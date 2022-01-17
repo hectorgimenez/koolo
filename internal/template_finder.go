@@ -13,15 +13,17 @@ import (
 
 type TemplateFinder struct {
 	templates map[string]Template
+	logger    *zap.Logger
 }
 
 type Template struct {
-	RGB       *gocv.Mat
-	GrayScale *gocv.Mat
+	RGB       gocv.Mat
+	GrayScale gocv.Mat
+	Mask      gocv.Mat
 }
 
 type TemplateMatch struct {
-	Score     float64
+	Score     float32
 	PositionX int
 	PositionY int
 	Found     bool
@@ -34,7 +36,8 @@ func NewTemplateFinder(logger *zap.Logger, templatesPath string) (TemplateFinder
 		if err != nil {
 			return err
 		}
-		if !strings.Contains(info.Name(), ".png") {
+		fileName := info.Name()
+		if !strings.Contains(fileName, ".png") {
 			return nil
 		}
 
@@ -46,9 +49,10 @@ func NewTemplateFinder(logger *zap.Logger, templatesPath string) (TemplateFinder
 		grayScale := mat.Clone()
 		gocv.CvtColor(mat, &rgb, gocv.ColorBGRAToBGR)
 		gocv.CvtColor(mat, &grayScale, gocv.ColorBGRAToGray)
-		templates[info.Name()] = Template{
-			RGB:       &rgb,
-			GrayScale: &grayScale,
+		templates[fileName[:len(fileName)-4]] = Template{
+			RGB:       rgb,
+			GrayScale: grayScale,
+			Mask:      createMask(mat),
 		}
 
 		return nil
@@ -65,16 +69,50 @@ func NewTemplateFinder(logger *zap.Logger, templatesPath string) (TemplateFinder
 
 	return TemplateFinder{
 		templates: templates,
+		logger:    logger,
 	}, nil
 }
 
-func (tf *TemplateFinder) Search(tpl string, img gocv.Mat) TemplateMatch {
-	mat, ok := tf.templates[tpl]
-	if !ok {
-		return TemplateMatch{}
-	}
+func createMask(tpl gocv.Mat) gocv.Mat {
+	mask := gocv.NewMat()
+	if mask.Channels() == 4 {
 
-	fmt.Print(mat)
+	}
+	gocv.Threshold(tpl, &mask, 1, 255, gocv.ThresholdBinary)
+
+	return mask
+}
+
+func (tf *TemplateFinder) Find(tplName string, img gocv.Mat) TemplateMatch {
+	t := time.Now()
+	threshold := float32(0.65)
+
+	tpl, ok := tf.templates[tplName]
+	if !ok {
+		return TemplateMatch{
+			Score: 0,
+			Found: false,
+		}
+	}
+	res := gocv.NewMat()
+	gocv.MatchTemplate(img, tpl.RGB, &res, gocv.TmCcoeffNormed, gocv.NewMat())
+	_, maxVal, _, maxPos := gocv.MinMaxLoc(res)
+	if maxVal > threshold {
+		tf.logger.Debug(fmt.Sprintf(
+			"Found Template (%dms): %s Score: %f",
+			time.Since(t).Milliseconds(),
+			tplName,
+			maxVal,
+		))
+		return TemplateMatch{
+			Score:     maxVal,
+			PositionX: 0,
+			PositionY: 0,
+			Found:     true,
+		}
+	}
+	fmt.Print(tpl)
+	fmt.Print(maxPos)
 
 	return TemplateMatch{}
 }
