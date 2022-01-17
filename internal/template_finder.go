@@ -2,9 +2,11 @@ package koolo
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"io/fs"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"gocv.io/x/gocv"
 )
@@ -25,8 +27,9 @@ type TemplateMatch struct {
 	Found     bool
 }
 
-func NewTemplateFinder(templatesPath string) (TemplateFinder, error) {
+func NewTemplateFinder(logger *zap.Logger, templatesPath string) (TemplateFinder, error) {
 	templates := map[string]Template{}
+	start := time.Now()
 	err := filepath.Walk(templatesPath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -53,6 +56,12 @@ func NewTemplateFinder(templatesPath string) (TemplateFinder, error) {
 	if err != nil {
 		return TemplateFinder{}, fmt.Errorf("error loading templates: %w", err)
 	}
+
+	logger.Debug(fmt.Sprintf(
+		"Found a total of %d templates, loaded in %dms",
+		len(templates),
+		time.Since(start).Milliseconds()),
+	)
 
 	return TemplateFinder{
 		templates: templates,
