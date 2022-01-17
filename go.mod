@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/go-vgo/robotgo v0.100.10
+	gocv.io/x/gocv v0.29.0
 	gopkg.in/ini.v1 v1.66.2
 )
 

@@ -17,6 +17,7 @@ func main() {
 
 	ctx := context.Background()
 	err = supervisor.Start(ctx)
+	_, err = koolo.NewTemplateFinder("assets")
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}
