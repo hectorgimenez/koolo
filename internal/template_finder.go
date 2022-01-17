@@ -2,10 +2,11 @@ package koolo
 
 import (
 	"fmt"
-	"gocv.io/x/gocv"
 	"io/fs"
 	"path/filepath"
 	"strings"
+
+	"gocv.io/x/gocv"
 )
 
 type TemplateFinder struct {
@@ -38,13 +39,13 @@ func NewTemplateFinder(templatesPath string) (TemplateFinder, error) {
 		if mat.Empty() {
 			return nil
 		}
-		rgb := &gocv.Mat{}
-		grayScale := &gocv.Mat{}
-		gocv.CvtColor(mat, rgb, gocv.ColorBGRAToBGR)
-		gocv.CvtColor(mat, grayScale, gocv.ColorBGRAToGray)
+		rgb := mat.Clone()
+		grayScale := mat.Clone()
+		gocv.CvtColor(mat, &rgb, gocv.ColorBGRAToBGR)
+		gocv.CvtColor(mat, &grayScale, gocv.ColorBGRAToGray)
 		templates[info.Name()] = Template{
-			RGB:       rgb,
-			GrayScale: grayScale,
+			RGB:       &rgb,
+			GrayScale: &grayScale,
 		}
 
 		return nil
@@ -63,6 +64,8 @@ func (tf *TemplateFinder) Search(tpl string, img gocv.Mat) TemplateMatch {
 	if !ok {
 		return TemplateMatch{}
 	}
+
+	fmt.Print(mat)
 
 	return TemplateMatch{}
 }
