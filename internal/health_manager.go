@@ -6,7 +6,7 @@ import "context"
 type HealthManager struct {
 }
 
-func NewHealthManager() HealthManager {
+func NewHealthManager(Display, TemplateFinder) HealthManager {
 	return HealthManager{}
 }
 
