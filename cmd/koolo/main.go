@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/kbinani/screenshot"
-	"gocv.io/x/gocv"
 	"log"
 )
 
@@ -23,15 +20,16 @@ func main() {
 	}
 	defer logger.Sync()
 
-	supervisor := koolo.NewSupervisor(cfg)
+	tf, err := koolo.NewTemplateFinder(logger, "assets/templates")
+	d, err := koolo.NewDisplay(cfg.Display, logger)
+
+	hm := koolo.NewHealthManager(d, tf)
+	bot := koolo.NewBot()
+	supervisor := koolo.NewSupervisor(cfg, hm, bot)
 
 	ctx := context.Background()
 	err = supervisor.Start(ctx)
-	tf, err := koolo.NewTemplateFinder(logger, "assets/templates")
-	img, err := screenshot.CaptureDisplay(0)
-	mat, _ := gocv.ImageToMatRGB(img)
-	tl := tf.Find("IDEA", mat)
-	fmt.Println(tl)
+
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}

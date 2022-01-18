@@ -3,6 +3,7 @@ package koolo
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"image"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -83,9 +84,14 @@ func createMask(tpl gocv.Mat) gocv.Mat {
 	return mask
 }
 
-func (tf *TemplateFinder) Find(tplName string, img gocv.Mat) TemplateMatch {
+func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 	t := time.Now()
 	threshold := float32(0.65)
+
+	mat, err := gocv.ImageToMatRGB(img)
+	if err != nil {
+		return TemplateMatch{}
+	}
 
 	tpl, ok := tf.templates[tplName]
 	if !ok {
@@ -95,7 +101,7 @@ func (tf *TemplateFinder) Find(tplName string, img gocv.Mat) TemplateMatch {
 		}
 	}
 	res := gocv.NewMat()
-	gocv.MatchTemplate(img, tpl.RGB, &res, gocv.TmCcoeffNormed, gocv.NewMat())
+	gocv.MatchTemplate(mat, tpl.RGB, &res, gocv.TmCcoeffNormed, gocv.NewMat())
 	_, maxVal, _, maxPos := gocv.MinMaxLoc(res)
 	if maxVal > threshold {
 		tf.logger.Debug(fmt.Sprintf(
@@ -111,8 +117,6 @@ func (tf *TemplateFinder) Find(tplName string, img gocv.Mat) TemplateMatch {
 			Found:     true,
 		}
 	}
-	fmt.Print(tpl)
-	fmt.Print(maxPos)
 
 	return TemplateMatch{}
 }
