@@ -117,6 +117,6 @@ func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 			Found:     true,
 		}
 	}
-
+	fmt.Sprintf("", maxPos)
 	return TemplateMatch{}
 }

@@ -16,8 +16,8 @@ const (
 )
 
 type Display struct {
-	offsetTop  int
-	offsetLeft int
+	OffsetTop  int
+	OffsetLeft int
 	logger     *zap.Logger
 }
 
@@ -54,8 +54,8 @@ func NewDisplay(display int, logger *zap.Logger) (Display, error) {
 			logger.Info(fmt.Sprintf("D2R Window found, offsets: left %dpx, top %dpx", offsetLeft, offsetTop))
 
 			return Display{
-				offsetTop:  offsetTop,
-				offsetLeft: offsetLeft,
+				OffsetTop:  offsetTop,
+				OffsetLeft: offsetLeft,
 				logger:     nil,
 			}, err
 		}
@@ -65,7 +65,7 @@ func NewDisplay(display int, logger *zap.Logger) (Display, error) {
 }
 
 func (d Display) Capture() image.Image {
-	img, _ := screenshot.Capture(d.offsetLeft, d.offsetTop, 1280, 720)
+	img, _ := screenshot.Capture(d.OffsetLeft, d.OffsetTop, 1280, 720)
 
 	// TODO: Remove after debugging
 	mat, _ := gocv.ImageToMatRGB(img)

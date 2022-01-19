@@ -5,8 +5,10 @@ go 1.18
 require (
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/kbinani/screenshot v0.0.0-20210720154843-7d3a670d8329
+	github.com/otiai10/gosseract/v2 v2.3.2-0.20211202101637-77fe480867ae
 	go.uber.org/zap v1.20.0
 	gocv.io/x/gocv v0.29.1-0.20220105094619-8fe4fc79738b
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/ini.v1 v1.66.2
 )
 

@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/go-vgo/robotgo"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"log"
+	"time"
 )
 
 func main() {
@@ -28,8 +31,26 @@ func main() {
 	supervisor := koolo.NewSupervisor(cfg, hm, bot)
 
 	ctx := context.Background()
-	err = supervisor.Start(ctx)
+	// TODO: Debug mouse
+	go func() {
+		if cfg.Debug {
+			ticker := time.NewTicker(time.Second * 3)
 
+			for {
+				select {
+				case <-ticker.C:
+					x, y := robotgo.GetMousePos()
+					relativeX := x - d.OffsetLeft
+					relativeY := y - d.OffsetTop
+					logger.Debug(fmt.Sprintf("Window mouse position: X %dpx Y%dpx", relativeX, relativeY))
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	err = supervisor.Start(ctx)
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}
