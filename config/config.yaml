@@ -1,0 +1,19 @@
+display: 0
+debug: true
+logFilePath: log.txt
+
+health: # Healing configuration, all values in %
+  healingPotionAt: 80
+  manaPotionAt: 10
+  rejuvPotionAtLife: 30
+  rejuvPotionAtMana: 0
+  mercHealingPotionAt: 80
+  mercRejuvPotionAt: 20
+  chickenAt: 20
+  mercChickenAt: 0
+
+character:
+  useMerc: true
+
+mapAssist:
+  hostName: http://localhost:1111

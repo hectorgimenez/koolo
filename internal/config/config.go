@@ -2,24 +2,42 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/ini.v1"
+	"gopkg.in/yaml.v2"
+	"os"
 )
 
 type Config struct {
-	Display     int    `ini:"display"`
-	Debug       bool   `ini:"debug"`
-	LogFilePath string `ini:"log_file_path"`
+	Display     int    `yaml:"display"`
+	Debug       bool   `yaml:"debug"`
+	LogFilePath string `yaml:"logFilePath"`
+	Health      struct {
+		HealingPotionAt     int `yaml:"healingPotionAt"`
+		ManaPotionAt        int `yaml:"manaPotionAt"`
+		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
+		RejuvPotionAtMana   int `yaml:"rejuvPotionAtMana"`
+		MercHealingPotionAt int `yaml:"mercHealingPotionAt"`
+		MercRejuvPotionAt   int `yaml:"mercRejuvPotionAt"`
+		ChickenAt           int `yaml:"chickenAt"`
+		MercChickenAt       int `yaml:"mercChickenAt"`
+	} `yaml:"health"`
+	Character struct {
+		UseMerc bool `yaml:"useMerc"`
+	} `yaml:"character"`
+	MapAssist struct {
+		HostName string `yaml:"hostName"`
+	} `yaml:"mapAssist"`
 }
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
 func Load() (Config, error) {
-	f, err := ini.Load("config/config.ini")
+	r, err := os.Open("config/config.yaml")
 	if err != nil {
-		return Config{}, fmt.Errorf("error loading config.ini: %w", err)
+		return Config{}, fmt.Errorf("error loading config.yaml: %w", err)
 	}
 
+	d := yaml.NewDecoder(r)
 	cfg := Config{}
-	if err = f.MapTo(&cfg); err != nil {
+	if err = d.Decode(&cfg); err != nil {
 		return Config{}, fmt.Errorf("error reading config: %w", err)
 	}
 
