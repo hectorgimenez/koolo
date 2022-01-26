@@ -2,10 +2,14 @@ package koolo
 
 import (
 	"context"
+	"fmt"
+	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/lxn/win"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -29,6 +33,11 @@ func NewSupervisor(cfg config.Config, ah action.Handler, hm health.Manager, bot 
 
 // Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
 func (s Supervisor) Start(ctx context.Context) error {
+	err := s.ensureProcessIsRunningAndPrepare()
+	if err != nil {
+		return fmt.Errorf("error preparing game: %w", err)
+	}
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	// Listen to actions triggered from elsewhere
@@ -71,4 +80,20 @@ func (s Supervisor) listenEvents(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (s Supervisor) ensureProcessIsRunningAndPrepare() error {
+	window := robotgo.FindWindow("Diablo II: Resurrected")
+	win.SetForegroundWindow(window)
+
+	pos := win.WINDOWPLACEMENT{}
+	win.GetWindowPlacement(window, &pos)
+
+	// Assuming game resolution 1280x720
+	offsetX := ((pos.RcNormalPosition.Right - pos.RcNormalPosition.Left - 1280) / 2) + pos.RcNormalPosition.Left
+	offsetY := ((pos.RcNormalPosition.Bottom - pos.RcNormalPosition.Top - 720) / 2) + pos.RcNormalPosition.Top
+	hid.WindowPositionX = int(offsetX)
+	hid.WindowPositionY = int(offsetY)
+
+	return nil
 }

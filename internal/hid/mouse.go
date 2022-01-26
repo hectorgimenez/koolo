@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+var WindowPositionX = 0
+var WindowPositionY = 0
+
 const (
 	// Windmouse configuration
 	windmouseG0 = 9.8  // magnitude of the gravitational force
@@ -23,6 +26,8 @@ type MouseButton string
 // MovePointer moves the mouse to the requested position, x and y should be the final position based on
 // pixels shown in the screen. Top-left corner is 0,0
 func MovePointer(x, y int) {
+	x = WindowPositionX + x
+	y = WindowPositionY + y
 	M0 := windmouseM0
 	destinationX, destinationY := float64(x), float64(y)
 	startXi, startYi := getCurrentPosition()

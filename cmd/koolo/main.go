@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/mapassist"
 	"log"
 	"time"
@@ -30,12 +31,12 @@ func main() {
 
 	chActions := make(chan action.Action, 10)
 	chEvents := make(chan event.Event, 10)
-	gm := game.NewGameManager(chActions, chEvents)
+	gm := game.NewGameManager(cfg, chActions, chEvents)
 	ah := action.NewHandler(chActions)
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
 	bm := health.NewBeltManager(cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(mapAssistApi, chActions, bm, gm, cfg)
-	bot := koolo.NewBot()
+	bot := koolo.NewBot(gm)
 	supervisor := koolo.NewSupervisor(cfg, ah, hm, bot)
 
 	ctx := context.Background()
@@ -48,7 +49,7 @@ func main() {
 				select {
 				case <-ticker.C:
 					x, y := robotgo.GetMousePos()
-					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x, y))
+					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowPositionX, y-hid.WindowPositionY))
 				case <-ctx.Done():
 					return
 				}

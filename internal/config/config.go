@@ -34,7 +34,8 @@ type Config struct {
 		BeltColumn4 inventory.PotionType `yaml:"beltColumn4"`
 	} `yaml:"inventory"`
 	Character struct {
-		UseMerc bool `yaml:"useMerc"`
+		Difficulty string `yaml:"difficulty"`
+		UseMerc    bool   `yaml:"useMerc"`
 	} `yaml:"character"`
 	MapAssist struct {
 		HostName string `yaml:"hostName"`

@@ -36,17 +36,27 @@ type HIDOperation interface {
 	delay() time.Duration
 }
 
-type KeyPress struct {
+type delayedOperation struct {
 	delayAfterOperation time.Duration
-	keyToPress          string
-	combinedKeys        []string
+}
+
+func (d delayedOperation) delay() time.Duration {
+	return d.delayAfterOperation
+}
+
+type KeyPress struct {
+	delayedOperation
+	keyToPress   string
+	combinedKeys []string
 }
 
 func NewKeyPress(key string, delay time.Duration, combinedKeys ...string) KeyPress {
 	return KeyPress{
-		delayAfterOperation: delay,
-		keyToPress:          key,
-		combinedKeys:        combinedKeys,
+		delayedOperation: delayedOperation{
+			delayAfterOperation: delay,
+		},
+		keyToPress:   key,
+		combinedKeys: combinedKeys,
 	}
 }
 
@@ -58,6 +68,36 @@ func (k KeyPress) execute() {
 	}
 }
 
-func (k KeyPress) delay() time.Duration {
-	return k.delayAfterOperation
+type MouseDisplacement struct {
+	delayedOperation
+	x int
+	y int
+}
+
+func (m MouseDisplacement) execute() {
+	hid.MovePointer(m.x, m.y)
+}
+
+func NewMouseDisplacement(delay time.Duration, x, y int) MouseDisplacement {
+	return MouseDisplacement{
+		delayedOperation: delayedOperation{delayAfterOperation: delay},
+		x:                x,
+		y:                y,
+	}
+}
+
+type MouseClick struct {
+	delayedOperation
+	button hid.MouseButton
+}
+
+func (m MouseClick) execute() {
+	hid.Click(m.button)
+}
+
+func NewMouseClick(delay time.Duration, button hid.MouseButton) MouseClick {
+	return MouseClick{
+		delayedOperation: delayedOperation{delayAfterOperation: delay},
+		button:           button,
+	}
 }

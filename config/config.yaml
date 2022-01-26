@@ -25,6 +25,7 @@ inventory:
   beltColumn4: mana # Allowed values: heal, mana, rejuv
 
 character:
+  difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
 
 mapAssist:
