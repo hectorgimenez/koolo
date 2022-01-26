@@ -3,7 +3,8 @@ package mapassist
 import (
 	"encoding/json"
 	"errors"
-	koolo "github.com/hectorgimenez/koolo/internal"
+	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/inventory"
 	"net/http"
 )
 
@@ -20,32 +21,36 @@ func NewAPIClient(hostName string) APIClient {
 	return APIClient{hostName: hostName}
 }
 
-func (A APIClient) CurrentStatus() (koolo.Status, error) {
+func (A APIClient) CurrentStatus() (health.Status, error) {
 	r, err := http.Get(A.hostName + healthEndpoint)
 	if err != nil {
-		return koolo.Status{}, err
+		return health.Status{}, err
 	}
 
 	status := statusHttpResponse{}
 	err = json.NewDecoder(r.Body).Decode(&status)
 	if err != nil {
-		return koolo.Status{}, err
+		return health.Status{}, err
 	}
 	if !status.Success {
-		return koolo.Status{}, errors.New("error fetching MapAssist data from API")
+		return health.Status{}, errors.New("error fetching MapAssist data from API")
 	}
 
-	return koolo.Status{
+	return health.Status{
 		Life:    status.Life,
 		MaxLife: status.MaxLife,
 		Mana:    status.Mana,
 		MaxMana: status.MaxMana,
-		Merc: koolo.MercStatus{
+		Merc: health.MercStatus{
 			Alive:   status.Merc.Alive,
 			Life:    status.Merc.Life,
 			MaxLife: status.Merc.MaxLife,
 		},
 	}, nil
+}
+
+func (A APIClient) Inventory() inventory.Inventory {
+	return inventory.Inventory{}
 }
 
 type statusHttpResponse struct {

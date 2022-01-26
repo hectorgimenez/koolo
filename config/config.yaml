@@ -12,6 +12,12 @@ health: # Healing configuration, all values in %
   chickenAt: 20
   mercChickenAt: 0
 
+bindings:
+  potion1: 1
+  potion2: 2
+  potion3: 3
+  potion4: 4
+
 character:
   useMerc: true
 

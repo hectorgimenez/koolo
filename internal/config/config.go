@@ -20,6 +20,12 @@ type Config struct {
 		ChickenAt           int `yaml:"chickenAt"`
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
+	Bindings struct {
+		Potion1 string `yaml:"potion1"`
+		Potion2 string `yaml:"potion2"`
+		Potion3 string `yaml:"potion3"`
+		Potion4 string `yaml:"potion4"`
+	} `yaml:"bindings"`
 	Character struct {
 		UseMerc bool `yaml:"useMerc"`
 	} `yaml:"character"`
