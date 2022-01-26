@@ -18,6 +18,12 @@ bindings:
   potion3: 3
   potion4: 4
 
+inventory:
+  beltColumn1: heal # Allowed values: heal, mana, rejuv
+  beltColumn2: heal # Allowed values: heal, mana, rejuv
+  beltColumn3: rejuv # Allowed values: heal, mana, rejuv
+  beltColumn4: mana # Allowed values: heal, mana, rejuv
+
 character:
   useMerc: true
 

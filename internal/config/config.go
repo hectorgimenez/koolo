@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/inventory"
 	"gopkg.in/yaml.v2"
 	"os"
 )
@@ -26,6 +27,12 @@ type Config struct {
 		Potion3 string `yaml:"potion3"`
 		Potion4 string `yaml:"potion4"`
 	} `yaml:"bindings"`
+	Inventory struct {
+		BeltColumn1 inventory.PotionType `yaml:"beltColumn1"`
+		BeltColumn2 inventory.PotionType `yaml:"beltColumn2"`
+		BeltColumn3 inventory.PotionType `yaml:"beltColumn3"`
+		BeltColumn4 inventory.PotionType `yaml:"beltColumn4"`
+	} `yaml:"inventory"`
 	Character struct {
 		UseMerc bool `yaml:"useMerc"`
 	} `yaml:"character"`
