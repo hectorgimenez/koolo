@@ -39,17 +39,23 @@ type HIDOperation interface {
 type KeyPress struct {
 	delayAfterOperation time.Duration
 	keyToPress          string
+	combinedKeys        []string
 }
 
-func NewKeyPress(key string, delay time.Duration) KeyPress {
+func NewKeyPress(key string, delay time.Duration, combinedKeys ...string) KeyPress {
 	return KeyPress{
 		delayAfterOperation: delay,
 		keyToPress:          key,
+		combinedKeys:        combinedKeys,
 	}
 }
 
 func (k KeyPress) execute() {
-	hid.PressKey(k.keyToPress)
+	if len(k.combinedKeys) > 0 {
+		hid.PressKeyCombination(k.keyToPress, k.combinedKeys...)
+	} else {
+		hid.PressKey(k.keyToPress)
+	}
 }
 
 func (k KeyPress) delay() time.Duration {

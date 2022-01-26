@@ -27,7 +27,7 @@ func (pm BeltManager) DrinkPotion(potionType inventory.PotionType, merc bool) {
 	if found {
 		binding := pm.getBindingBasedOnColumn(p)
 		if merc {
-			// TODO: Hold shift and drink
+			pm.actionChan <- action.NewAction(action.PriorityHigh, action.NewKeyPress("shift", time.Millisecond*50, binding))
 			return
 		}
 		pm.actionChan <- action.NewAction(action.PriorityHigh, action.NewKeyPress(binding, time.Millisecond*50))
