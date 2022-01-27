@@ -15,16 +15,14 @@ type Bot struct {
 	logger         *zap.Logger
 	cfg            config.Config
 	dataRepository DataRepository
-	gm             GameManager
 	bm             health.BeltManager
 	actionChan     chan<- action.Action
 }
 
-func NewBot(logger *zap.Logger, cfg config.Config, gm GameManager, bm health.BeltManager, dr DataRepository, actionChan chan<- action.Action) Bot {
+func NewBot(logger *zap.Logger, cfg config.Config, bm health.BeltManager, dr DataRepository, actionChan chan<- action.Action) Bot {
 	return Bot{
 		logger:         logger,
 		cfg:            cfg,
-		gm:             gm,
 		bm:             bm,
 		dataRepository: dr,
 		actionChan:     actionChan,

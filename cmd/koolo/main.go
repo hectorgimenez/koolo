@@ -31,12 +31,11 @@ func main() {
 
 	chActions := make(chan action.Action, 10)
 	chEvents := make(chan event.Event, 10)
-	gm := game.NewGameManager(cfg, chActions, chEvents)
 	ah := action.NewHandler(chActions)
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
 	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(logger, mapAssistApi, chActions, chEvents, bm, cfg)
-	bot := game.NewBot(logger, cfg, gm, bm, mapAssistApi, chActions)
+	bot := game.NewBot(logger, cfg, bm, mapAssistApi, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()
