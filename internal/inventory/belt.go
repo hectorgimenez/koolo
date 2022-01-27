@@ -1,9 +1,9 @@
 package inventory
 
 const (
-	HealingPotion      PotionType = "heal"
+	HealingPotion      PotionType = "healing"
 	ManaPotion         PotionType = "mana"
-	RejuvenationPotion PotionType = "rejuv"
+	RejuvenationPotion PotionType = "rejuvenation"
 )
 
 type Belt struct {

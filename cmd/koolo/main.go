@@ -34,9 +34,9 @@ func main() {
 	gm := game.NewGameManager(cfg, chActions, chEvents)
 	ah := action.NewHandler(chActions)
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
-	bm := health.NewBeltManager(cfg, mapAssistApi, chActions)
-	hm := health.NewHealthManager(mapAssistApi, chActions, bm, gm, cfg)
-	bot := game.NewBot(logger, gm, mapAssistApi, chActions)
+	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
+	hm := health.NewHealthManager(logger, mapAssistApi, chActions, chEvents, bm, cfg)
+	bot := game.NewBot(logger, cfg, gm, bm, mapAssistApi, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()

@@ -19,11 +19,12 @@ bindings:
   potion4: 4
 
 inventory:
-  beltColumn1: heal # Allowed values: heal, mana, rejuv
-  beltColumn2: heal # Allowed values: heal, mana, rejuv
-  beltColumn3: rejuv # Allowed values: heal, mana, rejuv
-  beltColumn4: mana # Allowed values: heal, mana, rejuv
-
+  beltColumns: # Amount of columns for each type of potion, sum of all should not be more than 4
+    healing: 2
+    mana: 1
+    rejuvenation: 1
+  beltRows: 4
+  
 character:
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true

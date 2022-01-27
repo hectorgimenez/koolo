@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/inventory"
 	"gopkg.in/yaml.v2"
 	"os"
 )
@@ -28,10 +27,12 @@ type Config struct {
 		Potion4 string `yaml:"potion4"`
 	} `yaml:"bindings"`
 	Inventory struct {
-		BeltColumn1 inventory.PotionType `yaml:"beltColumn1"`
-		BeltColumn2 inventory.PotionType `yaml:"beltColumn2"`
-		BeltColumn3 inventory.PotionType `yaml:"beltColumn3"`
-		BeltColumn4 inventory.PotionType `yaml:"beltColumn4"`
+		BeltColumns struct {
+			Healing      int `yaml:"healing"`
+			Mana         int `yaml:"mana"`
+			Rejuvenation int `yaml:"rejuvenation"`
+		} `yaml:"beltColumns"`
+		BeltRows int `yaml:"beltRows"`
 	} `yaml:"inventory"`
 	Character struct {
 		Difficulty string `yaml:"difficulty"`

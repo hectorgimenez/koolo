@@ -8,6 +8,9 @@ import (
 
 func (b Bot) prepare() {
 	b.recoverCorpse()
+	if b.bm.ShouldBuyPotions() {
+
+	}
 }
 
 func (b Bot) recoverCorpse() {

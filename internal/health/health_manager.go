@@ -2,11 +2,14 @@ package health
 
 import (
 	"context"
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	koolo "github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/inventory"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -19,10 +22,11 @@ const (
 
 // Manager responsibility is to keep our character and mercenary alive, monitoring life and giving potions when needed
 type Manager struct {
+	logger       *zap.Logger
 	hr           Repository
 	actionChan   chan<- action.Action
+	eventChan    chan<- event.Event
 	beltManager  BeltManager
-	gm           koolo.GameManager
 	cfg          config.Config
 	lastHeal     time.Time
 	lastMana     time.Time
@@ -30,12 +34,13 @@ type Manager struct {
 	active       *atomic.Bool
 }
 
-func NewHealthManager(hr Repository, actionChan chan<- action.Action, beltManager BeltManager, gm koolo.GameManager, cfg config.Config) Manager {
+func NewHealthManager(logger *zap.Logger, hr Repository, actionChan chan<- action.Action, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
 	return Manager{
+		logger:      logger,
 		hr:          hr,
 		actionChan:  actionChan,
+		eventChan:   eventChan,
 		beltManager: beltManager,
-		gm:          gm,
 		cfg:         cfg,
 		active:      atomic.NewBool(false),
 	}
@@ -118,6 +123,6 @@ func (hm Manager) handleHealthAndMana() {
 }
 
 func (hm Manager) chicken(status Status) {
-	// TODO: Print status
-	hm.gm.ExitGame()
+	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
+	helper.ExitGame(hm.actionChan, hm.eventChan)
 }

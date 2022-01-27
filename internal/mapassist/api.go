@@ -81,5 +81,41 @@ func (A APIClient) GameData() game.Data {
 }
 
 func (A APIClient) Inventory() inventory.Inventory {
-	return inventory.Inventory{}
+	http.Get(A.hostName + genericData)
+	r, _ := http.Get(A.hostName + genericData)
+
+	data := gameDataHttpResponse{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		// TODO: Handle error
+		return inventory.Inventory{}
+	}
+	if !data.Success {
+		// TODO: Handle error
+		return inventory.Inventory{}
+	}
+
+	var potions []inventory.Potion
+	for _, i := range data.Items {
+		if i.Place == "INBELT" {
+			potionType := inventory.HealingPotion
+			switch i.Name {
+			case "Minor Mana Potion", "Light Mana Potion", "Mana Potion", "Greater Mana Potion", "Super Mana Potion":
+				potionType = inventory.ManaPotion
+			case "Rejuvenation Potion", "Full Rejuvenation Potion":
+				potionType = inventory.RejuvenationPotion
+			}
+
+			potions = append(potions, inventory.Potion{
+				Row:    int(i.Position.Y),
+				Column: int(i.Position.X),
+				Type:   potionType,
+			})
+		}
+	}
+	return inventory.Inventory{
+		Belt: inventory.Belt{
+			Potions: potions,
+		},
+	}
 }
