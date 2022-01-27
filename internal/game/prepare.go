@@ -9,8 +9,12 @@ import (
 func (b Bot) prepare() {
 	b.recoverCorpse()
 	if b.bm.ShouldBuyPotions() {
-
+		// TODO: Buy pots
 	}
+	// TODO: Check if we need healing
+	// TODO: Check Merc alive
+	// TODO: Check for TPs and durability
+	// TODO: Check inventory (stash/not full)
 }
 
 func (b Bot) recoverCorpse() {
