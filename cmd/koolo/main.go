@@ -36,8 +36,8 @@ func main() {
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
 	bm := health.NewBeltManager(cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(mapAssistApi, chActions, bm, gm, cfg)
-	bot := koolo.NewBot(gm)
-	supervisor := koolo.NewSupervisor(cfg, ah, hm, bot)
+	bot := game.NewBot(logger, gm, mapAssistApi, chActions)
+	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()
 	// TODO: Debug mouse
@@ -49,7 +49,7 @@ func main() {
 				select {
 				case <-ticker.C:
 					x, y := robotgo.GetMousePos()
-					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowPositionX, y-hid.WindowPositionY))
+					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowLeftX, y-hid.WindowBottomY))
 				case <-ctx.Done():
 					return
 				}

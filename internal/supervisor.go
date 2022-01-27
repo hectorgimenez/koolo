@@ -7,23 +7,28 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/lxn/win"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"time"
 )
 
 // Supervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type Supervisor struct {
+	logger        *zap.Logger
 	cfg           config.Config
 	eventsChannel <-chan event.Event
 	ah            action.Handler
 	healthManager health.Manager
-	bot           Bot
+	bot           game.Bot
 }
 
-func NewSupervisor(cfg config.Config, ah action.Handler, hm health.Manager, bot Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, cfg config.Config, ah action.Handler, hm health.Manager, bot game.Bot) Supervisor {
 	return Supervisor{
+		logger:        logger,
 		cfg:           cfg,
 		ah:            ah,
 		healthManager: hm,
@@ -84,16 +89,20 @@ func (s Supervisor) listenEvents(ctx context.Context) {
 
 func (s Supervisor) ensureProcessIsRunningAndPrepare() error {
 	window := robotgo.FindWindow("Diablo II: Resurrected")
+	if window == win.HWND_TOP {
+		s.logger.Fatal("Diablo II: Resurrected window can not be found! Are you sure game is open?")
+	}
 	win.SetForegroundWindow(window)
 
+	// Assuming game resolution 1280x720
+	// Exclude border offsets
+	// TODO: Improve this, maybe getting window content coordinates?
 	pos := win.WINDOWPLACEMENT{}
 	win.GetWindowPlacement(window, &pos)
+	hid.WindowLeftX = int(pos.RcNormalPosition.Left) + 8
+	hid.WindowBottomY = int(pos.RcNormalPosition.Top) + 31
 
-	// Assuming game resolution 1280x720
-	offsetX := ((pos.RcNormalPosition.Right - pos.RcNormalPosition.Left - 1280) / 2) + pos.RcNormalPosition.Left
-	offsetY := ((pos.RcNormalPosition.Bottom - pos.RcNormalPosition.Top - 720) / 2) + pos.RcNormalPosition.Top
-	hid.WindowPositionX = int(offsetX)
-	hid.WindowPositionY = int(offsetY)
+	time.Sleep(time.Second * 1)
 
 	return nil
 }

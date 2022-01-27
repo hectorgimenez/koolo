@@ -3,6 +3,7 @@ package mapassist
 import (
 	"encoding/json"
 	"errors"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/inventory"
 	"net/http"
@@ -49,19 +50,36 @@ func (A APIClient) CurrentStatus() (health.Status, error) {
 	}, nil
 }
 
-func (A APIClient) Inventory() inventory.Inventory {
-	return inventory.Inventory{}
+func (A APIClient) GameData() game.Data {
+	// TODO: Fix on MapAssist, first request always returns old data
+	http.Get(A.hostName + genericData)
+	r, _ := http.Get(A.hostName + genericData)
+
+	data := gameDataHttpResponse{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		// TODO: Handle error
+		return game.Data{}
+	}
+	if !data.Success {
+		// TODO: Handle error
+		return game.Data{}
+	}
+
+	corpse := game.Corpse{}
+	for _, c := range data.Corpses {
+		if c.Name == data.PlayerUnit.Name {
+			corpse.Found = true
+			corpse.X = c.Position.X
+			corpse.Y = c.Position.Y
+		}
+	}
+	return game.Data{
+		Area:   game.Area(data.Area),
+		Corpse: corpse,
+	}
 }
 
-type statusHttpResponse struct {
-	Success bool `json:"success"`
-	Life    int  `json:"life"`
-	MaxLife int  `json:"max_life"`
-	Mana    int  `json:"mana"`
-	MaxMana int  `json:"max_mana"`
-	Merc    struct {
-		Alive   bool `json:"alive"`
-		Life    int  `json:"life"`
-		MaxLife int  `json:"max_life"`
-	} `json:"merc"`
+func (A APIClient) Inventory() inventory.Inventory {
+	return inventory.Inventory{}
 }

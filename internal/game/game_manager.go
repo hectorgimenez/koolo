@@ -37,17 +37,17 @@ func (gm GameManager) NewGame() {
 	difficultyPosition := map[string]struct {
 		X, Y int
 	}{
-		"normal":    {X: 635, Y: 311},
-		"nightmare": {X: 635, Y: 355},
-		"hell":      {X: 635, Y: 403},
+		"normal":    {X: 640, Y: 311},
+		"nightmare": {X: 640, Y: 355},
+		"hell":      {X: 640, Y: 403},
 	}
 
 	createX := difficultyPosition[gm.cfg.Character.Difficulty].X
 	createY := difficultyPosition[gm.cfg.Character.Difficulty].Y
 	a := action.NewAction(
 		action.PriorityNormal,
-		action.NewMouseDisplacement(time.Millisecond*50, 530, 665),
-		action.NewMouseClick(time.Millisecond*65, hid.LeftButton),
+		action.NewMouseDisplacement(time.Millisecond*50, 640, 672),
+		action.NewMouseClick(time.Millisecond*350, hid.LeftButton),
 		action.NewMouseDisplacement(time.Millisecond*87, createX, createY),
 		action.NewMouseClick(time.Millisecond*65, hid.LeftButton),
 	)
