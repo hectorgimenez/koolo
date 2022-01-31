@@ -9,7 +9,7 @@ import (
 func (b Bot) prepare() {
 	b.recoverCorpse()
 	if b.bm.ShouldBuyPotions() {
-		// TODO: Buy pots
+		b.tm.BuyPotionsAndTPs(b.data().Area)
 	}
 	// TODO: Check if we need healing
 	// TODO: Check Merc alive

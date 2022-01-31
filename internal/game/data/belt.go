@@ -1,4 +1,4 @@
-package inventory
+package data
 
 const (
 	HealingPotion      PotionType = "healing"

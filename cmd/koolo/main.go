@@ -11,8 +11,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/mapassist"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"log"
 	"time"
 )
@@ -35,7 +37,9 @@ func main() {
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
 	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(logger, mapAssistApi, chActions, chEvents, bm, cfg)
-	bot := game.NewBot(logger, cfg, bm, mapAssistApi, chActions)
+	pf := helper.NewPathFinder(logger, mapAssistApi)
+	tm := town.NewTownManager(mapAssistApi, pf)
+	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()
