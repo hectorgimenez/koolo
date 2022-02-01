@@ -12,30 +12,6 @@ type DataRepository interface {
 	GameData() Data
 }
 
-type Area string
-type Corpse struct {
-	Found    bool
-	Position Position
-}
-type Monster struct {
-	Name     string
-	Position Position
-}
-
-type Position struct {
-	X int
-	Y int
-}
-
-type PlayerUnit struct {
-	Name     string
-	Position Position
-}
-
-type NPC struct {
-	Name      string
-	Positions []Position
-}
 type Data struct {
 	Area          Area
 	AreaOrigin    Position
@@ -45,4 +21,42 @@ type Data struct {
 	CollisionGrid [][]int
 	PlayerUnit    PlayerUnit
 	NPCs          map[NPCID]NPC
+	Items         Items
+	OpenMenus     OpenMenus
+}
+
+type Area string
+type Corpse struct {
+	Found     bool
+	IsHovered bool
+	Position  Position
+}
+type Monster struct {
+	Name      string
+	IsHovered bool
+	Position  Position
+}
+
+type Position struct {
+	X int
+	Y int
+}
+
+type PlayerUnit struct {
+	Name      string
+	IsHovered bool
+	Position  Position
+}
+
+type NPC struct {
+	Name      string
+	Positions []Position
+}
+
+type OpenMenus struct {
+	Inventory   bool
+	NPCInteract bool
+	NPCShop     bool
+	Stash       bool
+	Waypoint    bool
 }

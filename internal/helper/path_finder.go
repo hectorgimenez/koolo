@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	gameScreenCenterX = 640
-	gameScreenCenterY = 360
-
 	halfTileSizeX = 8
 	halfTileSizeY = 4
 )
@@ -28,9 +25,12 @@ func NewPathFinder(logger *zap.Logger, dr data.DataRepository) PathFinder {
 
 func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 	// Using Monster structure provides better precision, but are only found when near.
-	lastIteration := false
 	for true {
 		d := pf.dr.GameData()
+		if d.OpenMenus.NPCInteract {
+			pf.logger.Debug("NPC Interaction menu detected")
+			break
+		}
 
 		npcPosX, npcPosY := getNPCPosition(d, npcID)
 
@@ -43,14 +43,14 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 		toY := npcPosY - d.AreaOrigin.Y
 
 		w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY)
-		p, distance, pFound := astar.Path(w.From(), w.To())
+		p, _, pFound := astar.Path(w.From(), w.To())
 		if !pFound {
 			pf.logger.Error(fmt.Sprintf("Error, Path to %s not found! Recalculating...", npcID))
 			continue
 		}
 
 		// Debug: Enable to generate Map bitmap
-		//w.RenderPathImg(p)
+		w.RenderPathImg(p)
 
 		moveTo := p[0].(*Tile)
 		if len(p) > 20 {
@@ -63,19 +63,18 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 
 		// Transform cartesian movement (world) to isometric (screen)
 		// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-		screenX := (worldDiffX-worldDiffY)*halfTileSizeX + gameScreenCenterX
-		screenY := (worldDiffX+worldDiffY)*halfTileSizeY + gameScreenCenterY
+		screenX := (worldDiffX-worldDiffY)*halfTileSizeX + (hid.GameAreaSizeX / 2)
+		screenY := (worldDiffX+worldDiffY)*halfTileSizeY + (hid.GameAreaSizeY / 2)
 
 		hid.MovePointer(screenX, screenY)
-		time.Sleep(time.Millisecond * 100)
-		if lastIteration {
-			fmt.Println("Arrived")
-			break
-		}
-		if distance < 10 {
-			fmt.Println("Delaying... we want to be precise calculating next step")
-			time.Sleep(time.Millisecond * 200)
-			lastIteration = true
+		time.Sleep(time.Millisecond * 250)
+
+		m, found := d.Monsters[npcID]
+		if found && m.IsHovered {
+			pf.logger.Debug("NPC Hovered, click and wait for NPC interaction")
+			hid.Click(hid.LeftButton)
+			time.Sleep(time.Millisecond * 500)
+			continue
 		}
 		hid.Click(hid.LeftButton)
 	}

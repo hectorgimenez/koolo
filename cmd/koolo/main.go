@@ -38,7 +38,7 @@ func main() {
 	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(logger, mapAssistApi, chActions, chEvents, bm, cfg)
 	pf := helper.NewPathFinder(logger, mapAssistApi)
-	tm := town.NewTownManager(mapAssistApi, pf)
+	tm := town.NewTownManager(mapAssistApi, pf, chActions)
 	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
@@ -52,7 +52,7 @@ func main() {
 				select {
 				case <-ticker.C:
 					x, y := robotgo.GetMousePos()
-					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowLeftX, y-hid.WindowBottomY))
+					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowLeftX, y-hid.WindowTopY))
 				case <-ctx.Done():
 					return
 				}

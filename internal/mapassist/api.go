@@ -75,6 +75,7 @@ func (A APIClient) GameData() data.Data {
 	for _, c := range d.Corpses {
 		if c.Name == d.PlayerUnit.Name {
 			corpse.Found = true
+			corpse.IsHovered = c.IsHovered
 			corpse.Position = data.Position{
 				X: int(c.Position.X),
 				Y: int(c.Position.Y),
@@ -85,7 +86,8 @@ func (A APIClient) GameData() data.Data {
 	monsters := map[data.NPCID]data.Monster{}
 	for _, m := range d.Monsters {
 		monsters[data.NPCID(m.Name)] = data.Monster{
-			Name: m.Name,
+			Name:      m.Name,
+			IsHovered: m.IsHovered,
 			Position: data.Position{
 				X: int(m.Position.X),
 				Y: int(m.Position.Y),
@@ -124,24 +126,18 @@ func (A APIClient) GameData() data.Data {
 				Y: int(d.PlayerUnit.Position.Y),
 			},
 		},
+		OpenMenus: data.OpenMenus{
+			Inventory:   d.MenuOpen.Inventory,
+			NPCInteract: d.MenuOpen.NPCInteract,
+			NPCShop:     d.MenuOpen.NPCShop,
+			Stash:       d.MenuOpen.Stash,
+			Waypoint:    d.MenuOpen.Waypoint,
+		},
+		Items: parseItems(d),
 	}
 }
 
-func (A APIClient) Inventory() data.Inventory {
-	http.Get(A.hostName + genericData)
-	r, _ := http.Get(A.hostName + genericData)
-
-	d := gameDataHttpResponse{}
-	err := json.NewDecoder(r.Body).Decode(&d)
-	if err != nil {
-		// TODO: Handle error
-		return data.Inventory{}
-	}
-	if !d.Success {
-		// TODO: Handle error
-		return data.Inventory{}
-	}
-
+func parseItems(d gameDataHttpResponse) data.Items {
 	var potions []data.Potion
 	for _, i := range d.Items {
 		if i.Place == "INBELT" {
@@ -154,13 +150,18 @@ func (A APIClient) Inventory() data.Inventory {
 			}
 
 			potions = append(potions, data.Potion{
-				Row:    int(i.Position.Y),
-				Column: int(i.Position.X),
-				Type:   potionType,
+				BaseItem: data.BaseItem{
+					Position: data.Position{
+						X: int(i.Position.X),
+						Y: int(i.Position.Y),
+					},
+					Name: i.Name,
+				},
+				Type: potionType,
 			})
 		}
 	}
-	return data.Inventory{
+	return data.Items{
 		Belt: data.Belt{
 			Potions: potions,
 		},

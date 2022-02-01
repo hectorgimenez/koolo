@@ -12,11 +12,11 @@ import (
 type BeltManager struct {
 	logger              *zap.Logger
 	cfg                 config.Config
-	inventoryRepository data.InventoryRepository
+	inventoryRepository data.DataRepository
 	actionChan          chan<- action.Action
 }
 
-func NewBeltManager(logger *zap.Logger, cfg config.Config, repository data.InventoryRepository, actionChan chan<- action.Action) BeltManager {
+func NewBeltManager(logger *zap.Logger, cfg config.Config, repository data.DataRepository, actionChan chan<- action.Action) BeltManager {
 	return BeltManager{
 		logger:              logger,
 		cfg:                 cfg,
@@ -72,11 +72,11 @@ func (pm BeltManager) ShouldBuyPotions() bool {
 }
 
 func (pm BeltManager) belt() data.Belt {
-	return pm.inventoryRepository.Inventory().Belt
+	return pm.inventoryRepository.GameData().Items.Belt
 }
 
 func (pm BeltManager) getBindingBasedOnColumn(potion data.Potion) string {
-	switch potion.Column {
+	switch potion.Position.X {
 	case 0:
 		return pm.cfg.Bindings.Potion1
 	case 1:
