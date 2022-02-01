@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
 
@@ -37,6 +38,11 @@ func (tm Manager) Repair(area data.Area) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.RepairNPC())
 	tm.openTradeMenu()
+	tm.actionChan <- action.NewAction(
+		action.PriorityNormal,
+		action.NewMouseDisplacement(time.Millisecond*850, int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37)),
+		action.NewMouseClick(time.Millisecond*1300, hid.LeftButton),
+	)
 }
 
 func (tm Manager) ReviveMerc(area data.Area) {
@@ -50,7 +56,7 @@ func (tm Manager) openTradeMenu() {
 	if d.OpenMenus.NPCInteract {
 		tm.actionChan <- action.NewAction(
 			action.PriorityNormal,
-			action.NewKeyPress("down", time.Millisecond*150),
+			action.NewKeyPress("down", time.Millisecond*760),
 			action.NewKeyPress("enter", time.Second),
 		)
 	}

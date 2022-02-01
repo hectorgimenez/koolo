@@ -29,6 +29,7 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 		d := pf.dr.GameData()
 		if d.OpenMenus.NPCInteract {
 			pf.logger.Debug("NPC Interaction menu detected")
+			time.Sleep(time.Millisecond * 927)
 			break
 		}
 

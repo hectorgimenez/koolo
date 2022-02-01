@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"math/rand"
 	"time"
 )
 
@@ -40,8 +41,13 @@ type delayedOperation struct {
 	delayAfterOperation time.Duration
 }
 
+// Add random 1-30% extra delay to all operations
 func (d delayedOperation) delay() time.Duration {
-	return d.delayAfterOperation
+	rand.Seed(time.Now().UnixNano())
+	randomPct := ((float32(rand.Intn(30-1+1)) + 1) / 100) + 1
+	delayedMs := int64(float32(d.delayAfterOperation.Milliseconds()) * randomPct)
+
+	return time.Duration(delayedMs) * time.Millisecond
 }
 
 type KeyPress struct {

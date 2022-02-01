@@ -39,7 +39,9 @@ func NewBot(
 }
 
 func (b *Bot) Start(ctx context.Context) error {
-	b.tm.BuyPotionsAndTPs(b.data().Area)
+	d := b.data()
+	//b.tm.BuyPotionsAndTPs(d.Area)
+	b.tm.Repair(d.Area)
 	//helper.NewGame(b.actionChan, b.cfg.Character.Difficulty)
 	//// TODO: Check for game creation finished (somehow) instead of waiting for a fixed period of time
 	//time.Sleep(time.Second * 10)
