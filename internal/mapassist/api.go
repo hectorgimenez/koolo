@@ -3,9 +3,9 @@ package mapassist
 import (
 	"encoding/json"
 	"errors"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"fmt"
+	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/inventory"
 	"net/http"
 )
 
@@ -50,71 +50,119 @@ func (A APIClient) CurrentStatus() (health.Status, error) {
 	}, nil
 }
 
-func (A APIClient) GameData() game.Data {
+func (A APIClient) GameData() data.Data {
 	// TODO: Fix on MapAssist, first request always returns old data
 	http.Get(A.hostName + genericData)
-	r, _ := http.Get(A.hostName + genericData)
+	r, err := http.Get(A.hostName + genericData)
+	if err != nil {
+		fmt.Println(err)
+		// TODO: Handle error
+	}
 
-	data := gameDataHttpResponse{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+	d := gameDataHttpResponse{}
+	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		// TODO: Handle error
-		return game.Data{}
+		return data.Data{}
 	}
-	if !data.Success {
+	if !d.Success {
 		// TODO: Handle error
-		return game.Data{}
+		return data.Data{}
 	}
 
-	corpse := game.Corpse{}
-	for _, c := range data.Corpses {
-		if c.Name == data.PlayerUnit.Name {
+	corpse := data.Corpse{}
+	// Match with current player
+	for _, c := range d.Corpses {
+		if c.Name == d.PlayerUnit.Name {
 			corpse.Found = true
-			corpse.X = c.Position.X
-			corpse.Y = c.Position.Y
+			corpse.IsHovered = c.IsHovered
+			corpse.Position = data.Position{
+				X: int(c.Position.X),
+				Y: int(c.Position.Y),
+			}
 		}
 	}
-	return game.Data{
-		Area:   game.Area(data.Area),
-		Corpse: corpse,
+
+	monsters := map[data.NPCID]data.Monster{}
+	for _, m := range d.Monsters {
+		monsters[data.NPCID(m.Name)] = data.Monster{
+			Name:      m.Name,
+			IsHovered: m.IsHovered,
+			Position: data.Position{
+				X: int(m.Position.X),
+				Y: int(m.Position.Y),
+			},
+		}
+	}
+
+	npcs := map[data.NPCID]data.NPC{}
+	for _, npc := range d.NPCs {
+		var positions []data.Position
+		for _, p := range npc.Positions {
+			positions = append(positions, data.Position{
+				X: int(p.X),
+				Y: int(p.Y),
+			})
+		}
+		npcs[data.NPCID(npc.Name)] = data.NPC{
+			Name:      npc.Name,
+			Positions: positions,
+		}
+	}
+	return data.Data{
+		Area: data.Area(d.Area),
+		AreaOrigin: data.Position{
+			X: int(d.AreaOrigin.X),
+			Y: int(d.AreaOrigin.Y),
+		},
+		Corpse:        corpse,
+		Monsters:      monsters,
+		NPCs:          npcs,
+		CollisionGrid: d.CollisionGrid,
+		PlayerUnit: data.PlayerUnit{
+			Name: d.PlayerUnit.Name,
+			Position: data.Position{
+				X: int(d.PlayerUnit.Position.X),
+				Y: int(d.PlayerUnit.Position.Y),
+			},
+		},
+		OpenMenus: data.OpenMenus{
+			Inventory:   d.MenuOpen.Inventory,
+			NPCInteract: d.MenuOpen.NPCInteract,
+			NPCShop:     d.MenuOpen.NPCShop,
+			Stash:       d.MenuOpen.Stash,
+			Waypoint:    d.MenuOpen.Waypoint,
+		},
+		Items: parseItems(d),
 	}
 }
 
-func (A APIClient) Inventory() inventory.Inventory {
-	http.Get(A.hostName + genericData)
-	r, _ := http.Get(A.hostName + genericData)
-
-	data := gameDataHttpResponse{}
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		// TODO: Handle error
-		return inventory.Inventory{}
-	}
-	if !data.Success {
-		// TODO: Handle error
-		return inventory.Inventory{}
-	}
-
-	var potions []inventory.Potion
-	for _, i := range data.Items {
+func parseItems(d gameDataHttpResponse) data.Items {
+	var potions []data.Potion
+	for _, i := range d.Items {
 		if i.Place == "INBELT" {
-			potionType := inventory.HealingPotion
+			potionType := data.HealingPotion
 			switch i.Name {
 			case "Minor Mana Potion", "Light Mana Potion", "Mana Potion", "Greater Mana Potion", "Super Mana Potion":
-				potionType = inventory.ManaPotion
+				potionType = data.ManaPotion
 			case "Rejuvenation Potion", "Full Rejuvenation Potion":
-				potionType = inventory.RejuvenationPotion
+				potionType = data.RejuvenationPotion
 			}
 
-			potions = append(potions, inventory.Potion{
-				Row:    int(i.Position.Y),
-				Column: int(i.Position.X),
-				Type:   potionType,
+			potions = append(potions, data.Potion{
+				BaseItem: data.BaseItem{
+					Position: data.Position{
+						X: int(i.Position.X),
+						Y: int(i.Position.Y),
+					},
+					Name: i.Name,
+				},
+				Type: potionType,
 			})
 		}
 	}
-	return inventory.Inventory{
-		Belt: inventory.Belt{
+	return data.Items{
+		Belt: data.Belt{
 			Potions: potions,
 		},
 	}

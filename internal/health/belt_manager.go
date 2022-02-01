@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/inventory"
+	"github.com/hectorgimenez/koolo/internal/game/data"
 	"go.uber.org/zap"
 	"time"
 )
@@ -12,11 +12,11 @@ import (
 type BeltManager struct {
 	logger              *zap.Logger
 	cfg                 config.Config
-	inventoryRepository inventory.InventoryRepository
+	inventoryRepository data.DataRepository
 	actionChan          chan<- action.Action
 }
 
-func NewBeltManager(logger *zap.Logger, cfg config.Config, repository inventory.InventoryRepository, actionChan chan<- action.Action) BeltManager {
+func NewBeltManager(logger *zap.Logger, cfg config.Config, repository data.DataRepository, actionChan chan<- action.Action) BeltManager {
 	return BeltManager{
 		logger:              logger,
 		cfg:                 cfg,
@@ -25,7 +25,7 @@ func NewBeltManager(logger *zap.Logger, cfg config.Config, repository inventory.
 	}
 }
 
-func (pm BeltManager) DrinkPotion(potionType inventory.PotionType, merc bool) {
+func (pm BeltManager) DrinkPotion(potionType data.PotionType, merc bool) {
 	belt := pm.belt()
 	p, found := belt.GetFirstPotion(potionType)
 	if found {
@@ -50,13 +50,13 @@ func (pm BeltManager) ShouldBuyPotions() bool {
 	currentMana := 0
 	currentRejuv := 0
 	for _, p := range pm.belt().Potions {
-		if p.Type == inventory.HealingPotion {
+		if p.Type == data.HealingPotion {
 			currentHealing++
 		}
-		if p.Type == inventory.ManaPotion {
+		if p.Type == data.ManaPotion {
 			currentMana++
 		}
-		if p.Type == inventory.RejuvenationPotion {
+		if p.Type == data.RejuvenationPotion {
 			currentRejuv++
 		}
 	}
@@ -71,12 +71,12 @@ func (pm BeltManager) ShouldBuyPotions() bool {
 	return false
 }
 
-func (pm BeltManager) belt() inventory.Belt {
-	return pm.inventoryRepository.Inventory().Belt
+func (pm BeltManager) belt() data.Belt {
+	return pm.inventoryRepository.GameData().Items.Belt
 }
 
-func (pm BeltManager) getBindingBasedOnColumn(potion inventory.Potion) string {
-	switch potion.Column {
+func (pm BeltManager) getBindingBasedOnColumn(potion data.Potion) string {
+	switch potion.Position.X {
 	case 0:
 		return pm.cfg.Bindings.Potion1
 	case 1:

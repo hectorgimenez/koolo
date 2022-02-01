@@ -94,14 +94,14 @@ func (s Supervisor) ensureProcessIsRunningAndPrepare() error {
 	}
 	win.SetForegroundWindow(window)
 
-	// Assuming game resolution 1280x720
 	// Exclude border offsets
 	// TODO: Improve this, maybe getting window content coordinates?
 	pos := win.WINDOWPLACEMENT{}
 	win.GetWindowPlacement(window, &pos)
 	hid.WindowLeftX = int(pos.RcNormalPosition.Left) + 8
-	hid.WindowBottomY = int(pos.RcNormalPosition.Top) + 31
-
+	hid.WindowTopY = int(pos.RcNormalPosition.Top) + 31
+	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 10
+	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 10
 	time.Sleep(time.Second * 1)
 
 	return nil

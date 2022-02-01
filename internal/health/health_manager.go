@@ -6,8 +6,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/inventory"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"time"
@@ -79,7 +79,7 @@ func (hm Manager) handleHealthAndMana() {
 
 	usedRejuv := false
 	if status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana {
-		hm.beltManager.DrinkPotion(inventory.RejuvenationPotion, false)
+		hm.beltManager.DrinkPotion(data.RejuvenationPotion, false)
 		usedRejuv = true
 	}
 
@@ -90,12 +90,12 @@ func (hm Manager) handleHealthAndMana() {
 		}
 
 		if status.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
-			hm.beltManager.DrinkPotion(inventory.HealingPotion, false)
+			hm.beltManager.DrinkPotion(data.HealingPotion, false)
 			hm.lastHeal = time.Now()
 		}
 
 		if status.MPPercent() <= hpConfig.ManaPotionAt && time.Since(hm.lastMana) > manaInterval {
-			hm.beltManager.DrinkPotion(inventory.ManaPotion, false)
+			hm.beltManager.DrinkPotion(data.ManaPotion, false)
 			hm.lastMana = time.Now()
 		}
 	}
@@ -104,7 +104,7 @@ func (hm Manager) handleHealthAndMana() {
 	if status.Merc.Alive {
 		usedMercRejuv := false
 		if status.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
-			hm.beltManager.DrinkPotion(inventory.RejuvenationPotion, true)
+			hm.beltManager.DrinkPotion(data.RejuvenationPotion, true)
 			usedMercRejuv = true
 		}
 
@@ -115,7 +115,7 @@ func (hm Manager) handleHealthAndMana() {
 			}
 
 			if status.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {
-				hm.beltManager.DrinkPotion(inventory.HealingPotion, true)
+				hm.beltManager.DrinkPotion(data.HealingPotion, true)
 				hm.lastMercHeal = time.Now()
 			}
 		}

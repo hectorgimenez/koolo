@@ -1,4 +1,4 @@
-package inventory
+package data
 
 const (
 	HealingPotion      PotionType = "healing"
@@ -12,7 +12,7 @@ type Belt struct {
 
 func (b Belt) GetFirstPotion(potionType PotionType) (Potion, bool) {
 	for _, p := range b.Potions {
-		if p.Type == potionType && p.Row == 0 {
+		if p.Type == potionType && p.Position.Y == 0 {
 			return p, true
 		}
 	}
@@ -22,7 +22,6 @@ func (b Belt) GetFirstPotion(potionType PotionType) (Potion, bool) {
 
 type PotionType string
 type Potion struct {
-	Row    int
-	Column int
-	Type   PotionType
+	BaseItem
+	Type PotionType
 }

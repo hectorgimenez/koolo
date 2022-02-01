@@ -7,8 +7,12 @@ import (
 	"time"
 )
 
-var WindowLeftX = 0
-var WindowBottomY = 0
+var (
+	WindowLeftX   = 0
+	WindowTopY    = 0
+	GameAreaSizeX = 0
+	GameAreaSizeY = 0
+)
 
 const (
 	// Windmouse configuration
@@ -27,7 +31,7 @@ type MouseButton string
 // pixels shown in the screen. Top-left corner is 0,0
 func MovePointer(x, y int) {
 	x = WindowLeftX + x
-	y = WindowBottomY + y
+	y = WindowTopY + y
 	M0 := windmouseM0
 	destinationX, destinationY := float64(x), float64(y)
 	startXi, startYi := getCurrentPosition()
