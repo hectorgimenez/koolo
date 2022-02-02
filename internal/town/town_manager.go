@@ -52,6 +52,10 @@ func (tm Manager) ReviveMerc(area data.Area) {
 	tm.openTradeMenu()
 }
 
+func (tm Manager) WPTo() {
+
+}
+
 func (tm Manager) openTradeMenu() {
 	d := tm.dr.GameData()
 	if d.OpenMenus.NPCInteract {
