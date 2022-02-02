@@ -1,15 +1,22 @@
 package data
 
+const (
+	ItemScrollTownPortal   = "Scroll of Town Portal"
+	ItemSuperHealingPotion = "Super Healing Potion"
+	ItemSuperManaPotion    = "Super Mana Potion"
+)
+
 type Items struct {
 	Belt      Belt
 	Inventory Inventory
+	Shop      []Item
 }
 
 type Inventory struct {
-	Items []BaseItem
+	Items []Item
 }
 
-type BaseItem struct {
+type Item struct {
 	Name     string
 	Position Position
 }

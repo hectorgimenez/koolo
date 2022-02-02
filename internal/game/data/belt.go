@@ -22,6 +22,6 @@ func (b Belt) GetFirstPotion(potionType PotionType) (Potion, bool) {
 
 type PotionType string
 type Potion struct {
-	BaseItem
+	Item
 	Type PotionType
 }

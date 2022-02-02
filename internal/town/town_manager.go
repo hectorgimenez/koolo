@@ -9,21 +9,22 @@ import (
 )
 
 type Manager struct {
-	towns      map[data.Area]Town
-	pf         helper.PathFinder
-	sm         ShopManager
-	dr         data.DataRepository
-	actionChan chan<- action.Action
+	towns       map[data.Area]Town
+	pf          helper.PathFinder
+	dr          data.DataRepository
+	shopManager ShopManager
+	actionChan  chan<- action.Action
 }
 
-func NewTownManager(repository data.DataRepository, pf helper.PathFinder, actionChan chan<- action.Action) Manager {
+func NewTownManager(repository data.DataRepository, pf helper.PathFinder, shopManager ShopManager, actionChan chan<- action.Action) Manager {
 	return Manager{
 		towns: map[data.Area]Town{
 			data.AreaHarrogath: A5{},
 		},
-		pf:         pf,
-		dr:         repository,
-		actionChan: actionChan,
+		pf:          pf,
+		dr:          repository,
+		actionChan:  actionChan,
+		shopManager: shopManager,
 	}
 }
 
@@ -31,7 +32,7 @@ func (tm Manager) BuyPotionsAndTPs(area data.Area) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.RefillNPC())
 	tm.openTradeMenu()
-	tm.sm.buyPotsAndTPs()
+	tm.shopManager.buyPotsAndTPs()
 }
 
 func (tm Manager) Repair(area data.Area) {
@@ -59,6 +60,7 @@ func (tm Manager) openTradeMenu() {
 			action.NewKeyPress("down", time.Millisecond*760),
 			action.NewKeyPress("enter", time.Second),
 		)
+		time.Sleep(time.Second)
 	}
 
 }

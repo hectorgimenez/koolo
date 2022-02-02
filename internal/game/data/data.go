@@ -16,7 +16,6 @@ type Data struct {
 	Area          Area
 	AreaOrigin    Position
 	Corpse        Corpse
-	Inventory     Inventory
 	Monsters      map[NPCID]Monster
 	CollisionGrid [][]int
 	PlayerUnit    PlayerUnit

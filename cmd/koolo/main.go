@@ -38,7 +38,8 @@ func main() {
 	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(logger, mapAssistApi, chActions, chEvents, bm, cfg)
 	pf := helper.NewPathFinder(logger, mapAssistApi)
-	tm := town.NewTownManager(mapAssistApi, pf, chActions)
+	sm := town.NewShopManager(logger, mapAssistApi, bm, chActions)
+	tm := town.NewTownManager(mapAssistApi, pf, sm, chActions)
 	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 

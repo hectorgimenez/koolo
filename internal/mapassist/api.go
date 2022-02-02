@@ -140,7 +140,7 @@ func (A APIClient) GameData() data.Data {
 func parseItems(d gameDataHttpResponse) data.Items {
 	var potions []data.Potion
 	for _, i := range d.Items {
-		if i.Place == "INBELT" {
+		if i.Place == "Belt" {
 			potionType := data.HealingPotion
 			switch i.Name {
 			case "Minor Mana Potion", "Light Mana Potion", "Mana Potion", "Greater Mana Potion", "Super Mana Potion":
@@ -150,7 +150,7 @@ func parseItems(d gameDataHttpResponse) data.Items {
 			}
 
 			potions = append(potions, data.Potion{
-				BaseItem: data.BaseItem{
+				Item: data.Item{
 					Position: data.Position{
 						X: int(i.Position.X),
 						Y: int(i.Position.Y),
@@ -161,9 +161,24 @@ func parseItems(d gameDataHttpResponse) data.Items {
 			})
 		}
 	}
+
+	var shop []data.Item
+	for _, i := range d.Items {
+		if i.Place == "Vendor" {
+			shop = append(shop, data.Item{
+				Position: data.Position{
+					X: int(i.Position.X),
+					Y: int(i.Position.Y),
+				},
+				Name: i.Name,
+			})
+		}
+	}
+
 	return data.Items{
 		Belt: data.Belt{
 			Potions: potions,
 		},
+		Shop: shop,
 	}
 }

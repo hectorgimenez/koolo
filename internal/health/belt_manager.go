@@ -46,6 +46,19 @@ func (pm BeltManager) ShouldBuyPotions() bool {
 	targetHealingAmount := pm.cfg.Inventory.BeltColumns.Healing * pm.cfg.Inventory.BeltRows
 	targetManaAmount := pm.cfg.Inventory.BeltColumns.Mana * pm.cfg.Inventory.BeltRows
 
+	currentHealing, currentMana, currentRejuv := pm.getCurrentPotions()
+
+	pm.logger.Debug(fmt.Sprintf("Belt Status: %d healing, %d mana, %d rejuv.", currentHealing, currentMana, currentRejuv))
+
+	if currentHealing < int(float32(targetHealingAmount)*0.75) || currentMana < int(float32(targetManaAmount)*0.75) {
+		pm.logger.Debug("Need more pots, let's buy them.")
+		return true
+	}
+
+	return false
+}
+
+func (pm BeltManager) getCurrentPotions() (int, int, int) {
 	currentHealing := 0
 	currentMana := 0
 	currentRejuv := 0
@@ -61,14 +74,19 @@ func (pm BeltManager) ShouldBuyPotions() bool {
 		}
 	}
 
-	pm.logger.Debug(fmt.Sprintf("Belt Status: %d healing, %d mana, %d rejuv.", currentHealing, currentMana, currentRejuv))
+	return currentHealing, currentMana, currentRejuv
+}
 
-	if currentHealing < int(float32(targetHealingAmount)*0.75) || currentMana < int(float32(targetManaAmount)*0.75) {
-		pm.logger.Debug("Need more pots, let's buy them.")
-		return true
+func (pm BeltManager) GetMissingCount(potionType data.PotionType) int {
+	currentHealing, currentMana, _ := pm.getCurrentPotions()
+
+	if potionType == data.HealingPotion {
+		targetAmount := pm.cfg.Inventory.BeltColumns.Healing * pm.cfg.Inventory.BeltRows
+		return targetAmount - currentHealing
 	}
 
-	return false
+	targetAmount := pm.cfg.Inventory.BeltColumns.Mana * pm.cfg.Inventory.BeltRows
+	return targetAmount - currentMana
 }
 
 func (pm BeltManager) belt() data.Belt {
