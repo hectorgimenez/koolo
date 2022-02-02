@@ -1,7 +1,7 @@
 package health
 
 type Repository interface {
-	CurrentStatus() (Status, error)
+	CurrentStatus() Status
 }
 
 type Status struct {

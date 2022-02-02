@@ -49,7 +49,7 @@ func (tm Manager) Repair(area data.Area) {
 func (tm Manager) ReviveMerc(area data.Area) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.MercContractorNPC())
-
+	tm.openTradeMenu()
 }
 
 func (tm Manager) openTradeMenu() {

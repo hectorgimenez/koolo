@@ -11,8 +11,11 @@ func (b Bot) prepare() {
 	if b.bm.ShouldBuyPotions() {
 		b.tm.BuyPotionsAndTPs(b.data().Area)
 	}
+	if b.cfg.Character.UseMerc && !b.hr.CurrentStatus().Merc.Alive {
+		b.tm.ReviveMerc(b.data().Area)
+	}
+
 	// TODO: Check if we need healing
-	// TODO: Check Merc alive
 	// TODO: Check for TPs and durability
 	// TODO: Check inventory (stash/not full)
 }
@@ -28,7 +31,7 @@ func (b Bot) recoverCorpse() {
 	b.logger.Info("Corpse found, let's recover our stuff...")
 	a := action.NewAction(
 		action.PriorityNormal,
-		action.NewMouseDisplacement(time.Millisecond*350, 631, 338),
+		action.NewMouseDisplacement(time.Millisecond*350, hid.GameAreaSizeX/2, hid.GameAreaSizeY/2),
 		action.NewMouseClick(time.Millisecond*150, hid.LeftButton),
 	)
 	b.actionChan <- a

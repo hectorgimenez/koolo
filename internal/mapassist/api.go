@@ -2,7 +2,6 @@ package mapassist
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/health"
@@ -22,19 +21,19 @@ func NewAPIClient(hostName string) APIClient {
 	return APIClient{hostName: hostName}
 }
 
-func (A APIClient) CurrentStatus() (health.Status, error) {
+func (A APIClient) CurrentStatus() health.Status {
 	r, err := http.Get(A.hostName + healthEndpoint)
 	if err != nil {
-		return health.Status{}, err
+		return health.Status{}
 	}
 
 	status := statusHttpResponse{}
 	err = json.NewDecoder(r.Body).Decode(&status)
 	if err != nil {
-		return health.Status{}, err
+		return health.Status{}
 	}
 	if !status.Success {
-		return health.Status{}, errors.New("error fetching MapAssist data from API")
+		return health.Status{}
 	}
 
 	return health.Status{
@@ -47,7 +46,7 @@ func (A APIClient) CurrentStatus() (health.Status, error) {
 			Life:    status.Merc.Life,
 			MaxLife: status.Merc.MaxLife,
 		},
-	}, nil
+	}
 }
 
 func (A APIClient) GameData() data.Data {
