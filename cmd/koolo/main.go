@@ -40,7 +40,7 @@ func main() {
 	pf := helper.NewPathFinder(logger, mapAssistApi)
 	sm := town.NewShopManager(logger, mapAssistApi, bm, chActions)
 	tm := town.NewTownManager(mapAssistApi, pf, sm, chActions)
-	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, chActions)
+	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()

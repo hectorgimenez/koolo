@@ -108,6 +108,12 @@ func (A APIClient) GameData() data.Data {
 			Positions: positions,
 		}
 	}
+
+	stats := map[string]int{}
+	for _, stat := range d.PlayerUnit.Stats {
+		stats[stat.Stat] = stat.Value
+	}
+
 	return data.Data{
 		Area: data.Area(d.Area),
 		AreaOrigin: data.Position{
@@ -124,6 +130,7 @@ func (A APIClient) GameData() data.Data {
 				X: int(d.PlayerUnit.Position.X),
 				Y: int(d.PlayerUnit.Position.Y),
 			},
+			Stats: stats,
 		},
 		OpenMenus: data.OpenMenus{
 			Inventory:   d.MenuOpen.Inventory,

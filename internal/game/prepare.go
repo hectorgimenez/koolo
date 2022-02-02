@@ -7,16 +7,21 @@ import (
 )
 
 func (b Bot) prepare() {
+	d := b.data()
 	b.recoverCorpse()
 	if b.bm.ShouldBuyPotions() {
-		b.tm.BuyPotionsAndTPs(b.data().Area)
+		b.tm.BuyPotionsAndTPs(d.Area)
 	}
 	if b.cfg.Character.UseMerc && !b.hr.CurrentStatus().Merc.Alive {
-		b.tm.ReviveMerc(b.data().Area)
+		b.tm.ReviveMerc(d.Area)
 	}
 
+	durabilityPct := float32(d.PlayerUnit.Stats["Durability"] / d.PlayerUnit.Stats["MaxDurability"])
+	if durabilityPct < 0.25 {
+		b.tm.Repair(d.Area)
+	}
 	// TODO: Check if we need healing
-	// TODO: Check for TPs and durability
+	// TODO: Check for TPs
 	// TODO: Check inventory (stash/not full)
 }
 

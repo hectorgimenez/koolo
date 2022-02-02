@@ -72,10 +72,7 @@ func (hm Manager) Resume() {
 
 func (hm Manager) handleHealthAndMana() {
 	hpConfig := hm.cfg.Health
-	status, err := hm.hr.CurrentStatus()
-	if err != nil {
-		// TODO: Handle error
-	}
+	status := hm.hr.CurrentStatus()
 
 	usedRejuv := false
 	if status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana {

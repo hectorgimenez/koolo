@@ -45,6 +45,7 @@ type PlayerUnit struct {
 	Name      string
 	IsHovered bool
 	Position  Position
+	Stats     map[string]int
 }
 
 type NPC struct {
