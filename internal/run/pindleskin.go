@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+const (
+	fixedPlaceNearRedPortalX = 5130
+	fixedPlaceNearRedPortalY = 5120
+)
+
 type Pindleskin struct {
 	dr data.DataRepository
 	pf helper.PathFinder
@@ -25,6 +30,8 @@ func (p Pindleskin) Kill() error {
 }
 
 func (p Pindleskin) MoveToStartingPoint() error {
+	// Let's do a first approach to the portal before trying to detect it
+	p.pf.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY)
 	portal, found := p.getRedPortal()
 	if !found {
 		return errors.New("portal not found")

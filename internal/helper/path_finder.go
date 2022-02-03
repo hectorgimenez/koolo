@@ -23,6 +23,16 @@ func NewPathFinder(logger *zap.Logger, dr data.DataRepository) PathFinder {
 	return PathFinder{logger: logger, dr: dr}
 }
 
+func (pf PathFinder) MoveTo(x, y int) {
+	for true {
+		d := pf.dr.GameData()
+		if d.PlayerUnit.Position.X == x && d.PlayerUnit.Position.Y == y {
+			return
+		}
+		pf.moveToNextStep(x, y, fmt.Sprintf("X: %d Y: %d", x, y), d)
+	}
+}
+
 func (pf PathFinder) InteractToObject(object data.Object) {
 	for true {
 		d := pf.dr.GameData()
@@ -96,8 +106,8 @@ func (pf PathFinder) moveToNextStep(destX, destY int, destinationName string, d 
 
 	// Transform cartesian movement (world) to isometric (screen)
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	screenX := (worldDiffX-worldDiffY)*halfTileSizeX + (hid.GameAreaSizeX / 2)
-	screenY := (worldDiffX+worldDiffY)*halfTileSizeY + (hid.GameAreaSizeY / 2)
+	screenX := ((worldDiffX-worldDiffY)*halfTileSizeX)*2 + (hid.GameAreaSizeX / 2)
+	screenY := ((worldDiffX+worldDiffY)*halfTileSizeY)*2 + (hid.GameAreaSizeY / 2)
 
 	hid.MovePointer(screenX, screenY)
 	time.Sleep(time.Millisecond * 250)
