@@ -36,6 +36,12 @@ type gameDataHttpResponse struct {
 		IsHovered bool     `json:"is_hovered"`
 		Place     string   `json:"place"`
 	} `json:"items"`
+	Objects []struct {
+		Position   position `json:"position"`
+		Name       string   `json:"name"`
+		IsHovered  bool     `json:"is_hovered"`
+		Selectable bool     `json:"selectable"`
+	} `json:"objects"`
 	Monsters []struct {
 		Position  position `json:"position"`
 		Name      string   `json:"name"`

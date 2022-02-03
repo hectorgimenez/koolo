@@ -1,11 +1,14 @@
 package data
 
 const (
+	// Towns
 	AreaRogueEncampment Area = "RogueEncampment"
 	AreaLutGholein      Area = "LutGholein"
 	AreaKurastDocks     Area = "KurastDocks"
 	AreaPandemonium     Area = "ThePandemoniumFortress"
 	AreaHarrogath       Area = "Harrogath"
+
+	AreaNihlathaksTemple Area = "NihlathaksTemple"
 )
 
 type DataRepository interface {
@@ -21,6 +24,7 @@ type Data struct {
 	PlayerUnit    PlayerUnit
 	NPCs          map[NPCID]NPC
 	Items         Items
+	Objects       []Object
 	OpenMenus     OpenMenus
 }
 

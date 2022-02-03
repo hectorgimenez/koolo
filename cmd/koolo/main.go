@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/mapassist"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"log"
 	"time"
@@ -40,7 +41,9 @@ func main() {
 	pf := helper.NewPathFinder(logger, mapAssistApi)
 	sm := town.NewShopManager(logger, mapAssistApi, bm, chActions)
 	tm := town.NewTownManager(mapAssistApi, pf, sm, chActions)
-	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, chActions)
+	runs := []run.Run{run.NewPindleskin(mapAssistApi, pf)}
+
+	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, runs, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()

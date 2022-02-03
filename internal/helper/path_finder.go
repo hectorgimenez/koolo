@@ -23,8 +23,23 @@ func NewPathFinder(logger *zap.Logger, dr data.DataRepository) PathFinder {
 	return PathFinder{logger: logger, dr: dr}
 }
 
-func (pf PathFinder) InteractToObject(npcID data.NPCID) {
+func (pf PathFinder) InteractToObject(object data.Object) {
+	for true {
+		d := pf.dr.GameData()
+		pf.moveToNextStep(object.Position.X, object.Position.Y, object.Name, d)
 
+		hovered := false
+		for _, o := range d.Objects {
+			if o.IsHovered && object.Name == o.Name {
+				hovered = true
+			}
+		}
+		if hovered {
+			pf.logger.Debug("Object, click and wait for interaction")
+			time.Sleep(time.Millisecond * 500)
+			return
+		}
+	}
 }
 
 func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
@@ -87,6 +102,10 @@ func (pf PathFinder) moveToNextStep(destX, destY int, destinationName string, d 
 	hid.MovePointer(screenX, screenY)
 	time.Sleep(time.Millisecond * 250)
 	hid.Click(hid.LeftButton)
+}
+
+func (pf PathFinder) WaitForArea() {
+
 }
 
 func getNPCPosition(gd data.Data, npcID data.NPCID) (X, Y int) {

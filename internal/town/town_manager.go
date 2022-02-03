@@ -52,8 +52,13 @@ func (tm Manager) ReviveMerc(area data.Area) {
 	tm.openTradeMenu()
 }
 
-func (tm Manager) WPTo() {
-
+func (tm Manager) WPTo(act int, area int) {
+	for _, o := range tm.dr.GameData().Objects {
+		if o.IsWaypoint() {
+			tm.pf.InteractToObject(o)
+			return
+		}
+	}
 }
 
 func (tm Manager) openTradeMenu() {

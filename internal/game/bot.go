@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 )
@@ -18,6 +19,7 @@ type Bot struct {
 	bm             health.BeltManager
 	hr             health.Repository
 	tm             town.Manager
+	runs           []run.Run
 	actionChan     chan<- action.Action
 }
 
@@ -28,6 +30,7 @@ func NewBot(
 	hr health.Repository,
 	tm town.Manager,
 	dr data.DataRepository,
+	runs []run.Run,
 	actionChan chan<- action.Action,
 ) Bot {
 	return Bot{
@@ -37,12 +40,19 @@ func NewBot(
 		hr:             hr,
 		tm:             tm,
 		dataRepository: dr,
+		runs:           runs,
 		actionChan:     actionChan,
 	}
 }
 
 func (b *Bot) Start(ctx context.Context) error {
 	b.prepare()
+
+	for _, r := range b.runs {
+		r.MoveToStartingPoint()
+		r.Kill()
+	}
+	//b.tm.WPTo(1, 1)
 	//b.tm.Repair(d.Area)
 	//helper.NewGame(b.actionChan, b.cfg.Character.Difficulty)
 	//// TODO: Check for game creation finished (somehow) instead of waiting for a fixed period of time

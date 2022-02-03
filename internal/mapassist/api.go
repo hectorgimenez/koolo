@@ -114,6 +114,19 @@ func (A APIClient) GameData() data.Data {
 		stats[stat.Stat] = stat.Value
 	}
 
+	var objects []data.Object
+	for _, o := range d.Objects {
+		objects = append(objects, data.Object{
+			Name:       o.Name,
+			IsHovered:  o.IsHovered,
+			Selectable: o.Selectable,
+			Position: data.Position{
+				X: int(o.Position.X),
+				Y: int(o.Position.Y),
+			},
+		})
+	}
+
 	return data.Data{
 		Area: data.Area(d.Area),
 		AreaOrigin: data.Position{
@@ -139,7 +152,8 @@ func (A APIClient) GameData() data.Data {
 			Stash:       d.MenuOpen.Stash,
 			Waypoint:    d.MenuOpen.Waypoint,
 		},
-		Items: parseItems(d),
+		Items:   parseItems(d),
+		Objects: objects,
 	}
 }
 
