@@ -144,6 +144,7 @@ func (A APIClient) GameData() data.Data {
 				Y: int(d.PlayerUnit.Position.Y),
 			},
 			Stats: stats,
+			Class: data.Class(d.PlayerUnit.PlayerClass),
 		},
 		OpenMenus: data.OpenMenus{
 			Inventory:   d.MenuOpen.Inventory,

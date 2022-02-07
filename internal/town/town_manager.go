@@ -41,8 +41,8 @@ func (tm Manager) Repair(area data.Area) {
 	tm.openTradeMenu()
 	tm.actionChan <- action.NewAction(
 		action.PriorityNormal,
-		action.NewMouseDisplacement(time.Millisecond*850, int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37)),
-		action.NewMouseClick(time.Millisecond*1300, hid.LeftButton),
+		action.NewMouseDisplacement(int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37), time.Millisecond*850),
+		action.NewMouseClick(hid.LeftButton, time.Millisecond*1300),
 	)
 }
 

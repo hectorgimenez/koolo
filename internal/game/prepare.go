@@ -36,8 +36,8 @@ func (b Bot) recoverCorpse() {
 	b.logger.Info("Corpse found, let's recover our stuff...")
 	a := action.NewAction(
 		action.PriorityNormal,
-		action.NewMouseDisplacement(time.Millisecond*350, hid.GameAreaSizeX/2, hid.GameAreaSizeY/2),
-		action.NewMouseClick(time.Millisecond*150, hid.LeftButton),
+		action.NewMouseDisplacement(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2, time.Millisecond*350),
+		action.NewMouseClick(hid.LeftButton, time.Millisecond*150),
 	)
 	b.actionChan <- a
 	time.Sleep(time.Second * 8)

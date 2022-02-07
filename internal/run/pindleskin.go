@@ -3,52 +3,63 @@ package run
 import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/game/data"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"time"
 )
 
 const (
 	fixedPlaceNearRedPortalX = 5130
 	fixedPlaceNearRedPortalY = 5120
+
+	safeDistanceFromPindleX = 10056
+	safeDistanceFromPindleY = 13239
 )
 
 type Pindleskin struct {
-	dr data.DataRepository
-	pf helper.PathFinder
+	BaseRun
 }
 
-func NewPindleskin(dr data.DataRepository, pf helper.PathFinder) Pindleskin {
+func NewPindleskin(run BaseRun) Pindleskin {
 	return Pindleskin{
-		dr: dr,
-		pf: pf,
+		BaseRun: run,
 	}
 }
 
 func (p Pindleskin) Kill() error {
-	//TODO implement me
-	panic("implement me")
+	err := p.char.KillPindle()
+	if err != nil {
+		p.UseTP()
+		return err
+	}
+
+	return nil
 }
 
 func (p Pindleskin) MoveToStartingPoint() error {
-	// Let's do a first approach to the portal before trying to detect it
-	p.pf.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY)
 	portal, found := p.getRedPortal()
 	if !found {
-		return errors.New("portal not found")
+		// Let's do a first approach via static pathing, looks like portal is too far away
+		p.pf.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false)
+
+		portal, found = p.getRedPortal()
+		if !found {
+			return errors.New("portal not found")
+		}
 	}
 
 	p.pf.InteractToObject(portal)
-	time.Sleep(time.Second * 3)
-	if p.dr.GameData().Area == data.AreaNihlathaksTemple {
-		return nil
+	time.Sleep(time.Second * 2)
+	if p.dr.GameData().Area != data.AreaNihlathaksTemple {
+		return errors.New("error moving to red portal")
 	}
 
-	return errors.New("error moving to red portal")
+	p.char.Buff()
+	return nil
 }
 
 func (p Pindleskin) TravelToDestination() error {
-	//TODO implement me
-	panic("implement me")
+	p.pf.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true)
+
+	return nil
 }
 
 func (p Pindleskin) getRedPortal() (data.Object, bool) {

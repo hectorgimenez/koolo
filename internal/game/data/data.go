@@ -9,6 +9,9 @@ const (
 	AreaHarrogath       Area = "Harrogath"
 
 	AreaNihlathaksTemple Area = "NihlathaksTemple"
+
+	// Classes
+	ClassSorceress Class = "Sorceress"
 )
 
 type DataRepository interface {
@@ -29,6 +32,7 @@ type Data struct {
 }
 
 type Area string
+type Class string
 type Corpse struct {
 	Found     bool
 	IsHovered bool
@@ -50,6 +54,7 @@ type PlayerUnit struct {
 	IsHovered bool
 	Position  Position
 	Stats     map[string]int
+	Class     Class
 }
 
 type NPC struct {

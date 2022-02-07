@@ -46,10 +46,15 @@ func NewBot(
 }
 
 func (b *Bot) Start(ctx context.Context) error {
-	b.prepare()
+	//b.prepare()
 
 	for _, r := range b.runs {
-		r.MoveToStartingPoint()
+		err := r.MoveToStartingPoint()
+		if err != nil {
+			// TODO: Handle error
+		}
+
+		r.TravelToDestination()
 		r.Kill()
 	}
 	//b.tm.WPTo(1, 1)

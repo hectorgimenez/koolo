@@ -7,6 +7,7 @@ import (
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -16,6 +17,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/mapassist"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"go.uber.org/zap"
 	"log"
 	"time"
 )
@@ -38,10 +40,15 @@ func main() {
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
 	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
 	hm := health.NewHealthManager(logger, mapAssistApi, chActions, chEvents, bm, cfg)
-	pf := helper.NewPathFinder(logger, mapAssistApi)
+	pf := helper.NewPathFinder(logger, mapAssistApi, cfg)
 	sm := town.NewShopManager(logger, mapAssistApi, bm, chActions)
 	tm := town.NewTownManager(mapAssistApi, pf, sm, chActions)
-	runs := []run.Run{run.NewPindleskin(mapAssistApi, pf)}
+	char, err := character.BuildCharacter(mapAssistApi, cfg, chActions)
+	if err != nil {
+		logger.Fatal("Error creating character", zap.Error(err))
+	}
+	baseRun := run.NewBaseRun(mapAssistApi, pf, char)
+	runs := []run.Run{run.NewPindleskin(baseRun)}
 
 	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, runs, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)

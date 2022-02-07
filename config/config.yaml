@@ -18,6 +18,21 @@ bindings:
   potion3: 3
   potion4: 4
 
+  # Skills
+  forceMove: e
+  standStill: j
+  swapWeapon: g
+  teleport: f1
+  tp: f8
+  CTABattleCommand: d
+  CTABattleOrders: s
+
+  # Class specific bindings
+  sorceress:
+    blizzard: f2
+    staticField: f3
+    frozenArmor: f4
+
 inventory:
   beltColumns: # Amount of columns for each type of potion, sum of all should not be more than 4
     healing: 2
@@ -28,6 +43,7 @@ inventory:
 character:
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
+  useCTA: false
 
 mapAssist:
   hostName: http://localhost:1111

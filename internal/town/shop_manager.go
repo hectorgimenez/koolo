@@ -59,9 +59,9 @@ func (sm ShopManager) buyItem(i data.Item, quantity int) {
 	x := topLeftShoppingWindowX + i.Position.X*itemBoxSize + (itemBoxSize / 2)
 	y := topLeftShoppingWindowY + i.Position.Y*itemBoxSize + (itemBoxSize / 2)
 
-	mouseOps := []action.HIDOperation{action.NewMouseDisplacement(time.Millisecond*250, x, y)}
+	mouseOps := []action.HIDOperation{action.NewMouseDisplacement(x, y, time.Millisecond*250)}
 	for k := 0; k < quantity; k++ {
-		mouseOps = append(mouseOps, action.NewMouseClick(time.Second*1, hid.RightButton))
+		mouseOps = append(mouseOps, action.NewMouseClick(hid.RightButton, time.Second*1))
 	}
 	mouseOps = append(mouseOps)
 	sm.actionChan <- action.NewAction(action.PriorityNormal, mouseOps...)
