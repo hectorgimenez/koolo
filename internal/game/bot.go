@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
@@ -22,7 +21,6 @@ type Bot struct {
 	tm             town.Manager
 	char           character.Character
 	runs           []run.Run
-	actionChan     chan<- action.Action
 }
 
 func NewBot(
@@ -34,7 +32,6 @@ func NewBot(
 	dr data.DataRepository,
 	char character.Character,
 	runs []run.Run,
-	actionChan chan<- action.Action,
 ) Bot {
 	return Bot{
 		logger:         logger,
@@ -45,7 +42,6 @@ func NewBot(
 		dataRepository: dr,
 		char:           char,
 		runs:           runs,
-		actionChan:     actionChan,
 	}
 }
 

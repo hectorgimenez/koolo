@@ -13,17 +13,15 @@ type Manager struct {
 	pf          helper.PathFinder
 	dr          data.DataRepository
 	shopManager ShopManager
-	actionChan  chan<- action.Action
 }
 
-func NewTownManager(repository data.DataRepository, pf helper.PathFinder, shopManager ShopManager, actionChan chan<- action.Action) Manager {
+func NewTownManager(repository data.DataRepository, pf helper.PathFinder, shopManager ShopManager) Manager {
 	return Manager{
 		towns: map[data.Area]Town{
 			data.AreaHarrogath: A5{},
 		},
 		pf:          pf,
 		dr:          repository,
-		actionChan:  actionChan,
 		shopManager: shopManager,
 	}
 }
@@ -39,8 +37,7 @@ func (tm Manager) Repair(area data.Area) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.RepairNPC())
 	tm.openTradeMenu()
-	tm.actionChan <- action.NewAction(
-		action.PriorityNormal,
+	action.Run(
 		action.NewMouseDisplacement(int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37), time.Millisecond*850),
 		action.NewMouseClick(hid.LeftButton, time.Millisecond*1300),
 	)
@@ -64,12 +61,7 @@ func (tm Manager) WPTo(act int, area int) {
 func (tm Manager) openTradeMenu() {
 	d := tm.dr.GameData()
 	if d.OpenMenus.NPCInteract {
-		tm.actionChan <- action.NewAction(
-			action.PriorityNormal,
-			action.NewKeyPress("down", time.Millisecond*760),
-			action.NewKeyPress("enter", time.Second),
-		)
-		time.Sleep(time.Second)
+		action.Run(action.NewKeyPress("down", time.Millisecond*760), action.NewKeyPress("enter", time.Second))
 	}
 
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"log"
 	"time"
 )
 
@@ -16,12 +15,11 @@ type Character interface {
 	UseTP()
 }
 
-func BuildCharacter(dr data.DataRepository, config config.Config, actionChan chan<- action.Action) (Character, error) {
+func BuildCharacter(dr data.DataRepository, config config.Config) (Character, error) {
 	d := dr.GameData()
 	bc := BaseCharacter{
-		cfg:        config,
-		dr:         dr,
-		actionChan: actionChan,
+		cfg: config,
+		dr:  dr,
 	}
 	switch d.PlayerUnit.Class {
 	case data.ClassSorceress:
@@ -32,15 +30,13 @@ func BuildCharacter(dr data.DataRepository, config config.Config, actionChan cha
 }
 
 type BaseCharacter struct {
-	cfg        config.Config
-	dr         data.DataRepository
-	actionChan chan<- action.Action
+	cfg config.Config
+	dr  data.DataRepository
 }
 
 func (bc BaseCharacter) BuffCTA() {
 	if bc.cfg.Character.UseCTA {
-		bc.actionChan <- action.NewAction(
-			action.PriorityNormal,
+		action.Run(
 			action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Second),
 			action.NewKeyPress(bc.cfg.Bindings.CTABattleCommand, time.Millisecond*600),
 			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
@@ -52,18 +48,15 @@ func (bc BaseCharacter) BuffCTA() {
 }
 
 func (bc BaseCharacter) UseTP() {
-	log.Println("Using TP...")
-	bc.actionChan <- action.NewAction(
-		action.PriorityNormal,
+	action.Run(
 		action.NewKeyPress(bc.cfg.Bindings.TP, time.Millisecond*200),
-		action.NewMouseClick(hid.RightButton, time.Second*10),
+		action.NewMouseClick(hid.RightButton, time.Second*1),
 	)
-	log.Println("TP Used...")
 }
 
 func (bc BaseCharacter) DoBasicAttack(x, y, times int) {
 	actions := []action.HIDOperation{
-		action.NewKeyDown(bc.cfg.Bindings.StandStill, time.Millisecond*300),
+		action.NewKeyDown(bc.cfg.Bindings.StandStill, time.Millisecond*100),
 		action.NewMouseDisplacement(x, y, time.Millisecond*400),
 	}
 
@@ -71,19 +64,15 @@ func (bc BaseCharacter) DoBasicAttack(x, y, times int) {
 		actions = append(actions, action.NewMouseClick(hid.LeftButton, time.Millisecond*250))
 	}
 
-	actions = append(actions, action.NewKeyUp(bc.cfg.Bindings.StandStill, time.Millisecond*300))
+	actions = append(actions, action.NewKeyUp(bc.cfg.Bindings.StandStill, time.Millisecond*150))
 
-	bc.actionChan <- action.NewAction(
-		action.PriorityNormal,
-		actions...,
-	)
+	action.Run(actions...)
 }
 
 func (bc BaseCharacter) DoSecondaryAttack(x, y int, keyBinding string) {
-	bc.actionChan <- action.NewAction(
-		action.PriorityNormal,
+	action.Run(
 		action.NewMouseDisplacement(x, y, time.Millisecond*100),
 		action.NewKeyPress(keyBinding, time.Millisecond*80),
-		action.NewMouseClick(hid.RightButton, time.Millisecond*250),
+		action.NewMouseClick(hid.RightButton, time.Millisecond*100),
 	)
 }

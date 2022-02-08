@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-vgo/robotgo"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -21,16 +20,14 @@ type Supervisor struct {
 	logger        *zap.Logger
 	cfg           config.Config
 	eventsChannel <-chan event.Event
-	ah            action.Handler
 	healthManager health.Manager
 	bot           game.Bot
 }
 
-func NewSupervisor(logger *zap.Logger, cfg config.Config, ah action.Handler, hm health.Manager, bot game.Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot game.Bot) Supervisor {
 	return Supervisor{
 		logger:        logger,
 		cfg:           cfg,
-		ah:            ah,
 		healthManager: hm,
 		bot:           bot,
 	}
@@ -44,11 +41,6 @@ func (s Supervisor) Start(ctx context.Context) error {
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-
-	// Listen to actions triggered from elsewhere
-	g.Go(func() error {
-		return s.ah.Listen(ctx)
-	})
 
 	// Listen to events and attaching/detaching bot operations
 	g.Go(func() error {

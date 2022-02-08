@@ -17,18 +17,16 @@ const (
 )
 
 type ShopManager struct {
-	logger     *zap.Logger
-	dr         data.DataRepository
-	bm         health.BeltManager
-	actionChan chan<- action.Action
+	logger *zap.Logger
+	dr     data.DataRepository
+	bm     health.BeltManager
 }
 
-func NewShopManager(logger *zap.Logger, dr data.DataRepository, bm health.BeltManager, actionChan chan<- action.Action) ShopManager {
+func NewShopManager(logger *zap.Logger, dr data.DataRepository, bm health.BeltManager) ShopManager {
 	return ShopManager{
-		logger:     logger,
-		dr:         dr,
-		bm:         bm,
-		actionChan: actionChan,
+		logger: logger,
+		dr:     dr,
+		bm:     bm,
 	}
 }
 func (sm ShopManager) buyPotsAndTPs() {
@@ -64,5 +62,6 @@ func (sm ShopManager) buyItem(i data.Item, quantity int) {
 		mouseOps = append(mouseOps, action.NewMouseClick(hid.RightButton, time.Second*1))
 	}
 	mouseOps = append(mouseOps)
-	sm.actionChan <- action.NewAction(action.PriorityNormal, mouseOps...)
+
+	action.Run(mouseOps...)
 }

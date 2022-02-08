@@ -3,7 +3,6 @@ package health
 import (
 	"context"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game/data"
@@ -24,7 +23,6 @@ const (
 type Manager struct {
 	logger       *zap.Logger
 	hr           Repository
-	actionChan   chan<- action.Action
 	eventChan    chan<- event.Event
 	beltManager  BeltManager
 	cfg          config.Config
@@ -34,11 +32,10 @@ type Manager struct {
 	active       *atomic.Bool
 }
 
-func NewHealthManager(logger *zap.Logger, hr Repository, actionChan chan<- action.Action, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
+func NewHealthManager(logger *zap.Logger, hr Repository, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
 	return Manager{
 		logger:      logger,
 		hr:          hr,
-		actionChan:  actionChan,
 		eventChan:   eventChan,
 		beltManager: beltManager,
 		cfg:         cfg,
@@ -121,5 +118,5 @@ func (hm Manager) handleHealthAndMana() {
 
 func (hm Manager) chicken(status Status) {
 	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
-	helper.ExitGame(hm.actionChan, hm.eventChan)
+	helper.ExitGame(hm.eventChan)
 }

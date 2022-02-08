@@ -13,15 +13,13 @@ type BeltManager struct {
 	logger              *zap.Logger
 	cfg                 config.Config
 	inventoryRepository data.DataRepository
-	actionChan          chan<- action.Action
 }
 
-func NewBeltManager(logger *zap.Logger, cfg config.Config, repository data.DataRepository, actionChan chan<- action.Action) BeltManager {
+func NewBeltManager(logger *zap.Logger, cfg config.Config, repository data.DataRepository) BeltManager {
 	return BeltManager{
 		logger:              logger,
 		cfg:                 cfg,
 		inventoryRepository: repository,
-		actionChan:          actionChan,
 	}
 }
 
@@ -31,10 +29,10 @@ func (pm BeltManager) DrinkPotion(potionType data.PotionType, merc bool) {
 	if found {
 		binding := pm.getBindingBasedOnColumn(p)
 		if merc {
-			pm.actionChan <- action.NewAction(action.PriorityHigh, action.NewKeyPress("shift", time.Millisecond*50, binding))
+			action.Run(action.NewKeyPress("shift", time.Millisecond*50, binding))
 			return
 		}
-		pm.actionChan <- action.NewAction(action.PriorityHigh, action.NewKeyPress(binding, time.Millisecond*50))
+		action.Run(action.NewKeyPress(binding, time.Millisecond*50))
 		return
 	}
 

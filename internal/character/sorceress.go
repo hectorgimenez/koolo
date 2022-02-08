@@ -18,12 +18,10 @@ type Sorceress struct {
 func (s Sorceress) Buff() {
 	s.BuffCTA()
 	if s.cfg.Bindings.Sorceress.FrozenArmor != "" {
-		s.actionChan <- action.NewAction(
-			action.PriorityNormal,
+		action.Run(
 			action.NewKeyPress(s.cfg.Bindings.Sorceress.FrozenArmor, time.Millisecond*600),
 			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
 		)
-		time.Sleep(time.Second * 2)
 	}
 }
 
@@ -37,7 +35,7 @@ func (s Sorceress) KillPindle() error {
 	for i := 0; i < maxPindleAttackLoops; i++ {
 		x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, pindle.Position.X, pindle.Position.Y)
 		s.DoSecondaryAttack(x, y, s.cfg.Bindings.Sorceress.Blizzard)
-		s.DoBasicAttack(x, y, 5)
+		s.DoBasicAttack(x, y, 3)
 		d = s.dr.GameData()
 
 		pindle, found = d.Monsters[data.Pindleskin]

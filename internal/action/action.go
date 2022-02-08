@@ -7,27 +7,8 @@ import (
 	"time"
 )
 
-const (
-	PriorityHigh   = "high"
-	PriorityNormal = "normal"
-)
-
-type Priority string
-
-type Action struct {
-	Priority Priority
-	sequence []HIDOperation
-}
-
-func NewAction(priority Priority, sequence ...HIDOperation) Action {
-	return Action{
-		Priority: priority,
-		sequence: sequence,
-	}
-}
-
-func (a Action) run() {
-	for _, op := range a.sequence {
+func Run(sequence ...HIDOperation) {
+	for _, op := range sequence {
 		op.execute()
 		time.Sleep(op.delay())
 	}

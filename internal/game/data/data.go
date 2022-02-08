@@ -32,6 +32,16 @@ type Data struct {
 }
 
 type Area string
+
+func (a Area) IsTown() bool {
+	switch a {
+	case AreaRogueEncampment, AreaLutGholein, AreaKurastDocks, AreaPandemonium, AreaHarrogath:
+		return true
+	}
+
+	return false
+}
+
 type Class string
 type Corpse struct {
 	Found     bool

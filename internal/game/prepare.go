@@ -34,12 +34,10 @@ func (b Bot) recoverCorpse() {
 
 	// If player died on previous game we recover the corpse
 	b.logger.Info("Corpse found, let's recover our stuff...")
-	a := action.NewAction(
-		action.PriorityNormal,
+	action.Run(
 		action.NewMouseDisplacement(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2, time.Millisecond*350),
 		action.NewMouseClick(hid.LeftButton, time.Second),
 	)
-	b.actionChan <- a
 
 	if b.data().Corpse.Found {
 		b.logger.Warn("Failed to pickup corpse!")
