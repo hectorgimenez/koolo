@@ -27,7 +27,6 @@ func NewPindleskin(run BaseRun) Pindleskin {
 func (p Pindleskin) Kill() error {
 	err := p.char.KillPindle()
 	if err != nil {
-		p.UseTP()
 		return err
 	}
 

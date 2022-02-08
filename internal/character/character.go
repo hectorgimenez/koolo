@@ -6,12 +6,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"log"
 	"time"
 )
 
 type Character interface {
 	Buff()
 	KillPindle() error
+	UseTP()
 }
 
 func BuildCharacter(dr data.DataRepository, config config.Config, actionChan chan<- action.Action) (Character, error) {
@@ -46,8 +48,17 @@ func (bc BaseCharacter) BuffCTA() {
 			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
 			action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Second),
 		)
-		time.Sleep(time.Second * 5)
 	}
+}
+
+func (bc BaseCharacter) UseTP() {
+	log.Println("Using TP...")
+	bc.actionChan <- action.NewAction(
+		action.PriorityNormal,
+		action.NewKeyPress(bc.cfg.Bindings.TP, time.Millisecond*200),
+		action.NewMouseClick(hid.RightButton, time.Second*10),
+	)
+	log.Println("TP Used...")
 }
 
 func (bc BaseCharacter) DoBasicAttack(x, y, times int) {
@@ -75,5 +86,4 @@ func (bc BaseCharacter) DoSecondaryAttack(x, y int, keyBinding string) {
 		action.NewKeyPress(keyBinding, time.Millisecond*80),
 		action.NewMouseClick(hid.RightButton, time.Millisecond*250),
 	)
-	time.Sleep(time.Millisecond * 500)
 }

@@ -37,10 +37,9 @@ func (b Bot) recoverCorpse() {
 	a := action.NewAction(
 		action.PriorityNormal,
 		action.NewMouseDisplacement(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2, time.Millisecond*350),
-		action.NewMouseClick(hid.LeftButton, time.Millisecond*150),
+		action.NewMouseClick(hid.LeftButton, time.Second),
 	)
 	b.actionChan <- a
-	time.Sleep(time.Second * 8)
 
 	if b.data().Corpse.Found {
 		b.logger.Warn("Failed to pickup corpse!")

@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/health"
@@ -19,6 +20,7 @@ type Bot struct {
 	bm             health.BeltManager
 	hr             health.Repository
 	tm             town.Manager
+	char           character.Character
 	runs           []run.Run
 	actionChan     chan<- action.Action
 }
@@ -30,6 +32,7 @@ func NewBot(
 	hr health.Repository,
 	tm town.Manager,
 	dr data.DataRepository,
+	char character.Character,
 	runs []run.Run,
 	actionChan chan<- action.Action,
 ) Bot {
@@ -40,13 +43,14 @@ func NewBot(
 		hr:             hr,
 		tm:             tm,
 		dataRepository: dr,
+		char:           char,
 		runs:           runs,
 		actionChan:     actionChan,
 	}
 }
 
 func (b *Bot) Start(ctx context.Context) error {
-	//b.prepare()
+	b.prepare()
 
 	for _, r := range b.runs {
 		err := r.MoveToStartingPoint()
@@ -54,8 +58,19 @@ func (b *Bot) Start(ctx context.Context) error {
 			// TODO: Handle error
 		}
 
-		r.TravelToDestination()
-		r.Kill()
+		err = r.TravelToDestination()
+		if err != nil {
+			r.ReturnToTown()
+			continue
+		}
+
+		err = r.Kill()
+		if err != nil {
+			r.ReturnToTown()
+			continue
+		}
+
+		r.ReturnToTown()
 	}
 	//b.tm.WPTo(1, 1)
 	//b.tm.Repair(d.Area)

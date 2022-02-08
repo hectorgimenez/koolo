@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"github.com/go-vgo/robotgo"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -13,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/mapassist"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -34,8 +31,8 @@ func main() {
 	}
 	defer logger.Sync()
 
-	chActions := make(chan action.Action, 10)
-	chEvents := make(chan event.Event, 10)
+	chActions := make(chan action.Action, 0)
+	chEvents := make(chan event.Event, 0)
 	ah := action.NewHandler(chActions)
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
 	bm := health.NewBeltManager(logger, cfg, mapAssistApi, chActions)
@@ -50,7 +47,7 @@ func main() {
 	baseRun := run.NewBaseRun(mapAssistApi, pf, char)
 	runs := []run.Run{run.NewPindleskin(baseRun)}
 
-	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, runs, chActions)
+	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, char, runs, chActions)
 	supervisor := koolo.NewSupervisor(logger, cfg, ah, hm, bot)
 
 	ctx := context.Background()
@@ -62,8 +59,8 @@ func main() {
 			for {
 				select {
 				case <-ticker.C:
-					x, y := robotgo.GetMousePos()
-					logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowLeftX, y-hid.WindowTopY))
+					//x, y := robotgo.GetMousePos()
+					//logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowLeftX, y-hid.WindowTopY))
 				case <-ctx.Done():
 					return
 				}
