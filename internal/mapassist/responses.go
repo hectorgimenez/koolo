@@ -1,11 +1,10 @@
 package mapassist
 
 type statusHttpResponse struct {
-	Success bool `json:"success"`
-	Life    int  `json:"life"`
-	MaxLife int  `json:"max_life"`
-	Mana    int  `json:"mana"`
-	MaxMana int  `json:"max_mana"`
+	Life    int `json:"life"`
+	MaxLife int `json:"max_life"`
+	Mana    int `json:"mana"`
+	MaxMana int `json:"max_mana"`
 	Merc    struct {
 		Alive   bool `json:"alive"`
 		Life    int  `json:"life"`
@@ -14,9 +13,10 @@ type statusHttpResponse struct {
 }
 
 type gameDataHttpResponse struct {
-	Success    bool     `json:"success"`
-	Area       string   `json:"area"`
-	AreaOrigin position `json:"area_origin"`
+	Success    bool               `json:"success"`
+	Area       string             `json:"area"`
+	AreaOrigin position           `json:"area_origin"`
+	Status     statusHttpResponse `json:"status"`
 	Corpses    []struct {
 		Name      string   `json:"name"`
 		IsHovered bool     `json:"is_hovered"`

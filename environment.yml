@@ -1,9 +1,0 @@
-name: koolo
-channels:
-  - conda-forge
-dependencies:
-  - go
-  - tesseract
-  - opencv
-  - libopencv
-  - leptonica

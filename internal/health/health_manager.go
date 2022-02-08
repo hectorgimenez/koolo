@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"time"
 )
@@ -22,24 +21,22 @@ const (
 // Manager responsibility is to keep our character and mercenary alive, monitoring life and giving potions when needed
 type Manager struct {
 	logger       *zap.Logger
-	hr           Repository
+	dr           data.DataRepository
 	eventChan    chan<- event.Event
 	beltManager  BeltManager
 	cfg          config.Config
 	lastHeal     time.Time
 	lastMana     time.Time
 	lastMercHeal time.Time
-	active       *atomic.Bool
 }
 
-func NewHealthManager(logger *zap.Logger, hr Repository, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
+func NewHealthManager(logger *zap.Logger, dr data.DataRepository, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
 	return Manager{
 		logger:      logger,
-		hr:          hr,
+		dr:          dr,
 		eventChan:   eventChan,
 		beltManager: beltManager,
 		cfg:         cfg,
-		active:      atomic.NewBool(false),
 	}
 }
 
@@ -50,26 +47,22 @@ func (hm Manager) Start(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			if hm.active.Load() {
-				hm.handleHealthAndMana()
-			}
+			hm.handleHealthAndMana()
 		case <-ctx.Done():
 			return nil
 		}
 	}
 }
 
-func (hm Manager) Pause() {
-	hm.active.Swap(false)
-}
-
-func (hm Manager) Resume() {
-	hm.active.Swap(true)
-}
-
-func (hm Manager) handleHealthAndMana() {
+func (hm *Manager) handleHealthAndMana() {
 	hpConfig := hm.cfg.Health
-	status := hm.hr.CurrentStatus()
+	d := hm.dr.GameData()
+	// Safe area, skipping
+	if d.Area.IsTown() {
+		return
+	}
+
+	status := d.Status
 
 	usedRejuv := false
 	if status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana {
@@ -116,7 +109,7 @@ func (hm Manager) handleHealthAndMana() {
 	}
 }
 
-func (hm Manager) chicken(status Status) {
+func (hm Manager) chicken(status data.Status) {
 	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
 	helper.ExitGame(hm.eventChan)
 }

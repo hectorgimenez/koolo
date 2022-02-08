@@ -44,7 +44,7 @@ func main() {
 	baseRun := run.NewBaseRun(mapAssistApi, pf, char)
 	runs := []run.Run{run.NewPindleskin(baseRun)}
 
-	bot := game.NewBot(logger, cfg, bm, mapAssistApi, tm, mapAssistApi, char, runs)
+	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, char, runs)
 	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
 
 	ctx := context.Background()

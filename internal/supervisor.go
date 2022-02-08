@@ -42,12 +42,6 @@ func (s Supervisor) Start(ctx context.Context) error {
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	// Listen to events and attaching/detaching bot operations
-	g.Go(func() error {
-		s.listenEvents(ctx)
-		return nil
-	})
-
 	// Main loop will be inside this, will handle bosses and path traveling
 	g.Go(func() error {
 		return s.bot.Start(ctx)
@@ -59,24 +53,6 @@ func (s Supervisor) Start(ctx context.Context) error {
 	})
 
 	return g.Wait()
-}
-
-func (s Supervisor) listenEvents(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case evt := <-s.eventsChannel:
-			switch evt {
-			case event.ExitedGame:
-				s.healthManager.Pause()
-			case event.SafeAreaAbandoned:
-				s.healthManager.Resume()
-			case event.SafeAreaEntered:
-				s.healthManager.Pause()
-			}
-		}
-	}
 }
 
 func (s Supervisor) ensureProcessIsRunningAndPrepare() error {

@@ -12,7 +12,7 @@ func (b Bot) prepare() {
 	if b.bm.ShouldBuyPotions() {
 		b.tm.BuyPotionsAndTPs(d.Area)
 	}
-	if b.cfg.Character.UseMerc && !b.hr.CurrentStatus().Merc.Alive {
+	if b.cfg.Character.UseMerc && !d.Status.Merc.Alive {
 		b.tm.ReviveMerc(d.Area)
 	}
 

@@ -1,8 +1,4 @@
-package health
-
-type Repository interface {
-	CurrentStatus() Status
-}
+package data
 
 type Status struct {
 	Life    int
@@ -19,13 +15,13 @@ type MercStatus struct {
 }
 
 func (s Status) HPPercent() int {
-	return (s.Life / s.MaxLife) * 100
+	return int((float64(s.Life) / float64(s.MaxLife)) * 100)
 }
 
 func (s Status) MPPercent() int {
-	return (s.Mana / s.MaxMana) * 100
+	return int((float64(s.Mana) / float64(s.MaxMana)) * 100)
 }
 
 func (s Status) MercHPPercent() int {
-	return (s.Merc.Life / s.Merc.MaxLife) * 100
+	return int((float64(s.Merc.Life) / float64(s.Merc.MaxLife)) * 100)
 }

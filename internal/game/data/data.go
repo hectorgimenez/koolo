@@ -19,6 +19,7 @@ type DataRepository interface {
 }
 
 type Data struct {
+	Status        Status
 	Area          Area
 	AreaOrigin    Position
 	Corpse        Corpse

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game/data"
-	"github.com/hectorgimenez/koolo/internal/health"
 	"net/http"
 )
 
@@ -19,34 +18,6 @@ type APIClient struct {
 
 func NewAPIClient(hostName string) APIClient {
 	return APIClient{hostName: hostName}
-}
-
-func (A APIClient) CurrentStatus() health.Status {
-	r, err := http.Get(A.hostName + healthEndpoint)
-	if err != nil {
-		return health.Status{}
-	}
-
-	status := statusHttpResponse{}
-	err = json.NewDecoder(r.Body).Decode(&status)
-	if err != nil {
-		return health.Status{}
-	}
-	if !status.Success {
-		return health.Status{}
-	}
-
-	return health.Status{
-		Life:    status.Life,
-		MaxLife: status.MaxLife,
-		Mana:    status.Mana,
-		MaxMana: status.MaxMana,
-		Merc: health.MercStatus{
-			Alive:   status.Merc.Alive,
-			Life:    status.Merc.Life,
-			MaxLife: status.Merc.MaxLife,
-		},
-	}
 }
 
 func (A APIClient) GameData() data.Data {
@@ -128,6 +99,17 @@ func (A APIClient) GameData() data.Data {
 	}
 
 	return data.Data{
+		Status: data.Status{
+			Life:    d.Status.Life,
+			MaxLife: d.Status.MaxLife,
+			Mana:    d.Status.Mana,
+			MaxMana: d.Status.MaxMana,
+			Merc: data.MercStatus{
+				Alive:   d.Status.Merc.Alive,
+				Life:    d.Status.Merc.Life,
+				MaxLife: d.Status.Merc.MaxLife,
+			},
+		},
 		Area: data.Area(d.Area),
 		AreaOrigin: data.Position{
 			X: int(d.AreaOrigin.X),

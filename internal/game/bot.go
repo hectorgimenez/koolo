@@ -17,7 +17,6 @@ type Bot struct {
 	cfg            config.Config
 	dataRepository data.DataRepository
 	bm             health.BeltManager
-	hr             health.Repository
 	tm             town.Manager
 	char           character.Character
 	runs           []run.Run
@@ -27,7 +26,6 @@ func NewBot(
 	logger *zap.Logger,
 	cfg config.Config,
 	bm health.BeltManager,
-	hr health.Repository,
 	tm town.Manager,
 	dr data.DataRepository,
 	char character.Character,
@@ -37,7 +35,6 @@ func NewBot(
 		logger:         logger,
 		cfg:            cfg,
 		bm:             bm,
-		hr:             hr,
 		tm:             tm,
 		dataRepository: dr,
 		char:           char,
