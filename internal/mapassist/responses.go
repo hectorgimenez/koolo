@@ -36,6 +36,8 @@ type gameDataHttpResponse struct {
 		Name      string   `json:"name"`
 		IsHovered bool     `json:"is_hovered"`
 		Place     string   `json:"place"`
+		Quality   string   `json:"quality"`
+		Ethereal  bool     `json:"ethereal"`
 	} `json:"items"`
 	Objects []struct {
 		Position   position `json:"position"`

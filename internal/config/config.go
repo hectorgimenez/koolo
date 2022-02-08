@@ -58,18 +58,34 @@ type Config struct {
 	} `yaml:"mapAssist"`
 }
 
+type Pickit struct {
+	PickupGold          bool `yaml:"pickupGold"`
+	MinimumGoldToPickup int  `yaml:"minimumGoldToPickup"`
+}
+
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
-func Load() (Config, error) {
+func Load() (Config, Pickit, error) {
 	r, err := os.Open("config/config.yaml")
 	if err != nil {
-		return Config{}, fmt.Errorf("error loading config.yaml: %w", err)
+		return Config{}, Pickit{}, fmt.Errorf("error loading config.yaml: %w", err)
 	}
 
 	d := yaml.NewDecoder(r)
 	cfg := Config{}
 	if err = d.Decode(&cfg); err != nil {
-		return Config{}, fmt.Errorf("error reading config: %w", err)
+		return Config{}, Pickit{}, fmt.Errorf("error reading config: %w", err)
 	}
 
-	return cfg, nil
+	r, err = os.Open("config/pickit.yaml")
+	if err != nil {
+		return Config{}, Pickit{}, fmt.Errorf("error loading pickit.yaml: %w", err)
+	}
+
+	d = yaml.NewDecoder(r)
+	pickit := Pickit{}
+	if err = d.Decode(&pickit); err != nil {
+		return Config{}, Pickit{}, fmt.Errorf("error reading pickit: %w", err)
+	}
+
+	return cfg, pickit, nil
 }
