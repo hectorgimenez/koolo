@@ -70,6 +70,7 @@ func (pf PathFinder) InteractToObject(object data.Object) {
 			for _, o := range d.Objects {
 				if o.IsHovered && object.Name == o.Name {
 					hovered = true
+					break
 				}
 			}
 			if hovered {
@@ -81,6 +82,45 @@ func (pf PathFinder) InteractToObject(object data.Object) {
 			}
 		}
 	}
+}
+
+func (pf PathFinder) PickupItem(item data.Item) error {
+	dist := -1
+	for true {
+		d := pf.dr.GameData()
+
+		if dist == -1 || dist > 15 {
+			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 20, false, d)
+		} else {
+			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 0, false, d)
+			time.Sleep(time.Millisecond * 500)
+
+			d = pf.dr.GameData()
+			hovered := false
+			for _, i := range d.Items.Ground {
+				if i.IsHovered && i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
+					hovered = true
+					break
+				}
+			}
+			if hovered {
+				pf.logger.Debug("Item hovered, click and wait for interaction")
+				time.Sleep(time.Millisecond * 200)
+				hid.Click(hid.LeftButton)
+				time.Sleep(time.Second)
+				d = pf.dr.GameData()
+				for _, i := range d.Items.Ground {
+					if i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
+						continue
+					}
+				}
+				pf.logger.Debug("Item Picked up!")
+				return nil
+			}
+		}
+	}
+
+	return nil
 }
 
 func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
@@ -119,8 +159,8 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 	diffX := destinationX - playerX
 	diffY := destinationY - playerY
 
-	screenX := ((diffX-diffY)*halfTileSizeX)*2 + (hid.GameAreaSizeX / 2)
-	screenY := ((diffX+diffY)*halfTileSizeY)*2 + (hid.GameAreaSizeY / 2)
+	screenX := int(float64((diffX-diffY)*halfTileSizeX)*2.5) + (hid.GameAreaSizeX / 2)
+	screenY := int(float64((diffX+diffY)*halfTileSizeY)*2.8) + (hid.GameAreaSizeY / 2)
 
 	return screenX, screenY
 }

@@ -2,6 +2,12 @@ pickupGold: true
 minimumGoldToPickup: 1000
 
 items:
+  # Potions
+  - superhealingpotion:
+  - supermanapotion:
+  - rejuvenationpotion:
+  - superrejuvenationpotion:
+
   # Runes
   - elrune:
   - eldrune:
@@ -39,3 +45,4 @@ items:
 
   - amulet: {quality: unique}
   - ring: {quality: unique}
+  - shako: {quality: unique} # Harlequin Crest

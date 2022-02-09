@@ -10,6 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/item"
 	"github.com/hectorgimenez/koolo/internal/mapassist"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -19,7 +20,7 @@ import (
 )
 
 func main() {
-	cfg, _, err := config.Load()
+	cfg, pickit, err := config.Load()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
@@ -43,8 +44,9 @@ func main() {
 	}
 	baseRun := run.NewBaseRun(mapAssistApi, pf, char)
 	runs := []run.Run{run.NewPindleskin(baseRun)}
+	pickup := item.NewPickup(logger, mapAssistApi, bm, pf, pickit)
 
-	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, char, runs)
+	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, char, runs, pickup)
 	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
 
 	ctx := context.Background()

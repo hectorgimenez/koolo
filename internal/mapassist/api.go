@@ -146,9 +146,9 @@ func parseItems(d gameDataHttpResponse) data.Items {
 		if i.Place == "Belt" {
 			potionType := data.HealingPotion
 			switch i.Name {
-			case "Minor Mana Potion", "Light Mana Potion", "Mana Potion", "Greater Mana Potion", "Super Mana Potion":
+			case "MinorManaPotion", "LightManaPotion", "ManaPotion", "GreaterManaPotion", "SuperManaPotion":
 				potionType = data.ManaPotion
-			case "Rejuvenation Potion", "Full Rejuvenation Potion":
+			case "RejuvenationPotion", "FullRejuvenationPotion":
 				potionType = data.RejuvenationPotion
 			}
 
@@ -173,9 +173,10 @@ func parseItems(d gameDataHttpResponse) data.Items {
 				X: int(i.Position.X),
 				Y: int(i.Position.Y),
 			},
-			Name:     i.Name,
-			Quality:  data.Quality(i.Quality),
-			Ethereal: i.Ethereal,
+			Name:      i.Name,
+			Quality:   data.Quality(i.Quality),
+			Ethereal:  i.Ethereal,
+			IsHovered: i.IsHovered,
 		}
 		switch i.Place {
 		case "Vendor":

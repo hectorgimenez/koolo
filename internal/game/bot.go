@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/item"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
@@ -20,6 +21,7 @@ type Bot struct {
 	tm             town.Manager
 	char           character.Character
 	runs           []run.Run
+	pickup         item.Pickup
 }
 
 func NewBot(
@@ -30,6 +32,7 @@ func NewBot(
 	dr data.DataRepository,
 	char character.Character,
 	runs []run.Run,
+	pickup item.Pickup,
 ) Bot {
 	return Bot{
 		logger:         logger,
@@ -39,6 +42,7 @@ func NewBot(
 		dataRepository: dr,
 		char:           char,
 		runs:           runs,
+		pickup:         pickup,
 	}
 }
 
@@ -62,15 +66,15 @@ func (b *Bot) Start(ctx context.Context) error {
 			r.ReturnToTown()
 			continue
 		}
+		b.logger.Debug("Run cleared, picking up items...")
+		b.pickup.Pickup()
 
+		b.logger.Debug("Item pickup completed, returning to town...")
 		r.ReturnToTown()
 	}
-	//b.tm.WPTo(1, 1)
-	//b.tm.Repair(d.Area)
+
 	//helper.NewGame(b.actionChan, b.cfg.Character.Difficulty)
 	//// TODO: Check for game creation finished (somehow) instead of waiting for a fixed period of time
-	//time.Sleep(time.Second * 10)
-	//
 
 	return nil
 }

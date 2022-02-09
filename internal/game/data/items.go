@@ -27,10 +27,11 @@ type Inventory struct {
 }
 
 type Item struct {
-	Name     string
-	Quality  Quality
-	Position Position
-	Ethereal bool
+	Name      string
+	Quality   Quality
+	Position  Position
+	Ethereal  bool
+	IsHovered bool
 }
 
 func (i Inventory) ShouldBuyTPs() bool {

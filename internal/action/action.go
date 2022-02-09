@@ -2,7 +2,6 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"log"
 	"math/rand"
 	"time"
 )
@@ -29,7 +28,6 @@ func (d delayedOperation) delay() time.Duration {
 	randomPct := ((float32(rand.Intn(30-1+1)) + 1) / 100) + 1
 	delayedMs := int64(float32(d.delayAfterOperation.Milliseconds()) * randomPct)
 
-	log.Printf("Delay of %d \n", (time.Duration(delayedMs) * time.Millisecond).Milliseconds())
 	return time.Duration(delayedMs) * time.Millisecond
 }
 
