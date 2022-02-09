@@ -47,31 +47,32 @@ func NewBot(
 }
 
 func (b *Bot) Start(ctx context.Context) error {
-	b.prepare()
-
-	for _, r := range b.runs {
-		err := r.MoveToStartingPoint()
-		if err != nil {
-			// TODO: Handle error
-		}
-
-		err = r.TravelToDestination()
-		if err != nil {
-			r.ReturnToTown()
-			continue
-		}
-
-		err = r.Kill()
-		if err != nil {
-			r.ReturnToTown()
-			continue
-		}
-		b.logger.Debug("Run cleared, picking up items...")
-		b.pickup.Pickup()
-
-		b.logger.Debug("Item pickup completed, returning to town...")
-		r.ReturnToTown()
-	}
+	b.tm.Stash()
+	//b.prepare()
+	//
+	//for _, r := range b.runs {
+	//	err := r.MoveToStartingPoint()
+	//	if err != nil {
+	//		// TODO: Handle error
+	//	}
+	//
+	//	err = r.TravelToDestination()
+	//	if err != nil {
+	//		r.ReturnToTown()
+	//		continue
+	//	}
+	//
+	//	err = r.Kill()
+	//	if err != nil {
+	//		r.ReturnToTown()
+	//		continue
+	//	}
+	//	b.logger.Debug("Run cleared, picking up items...")
+	//	b.pickup.Pickup()
+	//
+	//	b.logger.Debug("Item pickup completed, returning to town...")
+	//	r.ReturnToTown()
+	//}
 
 	//helper.NewGame(b.actionChan, b.cfg.Character.Difficulty)
 	//// TODO: Check for game creation finished (somehow) instead of waiting for a fixed period of time

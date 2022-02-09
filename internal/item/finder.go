@@ -79,6 +79,14 @@ func (f Pickup) getItemsToPickup() []data.Item {
 					break
 				}
 			}
+
+			// Check if we should pickup gold, based on amount
+			if f.pickitCfg.PickupGold && strings.EqualFold(item.Name, "Gold") {
+				if item.Stats[data.StatGold] >= f.pickitCfg.MinimumGoldToPickup {
+					itemsToPickup = append(itemsToPickup, item)
+					break
+				}
+			}
 		}
 	}
 

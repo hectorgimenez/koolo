@@ -49,6 +49,15 @@ func (tm Manager) ReviveMerc(area data.Area) {
 	tm.openTradeMenu()
 }
 
+func (tm Manager) Stash() {
+	for _, o := range tm.dr.GameData().Objects {
+		if o.Name == "Bank" {
+			tm.pf.InteractToObject(o)
+		}
+	}
+
+}
+
 func (tm Manager) WPTo(act int, area int) {
 	for _, o := range tm.dr.GameData().Objects {
 		if o.IsWaypoint() {

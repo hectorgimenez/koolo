@@ -19,6 +19,7 @@ const (
 	ItemQualityUNIQUE   Quality = "UNIQUE"
 
 	StatQuantity Stat = "Quantity"
+	StatGold     Stat = "Gold"
 )
 
 type Stat string
