@@ -1,2 +1,41 @@
 pickupGold: true
 minimumGoldToPickup: 1000
+
+items:
+  # Runes
+  - elrune:
+  - eldrune:
+  - tirrune:
+  - nefrune:
+  - ethrune:
+  - ithrune:
+  - talrune:
+  - ralrune:
+  - ortrune:
+  - thulrune:
+  - amnrune:
+  - solrune:
+  - shaelrune:
+  - dolrune:
+  - helrune:
+  - iorune:
+  - lumrune:
+  - korune:
+  - falrune:
+  - lemrune:
+  - pulrune:
+  - umrune:
+  - malrune:
+  - istrune:
+  - gulrune:
+  - vexrune:
+  - ohmrune:
+  - lorune:
+  - surrune:
+  - berrune:
+  - jahrune:
+  - chamrune:
+  - zodrune:
+
+  - amulet: {quality: unique}
+  - ring: {quality: unique}

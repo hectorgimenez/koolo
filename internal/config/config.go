@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 )
 
@@ -61,6 +62,12 @@ type Config struct {
 type Pickit struct {
 	PickupGold          bool `yaml:"pickupGold"`
 	MinimumGoldToPickup int  `yaml:"minimumGoldToPickup"`
+	Items               []ItemPickit
+}
+
+type ItemPickit struct {
+	Name    string
+	Quality string
 }
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
@@ -87,5 +94,35 @@ func Load() (Config, Pickit, error) {
 		return Config{}, Pickit{}, fmt.Errorf("error reading pickit: %w", err)
 	}
 
+	b, err := ioutil.ReadFile("config/pickit.yaml")
+	m := make(map[interface{}]interface{})
+	err = yaml.Unmarshal(b, &m)
+	if err != nil {
+		return Config{}, Pickit{}, fmt.Errorf("error decoding pickit items: %w", err)
+	}
+	items := parsePickitItems(m["items"].([]interface{}))
+	pickit.Items = items
+
 	return cfg, pickit, nil
+}
+
+func parsePickitItems(items []interface{}) []ItemPickit {
+	var itemsToPickit []ItemPickit
+	for _, item := range items {
+		for name, props := range item.(map[interface{}]interface{}) {
+			ip := ItemPickit{
+				Name: name.(string),
+			}
+
+			if props != nil {
+				quality, found := props.(map[interface{}]interface{})["quality"]
+				if found {
+					ip.Quality = quality.(string)
+				}
+			}
+			itemsToPickit = append(itemsToPickit, ip)
+		}
+	}
+
+	return itemsToPickit
 }

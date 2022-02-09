@@ -1,9 +1,9 @@
 package data
 
 const (
-	ItemScrollTownPortal   = "Scroll of Town Portal"
-	ItemSuperHealingPotion = "Super Healing Potion"
-	ItemSuperManaPotion    = "Super Mana Potion"
+	ItemScrollTownPortal   = "ScrollOfTownPortal"
+	ItemSuperHealingPotion = "SuperHealingPotion"
+	ItemSuperManaPotion    = "SuperManaPotion"
 
 	ItemQualityNormal   Quality = "NORMAL"
 	ItemQualitySuperior Quality = "SUPERIOR"
