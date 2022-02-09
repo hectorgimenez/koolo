@@ -29,7 +29,7 @@ func NewShopManager(logger *zap.Logger, dr data.DataRepository, bm health.BeltMa
 		bm:     bm,
 	}
 }
-func (sm ShopManager) buyPotsAndTPs() {
+func (sm ShopManager) buyPotsAndTPs(buyTPs bool) {
 	d := sm.dr.GameData()
 	missingHealingPots := sm.bm.GetMissingCount(data.HealingPotion)
 	missingManaPots := sm.bm.GetMissingCount(data.ManaPotion)
@@ -40,22 +40,30 @@ func (sm ShopManager) buyPotsAndTPs() {
 		if i.Name == data.ItemSuperHealingPotion && missingHealingPots > 1 {
 			sm.buyItem(i, missingHealingPots)
 			missingHealingPots = 0
+			break
 		}
 	}
 	for _, i := range d.Items.Shop {
 		if i.Name == data.ItemSuperManaPotion && missingManaPots > 1 {
 			sm.buyItem(i, missingManaPots)
 			missingManaPots = 0
+			break
+		}
+	}
+
+	if buyTPs {
+		sm.logger.Debug("Filling TP Tome...")
+		for _, i := range d.Items.Shop {
+			if i.Name == data.ItemScrollTownPortal {
+				sm.buyFullStack(i)
+				break
+			}
 		}
 	}
 }
 
 func (sm ShopManager) buyItem(i data.Item, quantity int) {
-	topLeftShoppingWindowX := int(float32(hid.GameAreaSizeX) / topCornerWindowWidthProportion)
-	topLeftShoppingWindowY := int(float32(hid.GameAreaSizeY) / topCornerWindowHeightProportion)
-
-	x := topLeftShoppingWindowX + i.Position.X*itemBoxSize + (itemBoxSize / 2)
-	y := topLeftShoppingWindowY + i.Position.Y*itemBoxSize + (itemBoxSize / 2)
+	x, y := sm.getScreenCordinatesForItem(i)
 
 	mouseOps := []action.HIDOperation{action.NewMouseDisplacement(x, y, time.Millisecond*250)}
 	for k := 0; k < quantity; k++ {
@@ -64,4 +72,25 @@ func (sm ShopManager) buyItem(i data.Item, quantity int) {
 	mouseOps = append(mouseOps)
 
 	action.Run(mouseOps...)
+}
+
+func (sm ShopManager) buyFullStack(i data.Item) {
+	x, y := sm.getScreenCordinatesForItem(i)
+
+	action.Run(
+		action.NewMouseDisplacement(x, y, time.Millisecond*250),
+		action.NewKeyDown("shift", time.Millisecond*100),
+		action.NewMouseClick(hid.RightButton, time.Millisecond*300),
+		action.NewKeyUp("shift", time.Second),
+	)
+}
+
+func (sm ShopManager) getScreenCordinatesForItem(i data.Item) (int, int) {
+	topLeftShoppingWindowX := int(float32(hid.GameAreaSizeX) / topCornerWindowWidthProportion)
+	topLeftShoppingWindowY := int(float32(hid.GameAreaSizeY) / topCornerWindowHeightProportion)
+
+	x := topLeftShoppingWindowX + i.Position.X*itemBoxSize + (itemBoxSize / 2)
+	y := topLeftShoppingWindowY + i.Position.Y*itemBoxSize + (itemBoxSize / 2)
+
+	return x, y
 }

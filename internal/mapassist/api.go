@@ -167,7 +167,12 @@ func parseItems(d gameDataHttpResponse) data.Items {
 
 	var shop []data.Item
 	var ground []data.Item
+	var inventory []data.Item
 	for _, i := range d.Items {
+		stats := map[data.Stat]int{}
+		for _, s := range i.Stats {
+			stats[data.Stat(s.Stat)] = s.Value
+		}
 		item := data.Item{
 			Position: data.Position{
 				X: int(i.Position.X),
@@ -177,12 +182,15 @@ func parseItems(d gameDataHttpResponse) data.Items {
 			Quality:   data.Quality(i.Quality),
 			Ethereal:  i.Ethereal,
 			IsHovered: i.IsHovered,
+			Stats:     stats,
 		}
 		switch i.Place {
 		case "Vendor":
 			shop = append(shop, item)
 		case "Ground":
 			ground = append(ground, item)
+		case "Inventory":
+			inventory = append(inventory, item)
 		}
 	}
 
@@ -190,7 +198,8 @@ func parseItems(d gameDataHttpResponse) data.Items {
 		Belt: data.Belt{
 			Potions: potions,
 		},
-		Shop:   shop,
-		Ground: ground,
+		Shop:      shop,
+		Ground:    ground,
+		Inventory: inventory,
 	}
 }

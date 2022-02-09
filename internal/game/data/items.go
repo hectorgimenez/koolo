@@ -1,7 +1,13 @@
 package data
 
+import (
+	"math/rand"
+	"time"
+)
+
 const (
 	ItemScrollTownPortal   = "ScrollOfTownPortal"
+	ItemTomeOfTownPortal   = "TomeOfTownPortal"
 	ItemSuperHealingPotion = "SuperHealingPotion"
 	ItemSuperManaPotion    = "SuperManaPotion"
 
@@ -11,8 +17,11 @@ const (
 	ItemQualitySet      Quality = "SET"
 	ItemQualityRare     Quality = "RARE"
 	ItemQualityUNIQUE   Quality = "UNIQUE"
+
+	StatQuantity Stat = "Quantity"
 )
 
+type Stat string
 type Quality string
 
 type Items struct {
@@ -22,9 +31,7 @@ type Items struct {
 	Ground    []Item
 }
 
-type Inventory struct {
-	Items []Item
-}
+type Inventory []Item
 
 type Item struct {
 	Name      string
@@ -32,8 +39,20 @@ type Item struct {
 	Position  Position
 	Ethereal  bool
 	IsHovered bool
+	Stats     map[Stat]int
 }
 
 func (i Inventory) ShouldBuyTPs() bool {
-	return true
+	for _, it := range i {
+		if it.Name != ItemTomeOfTownPortal {
+			continue
+		}
+
+		qty, found := it.Stats[StatQuantity]
+		rand.Seed(time.Now().UnixNano())
+		if qty <= rand.Intn(5-1)+1 || !found {
+			return true
+		}
+	}
+	return false
 }

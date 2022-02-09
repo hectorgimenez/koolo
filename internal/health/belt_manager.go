@@ -80,11 +80,19 @@ func (pm BeltManager) GetMissingCount(potionType data.PotionType) int {
 
 	if potionType == data.HealingPotion {
 		targetAmount := pm.cfg.Inventory.BeltColumns.Healing * pm.cfg.Inventory.BeltRows
-		return targetAmount - currentHealing
+		missingPots := targetAmount - currentHealing
+		if missingPots < 0 {
+			return 0
+		}
+		return missingPots
 	}
 
 	targetAmount := pm.cfg.Inventory.BeltColumns.Mana * pm.cfg.Inventory.BeltRows
-	return targetAmount - currentMana
+	missingPots := targetAmount - currentMana
+	if missingPots < 0 {
+		return 0
+	}
+	return missingPots
 }
 
 func (pm BeltManager) belt() data.Belt {

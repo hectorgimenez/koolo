@@ -26,11 +26,11 @@ func NewTownManager(repository data.DataRepository, pf helper.PathFinder, shopMa
 	}
 }
 
-func (tm Manager) BuyPotionsAndTPs(area data.Area) {
+func (tm Manager) BuyPotionsAndTPs(area data.Area, buyTPs bool) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.RefillNPC())
 	tm.openTradeMenu()
-	tm.shopManager.buyPotsAndTPs()
+	tm.shopManager.buyPotsAndTPs(buyTPs)
 }
 
 func (tm Manager) Repair(area data.Area) {

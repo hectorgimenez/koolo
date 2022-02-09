@@ -48,17 +48,26 @@ func (f Pickup) getItemsToPickup() []data.Item {
 	for _, item := range groundItems {
 		for _, pickitItem := range f.pickitCfg.Items {
 			// Pickup potions only if they are required
-			if strings.Contains(item.Name, "healingpotion") && missingHealingPotions > 0 {
+			if strings.Contains(strings.ToLower(item.Name), "healingpotion") {
+				if missingHealingPotions == 0 {
+					break
+				}
 				itemsToPickup = append(itemsToPickup, item)
 				missingHealingPotions--
 				break
 			}
-			if strings.Contains(item.Name, "manapotion") && missingManaPotions > 0 {
+			if strings.EqualFold(strings.ToLower(item.Name), "manapotion") {
+				if missingManaPotions == 0 {
+					break
+				}
 				itemsToPickup = append(itemsToPickup, item)
 				missingManaPotions--
 				break
 			}
-			if strings.Contains(item.Name, "rejuvenationpotion") && missingRejuvenationPotions > 0 {
+			if strings.EqualFold(strings.ToLower(item.Name), "rejuvenationpotion") {
+				if missingRejuvenationPotions == 0 {
+					break
+				}
 				itemsToPickup = append(itemsToPickup, item)
 				missingRejuvenationPotions--
 				break

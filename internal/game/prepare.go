@@ -9,8 +9,9 @@ import (
 func (b Bot) prepare() {
 	d := b.data()
 	b.recoverCorpse()
-	if b.bm.ShouldBuyPotions() {
-		b.tm.BuyPotionsAndTPs(d.Area)
+	shouldBuyTPs := d.Items.Inventory.ShouldBuyTPs()
+	if b.bm.ShouldBuyPotions() || shouldBuyTPs {
+		b.tm.BuyPotionsAndTPs(d.Area, shouldBuyTPs)
 	}
 	if b.cfg.Character.UseMerc && !d.Status.Merc.Alive {
 		b.tm.ReviveMerc(d.Area)

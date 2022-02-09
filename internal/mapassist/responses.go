@@ -38,6 +38,10 @@ type gameDataHttpResponse struct {
 		Place     string   `json:"place"`
 		Quality   string   `json:"quality"`
 		Ethereal  bool     `json:"ethereal"`
+		Stats     []struct {
+			Stat  string `json:"stat"`
+			Value int    `json:"value"`
+		} `json:"stats"`
 	} `json:"items"`
 	Objects []struct {
 		Position   position `json:"position"`

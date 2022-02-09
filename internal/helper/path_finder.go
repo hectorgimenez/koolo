@@ -2,6 +2,7 @@ package helper
 
 import (
 	"github.com/beefsack/go-astar"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -105,9 +106,9 @@ func (pf PathFinder) PickupItem(item data.Item) error {
 			}
 			if hovered {
 				pf.logger.Debug("Item hovered, click and wait for interaction")
-				time.Sleep(time.Millisecond * 200)
-				hid.Click(hid.LeftButton)
-				time.Sleep(time.Second)
+				action.Run(
+					action.NewMouseClick(hid.LeftButton, time.Second),
+				)
 				d = pf.dr.GameData()
 				for _, i := range d.Items.Ground {
 					if i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
