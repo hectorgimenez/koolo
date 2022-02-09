@@ -61,7 +61,7 @@ func (tm Manager) WPTo(act int, area int) {
 func (tm Manager) openTradeMenu() {
 	d := tm.dr.GameData()
 	if d.OpenMenus.NPCInteract {
-		action.Run(action.NewKeyPress("down", time.Millisecond*760), action.NewKeyPress("enter", time.Second))
+		action.Run(action.NewKeyPress("down", time.Millisecond*150), action.NewKeyPress("enter", time.Millisecond*500))
 	}
 
 }

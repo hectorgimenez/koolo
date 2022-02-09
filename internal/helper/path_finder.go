@@ -131,7 +131,7 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 		d := pf.dr.GameData()
 		if d.OpenMenus.NPCInteract {
 			pf.logger.Debug("NPC Interaction menu detected")
-			time.Sleep(time.Millisecond * 927)
+			time.Sleep(time.Millisecond * 100)
 			break
 		}
 
@@ -141,15 +141,14 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 			dist = pf.moveToNextStep(npcPosX, npcPosY, 20, false, d)
 		} else {
 			dist = pf.moveToNextStep(npcPosX, npcPosY, 0, false, d)
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 250)
 
 			d = pf.dr.GameData()
 			m, found := d.Monsters[npcID]
 			if found && m.IsHovered {
 				pf.logger.Debug("NPC Hovered, click and wait for NPC interaction")
-				time.Sleep(time.Millisecond * 200)
 				hid.Click(hid.LeftButton)
-				time.Sleep(time.Second)
+				time.Sleep(time.Millisecond * 500)
 				continue
 			}
 		}
