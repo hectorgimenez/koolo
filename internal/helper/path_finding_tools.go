@@ -46,6 +46,9 @@ type Tile struct {
 // tiles off the edge of the board.
 func (t *Tile) PathNeighbors() []astar.Pather {
 	var neighbors []astar.Pather
+	if t == nil {
+		return neighbors
+	}
 	for _, offset := range [][]int{
 		{-1, 0},
 		{1, 0},

@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
+	"math/rand"
 	"time"
 )
 
@@ -72,6 +73,7 @@ func (pf PathFinder) InteractToObject(object data.Object) {
 				}
 			}
 			if hovered {
+				time.Sleep(time.Second)
 				pf.logger.Debug("Object, click and wait for interaction")
 				time.Sleep(time.Millisecond * 200)
 				hid.Click(hid.LeftButton)
@@ -173,6 +175,13 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY)
 	p, dist, pFound := astar.Path(w.From(), w.To())
 	if !pFound {
+		pf.logger.Debug("Path not found! Let's do a random movement...")
+		x := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
+		y := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
+		action.Run(
+			action.NewMouseDisplacement(x, y, time.Millisecond*80),
+			action.NewKeyPress(pf.cfg.Bindings.ForceMove, time.Second),
+		)
 		return -1
 	}
 
