@@ -26,7 +26,7 @@ func (s Sorceress) Buff() {
 }
 
 func (s Sorceress) KillPindle() error {
-	d := data.Status
+	d := data.Status()
 	pindle, found := d.Monsters[data.Pindleskin]
 	if !found {
 		return errors.New("pindleskin not found")
@@ -35,14 +35,14 @@ func (s Sorceress) KillPindle() error {
 	for i := 0; i < maxPindleAttackLoops; i++ {
 		x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, pindle.Position.X, pindle.Position.Y)
 		s.DoSecondaryAttack(x, y, s.cfg.Bindings.Sorceress.Blizzard)
-		pindle, found = d.Monsters[data.Pindleskin]
+		pindle, found = data.Status().Monsters[data.Pindleskin]
 		if !found {
 			return nil
 		}
 
 		s.DoBasicAttack(x, y, 3)
 
-		pindle, found = d.Monsters[data.Pindleskin]
+		pindle, found = data.Status().Monsters[data.Pindleskin]
 		if !found {
 			return nil
 		}

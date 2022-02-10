@@ -37,7 +37,7 @@ func (f Pickup) Pickup() {
 }
 
 func (f Pickup) getItemsToPickup() []data.Item {
-	groundItems := data.Status.Items.Ground
+	groundItems := data.Status().Items.Ground
 
 	missingHealingPotions := f.bm.GetMissingCount(data.HealingPotion)
 	missingManaPotions := f.bm.GetMissingCount(data.ManaPotion)

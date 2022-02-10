@@ -11,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/item"
-	"github.com/hectorgimenez/koolo/internal/mapassist"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
@@ -32,10 +31,6 @@ func main() {
 	defer logger.Sync()
 
 	chEvents := make(chan event.Event, 0)
-	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
-	if err := mapAssistApi.UpdateGameStatus(); err != nil {
-		logger.Fatal("error fetching game data", zap.Error(err))
-	}
 	bm := health.NewBeltManager(logger, cfg)
 	hm := health.NewHealthManager(logger, chEvents, bm, cfg)
 	pf := helper.NewPathFinder(logger, cfg)
@@ -50,7 +45,7 @@ func main() {
 	pickup := item.NewPickup(logger, bm, pf, pickit)
 
 	bot := game.NewBot(logger, cfg, bm, tm, char, runs, pickup)
-	supervisor := koolo.NewSupervisor(logger, cfg, hm, mapAssistApi, bot)
+	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
 
 	ctx := context.Background()
 	// TODO: Debug mouse

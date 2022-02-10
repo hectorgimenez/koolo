@@ -8,7 +8,7 @@ import (
 )
 
 func (b Bot) prepare() {
-	d := data.Status
+	d := data.Status()
 	b.recoverCorpse()
 	shouldBuyTPs := d.Items.Inventory.ShouldBuyTPs()
 	if b.bm.ShouldBuyPotions() || shouldBuyTPs {
@@ -27,7 +27,7 @@ func (b Bot) prepare() {
 }
 
 func (b Bot) recoverCorpse() {
-	d := data.Status
+	d := data.Status()
 
 	if !d.Corpse.Found {
 		return
@@ -40,7 +40,7 @@ func (b Bot) recoverCorpse() {
 		action.NewMouseClick(hid.LeftButton, time.Second),
 	)
 
-	if d.Corpse.Found {
+	if data.Status().Corpse.Found {
 		b.logger.Warn("Failed to pickup corpse!")
 	}
 }

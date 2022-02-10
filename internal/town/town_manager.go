@@ -51,7 +51,7 @@ func (tm Manager) ReviveMerc(area data.Area) {
 }
 
 func (tm Manager) Stash() {
-	for _, o := range data.Status.Objects {
+	for _, o := range data.Status().Objects {
 		if o.Name == "Bank" {
 			tm.pf.InteractToObject(o)
 			tm.stashAllItems()
@@ -61,7 +61,7 @@ func (tm Manager) Stash() {
 }
 
 func (tm Manager) WPTo(act int, area int) {
-	for _, o := range data.Status.Objects {
+	for _, o := range data.Status().Objects {
 		if o.IsWaypoint() {
 			tm.pf.InteractToObject(o)
 			return
@@ -70,7 +70,7 @@ func (tm Manager) WPTo(act int, area int) {
 }
 
 func (tm Manager) openTradeMenu() {
-	if data.Status.OpenMenus.NPCInteract {
+	if data.Status().OpenMenus.NPCInteract {
 		action.Run(action.NewKeyPress("down", time.Millisecond*150), action.NewKeyPress("enter", time.Millisecond*500))
 	}
 }

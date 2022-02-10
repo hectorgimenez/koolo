@@ -1,46 +1,18 @@
-package mapassist
+package data
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game/data"
 	"net/http"
-	"time"
 )
 
 const (
-	genericData               = "/get_data"
-	updateGameStatusFrequency = time.Millisecond * 50
+	genericData = "/get_data"
+	hostName    = "http://localhost:1111"
 )
 
-type APIClient struct {
-	hostName string
-}
-
-func NewAPIClient(hostName string) APIClient {
-	return APIClient{hostName: hostName}
-}
-
-// Start will keep looking at life/mana levels from our character and mercenary and do best effort to keep them up
-func (A APIClient) Start(ctx context.Context) error {
-	ticker := time.NewTicker(updateGameStatusFrequency)
-
-	for {
-		select {
-		case <-ticker.C:
-			err := A.UpdateGameStatus()
-			if err != nil {
-				return err
-			}
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-func (A APIClient) UpdateGameStatus() error {
-	r, err := http.Get(A.hostName + genericData)
+func Status() Data {
+	r, err := http.Get(hostName + genericData)
 	if err != nil {
 		fmt.Println(err)
 		// TODO: Handle error
@@ -50,85 +22,83 @@ func (A APIClient) UpdateGameStatus() error {
 	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		// TODO: Handle error
-		return err
 	}
 	if !d.Success {
 		// TODO: Handle error
-		return err
 	}
 
-	corpse := data.Corpse{}
+	corpse := Corpse{}
 	// Match with current player
 	for _, c := range d.Corpses {
 		if c.Name == d.PlayerUnit.Name {
 			corpse.Found = true
 			corpse.IsHovered = c.IsHovered
-			corpse.Position = data.Position{
+			corpse.Position = Position{
 				X: int(c.Position.X),
 				Y: int(c.Position.Y),
 			}
 		}
 	}
 
-	monsters := map[data.NPCID]data.Monster{}
+	monsters := map[NPCID]Monster{}
 	for _, m := range d.Monsters {
-		monsters[data.NPCID(m.Name)] = data.Monster{
+		monsters[NPCID(m.Name)] = Monster{
 			Name:      m.Name,
 			IsHovered: m.IsHovered,
-			Position: data.Position{
+			Position: Position{
 				X: int(m.Position.X),
 				Y: int(m.Position.Y),
 			},
 		}
 	}
 
-	npcs := map[data.NPCID]data.NPC{}
+	npcs := map[NPCID]NPC{}
 	for _, npc := range d.NPCs {
-		var positions []data.Position
+		var positions []Position
 		for _, p := range npc.Positions {
-			positions = append(positions, data.Position{
+			positions = append(positions, Position{
 				X: int(p.X),
 				Y: int(p.Y),
 			})
 		}
-		npcs[data.NPCID(npc.Name)] = data.NPC{
+		npcs[NPCID(npc.Name)] = NPC{
 			Name:      npc.Name,
 			Positions: positions,
 		}
 	}
 
-	stats := map[data.Stat]int{}
+	stats := map[Stat]int{}
 	for _, stat := range d.PlayerUnit.Stats {
-		stats[data.Stat(stat.Stat)] = stat.Value
+		stats[Stat(stat.Stat)] = stat.Value
 	}
 
-	var objects []data.Object
+	var objects []Object
 	for _, o := range d.Objects {
-		objects = append(objects, data.Object{
+		objects = append(objects, Object{
 			Name:       o.Name,
 			IsHovered:  o.IsHovered,
 			Selectable: o.Selectable,
-			Position: data.Position{
+			Position: Position{
 				X: int(o.Position.X),
 				Y: int(o.Position.Y),
 			},
 		})
 	}
 
-	data.Status = &data.Data{
-		Health: data.Health{
+	return Data{
+		Health: Health{
 			Life:    d.Status.Life,
 			MaxLife: d.Status.MaxLife,
 			Mana:    d.Status.Mana,
 			MaxMana: d.Status.MaxMana,
-			Merc: data.MercStatus{
+			Merc: MercStatus{
 				Alive:   d.Status.Merc.Alive,
 				Life:    d.Status.Merc.Life,
 				MaxLife: d.Status.Merc.MaxLife,
 			},
 		},
-		Area: data.Area(d.Area),
-		AreaOrigin: data.Position{
+		Area: Area(d.Area),
+		AreaOrigin: Position{
 			X: int(d.AreaOrigin.X),
 			Y: int(d.AreaOrigin.Y),
 		},
@@ -136,16 +106,16 @@ func (A APIClient) UpdateGameStatus() error {
 		Monsters:      monsters,
 		NPCs:          npcs,
 		CollisionGrid: d.CollisionGrid,
-		PlayerUnit: data.PlayerUnit{
+		PlayerUnit: PlayerUnit{
 			Name: d.PlayerUnit.Name,
-			Position: data.Position{
+			Position: Position{
 				X: int(d.PlayerUnit.Position.X),
 				Y: int(d.PlayerUnit.Position.Y),
 			},
 			Stats: stats,
-			Class: data.Class(d.PlayerUnit.PlayerClass),
+			Class: Class(d.PlayerUnit.PlayerClass),
 		},
-		OpenMenus: data.OpenMenus{
+		OpenMenus: OpenMenus{
 			Inventory:   d.MenuOpen.Inventory,
 			NPCInteract: d.MenuOpen.NPCInteract,
 			NPCShop:     d.MenuOpen.NPCShop,
@@ -155,25 +125,23 @@ func (A APIClient) UpdateGameStatus() error {
 		Items:   parseItems(d),
 		Objects: objects,
 	}
-
-	return nil
 }
 
-func parseItems(d gameDataHttpResponse) data.Items {
-	var potions []data.Potion
+func parseItems(d gameDataHttpResponse) Items {
+	var potions []Potion
 	for _, i := range d.Items {
 		if i.Place == "Belt" {
-			potionType := data.HealingPotion
+			potionType := HealingPotion
 			switch i.Name {
 			case "MinorManaPotion", "LightManaPotion", "ManaPotion", "GreaterManaPotion", "SuperManaPotion":
-				potionType = data.ManaPotion
+				potionType = ManaPotion
 			case "RejuvenationPotion", "FullRejuvenationPotion":
-				potionType = data.RejuvenationPotion
+				potionType = RejuvenationPotion
 			}
 
-			potions = append(potions, data.Potion{
-				Item: data.Item{
-					Position: data.Position{
+			potions = append(potions, Potion{
+				Item: Item{
+					Position: Position{
 						X: int(i.Position.X),
 						Y: int(i.Position.Y),
 					},
@@ -184,21 +152,21 @@ func parseItems(d gameDataHttpResponse) data.Items {
 		}
 	}
 
-	var shop []data.Item
-	var ground []data.Item
-	var inventory []data.Item
+	var shop []Item
+	var ground []Item
+	var inventory []Item
 	for _, i := range d.Items {
-		stats := map[data.Stat]int{}
+		stats := map[Stat]int{}
 		for _, s := range i.Stats {
-			stats[data.Stat(s.Stat)] = s.Value
+			stats[Stat(s.Stat)] = s.Value
 		}
-		item := data.Item{
-			Position: data.Position{
+		item := Item{
+			Position: Position{
 				X: int(i.Position.X),
 				Y: int(i.Position.Y),
 			},
 			Name:      i.Name,
-			Quality:   data.Quality(i.Quality),
+			Quality:   Quality(i.Quality),
 			Ethereal:  i.Ethereal,
 			IsHovered: i.IsHovered,
 			Stats:     stats,
@@ -213,8 +181,8 @@ func parseItems(d gameDataHttpResponse) data.Items {
 		}
 	}
 
-	return data.Items{
-		Belt: data.Belt{
+	return Items{
+		Belt: Belt{
 			Potions: potions,
 		},
 		Shop:      shop,

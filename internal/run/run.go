@@ -21,7 +21,7 @@ type BaseRun struct {
 
 func (b BaseRun) ReturnToTown() {
 	b.char.UseTP()
-	for _, o := range data.Status.Objects {
+	for _, o := range data.Status().Objects {
 		if o.IsPortal() {
 			log.Println("Entering Portal...")
 			b.pf.InteractToObject(o)

@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/mapassist"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -18,21 +17,19 @@ import (
 
 // Supervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type Supervisor struct {
-	logger          *zap.Logger
-	cfg             config.Config
-	eventsChannel   <-chan event.Event
-	healthManager   health.Manager
-	mapAssistClient mapassist.APIClient
-	bot             game.Bot
+	logger        *zap.Logger
+	cfg           config.Config
+	eventsChannel <-chan event.Event
+	healthManager health.Manager
+	bot           game.Bot
 }
 
-func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, mapAssistClient mapassist.APIClient, bot game.Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot game.Bot) Supervisor {
 	return Supervisor{
-		logger:          logger,
-		cfg:             cfg,
-		healthManager:   hm,
-		mapAssistClient: mapAssistClient,
-		bot:             bot,
+		logger:        logger,
+		cfg:           cfg,
+		healthManager: hm,
+		bot:           bot,
 	}
 }
 
@@ -45,9 +42,6 @@ func (s Supervisor) Start(ctx context.Context) error {
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error {
-		return s.mapAssistClient.Start(ctx)
-	})
 	// Main loop will be inside this, will handle bosses and path traveling
 	g.Go(func() error {
 		return s.bot.Start(ctx)

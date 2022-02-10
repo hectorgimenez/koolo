@@ -18,13 +18,14 @@ func (tm Manager) stashAllItems() {
 }
 
 func (tm Manager) stashGold() {
-	d := data.Status
+	d := data.Status()
 	if d.PlayerUnit.Stats[data.StatGold] == 0 {
 		return
 	}
 
 	if d.PlayerUnit.Stats[data.StatStashGold] < maxGoldPerStashTab {
 		stashGoldAction()
+		d = data.Status()
 		if d.PlayerUnit.Stats[data.StatGold] == 0 {
 			return
 		}

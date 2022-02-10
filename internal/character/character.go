@@ -16,7 +16,7 @@ type Character interface {
 }
 
 func BuildCharacter(config config.Config) (Character, error) {
-	d := data.Status
+	d := data.Status()
 	bc := BaseCharacter{
 		cfg: config,
 	}

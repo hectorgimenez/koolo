@@ -94,7 +94,7 @@ func (pm BeltManager) GetMissingCount(potionType data.PotionType) int {
 }
 
 func (pm BeltManager) belt() data.Belt {
-	return data.Status.Items.Belt
+	return data.Status().Items.Belt
 }
 
 func (pm BeltManager) getBindingBasedOnColumn(potion data.Potion) string {

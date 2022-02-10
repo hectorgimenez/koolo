@@ -55,9 +55,6 @@ type Config struct {
 		UseMerc    bool   `yaml:"useMerc"`
 		UseCTA     bool   `yaml:"useCTA"`
 	} `yaml:"character"`
-	MapAssist struct {
-		HostName string `yaml:"hostName"`
-	} `yaml:"mapAssist"`
 }
 
 type Pickit struct {

@@ -47,7 +47,7 @@ func (p Pindleskin) MoveToStartingPoint() error {
 
 	p.pf.InteractToObject(portal)
 	time.Sleep(time.Second)
-	if data.Status.Area != data.AreaNihlathaksTemple {
+	if data.Status().Area != data.AreaNihlathaksTemple {
 		return errors.New("error moving to red portal")
 	}
 
@@ -62,7 +62,7 @@ func (p Pindleskin) TravelToDestination() error {
 }
 
 func (p Pindleskin) getRedPortal() (data.Object, bool) {
-	for _, o := range data.Status.Objects {
+	for _, o := range data.Status().Objects {
 		if o.IsRedPortal() {
 			return o, true
 		}

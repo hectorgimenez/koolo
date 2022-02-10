@@ -54,7 +54,7 @@ func (hm Manager) Start(ctx context.Context) error {
 
 func (hm *Manager) handleHealthAndMana() {
 	hpConfig := hm.cfg.Health
-	d := data.Status
+	d := data.Status()
 	// Safe area, skipping
 	if d.Area.IsTown() {
 		return

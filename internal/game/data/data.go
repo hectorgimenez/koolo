@@ -14,8 +14,6 @@ const (
 	ClassSorceress Class = "Sorceress"
 )
 
-var Status *Data
-
 type Data struct {
 	Health        Health
 	Area          Area

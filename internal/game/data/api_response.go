@@ -1,4 +1,4 @@
-package mapassist
+package data
 
 type statusHttpResponse struct {
 	Life    int `json:"life"`

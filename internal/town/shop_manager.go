@@ -28,7 +28,7 @@ func NewShopManager(logger *zap.Logger, bm health.BeltManager) ShopManager {
 	}
 }
 func (sm ShopManager) buyPotsAndTPs(buyTPs bool) {
-	d := data.Status
+	d := data.Status()
 	missingHealingPots := sm.bm.GetMissingCount(data.HealingPotion)
 	missingManaPots := sm.bm.GetMissingCount(data.ManaPotion)
 

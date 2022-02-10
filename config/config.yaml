@@ -50,6 +50,3 @@ character:
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
   useCTA: false
-
-mapAssist:
-  hostName: http://localhost:1111
