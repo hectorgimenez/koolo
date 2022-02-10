@@ -16,16 +16,15 @@ type Character interface {
 }
 
 func BuildCharacter(config config.Config) (Character, error) {
-	d := game.Status()
 	bc := BaseCharacter{
 		cfg: config,
 	}
-	switch d.PlayerUnit.Class {
+	switch game.Class(config.Character.Class) {
 	case game.ClassSorceress:
 		return Sorceress{BaseCharacter: bc}, nil
 	}
 
-	return nil, fmt.Errorf("class %s not implemented", d.PlayerUnit.Class)
+	return nil, fmt.Errorf("class %s not implemented", config.Character.Class)
 }
 
 type BaseCharacter struct {

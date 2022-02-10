@@ -47,6 +47,7 @@ inventory:
   beltRows: 4
   
 character:
+  class: Sorceress
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
   useCTA: false

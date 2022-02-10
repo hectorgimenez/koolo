@@ -51,6 +51,7 @@ type Config struct {
 		BeltRows int `yaml:"beltRows"`
 	} `yaml:"inventory"`
 	Character struct {
+		Class      string `yaml:"class"`
 		Difficulty string `yaml:"difficulty"`
 		UseMerc    bool   `yaml:"useMerc"`
 		UseCTA     bool   `yaml:"useCTA"`

@@ -15,6 +15,7 @@ const (
 )
 
 type Data struct {
+	Success       bool
 	Health        Health
 	Area          Area
 	AreaOrigin    Position

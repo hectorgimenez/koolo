@@ -1,9 +1,9 @@
 package game
 
 const (
-	difficultyNormal    = "normal"
-	difficultyNightmare = "nightmare"
-	difficultyHell      = "hell"
+	DifficultyNormal    = "normal"
+	DifficultyNightmare = "nightmare"
+	DifficultyHell      = "hell"
 )
 
 type Difficulty string

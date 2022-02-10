@@ -1,8 +1,10 @@
 package helper
 
 import (
+	"errors"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -16,7 +18,7 @@ func ExitGame(eventChan chan<- event.Event) {
 	eventChan <- event.ExitedGame
 }
 
-func NewGame(difficulty string) {
+func NewGame(difficulty string) error {
 	difficultyPosition := map[string]struct {
 		X, Y int
 	}{
@@ -33,4 +35,13 @@ func NewGame(difficulty string) {
 		action.NewMouseDisplacement(createX, createY, time.Millisecond*87),
 		action.NewMouseClick(hid.LeftButton, time.Millisecond*65),
 	)
+
+	for i := 0; i < 20; i++ {
+		if game.Status().Success {
+			return nil
+		}
+		time.Sleep(time.Second)
+	}
+
+	return errors.New("error creating new game")
 }

@@ -86,6 +86,7 @@ func Status() Data {
 	}
 
 	return Data{
+		Success: d.Success,
 		Health: Health{
 			Life:    d.Status.Life,
 			MaxLife: d.Status.MaxLife,

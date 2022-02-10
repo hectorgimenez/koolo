@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
@@ -41,17 +42,29 @@ func (s Supervisor) Start(ctx context.Context) error {
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	// Main loop will be inside this, will handle bosses and path traveling
-	g.Go(func() error {
-		return s.bot.Start(ctx)
-	})
+	for {
+		s.logger.Info("Creating new game...")
+		err = helper.NewGame(s.cfg.Character.Difficulty)
+		if err != nil {
+			s.logger.Fatal("Error creating new game")
+		}
 
-	// Will keep our character and mercenary alive, monitoring life and mana
-	g.Go(func() error {
-		return s.healthManager.Start(ctx)
-	})
+		// Main loop will be inside this, will handle bosses and path traveling
+		g.Go(func() error {
+			return s.bot.Start(ctx)
+		})
 
-	return g.Wait()
+		// Will keep our character and mercenary alive, monitoring life and mana
+		g.Go(func() error {
+			return s.healthManager.Start(ctx)
+		})
+
+		if err = g.Wait(); err != nil {
+			s.logger.Error("Game exited with error!", zap.Error(err))
+		} else {
+			s.logger.Info("Game finished")
+		}
+	}
 }
 
 func (s Supervisor) ensureProcessIsRunningAndPrepare() error {

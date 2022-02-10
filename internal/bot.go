@@ -70,10 +70,5 @@ func (b *Bot) Start(ctx context.Context) error {
 		r.ReturnToTown()
 	}
 
-	//helper.ExitGame()
-
-	//helper.NewGame(b.actionChan, b.cfg.Character.Difficulty)
-	//// TODO: Check for game creation finished (somehow) instead of waiting for a fixed period of time
-
 	return nil
 }
