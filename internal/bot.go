@@ -1,4 +1,4 @@
-package game
+package koolo
 
 import (
 	"context"
@@ -48,7 +48,8 @@ func (b *Bot) Start(ctx context.Context) error {
 	for _, r := range b.runs {
 		err := r.MoveToStartingPoint()
 		if err != nil {
-			// TODO: Handle error
+			b.logger.Error("Error moving to start point for current run, let's skip it")
+			continue
 		}
 
 		err = r.TravelToDestination()
@@ -68,6 +69,8 @@ func (b *Bot) Start(ctx context.Context) error {
 		b.logger.Debug("Item pickup completed, returning to town...")
 		r.ReturnToTown()
 	}
+
+	//helper.ExitGame()
 
 	//helper.NewGame(b.actionChan, b.cfg.Character.Difficulty)
 	//// TODO: Check for game creation finished (somehow) instead of waiting for a fixed period of time

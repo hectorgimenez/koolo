@@ -1,4 +1,4 @@
-package data
+package game
 
 const (
 	HealingPotion      PotionType = "healing"

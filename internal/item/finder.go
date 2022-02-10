@@ -3,7 +3,7 @@ package item
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"go.uber.org/zap"
@@ -36,13 +36,13 @@ func (f Pickup) Pickup() {
 	}
 }
 
-func (f Pickup) getItemsToPickup() []data.Item {
-	groundItems := data.Status().Items.Ground
+func (f Pickup) getItemsToPickup() []game.Item {
+	groundItems := game.Status().Items.Ground
 
-	missingHealingPotions := f.bm.GetMissingCount(data.HealingPotion)
-	missingManaPotions := f.bm.GetMissingCount(data.ManaPotion)
-	missingRejuvenationPotions := f.bm.GetMissingCount(data.RejuvenationPotion)
-	var itemsToPickup []data.Item
+	missingHealingPotions := f.bm.GetMissingCount(game.HealingPotion)
+	missingManaPotions := f.bm.GetMissingCount(game.ManaPotion)
+	missingRejuvenationPotions := f.bm.GetMissingCount(game.RejuvenationPotion)
+	var itemsToPickup []game.Item
 	for _, item := range groundItems {
 		for _, pickitItem := range f.pickitCfg.Items {
 			// Pickup potions only if they are required
@@ -80,7 +80,7 @@ func (f Pickup) getItemsToPickup() []data.Item {
 
 			// Check if we should pickup gold, based on amount
 			if f.pickitCfg.PickupGold && strings.EqualFold(item.Name, "Gold") {
-				if item.Stats[data.StatGold] >= f.pickitCfg.MinimumGoldToPickup {
+				if item.Stats[game.StatGold] >= f.pickitCfg.MinimumGoldToPickup {
 					itemsToPickup = append(itemsToPickup, item)
 					break
 				}

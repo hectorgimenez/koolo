@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"go.uber.org/zap"
 	"time"
@@ -54,7 +54,7 @@ func (hm Manager) Start(ctx context.Context) error {
 
 func (hm *Manager) handleHealthAndMana() {
 	hpConfig := hm.cfg.Health
-	d := data.Status()
+	d := game.Status()
 	// Safe area, skipping
 	if d.Area.IsTown() {
 		return
@@ -64,7 +64,7 @@ func (hm *Manager) handleHealthAndMana() {
 
 	usedRejuv := false
 	if status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana {
-		hm.beltManager.DrinkPotion(data.RejuvenationPotion, false)
+		hm.beltManager.DrinkPotion(game.RejuvenationPotion, false)
 		usedRejuv = true
 	}
 
@@ -75,12 +75,12 @@ func (hm *Manager) handleHealthAndMana() {
 		}
 
 		if status.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
-			hm.beltManager.DrinkPotion(data.HealingPotion, false)
+			hm.beltManager.DrinkPotion(game.HealingPotion, false)
 			hm.lastHeal = time.Now()
 		}
 
 		if status.MPPercent() <= hpConfig.ManaPotionAt && time.Since(hm.lastMana) > manaInterval {
-			hm.beltManager.DrinkPotion(data.ManaPotion, false)
+			hm.beltManager.DrinkPotion(game.ManaPotion, false)
 			hm.lastMana = time.Now()
 		}
 	}
@@ -89,7 +89,7 @@ func (hm *Manager) handleHealthAndMana() {
 	if status.Merc.Alive {
 		usedMercRejuv := false
 		if status.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
-			hm.beltManager.DrinkPotion(data.RejuvenationPotion, true)
+			hm.beltManager.DrinkPotion(game.RejuvenationPotion, true)
 			usedMercRejuv = true
 		}
 
@@ -100,14 +100,14 @@ func (hm *Manager) handleHealthAndMana() {
 			}
 
 			if status.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {
-				hm.beltManager.DrinkPotion(data.HealingPotion, true)
+				hm.beltManager.DrinkPotion(game.HealingPotion, true)
 				hm.lastMercHeal = time.Now()
 			}
 		}
 	}
 }
 
-func (hm Manager) chicken(status data.Health) {
+func (hm Manager) chicken(status game.Health) {
 	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
 	helper.ExitGame(hm.eventChan)
 }

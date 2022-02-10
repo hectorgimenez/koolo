@@ -6,7 +6,6 @@ import (
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/lxn/win"
@@ -21,10 +20,10 @@ type Supervisor struct {
 	cfg           config.Config
 	eventsChannel <-chan event.Event
 	healthManager health.Manager
-	bot           game.Bot
+	bot           Bot
 }
 
-func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot game.Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot Bot) Supervisor {
 	return Supervisor{
 		logger:        logger,
 		cfg:           cfg,

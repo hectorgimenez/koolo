@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"go.uber.org/zap"
 	"time"
 )
@@ -21,7 +21,7 @@ func NewBeltManager(logger *zap.Logger, cfg config.Config) BeltManager {
 	}
 }
 
-func (pm BeltManager) DrinkPotion(potionType data.PotionType, merc bool) {
+func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) {
 	belt := pm.belt()
 	p, found := belt.GetFirstPotion(potionType)
 	if found {
@@ -59,13 +59,13 @@ func (pm BeltManager) getCurrentPotions() (int, int, int) {
 	currentMana := 0
 	currentRejuv := 0
 	for _, p := range pm.belt().Potions {
-		if p.Type == data.HealingPotion {
+		if p.Type == game.HealingPotion {
 			currentHealing++
 		}
-		if p.Type == data.ManaPotion {
+		if p.Type == game.ManaPotion {
 			currentMana++
 		}
-		if p.Type == data.RejuvenationPotion {
+		if p.Type == game.RejuvenationPotion {
 			currentRejuv++
 		}
 	}
@@ -73,10 +73,10 @@ func (pm BeltManager) getCurrentPotions() (int, int, int) {
 	return currentHealing, currentMana, currentRejuv
 }
 
-func (pm BeltManager) GetMissingCount(potionType data.PotionType) int {
+func (pm BeltManager) GetMissingCount(potionType game.PotionType) int {
 	currentHealing, currentMana, _ := pm.getCurrentPotions()
 
-	if potionType == data.HealingPotion {
+	if potionType == game.HealingPotion {
 		targetAmount := pm.cfg.Inventory.BeltColumns.Healing * pm.cfg.Inventory.BeltRows
 		missingPots := targetAmount - currentHealing
 		if missingPots < 0 {
@@ -93,11 +93,11 @@ func (pm BeltManager) GetMissingCount(potionType data.PotionType) int {
 	return missingPots
 }
 
-func (pm BeltManager) belt() data.Belt {
-	return data.Status().Items.Belt
+func (pm BeltManager) belt() game.Belt {
+	return game.Status().Items.Belt
 }
 
-func (pm BeltManager) getBindingBasedOnColumn(potion data.Potion) string {
+func (pm BeltManager) getBindingBasedOnColumn(potion game.Potion) string {
 	switch potion.Position.X {
 	case 0:
 		return pm.cfg.Bindings.Potion1

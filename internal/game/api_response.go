@@ -1,4 +1,4 @@
-package data
+package game
 
 type statusHttpResponse struct {
 	Life    int `json:"life"`

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -16,12 +16,12 @@ type Character interface {
 }
 
 func BuildCharacter(config config.Config) (Character, error) {
-	d := data.Status()
+	d := game.Status()
 	bc := BaseCharacter{
 		cfg: config,
 	}
 	switch d.PlayerUnit.Class {
-	case data.ClassSorceress:
+	case game.ClassSorceress:
 		return Sorceress{BaseCharacter: bc}, nil
 	}
 

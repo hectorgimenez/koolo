@@ -1,9 +1,11 @@
 package town
 
-import "github.com/hectorgimenez/koolo/internal/game/data"
+import (
+	"github.com/hectorgimenez/koolo/internal/game"
+)
 
 type Town interface {
-	RefillNPC() data.NPCID
-	RepairNPC() data.NPCID
-	MercContractorNPC() data.NPCID
+	RefillNPC() game.NPCID
+	RepairNPC() game.NPCID
+	MercContractorNPC() game.NPCID
 }

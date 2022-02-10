@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/item"
@@ -44,7 +43,7 @@ func main() {
 	runs := []run.Run{run.NewPindleskin(baseRun)}
 	pickup := item.NewPickup(logger, bm, pf, pickit)
 
-	bot := game.NewBot(logger, cfg, bm, tm, char, runs, pickup)
+	bot := koolo.NewBot(logger, cfg, bm, tm, char, runs, pickup)
 	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
 
 	ctx := context.Background()

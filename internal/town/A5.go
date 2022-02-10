@@ -1,20 +1,20 @@
 package town
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type A5 struct {
 }
 
-func (a A5) MercContractorNPC() data.NPCID {
-	return data.QualKehkNPC
+func (a A5) MercContractorNPC() game.NPCID {
+	return game.QualKehkNPC
 }
 
-func (a A5) RefillNPC() data.NPCID {
-	return data.MalahNPC
+func (a A5) RefillNPC() game.NPCID {
+	return game.MalahNPC
 }
 
-func (a A5) RepairNPC() data.NPCID {
-	return data.LarzukNPC
+func (a A5) RepairNPC() game.NPCID {
+	return game.LarzukNPC
 }

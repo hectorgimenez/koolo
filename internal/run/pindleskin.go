@@ -2,7 +2,7 @@ package run
 
 import (
 	"errors"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 )
 
@@ -47,7 +47,7 @@ func (p Pindleskin) MoveToStartingPoint() error {
 
 	p.pf.InteractToObject(portal)
 	time.Sleep(time.Second)
-	if data.Status().Area != data.AreaNihlathaksTemple {
+	if game.Status().Area != game.AreaNihlathaksTemple {
 		return errors.New("error moving to red portal")
 	}
 
@@ -61,12 +61,12 @@ func (p Pindleskin) TravelToDestination() error {
 	return nil
 }
 
-func (p Pindleskin) getRedPortal() (data.Object, bool) {
-	for _, o := range data.Status().Objects {
+func (p Pindleskin) getRedPortal() (game.Object, bool) {
+	for _, o := range game.Status().Objects {
 		if o.IsRedPortal() {
 			return o, true
 		}
 	}
 
-	return data.Object{}, false
+	return game.Object{}, false
 }

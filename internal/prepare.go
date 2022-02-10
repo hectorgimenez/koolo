@@ -1,14 +1,14 @@
-package game
+package koolo
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
 
 func (b Bot) prepare() {
-	d := data.Status()
+	d := game.Status()
 	b.recoverCorpse()
 	shouldBuyTPs := d.Items.Inventory.ShouldBuyTPs()
 	if b.bm.ShouldBuyPotions() || shouldBuyTPs {
@@ -18,7 +18,7 @@ func (b Bot) prepare() {
 		b.tm.ReviveMerc(d.Area)
 	}
 
-	durabilityPct := float32(d.PlayerUnit.Stats[data.StatDurability] / d.PlayerUnit.Stats[data.StatMaxDurability])
+	durabilityPct := float32(d.PlayerUnit.Stats[game.StatDurability] / d.PlayerUnit.Stats[game.StatMaxDurability])
 	if durabilityPct < 0.25 {
 		b.tm.Repair(d.Area)
 	}
@@ -27,7 +27,7 @@ func (b Bot) prepare() {
 }
 
 func (b Bot) recoverCorpse() {
-	d := data.Status()
+	d := game.Status()
 
 	if !d.Corpse.Found {
 		return
@@ -40,7 +40,7 @@ func (b Bot) recoverCorpse() {
 		action.NewMouseClick(hid.LeftButton, time.Second),
 	)
 
-	if data.Status().Corpse.Found {
+	if game.Status().Corpse.Found {
 		b.logger.Warn("Failed to pickup corpse!")
 	}
 }

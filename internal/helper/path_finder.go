@@ -4,7 +4,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
 	"math/rand"
@@ -29,7 +29,7 @@ func NewPathFinder(logger *zap.Logger, cfg config.Config) PathFinder {
 }
 
 func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
-	d := data.Status()
+	d := game.Status()
 
 	if teleporting && pf.cfg.Bindings.Teleport != "" {
 		hid.PressKey(pf.cfg.Bindings.Teleport)
@@ -51,14 +51,14 @@ func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
 		if dist < 6 {
 			return
 		}
-		d = data.Status()
+		d = game.Status()
 	}
 }
 
-func (pf PathFinder) InteractToObject(object data.Object) {
+func (pf PathFinder) InteractToObject(object game.Object) {
 	dist := -1
 	for true {
-		d := data.Status()
+		d := game.Status()
 
 		if dist == -1 || dist > 15 {
 			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 20, false)
@@ -66,7 +66,7 @@ func (pf PathFinder) InteractToObject(object data.Object) {
 			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 0, false)
 			time.Sleep(time.Millisecond * 500)
 
-			d = data.Status()
+			d = game.Status()
 			hovered := false
 			for _, o := range d.Objects {
 				if o.IsHovered && object.Name == o.Name {
@@ -86,10 +86,10 @@ func (pf PathFinder) InteractToObject(object data.Object) {
 	}
 }
 
-func (pf PathFinder) PickupItem(item data.Item) error {
+func (pf PathFinder) PickupItem(item game.Item) error {
 	dist := -1
 	for true {
-		d := data.Status()
+		d := game.Status()
 
 		if dist == -1 || dist > 15 {
 			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 20, false)
@@ -97,7 +97,7 @@ func (pf PathFinder) PickupItem(item data.Item) error {
 			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 0, false)
 			time.Sleep(time.Millisecond * 500)
 
-			d = data.Status()
+			d = game.Status()
 			hovered := false
 			for _, i := range d.Items.Ground {
 				if i.IsHovered && i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
@@ -125,11 +125,11 @@ func (pf PathFinder) PickupItem(item data.Item) error {
 	return nil
 }
 
-func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
+func (pf PathFinder) InteractToNPC(npcID game.NPCID) {
 	// Using Monster structure provides better precision, but are only found when near.
 	dist := -1
 	for true {
-		d := data.Status()
+		d := game.Status()
 		if d.OpenMenus.NPCInteract {
 			pf.logger.Debug("NPC Interaction menu detected")
 			time.Sleep(time.Millisecond * 100)
@@ -144,7 +144,7 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 			dist = pf.moveToNextStep(npcPosX, npcPosY, 0, false)
 			time.Sleep(time.Millisecond * 250)
 
-			d = data.Status()
+			d = game.Status()
 			m, found := d.Monsters[npcID]
 			if found && m.IsHovered {
 				pf.logger.Debug("NPC Hovered, click and wait for NPC interaction")
@@ -167,7 +167,7 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 }
 
 func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, teleport bool) int {
-	d := data.Status()
+	d := game.Status()
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
@@ -223,8 +223,8 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 	return int(dist)
 }
 
-func getNPCPosition(npcID data.NPCID) (X, Y int) {
-	d := data.Status()
+func getNPCPosition(npcID game.NPCID) (X, Y int) {
+	d := game.Status()
 	npc, found := d.Monsters[npcID]
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit

@@ -1,4 +1,4 @@
-package data
+package game
 
 type Health struct {
 	Life    int

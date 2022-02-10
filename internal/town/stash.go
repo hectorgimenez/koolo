@@ -2,7 +2,7 @@ package town
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/game/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -23,15 +23,15 @@ func (tm Manager) stashAllItems() {
 }
 
 func (tm Manager) stashGold() {
-	d := data.Status()
-	if d.PlayerUnit.Stats[data.StatGold] == 0 {
+	d := game.Status()
+	if d.PlayerUnit.Stats[game.StatGold] == 0 {
 		return
 	}
 
-	if d.PlayerUnit.Stats[data.StatStashGold] < maxGoldPerStashTab {
+	if d.PlayerUnit.Stats[game.StatStashGold] < maxGoldPerStashTab {
 		stashGoldAction()
-		d = data.Status()
-		if d.PlayerUnit.Stats[data.StatGold] == 0 {
+		d = game.Status()
+		if d.PlayerUnit.Stats[game.StatGold] == 0 {
 			return
 		}
 	}
@@ -43,7 +43,7 @@ func (tm Manager) stashGold() {
 }
 
 func (tm Manager) stashInventory() {
-	for _, i := range data.Status().Items.Inventory {
+	for _, i := range game.Status().Items.Inventory {
 		if tm.cfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 			continue
 		}
@@ -65,7 +65,7 @@ func stashGoldAction() {
 	)
 }
 
-func stashItemAction(i data.Item) bool {
+func stashItemAction(i game.Item) bool {
 	spaceX := int(float32(hid.GameAreaSizeX)/inventoryTopLeftX) + i.Position.X*itemBoxSize + (itemBoxSize / 2)
 	spaceY := int(float32(hid.GameAreaSizeY)/inventoryTopLeftY) + i.Position.Y*itemBoxSize + (itemBoxSize / 2)
 	action.Run(
