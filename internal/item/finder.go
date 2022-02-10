@@ -54,7 +54,7 @@ func (f Pickup) getItemsToPickup() []data.Item {
 				missingHealingPotions--
 				break
 			}
-			if strings.EqualFold(strings.ToLower(item.Name), "manapotion") {
+			if strings.Contains(strings.ToLower(item.Name), "manapotion") {
 				if missingManaPotions == 0 {
 					break
 				}
@@ -62,7 +62,7 @@ func (f Pickup) getItemsToPickup() []data.Item {
 				missingManaPotions--
 				break
 			}
-			if strings.EqualFold(strings.ToLower(item.Name), "rejuvenationpotion") {
+			if strings.Contains(strings.ToLower(item.Name), "rejuvenationpotion") {
 				if missingRejuvenationPotions == 0 {
 					break
 				}
