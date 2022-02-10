@@ -13,18 +13,16 @@ type Manager struct {
 	towns       map[data.Area]Town
 	cfg         config.Config
 	pf          helper.PathFinder
-	dr          data.DataRepository
 	shopManager ShopManager
 }
 
-func NewTownManager(cfg config.Config, repository data.DataRepository, pf helper.PathFinder, shopManager ShopManager) Manager {
+func NewTownManager(cfg config.Config, pf helper.PathFinder, shopManager ShopManager) Manager {
 	return Manager{
 		towns: map[data.Area]Town{
 			data.AreaHarrogath: A5{},
 		},
 		cfg:         cfg,
 		pf:          pf,
-		dr:          repository,
 		shopManager: shopManager,
 	}
 }
@@ -53,7 +51,7 @@ func (tm Manager) ReviveMerc(area data.Area) {
 }
 
 func (tm Manager) Stash() {
-	for _, o := range tm.dr.GameData().Objects {
+	for _, o := range data.Status.Objects {
 		if o.Name == "Bank" {
 			tm.pf.InteractToObject(o)
 			tm.stashAllItems()
@@ -63,7 +61,7 @@ func (tm Manager) Stash() {
 }
 
 func (tm Manager) WPTo(act int, area int) {
-	for _, o := range tm.dr.GameData().Objects {
+	for _, o := range data.Status.Objects {
 		if o.IsWaypoint() {
 			tm.pf.InteractToObject(o)
 			return
@@ -72,11 +70,9 @@ func (tm Manager) WPTo(act int, area int) {
 }
 
 func (tm Manager) openTradeMenu() {
-	d := tm.dr.GameData()
-	if d.OpenMenus.NPCInteract {
+	if data.Status.OpenMenus.NPCInteract {
 		action.Run(action.NewKeyPress("down", time.Millisecond*150), action.NewKeyPress("enter", time.Millisecond*500))
 	}
-
 }
 
 func (tm Manager) getTownByArea(area data.Area) Town {

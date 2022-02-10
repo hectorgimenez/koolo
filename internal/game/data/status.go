@@ -1,6 +1,6 @@
 package data
 
-type Status struct {
+type Health struct {
 	Life    int
 	MaxLife int
 	Mana    int
@@ -14,14 +14,14 @@ type MercStatus struct {
 	MaxLife int
 }
 
-func (s Status) HPPercent() int {
+func (s Health) HPPercent() int {
 	return int((float64(s.Life) / float64(s.MaxLife)) * 100)
 }
 
-func (s Status) MPPercent() int {
+func (s Health) MPPercent() int {
 	return int((float64(s.Mana) / float64(s.MaxMana)) * 100)
 }
 
-func (s Status) MercHPPercent() int {
+func (s Health) MercHPPercent() int {
 	return int((float64(s.Merc.Life) / float64(s.Merc.MaxLife)) * 100)
 }

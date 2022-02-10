@@ -15,11 +15,10 @@ type Character interface {
 	UseTP()
 }
 
-func BuildCharacter(dr data.DataRepository, config config.Config) (Character, error) {
-	d := dr.GameData()
+func BuildCharacter(config config.Config) (Character, error) {
+	d := data.Status
 	bc := BaseCharacter{
 		cfg: config,
-		dr:  dr,
 	}
 	switch d.PlayerUnit.Class {
 	case data.ClassSorceress:
@@ -31,7 +30,6 @@ func BuildCharacter(dr data.DataRepository, config config.Config) (Character, er
 
 type BaseCharacter struct {
 	cfg config.Config
-	dr  data.DataRepository
 }
 
 func (bc BaseCharacter) BuffCTA() {

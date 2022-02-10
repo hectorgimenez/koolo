@@ -20,32 +20,30 @@ const (
 
 type PathFinder struct {
 	logger *zap.Logger
-	dr     data.DataRepository
 	cfg    config.Config
 }
 
-func NewPathFinder(logger *zap.Logger, dr data.DataRepository, cfg config.Config) PathFinder {
-	return PathFinder{logger: logger, dr: dr, cfg: cfg}
+func NewPathFinder(logger *zap.Logger, cfg config.Config) PathFinder {
+	return PathFinder{logger: logger, cfg: cfg}
 }
 
 func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
-	d := pf.dr.GameData()
+	d := data.Status
 
 	if teleporting && pf.cfg.Bindings.Teleport != "" {
 		hid.PressKey(pf.cfg.Bindings.Teleport)
 	}
 
 	for true {
-		d = pf.dr.GameData()
 		if d.PlayerUnit.Position.X == x && d.PlayerUnit.Position.Y == y {
 			return
 		}
 		dist := -1
 		if teleporting {
-			dist = pf.moveToNextStep(x, y, 40, true, d)
+			dist = pf.moveToNextStep(x, y, 40, true)
 			time.Sleep(time.Millisecond * 250)
 		} else {
-			dist = pf.moveToNextStep(x, y, 20, false, d)
+			dist = pf.moveToNextStep(x, y, 20, false)
 		}
 
 		// TODO: Calculate game grid based on screen resolution, otherwise precision is not good.
@@ -58,15 +56,14 @@ func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
 func (pf PathFinder) InteractToObject(object data.Object) {
 	dist := -1
 	for true {
-		d := pf.dr.GameData()
+		d := data.Status
 
 		if dist == -1 || dist > 15 {
-			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 20, false, d)
+			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 20, false)
 		} else {
-			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 0, false, d)
+			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 0, false)
 			time.Sleep(time.Millisecond * 500)
 
-			d = pf.dr.GameData()
 			hovered := false
 			for _, o := range d.Objects {
 				if o.IsHovered && object.Name == o.Name {
@@ -88,15 +85,14 @@ func (pf PathFinder) InteractToObject(object data.Object) {
 func (pf PathFinder) PickupItem(item data.Item) error {
 	dist := -1
 	for true {
-		d := pf.dr.GameData()
+		d := data.Status
 
 		if dist == -1 || dist > 15 {
-			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 20, false, d)
+			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 20, false)
 		} else {
-			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 0, false, d)
+			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 0, false)
 			time.Sleep(time.Millisecond * 500)
 
-			d = pf.dr.GameData()
 			hovered := false
 			for _, i := range d.Items.Ground {
 				if i.IsHovered && i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
@@ -109,7 +105,7 @@ func (pf PathFinder) PickupItem(item data.Item) error {
 				action.Run(
 					action.NewMouseClick(hid.LeftButton, time.Second),
 				)
-				d = pf.dr.GameData()
+
 				for _, i := range d.Items.Ground {
 					if i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
 						continue
@@ -128,22 +124,21 @@ func (pf PathFinder) InteractToNPC(npcID data.NPCID) {
 	// Using Monster structure provides better precision, but are only found when near.
 	dist := -1
 	for true {
-		d := pf.dr.GameData()
+		d := data.Status
 		if d.OpenMenus.NPCInteract {
 			pf.logger.Debug("NPC Interaction menu detected")
 			time.Sleep(time.Millisecond * 100)
 			break
 		}
 
-		npcPosX, npcPosY := getNPCPosition(d, npcID)
+		npcPosX, npcPosY := getNPCPosition(npcID)
 
 		if dist == -1 || dist > 15 {
-			dist = pf.moveToNextStep(npcPosX, npcPosY, 20, false, d)
+			dist = pf.moveToNextStep(npcPosX, npcPosY, 20, false)
 		} else {
-			dist = pf.moveToNextStep(npcPosX, npcPosY, 0, false, d)
+			dist = pf.moveToNextStep(npcPosX, npcPosY, 0, false)
 			time.Sleep(time.Millisecond * 250)
 
-			d = pf.dr.GameData()
 			m, found := d.Monsters[npcID]
 			if found && m.IsHovered {
 				pf.logger.Debug("NPC Hovered, click and wait for NPC interaction")
@@ -165,7 +160,8 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 	return screenX, screenY
 }
 
-func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, teleport bool, d data.Data) int {
+func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, teleport bool) int {
+	d := data.Status
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
@@ -214,12 +210,13 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 	return int(dist)
 }
 
-func getNPCPosition(gd data.Data, npcID data.NPCID) (X, Y int) {
-	npc, found := gd.Monsters[npcID]
+func getNPCPosition(npcID data.NPCID) (X, Y int) {
+	d := data.Status
+	npc, found := d.Monsters[npcID]
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit
 		return npc.Position.X - 2, npc.Position.Y - 2
 	}
 
-	return gd.NPCs[npcID].Positions[0].X, gd.NPCs[npcID].Positions[0].Y
+	return d.NPCs[npcID].Positions[0].X, d.NPCs[npcID].Positions[0].Y
 }

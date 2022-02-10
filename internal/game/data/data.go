@@ -14,12 +14,10 @@ const (
 	ClassSorceress Class = "Sorceress"
 )
 
-type DataRepository interface {
-	GameData() Data
-}
+var Status *Data
 
 type Data struct {
-	Status        Status
+	Health        Health
 	Area          Area
 	AreaOrigin    Position
 	Corpse        Corpse

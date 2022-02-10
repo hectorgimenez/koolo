@@ -1,15 +1,17 @@
 package mapassist
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"net/http"
+	"time"
 )
 
 const (
-	genericData    = "/get_data"
-	healthEndpoint = "/get_health"
+	genericData               = "/get_data"
+	updateGameStatusFrequency = time.Millisecond * 50
 )
 
 type APIClient struct {
@@ -20,9 +22,24 @@ func NewAPIClient(hostName string) APIClient {
 	return APIClient{hostName: hostName}
 }
 
-func (A APIClient) GameData() data.Data {
-	// TODO: Fix on MapAssist, first request always returns old data
-	http.Get(A.hostName + genericData)
+// Start will keep looking at life/mana levels from our character and mercenary and do best effort to keep them up
+func (A APIClient) Start(ctx context.Context) error {
+	ticker := time.NewTicker(updateGameStatusFrequency)
+
+	for {
+		select {
+		case <-ticker.C:
+			err := A.UpdateGameStatus()
+			if err != nil {
+				return err
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (A APIClient) UpdateGameStatus() error {
 	r, err := http.Get(A.hostName + genericData)
 	if err != nil {
 		fmt.Println(err)
@@ -33,11 +50,11 @@ func (A APIClient) GameData() data.Data {
 	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		// TODO: Handle error
-		return data.Data{}
+		return err
 	}
 	if !d.Success {
 		// TODO: Handle error
-		return data.Data{}
+		return err
 	}
 
 	corpse := data.Corpse{}
@@ -98,8 +115,8 @@ func (A APIClient) GameData() data.Data {
 		})
 	}
 
-	return data.Data{
-		Status: data.Status{
+	data.Status = &data.Data{
+		Health: data.Health{
 			Life:    d.Status.Life,
 			MaxLife: d.Status.MaxLife,
 			Mana:    d.Status.Mana,
@@ -138,6 +155,8 @@ func (A APIClient) GameData() data.Data {
 		Items:   parseItems(d),
 		Objects: objects,
 	}
+
+	return nil
 }
 
 func parseItems(d gameDataHttpResponse) data.Items {

@@ -10,16 +10,14 @@ import (
 )
 
 type BeltManager struct {
-	logger              *zap.Logger
-	cfg                 config.Config
-	inventoryRepository data.DataRepository
+	logger *zap.Logger
+	cfg    config.Config
 }
 
-func NewBeltManager(logger *zap.Logger, cfg config.Config, repository data.DataRepository) BeltManager {
+func NewBeltManager(logger *zap.Logger, cfg config.Config) BeltManager {
 	return BeltManager{
-		logger:              logger,
-		cfg:                 cfg,
-		inventoryRepository: repository,
+		logger: logger,
+		cfg:    cfg,
 	}
 }
 
@@ -46,7 +44,7 @@ func (pm BeltManager) ShouldBuyPotions() bool {
 
 	currentHealing, currentMana, currentRejuv := pm.getCurrentPotions()
 
-	pm.logger.Debug(fmt.Sprintf("Belt Status: %d healing, %d mana, %d rejuv.", currentHealing, currentMana, currentRejuv))
+	pm.logger.Debug(fmt.Sprintf("Belt Health: %d healing, %d mana, %d rejuv.", currentHealing, currentMana, currentRejuv))
 
 	if currentHealing < int(float32(targetHealingAmount)*0.75) || currentMana < int(float32(targetManaAmount)*0.75) {
 		pm.logger.Debug("Need more pots, let's buy them.")
@@ -96,7 +94,7 @@ func (pm BeltManager) GetMissingCount(potionType data.PotionType) int {
 }
 
 func (pm BeltManager) belt() data.Belt {
-	return pm.inventoryRepository.GameData().Items.Belt
+	return data.Status.Items.Belt
 }
 
 func (pm BeltManager) getBindingBasedOnColumn(potion data.Potion) string {

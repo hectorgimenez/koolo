@@ -15,14 +15,13 @@ type Run interface {
 }
 
 type BaseRun struct {
-	dr   data.DataRepository
 	pf   helper.PathFinder
 	char character.Character
 }
 
 func (b BaseRun) ReturnToTown() {
 	b.char.UseTP()
-	for _, o := range b.dr.GameData().Objects {
+	for _, o := range data.Status.Objects {
 		if o.IsPortal() {
 			log.Println("Entering Portal...")
 			b.pf.InteractToObject(o)
@@ -30,9 +29,8 @@ func (b BaseRun) ReturnToTown() {
 	}
 }
 
-func NewBaseRun(dr data.DataRepository, pf helper.PathFinder, char character.Character) BaseRun {
+func NewBaseRun(pf helper.PathFinder, char character.Character) BaseRun {
 	return BaseRun{
-		dr:   dr,
 		pf:   pf,
 		char: char,
 	}

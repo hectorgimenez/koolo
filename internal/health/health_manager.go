@@ -21,7 +21,6 @@ const (
 // Manager responsibility is to keep our character and mercenary alive, monitoring life and giving potions when needed
 type Manager struct {
 	logger       *zap.Logger
-	dr           data.DataRepository
 	eventChan    chan<- event.Event
 	beltManager  BeltManager
 	cfg          config.Config
@@ -30,10 +29,9 @@ type Manager struct {
 	lastMercHeal time.Time
 }
 
-func NewHealthManager(logger *zap.Logger, dr data.DataRepository, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
+func NewHealthManager(logger *zap.Logger, eventChan chan<- event.Event, beltManager BeltManager, cfg config.Config) Manager {
 	return Manager{
 		logger:      logger,
-		dr:          dr,
 		eventChan:   eventChan,
 		beltManager: beltManager,
 		cfg:         cfg,
@@ -56,13 +54,13 @@ func (hm Manager) Start(ctx context.Context) error {
 
 func (hm *Manager) handleHealthAndMana() {
 	hpConfig := hm.cfg.Health
-	d := hm.dr.GameData()
+	d := data.Status
 	// Safe area, skipping
 	if d.Area.IsTown() {
 		return
 	}
 
-	status := d.Status
+	status := d.Health
 
 	usedRejuv := false
 	if status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana {
@@ -109,7 +107,7 @@ func (hm *Manager) handleHealthAndMana() {
 	}
 }
 
-func (hm Manager) chicken(status data.Status) {
+func (hm Manager) chicken(status data.Health) {
 	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
 	helper.ExitGame(hm.eventChan)
 }

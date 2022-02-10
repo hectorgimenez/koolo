@@ -33,21 +33,24 @@ func main() {
 
 	chEvents := make(chan event.Event, 0)
 	mapAssistApi := mapassist.NewAPIClient(cfg.MapAssist.HostName)
-	bm := health.NewBeltManager(logger, cfg, mapAssistApi)
-	hm := health.NewHealthManager(logger, mapAssistApi, chEvents, bm, cfg)
-	pf := helper.NewPathFinder(logger, mapAssistApi, cfg)
-	sm := town.NewShopManager(logger, mapAssistApi, bm)
-	tm := town.NewTownManager(cfg, mapAssistApi, pf, sm)
-	char, err := character.BuildCharacter(mapAssistApi, cfg)
+	if err := mapAssistApi.UpdateGameStatus(); err != nil {
+		logger.Fatal("error fetching game data", zap.Error(err))
+	}
+	bm := health.NewBeltManager(logger, cfg)
+	hm := health.NewHealthManager(logger, chEvents, bm, cfg)
+	pf := helper.NewPathFinder(logger, cfg)
+	sm := town.NewShopManager(logger, bm)
+	tm := town.NewTownManager(cfg, pf, sm)
+	char, err := character.BuildCharacter(cfg)
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
-	baseRun := run.NewBaseRun(mapAssistApi, pf, char)
+	baseRun := run.NewBaseRun(pf, char)
 	runs := []run.Run{run.NewPindleskin(baseRun)}
-	pickup := item.NewPickup(logger, mapAssistApi, bm, pf, pickit)
+	pickup := item.NewPickup(logger, bm, pf, pickit)
 
-	bot := game.NewBot(logger, cfg, bm, tm, mapAssistApi, char, runs, pickup)
-	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
+	bot := game.NewBot(logger, cfg, bm, tm, char, runs, pickup)
+	supervisor := koolo.NewSupervisor(logger, cfg, hm, mapAssistApi, bot)
 
 	ctx := context.Background()
 	// TODO: Debug mouse

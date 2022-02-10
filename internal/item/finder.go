@@ -12,16 +12,14 @@ import (
 
 type Pickup struct {
 	logger    *zap.Logger
-	dr        data.DataRepository
 	bm        health.BeltManager
 	pf        helper.PathFinder
 	pickitCfg config.Pickit
 }
 
-func NewPickup(logger *zap.Logger, dr data.DataRepository, bm health.BeltManager, pf helper.PathFinder, pickitCfg config.Pickit) Pickup {
+func NewPickup(logger *zap.Logger, bm health.BeltManager, pf helper.PathFinder, pickitCfg config.Pickit) Pickup {
 	return Pickup{
 		logger:    logger,
-		dr:        dr,
 		bm:        bm,
 		pf:        pf,
 		pickitCfg: pickitCfg,
@@ -39,7 +37,7 @@ func (f Pickup) Pickup() {
 }
 
 func (f Pickup) getItemsToPickup() []data.Item {
-	groundItems := f.dr.GameData().Items.Ground
+	groundItems := data.Status.Items.Ground
 
 	missingHealingPotions := f.bm.GetMissingCount(data.HealingPotion)
 	missingManaPotions := f.bm.GetMissingCount(data.ManaPotion)

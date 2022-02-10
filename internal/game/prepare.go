@@ -8,13 +8,13 @@ import (
 )
 
 func (b Bot) prepare() {
-	d := b.data()
+	d := data.Status
 	b.recoverCorpse()
 	shouldBuyTPs := d.Items.Inventory.ShouldBuyTPs()
 	if b.bm.ShouldBuyPotions() || shouldBuyTPs {
 		b.tm.BuyPotionsAndTPs(d.Area, shouldBuyTPs)
 	}
-	if b.cfg.Character.UseMerc && !d.Status.Merc.Alive {
+	if b.cfg.Character.UseMerc && !d.Health.Merc.Alive {
 		b.tm.ReviveMerc(d.Area)
 	}
 
@@ -23,12 +23,11 @@ func (b Bot) prepare() {
 		b.tm.Repair(d.Area)
 	}
 	// TODO: Check if we need healing
-	// TODO: Check for TPs
-	// TODO: Check inventory (stash/not full)
+	b.tm.Stash()
 }
 
 func (b Bot) recoverCorpse() {
-	d := b.data()
+	d := data.Status
 
 	if !d.Corpse.Found {
 		return
@@ -41,7 +40,7 @@ func (b Bot) recoverCorpse() {
 		action.NewMouseClick(hid.LeftButton, time.Second),
 	)
 
-	if b.data().Corpse.Found {
+	if d.Corpse.Found {
 		b.logger.Warn("Failed to pickup corpse!")
 	}
 }

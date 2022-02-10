@@ -18,19 +18,17 @@ const (
 
 type ShopManager struct {
 	logger *zap.Logger
-	dr     data.DataRepository
 	bm     health.BeltManager
 }
 
-func NewShopManager(logger *zap.Logger, dr data.DataRepository, bm health.BeltManager) ShopManager {
+func NewShopManager(logger *zap.Logger, bm health.BeltManager) ShopManager {
 	return ShopManager{
 		logger: logger,
-		dr:     dr,
 		bm:     bm,
 	}
 }
 func (sm ShopManager) buyPotsAndTPs(buyTPs bool) {
-	d := sm.dr.GameData()
+	d := data.Status
 	missingHealingPots := sm.bm.GetMissingCount(data.HealingPotion)
 	missingManaPots := sm.bm.GetMissingCount(data.ManaPotion)
 
