@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -17,7 +18,7 @@ func (b Bot) prepare() {
 		b.tm.ReviveMerc(d.Area)
 	}
 
-	durabilityPct := float32(d.PlayerUnit.Stats["Durability"] / d.PlayerUnit.Stats["MaxDurability"])
+	durabilityPct := float32(d.PlayerUnit.Stats[data.StatDurability] / d.PlayerUnit.Stats[data.StatMaxDurability])
 	if durabilityPct < 0.25 {
 		b.tm.Repair(d.Area)
 	}

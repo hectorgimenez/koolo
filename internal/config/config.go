@@ -42,7 +42,8 @@ type Config struct {
 		} `yaml:"sorceress"`
 	} `yaml:"bindings"`
 	Inventory struct {
-		BeltColumns struct {
+		InventoryLock [][]int `yaml:"inventoryLock"`
+		BeltColumns   struct {
 			Healing      int `yaml:"healing"`
 			Mana         int `yaml:"mana"`
 			Rejuvenation int `yaml:"rejuvenation"`

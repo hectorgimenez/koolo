@@ -34,6 +34,12 @@ bindings:
     frozenArmor: f4
 
 inventory:
+  inventoryLock:
+    - [1, 1, 1, 1, 1, 1, 1, 1, 0, 0] # 0: Item locked and won't be moved.
+    - [1, 1, 1, 1, 1, 1, 1, 1, 0, 0] # 1: Item unlocked, it will be stashed, sold or dropped.
+    - [1, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+    - [1, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+
   beltColumns: # Amount of columns for each type of potion, sum of all should not be more than 4
     healing: 2
     mana: 1

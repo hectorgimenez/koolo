@@ -2,6 +2,7 @@ package town
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/data"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -10,16 +11,18 @@ import (
 
 type Manager struct {
 	towns       map[data.Area]Town
+	cfg         config.Config
 	pf          helper.PathFinder
 	dr          data.DataRepository
 	shopManager ShopManager
 }
 
-func NewTownManager(repository data.DataRepository, pf helper.PathFinder, shopManager ShopManager) Manager {
+func NewTownManager(cfg config.Config, repository data.DataRepository, pf helper.PathFinder, shopManager ShopManager) Manager {
 	return Manager{
 		towns: map[data.Area]Town{
 			data.AreaHarrogath: A5{},
 		},
+		cfg:         cfg,
 		pf:          pf,
 		dr:          repository,
 		shopManager: shopManager,
@@ -53,6 +56,7 @@ func (tm Manager) Stash() {
 	for _, o := range tm.dr.GameData().Objects {
 		if o.Name == "Bank" {
 			tm.pf.InteractToObject(o)
+			tm.stashAllItems()
 		}
 	}
 

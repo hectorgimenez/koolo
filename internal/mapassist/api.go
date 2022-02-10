@@ -80,9 +80,9 @@ func (A APIClient) GameData() data.Data {
 		}
 	}
 
-	stats := map[string]int{}
+	stats := map[data.Stat]int{}
 	for _, stat := range d.PlayerUnit.Stats {
-		stats[stat.Stat] = stat.Value
+		stats[data.Stat(stat.Stat)] = stat.Value
 	}
 
 	var objects []data.Object

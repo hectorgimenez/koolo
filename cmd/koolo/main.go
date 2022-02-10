@@ -37,7 +37,7 @@ func main() {
 	hm := health.NewHealthManager(logger, mapAssistApi, chEvents, bm, cfg)
 	pf := helper.NewPathFinder(logger, mapAssistApi, cfg)
 	sm := town.NewShopManager(logger, mapAssistApi, bm)
-	tm := town.NewTownManager(mapAssistApi, pf, sm)
+	tm := town.NewTownManager(cfg, mapAssistApi, pf, sm)
 	char, err := character.BuildCharacter(mapAssistApi, cfg)
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))

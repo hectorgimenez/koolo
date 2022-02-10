@@ -18,8 +18,11 @@ const (
 	ItemQualityRare     Quality = "RARE"
 	ItemQualityUNIQUE   Quality = "UNIQUE"
 
-	StatQuantity Stat = "Quantity"
-	StatGold     Stat = "Gold"
+	StatQuantity      Stat = "Quantity"
+	StatGold          Stat = "Gold"
+	StatStashGold     Stat = "StashGold"
+	StatDurability    Stat = "Durability"
+	StatMaxDurability Stat = "MaxDurability"
 )
 
 type Stat string
