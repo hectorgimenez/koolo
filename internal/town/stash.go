@@ -9,12 +9,17 @@ import (
 
 const (
 	maxGoldPerStashTab = 2500000
-	stashGoldBtnX      = 1.2776
-	stashGoldBtnY      = 1.357
+
+	stashGoldBtnX = 1.2776
+	stashGoldBtnY = 1.357
+
+	inventoryTopLeftX = 1.494
+	inventoryTopLeftY = 2.071
 )
 
 func (tm Manager) stashAllItems() {
 	tm.stashGold()
+	tm.stashInventory()
 }
 
 func (tm Manager) stashGold() {
@@ -37,6 +42,19 @@ func (tm Manager) stashGold() {
 	}
 }
 
+func (tm Manager) stashInventory() {
+	for _, i := range data.Status().Items.Inventory {
+		if tm.cfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+			continue
+		}
+		stashItemAction(i)
+
+		for tab := 0; tab < 3; tab++ {
+			// TODO: Stash items in other tabs
+		}
+	}
+}
+
 func stashGoldAction() {
 	btnX := int(float32(hid.GameAreaSizeX) / stashGoldBtnX)
 	btnY := int(float32(hid.GameAreaSizeY) / stashGoldBtnY)
@@ -45,4 +63,18 @@ func stashGoldAction() {
 		action.NewMouseClick(hid.LeftButton, time.Millisecond*200),
 		action.NewKeyPress("enter", time.Millisecond*500),
 	)
+}
+
+func stashItemAction(i data.Item) bool {
+	spaceX := int(float32(hid.GameAreaSizeX)/inventoryTopLeftX) + i.Position.X*itemBoxSize + (itemBoxSize / 2)
+	spaceY := int(float32(hid.GameAreaSizeY)/inventoryTopLeftY) + i.Position.Y*itemBoxSize + (itemBoxSize / 2)
+	action.Run(
+		action.NewMouseDisplacement(spaceX, spaceY, time.Millisecond*170),
+		action.NewKeyDown("control", time.Millisecond*150),
+		action.NewMouseClick(hid.LeftButton, time.Millisecond*200),
+		action.NewKeyUp("control", time.Millisecond*150),
+	)
+
+	// TODO: Check if item has been stored correctly
+	return true
 }

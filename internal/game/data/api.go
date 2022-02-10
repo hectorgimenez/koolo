@@ -155,6 +155,7 @@ func parseItems(d gameDataHttpResponse) Items {
 	var shop []Item
 	var ground []Item
 	var inventory []Item
+	var stash []Item
 	for _, i := range d.Items {
 		stats := map[Stat]int{}
 		for _, s := range i.Stats {
@@ -178,6 +179,8 @@ func parseItems(d gameDataHttpResponse) Items {
 			ground = append(ground, item)
 		case "Inventory":
 			inventory = append(inventory, item)
+		case "Stash":
+			stash = append(stash, item)
 		}
 	}
 
