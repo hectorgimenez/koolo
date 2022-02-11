@@ -2,13 +2,17 @@ package koolo
 
 import (
 	"context"
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/item"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
+	"time"
 )
 
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
@@ -42,11 +46,18 @@ func NewBot(
 	}
 }
 
-func (b *Bot) Start(ctx context.Context) error {
+func (b *Bot) Start(ctx context.Context) (err error) {
+	defer func() {
+		if r := recover(); r == game.NotInGameErr {
+			err = game.NotInGameErr
+		}
+	}()
+
+	start := time.Now()
 	b.prepare()
 
-	for _, r := range b.runs {
-		err := r.MoveToStartingPoint()
+	for i, r := range b.runs {
+		err = r.MoveToStartingPoint()
 		if err != nil {
 			b.logger.Error("Error moving to start point for current run, let's skip it")
 			continue
@@ -66,9 +77,15 @@ func (b *Bot) Start(ctx context.Context) error {
 		b.logger.Debug("Run cleared, picking up items...")
 		b.pickup.Pickup()
 
-		b.logger.Debug("Item pickup completed, returning to town...")
-		r.ReturnToTown()
+		// Don't return to town on last run, just quit
+		if len(b.runs)-1 != i {
+			b.logger.Debug("Item pickup completed, returning to town...")
+			r.ReturnToTown()
+		}
 	}
+
+	b.logger.Info(fmt.Sprintf("Game finished successfully. Run time: %0.2f seconds", time.Since(start).Seconds()))
+	helper.ExitGame()
 
 	return nil
 }

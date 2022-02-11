@@ -3,19 +3,17 @@ package helper
 import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
 
-func ExitGame(eventChan chan<- event.Event) {
+func ExitGame() {
 	action.Run(
 		action.NewKeyPress("esc", time.Millisecond*200),
 		action.NewMouseDisplacement(640, 328, time.Millisecond*50),
 		action.NewMouseClick(hid.LeftButton, time.Millisecond*120),
 	)
-	eventChan <- event.ExitedGame
 }
 
 func NewGame(difficulty string) error {
@@ -37,7 +35,7 @@ func NewGame(difficulty string) error {
 	)
 
 	for i := 0; i < 20; i++ {
-		if game.Status().Success {
+		if game.IsInGame() {
 			return nil
 		}
 		time.Sleep(time.Second)

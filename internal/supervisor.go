@@ -6,6 +6,7 @@ import (
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -59,11 +60,10 @@ func (s Supervisor) Start(ctx context.Context) error {
 			return s.healthManager.Start(ctx)
 		})
 
-		if err = g.Wait(); err != nil {
+		if err = g.Wait(); err != nil && err != game.NotInGameErr {
 			s.logger.Error("Game exited with error!", zap.Error(err))
-		} else {
-			s.logger.Info("Game finished")
 		}
+		time.Sleep(time.Second * 5)
 	}
 }
 

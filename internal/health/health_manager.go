@@ -39,9 +39,14 @@ func NewHealthManager(logger *zap.Logger, eventChan chan<- event.Event, beltMana
 }
 
 // Start will keep looking at life/mana levels from our character and mercenary and do best effort to keep them up
-func (hm Manager) Start(ctx context.Context) error {
-	ticker := time.NewTicker(monitorEvery)
+func (hm Manager) Start(ctx context.Context) (err error) {
+	defer func() {
+		if r := recover(); r == game.NotInGameErr {
+			err = game.NotInGameErr
+		}
+	}()
 
+	ticker := time.NewTicker(monitorEvery)
 	for {
 		select {
 		case <-ticker.C:
@@ -109,5 +114,5 @@ func (hm *Manager) handleHealthAndMana() {
 
 func (hm Manager) chicken(status game.Health) {
 	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
-	helper.ExitGame(hm.eventChan)
+	helper.ExitGame()
 }

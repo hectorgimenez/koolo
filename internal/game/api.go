@@ -2,130 +2,155 @@ package game
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
+	"time"
 )
 
 const (
 	genericData = "/get_data"
 	hostName    = "http://localhost:1111"
+	maxRetries  = 3
 )
 
-func Status() Data {
+var NotInGameErr = errors.New("not in game")
+
+func IsInGame() bool {
 	r, err := http.Get(hostName + genericData)
 	if err != nil {
-		fmt.Println(err)
-		// TODO: Handle error
+		return false
 	}
 
-	d := gameDataHttpResponse{}
+	d := requestSucceed{}
 	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		// TODO: Handle error
-	}
-	if !d.Success {
-		// TODO: Handle error
+		return false
 	}
 
-	corpse := Corpse{}
-	// Match with current player
-	for _, c := range d.Corpses {
-		if c.Name == d.PlayerUnit.Name {
-			corpse.Found = true
-			corpse.IsHovered = c.IsHovered
-			corpse.Position = Position{
-				X: int(c.Position.X),
-				Y: int(c.Position.Y),
+	return d.Success
+}
+
+func Status() Data {
+	for retries := 0; retries < maxRetries; retries++ {
+		r, err := http.Get(hostName + genericData)
+		if err != nil {
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
+
+		d := gameDataHttpResponse{}
+		err = json.NewDecoder(r.Body).Decode(&d)
+		if err != nil {
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
+		if !d.Success {
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
+
+		corpse := Corpse{}
+		// Match with current player
+		for _, c := range d.Corpses {
+			if c.Name == d.PlayerUnit.Name {
+				corpse.Found = true
+				corpse.IsHovered = c.IsHovered
+				corpse.Position = Position{
+					X: int(c.Position.X),
+					Y: int(c.Position.Y),
+				}
 			}
 		}
-	}
 
-	monsters := map[NPCID]Monster{}
-	for _, m := range d.Monsters {
-		monsters[NPCID(m.Name)] = Monster{
-			Name:      m.Name,
-			IsHovered: m.IsHovered,
-			Position: Position{
-				X: int(m.Position.X),
-				Y: int(m.Position.Y),
-			},
+		monsters := map[NPCID]Monster{}
+		for _, m := range d.Monsters {
+			monsters[NPCID(m.Name)] = Monster{
+				Name:      m.Name,
+				IsHovered: m.IsHovered,
+				Position: Position{
+					X: int(m.Position.X),
+					Y: int(m.Position.Y),
+				},
+			}
 		}
-	}
 
-	npcs := map[NPCID]NPC{}
-	for _, npc := range d.NPCs {
-		var positions []Position
-		for _, p := range npc.Positions {
-			positions = append(positions, Position{
-				X: int(p.X),
-				Y: int(p.Y),
+		npcs := map[NPCID]NPC{}
+		for _, npc := range d.NPCs {
+			var positions []Position
+			for _, p := range npc.Positions {
+				positions = append(positions, Position{
+					X: int(p.X),
+					Y: int(p.Y),
+				})
+			}
+			npcs[NPCID(npc.Name)] = NPC{
+				Name:      npc.Name,
+				Positions: positions,
+			}
+		}
+
+		stats := map[Stat]int{}
+		for _, stat := range d.PlayerUnit.Stats {
+			stats[Stat(stat.Stat)] = stat.Value
+		}
+
+		var objects []Object
+		for _, o := range d.Objects {
+			objects = append(objects, Object{
+				Name:       o.Name,
+				IsHovered:  o.IsHovered,
+				Selectable: o.Selectable,
+				Position: Position{
+					X: int(o.Position.X),
+					Y: int(o.Position.Y),
+				},
 			})
 		}
-		npcs[NPCID(npc.Name)] = NPC{
-			Name:      npc.Name,
-			Positions: positions,
+		return Data{
+			Health: Health{
+				Life:    d.Status.Life,
+				MaxLife: d.Status.MaxLife,
+				Mana:    d.Status.Mana,
+				MaxMana: d.Status.MaxMana,
+				Merc: MercStatus{
+					Alive:   d.Status.Merc.Alive,
+					Life:    d.Status.Merc.Life,
+					MaxLife: d.Status.Merc.MaxLife,
+				},
+			},
+			Area: Area(d.Area),
+			AreaOrigin: Position{
+				X: int(d.AreaOrigin.X),
+				Y: int(d.AreaOrigin.Y),
+			},
+			Corpse:        corpse,
+			Monsters:      monsters,
+			NPCs:          npcs,
+			CollisionGrid: d.CollisionGrid,
+			PlayerUnit: PlayerUnit{
+				Name: d.PlayerUnit.Name,
+				Position: Position{
+					X: int(d.PlayerUnit.Position.X),
+					Y: int(d.PlayerUnit.Position.Y),
+				},
+				Stats: stats,
+				Class: Class(d.PlayerUnit.PlayerClass),
+			},
+			OpenMenus: OpenMenus{
+				Inventory:   d.MenuOpen.Inventory,
+				NPCInteract: d.MenuOpen.NPCInteract,
+				NPCShop:     d.MenuOpen.NPCShop,
+				Stash:       d.MenuOpen.Stash,
+				Waypoint:    d.MenuOpen.Waypoint,
+			},
+			Items:   parseItems(d),
+			Objects: objects,
 		}
 	}
 
-	stats := map[Stat]int{}
-	for _, stat := range d.PlayerUnit.Stats {
-		stats[Stat(stat.Stat)] = stat.Value
-	}
-
-	var objects []Object
-	for _, o := range d.Objects {
-		objects = append(objects, Object{
-			Name:       o.Name,
-			IsHovered:  o.IsHovered,
-			Selectable: o.Selectable,
-			Position: Position{
-				X: int(o.Position.X),
-				Y: int(o.Position.Y),
-			},
-		})
-	}
-
-	return Data{
-		Success: d.Success,
-		Health: Health{
-			Life:    d.Status.Life,
-			MaxLife: d.Status.MaxLife,
-			Mana:    d.Status.Mana,
-			MaxMana: d.Status.MaxMana,
-			Merc: MercStatus{
-				Alive:   d.Status.Merc.Alive,
-				Life:    d.Status.Merc.Life,
-				MaxLife: d.Status.Merc.MaxLife,
-			},
-		},
-		Area: Area(d.Area),
-		AreaOrigin: Position{
-			X: int(d.AreaOrigin.X),
-			Y: int(d.AreaOrigin.Y),
-		},
-		Corpse:        corpse,
-		Monsters:      monsters,
-		NPCs:          npcs,
-		CollisionGrid: d.CollisionGrid,
-		PlayerUnit: PlayerUnit{
-			Name: d.PlayerUnit.Name,
-			Position: Position{
-				X: int(d.PlayerUnit.Position.X),
-				Y: int(d.PlayerUnit.Position.Y),
-			},
-			Stats: stats,
-			Class: Class(d.PlayerUnit.PlayerClass),
-		},
-		OpenMenus: OpenMenus{
-			Inventory:   d.MenuOpen.Inventory,
-			NPCInteract: d.MenuOpen.NPCInteract,
-			NPCShop:     d.MenuOpen.NPCShop,
-			Stash:       d.MenuOpen.Stash,
-			Waypoint:    d.MenuOpen.Waypoint,
-		},
-		Items:   parseItems(d),
-		Objects: objects,
-	}
+	// This is super hacky, but is the easiest way to kill the main routines in case of error, or when other routine
+	// decides to quit the game, for example chickening.
+	panic(NotInGameErr)
 }
 
 func parseItems(d gameDataHttpResponse) Items {

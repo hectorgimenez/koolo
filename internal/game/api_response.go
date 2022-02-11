@@ -12,6 +12,10 @@ type statusHttpResponse struct {
 	} `json:"merc"`
 }
 
+type requestSucceed struct {
+	Success bool `json:"success"`
+}
+
 type gameDataHttpResponse struct {
 	Success    bool               `json:"success"`
 	Area       string             `json:"area"`
