@@ -11,6 +11,8 @@ import (
 
 type Character interface {
 	Buff()
+	KillAndariel() error
+	KillMephisto() error
 	KillPindle() error
 	UseTP()
 }

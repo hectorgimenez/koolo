@@ -19,19 +19,19 @@ bindings:
   potion4: 4
 
   # Skills
-  forceMove: e
+  forceMove: h
   standStill: j
   swapWeapon: g
-  teleport: f1
-  tp: f8
-  CTABattleCommand: d
-  CTABattleOrders: s
+  teleport: q
+  tp: t
+  CTABattleCommand: s
+  CTABattleOrders: d
 
   # Class specific bindings
   sorceress:
-    blizzard: f2
-    staticField: f3
-    frozenArmor: f4
+    blizzard: w
+    staticField: e
+    frozenArmor: a
 
 inventory:
   inventoryLock:

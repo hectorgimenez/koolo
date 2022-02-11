@@ -34,6 +34,12 @@ func (p Pindleskin) Kill() error {
 }
 
 func (p Pindleskin) MoveToStartingPoint() error {
+	if game.Status().Area != game.AreaHarrogath {
+		if err := p.tm.WPTo(5, 1); err != nil {
+			return err
+		}
+	}
+
 	portal, found := p.getRedPortal()
 	if !found {
 		// Let's do a first approach via static pathing, looks like portal is too far away

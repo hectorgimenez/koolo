@@ -9,7 +9,11 @@ import (
 	"time"
 )
 
-const maxPindleAttackLoops = 10
+const (
+	maxAndarielAttackLoops = 10
+	maxPindleAttackLoops   = 10
+	maxMephistoAttackLoops = 10
+)
 
 type Sorceress struct {
 	BaseCharacter
@@ -23,6 +27,32 @@ func (s Sorceress) Buff() {
 			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
 		)
 	}
+}
+
+func (s Sorceress) KillAndariel() error {
+	d := game.Status()
+	andariel, found := d.Monsters[game.Andariel]
+	if !found {
+		return errors.New("Andariel not found")
+	}
+
+	for i := 0; i < maxAndarielAttackLoops; i++ {
+		x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, andariel.Position.X, andariel.Position.Y)
+		s.DoSecondaryAttack(x, y, s.cfg.Bindings.Sorceress.Blizzard)
+		andariel, found = game.Status().Monsters[game.Andariel]
+		if !found {
+			return nil
+		}
+
+		s.DoBasicAttack(x, y, 3)
+
+		andariel, found = game.Status().Monsters[game.Andariel]
+		if !found {
+			return nil
+		}
+	}
+
+	return errors.New("timeout trying to kill Andariel")
 }
 
 func (s Sorceress) KillPindle() error {
@@ -49,4 +79,30 @@ func (s Sorceress) KillPindle() error {
 	}
 
 	return errors.New("timeout trying to kill pindleskin")
+}
+
+func (s Sorceress) KillMephisto() error {
+	d := game.Status()
+	mephisto, found := d.Monsters[game.Mephisto]
+	if !found {
+		return errors.New("Mephisto not found")
+	}
+
+	for i := 0; i < maxMephistoAttackLoops; i++ {
+		x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, mephisto.Position.X, mephisto.Position.Y)
+		s.DoSecondaryAttack(x, y, s.cfg.Bindings.Sorceress.Blizzard)
+		mephisto, found = game.Status().Monsters[game.Mephisto]
+		if !found {
+			return nil
+		}
+
+		s.DoBasicAttack(x, y, 3)
+
+		mephisto, found = game.Status().Monsters[game.Mephisto]
+		if !found {
+			return nil
+		}
+	}
+
+	return errors.New("timeout trying to kill Mephisto")
 }

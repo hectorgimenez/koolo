@@ -17,9 +17,26 @@ const (
 	inventoryTopLeftY = 2.071
 )
 
-func (tm Manager) stashAllItems() {
-	tm.stashGold()
-	tm.stashInventory()
+func (tm Manager) Stash() {
+	d := game.Status()
+
+	stashingRequired := false
+	for _, i := range d.Items.Inventory {
+		if tm.cfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+			stashingRequired = true
+			break
+		}
+	}
+
+	if stashingRequired {
+		for _, o := range d.Objects {
+			if o.Name == "Bank" {
+				tm.pf.InteractToObject(o)
+				tm.stashGold()
+				tm.stashInventory()
+			}
+		}
+	}
 }
 
 func (tm Manager) stashGold() {

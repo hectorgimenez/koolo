@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"errors"
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -17,6 +18,8 @@ const (
 
 	interactionOffsetX = -2
 	interactionOffsetY = -2
+
+	bottomHUDOffsetY = 1.21
 )
 
 type PathFinder struct {
@@ -42,7 +45,7 @@ func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
 		dist := -1
 		if teleporting {
 			dist = pf.moveToNextStep(x, y, 40, true)
-			time.Sleep(time.Millisecond * 250)
+			time.Sleep(time.Millisecond * 100)
 		} else {
 			dist = pf.moveToNextStep(x, y, 20, false)
 		}
@@ -178,6 +181,10 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 
 	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY)
 	p, dist, pFound := astar.Path(w.From(), w.To())
+
+	// Debug: Enable to generate Map bitmap
+	//w.RenderPathImg(p)
+
 	if !pFound {
 		pf.logger.Debug("Path not found! Let's do a random movement...")
 		x := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
@@ -188,9 +195,6 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 		)
 		return -1
 	}
-
-	// Debug: Enable to generate Map bitmap
-	//w.RenderPathImg(p)
 
 	moveTo := p[0].(*Tile)
 	tileJump := 20
@@ -210,14 +214,19 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 	screenX := ((worldDiffX-worldDiffY)*halfTileSizeX)*2 + (hid.GameAreaSizeX / 2)
 	screenY := ((worldDiffX+worldDiffY)*halfTileSizeY)*2 + (hid.GameAreaSizeY / 2)
 
+	// Prevent mouse overlap the HUD
+	if screenY > int(float32(hid.GameAreaSizeY)/1.21) {
+		screenY = int(float32(hid.GameAreaSizeY) / 1.21)
+	}
+
 	hid.MovePointer(screenX, screenY)
 	if movementDistance > 0 {
 		if teleport {
 			hid.Click(hid.RightButton)
 		} else {
 			hid.PressKey(pf.cfg.Bindings.ForceMove)
+			time.Sleep(time.Millisecond * 250)
 		}
-		time.Sleep(time.Millisecond * 250)
 	}
 
 	return int(dist)
@@ -232,4 +241,30 @@ func getNPCPosition(npcID game.NPCID) (X, Y int) {
 	}
 
 	return d.NPCs[npcID].Positions[0].X, d.NPCs[npcID].Positions[0].Y
+}
+
+func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
+	d := game.Status()
+	for _, l := range d.AdjacentLevels {
+		if l.Area == destinationArea {
+			// Hacky solution for not being able to process path, because usually stairs are on a non-walkable zone
+			pf.MoveTo(l.Position.X+5, l.Position.Y+5, true)
+			d = game.Status()
+			x, y := GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
+			action.Run(
+				action.NewMouseDisplacement(x, y, time.Millisecond*100),
+				action.NewMouseClick(hid.LeftButton, time.Second),
+			)
+
+			for i := 0; i < 5; i++ {
+				d = game.Status()
+				if d.Area == destinationArea {
+					return nil
+				}
+			}
+			return errors.New("destination area found, but not able to click it")
+		}
+	}
+
+	return errors.New("area not found")
 }

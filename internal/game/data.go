@@ -8,27 +8,38 @@ const (
 	AreaPandemonium     Area = "ThePandemoniumFortress"
 	AreaHarrogath       Area = "Harrogath"
 
-	AreaNihlathaksTemple Area = "NihlathaksTemple"
+	AreaCatacombsLevel2     Area = "CatacombsLevel2"
+	AreaCatacombsLevel3     Area = "CatacombsLevel3"
+	AreaCatacombsLevel4     Area = "CatacombsLevel4"
+	AreaNihlathaksTemple    Area = "NihlathaksTemple"
+	AreaDuranceOfHateLevel2 Area = "DuranceOfHateLevel2"
+	AreaDuranceOfHateLevel3 Area = "DuranceOfHateLevel3"
 
 	// Classes
 	ClassSorceress Class = "Sorceress"
 )
 
 type Data struct {
-	Health        Health
-	Area          Area
-	AreaOrigin    Position
-	Corpse        Corpse
-	Monsters      map[NPCID]Monster
-	CollisionGrid [][]int
-	PlayerUnit    PlayerUnit
-	NPCs          map[NPCID]NPC
-	Items         Items
-	Objects       []Object
-	OpenMenus     OpenMenus
+	Health         Health
+	Area           Area
+	AreaOrigin     Position
+	Corpse         Corpse
+	Monsters       map[NPCID]Monster
+	CollisionGrid  [][]int
+	PlayerUnit     PlayerUnit
+	NPCs           map[NPCID]NPC
+	Items          Items
+	Objects        []Object
+	AdjacentLevels []Level
+	OpenMenus      OpenMenus
 }
 
 type Area string
+
+type Level struct {
+	Area     Area
+	Position Position
+}
 
 func (a Area) IsTown() bool {
 	switch a {

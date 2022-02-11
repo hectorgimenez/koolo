@@ -106,6 +106,18 @@ func Status() Data {
 				},
 			})
 		}
+
+		var levels []Level
+		for _, lv := range d.AdjacentLevels {
+			levels = append(levels, Level{
+				Area: Area(lv.Area),
+				Position: Position{
+					X: int(lv.Positions[0].X),
+					Y: int(lv.Positions[0].Y),
+				},
+			})
+		}
+
 		return Data{
 			Health: Health{
 				Life:    d.Status.Life,
@@ -143,8 +155,9 @@ func Status() Data {
 				Stash:       d.MenuOpen.Stash,
 				Waypoint:    d.MenuOpen.Waypoint,
 			},
-			Items:   parseItems(d),
-			Objects: objects,
+			Items:          parseItems(d),
+			Objects:        objects,
+			AdjacentLevels: levels,
 		}
 	}
 

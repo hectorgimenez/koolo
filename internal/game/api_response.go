@@ -70,6 +70,11 @@ type gameDataHttpResponse struct {
 		Stash       bool `json:"stash"`
 		Waypoint    bool `json:"waypoint"`
 	} `json:"menu_open"`
+	AdjacentLevels []struct {
+		Area      string     `json:"area"`
+		Positions []position `json:"positions"`
+		IsPortal  bool
+	} `json:"adjacent_levels"`
 }
 
 type position struct {

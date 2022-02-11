@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"log"
 )
 
@@ -17,6 +18,7 @@ type Run interface {
 type BaseRun struct {
 	pf   helper.PathFinder
 	char character.Character
+	tm   town.Manager
 }
 
 func (b BaseRun) ReturnToTown() {
@@ -29,9 +31,10 @@ func (b BaseRun) ReturnToTown() {
 	}
 }
 
-func NewBaseRun(pf helper.PathFinder, char character.Character) BaseRun {
+func NewBaseRun(pf helper.PathFinder, char character.Character, tm town.Manager) BaseRun {
 	return BaseRun{
 		pf:   pf,
 		char: char,
+		tm:   tm,
 	}
 }
