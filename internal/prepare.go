@@ -1,6 +1,7 @@
 package koolo
 
 import (
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -13,14 +14,17 @@ func (b Bot) prepare(stash bool) {
 	b.recoverCorpse()
 	shouldBuyTPs := d.Items.Inventory.ShouldBuyTPs()
 	if b.bm.ShouldBuyPotions() || shouldBuyTPs {
+		b.logger.Info("Shopping time: go to fill pots and TPs")
 		b.tm.BuyPotionsAndTPs(d.Area, shouldBuyTPs)
 	}
 	if b.cfg.Character.UseMerc && !d.Health.Merc.Alive {
+		b.logger.Info("Merc is dead, let's revive it!")
 		b.tm.ReviveMerc(d.Area)
 	}
 
 	durabilityPct := float32(d.PlayerUnit.Stats[game.StatDurability] / d.PlayerUnit.Stats[game.StatMaxDurability])
 	if durabilityPct < 0.25 {
+		b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.25", durabilityPct))
 		b.tm.Repair(d.Area)
 	}
 	// TODO: Check if we need healing
