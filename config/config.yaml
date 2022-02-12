@@ -50,4 +50,4 @@ character:
   class: Sorceress
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
-  useCTA: false
+  useCTA: true

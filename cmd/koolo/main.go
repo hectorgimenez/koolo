@@ -35,7 +35,7 @@ func main() {
 	pf := helper.NewPathFinder(logger, cfg)
 	sm := town.NewShopManager(logger, bm)
 	tm := town.NewTownManager(cfg, pf, sm)
-	char, err := character.BuildCharacter(cfg)
+	char, err := character.BuildCharacter(cfg, pf)
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}

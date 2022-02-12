@@ -54,9 +54,14 @@ func (b *Bot) Start(ctx context.Context) (err error) {
 	}()
 
 	start := time.Now()
-	b.prepare()
 
 	for i, r := range b.runs {
+		if i == 0 {
+			b.prepare(true)
+		} else {
+			b.prepare(false)
+		}
+
 		err = r.MoveToStartingPoint()
 		if err != nil {
 			b.logger.Error("Error moving to start point for current run, let's skip it")
@@ -65,13 +70,13 @@ func (b *Bot) Start(ctx context.Context) (err error) {
 
 		err = r.TravelToDestination()
 		if err != nil {
-			r.ReturnToTown()
+			b.quitIfErr(start, b.char.ReturnToTown())
 			continue
 		}
 
 		err = r.Kill()
 		if err != nil {
-			r.ReturnToTown()
+			b.quitIfErr(start, b.char.ReturnToTown())
 			continue
 		}
 		b.logger.Debug("Run cleared, picking up items...")
@@ -80,7 +85,7 @@ func (b *Bot) Start(ctx context.Context) (err error) {
 		// Don't return to town on last run, just quit
 		if len(b.runs)-1 != i {
 			b.logger.Debug("Item pickup completed, returning to town...")
-			r.ReturnToTown()
+			b.quitIfErr(start, b.char.ReturnToTown())
 		}
 	}
 
@@ -88,4 +93,11 @@ func (b *Bot) Start(ctx context.Context) (err error) {
 	helper.ExitGame()
 
 	return nil
+}
+
+func (b *Bot) quitIfErr(startTime time.Time, err error) {
+	if err != nil {
+		helper.ExitGame()
+		b.logger.Info(fmt.Sprintf("Game finished with errors. Run time: %0.2f seconds, error: %s", time.Since(startTime).Seconds(), err.Error()))
+	}
 }

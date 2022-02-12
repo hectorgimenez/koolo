@@ -2,6 +2,7 @@ package helper
 
 import (
 	"errors"
+	"fmt"
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -18,8 +19,6 @@ const (
 
 	interactionOffsetX = -2
 	interactionOffsetY = -2
-
-	bottomHUDOffsetY = 1.21
 )
 
 type PathFinder struct {
@@ -91,7 +90,12 @@ func (pf PathFinder) InteractToObject(object game.Object) {
 
 func (pf PathFinder) PickupItem(item game.Item) error {
 	dist := -1
+	itemPickupRetries := 0
 	for true {
+		if itemPickupRetries > 5 {
+			return errors.New("item could not be picked up")
+		}
+
 		d := game.Status()
 
 		if dist == -1 || dist > 15 {
@@ -116,10 +120,12 @@ func (pf PathFinder) PickupItem(item game.Item) error {
 
 				for _, i := range d.Items.Ground {
 					if i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
+						pf.logger.Warn("Failed picking up the item, retry...")
+						itemPickupRetries++
 						continue
 					}
 				}
-				pf.logger.Debug("Item Picked up!")
+				pf.logger.Debug(fmt.Sprintf("Item Picked up: %s [%s]!", item.Name, item.Quality))
 				return nil
 			}
 		}
@@ -257,10 +263,14 @@ func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
 			)
 
 			for i := 0; i < 5; i++ {
-				d = game.Status()
-				if d.Area == destinationArea {
+				if game.Status().Area == destinationArea {
 					return nil
 				}
+				x, y = GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X+i, l.Position.Y+i)
+				action.Run(
+					action.NewMouseDisplacement(x, y, time.Millisecond*100),
+					action.NewMouseClick(hid.LeftButton, time.Second),
+				)
 			}
 			return errors.New("destination area found, but not able to click it")
 		}

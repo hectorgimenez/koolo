@@ -1,11 +1,14 @@
 package character
 
 import (
+	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"log"
 	"time"
 )
 
@@ -14,12 +17,13 @@ type Character interface {
 	KillAndariel() error
 	KillMephisto() error
 	KillPindle() error
-	UseTP()
+	ReturnToTown() error
 }
 
-func BuildCharacter(config config.Config) (Character, error) {
+func BuildCharacter(config config.Config, finder helper.PathFinder) (Character, error) {
 	bc := BaseCharacter{
 		cfg: config,
+		pf:  finder,
 	}
 	switch game.Class(config.Character.Class) {
 	case game.ClassSorceress:
@@ -31,6 +35,7 @@ func BuildCharacter(config config.Config) (Character, error) {
 
 type BaseCharacter struct {
 	cfg config.Config
+	pf  helper.PathFinder
 }
 
 func (bc BaseCharacter) BuffCTA() {
@@ -46,17 +51,32 @@ func (bc BaseCharacter) BuffCTA() {
 	}
 }
 
-func (bc BaseCharacter) UseTP() {
+func (bc BaseCharacter) ReturnToTown() error {
 	action.Run(
 		action.NewKeyPress(bc.cfg.Bindings.TP, time.Millisecond*200),
 		action.NewMouseClick(hid.RightButton, time.Second*1),
 	)
+	for i := 0; i <= 5; i++ {
+		for _, o := range game.Status().Objects {
+			if o.IsPortal() {
+				log.Println("Entering Portal...")
+				bc.pf.InteractToObject(o)
+				time.Sleep(time.Second)
+			}
+		}
+
+		if game.Status().Area.IsTown() {
+			return nil
+		}
+	}
+
+	return errors.New("error returning town")
 }
 
 func (bc BaseCharacter) DoBasicAttack(x, y, times int) {
 	actions := []action.HIDOperation{
 		action.NewKeyDown(bc.cfg.Bindings.StandStill, time.Millisecond*100),
-		action.NewMouseDisplacement(x, y, time.Millisecond*400),
+		action.NewMouseDisplacement(x, y, time.Millisecond*150),
 	}
 
 	for i := 0; i < times; i++ {

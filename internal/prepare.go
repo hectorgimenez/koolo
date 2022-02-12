@@ -3,11 +3,12 @@ package koolo
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
 
-func (b Bot) prepare() {
+func (b Bot) prepare(stash bool) {
 	d := game.Status()
 	b.recoverCorpse()
 	shouldBuyTPs := d.Items.Inventory.ShouldBuyTPs()
@@ -23,7 +24,10 @@ func (b Bot) prepare() {
 		b.tm.Repair(d.Area)
 	}
 	// TODO: Check if we need healing
-	b.tm.Stash()
+
+	if stash {
+		b.tm.Stash()
+	}
 }
 
 func (b Bot) recoverCorpse() {
@@ -35,8 +39,9 @@ func (b Bot) recoverCorpse() {
 
 	// If player died on previous game we recover the corpse
 	b.logger.Info("Corpse found, let's recover our stuff...")
+	x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, d.Corpse.Position.X, d.Corpse.Position.Y)
 	action.Run(
-		action.NewMouseDisplacement(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2, time.Millisecond*350),
+		action.NewMouseDisplacement(x, y, time.Millisecond*350),
 		action.NewMouseClick(hid.LeftButton, time.Second),
 	)
 

@@ -82,6 +82,8 @@ func (tm Manager) WPTo(act int, area int) error {
 
 			for i := 0; i < 10; i++ {
 				if game.Status().Area != currentArea {
+					// Give some time to load the area
+					time.Sleep(time.Second * 4)
 					return nil
 				}
 				time.Sleep(time.Second * 1)
