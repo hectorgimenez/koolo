@@ -31,7 +31,13 @@ func (tm Manager) Stash() {
 	if stashingRequired {
 		for _, o := range d.Objects {
 			if o.Name == "Bank" {
-				tm.pf.InteractToObject(o)
+				err := tm.pf.InteractToObject(o, func(data game.Data) bool {
+					return data.OpenMenus.Stash
+				})
+				if err != nil {
+					// TODO: Handle error
+					return
+				}
 				tm.stashGold()
 				tm.stashInventory()
 			}

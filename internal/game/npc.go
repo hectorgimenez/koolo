@@ -18,6 +18,7 @@ const (
 	CainNPC     NPCID = "Deckard Cain"
 
 	// Monsters
+	Countess   NPCID = "The Countess"
 	Andariel   NPCID = "Andariel"
 	Pindleskin NPCID = "Pindleskin"
 	Mephisto   NPCID = "Mephisto"

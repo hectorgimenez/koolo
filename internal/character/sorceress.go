@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	maxCountessAttackLoops = 10
 	maxAndarielAttackLoops = 10
 	maxPindleAttackLoops   = 10
 	maxMephistoAttackLoops = 10
@@ -23,10 +24,36 @@ func (s Sorceress) Buff() {
 	s.BuffCTA()
 	if s.cfg.Bindings.Sorceress.FrozenArmor != "" {
 		action.Run(
-			action.NewKeyPress(s.cfg.Bindings.Sorceress.FrozenArmor, time.Millisecond*600),
-			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
+			action.NewKeyPress(s.cfg.Bindings.Sorceress.FrozenArmor, time.Millisecond*100),
+			action.NewMouseClick(hid.RightButton, time.Millisecond*200),
 		)
 	}
+}
+
+func (s Sorceress) KillCountess() error {
+	d := game.Status()
+	andariel, found := d.Monsters[game.Countess]
+	if !found {
+		return errors.New("Countess not found")
+	}
+
+	for i := 0; i < maxCountessAttackLoops; i++ {
+		x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, andariel.Position.X, andariel.Position.Y)
+		s.DoSecondaryAttack(x, y, s.cfg.Bindings.Sorceress.Blizzard)
+		andariel, found = game.Status().Monsters[game.Countess]
+		if !found {
+			return nil
+		}
+
+		s.DoBasicAttack(x, y, 3)
+
+		andariel, found = game.Status().Monsters[game.Countess]
+		if !found {
+			return nil
+		}
+	}
+
+	return errors.New("timeout trying to kill Countess")
 }
 
 func (s Sorceress) KillAndariel() error {

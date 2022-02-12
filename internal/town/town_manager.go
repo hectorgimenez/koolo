@@ -44,6 +44,7 @@ func (tm Manager) BuyPotionsAndTPs(area game.Area, buyTPs bool) {
 	tm.pf.InteractToNPC(t.RefillNPC())
 	tm.openTradeMenu()
 	tm.shopManager.buyPotsAndTPs(buyTPs)
+
 }
 
 func (tm Manager) Repair(area game.Area) {
@@ -54,18 +55,25 @@ func (tm Manager) Repair(area game.Area) {
 		action.NewMouseDisplacement(int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37), time.Millisecond*850),
 		action.NewMouseClick(hid.LeftButton, time.Millisecond*1300),
 	)
+	tm.closeTradeMenu()
 }
 
 func (tm Manager) ReviveMerc(area game.Area) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.MercContractorNPC())
 	tm.openTradeMenu()
+	tm.closeTradeMenu()
 }
 
 func (tm Manager) WPTo(act int, area int) error {
 	for _, o := range game.Status().Objects {
 		if o.IsWaypoint() {
-			tm.pf.InteractToObject(o)
+			err := tm.pf.InteractToObject(o, func(data game.Data) bool {
+				return data.OpenMenus.Waypoint
+			})
+			if err != nil {
+				return err
+			}
 
 			currentArea := game.Status().Area
 			actTabX := int(float32(hid.GameAreaSizeX)/wpTabStartX) + (act-1)*wpTabSize + (wpTabSize / 2)
@@ -83,7 +91,7 @@ func (tm Manager) WPTo(act int, area int) error {
 			for i := 0; i < 10; i++ {
 				if game.Status().Area != currentArea {
 					// Give some time to load the area
-					time.Sleep(time.Second * 4)
+					time.Sleep(time.Second * 3)
 					return nil
 				}
 				time.Sleep(time.Second * 1)
@@ -97,6 +105,12 @@ func (tm Manager) WPTo(act int, area int) error {
 func (tm Manager) openTradeMenu() {
 	if game.Status().OpenMenus.NPCInteract {
 		action.Run(action.NewKeyPress("down", time.Millisecond*150), action.NewKeyPress("enter", time.Millisecond*500))
+	}
+}
+
+func (tm Manager) closeTradeMenu() {
+	if game.Status().OpenMenus.NPCInteract {
+		action.Run(action.NewKeyPress("esc", time.Millisecond*150))
 	}
 }
 

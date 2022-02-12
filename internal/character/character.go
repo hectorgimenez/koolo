@@ -14,6 +14,7 @@ import (
 
 type Character interface {
 	Buff()
+	KillCountess() error
 	KillAndariel() error
 	KillMephisto() error
 	KillPindle() error
@@ -41,12 +42,12 @@ type BaseCharacter struct {
 func (bc BaseCharacter) BuffCTA() {
 	if bc.cfg.Character.UseCTA {
 		action.Run(
-			action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Second),
-			action.NewKeyPress(bc.cfg.Bindings.CTABattleCommand, time.Millisecond*600),
+			action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Millisecond*300),
+			action.NewKeyPress(bc.cfg.Bindings.CTABattleCommand, time.Millisecond*100),
 			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
-			action.NewKeyPress(bc.cfg.Bindings.CTABattleOrders, time.Millisecond*600),
+			action.NewKeyPress(bc.cfg.Bindings.CTABattleOrders, time.Millisecond*100),
 			action.NewMouseClick(hid.RightButton, time.Millisecond*400),
-			action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Second),
+			action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Millisecond*300),
 		)
 	}
 }
@@ -60,7 +61,13 @@ func (bc BaseCharacter) ReturnToTown() error {
 		for _, o := range game.Status().Objects {
 			if o.IsPortal() {
 				log.Println("Entering Portal...")
-				bc.pf.InteractToObject(o)
+				err := bc.pf.InteractToObject(o, func(data game.Data) bool {
+					return game.Status().Area.IsTown()
+				})
+				if err != nil {
+					return err
+				}
+
 				time.Sleep(time.Second)
 			}
 		}

@@ -19,6 +19,8 @@ const (
 
 	interactionOffsetX = -2
 	interactionOffsetY = -2
+
+	maxInteractionRetries = 3
 )
 
 type PathFinder struct {
@@ -57,8 +59,9 @@ func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
 	}
 }
 
-func (pf PathFinder) InteractToObject(object game.Object) {
+func (pf PathFinder) InteractToObject(object game.Object, checker func(data game.Data) bool) error {
 	dist := -1
+	interactionRetries := 0
 	for true {
 		d := game.Status()
 
@@ -78,14 +81,24 @@ func (pf PathFinder) InteractToObject(object game.Object) {
 			}
 			if hovered {
 				time.Sleep(time.Second)
-				pf.logger.Debug("Object, click and wait for interaction")
+				pf.logger.Debug(fmt.Sprintf("%s hovered, click and wait for interaction", object.Name))
 				time.Sleep(time.Millisecond * 200)
 				hid.Click(hid.LeftButton)
 				time.Sleep(time.Second)
-				return
+				if checker(game.Status()) {
+					return nil
+				}
+				interactionRetries++
+				pf.logger.Debug(fmt.Sprintf("%s interaction failed, random movement and try again. Retry %d of %d...", object.Name, interactionRetries, maxInteractionRetries))
+				pf.randomMovement()
+				if interactionRetries >= maxInteractionRetries {
+					return errors.New(fmt.Sprintf("%s object could not be interacted, aborting", object.Name))
+				}
 			}
 		}
 	}
+
+	return nil
 }
 
 func (pf PathFinder) PickupItem(item game.Item) error {
@@ -120,7 +133,7 @@ func (pf PathFinder) PickupItem(item game.Item) error {
 
 				for _, i := range d.Items.Ground {
 					if i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
-						pf.logger.Warn("Failed picking up the item, retry...")
+						pf.logger.Debug("Failed picking up the item, retry...")
 						itemPickupRetries++
 						continue
 					}
@@ -189,16 +202,11 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 	p, dist, pFound := astar.Path(w.From(), w.To())
 
 	// Debug: Enable to generate Map bitmap
-	//w.RenderPathImg(p)
+	w.RenderPathImg(p)
 
 	if !pFound {
 		pf.logger.Debug("Path not found! Let's do a random movement...")
-		x := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
-		y := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
-		action.Run(
-			action.NewMouseDisplacement(x, y, time.Millisecond*80),
-			action.NewKeyPress(pf.cfg.Bindings.ForceMove, time.Second),
-		)
+		pf.randomMovement()
 		return -1
 	}
 
@@ -254,7 +262,7 @@ func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
 	for _, l := range d.AdjacentLevels {
 		if l.Area == destinationArea {
 			// Hacky solution for not being able to process path, because usually stairs are on a non-walkable zone
-			pf.MoveTo(l.Position.X+5, l.Position.Y+5, true)
+			pf.MoveTo(l.Position.X+2, l.Position.Y+2, true)
 			d = game.Status()
 			x, y := GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
 			action.Run(
@@ -277,4 +285,13 @@ func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
 	}
 
 	return errors.New("area not found")
+}
+
+func (pf PathFinder) randomMovement() {
+	x := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
+	y := (hid.GameAreaSizeX / 2) + rand.Intn(150) - 50
+	action.Run(
+		action.NewMouseDisplacement(x, y, time.Millisecond*80),
+		action.NewKeyPress(pf.cfg.Bindings.ForceMove, time.Second),
+	)
 }

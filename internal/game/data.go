@@ -14,6 +14,13 @@ const (
 	AreaNihlathaksTemple    Area = "NihlathaksTemple"
 	AreaDuranceOfHateLevel2 Area = "DuranceOfHateLevel2"
 	AreaDuranceOfHateLevel3 Area = "DuranceOfHateLevel3"
+	AreaBlackMarsh          Area = "BlackMarsh"
+	AreaForgottenTower      Area = "ForgottenTower"
+	AreaTowerCellarLevel1   Area = "TowerCellarLevel1"
+	AreaTowerCellarLevel2   Area = "TowerCellarLevel2"
+	AreaTowerCellarLevel3   Area = "TowerCellarLevel3"
+	AreaTowerCellarLevel4   Area = "TowerCellarLevel4"
+	AreaTowerCellarLevel5   Area = "TowerCellarLevel5"
 
 	// Classes
 	ClassSorceress Class = "Sorceress"
