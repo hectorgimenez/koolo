@@ -22,7 +22,7 @@ func (b Bot) prepare(stash bool) {
 		b.tm.ReviveMerc(d.Area)
 	}
 
-	durabilityPct := float32(d.PlayerUnit.Stats[game.StatDurability] / d.PlayerUnit.Stats[game.StatMaxDurability])
+	durabilityPct := float32(d.PlayerUnit.Stats[game.StatDurability]) / float32(d.PlayerUnit.Stats[game.StatMaxDurability])
 	if durabilityPct < 0.25 {
 		b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.25", durabilityPct))
 		b.tm.Repair(d.Area)
