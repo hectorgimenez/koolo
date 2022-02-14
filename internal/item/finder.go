@@ -45,33 +45,33 @@ func (f Pickup) getItemsToPickup() []game.Item {
 	var itemsToPickup []game.Item
 	for _, item := range groundItems {
 		for _, pickitItem := range f.pickitCfg.Items {
-			// Pickup potions only if they are required
-			if strings.Contains(strings.ToLower(item.Name), "healingpotion") {
-				if missingHealingPotions == 0 {
-					break
-				}
-				itemsToPickup = append(itemsToPickup, item)
-				missingHealingPotions--
-				break
-			}
-			if strings.Contains(strings.ToLower(item.Name), "manapotion") {
-				if missingManaPotions == 0 {
-					break
-				}
-				itemsToPickup = append(itemsToPickup, item)
-				missingManaPotions--
-				break
-			}
-			if strings.Contains(strings.ToLower(item.Name), "rejuvenationpotion") {
-				if missingRejuvenationPotions == 0 {
-					break
-				}
-				itemsToPickup = append(itemsToPickup, item)
-				missingRejuvenationPotions--
-				break
-			}
-
 			if strings.EqualFold(item.Name, pickitItem.Name) {
+				// Pickup potions only if they are required
+				if strings.Contains(strings.ToLower(item.Name), "healingpotion") {
+					if missingHealingPotions == 0 {
+						break
+					}
+					itemsToPickup = append(itemsToPickup, item)
+					missingHealingPotions--
+					break
+				}
+				if strings.Contains(strings.ToLower(item.Name), "manapotion") {
+					if missingManaPotions == 0 {
+						break
+					}
+					itemsToPickup = append(itemsToPickup, item)
+					missingManaPotions--
+					break
+				}
+				if strings.Contains(strings.ToLower(item.Name), "rejuvenationpotion") {
+					if missingRejuvenationPotions == 0 {
+						break
+					}
+					itemsToPickup = append(itemsToPickup, item)
+					missingRejuvenationPotions--
+					break
+				}
+
 				if pickitItem.Quality == "" || strings.EqualFold(string(item.Quality), pickitItem.Quality) {
 					itemsToPickup = append(itemsToPickup, item)
 					break

@@ -69,6 +69,7 @@ func (bc BaseCharacter) ReturnToTown() error {
 				}
 
 				time.Sleep(time.Second)
+				break
 			}
 		}
 

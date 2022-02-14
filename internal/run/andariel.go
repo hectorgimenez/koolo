@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	andarielStartingPositionX = 22552
-	andarielStartingPositionY = 9520
+	andarielStartingPositionX = 22563
+	andarielStartingPositionY = 9533
 )
 
 type Andariel struct {

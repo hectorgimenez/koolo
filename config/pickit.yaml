@@ -1,5 +1,5 @@
 pickupGold: true
-minimumGoldToPickup: 1000
+minimumGoldToPickup: 5000
 
 items:
   # Potions
@@ -43,6 +43,41 @@ items:
   - chamrune:
   - zodrune:
 
+  # Keys
+  - keyofhate:
+  - keyofterror:
+  - keyofdestruction:
+
+  # Essences
+  - twistedessenceofsuffering:
+
+
   - amulet: {quality: unique}
   - ring: {quality: unique}
+
+  ########### Helms ###########
+  # Unique
   - shako: {quality: unique} # Harlequin Crest
+  - tiara: {quality: unique} # Kira's Guardian
+  - diadem: {quality: unique} # Griffon's Eye
+  - demonhead: {quality: unique} # Andariel's Visage
+  - grimhelm: {quality: unique} # Vampire Gaze
+  - corona: {quality: unique} # Crown of Ages
+  - grandcrown: {quality: unique} # Crown of Thieves
+  - spiredhelm: {quality: unique} # Nightwing's Veil
+
+  ########### Gloves ###########
+  # Unique
+  - vampirebonegloves: {quality: unique} # Dracul's Grasp
+  - ogregauntlets: {quality: unique} # Steelrend
+  - heavygloves: {quality: unique} # Bloodfist
+  - sharkskingloves: {quality: unique} # Bloodfist
+  - vampirebonegloves: {quality: unique} # Bloodfist
+  - chaingloves: {quality: unique} # Chance Guard
+  - lightgauntlets: {quality: unique} # Magefist
+  - battlegauntlets: {quality: unique} # Magefist
+  - crusadergauntlets: {quality: unique} # Magefist
+  - gauntlets: {quality: unique} # Frostburn
+
+  ########### Boots ###########
+  # Unique
