@@ -45,10 +45,10 @@ func (pf PathFinder) MoveTo(x, y int, teleporting bool) {
 		}
 		dist := -1
 		if teleporting {
-			dist = pf.moveToNextStep(x, y, 40, true)
+			dist = pf.moveToNextStep(x, y, 30, true)
 			time.Sleep(time.Millisecond * 100)
 		} else {
-			dist = pf.moveToNextStep(x, y, 20, false)
+			dist = pf.moveToNextStep(x, y, 15, false)
 		}
 
 		// TODO: Calculate game grid based on screen resolution, otherwise precision is not good.
@@ -66,7 +66,7 @@ func (pf PathFinder) InteractToObject(object game.Object, checker func(data game
 		d := game.Status()
 
 		if dist == -1 || dist > 15 {
-			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 20, false)
+			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 15, false)
 		} else {
 			dist = pf.moveToNextStep(object.Position.X+interactionOffsetX, object.Position.Y+interactionOffsetY, 0, false)
 			time.Sleep(time.Millisecond * 500)
@@ -112,7 +112,7 @@ func (pf PathFinder) PickupItem(item game.Item) error {
 		d := game.Status()
 
 		if dist == -1 || dist > 15 {
-			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 20, false)
+			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 15, false)
 		} else {
 			dist = pf.moveToNextStep(item.Position.X+interactionOffsetX, item.Position.Y+interactionOffsetY, 0, false)
 			time.Sleep(time.Millisecond * 500)
@@ -161,7 +161,7 @@ func (pf PathFinder) InteractToNPC(npcID game.NPCID) {
 		npcPosX, npcPosY := getNPCPosition(npcID)
 
 		if dist == -1 || dist > 15 {
-			dist = pf.moveToNextStep(npcPosX, npcPosY, 20, false)
+			dist = pf.moveToNextStep(npcPosX, npcPosY, 15, false)
 		} else {
 			dist = pf.moveToNextStep(npcPosX, npcPosY, 0, false)
 			time.Sleep(time.Millisecond * 250)
@@ -182,9 +182,8 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 	diffX := destinationX - playerX
 	diffY := destinationY - playerY
 
-	screenX := int(float64((diffX-diffY)*halfTileSizeX)*2.5) + (hid.GameAreaSizeX / 2)
-	screenY := int(float64((diffX+diffY)*halfTileSizeY)*2.8) + (hid.GameAreaSizeY / 2)
-
+	screenX := int((float32(diffX-diffY) * 19.8) + float32(hid.GameAreaSizeX/2))
+	screenY := int((float32(diffX+diffY) * 9.9) + float32(hid.GameAreaSizeY/2))
 	return screenX, screenY
 }
 
@@ -225,8 +224,10 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 
 	// Transform cartesian movement (world) to isometric (screen)e
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	screenX := ((worldDiffX-worldDiffY)*halfTileSizeX)*2 + (hid.GameAreaSizeX / 2)
-	screenY := ((worldDiffX+worldDiffY)*halfTileSizeY)*2 + (hid.GameAreaSizeY / 2)
+	//halfTileX := float32(1933) / 40
+	//halfTileY := float32(1110) / 40
+	screenX := int((float32(worldDiffX-worldDiffY) * 19.8) + float32(hid.GameAreaSizeX/2))
+	screenY := int((float32(worldDiffX+worldDiffY) * 9.9) + float32(hid.GameAreaSizeY/2))
 
 	// Prevent mouse overlap the HUD
 	if screenY > int(float32(hid.GameAreaSizeY)/1.21) {
@@ -263,6 +264,7 @@ func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
 		if l.Area == destinationArea {
 			// Hacky solution for not being able to process path, because usually stairs are on a non-walkable zone
 			pf.MoveTo(l.Position.X+2, l.Position.Y+2, true)
+			time.Sleep(time.Millisecond * 500)
 			d = game.Status()
 			x, y := GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
 			action.Run(
@@ -288,8 +290,10 @@ func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
 }
 
 func (pf PathFinder) randomMovement() {
-	x := (hid.GameAreaSizeX / 2) + rand.Intn(301) - 150
-	y := (hid.GameAreaSizeX / 2) + rand.Intn(150) - 50
+	midGameX := hid.GameAreaSizeX / 2
+	midGameY := hid.GameAreaSizeY / 2
+	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
+	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
 	action.Run(
 		action.NewMouseDisplacement(x, y, time.Millisecond*80),
 		action.NewKeyPress(pf.cfg.Bindings.ForceMove, time.Second),
