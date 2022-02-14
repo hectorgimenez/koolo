@@ -27,7 +27,10 @@ func (b Bot) prepare(stash bool) {
 		b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.25", durabilityPct))
 		b.tm.Repair(d.Area)
 	}
-	// TODO: Check if we need healing
+
+	if game.Status().Health.HPPercent() < 80 {
+		b.tm.Heal(d.Area)
+	}
 
 	if stash {
 		b.tm.Stash()

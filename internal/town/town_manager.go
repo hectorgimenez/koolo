@@ -47,6 +47,11 @@ func (tm Manager) BuyPotionsAndTPs(area game.Area, buyTPs bool) {
 
 }
 
+func (tm Manager) Heal(area game.Area) {
+	t := tm.getTownByArea(area)
+	tm.pf.InteractToNPC(t.RefillNPC())
+}
+
 func (tm Manager) Repair(area game.Area) {
 	t := tm.getTownByArea(area)
 	tm.pf.InteractToNPC(t.RepairNPC())
