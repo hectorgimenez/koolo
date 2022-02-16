@@ -26,14 +26,19 @@ func NewPickup(logger *zap.Logger, bm health.BeltManager, pf helper.PathFinder, 
 	}
 }
 
-func (f Pickup) Pickup() {
+func (f Pickup) Pickup() int {
 	itemsToPickup := f.getItemsToPickup()
+	itemsPickedUp := 0
 	for _, item := range itemsToPickup {
 		f.logger.Debug(fmt.Sprintf("Picking %s [%s] at X: %d Y: %d", item.Name, item.Quality, item.Position.X, item.Position.Y))
 		if err := f.pf.PickupItem(item); err != nil {
 			f.logger.Error(fmt.Sprintf("Error picking up %s item! %s", item.Name, err.Error()))
+		} else {
+			itemsPickedUp++
 		}
 	}
+
+	return itemsPickedUp
 }
 
 func (f Pickup) getItemsToPickup() []game.Item {

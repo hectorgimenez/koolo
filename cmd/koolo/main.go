@@ -43,7 +43,7 @@ func main() {
 	runs := []run.Run{run.NewAndariel(baseRun), run.NewMephisto(baseRun), run.NewPindleskin(baseRun)}
 	pickup := item.NewPickup(logger, bm, pf, pickit)
 
-	bot := koolo.NewBot(logger, cfg, bm, tm, char, runs, pickup)
+	bot := koolo.NewBot(logger, cfg, hm, bm, tm, char, pickup)
 	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
 
 	ctx := context.Background()
@@ -64,7 +64,7 @@ func main() {
 		}
 	}()
 
-	err = supervisor.Start(ctx)
+	err = supervisor.Start(ctx, runs)
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}

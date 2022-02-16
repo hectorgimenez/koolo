@@ -24,6 +24,10 @@ func NewMephisto(run BaseRun) Mephisto {
 	}
 }
 
+func (p Mephisto) Name() string {
+	return "Mephisto"
+}
+
 func (p Mephisto) Kill() error {
 	err := p.char.KillMephisto()
 	if err != nil {

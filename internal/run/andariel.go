@@ -21,6 +21,10 @@ func NewAndariel(run BaseRun) Andariel {
 	}
 }
 
+func (p Andariel) Name() string {
+	return "Andariel"
+}
+
 func (p Andariel) Kill() error {
 	err := p.char.KillAndariel()
 	if err != nil {

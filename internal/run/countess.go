@@ -21,6 +21,10 @@ func NewCountess(run BaseRun) Countess {
 	}
 }
 
+func (p Countess) Name() string {
+	return "Countess"
+}
+
 func (p Countess) Kill() error {
 	err := p.char.KillCountess()
 	if err != nil {

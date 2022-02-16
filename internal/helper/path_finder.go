@@ -201,7 +201,7 @@ func (pf PathFinder) moveToNextStep(destX, destY int, movementDistance int, tele
 	p, dist, pFound := astar.Path(w.From(), w.To())
 
 	// Debug: Enable to generate Map bitmap
-	w.RenderPathImg(p)
+	//w.RenderPathImg(p)
 
 	if !pFound {
 		pf.logger.Debug("Path not found! Let's do a random movement...")

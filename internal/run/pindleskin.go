@@ -24,6 +24,10 @@ func NewPindleskin(run BaseRun) Pindleskin {
 	}
 }
 
+func (p Pindleskin) Name() string {
+	return "Pindleskin"
+}
+
 func (p Pindleskin) Kill() error {
 	err := p.char.KillPindle()
 	if err != nil {

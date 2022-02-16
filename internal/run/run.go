@@ -7,6 +7,7 @@ import (
 )
 
 type Run interface {
+	Name() string
 	MoveToStartingPoint() error
 	TravelToDestination() error
 	Kill() error

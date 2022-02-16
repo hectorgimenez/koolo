@@ -6,23 +6,37 @@ import (
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 	"time"
 )
 
 // Supervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type Supervisor struct {
-	logger        *zap.Logger
-	cfg           config.Config
-	eventsChannel <-chan event.Event
-	healthManager health.Manager
-	bot           Bot
+	logger         *zap.Logger
+	cfg            config.Config
+	eventsChannel  <-chan event.Event
+	healthManager  health.Manager
+	bot            Bot
+	executionStats ExecutionStats
+}
+
+type ExecutionStats struct {
+	Runs        map[string]*RunStats
+	RunningTime time.Duration
+}
+
+type RunStats struct {
+	ItemCounter int
+	Kills       int
+	Deaths      int
+	Chickens    int
+	Errors      int
+	Time        time.Duration
 }
 
 func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot Bot) Supervisor {
@@ -35,13 +49,12 @@ func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot
 }
 
 // Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
-func (s Supervisor) Start(ctx context.Context) error {
+func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
+	s.initializeStats(runs)
 	err := s.ensureProcessIsRunningAndPrepare()
 	if err != nil {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
-
-	g, ctx := errgroup.WithContext(ctx)
 
 	for {
 		s.logger.Info("Creating new game...")
@@ -50,24 +63,21 @@ func (s Supervisor) Start(ctx context.Context) error {
 			s.logger.Fatal("Error creating new game")
 		}
 
-		// Main loop will be inside this, will handle bosses and path traveling
-		g.Go(func() error {
-			return s.bot.Start(ctx)
-		})
-
-		// Will keep our character and mercenary alive, monitoring life and mana
-		g.Go(func() error {
-			return s.healthManager.Start(ctx)
-		})
-
-		if err = g.Wait(); err != nil && err != game.NotInGameErr {
-			s.logger.Error("Game exited with error!", zap.Error(err))
+		gameStats := s.bot.RunGame(ctx, runs)
+		for k, stats := range gameStats {
+			s.executionStats.Runs[k].ItemCounter = s.executionStats.Runs[k].ItemCounter + stats.ItemCounter
+			s.executionStats.Runs[k].Kills = s.executionStats.Runs[k].Kills + stats.Kills
+			s.executionStats.Runs[k].Deaths = s.executionStats.Runs[k].Deaths + stats.Deaths
+			s.executionStats.Runs[k].Chickens = s.executionStats.Runs[k].Chickens + stats.Chickens
+			s.executionStats.Runs[k].Errors = s.executionStats.Runs[k].Errors + stats.Errors
+			s.executionStats.Runs[k].Time = s.executionStats.Runs[k].Time + stats.Time
 		}
+
 		time.Sleep(time.Second * 5)
 	}
 }
 
-func (s Supervisor) ensureProcessIsRunningAndPrepare() error {
+func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 	window := robotgo.FindWindow("Diablo II: Resurrected")
 	if window == win.HWND_TOP {
 		s.logger.Fatal("Diablo II: Resurrected window can not be found! Are you sure game is open?")
@@ -85,4 +95,11 @@ func (s Supervisor) ensureProcessIsRunningAndPrepare() error {
 	time.Sleep(time.Second * 1)
 
 	return nil
+}
+
+func (s *Supervisor) initializeStats(runs []run.Run) {
+	s.executionStats.Runs = map[string]*RunStats{}
+	for _, r := range runs {
+		s.executionStats.Runs[r.Name()] = &RunStats{}
+	}
 }
