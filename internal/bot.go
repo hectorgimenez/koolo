@@ -95,10 +95,11 @@ func (b Bot) RunGame(ctx context.Context, runs []run.Run) map[string]*RunStats {
 			b.logger.Debug(fmt.Sprintf("%s cleared, picking up items...", r.Name()))
 			stats[r.Name()].ItemCounter = b.pickup.Pickup()
 			stats[r.Name()].Kills = 1
+			b.logger.Debug("Item pickup completed")
 
 			// Don't return to town on last run, just quit
 			if len(runs)-1 != i {
-				b.logger.Debug("Item pickup completed, returning to town...")
+				b.logger.Debug("Returning to town...")
 				b.quitIfErr(totalTime, b.char.ReturnToTown())
 			}
 			stats[r.Name()].Time = time.Since(start)
@@ -115,6 +116,7 @@ func (b Bot) RunGame(ctx context.Context, runs []run.Run) map[string]*RunStats {
 		}
 	}
 
+	b.logger.Info(fmt.Sprintf("Game finished successfully. Run time: %0.2f seconds", time.Since(totalTime).Seconds()))
 	helper.ExitGame()
 
 	return stats

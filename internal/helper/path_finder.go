@@ -131,12 +131,17 @@ func (pf PathFinder) PickupItem(item game.Item) error {
 					action.NewMouseClick(hid.LeftButton, time.Second),
 				)
 
+				pickedUp := true
 				for _, i := range d.Items.Ground {
 					if i.Name == i.Name && i.Position.X == item.Position.X && i.Position.Y == item.Position.Y {
 						pf.logger.Debug("Failed picking up the item, retry...")
+						pickedUp = false
 						itemPickupRetries++
-						continue
+						break
 					}
+				}
+				if !pickedUp {
+					continue
 				}
 				pf.logger.Debug(fmt.Sprintf("Item Picked up: %s [%s]!", item.Name, item.Quality))
 				return nil
@@ -279,7 +284,7 @@ func (pf PathFinder) MoveToArea(destinationArea game.Area) error {
 				x, y = GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X+i, l.Position.Y+i)
 				action.Run(
 					action.NewMouseDisplacement(x, y, time.Millisecond*100),
-					action.NewMouseClick(hid.LeftButton, time.Second),
+					action.NewMouseClick(hid.LeftButton, time.Second*2),
 				)
 			}
 			return errors.New("destination area found, but not able to click it")
