@@ -18,10 +18,11 @@ const (
 	CainNPC     NPCID = "Deckard Cain"
 
 	// Monsters
-	Countess   NPCID = "The Countess"
-	Andariel   NPCID = "Andariel"
-	Pindleskin NPCID = "Pindleskin"
-	Mephisto   NPCID = "Mephisto"
+	Countess    NPCID = "The Countess"
+	Andariel    NPCID = "Andariel"
+	Pindleskin  NPCID = "Pindleskin"
+	Mephisto    NPCID = "Mephisto"
+	TheSummoner NPCID = "The Summoner"
 )
 
 type NPCID string

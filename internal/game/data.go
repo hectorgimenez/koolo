@@ -21,6 +21,7 @@ const (
 	AreaTowerCellarLevel3   Area = "TowerCellarLevel3"
 	AreaTowerCellarLevel4   Area = "TowerCellarLevel4"
 	AreaTowerCellarLevel5   Area = "TowerCellarLevel5"
+	ArcaneSanctuary         Area = "ArcaneSanctuary"
 
 	// Classes
 	ClassSorceress Class = "Sorceress"

@@ -28,9 +28,11 @@ func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) {
 		binding := pm.getBindingBasedOnColumn(p)
 		if merc {
 			action.Run(action.NewKeyPress("shift", time.Millisecond*50, binding))
+			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary", potionType))
 			return
 		}
 		action.Run(action.NewKeyPress(binding, time.Millisecond*50))
+		pm.logger.Debug(fmt.Sprintf("Drinking %s potion", potionType))
 		return
 	}
 

@@ -40,7 +40,7 @@ func main() {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 	baseRun := run.NewBaseRun(pf, char, tm)
-	runs := []run.Run{run.NewAndariel(baseRun), run.NewMephisto(baseRun), run.NewPindleskin(baseRun)}
+	runs := []run.Run{run.NewAndariel(baseRun), run.NewSummoner(baseRun), run.NewMephisto(baseRun), run.NewPindleskin(baseRun)}
 	pickup := item.NewPickup(logger, bm, pf, pickit)
 
 	bot := koolo.NewBot(logger, cfg, hm, bm, tm, char, pickup)

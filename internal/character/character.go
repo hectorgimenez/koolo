@@ -16,6 +16,7 @@ type Character interface {
 	Buff()
 	KillCountess() error
 	KillAndariel() error
+	KillSummoner() error
 	KillMephisto() error
 	KillPindle() error
 	ReturnToTown() error

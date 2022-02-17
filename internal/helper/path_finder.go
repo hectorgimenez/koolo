@@ -301,6 +301,6 @@ func (pf PathFinder) randomMovement() {
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
 	action.Run(
 		action.NewMouseDisplacement(x, y, time.Millisecond*80),
-		action.NewKeyPress(pf.cfg.Bindings.ForceMove, time.Second),
+		action.NewKeyPress(pf.cfg.Bindings.ForceMove, time.Second*2),
 	)
 }
