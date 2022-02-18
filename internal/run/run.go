@@ -1,28 +1,27 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/town"
 )
 
 type Run interface {
 	Name() string
-	MoveToStartingPoint() error
-	TravelToDestination() error
-	Kill() error
+	BuildActions(game.Data) []action.Action
 }
 
 type BaseRun struct {
-	pf   helper.PathFinder
-	char character.Character
-	tm   town.Manager
+	builder action.Builder
+	pf      helper.PathFinderV2
+	char    character.Character
 }
 
-func NewBaseRun(pf helper.PathFinder, char character.Character, tm town.Manager) BaseRun {
+func NewBaseRun(builder action.Builder, pf helper.PathFinderV2, char character.Character) BaseRun {
 	return BaseRun{
-		pf:   pf,
-		char: char,
-		tm:   tm,
+		builder: builder,
+		pf:      pf,
+		char:    char,
 	}
 }

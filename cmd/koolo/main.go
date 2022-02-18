@@ -4,12 +4,11 @@ import (
 	"context"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/item"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
@@ -18,7 +17,7 @@ import (
 )
 
 func main() {
-	cfg, pickit, err := config.Load()
+	cfg, _, err := config.Load()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
@@ -29,22 +28,21 @@ func main() {
 	}
 	defer logger.Sync()
 
-	chEvents := make(chan event.Event, 0)
+	pf := helper.NewPathFinderV2(logger, cfg)
 	bm := health.NewBeltManager(logger, cfg)
-	hm := health.NewHealthManager(logger, chEvents, bm, cfg)
-	pf := helper.NewPathFinder(logger, cfg)
+	hm := health.NewHealthManager(logger, bm, cfg)
 	sm := town.NewShopManager(logger, bm)
-	tm := town.NewTownManager(cfg, pf, sm)
-	char, err := character.BuildCharacter(cfg, pf)
+	char, err := character.BuildCharacter(cfg)
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
-	baseRun := run.NewBaseRun(pf, char, tm)
-	runs := []run.Run{run.NewAndariel(baseRun), run.NewSummoner(baseRun), run.NewMephisto(baseRun), run.NewPindleskin(baseRun)}
-	pickup := item.NewPickup(logger, bm, pf, pickit)
 
-	bot := koolo.NewBot(logger, cfg, hm, bm, tm, char, pickup)
-	supervisor := koolo.NewSupervisor(logger, cfg, hm, bot)
+	ab := action.NewBuilder(cfg, logger, pf, sm, bm)
+	baseRun := run.NewBaseRun(ab, pf, char)
+	runs := []run.Run{run.NewPindleskin(baseRun)}
+	//pickup := item.NewPickup(logger, bm, pickit)
+	bot := koolo.NewBot(logger, cfg, hm, bm, sm, pf, ab)
+	supervisor := koolo.NewSupervisor(logger, cfg, bot)
 
 	ctx := context.Background()
 	// TODO: Debug mouse

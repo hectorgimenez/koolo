@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
@@ -17,17 +14,9 @@ import (
 
 // Supervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type Supervisor struct {
-	logger         *zap.Logger
-	cfg            config.Config
-	eventsChannel  <-chan event.Event
-	healthManager  health.Manager
-	bot            Bot
-	executionStats ExecutionStats
-}
-
-type ExecutionStats struct {
-	Runs        map[string]*RunStats
-	RunningTime time.Duration
+	logger *zap.Logger
+	cfg    config.Config
+	bot    Bot
 }
 
 type RunStats struct {
@@ -39,42 +28,22 @@ type RunStats struct {
 	Time        time.Duration
 }
 
-func NewSupervisor(logger *zap.Logger, cfg config.Config, hm health.Manager, bot Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, cfg config.Config, bot Bot) Supervisor {
 	return Supervisor{
-		logger:        logger,
-		cfg:           cfg,
-		healthManager: hm,
-		bot:           bot,
+		logger: logger,
+		cfg:    cfg,
+		bot:    bot,
 	}
 }
 
 // Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
 func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
-	s.initializeStats(runs)
 	err := s.ensureProcessIsRunningAndPrepare()
 	if err != nil {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
 
-	for {
-		s.logger.Info("Creating new game...")
-		err = helper.NewGame(s.cfg.Character.Difficulty)
-		if err != nil {
-			s.logger.Fatal("Error creating new game")
-		}
-
-		gameStats := s.bot.RunGame(ctx, runs)
-		for k, stats := range gameStats {
-			s.executionStats.Runs[k].ItemCounter = s.executionStats.Runs[k].ItemCounter + stats.ItemCounter
-			s.executionStats.Runs[k].Kills = s.executionStats.Runs[k].Kills + stats.Kills
-			s.executionStats.Runs[k].Deaths = s.executionStats.Runs[k].Deaths + stats.Deaths
-			s.executionStats.Runs[k].Chickens = s.executionStats.Runs[k].Chickens + stats.Chickens
-			s.executionStats.Runs[k].Errors = s.executionStats.Runs[k].Errors + stats.Errors
-			s.executionStats.Runs[k].Time = s.executionStats.Runs[k].Time + stats.Time
-		}
-
-		time.Sleep(time.Second * 5)
-	}
+	return s.bot.Run(ctx, runs)
 }
 
 func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
@@ -95,11 +64,4 @@ func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 	time.Sleep(time.Second * 1)
 
 	return nil
-}
-
-func (s *Supervisor) initializeStats(runs []run.Run) {
-	s.executionStats.Runs = map[string]*RunStats{}
-	for _, r := range runs {
-		s.executionStats.Runs[r.Name()] = &RunStats{}
-	}
 }

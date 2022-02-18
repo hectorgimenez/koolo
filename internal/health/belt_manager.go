@@ -2,11 +2,10 @@ package health
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
-	"time"
 )
 
 type BeltManager struct {
@@ -27,11 +26,11 @@ func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) {
 	if found {
 		binding := pm.getBindingBasedOnColumn(p)
 		if merc {
-			action.Run(action.NewKeyPress("shift", time.Millisecond*50, binding))
+			hid.PressKeyCombination("shift", binding)
 			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary", potionType))
 			return
 		}
-		action.Run(action.NewKeyPress(binding, time.Millisecond*50))
+		hid.PressKey(binding)
 		pm.logger.Debug(fmt.Sprintf("Drinking %s potion", potionType))
 		return
 	}
