@@ -21,7 +21,7 @@ func PickupItem(item game.Item) *PickupItemStep {
 	}
 }
 
-func (p PickupItemStep) Status(data game.Data) Status {
+func (p *PickupItemStep) Status(data game.Data) Status {
 	for _, i := range data.Items.Ground {
 		if i.ID == p.item.ID {
 			return p.status
@@ -31,9 +31,9 @@ func (p PickupItemStep) Status(data game.Data) Status {
 	return p.tryTransitionStatus(StatusCompleted)
 }
 
-func (p PickupItemStep) Run(data game.Data) error {
+func (p *PickupItemStep) Run(data game.Data) error {
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) < time.Millisecond*500 {
+	if time.Since(p.lastRun) < time.Second {
 		return nil
 	}
 
@@ -49,12 +49,13 @@ func (p PickupItemStep) Run(data game.Data) error {
 				p.waitingForInteraction = true
 				return nil
 			} else {
-				path, distance, _ := helper.GetPathToDestination(data, i.Position.X-2, i.Position.Y-2)
-				if distance > 15 {
+				path, distance, _ := helper.GetPathToDestination(data, i.Position.X, i.Position.Y)
+				if distance > 5 {
 					helper.MoveThroughPath(path, 15, false)
 					return nil
 				}
-				helper.MoveThroughPath(path, 0, false)
+				x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-2, i.Position.Y-2)
+				hid.MovePointer(x, y)
 
 				return nil
 			}

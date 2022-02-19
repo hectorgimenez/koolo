@@ -42,14 +42,15 @@ func (m *MoveToStep) Run(data game.Data) error {
 	}
 	m.tryTransitionStatus(StatusInProgress)
 
+	// TODO: In case of teleport, calculate fcr frames for waiting time
+	if time.Since(m.lastRun) < time.Millisecond*500 {
+		return nil
+	}
+
 	if m.path == nil || !m.adjustPath(data) {
 		// TODO: Handle not found
 		path, _, _ := helper.GetPathToDestination(data, m.toX, m.toY)
 		m.path = path
-	}
-	// TODO: In case of teleport, calculate fcr frames for waiting time
-	if time.Since(m.lastRun) < time.Millisecond*500 {
-		return nil
 	}
 
 	m.lastRun = time.Now()

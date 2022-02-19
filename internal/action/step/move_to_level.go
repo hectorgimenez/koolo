@@ -50,7 +50,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 			distance := helper.DistanceFromPoint(data, l.Position.X, l.Position.Y)
 			if distance > 10 {
 				path, _, _ := helper.GetPathToDestination(data, l.Position.X, l.Position.Y)
-				helper.MoveThroughPath(path, 20, true)
+				helper.MoveThroughPath(path, 25, true)
 				return nil
 			}
 
