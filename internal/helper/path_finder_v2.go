@@ -5,22 +5,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"go.uber.org/zap"
 )
 
-type PathFinderV2 struct {
-	logger *zap.Logger
-	cfg    config.Config
-}
-
-func NewPathFinderV2(logger *zap.Logger, cfg config.Config) PathFinderV2 {
-	return PathFinderV2{
-		logger: logger,
-		cfg:    cfg,
-	}
-}
-
-func (pf PathFinderV2) GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, distance float64, found bool) {
+func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, distance float64, found bool) {
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
@@ -34,7 +21,7 @@ func (pf PathFinderV2) GetPathToDestination(d game.Data, destX, destY int) (path
 	return astar.Path(w.From(), w.To())
 }
 
-func (pf PathFinderV2) MoveThroughPath(p []astar.Pather, distance int, teleport bool) {
+func MoveThroughPath(p []astar.Pather, distance int, teleport bool) {
 	moveTo := p[0].(*Tile)
 	if distance > 0 && len(p) > distance {
 		moveTo = p[len(p)-distance].(*Tile)
@@ -51,7 +38,7 @@ func (pf PathFinderV2) MoveThroughPath(p []astar.Pather, distance int, teleport 
 		if teleport {
 			hid.Click(hid.RightButton)
 		} else {
-			hid.PressKey(pf.cfg.Bindings.ForceMove)
+			hid.PressKey(config.Config.Bindings.ForceMove)
 		}
 	}
 }

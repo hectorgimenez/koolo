@@ -29,77 +29,32 @@ func (p Pindleskin) Name() string {
 }
 
 func (p Pindleskin) BuildActions(data game.Data) (actions []action.Action) {
+	// Move to Act 5
 	if data.Area != game.AreaHarrogath {
 		actions = append(actions, p.builder.WayPoint(game.AreaHarrogath))
 	}
 
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		steps = append(steps,
-			step.NewMoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false, p.BaseRun.pf),
+	// Moving to starting point
+	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+		return []step.Step{
+			step.NewMoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
 			step.NewInteractObject("PermanentTownPortal", func(data game.Data) bool {
 				return data.Area == game.AreaNihlathaksTemple
-			}, p.BaseRun.pf),
-		)
-		return
+			}),
+		}
 	}))
 
 	// Buff
 	actions = append(actions, p.char.Buff())
 
-	return
-}
-
-func (p Pindleskin) Kill() error {
-	err := p.char.KillPindle()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p Pindleskin) MoveToStartingPoint() error {
-	//if game.Status().Area != game.AreaHarrogath {
-	//	if err := p.tm.WPTo(5, 1); err != nil {
-	//		return err
-	//	}
-	//}
-	//
-	//portal, found := p.getRedPortal()
-	//if !found {
-	//	// Let's do a first approach via static pathing, looks like portal is too far away
-	//	p.pf.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false)
-	//
-	//	portal, found = p.getRedPortal()
-	//	if !found {
-	//		return errors.New("portal not found")
-	//	}
-	//}
-	//
-	//err := p.pf.InteractToObject(portal, func(data game.Data) bool {
-	//	time.Sleep(time.Second)
-	//	return game.Status().Area == game.AreaNihlathaksTemple
-	//})
-	//if err != nil {
-	//	return errors.New("error moving to red portal")
-	//}
-	//
-	//p.char.Buff()
-	return nil
-}
-
-func (p Pindleskin) TravelToDestination() error {
-	//p.pf.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true)
-	//
-	return nil
-}
-
-func (p Pindleskin) getRedPortal() (game.Object, bool) {
-	for _, o := range game.Status().Objects {
-		if o.IsRedPortal() {
-			return o, true
+	// Travel to boss destination
+	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+		return []step.Step{
+			step.NewMoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),
 		}
-	}
+	}))
 
-	return game.Object{}, false
+	// Kill Pindleskin
+	actions = append(actions, p.char.KillPindle())
+	return
 }

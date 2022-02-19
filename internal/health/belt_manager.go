@@ -10,13 +10,11 @@ import (
 
 type BeltManager struct {
 	logger *zap.Logger
-	cfg    config.Config
 }
 
-func NewBeltManager(logger *zap.Logger, cfg config.Config) BeltManager {
+func NewBeltManager(logger *zap.Logger) BeltManager {
 	return BeltManager{
 		logger: logger,
-		cfg:    cfg,
 	}
 }
 
@@ -40,8 +38,8 @@ func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) {
 
 // ShouldBuyPotions will return true if more than 25% of belt is empty (ignoring rejuv)
 func (pm BeltManager) ShouldBuyPotions() bool {
-	targetHealingAmount := pm.cfg.Inventory.BeltColumns.Healing * pm.cfg.Inventory.BeltRows
-	targetManaAmount := pm.cfg.Inventory.BeltColumns.Mana * pm.cfg.Inventory.BeltRows
+	targetHealingAmount := config.Config.Inventory.BeltColumns.Healing * config.Config.Inventory.BeltRows
+	targetManaAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
 
 	currentHealing, currentMana, currentRejuv := pm.getCurrentPotions()
 
@@ -78,7 +76,7 @@ func (pm BeltManager) GetMissingCount(potionType game.PotionType) int {
 	currentHealing, currentMana, _ := pm.getCurrentPotions()
 
 	if potionType == game.HealingPotion {
-		targetAmount := pm.cfg.Inventory.BeltColumns.Healing * pm.cfg.Inventory.BeltRows
+		targetAmount := config.Config.Inventory.BeltColumns.Healing * config.Config.Inventory.BeltRows
 		missingPots := targetAmount - currentHealing
 		if missingPots < 0 {
 			return 0
@@ -86,7 +84,7 @@ func (pm BeltManager) GetMissingCount(potionType game.PotionType) int {
 		return missingPots
 	}
 
-	targetAmount := pm.cfg.Inventory.BeltColumns.Mana * pm.cfg.Inventory.BeltRows
+	targetAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
 	missingPots := targetAmount - currentMana
 	if missingPots < 0 {
 		return 0
@@ -101,13 +99,13 @@ func (pm BeltManager) belt() game.Belt {
 func (pm BeltManager) getBindingBasedOnColumn(potion game.Potion) string {
 	switch potion.Position.X {
 	case 0:
-		return pm.cfg.Bindings.Potion1
+		return config.Config.Bindings.Potion1
 	case 1:
-		return pm.cfg.Bindings.Potion2
+		return config.Config.Bindings.Potion2
 	case 2:
-		return pm.cfg.Bindings.Potion3
+		return config.Config.Bindings.Potion3
 	case 3:
-		return pm.cfg.Bindings.Potion4
+		return config.Config.Bindings.Potion4
 	}
 
 	return ""

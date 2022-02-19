@@ -11,18 +11,16 @@ import (
 type InteractObject struct {
 	basicStep
 	objectName            string
-	pf                    helper.PathFinderV2
 	waitingForInteraction bool
 	isCompleted           func(game.Data) bool
 }
 
-func NewInteractObject(objectName string, isCompleted func(game.Data) bool, pf helper.PathFinderV2) *InteractObject {
+func NewInteractObject(objectName string, isCompleted func(game.Data) bool) *InteractObject {
 	return &InteractObject{
 		basicStep: basicStep{
 			status: StatusNotStarted,
 		},
 		objectName:  objectName,
-		pf:          pf,
 		isCompleted: isCompleted,
 	}
 }
@@ -54,12 +52,12 @@ func (i *InteractObject) Run(data game.Data) error {
 				i.waitingForInteraction = true
 				return nil
 			} else {
-				path, distance, _ := i.pf.GetPathToDestination(data, o.Position.X-2, o.Position.Y-2)
+				path, distance, _ := helper.GetPathToDestination(data, o.Position.X-2, o.Position.Y-2)
 				if distance > 15 {
-					i.pf.MoveThroughPath(path, 15, false)
+					helper.MoveThroughPath(path, 15, false)
 					return nil
 				}
-				i.pf.MoveThroughPath(path, 0, false)
+				helper.MoveThroughPath(path, 0, false)
 
 				return nil
 			}

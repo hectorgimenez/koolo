@@ -2,21 +2,18 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type MoveToLevel struct {
 	basicStep
 	level                 game.Level
-	pf                    helper.PathFinderV2
 	waitingForInteraction bool
 }
 
-func NewMoveToLevel(level game.Level, pf helper.PathFinderV2) *MoveToLevel {
+func NewMoveToLevel(level game.Level) *MoveToLevel {
 	return &MoveToLevel{
 		basicStep: newBasicStep(),
 		level:     level,
-		pf:        pf,
 	}
 }
 

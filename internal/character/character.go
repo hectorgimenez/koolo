@@ -1,7 +1,6 @@
 package character
 
 import (
-	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -13,54 +12,54 @@ import (
 
 type Character interface {
 	Buff() *action.BasicAction
-	KillCountess() error
-	KillAndariel() error
-	KillSummoner() error
-	KillMephisto() error
-	KillPindle() error
-	ReturnToTown() error
+	//KillCountess() *action.BasicAction
+	//KillAndariel() *action.BasicAction
+	//KillSummoner() *action.BasicAction
+	//KillMephisto() *action.BasicAction
+	KillPindle() *action.BasicAction
+	ReturnToTown() *action.BasicAction
 }
 
-func BuildCharacter(config config.Config) (Character, error) {
-	bc := BaseCharacter{
-		cfg: config,
-	}
-	switch game.Class(config.Character.Class) {
+func BuildCharacter() (Character, error) {
+	bc := BaseCharacter{}
+	switch game.Class(config.Config.Character.Class) {
 	case game.ClassSorceress:
 		return Sorceress{BaseCharacter: bc}, nil
 	}
 
-	return nil, fmt.Errorf("class %s not implemented", config.Character.Class)
+	return nil, fmt.Errorf("class %s not implemented", config.Config.Character.Class)
 }
 
 type BaseCharacter struct {
-	cfg config.Config
 }
 
 func (bc BaseCharacter) buffCTA() (steps []step.Step) {
-	if bc.cfg.Character.UseCTA {
+	if config.Config.Character.UseCTA {
 		steps = append(steps,
-			step.NewSwapWeapon(bc.cfg),
+			step.NewSwapWeapon(),
 			step.NewSyncAction(func(data game.Data) error {
-				hid.PressKey(bc.cfg.Bindings.CTABattleCommand)
+				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
 				helper.Sleep(500)
-				hid.PressKey(bc.cfg.Bindings.CTABattleOrders)
+				hid.PressKey(config.Config.Bindings.CTABattleOrders)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
 				helper.Sleep(1000)
 
 				return nil
 			}),
-			step.NewSwapWeapon(bc.cfg),
+			step.NewSwapWeapon(),
 		)
 	}
 
 	return steps
 }
 
-func (bc BaseCharacter) ReturnToTown() error {
+func (bc BaseCharacter) ReturnToTown() *action.BasicAction {
+	return action.BuildOnRuntime(func(data game.Data) []step.Step {
+		return nil
+	})
 	//action.Run(
 	//	action.NewKeyPress(bc.cfg.Bindings.TP, time.Millisecond*200),
 	//	action.NewMouseClick(hid.RightButton, time.Second*1),
@@ -86,7 +85,6 @@ func (bc BaseCharacter) ReturnToTown() error {
 	//	}
 	//}
 
-	return errors.New("error returning town")
 }
 
 func (bc BaseCharacter) DoBasicAttack(x, y, times int) {

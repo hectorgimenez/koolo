@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-vgo/robotgo"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
@@ -15,7 +14,6 @@ import (
 // Supervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type Supervisor struct {
 	logger *zap.Logger
-	cfg    config.Config
 	bot    Bot
 }
 
@@ -28,10 +26,9 @@ type RunStats struct {
 	Time        time.Duration
 }
 
-func NewSupervisor(logger *zap.Logger, cfg config.Config, bot Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, bot Bot) Supervisor {
 	return Supervisor{
 		logger: logger,
-		cfg:    cfg,
 		bot:    bot,
 	}
 }

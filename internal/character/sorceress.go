@@ -1,9 +1,9 @@
 package character
 
 import (
-	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -21,8 +21,8 @@ func (s Sorceress) Buff() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.NewSyncAction(func(data game.Data) error {
-			if s.cfg.Bindings.Sorceress.FrozenArmor != "" {
-				hid.PressKey(s.cfg.Bindings.Sorceress.FrozenArmor)
+			if config.Config.Bindings.Sorceress.FrozenArmor != "" {
+				hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
 			}
@@ -34,27 +34,36 @@ func (s Sorceress) Buff() *action.BasicAction {
 	})
 }
 
-func (s Sorceress) KillCountess() error {
+func (s Sorceress) KillCountess() *action.BasicAction {
 	return s.killMonster(game.Countess)
 }
 
-func (s Sorceress) KillAndariel() error {
+func (s Sorceress) KillAndariel() *action.BasicAction {
 	return s.killMonster(game.Andariel)
 }
 
-func (s Sorceress) KillSummoner() error {
+func (s Sorceress) KillSummoner() *action.BasicAction {
 	return s.killMonster(game.TheSummoner)
 }
 
-func (s Sorceress) KillPindle() error {
+func (s Sorceress) KillPindle() *action.BasicAction {
 	return s.killMonster(game.Pindleskin)
 }
 
-func (s Sorceress) KillMephisto() error {
+func (s Sorceress) KillMephisto() *action.BasicAction {
 	return s.killMonster(game.Mephisto)
 }
 
-func (s Sorceress) killMonster(npc game.NPCID) error {
+func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
+	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		for i := 0; i < maxAttackLoops; i++ {
+			steps = append(steps,
+				step.NewPrimaryAttack(npc, 3, 300),
+			)
+		}
+
+		return
+	})
 	//d := game.Status()
 	//monster, found := d.Monsters[npc]
 	//if !found {
@@ -77,5 +86,5 @@ func (s Sorceress) killMonster(npc game.NPCID) error {
 	//	}
 	//}
 
-	return fmt.Errorf("timeout trying to kill %s", npc)
+	//return fmt.Errorf("timeout trying to kill %s", npc)
 }

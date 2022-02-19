@@ -10,17 +10,15 @@ import (
 type InteractNPC struct {
 	basicStep
 	NPC                   game.NPCID
-	pf                    helper.PathFinderV2
 	waitingForInteraction bool
 }
 
-func NewInteractNPC(npc game.NPCID, pf helper.PathFinderV2) *InteractNPC {
+func NewInteractNPC(npc game.NPCID) *InteractNPC {
 	return &InteractNPC{
 		basicStep: basicStep{
 			status: StatusNotStarted,
 		},
 		NPC: npc,
-		pf:  pf,
 	}
 }
 
@@ -56,12 +54,12 @@ func (i *InteractNPC) Run(data game.Data) error {
 	x, y := i.getNPCPosition(data)
 
 	// TODO: Handle not found
-	path, distance, _ := i.pf.GetPathToDestination(data, x, y)
+	path, distance, _ := helper.GetPathToDestination(data, x, y)
 	if distance > 15 {
-		i.pf.MoveThroughPath(path, 15, false)
+		helper.MoveThroughPath(path, 15, false)
 		return nil
 	}
-	i.pf.MoveThroughPath(path, 0, false)
+	helper.MoveThroughPath(path, 0, false)
 
 	return nil
 }

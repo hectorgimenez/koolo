@@ -1,23 +1,23 @@
 package step
 
 import (
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
 
 type MoveTo struct {
 	basicStep
-	pf       helper.PathFinderV2
 	toX      int
 	toY      int
 	teleport bool
 }
 
-func NewMoveTo(toX, toY int, teleport bool, pf helper.PathFinderV2) *MoveTo {
+func NewMoveTo(toX, toY int, teleport bool) *MoveTo {
 	return &MoveTo{
 		basicStep: newBasicStep(),
-		pf:        pf,
 		toX:       toX,
 		toY:       toY,
 		teleport:  teleport,
@@ -25,7 +25,7 @@ func NewMoveTo(toX, toY int, teleport bool, pf helper.PathFinderV2) *MoveTo {
 }
 
 func (m *MoveTo) Status(data game.Data) Status {
-	_, distance, _ := m.pf.GetPathToDestination(data, m.toX, m.toY)
+	_, distance, _ := helper.GetPathToDestination(data, m.toX, m.toY)
 	if distance < 6 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
@@ -34,6 +34,10 @@ func (m *MoveTo) Status(data game.Data) Status {
 }
 
 func (m *MoveTo) Run(data game.Data) error {
+	if m.teleport && m.status == StatusNotStarted {
+		hid.PressKey(config.Config.Bindings.Teleport)
+	}
+
 	m.tryTransitionStatus(StatusInProgress)
 	// TODO: In case of teleport, calculate fcr frames for waiting time
 	if time.Since(m.lastRun) < time.Millisecond*500 {
@@ -42,8 +46,8 @@ func (m *MoveTo) Run(data game.Data) error {
 
 	m.lastRun = time.Now()
 	// TODO: Handle not found
-	path, _, _ := m.pf.GetPathToDestination(data, m.toX, m.toY)
-	m.pf.MoveThroughPath(path, 20, m.teleport)
+	path, _, _ := helper.GetPathToDestination(data, m.toX, m.toY)
+	helper.MoveThroughPath(path, 20, m.teleport)
 
 	return nil
 }

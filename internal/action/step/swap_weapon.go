@@ -13,10 +13,10 @@ type SwapWeapon struct {
 	initialWeaponWasCTA bool
 }
 
-func NewSwapWeapon(cfg config.Config) *SwapWeapon {
+func NewSwapWeapon() *SwapWeapon {
 	return &SwapWeapon{
 		basicStep: newBasicStep(),
-		binding:   cfg.Bindings.SwapWeapon,
+		binding:   config.Config.Bindings.SwapWeapon,
 	}
 }
 

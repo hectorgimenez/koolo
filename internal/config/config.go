@@ -7,7 +7,12 @@ import (
 	"os"
 )
 
-type Config struct {
+var (
+	Config StructConfig
+	Pickit StructPickit
+)
+
+type StructConfig struct {
 	Display     int    `yaml:"display"`
 	Debug       bool   `yaml:"debug"`
 	LogFilePath string `yaml:"logFilePath"`
@@ -58,7 +63,7 @@ type Config struct {
 	} `yaml:"character"`
 }
 
-type Pickit struct {
+type StructPickit struct {
 	PickupGold          bool `yaml:"pickupGold"`
 	MinimumGoldToPickup int  `yaml:"minimumGoldToPickup"`
 	Items               []ItemPickit
@@ -70,39 +75,37 @@ type ItemPickit struct {
 }
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
-func Load() (Config, Pickit, error) {
+func Load() error {
 	r, err := os.Open("config/config.yaml")
 	if err != nil {
-		return Config{}, Pickit{}, fmt.Errorf("error loading config.yaml: %w", err)
+		return fmt.Errorf("error loading config.yaml: %w", err)
 	}
 
 	d := yaml.NewDecoder(r)
-	cfg := Config{}
-	if err = d.Decode(&cfg); err != nil {
-		return Config{}, Pickit{}, fmt.Errorf("error reading config: %w", err)
+	if err = d.Decode(&Config); err != nil {
+		return fmt.Errorf("error reading config: %w", err)
 	}
 
 	r, err = os.Open("config/pickit.yaml")
 	if err != nil {
-		return Config{}, Pickit{}, fmt.Errorf("error loading pickit.yaml: %w", err)
+		return fmt.Errorf("error loading pickit.yaml: %w", err)
 	}
 
 	d = yaml.NewDecoder(r)
-	pickit := Pickit{}
-	if err = d.Decode(&pickit); err != nil {
-		return Config{}, Pickit{}, fmt.Errorf("error reading pickit: %w", err)
+	if err = d.Decode(&Pickit); err != nil {
+		return fmt.Errorf("error reading pickit: %w", err)
 	}
 
 	b, err := ioutil.ReadFile("config/pickit.yaml")
 	m := make(map[interface{}]interface{})
 	err = yaml.Unmarshal(b, &m)
 	if err != nil {
-		return Config{}, Pickit{}, fmt.Errorf("error decoding pickit items: %w", err)
+		return fmt.Errorf("error decoding pickit items: %w", err)
 	}
 	items := parsePickitItems(m["items"].([]interface{}))
-	pickit.Items = items
+	Pickit.Items = items
 
-	return cfg, pickit, nil
+	return nil
 }
 
 func parsePickitItems(items []interface{}) []ItemPickit {

@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -26,7 +27,7 @@ func (b Builder) Stash() *BasicAction {
 		steps = append(steps,
 			step.NewInteractObject("Bank", func(data game.Data) bool {
 				return data.OpenMenus.Stash
-			}, b.pf),
+			}),
 			step.NewSyncAction(func(data game.Data) error {
 				stashGold(data)
 				b.stashInventory()
@@ -41,7 +42,7 @@ func (b Builder) Stash() *BasicAction {
 
 func (b Builder) isStashingRequired(data game.Data) bool {
 	for _, i := range data.Items.Inventory {
-		if b.cfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			return true
 		}
 	}
@@ -66,7 +67,7 @@ func stashGold(d game.Data) {
 
 func (b Builder) stashInventory() {
 	for _, i := range game.Status().Items.Inventory {
-		if b.cfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 			continue
 		}
 		stashItemAction(i)

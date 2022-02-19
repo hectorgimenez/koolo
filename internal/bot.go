@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
@@ -17,30 +15,24 @@ import (
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
 type Bot struct {
 	logger *zap.Logger
-	cfg    config.Config
 	hm     health.Manager
 	bm     health.BeltManager
 	sm     town.ShopManager
-	pf     helper.PathFinderV2
 	ab     action.Builder
 }
 
 func NewBot(
 	logger *zap.Logger,
-	cfg config.Config,
 	hm health.Manager,
 	bm health.BeltManager,
 	sm town.ShopManager,
-	pf helper.PathFinderV2,
 	ab action.Builder,
 ) Bot {
 	return Bot{
 		logger: logger,
-		cfg:    cfg,
 		hm:     hm,
 		bm:     bm,
 		sm:     sm,
-		pf:     pf,
 		ab:     ab,
 	}
 }

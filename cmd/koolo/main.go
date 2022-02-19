@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
@@ -17,37 +16,36 @@ import (
 )
 
 func main() {
-	cfg, _, err := config.Load()
+	err := config.Load()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
 
-	logger, err := zapLogger.NewLogger(cfg.Debug, cfg.LogFilePath)
+	logger, err := zapLogger.NewLogger(config.Config.Debug, config.Config.LogFilePath)
 	if err != nil {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}
 	defer logger.Sync()
 
-	pf := helper.NewPathFinderV2(logger, cfg)
-	bm := health.NewBeltManager(logger, cfg)
-	hm := health.NewHealthManager(logger, bm, cfg)
+	bm := health.NewBeltManager(logger)
+	hm := health.NewHealthManager(logger, bm)
 	sm := town.NewShopManager(logger, bm)
-	char, err := character.BuildCharacter(cfg)
+	char, err := character.BuildCharacter()
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 
-	ab := action.NewBuilder(cfg, logger, pf, sm, bm)
-	baseRun := run.NewBaseRun(ab, pf, char)
+	ab := action.NewBuilder(logger, sm, bm)
+	baseRun := run.NewBaseRun(ab, char)
 	runs := []run.Run{run.NewPindleskin(baseRun)}
 	//pickup := item.NewPickup(logger, bm, pickit)
-	bot := koolo.NewBot(logger, cfg, hm, bm, sm, pf, ab)
-	supervisor := koolo.NewSupervisor(logger, cfg, bot)
+	bot := koolo.NewBot(logger, hm, bm, sm, ab)
+	supervisor := koolo.NewSupervisor(logger, bot)
 
 	ctx := context.Background()
 	// TODO: Debug mouse
 	go func() {
-		if cfg.Debug {
+		if config.Config.Debug {
 			ticker := time.NewTicker(time.Second * 3)
 
 			for {

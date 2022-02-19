@@ -18,22 +18,20 @@ const (
 type Manager struct {
 	logger       *zap.Logger
 	beltManager  BeltManager
-	cfg          config.Config
 	lastHeal     time.Time
 	lastMana     time.Time
 	lastMercHeal time.Time
 }
 
-func NewHealthManager(logger *zap.Logger, beltManager BeltManager, cfg config.Config) Manager {
+func NewHealthManager(logger *zap.Logger, beltManager BeltManager) Manager {
 	return Manager{
 		logger:      logger,
 		beltManager: beltManager,
-		cfg:         cfg,
 	}
 }
 
 func (hm *Manager) HandleHealthAndMana(d game.Data) {
-	hpConfig := hm.cfg.Health
+	hpConfig := config.Config.Health
 	// Safe area, skipping
 	if d.Area.IsTown() {
 		return
