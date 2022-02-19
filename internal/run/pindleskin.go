@@ -47,7 +47,7 @@ func (p Pindleskin) BuildActions(data game.Data) (actions []action.Action) {
 	// Buff
 	actions = append(actions, p.char.Buff())
 
-	// Travel to boss destination
+	// Travel to boss position
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),

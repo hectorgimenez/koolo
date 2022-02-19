@@ -37,8 +37,7 @@ func main() {
 
 	ab := action.NewBuilder(logger, sm, bm)
 	baseRun := run.NewBaseRun(ab, char)
-	runs := []run.Run{run.NewPindleskin(baseRun)}
-	//pickup := item.NewPickup(logger, bm, pickit)
+	runs := []run.Run{run.NewPindleskin(baseRun), run.NewAndariel(baseRun)}
 	bot := koolo.NewBot(logger, hm, bm, sm, ab)
 	supervisor := koolo.NewSupervisor(logger, bot)
 
