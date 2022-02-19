@@ -65,27 +65,4 @@ func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
 
 		return
 	})
-	//d := game.Status()
-	//monster, found := d.Monsters[npc]
-	//if !found {
-	//	return errors.New("Mephisto not found")
-	//}
-	//
-	//for i := 0; i < maxAttackLoops; i++ {
-	//	x, y := helper.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
-	//	s.DoSecondaryAttack(x, y, s.cfg.Bindings.Sorceress.Blizzard)
-	//	monster, found = game.Status().Monsters[npc]
-	//	if !found {
-	//		return nil
-	//	}
-	//
-	//	s.DoBasicAttack(x, y, 3)
-	//
-	//	monster, found = game.Status().Monsters[npc]
-	//	if !found {
-	//		return nil
-	//	}
-	//}
-
-	//return fmt.Errorf("timeout trying to kill %s", npc)
 }
