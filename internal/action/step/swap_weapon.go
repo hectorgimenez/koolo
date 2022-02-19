@@ -24,10 +24,6 @@ func (s *SwapWeapon) Status(data game.Data) Status {
 	if s.status == StatusNotStarted {
 		return StatusNotStarted
 	}
-	// Add some delay to let the weapon switch
-	if time.Since(s.lastRun) < time.Second {
-		return s.status
-	}
 
 	_, found := data.PlayerUnit.Skills[game.SkillBattleOrders]
 	if found && s.initialWeaponWasCTA || !found && !s.initialWeaponWasCTA {
@@ -39,7 +35,7 @@ func (s *SwapWeapon) Status(data game.Data) Status {
 
 func (s *SwapWeapon) Run(data game.Data) error {
 	// Add some delay to let the weapon switch
-	if time.Since(s.lastRun) < time.Second*2 {
+	if time.Since(s.lastRun) < time.Second {
 		return nil
 	}
 
