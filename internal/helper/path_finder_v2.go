@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"math"
 	"math/rand"
 )
 
@@ -16,6 +17,11 @@ func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, d
 	// Convert to relative coordinates (Target position)
 	toX := destX - d.AreaOrigin.X
 	toY := destY - d.AreaOrigin.Y
+
+	// Origin and destination are the same point
+	if fromX == toX && fromY == toY {
+		return []astar.Pather{}, 0, true
+	}
 
 	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY)
 
@@ -55,6 +61,13 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 	screenY := int((float32(diffX+diffY) * 9.9) + float32(hid.GameAreaSizeY/2))
 
 	return screenX, screenY
+}
+
+func DistanceFromPoint(data game.Data, toX, toY int) int {
+	first := math.Pow(float64(toX-data.PlayerUnit.Position.X), 2)
+	second := math.Pow(float64(toY-data.PlayerUnit.Position.Y), 2)
+
+	return int(math.Sqrt(first + second))
 }
 
 func RandomMovement() {

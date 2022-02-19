@@ -21,7 +21,7 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 	allowedAreas := map[game.Area][2]int{
 		game.AreaBlackMarsh:          {1, 5},
 		game.AreaCatacombsLevel2:     {1, 9},
-		game.AreaForgottenTower:      {2, 8},
+		game.ArcaneSanctuary:         {2, 8},
 		game.AreaDuranceOfHateLevel2: {3, 9},
 		game.AreaHarrogath:           {5, 1},
 	}

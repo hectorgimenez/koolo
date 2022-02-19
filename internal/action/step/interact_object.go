@@ -52,12 +52,15 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				i.waitingForInteraction = true
 				return nil
 			} else {
-				path, distance, _ := helper.GetPathToDestination(data, o.Position.X-2, o.Position.Y-2)
+				distance := helper.DistanceFromPoint(data, o.Position.X, o.Position.Y)
+
 				if distance > 15 {
+					path, _, _ := helper.GetPathToDestination(data, o.Position.X, o.Position.Y)
 					helper.MoveThroughPath(path, 15, false)
 					return nil
 				}
-				helper.MoveThroughPath(path, 0, false)
+				x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, o.Position.X-2, o.Position.Y-2)
+				hid.MovePointer(x, y)
 
 				return nil
 			}

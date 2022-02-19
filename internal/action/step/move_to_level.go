@@ -47,12 +47,16 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	m.lastRun = time.Now()
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
-			path, distance, _ := helper.GetPathToDestination(data, l.Position.X, l.Position.Y)
-			if distance > 15 {
-				helper.MoveThroughPath(path, 15, true)
+			distance := helper.DistanceFromPoint(data, l.Position.X, l.Position.Y)
+			if distance > 10 {
+				path, _, _ := helper.GetPathToDestination(data, l.Position.X, l.Position.Y)
+				helper.MoveThroughPath(path, 20, true)
 				return nil
 			}
-			helper.MoveThroughPath(path, 0, false)
+
+			x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
+			hid.MovePointer(x, y)
+			helper.Sleep(100)
 			hid.Click(hid.LeftButton)
 			m.waitingForInteraction = true
 			return nil

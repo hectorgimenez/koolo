@@ -53,7 +53,7 @@ character:
   useCTA: true
 
 runs:
-  countess: false
+  countess: true
   andariel: true
   summoner: true
   mephisto: true

@@ -197,9 +197,30 @@ func ParseWorld(collisionGrid [][]int, fromX, fromY, toX, toY int) World {
 	w.SetTile(&Tile{
 		Kind: KindFrom,
 	}, fromX, fromY)
+
 	w.SetTile(&Tile{
 		Kind: KindTo,
 	}, toX, toY)
 
+	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
+	// the path, so we fake some points around the character making them walkable even if they're not technically
+	for i := -1; i < 2; i++ {
+		for k := -1; k < 2; k++ {
+			if i == 0 && k == 0 {
+				continue
+			}
+
+			w.SetTile(&Tile{
+				Kind: KindPlain,
+			}, fromX+i, fromY+k)
+
+			w.SetTile(&Tile{
+				Kind: KindPlain,
+			}, toX+i, toY+k)
+		}
+	}
+
+	// Debug only, this will render a png file with map and origin/destination points
+	//w.RenderPathImg(nil)
 	return w
 }

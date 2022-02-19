@@ -54,12 +54,14 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	x, y := i.getNPCPosition(data)
 
 	// TODO: Handle not found
-	path, distance, _ := helper.GetPathToDestination(data, x, y)
+	distance := helper.DistanceFromPoint(data, x, y)
 	if distance > 15 {
+		path, _, _ := helper.GetPathToDestination(data, x, y)
 		helper.MoveThroughPath(path, 15, false)
 		return nil
 	}
-	helper.MoveThroughPath(path, 0, false)
+	x, y = helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, x, y)
+	hid.MovePointer(x, y)
 
 	return nil
 }
