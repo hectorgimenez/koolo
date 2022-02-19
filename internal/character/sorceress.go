@@ -2,7 +2,11 @@ package character
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 const (
@@ -13,14 +17,21 @@ type Sorceress struct {
 	BaseCharacter
 }
 
-func (s Sorceress) Buff() {
-	s.BuffCTA()
-	if s.cfg.Bindings.Sorceress.FrozenArmor != "" {
-		//action.Run(
-		//	action.NewKeyPress(s.cfg.Bindings.Sorceress.FrozenArmor, time.Millisecond*100),
-		//	action.NewMouseClick(hid.RightButton, time.Millisecond*200),
-		//)
-	}
+func (s Sorceress) Buff() *action.BasicAction {
+	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		steps = append(steps, s.buffCTA()...)
+		steps = append(steps, step.NewSyncAction(func(data game.Data) error {
+			if s.cfg.Bindings.Sorceress.FrozenArmor != "" {
+				hid.PressKey(s.cfg.Bindings.Sorceress.FrozenArmor)
+				helper.Sleep(100)
+				hid.Click(hid.RightButton)
+			}
+
+			return nil
+		}))
+
+		return
+	})
 }
 
 func (s Sorceress) KillCountess() error {

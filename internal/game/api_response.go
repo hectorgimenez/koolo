@@ -29,7 +29,11 @@ type gameDataHttpResponse struct {
 	PlayerUnit struct {
 		Name     string   `json:"name"`
 		Position position `json:"position"`
-		Stats    []struct {
+		Skills   []struct {
+			Skill  string `json:"skill"`
+			Points int    `json:"points"`
+		} `json:"skills"`
+		Stats []struct {
 			Stat  string `json:"stat"`
 			Value int    `json:"value"`
 		} `json:"stats"`

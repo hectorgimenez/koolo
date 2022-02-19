@@ -43,6 +43,9 @@ func (p Pindleskin) BuildActions(data game.Data) (actions []action.Action) {
 		return
 	}))
 
+	// Buff
+	actions = append(actions, p.char.Buff())
+
 	return
 }
 

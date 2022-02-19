@@ -54,7 +54,7 @@ func (i *InteractObject) Run(data game.Data) error {
 				i.waitingForInteraction = true
 				return nil
 			} else {
-				path, distance, _ := i.pf.GetPathToDestination(data, o.Position.X, o.Position.Y)
+				path, distance, _ := i.pf.GetPathToDestination(data, o.Position.X-2, o.Position.Y-2)
 				if distance > 15 {
 					i.pf.MoveThroughPath(path, 15, false)
 					return nil

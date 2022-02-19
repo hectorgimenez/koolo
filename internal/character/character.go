@@ -3,12 +3,16 @@ package character
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 type Character interface {
-	Buff()
+	Buff() *action.BasicAction
 	KillCountess() error
 	KillAndariel() error
 	KillSummoner() error
@@ -33,17 +37,27 @@ type BaseCharacter struct {
 	cfg config.Config
 }
 
-func (bc BaseCharacter) BuffCTA() {
-	//if bc.cfg.Character.UseCTA {
-	//	action.Run(
-	//		action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Millisecond*300),
-	//		action.NewKeyPress(bc.cfg.Bindings.CTABattleCommand, time.Millisecond*100),
-	//		action.NewMouseClick(hid.RightButton, time.Millisecond*400),
-	//		action.NewKeyPress(bc.cfg.Bindings.CTABattleOrders, time.Millisecond*100),
-	//		action.NewMouseClick(hid.RightButton, time.Millisecond*400),
-	//		action.NewKeyPress(bc.cfg.Bindings.SwapWeapon, time.Millisecond*300),
-	//	)
-	//}
+func (bc BaseCharacter) buffCTA() (steps []step.Step) {
+	if bc.cfg.Character.UseCTA {
+		steps = append(steps,
+			step.NewSwapWeapon(bc.cfg),
+			step.NewSyncAction(func(data game.Data) error {
+				hid.PressKey(bc.cfg.Bindings.CTABattleCommand)
+				helper.Sleep(100)
+				hid.Click(hid.RightButton)
+				helper.Sleep(500)
+				hid.PressKey(bc.cfg.Bindings.CTABattleOrders)
+				helper.Sleep(100)
+				hid.Click(hid.RightButton)
+				helper.Sleep(1000)
+
+				return nil
+			}),
+			step.NewSwapWeapon(bc.cfg),
+		)
+	}
+
+	return steps
 }
 
 func (bc BaseCharacter) ReturnToTown() error {
