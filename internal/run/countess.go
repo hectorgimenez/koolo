@@ -12,13 +12,7 @@ const (
 )
 
 type Countess struct {
-	BaseRun
-}
-
-func NewCountess(run BaseRun) Countess {
-	return Countess{
-		BaseRun: run,
-	}
+	baseRun
 }
 
 func (c Countess) Name() string {

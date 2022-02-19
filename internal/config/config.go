@@ -61,6 +61,13 @@ type StructConfig struct {
 		UseMerc    bool   `yaml:"useMerc"`
 		UseCTA     bool   `yaml:"useCTA"`
 	} `yaml:"character"`
+	Runs struct {
+		Countess   bool `yaml:"countess"`
+		Andariel   bool `yaml:"andariel"`
+		Summoner   bool `yaml:"summoner"`
+		Mephisto   bool `yaml:"mephisto"`
+		Pindleskin bool `yaml:"pindleskin"`
+	} `yaml:"runs"`
 }
 
 type StructPickit struct {

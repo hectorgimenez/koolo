@@ -7,13 +7,7 @@ import (
 )
 
 type Summoner struct {
-	BaseRun
-}
-
-func NewSummoner(run BaseRun) Summoner {
-	return Summoner{
-		BaseRun: run,
-	}
+	baseRun
 }
 
 func (s Summoner) Name() string {

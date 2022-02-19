@@ -15,13 +15,7 @@ const (
 )
 
 type Pindleskin struct {
-	BaseRun
-}
-
-func NewPindleskin(run BaseRun) Pindleskin {
-	return Pindleskin{
-		BaseRun: run,
-	}
+	baseRun
 }
 
 func (p Pindleskin) Name() string {

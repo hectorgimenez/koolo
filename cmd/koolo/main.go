@@ -36,8 +36,6 @@ func main() {
 	}
 
 	ab := action.NewBuilder(logger, sm, bm)
-	baseRun := run.NewBaseRun(ab, char)
-	runs := []run.Run{run.NewCountess(baseRun), run.NewAndariel(baseRun), run.NewSummoner(baseRun), run.NewMephisto(baseRun), run.NewPindleskin(baseRun)}
 	bot := koolo.NewBot(logger, hm, bm, sm, ab)
 	supervisor := koolo.NewSupervisor(logger, bot)
 
@@ -59,7 +57,7 @@ func main() {
 		}
 	}()
 
-	err = supervisor.Start(ctx, runs)
+	err = supervisor.Start(ctx, run.BuildRuns(ab, char))
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}

@@ -12,13 +12,7 @@ const (
 )
 
 type Mephisto struct {
-	BaseRun
-}
-
-func NewMephisto(run BaseRun) Mephisto {
-	return Mephisto{
-		BaseRun: run,
-	}
+	baseRun
 }
 
 func (m Mephisto) Name() string {
