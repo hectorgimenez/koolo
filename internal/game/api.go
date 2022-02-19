@@ -15,21 +15,6 @@ const (
 
 var NotInGameErr = errors.New("not in game")
 
-func IsInGame() bool {
-	r, err := http.Get(hostName + genericData)
-	if err != nil {
-		return false
-	}
-
-	d := requestSucceed{}
-	err = json.NewDecoder(r.Body).Decode(&d)
-	if err != nil {
-		return false
-	}
-
-	return d.Success
-}
-
 func Status() Data {
 	for retries := 0; retries < maxRetries; retries++ {
 		r, err := http.Get(hostName + genericData)
@@ -94,6 +79,11 @@ func Status() Data {
 			stats[Stat(stat.Stat)] = stat.Value
 		}
 
+		skills := map[Skill]int{}
+		for _, skill := range d.PlayerUnit.Skills {
+			skills[Skill(skill.Skill)] = skill.Points
+		}
+
 		var objects []Object
 		for _, o := range d.Objects {
 			objects = append(objects, Object{
@@ -145,8 +135,9 @@ func Status() Data {
 					X: int(d.PlayerUnit.Position.X),
 					Y: int(d.PlayerUnit.Position.Y),
 				},
-				Stats: stats,
-				Class: Class(d.PlayerUnit.PlayerClass),
+				Stats:  stats,
+				Skills: skills,
+				Class:  Class(d.PlayerUnit.PlayerClass),
 			},
 			OpenMenus: OpenMenus{
 				Inventory:   d.MenuOpen.Inventory,
@@ -201,6 +192,7 @@ func parseItems(d gameDataHttpResponse) Items {
 			stats[Stat(s.Stat)] = s.Value
 		}
 		item := Item{
+			ID: i.ID,
 			Position: Position{
 				X: int(i.Position.X),
 				Y: int(i.Position.Y),

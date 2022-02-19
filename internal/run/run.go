@@ -1,28 +1,43 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Run interface {
 	Name() string
-	MoveToStartingPoint() error
-	TravelToDestination() error
-	Kill() error
+	BuildActions(game.Data) []action.Action
 }
 
-type BaseRun struct {
-	pf   helper.PathFinder
-	char character.Character
-	tm   town.Manager
+type baseRun struct {
+	builder action.Builder
+	char    character.Character
 }
 
-func NewBaseRun(pf helper.PathFinder, char character.Character, tm town.Manager) BaseRun {
-	return BaseRun{
-		pf:   pf,
-		char: char,
-		tm:   tm,
+func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
+	baseRun := baseRun{
+		builder: builder,
+		char:    char,
 	}
+
+	if config.Config.Runs.Countess {
+		runs = append(runs, Countess{baseRun})
+	}
+	if config.Config.Runs.Andariel {
+		runs = append(runs, Andariel{baseRun})
+	}
+	if config.Config.Runs.Summoner {
+		runs = append(runs, Summoner{baseRun})
+	}
+	if config.Config.Runs.Mephisto {
+		runs = append(runs, Mephisto{baseRun})
+	}
+	if config.Config.Runs.Pindleskin {
+		runs = append(runs, Pindleskin{baseRun})
+	}
+
+	return
 }

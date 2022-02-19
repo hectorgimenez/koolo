@@ -17,6 +17,14 @@ func PressKey(key string) {
 	robotgo.KeyUp(key)
 }
 
+func KeyDown(key string) {
+	robotgo.KeyDown(key)
+}
+
+func KeyUp(key string) {
+	robotgo.KeyUp(key)
+}
+
 func PressKeyCombination(key string, keys ...string) {
 	robotgo.KeyTap(key, keys)
 }

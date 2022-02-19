@@ -51,3 +51,11 @@ character:
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
   useCTA: true
+
+runs:
+  countess: false
+  andariel: true
+  summoner: true
+  mephisto: true
+  pindleskin: true
+

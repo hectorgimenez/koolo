@@ -25,6 +25,9 @@ const (
 
 	// Classes
 	ClassSorceress Class = "Sorceress"
+
+	// Skills
+	SkillBattleOrders Skill = "BattleOrders"
 )
 
 type Data struct {
@@ -75,11 +78,13 @@ type Position struct {
 	Y int
 }
 
+type Skill string
 type PlayerUnit struct {
 	Name      string
 	IsHovered bool
 	Position  Position
 	Stats     map[Stat]int
+	Skills    map[Skill]int
 	Class     Class
 }
 
