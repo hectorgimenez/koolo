@@ -12,15 +12,18 @@ const (
 	healingInterval     = time.Second * 6
 	healingMercInterval = time.Second * 6
 	manaInterval        = time.Second * 4
+	rejuvInterval       = time.Second * 2
 )
 
 // Manager responsibility is to keep our character and mercenary alive, monitoring life and giving potions when needed
 type Manager struct {
-	logger       *zap.Logger
-	beltManager  BeltManager
-	lastHeal     time.Time
-	lastMana     time.Time
-	lastMercHeal time.Time
+	logger        *zap.Logger
+	beltManager   BeltManager
+	lastRejuv     time.Time
+	lastRejuvMerc time.Time
+	lastHeal      time.Time
+	lastMana      time.Time
+	lastMercHeal  time.Time
 }
 
 func NewHealthManager(logger *zap.Logger, beltManager BeltManager) Manager {
@@ -40,9 +43,11 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) {
 	status := d.Health
 
 	usedRejuv := false
-	if status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana {
-		hm.beltManager.DrinkPotion(game.RejuvenationPotion, false)
-		usedRejuv = true
+	if time.Since(hm.lastRejuv) > rejuvInterval && (status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana) {
+		usedRejuv = hm.beltManager.DrinkPotion(game.RejuvenationPotion, false)
+		if usedRejuv {
+			hm.lastRejuv = time.Now()
+		}
 	}
 
 	if !usedRejuv {
@@ -65,9 +70,11 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) {
 	// Mercenary
 	if status.Merc.Alive {
 		usedMercRejuv := false
-		if status.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
-			hm.beltManager.DrinkPotion(game.RejuvenationPotion, true)
-			usedMercRejuv = true
+		if time.Since(hm.lastRejuvMerc) > rejuvInterval && status.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
+			usedMercRejuv = hm.beltManager.DrinkPotion(game.RejuvenationPotion, true)
+			if usedMercRejuv {
+				hm.lastRejuvMerc = time.Now()
+			}
 		}
 
 		if !usedMercRejuv {

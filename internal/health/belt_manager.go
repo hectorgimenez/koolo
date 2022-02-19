@@ -18,7 +18,7 @@ func NewBeltManager(logger *zap.Logger) BeltManager {
 	}
 }
 
-func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) {
+func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) bool {
 	belt := pm.belt()
 	p, found := belt.GetFirstPotion(potionType)
 	if found {
@@ -26,14 +26,14 @@ func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) {
 		if merc {
 			hid.PressKeyCombination("shift", binding)
 			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary", potionType))
-			return
+			return true
 		}
 		hid.PressKey(binding)
 		pm.logger.Debug(fmt.Sprintf("Drinking %s potion", potionType))
-		return
+		return true
 	}
 
-	pm.logger.Warn(fmt.Sprintf("Tried to use %s but failed, no more pots left!", potionType))
+	return false
 }
 
 // ShouldBuyPotions will return true if more than 25% of belt is empty (ignoring rejuv)
