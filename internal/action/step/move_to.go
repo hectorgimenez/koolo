@@ -1,6 +1,8 @@
 package step
 
 import (
+	"fmt"
+	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -13,6 +15,7 @@ type MoveToStep struct {
 	toX      int
 	toY      int
 	teleport bool
+	path     []astar.Pather
 }
 
 func MoveTo(toX, toY int, teleport bool) *MoveToStep {
@@ -26,7 +29,7 @@ func MoveTo(toX, toY int, teleport bool) *MoveToStep {
 
 func (m *MoveToStep) Status(data game.Data) Status {
 	_, distance, _ := helper.GetPathToDestination(data, m.toX, m.toY)
-	if distance < 6 {
+	if distance < 8 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -37,17 +40,42 @@ func (m *MoveToStep) Run(data game.Data) error {
 	if m.teleport && m.status == StatusNotStarted {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
-
 	m.tryTransitionStatus(StatusInProgress)
+
+	if m.path == nil || !m.adjustPath(data) {
+		// TODO: Handle not found
+		path, _, _ := helper.GetPathToDestination(data, m.toX, m.toY)
+		m.path = path
+	}
 	// TODO: In case of teleport, calculate fcr frames for waiting time
 	if time.Since(m.lastRun) < time.Millisecond*500 {
 		return nil
 	}
 
 	m.lastRun = time.Now()
-	// TODO: Handle not found
-	path, _, _ := helper.GetPathToDestination(data, m.toX, m.toY)
-	helper.MoveThroughPath(path, 20, m.teleport)
+	helper.MoveThroughPath(m.path, 25, m.teleport)
 
 	return nil
+}
+
+// Cache the path and try to reuse it
+func (m *MoveToStep) adjustPath(data game.Data) bool {
+	nearestKey := 0
+	nearestDistance := 99999999
+	for k, pos := range m.path {
+		distance := helper.DistanceFromPoint(data, pos.(*helper.Tile).X+data.AreaOrigin.X, pos.(*helper.Tile).Y+data.AreaOrigin.Y)
+		if distance < nearestDistance {
+			nearestDistance = distance
+			nearestKey = k
+		}
+	}
+
+	if nearestDistance < 5 && len(m.path) > nearestKey {
+		fmt.Println(fmt.Sprintf("Max deviation: %d, using Path Key: %d [%d]", nearestDistance, nearestKey, len(m.path)-1))
+		m.path = m.path[:nearestKey]
+
+		return true
+	}
+
+	return false
 }

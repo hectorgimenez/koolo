@@ -25,7 +25,12 @@ func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, d
 
 	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY)
 
-	return astar.Path(w.From(), w.To())
+	p, distance, found := astar.Path(w.From(), w.To())
+
+	// Debug only, this will render a png file with map and origin/destination points
+	//w.RenderPathImg(p)
+
+	return p, distance, found
 }
 
 func MoveThroughPath(p []astar.Pather, distance int, teleport bool) {
