@@ -1,7 +1,6 @@
 package step
 
 import (
-	"fmt"
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -72,7 +71,7 @@ func (m *MoveToStep) adjustPath(data game.Data) bool {
 	}
 
 	if nearestDistance < 5 && len(m.path) > nearestKey {
-		fmt.Println(fmt.Sprintf("Max deviation: %d, using Path Key: %d [%d]", nearestDistance, nearestKey, len(m.path)-1))
+		//fmt.Println(fmt.Sprintf("Max deviation: %d, using Path Key: %d [%d]", nearestDistance, nearestKey, len(m.path)-1))
 		m.path = m.path[:nearestKey]
 
 		return true

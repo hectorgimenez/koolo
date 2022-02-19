@@ -50,6 +50,8 @@ func (p *AttackStep) Status(data game.Data) Status {
 func (p *AttackStep) Run(data game.Data) error {
 	if p.status == StatusNotStarted && p.keyBinding != "" {
 		hid.PressKey(p.keyBinding)
+		// Let's wait the delay for the secondary attack before triggering it, sometimes it gets bugged
+		p.lastRun = time.Now()
 	}
 
 	p.tryTransitionStatus(StatusInProgress)

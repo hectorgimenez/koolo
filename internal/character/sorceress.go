@@ -58,7 +58,7 @@ func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		for i := 0; i < maxAttackLoops; i++ {
 			steps = append(steps,
-				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, 100),
+				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, 200),
 				step.PrimaryAttack(npc, 3, 300),
 			)
 		}

@@ -37,7 +37,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		return nil
 	}
 
-	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*3 {
+	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*2 {
 		return nil
 	}
 
@@ -57,7 +57,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	distance := helper.DistanceFromPoint(data, x, y)
 	if distance > 15 {
 		path, _, _ := helper.GetPathToDestination(data, x, y)
-		helper.MoveThroughPath(path, 15, false)
+		helper.MoveThroughPath(path, 12, false)
 		return nil
 	}
 	x, y = helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, x, y)

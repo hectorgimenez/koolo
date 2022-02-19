@@ -56,7 +56,7 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 
 				if distance > 15 {
 					path, _, _ := helper.GetPathToDestination(data, o.Position.X, o.Position.Y)
-					helper.MoveThroughPath(path, 15, false)
+					helper.MoveThroughPath(path, 10, false)
 					i.lastRun = time.Now()
 					return nil
 				}
