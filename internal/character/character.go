@@ -12,10 +12,10 @@ import (
 
 type Character interface {
 	Buff() *action.BasicAction
-	//KillCountess() *action.BasicAction
-	//KillAndariel() *action.BasicAction
-	//KillSummoner() *action.BasicAction
-	//KillMephisto() *action.BasicAction
+	KillCountess() *action.BasicAction
+	KillAndariel() *action.BasicAction
+	KillSummoner() *action.BasicAction
+	KillMephisto() *action.BasicAction
 	KillPindle() *action.BasicAction
 	ReturnToTown() *action.BasicAction
 }
@@ -85,27 +85,4 @@ func (bc BaseCharacter) ReturnToTown() *action.BasicAction {
 	//	}
 	//}
 
-}
-
-func (bc BaseCharacter) DoBasicAttack(x, y, times int) {
-	//actions := []action.HIDOperation{
-	//	action.NewKeyDown(bc.cfg.Bindings.StandStill, time.Millisecond*100),
-	//	action.NewMouseDisplacement(x, y, time.Millisecond*150),
-	//}
-	//
-	//for i := 0; i < times; i++ {
-	//	actions = append(actions, action.NewMouseClick(hid.LeftButton, time.Millisecond*250))
-	//}
-	//
-	//actions = append(actions, action.NewKeyUp(bc.cfg.Bindings.StandStill, time.Millisecond*150))
-	//
-	//action.Run(actions...)
-}
-
-func (bc BaseCharacter) DoSecondaryAttack(x, y int, keyBinding string) {
-	//action.Run(
-	//	action.NewMouseDisplacement(x, y, time.Millisecond*100),
-	//	action.NewKeyPress(keyBinding, time.Millisecond*80),
-	//	action.NewMouseClick(hid.RightButton, time.Millisecond*100),
-	//)
 }
