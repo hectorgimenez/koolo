@@ -6,6 +6,11 @@ const (
 	KashyaNPC NPCID = "Kashya"
 	CharsiNPC NPCID = "Charsi"
 
+	// A2 Town NPCs
+	DrognanNPC NPCID = "Drognan"
+	FaraNPC    NPCID = "Fara"
+	GreizNPC   NPCID = "Greiz"
+
 	// A3 Town NPCs
 	OrmusNPC   NPCID = "Ormus"
 	AshearaNPC NPCID = "Asheara"
