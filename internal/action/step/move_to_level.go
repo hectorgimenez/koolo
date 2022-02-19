@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -31,6 +32,9 @@ func (m *MoveToAreaStep) Status(data game.Data) Status {
 }
 
 func (m *MoveToAreaStep) Run(data game.Data) error {
+	if m.status == StatusNotStarted {
+		hid.PressKey(config.Config.Bindings.Teleport)
+	}
 	m.tryTransitionStatus(StatusInProgress)
 	if time.Since(m.lastRun) < time.Millisecond*500 {
 		return nil
@@ -43,7 +47,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	m.lastRun = time.Now()
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
-			path, distance, _ := helper.GetPathToDestination(data, l.Position.X, l.Position.Y-2)
+			path, distance, _ := helper.GetPathToDestination(data, l.Position.X, l.Position.Y)
 			if distance > 15 {
 				helper.MoveThroughPath(path, 15, true)
 				return nil
