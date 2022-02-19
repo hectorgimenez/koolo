@@ -1,71 +1,53 @@
 package run
 
-//import (
-//	"errors"
-//	"github.com/hectorgimenez/koolo/internal/game"
-//	"time"
-//)
-//
-//const (
-//	countessStartingPositionX = 12554
-//	countessStartingPositionY = 11014
-//)
-//
-//type Countess struct {
-//	BaseRun
-//}
-//
-//func NewCountess(run BaseRun) Countess {
-//	return Countess{
-//		BaseRun: run,
-//	}
-//}
-//
-//func (p Countess) Name() string {
-//	return "Countess"
-//}
-//
-//func (p Countess) Kill() error {
-//	err := p.char.KillCountess()
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-//
-//func (p Countess) MoveToStartingPoint() error {
-//	if err := p.tm.WPTo(1, 5); err != nil {
-//		return err
-//	}
-//	time.Sleep(time.Second)
-//
-//	if game.Status().Area != game.AreaBlackMarsh {
-//		return errors.New("error moving to Black Marsh")
-//	}
-//
-//	p.char.Buff()
-//	return nil
-//}
-//
-//func (p Countess) TravelToDestination() error {
-//	areas := []game.Area{
-//		game.AreaForgottenTower,
-//		game.AreaTowerCellarLevel1,
-//		game.AreaTowerCellarLevel2,
-//		game.AreaTowerCellarLevel3,
-//		game.AreaTowerCellarLevel4,
-//		game.AreaTowerCellarLevel5,
-//	}
-//
-//	for _, area := range areas {
-//		err := p.pf.MoveToArea(area)
-//		if err != nil {
-//			return err
-//		}
-//	}
-//
-//	p.pf.MoveTo(countessStartingPositionX, countessStartingPositionY, true)
-//
-//	return nil
-//}
+import (
+	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
+)
+
+const (
+	countessStartingPositionX = 12554
+	countessStartingPositionY = 11014
+)
+
+type Countess struct {
+	BaseRun
+}
+
+func NewCountess(run BaseRun) Countess {
+	return Countess{
+		BaseRun: run,
+	}
+}
+
+func (c Countess) Name() string {
+	return "Countess"
+}
+
+func (c Countess) BuildActions(data game.Data) (actions []action.Action) {
+	// Moving to starting point (Black Marsh)
+	if data.Area != game.AreaBlackMarsh {
+		actions = append(actions, c.builder.WayPoint(game.AreaBlackMarsh))
+	}
+
+	// Buff
+	actions = append(actions, c.char.Buff())
+
+	// Travel to boss position
+	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+		return []step.Step{
+			step.MoveToLevel(game.AreaForgottenTower),
+			step.MoveToLevel(game.AreaTowerCellarLevel1),
+			step.MoveToLevel(game.AreaTowerCellarLevel2),
+			step.MoveToLevel(game.AreaTowerCellarLevel3),
+			step.MoveToLevel(game.AreaTowerCellarLevel4),
+			step.MoveToLevel(game.AreaTowerCellarLevel5),
+			step.MoveTo(countessStartingPositionX, countessStartingPositionY, true),
+		}
+	}))
+
+	// Kill Countess
+	actions = append(actions, c.char.KillCountess())
+	return
+}
