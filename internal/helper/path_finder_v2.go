@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"math/rand"
 )
 
 func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, distance float64, found bool) {
@@ -50,10 +51,17 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 
 	// Transform cartesian movement (world) to isometric (screen)e
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	//halfTileX := float32(1933) / 40
-	//halfTileY := float32(1110) / 40
 	screenX := int((float32(diffX-diffY) * 19.8) + float32(hid.GameAreaSizeX/2))
 	screenY := int((float32(diffX+diffY) * 9.9) + float32(hid.GameAreaSizeY/2))
 
 	return screenX, screenY
+}
+
+func RandomMovement() {
+	midGameX := hid.GameAreaSizeX / 2
+	midGameY := hid.GameAreaSizeY / 2
+	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
+	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
+	hid.MovePointer(x, y)
+	hid.PressKey(config.Config.Bindings.ForceMove)
 }
