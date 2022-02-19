@@ -192,6 +192,7 @@ func parseItems(d gameDataHttpResponse) Items {
 			stats[Stat(s.Stat)] = s.Value
 		}
 		item := Item{
+			ID: i.ID,
 			Position: Position{
 				X: int(i.Position.X),
 				Y: int(i.Position.Y),

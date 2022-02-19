@@ -40,6 +40,7 @@ type gameDataHttpResponse struct {
 		PlayerClass string `json:"player_class"`
 	} `json:"player_unit"`
 	Items []struct {
+		ID        int      `json:"id"`
 		Position  position `json:"position"`
 		Name      string   `json:"name"`
 		IsHovered bool     `json:"is_hovered"`

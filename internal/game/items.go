@@ -38,6 +38,7 @@ type Items struct {
 type Inventory []Item
 
 type Item struct {
+	ID        int
 	Name      string
 	Quality   Quality
 	Position  Position

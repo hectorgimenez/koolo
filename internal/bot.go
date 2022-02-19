@@ -52,6 +52,7 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 		}
 
 		actions = append(actions, r.BuildActions(game.Status())...)
+		actions = append(actions, b.ab.ItemPickup())
 		running := true
 		for running {
 			d := game.Status()
