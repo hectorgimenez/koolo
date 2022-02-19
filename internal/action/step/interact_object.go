@@ -44,12 +44,12 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 		return nil
 	}
 
-	i.lastRun = time.Now()
 	for _, o := range data.Objects {
 		if o.Name == i.objectName {
 			if o.IsHovered {
 				hid.Click(hid.LeftButton)
 				i.waitingForInteraction = true
+				i.lastRun = time.Now()
 				return nil
 			} else {
 				distance := helper.DistanceFromPoint(data, o.Position.X, o.Position.Y)
@@ -57,15 +57,21 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				if distance > 15 {
 					path, _, _ := helper.GetPathToDestination(data, o.Position.X, o.Position.Y)
 					helper.MoveThroughPath(path, 15, false)
+					i.lastRun = time.Now()
+					return nil
+				}
+				if time.Since(i.lastRun) < time.Second {
 					return nil
 				}
 				x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, o.Position.X-2, o.Position.Y-2)
 				hid.MovePointer(x, y)
 
+				i.lastRun = time.Now()
 				return nil
 			}
 		}
 	}
 
+	i.lastRun = time.Now()
 	return fmt.Errorf("object %s not found", i.objectName)
 }

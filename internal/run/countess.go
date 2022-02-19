@@ -28,7 +28,7 @@ func (c Countess) BuildActions(data game.Data) (actions []action.Action) {
 	// Buff
 	actions = append(actions, c.char.Buff())
 
-	// Travel to boss position
+	// Travel to boss level
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(game.AreaForgottenTower),
@@ -37,8 +37,28 @@ func (c Countess) BuildActions(data game.Data) (actions []action.Action) {
 			step.MoveToLevel(game.AreaTowerCellarLevel3),
 			step.MoveToLevel(game.AreaTowerCellarLevel4),
 			step.MoveToLevel(game.AreaTowerCellarLevel5),
-			step.MoveTo(countessStartingPositionX, countessStartingPositionY, true),
 		}
+	}))
+
+	// Try to move around Countess area
+	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		for _, o := range data.Objects {
+			if o.Name == "GoodChest" {
+				steps = append(steps, step.MoveTo(o.Position.X, o.Position.Y, true))
+			}
+		}
+		return
+	}))
+
+	// Let's teleport over Countess
+	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		countess, found := data.Monsters[game.Countess]
+		if !found {
+			return
+		}
+
+		steps = append(steps, step.MoveTo(countess.Position.X, countess.Position.Y, true))
+		return
 	}))
 
 	// Kill Countess
