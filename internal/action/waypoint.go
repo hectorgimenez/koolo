@@ -35,10 +35,10 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 		for _, o := range game.Status().Objects {
 			if o.IsWaypoint() {
 				steps = append(steps,
-					step.NewInteractObject(o.Name, func(data game.Data) bool {
+					step.InteractObject(o.Name, func(data game.Data) bool {
 						return data.OpenMenus.Waypoint
 					}),
-					step.NewSyncAction(func(data game.Data) error {
+					step.SyncAction(func(data game.Data) error {
 						actTabX := int(float32(hid.GameAreaSizeX)/wpTabStartX) + (wpCoords[0]-1)*wpTabSize + (wpTabSize / 2)
 						actTabY := int(float32(hid.GameAreaSizeY) / wpTabStartY)
 

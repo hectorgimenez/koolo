@@ -36,8 +36,8 @@ type BaseCharacter struct {
 func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	if config.Config.Character.UseCTA {
 		steps = append(steps,
-			step.NewSwapWeapon(),
-			step.NewSyncAction(func(data game.Data) error {
+			step.SwapWeapon(),
+			step.SyncAction(func(data game.Data) error {
 				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
@@ -49,7 +49,7 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 
 				return nil
 			}),
-			step.NewSwapWeapon(),
+			step.SwapWeapon(),
 		)
 	}
 

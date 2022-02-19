@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-type InteractObject struct {
+type InteractObjectStep struct {
 	basicStep
 	objectName            string
 	waitingForInteraction bool
 	isCompleted           func(game.Data) bool
 }
 
-func NewInteractObject(objectName string, isCompleted func(game.Data) bool) *InteractObject {
-	return &InteractObject{
+func InteractObject(objectName string, isCompleted func(game.Data) bool) *InteractObjectStep {
+	return &InteractObjectStep{
 		basicStep: basicStep{
 			status: StatusNotStarted,
 		},
@@ -25,7 +25,7 @@ func NewInteractObject(objectName string, isCompleted func(game.Data) bool) *Int
 	}
 }
 
-func (i *InteractObject) Status(data game.Data) Status {
+func (i *InteractObjectStep) Status(data game.Data) Status {
 	// Give some extra time to render the UI
 	if i.isCompleted(data) && time.Since(i.lastRun) > time.Second*1 {
 		return i.tryTransitionStatus(StatusCompleted)
@@ -34,7 +34,7 @@ func (i *InteractObject) Status(data game.Data) Status {
 	return i.status
 }
 
-func (i *InteractObject) Run(data game.Data) error {
+func (i *InteractObjectStep) Run(data game.Data) error {
 	i.tryTransitionStatus(StatusInProgress)
 	if time.Since(i.lastRun) < time.Millisecond*500 {
 		return nil

@@ -8,20 +8,20 @@ import (
 	"time"
 )
 
-type PickupItem struct {
+type PickupItemStep struct {
 	basicStep
 	item                  game.Item
 	waitingForInteraction bool
 }
 
-func NewPickupItem(item game.Item) *PickupItem {
-	return &PickupItem{
+func PickupItem(item game.Item) *PickupItemStep {
+	return &PickupItemStep{
 		basicStep: newBasicStep(),
 		item:      item,
 	}
 }
 
-func (p PickupItem) Status(data game.Data) Status {
+func (p PickupItemStep) Status(data game.Data) Status {
 	for _, i := range data.Items.Ground {
 		if i.ID == p.item.ID {
 			return p.status
@@ -31,7 +31,7 @@ func (p PickupItem) Status(data game.Data) Status {
 	return p.tryTransitionStatus(StatusCompleted)
 }
 
-func (p PickupItem) Run(data game.Data) error {
+func (p PickupItemStep) Run(data game.Data) error {
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) < time.Millisecond*500 {
 		return nil

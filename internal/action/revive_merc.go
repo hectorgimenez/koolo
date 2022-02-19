@@ -13,8 +13,8 @@ func (b Builder) ReviveMerc() *BasicAction {
 			b.logger.Info("Merc is dead, let's revive it!")
 
 			steps = append(steps,
-				step.NewInteractNPC(town.GetTownByArea(data.Area).MercContractorNPC()),
-				step.NewKeySequence("up", "down", "enter", "esc"),
+				step.InteractNPC(town.GetTownByArea(data.Area).MercContractorNPC()),
+				step.KeySequence("up", "down", "enter", "esc"),
 			)
 		}
 

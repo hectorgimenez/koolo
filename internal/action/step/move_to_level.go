@@ -4,25 +4,25 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-type MoveToLevel struct {
+type MoveToLevelStep struct {
 	basicStep
 	level                 game.Level
 	waitingForInteraction bool
 }
 
-func NewMoveToLevel(level game.Level) *MoveToLevel {
-	return &MoveToLevel{
+func MoveToLevel(level game.Level) *MoveToLevelStep {
+	return &MoveToLevelStep{
 		basicStep: newBasicStep(),
 		level:     level,
 	}
 }
 
-func (m *MoveToLevel) Status(data game.Data) Status {
+func (m *MoveToLevelStep) Status(data game.Data) Status {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MoveToLevel) Run(data game.Data) error {
+func (m *MoveToLevelStep) Run(data game.Data) error {
 	//TODO implement me
 	panic("implement me")
 }

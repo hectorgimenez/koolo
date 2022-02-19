@@ -4,23 +4,23 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-type SyncAction struct {
+type SyncActionStep struct {
 	basicStep
 	action func(game.Data) error
 }
 
-func NewSyncAction(fn func(game.Data) error) *SyncAction {
-	return &SyncAction{
+func SyncAction(fn func(game.Data) error) *SyncActionStep {
+	return &SyncActionStep{
 		basicStep: newBasicStep(),
 		action:    fn,
 	}
 }
 
-func (s *SyncAction) Status(_ game.Data) Status {
+func (s *SyncActionStep) Status(_ game.Data) Status {
 	return s.status
 }
 
-func (s *SyncAction) Run(d game.Data) error {
+func (s *SyncActionStep) Run(d game.Data) error {
 	s.tryTransitionStatus(StatusCompleted)
 
 	return s.action(d)

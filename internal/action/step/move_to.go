@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-type MoveTo struct {
+type MoveToStep struct {
 	basicStep
 	toX      int
 	toY      int
 	teleport bool
 }
 
-func NewMoveTo(toX, toY int, teleport bool) *MoveTo {
-	return &MoveTo{
+func MoveTo(toX, toY int, teleport bool) *MoveToStep {
+	return &MoveToStep{
 		basicStep: newBasicStep(),
 		toX:       toX,
 		toY:       toY,
@@ -24,7 +24,7 @@ func NewMoveTo(toX, toY int, teleport bool) *MoveTo {
 	}
 }
 
-func (m *MoveTo) Status(data game.Data) Status {
+func (m *MoveToStep) Status(data game.Data) Status {
 	_, distance, _ := helper.GetPathToDestination(data, m.toX, m.toY)
 	if distance < 6 {
 		return m.tryTransitionStatus(StatusCompleted)
@@ -33,7 +33,7 @@ func (m *MoveTo) Status(data game.Data) Status {
 	return m.status
 }
 
-func (m *MoveTo) Run(data game.Data) error {
+func (m *MoveToStep) Run(data game.Data) error {
 	if m.teleport && m.status == StatusNotStarted {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}

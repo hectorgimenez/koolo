@@ -37,8 +37,8 @@ func (p Pindleskin) BuildActions(data game.Data) (actions []action.Action) {
 	// Moving to starting point
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
 		return []step.Step{
-			step.NewMoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
-			step.NewInteractObject("PermanentTownPortal", func(data game.Data) bool {
+			step.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
+			step.InteractObject("PermanentTownPortal", func(data game.Data) bool {
 				return data.Area == game.AreaNihlathaksTemple
 			}),
 		}
@@ -50,7 +50,7 @@ func (p Pindleskin) BuildActions(data game.Data) (actions []action.Action) {
 	// Travel to boss destination
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
 		return []step.Step{
-			step.NewMoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),
+			step.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),
 		}
 	}))
 

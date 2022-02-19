@@ -13,7 +13,7 @@ func (b Builder) RecoverCorpse() *BasicAction {
 		if data.Corpse.Found {
 			b.logger.Info("Corpse found, let's recover our stuff...")
 			steps = append(steps,
-				step.NewSyncAction(func(data game.Data) error {
+				step.SyncAction(func(data game.Data) error {
 					x, y := helper.GameCoordsToScreenCords(
 						data.PlayerUnit.Position.X,
 						data.PlayerUnit.Position.Y,

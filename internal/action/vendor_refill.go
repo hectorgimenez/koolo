@@ -12,13 +12,13 @@ func (b Builder) VendorRefill() *BasicAction {
 
 		if b.bm.ShouldBuyPotions() || shouldBuyTPs {
 			steps = append(steps,
-				step.NewInteractNPC(town.GetTownByArea(data.Area).RefillNPC()),
-				step.NewKeySequence("up", "down", "enter"),
-				step.NewSyncAction(func(data game.Data) error {
+				step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()),
+				step.KeySequence("up", "down", "enter"),
+				step.SyncAction(func(data game.Data) error {
 					b.sm.BuyPotsAndTPs(data)
 					return nil
 				}),
-				step.NewKeySequence("esc"),
+				step.KeySequence("esc"),
 			)
 		}
 

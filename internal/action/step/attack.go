@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Attack struct {
+type AttackStep struct {
 	basicStep
 	target                game.NPCID
 	standStillBinding     string
@@ -17,8 +17,8 @@ type Attack struct {
 	keyBinding            string
 }
 
-func NewPrimaryAttack(target game.NPCID, numOfAttacks, delayBetweenAttacksMs int) *Attack {
-	return &Attack{
+func PrimaryAttack(target game.NPCID, numOfAttacks, delayBetweenAttacksMs int) *AttackStep {
+	return &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
@@ -27,8 +27,8 @@ func NewPrimaryAttack(target game.NPCID, numOfAttacks, delayBetweenAttacksMs int
 	}
 }
 
-func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks, delayBetweenAttacksMs int) *Attack {
-	return &Attack{
+func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks, delayBetweenAttacksMs int) *AttackStep {
+	return &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
@@ -38,7 +38,7 @@ func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks, dela
 	}
 }
 
-func (p *Attack) Status(data game.Data) Status {
+func (p *AttackStep) Status(data game.Data) Status {
 	_, found := data.Monsters[p.target]
 	if !found || p.numOfAttacksRemaining <= 0 {
 		return p.tryTransitionStatus(StatusCompleted)
@@ -47,7 +47,7 @@ func (p *Attack) Status(data game.Data) Status {
 	return p.status
 }
 
-func (p *Attack) Run(data game.Data) error {
+func (p *AttackStep) Run(data game.Data) error {
 	if p.status == StatusNotStarted && p.keyBinding != "" {
 		hid.PressKey(p.keyBinding)
 	}

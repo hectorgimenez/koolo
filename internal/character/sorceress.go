@@ -20,7 +20,7 @@ type Sorceress struct {
 func (s Sorceress) Buff() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
-		steps = append(steps, step.NewSyncAction(func(data game.Data) error {
+		steps = append(steps, step.SyncAction(func(data game.Data) error {
 			if config.Config.Bindings.Sorceress.FrozenArmor != "" {
 				hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
 				helper.Sleep(100)
@@ -59,7 +59,7 @@ func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
 		for i := 0; i < maxAttackLoops; i++ {
 			steps = append(steps,
 				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, 100),
-				step.NewPrimaryAttack(npc, 3, 300),
+				step.PrimaryAttack(npc, 3, 300),
 			)
 		}
 

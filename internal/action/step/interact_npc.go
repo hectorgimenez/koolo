@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-type InteractNPC struct {
+type InteractNPCStep struct {
 	basicStep
 	NPC                   game.NPCID
 	waitingForInteraction bool
 }
 
-func NewInteractNPC(npc game.NPCID) *InteractNPC {
-	return &InteractNPC{
+func InteractNPC(npc game.NPCID) *InteractNPCStep {
+	return &InteractNPCStep{
 		basicStep: basicStep{
 			status: StatusNotStarted,
 		},
@@ -22,7 +22,7 @@ func NewInteractNPC(npc game.NPCID) *InteractNPC {
 	}
 }
 
-func (i *InteractNPC) Status(data game.Data) Status {
+func (i *InteractNPCStep) Status(data game.Data) Status {
 	// Give some extra time to render the UI
 	if data.OpenMenus.NPCInteract && time.Since(i.lastRun) > time.Second*1 {
 		return i.tryTransitionStatus(StatusCompleted)
@@ -31,7 +31,7 @@ func (i *InteractNPC) Status(data game.Data) Status {
 	return i.status
 }
 
-func (i *InteractNPC) Run(data game.Data) error {
+func (i *InteractNPCStep) Run(data game.Data) error {
 	i.tryTransitionStatus(StatusInProgress)
 	if time.Since(i.lastRun) < time.Millisecond*500 {
 		return nil
@@ -64,7 +64,7 @@ func (i *InteractNPC) Run(data game.Data) error {
 	return nil
 }
 
-func (i InteractNPC) getNPCPosition(d game.Data) (X, Y int) {
+func (i InteractNPCStep) getNPCPosition(d game.Data) (X, Y int) {
 	npc, found := d.Monsters[i.NPC]
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit

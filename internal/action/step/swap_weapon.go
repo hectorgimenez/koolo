@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-type SwapWeapon struct {
+type SwapWeaponStep struct {
 	basicStep
 	binding             string
 	initialWeaponWasCTA bool
 }
 
-func NewSwapWeapon() *SwapWeapon {
-	return &SwapWeapon{
+func SwapWeapon() *SwapWeaponStep {
+	return &SwapWeaponStep{
 		basicStep: newBasicStep(),
 		binding:   config.Config.Bindings.SwapWeapon,
 	}
 }
 
-func (s *SwapWeapon) Status(data game.Data) Status {
+func (s *SwapWeaponStep) Status(data game.Data) Status {
 	if s.status == StatusNotStarted {
 		return StatusNotStarted
 	}
@@ -33,7 +33,7 @@ func (s *SwapWeapon) Status(data game.Data) Status {
 	return s.tryTransitionStatus(StatusCompleted)
 }
 
-func (s *SwapWeapon) Run(data game.Data) error {
+func (s *SwapWeaponStep) Run(data game.Data) error {
 	// Add some delay to let the weapon switch
 	if time.Since(s.lastRun) < time.Second {
 		return nil

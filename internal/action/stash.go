@@ -25,10 +25,10 @@ func (b Builder) Stash() *BasicAction {
 		}
 
 		steps = append(steps,
-			step.NewInteractObject("Bank", func(data game.Data) bool {
+			step.InteractObject("Bank", func(data game.Data) bool {
 				return data.OpenMenus.Stash
 			}),
-			step.NewSyncAction(func(data game.Data) error {
+			step.SyncAction(func(data game.Data) error {
 				stashGold(data)
 				b.stashInventory()
 				hid.PressKey("esc")

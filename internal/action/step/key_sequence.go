@@ -6,19 +6,19 @@ import (
 	"time"
 )
 
-type KeySequence struct {
+type KeySequenceStep struct {
 	basicStep
 	keysToPress []string
 }
 
-func NewKeySequence(keysToPress ...string) *KeySequence {
-	return &KeySequence{
+func KeySequence(keysToPress ...string) *KeySequenceStep {
+	return &KeySequenceStep{
 		basicStep:   newBasicStep(),
 		keysToPress: keysToPress,
 	}
 }
 
-func (o *KeySequence) Status(_ game.Data) Status {
+func (o *KeySequenceStep) Status(_ game.Data) Status {
 	if len(o.keysToPress) > 0 {
 		return o.status
 	}
@@ -27,7 +27,7 @@ func (o *KeySequence) Status(_ game.Data) Status {
 	return o.status
 }
 
-func (o *KeySequence) Run(_ game.Data) error {
+func (o *KeySequenceStep) Run(_ game.Data) error {
 	if time.Since(o.lastRun) < time.Millisecond*200 {
 		return nil
 	}
