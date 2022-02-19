@@ -36,7 +36,7 @@ func main() {
 	}
 
 	ab := action.NewBuilder(logger, sm, bm)
-	bot := koolo.NewBot(logger, hm, bm, sm, ab)
+	bot := koolo.NewBot(logger, hm, ab)
 	supervisor := koolo.NewSupervisor(logger, bot)
 
 	ctx := context.Background()

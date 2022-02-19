@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"time"
 )
@@ -16,23 +15,17 @@ import (
 type Bot struct {
 	logger *zap.Logger
 	hm     health.Manager
-	bm     health.BeltManager
-	sm     town.ShopManager
 	ab     action.Builder
 }
 
 func NewBot(
 	logger *zap.Logger,
 	hm health.Manager,
-	bm health.BeltManager,
-	sm town.ShopManager,
 	ab action.Builder,
 ) Bot {
 	return Bot{
 		logger: logger,
 		hm:     hm,
-		bm:     bm,
-		sm:     sm,
 		ab:     ab,
 	}
 }
