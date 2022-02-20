@@ -1,9 +1,12 @@
 package health
 
 import (
+	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
 	"time"
 )
@@ -41,6 +44,14 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	status := d.Health
+
+	if status.Life == 0 {
+		// After dying we need to press esc and wait the loading screen until we can exit game, it's a bit hacky but it works
+		helper.Sleep(1000)
+		hid.PressKey("esc")
+		helper.Sleep(10000)
+		return errors.New("you died :(")
+	}
 
 	usedRejuv := false
 	if time.Since(hm.lastRejuv) > rejuvInterval && (status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana) {
