@@ -1,11 +1,13 @@
 package helper
 
 import (
+	"errors"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
-func ExitGame() {
+func ExitGame() error {
 	hid.PressKey("esc")
 	Sleep(150)
 	hid.PressKey("up")
@@ -15,10 +17,19 @@ func ExitGame() {
 	hid.PressKey("down")
 	Sleep(50)
 	hid.PressKey("enter")
+
+	for i := 0; i < 30; i++ {
+		if !game.IsInGame() {
+			return nil
+		}
+		Sleep(1000)
+	}
+
+	return errors.New("error exiting game! Timeout")
 }
 
 // TODO: Make this coords dynamic
-func NewGame() {
+func NewGame() error {
 	difficultyPosition := map[string]struct {
 		X, Y int
 	}{
@@ -35,4 +46,13 @@ func NewGame() {
 	Sleep(200)
 	hid.MovePointer(createX, createY)
 	hid.Click(hid.LeftButton)
+
+	for i := 0; i < 30; i++ {
+		if game.IsInGame() {
+			return nil
+		}
+		Sleep(1000)
+	}
+
+	return errors.New("error creating game! Timeout")
 }

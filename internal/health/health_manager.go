@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"go.uber.org/zap"
 	"time"
 )
@@ -34,11 +33,11 @@ func NewHealthManager(logger *zap.Logger, beltManager BeltManager) Manager {
 	}
 }
 
-func (hm *Manager) HandleHealthAndMana(d game.Data) {
+func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	hpConfig := config.Config.Health
 	// Safe area, skipping
 	if d.Area.IsTown() {
-		return
+		return nil
 	}
 
 	status := d.Health
@@ -53,8 +52,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) {
 
 	if !usedRejuv {
 		if status.HPPercent() <= hpConfig.ChickenAt {
-			hm.chicken(status)
-			return
+			return fmt.Errorf("chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent())
 		}
 
 		if status.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
@@ -80,8 +78,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) {
 
 		if !usedMercRejuv {
 			if status.MercHPPercent() <= hpConfig.MercChickenAt {
-				hm.chicken(status)
-				return
+				return fmt.Errorf("mercenary chicken! Current Merc Health: %d (%d percent)", status.Merc.Life, status.MercHPPercent())
 			}
 
 			if status.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {
@@ -90,9 +87,6 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) {
 			}
 		}
 	}
-}
 
-func (hm Manager) chicken(status game.Health) {
-	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
-	helper.ExitGame()
+	return nil
 }

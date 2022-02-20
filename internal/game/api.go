@@ -15,6 +15,21 @@ const (
 
 var NotInGameErr = errors.New("not in game")
 
+func IsInGame() bool {
+	r, err := http.Get(hostName + genericData)
+	if err != nil {
+		return false
+	}
+
+	d := requestSucceed{}
+	err = json.NewDecoder(r.Body).Decode(&d)
+	if err != nil {
+		return false
+	}
+
+	return d.Success
+}
+
 func Status() Data {
 	for retries := 0; retries < maxRetries; retries++ {
 		r, err := http.Get(hostName + genericData)

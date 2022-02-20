@@ -50,7 +50,9 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 		running := true
 		for running {
 			d := game.Status()
-			b.hm.HandleHealthAndMana(d)
+			if err := b.hm.HandleHealthAndMana(d); err != nil {
+				return err
+			}
 
 			for k, act := range actions {
 				if !act.Finished(d) {

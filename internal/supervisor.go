@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-vgo/robotgo"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
@@ -40,7 +41,25 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
 
-	return s.bot.Run(ctx, runs)
+	for {
+		if err = helper.NewGame(); err != nil {
+			s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+			continue
+		}
+
+		gameStart := time.Now()
+		err = s.bot.Run(ctx, runs)
+		if exitErr := helper.ExitGame(); exitErr != nil {
+			s.logger.Fatal(fmt.Sprintf("Error exiting game: %s, shutting down...", exitErr))
+		}
+
+		gameDuration := time.Since(gameStart)
+		if err != nil {
+			s.logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), gameDuration.Seconds()))
+		}
+		helper.Sleep(10000)
+	}
+
 }
 
 func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
