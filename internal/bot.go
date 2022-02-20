@@ -44,7 +44,7 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 			b.ab.Stash(),
 		}
 
-		actions = append(actions, r.BuildActions(game.Status())...)
+		actions = append(actions, r.BuildActions()...)
 		actions = append(actions, b.ab.ItemPickup())
 		actions = append(actions, b.ab.ReturnTown())
 		running := true

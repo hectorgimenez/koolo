@@ -14,13 +14,12 @@ func (s Summoner) Name() string {
 	return "Summoner"
 }
 
-func (s Summoner) BuildActions(data game.Data) (actions []action.Action) {
+func (s Summoner) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Arcane Sanctuary)
-	if data.Area != game.ArcaneSanctuary {
-		actions = append(actions, s.builder.WayPoint(game.ArcaneSanctuary))
-	}
+	actions = append(actions, s.builder.WayPoint(game.ArcaneSanctuary))
 
 	// Buff
+	actions = append(actions, s.char.Buff())
 	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position

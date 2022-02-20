@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"go.uber.org/zap"
 	"time"
 )
@@ -93,5 +94,5 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) {
 
 func (hm Manager) chicken(status game.Health) {
 	hm.logger.Warn(fmt.Sprintf("Chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent()))
-	//helper.ExitGame()
+	helper.ExitGame()
 }

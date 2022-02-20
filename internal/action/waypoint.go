@@ -27,6 +27,11 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 	}
 
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		// We don't need to move
+		if data.Area == area {
+			return
+		}
+
 		wpCoords, found := allowedAreas[area]
 		if !found {
 			panic("Area destination is not mapped on WayPoint Action (waypoint.go)")

@@ -19,11 +19,9 @@ func (m Mephisto) Name() string {
 	return "Mephisto"
 }
 
-func (m Mephisto) BuildActions(data game.Data) (actions []action.Action) {
-	// Moving to starting point (Catacombs Level 2)
-	if data.Area != game.AreaDuranceOfHateLevel2 {
-		actions = append(actions, m.builder.WayPoint(game.AreaDuranceOfHateLevel2))
-	}
+func (m Mephisto) BuildActions() (actions []action.Action) {
+	// Moving to starting point (Durance of Hate Level 2)
+	actions = append(actions, m.builder.WayPoint(game.AreaDuranceOfHateLevel2))
 
 	// Buff
 	actions = append(actions, m.char.Buff())

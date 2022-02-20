@@ -6,11 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-const (
-	countessStartingPositionX = 12554
-	countessStartingPositionY = 11014
-)
-
 type Countess struct {
 	baseRun
 }
@@ -19,11 +14,9 @@ func (c Countess) Name() string {
 	return "Countess"
 }
 
-func (c Countess) BuildActions(data game.Data) (actions []action.Action) {
+func (c Countess) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Black Marsh)
-	if data.Area != game.AreaBlackMarsh {
-		actions = append(actions, c.builder.WayPoint(game.AreaBlackMarsh))
-	}
+	actions = append(actions, c.builder.WayPoint(game.AreaBlackMarsh))
 
 	// Buff
 	actions = append(actions, c.char.Buff())

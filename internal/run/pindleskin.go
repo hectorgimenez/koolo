@@ -22,11 +22,9 @@ func (p Pindleskin) Name() string {
 	return "Pindleskin"
 }
 
-func (p Pindleskin) BuildActions(data game.Data) (actions []action.Action) {
+func (p Pindleskin) BuildActions() (actions []action.Action) {
 	// Move to Act 5
-	if data.Area != game.AreaHarrogath {
-		actions = append(actions, p.builder.WayPoint(game.AreaHarrogath))
-	}
+	actions = append(actions, p.builder.WayPoint(game.AreaHarrogath))
 
 	// Moving to starting point
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {

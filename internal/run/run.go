@@ -4,12 +4,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Run interface {
 	Name() string
-	BuildActions(game.Data) []action.Action
+	BuildActions() []action.Action
 }
 
 type baseRun struct {

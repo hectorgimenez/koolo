@@ -19,11 +19,9 @@ func (a Andariel) Name() string {
 	return "Andariel"
 }
 
-func (a Andariel) BuildActions(data game.Data) (actions []action.Action) {
+func (a Andariel) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Catacombs Level 2)
-	if data.Area != game.AreaCatacombsLevel2 {
-		actions = append(actions, a.builder.WayPoint(game.AreaCatacombsLevel2))
-	}
+	actions = append(actions, a.builder.WayPoint(game.AreaCatacombsLevel2))
 
 	// Buff
 	actions = append(actions, a.char.Buff())
