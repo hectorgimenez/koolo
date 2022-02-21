@@ -50,7 +50,9 @@ items:
 
   # Essences
   - twistedessenceofsuffering:
-
+  - chargedessenceofhatred:
+  - burningessenceofterror:
+  - festeringessenceofdestruction:
 
   - amulet: {quality: unique}
   - ring: {quality: unique}
