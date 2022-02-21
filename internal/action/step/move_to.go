@@ -4,8 +4,8 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
@@ -27,7 +27,7 @@ func MoveTo(toX, toY int, teleport bool) *MoveToStep {
 }
 
 func (m *MoveToStep) Status(data game.Data) Status {
-	_, distance, _ := helper.GetPathToDestination(data, m.toX, m.toY)
+	_, distance, _ := pather.GetPathToDestination(data, m.toX, m.toY)
 	if distance < 8 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
@@ -48,12 +48,12 @@ func (m *MoveToStep) Run(data game.Data) error {
 
 	if m.path == nil || !m.adjustPath(data) {
 		// TODO: Handle not found
-		path, _, _ := helper.GetPathToDestination(data, m.toX, m.toY)
+		path, _, _ := pather.GetPathToDestination(data, m.toX, m.toY)
 		m.path = path
 	}
 
 	m.lastRun = time.Now()
-	helper.MoveThroughPath(m.path, 25, m.teleport)
+	pather.MoveThroughPath(m.path, 25, m.teleport)
 
 	return nil
 }
@@ -63,7 +63,7 @@ func (m *MoveToStep) adjustPath(data game.Data) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
 	for k, pos := range m.path {
-		distance := helper.DistanceFromPoint(data, pos.(*helper.Tile).X+data.AreaOrigin.X, pos.(*helper.Tile).Y+data.AreaOrigin.Y)
+		distance := pather.DistanceFromPoint(data, pos.(*pather.Tile).X+data.AreaOrigin.X, pos.(*pather.Tile).Y+data.AreaOrigin.Y)
 		if distance < nearestDistance {
 			nearestDistance = distance
 			nearestKey = k

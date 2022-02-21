@@ -3,8 +3,8 @@ package step
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
@@ -52,18 +52,18 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				i.lastRun = time.Now()
 				return nil
 			} else {
-				distance := helper.DistanceFromPoint(data, o.Position.X, o.Position.Y)
+				distance := pather.DistanceFromPoint(data, o.Position.X, o.Position.Y)
 
 				if distance > 15 {
-					path, _, _ := helper.GetPathToDestination(data, o.Position.X, o.Position.Y)
-					helper.MoveThroughPath(path, 10, false)
+					path, _, _ := pather.GetPathToDestination(data, o.Position.X, o.Position.Y)
+					pather.MoveThroughPath(path, 10, false)
 					i.lastRun = time.Now()
 					return nil
 				}
 				if time.Since(i.lastRun) < time.Second {
 					return nil
 				}
-				x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, o.Position.X-2, o.Position.Y-2)
+				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, o.Position.X-2, o.Position.Y-2)
 				hid.MovePointer(x, y)
 
 				i.lastRun = time.Now()

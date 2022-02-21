@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
@@ -63,7 +64,7 @@ func (p *AttackStep) Run(data game.Data) error {
 		}
 
 		hid.KeyDown(p.standStillBinding)
-		x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
+		x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 		hid.MovePointer(x, y)
 
 		if p.keyBinding != "" {

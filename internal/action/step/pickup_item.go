@@ -3,8 +3,8 @@ package step
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
@@ -49,12 +49,12 @@ func (p *PickupItemStep) Run(data game.Data) error {
 				p.waitingForInteraction = true
 				return nil
 			} else {
-				path, distance, _ := helper.GetPathToDestination(data, i.Position.X, i.Position.Y)
+				path, distance, _ := pather.GetPathToDestination(data, i.Position.X, i.Position.Y)
 				if distance > 5 {
-					helper.MoveThroughPath(path, 15, false)
+					pather.MoveThroughPath(path, 15, false)
 					return nil
 				}
-				x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-2, i.Position.Y-2)
+				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-2, i.Position.Y-2)
 				hid.MovePointer(x, y)
 
 				return nil

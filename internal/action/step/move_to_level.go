@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
@@ -47,14 +48,14 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	m.lastRun = time.Now()
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
-			distance := helper.DistanceFromPoint(data, l.Position.X, l.Position.Y)
+			distance := pather.DistanceFromPoint(data, l.Position.X, l.Position.Y)
 			if distance > 10 {
-				path, _, _ := helper.GetPathToDestination(data, l.Position.X, l.Position.Y)
-				helper.MoveThroughPath(path, 25, true)
+				path, _, _ := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
+				pather.MoveThroughPath(path, 25, true)
 				return nil
 			}
 
-			x, y := helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
+			x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
 			hid.MovePointer(x, y)
 			helper.Sleep(100)
 			hid.Click(hid.LeftButton)

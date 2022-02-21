@@ -2,8 +2,8 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
@@ -54,13 +54,13 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	x, y := i.getNPCPosition(data)
 
 	// TODO: Handle not found
-	distance := helper.DistanceFromPoint(data, x, y)
+	distance := pather.DistanceFromPoint(data, x, y)
 	if distance > 15 {
-		path, _, _ := helper.GetPathToDestination(data, x, y)
-		helper.MoveThroughPath(path, 12, false)
+		path, _, _ := pather.GetPathToDestination(data, x, y)
+		pather.MoveThroughPath(path, 12, false)
 		return nil
 	}
-	x, y = helper.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, x, y)
+	x, y = pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, x, y)
 	hid.MovePointer(x, y)
 
 	return nil

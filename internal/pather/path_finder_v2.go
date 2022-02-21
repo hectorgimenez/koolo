@@ -1,4 +1,4 @@
-package helper
+package pather
 
 import (
 	"github.com/beefsack/go-astar"
