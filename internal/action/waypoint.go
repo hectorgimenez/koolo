@@ -21,9 +21,10 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 	allowedAreas := map[game.Area][2]int{
 		game.AreaBlackMarsh:          {1, 5},
 		game.AreaCatacombsLevel2:     {1, 9},
-		game.ArcaneSanctuary:         {2, 8},
+		game.AreaArcaneSanctuary:     {2, 8},
 		game.AreaDuranceOfHateLevel2: {3, 9},
 		game.AreaHarrogath:           {5, 1},
+		game.AreaHallsOfPain:         {5, 6},
 	}
 
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {

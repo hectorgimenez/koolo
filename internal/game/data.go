@@ -21,7 +21,9 @@ const (
 	AreaTowerCellarLevel3   Area = "TowerCellarLevel3"
 	AreaTowerCellarLevel4   Area = "TowerCellarLevel4"
 	AreaTowerCellarLevel5   Area = "TowerCellarLevel5"
-	ArcaneSanctuary         Area = "ArcaneSanctuary"
+	AreaArcaneSanctuary     Area = "AreaArcaneSanctuary"
+	AreaHallsOfPain         Area = "AreaHallsOfPain"
+	AreaHallsOfVaught       Area = "AreaHallsOfVaught"
 
 	// Classes
 	ClassSorceress Class = "Sorceress"
@@ -31,18 +33,19 @@ const (
 )
 
 type Data struct {
-	Health         Health
-	Area           Area
-	AreaOrigin     Position
-	Corpse         Corpse
-	Monsters       map[NPCID]Monster
-	CollisionGrid  [][]int
-	PlayerUnit     PlayerUnit
-	NPCs           map[NPCID]NPC
-	Items          Items
-	Objects        []Object
-	AdjacentLevels []Level
-	OpenMenus      OpenMenus
+	Health           Health
+	Area             Area
+	AreaOrigin       Position
+	Corpse           Corpse
+	Monsters         map[NPCID]Monster
+	CollisionGrid    [][]int
+	PlayerUnit       PlayerUnit
+	NPCs             map[NPCID]NPC
+	Items            Items
+	Objects          []Object
+	AdjacentLevels   []Level
+	PointsOfInterest []PointOfInterest
+	OpenMenus        OpenMenus
 }
 
 type Area string
@@ -91,6 +94,11 @@ type PlayerUnit struct {
 type NPC struct {
 	Name      string
 	Positions []Position
+}
+
+type PointOfInterest struct {
+	Name     string
+	Position Position
 }
 
 type OpenMenus struct {

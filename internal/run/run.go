@@ -37,6 +37,9 @@ func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
 	if config.Config.Runs.Pindleskin {
 		runs = append(runs, Pindleskin{baseRun})
 	}
+	if config.Config.Runs.Nihlathak {
+		runs = append(runs, Nihlathak{baseRun})
+	}
 
 	return
 }

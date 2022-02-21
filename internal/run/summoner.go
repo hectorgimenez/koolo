@@ -16,7 +16,7 @@ func (s Summoner) Name() string {
 
 func (s Summoner) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Arcane Sanctuary)
-	actions = append(actions, s.builder.WayPoint(game.ArcaneSanctuary))
+	actions = append(actions, s.builder.WayPoint(game.AreaArcaneSanctuary))
 
 	// Buff
 	actions = append(actions, s.char.Buff())

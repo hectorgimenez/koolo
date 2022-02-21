@@ -80,6 +80,10 @@ type gameDataHttpResponse struct {
 		Positions []position `json:"positions"`
 		IsPortal  bool
 	} `json:"adjacent_levels"`
+	PointsOfInterest []struct {
+		Label    string   `json:"label"`
+		Position position `json:"position"`
+	} `json:"points_of_interest"`
 }
 
 type position struct {

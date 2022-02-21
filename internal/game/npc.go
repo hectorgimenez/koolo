@@ -28,6 +28,7 @@ const (
 	Pindleskin  NPCID = "Pindleskin"
 	Mephisto    NPCID = "Mephisto"
 	TheSummoner NPCID = "The Summoner"
+	Nihlathak   NPCID = "Nihlathak"
 )
 
 type NPCID string

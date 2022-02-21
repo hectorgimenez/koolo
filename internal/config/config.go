@@ -67,6 +67,7 @@ type StructConfig struct {
 		Summoner   bool `yaml:"summoner"`
 		Mephisto   bool `yaml:"mephisto"`
 		Pindleskin bool `yaml:"pindleskin"`
+		Nihlathak  bool `yaml:"nihlathak"`
 	} `yaml:"runs"`
 }
 

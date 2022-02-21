@@ -17,6 +17,7 @@ type Character interface {
 	KillSummoner() *action.BasicAction
 	KillMephisto() *action.BasicAction
 	KillPindle() *action.BasicAction
+	KillNihlathak() *action.BasicAction
 	ReturnToTown() *action.BasicAction
 }
 

@@ -123,6 +123,16 @@ func Status() Data {
 			})
 		}
 
+		var pois []PointOfInterest
+		for _, poi := range d.PointsOfInterest {
+			pois = append(pois, PointOfInterest{
+				Name: poi.Label,
+				Position: Position{
+					X: int(poi.Position.X),
+					Y: int(poi.Position.Y),
+				},
+			})
+		}
 		return Data{
 			Health: Health{
 				Life:    d.Status.Life,
@@ -161,9 +171,10 @@ func Status() Data {
 				Stash:       d.MenuOpen.Stash,
 				Waypoint:    d.MenuOpen.Waypoint,
 			},
-			Items:          parseItems(d),
-			Objects:        objects,
-			AdjacentLevels: levels,
+			Items:            parseItems(d),
+			Objects:          objects,
+			AdjacentLevels:   levels,
+			PointsOfInterest: pois,
 		}
 	}
 

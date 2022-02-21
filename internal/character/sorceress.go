@@ -54,6 +54,10 @@ func (s Sorceress) KillMephisto() *action.BasicAction {
 	return s.killMonster(game.Mephisto)
 }
 
+func (s Sorceress) KillNihlathak() *action.BasicAction {
+	return s.killMonster(game.Nihlathak)
+}
+
 func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		for i := 0; i < maxAttackLoops; i++ {
