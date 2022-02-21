@@ -1,6 +1,7 @@
 package step
 
 import (
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -8,17 +9,15 @@ import (
 )
 
 type InteractNPCStep struct {
-	basicStep
+	pathingStep
 	NPC                   game.NPCID
 	waitingForInteraction bool
 }
 
 func InteractNPC(npc game.NPCID) *InteractNPCStep {
 	return &InteractNPCStep{
-		basicStep: basicStep{
-			status: StatusNotStarted,
-		},
-		NPC: npc,
+		pathingStep: newPathingStep(),
+		NPC:         npc,
 	}
 }
 
@@ -32,11 +31,17 @@ func (i *InteractNPCStep) Status(data game.Data) Status {
 }
 
 func (i *InteractNPCStep) Run(data game.Data) error {
+	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
+		return fmt.Errorf("error moving to %s: %w", i.NPC, errPathNotFound)
+	}
+
 	i.tryTransitionStatus(StatusInProgress)
+	// Throttle movement clicks
 	if time.Since(i.lastRun) < time.Millisecond*500 {
 		return nil
 	}
 
+	// Give some time before retrying the interaction
 	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*2 {
 		return nil
 	}
@@ -53,10 +58,15 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 
 	x, y := i.getNPCPosition(data)
 
-	// TODO: Handle not found
 	distance := pather.DistanceFromPoint(data, x, y)
 	if distance > 15 {
-		path, _, _ := pather.GetPathToDestination(data, x, y)
+		path, _, found := pather.GetPathToDestination(data, x, y)
+		if !found {
+			pather.RandomMovement()
+			i.consecutivePathNotFound++
+			return nil
+		}
+		i.consecutivePathNotFound = 0
 		pather.MoveThroughPath(path, 12, false)
 		return nil
 	}

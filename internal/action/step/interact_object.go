@@ -9,7 +9,7 @@ import (
 )
 
 type InteractObjectStep struct {
-	basicStep
+	pathingStep
 	objectName            string
 	waitingForInteraction bool
 	isCompleted           func(game.Data) bool
@@ -17,9 +17,7 @@ type InteractObjectStep struct {
 
 func InteractObject(objectName string, isCompleted func(game.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
-		basicStep: basicStep{
-			status: StatusNotStarted,
-		},
+		pathingStep: newPathingStep(),
 		objectName:  objectName,
 		isCompleted: isCompleted,
 	}
@@ -35,11 +33,17 @@ func (i *InteractObjectStep) Status(data game.Data) Status {
 }
 
 func (i *InteractObjectStep) Run(data game.Data) error {
+	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
+		return fmt.Errorf("error moving to %s: %w", i.objectName, errPathNotFound)
+	}
+
 	i.tryTransitionStatus(StatusInProgress)
+	// Throttle movement clicks
 	if time.Since(i.lastRun) < time.Millisecond*500 {
 		return nil
 	}
 
+	// Give some time before retrying the interaction
 	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*3 {
 		return nil
 	}
@@ -55,7 +59,13 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				distance := pather.DistanceFromPoint(data, o.Position.X, o.Position.Y)
 
 				if distance > 15 {
-					path, _, _ := pather.GetPathToDestination(data, o.Position.X, o.Position.Y)
+					path, _, found := pather.GetPathToDestination(data, o.Position.X, o.Position.Y)
+					if !found {
+						pather.RandomMovement()
+						i.consecutivePathNotFound++
+						return nil
+					}
+					i.consecutivePathNotFound = 0
 					pather.MoveThroughPath(path, 10, false)
 					i.lastRun = time.Now()
 					return nil
