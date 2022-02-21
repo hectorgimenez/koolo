@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -41,6 +42,11 @@ func (p *PickupItemStep) Run(data game.Data) error {
 		return nil
 	}
 
+	// Set teleport for first time
+	if p.lastRun.IsZero() {
+		hid.PressKey(config.Config.Bindings.Teleport)
+	}
+
 	p.lastRun = time.Now()
 	for _, i := range data.Items.Ground {
 		if i.ID == p.item.ID {
@@ -51,7 +57,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 			} else {
 				path, distance, _ := pather.GetPathToDestination(data, i.Position.X, i.Position.Y)
 				if distance > 5 {
-					pather.MoveThroughPath(path, 15, false)
+					pather.MoveThroughPath(path, 15, true)
 					return nil
 				}
 				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-2, i.Position.Y-2)

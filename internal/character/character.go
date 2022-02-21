@@ -37,7 +37,7 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	if config.Config.Character.UseCTA {
 		steps = append(steps,
 			step.SwapWeapon(),
-			step.SyncAction(func(data game.Data) error {
+			step.SyncStep(func(data game.Data) error {
 				helper.Sleep(1000)
 				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)

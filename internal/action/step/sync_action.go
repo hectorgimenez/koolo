@@ -6,22 +6,38 @@ import (
 
 type SyncActionStep struct {
 	basicStep
-	action func(game.Data) error
+	action        func(game.Data) error
+	statusChecker func(game.Data) Status
 }
 
-func SyncAction(fn func(game.Data) error) *SyncActionStep {
+func SyncStep(action func(game.Data) error) *SyncActionStep {
 	return &SyncActionStep{
 		basicStep: newBasicStep(),
-		action:    fn,
+		action:    action,
 	}
 }
 
-func (s *SyncActionStep) Status(_ game.Data) Status {
+func SyncStepWithCheck(action func(game.Data) error, statusChecker func(game.Data) Status) *SyncActionStep {
+	return &SyncActionStep{
+		basicStep:     newBasicStep(),
+		action:        action,
+		statusChecker: statusChecker,
+	}
+}
+
+func (s *SyncActionStep) Status(d game.Data) Status {
+	if s.statusChecker != nil {
+		s.tryTransitionStatus(s.statusChecker(d))
+	}
+
 	return s.status
 }
 
 func (s *SyncActionStep) Run(d game.Data) error {
-	s.tryTransitionStatus(StatusCompleted)
+	if s.statusChecker == nil {
+		s.tryTransitionStatus(StatusCompleted)
+	}
 
-	return s.action(d)
+	err := s.action(d)
+	return err
 }

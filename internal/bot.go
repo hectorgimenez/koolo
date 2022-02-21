@@ -31,7 +31,7 @@ func NewBot(
 }
 
 func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
-	for _, r := range runs {
+	for k, r := range runs {
 		runStart := time.Now()
 		b.logger.Debug(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -46,7 +46,12 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 
 		actions = append(actions, r.BuildActions()...)
 		actions = append(actions, b.ab.ItemPickup())
-		actions = append(actions, b.ab.ReturnTown())
+
+		// Don't return town on last run
+		if k != len(runs)-1 {
+			actions = append(actions, b.ab.ReturnTown())
+		}
+
 		running := true
 		for running {
 			d := game.Status()

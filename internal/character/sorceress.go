@@ -20,7 +20,7 @@ type Sorceress struct {
 func (s Sorceress) Buff() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
-		steps = append(steps, step.SyncAction(func(data game.Data) error {
+		steps = append(steps, step.SyncStep(func(data game.Data) error {
 			if config.Config.Bindings.Sorceress.FrozenArmor != "" {
 				hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
 				helper.Sleep(100)

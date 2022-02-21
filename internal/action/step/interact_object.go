@@ -39,7 +39,7 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 
 	i.tryTransitionStatus(StatusInProgress)
 	// Throttle movement clicks
-	if time.Since(i.lastRun) < time.Millisecond*500 {
+	if time.Since(i.lastRun) < time.Millisecond*350 {
 		return nil
 	}
 
@@ -66,7 +66,7 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 						return nil
 					}
 					i.consecutivePathNotFound = 0
-					pather.MoveThroughPath(path, 10, false)
+					pather.MoveThroughPath(path, 12, false)
 					i.lastRun = time.Now()
 					return nil
 				}

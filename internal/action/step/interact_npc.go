@@ -37,7 +37,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 
 	i.tryTransitionStatus(StatusInProgress)
 	// Throttle movement clicks
-	if time.Since(i.lastRun) < time.Millisecond*500 {
+	if time.Since(i.lastRun) < time.Millisecond*350 {
 		return nil
 	}
 

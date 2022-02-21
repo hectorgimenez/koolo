@@ -19,7 +19,7 @@ func (b Builder) Repair() *BasicAction {
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).RepairNPC()),
 				step.KeySequence("up", "down", "enter"),
-				step.SyncAction(func(_ game.Data) error {
+				step.SyncStep(func(_ game.Data) error {
 					hid.MovePointer(x, y)
 					hid.Click(hid.LeftButton)
 					return nil

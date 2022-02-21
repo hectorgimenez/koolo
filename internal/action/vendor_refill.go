@@ -14,7 +14,7 @@ func (b Builder) VendorRefill() *BasicAction {
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()),
 				step.KeySequence("up", "down", "enter"),
-				step.SyncAction(func(data game.Data) error {
+				step.SyncStep(func(data game.Data) error {
 					b.sm.BuyPotsAndTPs(data)
 					return nil
 				}),
