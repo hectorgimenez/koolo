@@ -4,9 +4,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"time"
 )
 
 const (
@@ -30,7 +30,8 @@ func (b Builder) Stash() *BasicAction {
 			}),
 			step.SyncStep(func(data game.Data) error {
 				stashGold(data)
-				b.stashInventory()
+				b.orderInventoryPotions(data)
+				b.stashInventory(data)
 				hid.PressKey("esc")
 				return nil
 			}),
@@ -38,6 +39,22 @@ func (b Builder) Stash() *BasicAction {
 
 		return
 	})
+}
+
+func (b Builder) orderInventoryPotions(data game.Data) {
+	for _, i := range data.Items.Inventory {
+		if i.IsPotion() {
+			if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+				continue
+			}
+			x := int(float32(hid.GameAreaSizeX)/inventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+			y := int(float32(hid.GameAreaSizeY)/inventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+			hid.MovePointer(x, y)
+			helper.Sleep(100)
+			hid.Click(hid.RightButton)
+			helper.Sleep(200)
+		}
+	}
 }
 
 func (b Builder) isStashingRequired(data game.Data) bool {
@@ -58,16 +75,12 @@ func stashGold(d game.Data) {
 
 	if d.PlayerUnit.Stats[game.StatStashGold] < maxGoldPerStashTab {
 		clickStashGoldBtn()
-		d = game.Status()
-		if d.PlayerUnit.Stats[game.StatGold] == 0 {
-			return
-		}
 	}
 }
 
-func (b Builder) stashInventory() {
-	for _, i := range game.Status().Items.Inventory {
-		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+func (b Builder) stashInventory(data game.Data) {
+	for _, i := range data.Items.Inventory {
+		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 			continue
 		}
 		stashItemAction(i)
@@ -82,13 +95,13 @@ func stashItemAction(i game.Item) bool {
 	x := int(float32(hid.GameAreaSizeX)/inventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	y := int(float32(hid.GameAreaSizeY)/inventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
-	time.Sleep(time.Millisecond * 170)
+	helper.Sleep(170)
 	hid.KeyDown("control")
-	time.Sleep(time.Millisecond * 150)
+	helper.Sleep(150)
 	hid.Click(hid.LeftButton)
-	time.Sleep(time.Millisecond * 200)
+	helper.Sleep(200)
 	hid.KeyUp("control")
-	time.Sleep(time.Millisecond * 150)
+	helper.Sleep(150)
 
 	// TODO: Check if item has been stored correctly
 	return true
@@ -99,9 +112,9 @@ func clickStashGoldBtn() {
 	btnY := int(float32(hid.GameAreaSizeY) / stashGoldBtnY)
 
 	hid.MovePointer(btnX, btnY)
-	time.Sleep(time.Millisecond * 170)
+	helper.Sleep(170)
 	hid.Click(hid.LeftButton)
-	time.Sleep(time.Millisecond * 200)
+	helper.Sleep(200)
 	hid.PressKey("enter")
-	time.Sleep(time.Millisecond * 500)
+	helper.Sleep(500)
 }

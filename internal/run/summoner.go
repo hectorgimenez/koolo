@@ -24,7 +24,7 @@ func (s Summoner) BuildActions() (actions []action.Action) {
 
 	// Travel to boss position
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
-		npc, found := game.Status().NPCs[game.TheSummoner]
+		npc, found := data.NPCs[game.TheSummoner]
 		if !found {
 			return nil
 		}

@@ -38,7 +38,7 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 			panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
 		}
 
-		for _, o := range game.Status().Objects {
+		for _, o := range data.Objects {
 			if o.IsWaypoint() {
 				steps = append(steps,
 					step.InteractObject(o.Name, func(data game.Data) bool {

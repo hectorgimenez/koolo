@@ -2,6 +2,7 @@ package game
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,21 @@ type Item struct {
 	Ethereal  bool
 	IsHovered bool
 	Stats     map[Stat]int
+}
+
+func (i Item) IsPotion() bool {
+	return i.IsHealingPotion() || i.IsManaPotion() || i.IsRejuvPotion()
+}
+
+func (i Item) IsHealingPotion() bool {
+	return strings.Contains(strings.ToLower(i.Name), "healingpotion")
+}
+
+func (i Item) IsManaPotion() bool {
+	return strings.Contains(strings.ToLower(i.Name), "manapotion")
+}
+func (i Item) IsRejuvPotion() bool {
+	return strings.Contains(strings.ToLower(i.Name), "rejuvenationpotion")
 }
 
 func (i Inventory) ShouldBuyTPs() bool {

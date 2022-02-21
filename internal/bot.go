@@ -39,11 +39,11 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 
 		actions := []action.Action{
 			b.ab.RecoverCorpse(),
+			b.ab.Stash(),
 			b.ab.VendorRefill(),
 			b.ab.ReviveMerc(),
 			b.ab.Repair(),
 			b.ab.Heal(),
-			b.ab.Stash(),
 		}
 
 		actions = append(actions, r.BuildActions()...)

@@ -61,7 +61,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 
 	usedRejuv := false
 	if time.Since(hm.lastRejuv) > rejuvInterval && (status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana) {
-		usedRejuv = hm.beltManager.DrinkPotion(game.RejuvenationPotion, false)
+		usedRejuv = hm.beltManager.DrinkPotion(d, game.RejuvenationPotion, false)
 		if usedRejuv {
 			hm.lastRejuv = time.Now()
 		}
@@ -74,12 +74,12 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 		}
 
 		if status.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
-			hm.beltManager.DrinkPotion(game.HealingPotion, false)
+			hm.beltManager.DrinkPotion(d, game.HealingPotion, false)
 			hm.lastHeal = time.Now()
 		}
 
 		if status.MPPercent() <= hpConfig.ManaPotionAt && time.Since(hm.lastMana) > manaInterval {
-			hm.beltManager.DrinkPotion(game.ManaPotion, false)
+			hm.beltManager.DrinkPotion(d, game.ManaPotion, false)
 			hm.lastMana = time.Now()
 		}
 	}
@@ -88,7 +88,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	if status.Merc.Alive {
 		usedMercRejuv := false
 		if time.Since(hm.lastRejuvMerc) > rejuvInterval && status.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
-			usedMercRejuv = hm.beltManager.DrinkPotion(game.RejuvenationPotion, true)
+			usedMercRejuv = hm.beltManager.DrinkPotion(d, game.RejuvenationPotion, true)
 			if usedMercRejuv {
 				hm.lastRejuvMerc = time.Now()
 			}
@@ -101,7 +101,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 			}
 
 			if status.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {
-				hm.beltManager.DrinkPotion(game.HealingPotion, true)
+				hm.beltManager.DrinkPotion(d, game.HealingPotion, true)
 				hm.lastMercHeal = time.Now()
 			}
 		}

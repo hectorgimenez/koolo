@@ -21,15 +21,15 @@ func (b Builder) ItemPickup() *BasicAction {
 }
 
 func (b Builder) getItemsToPickup(data game.Data) []game.Item {
-	missingHealingPotions := b.bm.GetMissingCount(game.HealingPotion)
-	missingManaPotions := b.bm.GetMissingCount(game.ManaPotion)
-	missingRejuvenationPotions := b.bm.GetMissingCount(game.RejuvenationPotion)
+	missingHealingPotions := b.bm.GetMissingCount(data, game.HealingPotion)
+	missingManaPotions := b.bm.GetMissingCount(data, game.ManaPotion)
+	missingRejuvenationPotions := b.bm.GetMissingCount(data, game.RejuvenationPotion)
 	var itemsToPickup []game.Item
 	for _, item := range data.Items.Ground {
 		for _, pickitItem := range config.Pickit.Items {
 			if strings.EqualFold(item.Name, pickitItem.Name) {
 				// Pickup potions only if they are required
-				if strings.Contains(strings.ToLower(item.Name), "healingpotion") {
+				if item.IsHealingPotion() {
 					if missingHealingPotions == 0 {
 						break
 					}
@@ -37,7 +37,7 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 					missingHealingPotions--
 					break
 				}
-				if strings.Contains(strings.ToLower(item.Name), "manapotion") {
+				if item.IsManaPotion() {
 					if missingManaPotions == 0 {
 						break
 					}
@@ -45,7 +45,7 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 					missingManaPotions--
 					break
 				}
-				if strings.Contains(strings.ToLower(item.Name), "rejuvenationpotion") {
+				if item.IsRejuvPotion() {
 					if missingRejuvenationPotions == 0 {
 						break
 					}
