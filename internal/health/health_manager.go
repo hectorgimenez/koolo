@@ -7,9 +7,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
 )
+
+var ErrDied = errors.New("you died :(")
+var ErrChicken = errors.New("chicken")
+var ErrMercChicken = errors.New("mercenary chicken")
 
 const (
 	healingInterval     = time.Second * 6
@@ -50,7 +55,8 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 		helper.Sleep(1000)
 		hid.PressKey("esc")
 		helper.Sleep(10000)
-		return errors.New("you died :(")
+		stats.FinishCurrentRun(stats.EventDeath)
+		return ErrDied
 	}
 
 	usedRejuv := false
@@ -63,7 +69,8 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 
 	if !usedRejuv {
 		if status.HPPercent() <= hpConfig.ChickenAt {
-			return fmt.Errorf("chicken! Current Health: %d (%d percent)", status.Life, status.HPPercent())
+			stats.FinishCurrentRun(stats.EventChicken)
+			return fmt.Errorf("%w: Current Health: %d (%d percent)", ErrChicken, status.Life, status.HPPercent())
 		}
 
 		if status.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
@@ -89,7 +96,8 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 
 		if !usedMercRejuv {
 			if status.MercHPPercent() <= hpConfig.MercChickenAt {
-				return fmt.Errorf("mercenary chicken! Current Merc Health: %d (%d percent)", status.Merc.Life, status.MercHPPercent())
+				stats.FinishCurrentRun(stats.EventMercChicken)
+				return fmt.Errorf("%w: Current Merc Health: %d (%d percent)", ErrMercChicken, status.Merc.Life, status.MercHPPercent())
 			}
 
 			if status.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {

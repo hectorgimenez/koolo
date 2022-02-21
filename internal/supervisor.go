@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
 	"time"
@@ -57,6 +58,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		if err != nil {
 			s.logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), gameDuration.Seconds()))
 		}
+		s.logger.Debug("Game stats:", zap.Any("stats", stats.Status))
 		helper.Sleep(10000)
 	}
 

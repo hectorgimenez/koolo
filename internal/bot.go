@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
 )
@@ -32,6 +33,7 @@ func NewBot(
 
 func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 	for k, r := range runs {
+		stats.StartRun(r.Name())
 		runStart := time.Now()
 		b.logger.Debug(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -68,6 +70,7 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 					break
 				}
 				if len(actions)-1 == k {
+					stats.FinishCurrentRun(stats.EventKill)
 					b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
 					running = false
 				}

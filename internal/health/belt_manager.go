@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 )
 
@@ -26,10 +27,12 @@ func (pm BeltManager) DrinkPotion(potionType game.PotionType, merc bool) bool {
 		if merc {
 			hid.PressKeyCombination("shift", binding)
 			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary", potionType))
+			stats.UsedPotion(potionType, true)
 			return true
 		}
 		hid.PressKey(binding)
 		pm.logger.Debug(fmt.Sprintf("Drinking %s potion", potionType))
+		stats.UsedPotion(potionType, false)
 		return true
 	}
 
