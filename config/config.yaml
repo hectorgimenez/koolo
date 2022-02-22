@@ -47,7 +47,7 @@ inventory:
   beltRows: 4
   
 character:
-  class: Sorceress
+  class: Sorceress # Allowed values: Sorceress
   difficulty: hell # Allowed values: normal, nightmare, hell
   useMerc: true
   useCTA: true
@@ -58,4 +58,6 @@ runs:
   summoner: true
   mephisto: true
   pindleskin: true
+  nihlathak: true
+  council: true
 
