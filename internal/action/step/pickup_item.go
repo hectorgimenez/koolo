@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 )
 
+const maxInteractions = 10
+
 type PickupItemStep struct {
 	basicStep
 	item                  game.Item
 	waitingForInteraction bool
+	mouseOverAttempts     int
 }
 
 func PickupItem(item game.Item) *PickupItemStep {
@@ -33,6 +37,10 @@ func (p *PickupItemStep) Status(data game.Data) Status {
 }
 
 func (p *PickupItemStep) Run(data game.Data) error {
+	if p.mouseOverAttempts > maxInteractions {
+		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Name, p.item.Quality)
+	}
+
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) < time.Second {
 		return nil
@@ -60,8 +68,15 @@ func (p *PickupItemStep) Run(data game.Data) error {
 					pather.MoveThroughPath(path, 15, true)
 					return nil
 				}
-				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-1, i.Position.Y-1)
+				itemX := i.Position.X - 1
+				itemY := i.Position.Y - 1
+				if p.mouseOverAttempts > 3 {
+					itemX += helper.RandRng(-2, 2)
+					itemY += helper.RandRng(-2, 2)
+				}
+				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, itemX, itemY)
 				hid.MovePointer(x, y)
+				p.mouseOverAttempts++
 
 				return nil
 			}

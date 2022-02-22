@@ -4,7 +4,6 @@ import (
 	"github.com/go-vgo/robotgo"
 	"math"
 	"math/rand"
-	"time"
 )
 
 var (
@@ -82,14 +81,6 @@ func MovePointer(x, y int) {
 // Click just does a single mouse click at current pointer position
 func Click(btn MouseButton) {
 	robotgo.Click(string(btn))
-}
-
-// ClickAndHold holds the mouse button during a period of time between minMilliseconds and maxMilliseconds
-func ClickAndHold(btn MouseButton, minMilliseconds, maxMilliseconds int) {
-	robotgo.Toggle(string(btn))
-	sleepTime := rand.Intn(maxMilliseconds-minMilliseconds) + minMilliseconds
-	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	robotgo.Toggle(string(btn), "up")
 }
 
 func getCurrentPosition() (int, int) {

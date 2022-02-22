@@ -3,6 +3,7 @@ package step
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
@@ -13,6 +14,7 @@ type InteractObjectStep struct {
 	objectName            string
 	waitingForInteraction bool
 	isCompleted           func(game.Data) bool
+	mouseOverAttempts     int
 }
 
 func InteractObject(objectName string, isCompleted func(game.Data) bool) *InteractObjectStep {
@@ -33,6 +35,10 @@ func (i *InteractObjectStep) Status(data game.Data) Status {
 }
 
 func (i *InteractObjectStep) Run(data game.Data) error {
+	if i.mouseOverAttempts > maxInteractions {
+		return fmt.Errorf("object %s could not be interacted", i.objectName)
+	}
+
 	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
 		return fmt.Errorf("error moving to %s: %w", i.objectName, errPathNotFound)
 	}
@@ -73,8 +79,15 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				if time.Since(i.lastRun) < time.Second {
 					return nil
 				}
-				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, o.Position.X-2, o.Position.Y-2)
+				objectX := o.Position.X - 2
+				objectY := o.Position.Y - 2
+				if i.mouseOverAttempts > 3 {
+					objectX += helper.RandRng(-2, 2)
+					objectY += helper.RandRng(-2, 2)
+				}
+				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX, objectY)
 				hid.MovePointer(x, y)
+				i.mouseOverAttempts++
 
 				i.lastRun = time.Now()
 				return nil

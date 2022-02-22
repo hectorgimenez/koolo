@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"math/rand"
 	"time"
 )
 
@@ -9,7 +8,7 @@ import (
 func Sleep(milliseconds int) {
 	maxTime := int(float32(milliseconds) * 1.3)
 	minTime := int(float32(milliseconds) * 0.7)
-	sleepTime := rand.Intn(maxTime-minTime) + minTime
+	sleepTime := RandRng(minTime, maxTime)
 
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
 }
