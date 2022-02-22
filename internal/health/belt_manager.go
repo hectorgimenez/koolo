@@ -75,23 +75,33 @@ func (pm BeltManager) getCurrentPotions(data game.Data) (int, int, int) {
 }
 
 func (pm BeltManager) GetMissingCount(data game.Data, potionType game.PotionType) int {
-	currentHealing, currentMana, _ := pm.getCurrentPotions(data)
+	currentHealing, currentMana, currentRejuv := pm.getCurrentPotions(data)
 
-	if potionType == game.HealingPotion {
+	switch potionType {
+	case game.HealingPotion:
 		targetAmount := config.Config.Inventory.BeltColumns.Healing * config.Config.Inventory.BeltRows
 		missingPots := targetAmount - currentHealing
 		if missingPots < 0 {
 			return 0
 		}
 		return missingPots
+	case game.ManaPotion:
+		targetAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
+		missingPots := targetAmount - currentMana
+		if missingPots < 0 {
+			return 0
+		}
+		return missingPots
+	case game.RejuvenationPotion:
+		targetAmount := config.Config.Inventory.BeltColumns.Rejuvenation * config.Config.Inventory.BeltRows
+		missingPots := targetAmount - currentRejuv
+		if missingPots < 0 {
+			return 0
+		}
+		return missingPots
 	}
 
-	targetAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
-	missingPots := targetAmount - currentMana
-	if missingPots < 0 {
-		return 0
-	}
-	return missingPots
+	return 0
 }
 
 func (pm BeltManager) getBindingBasedOnColumn(potion game.Potion) string {
