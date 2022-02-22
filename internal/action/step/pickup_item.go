@@ -60,7 +60,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 					pather.MoveThroughPath(path, 15, true)
 					return nil
 				}
-				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-2, i.Position.Y-2)
+				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, i.Position.X-1, i.Position.Y-1)
 				hid.MovePointer(x, y)
 
 				return nil
