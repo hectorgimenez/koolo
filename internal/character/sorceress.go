@@ -68,6 +68,7 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 
 			for i := 0; i < maxAttackLoops; i++ {
 				steps = append(steps,
+					// TODO: Move closer to the enemy to ensure is on screen
 					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, 200),
 					step.PrimaryAttack(game.NPCID(m.Name), 3, 300),
 				)
