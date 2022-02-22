@@ -11,8 +11,8 @@ import (
 func (b Builder) Repair() *BasicAction {
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		durabilityPct := float32(data.PlayerUnit.Stats[game.StatDurability]) / float32(data.PlayerUnit.Stats[game.StatMaxDurability])
-		if durabilityPct < 0.25 {
-			b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.25", durabilityPct))
+		if durabilityPct < 0.80 {
+			b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.80", durabilityPct))
 
 			x, y := int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37)
 
