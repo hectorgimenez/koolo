@@ -40,6 +40,9 @@ func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
 	if config.Config.Runs.Nihlathak {
 		runs = append(runs, Nihlathak{baseRun})
 	}
+	if config.Config.Runs.Council {
+		runs = append(runs, Council{baseRun})
+	}
 
 	return
 }

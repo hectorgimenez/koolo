@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"strings"
 )
 
 const (
@@ -56,6 +57,25 @@ func (s Sorceress) KillMephisto() *action.BasicAction {
 
 func (s Sorceress) KillNihlathak() *action.BasicAction {
 	return s.killMonster(game.Nihlathak)
+}
+
+func (s Sorceress) KillCouncil() *action.BasicAction {
+	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		for _, m := range data.Monsters {
+			if !strings.Contains(strings.ToLower(m.Name), "councilmember") {
+				continue
+			}
+
+			for i := 0; i < maxAttackLoops; i++ {
+				steps = append(steps,
+					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, 200),
+					step.PrimaryAttack(game.NPCID(m.Name), 3, 300),
+				)
+			}
+		}
+		return
+	})
+
 }
 
 func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {

@@ -25,6 +25,7 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 		game.AreaDuranceOfHateLevel2: {3, 9},
 		game.AreaHarrogath:           {5, 1},
 		game.AreaHallsOfPain:         {5, 6},
+		game.AreaTravincal:           {3, 8},
 	}
 
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {

@@ -18,6 +18,7 @@ type Character interface {
 	KillMephisto() *action.BasicAction
 	KillPindle() *action.BasicAction
 	KillNihlathak() *action.BasicAction
+	KillCouncil() *action.BasicAction
 	ReturnToTown() *action.BasicAction
 }
 

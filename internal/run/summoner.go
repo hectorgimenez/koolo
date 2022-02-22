@@ -20,7 +20,6 @@ func (s Summoner) BuildActions() (actions []action.Action) {
 
 	// Buff
 	actions = append(actions, s.char.Buff())
-	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
