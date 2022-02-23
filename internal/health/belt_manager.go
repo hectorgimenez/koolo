@@ -25,12 +25,12 @@ func (pm BeltManager) DrinkPotion(data game.Data, potionType game.PotionType, me
 		binding := pm.getBindingBasedOnColumn(p)
 		if merc {
 			hid.PressKeyCombination("shift", binding)
-			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary", potionType))
+			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Row: %d]. HP: %d", potionType, p.Position.X+1, data.Health.MercHPPercent()))
 			stats.UsedPotion(potionType, true)
 			return true
 		}
 		hid.PressKey(binding)
-		pm.logger.Debug(fmt.Sprintf("Drinking %s potion", potionType))
+		pm.logger.Debug(fmt.Sprintf("Using %s potio [Row: %d]. HP: %d MP: %d", potionType, p.Position.X+1, data.Health.HPPercent(), data.Health.MPPercent()))
 		stats.UsedPotion(potionType, false)
 		return true
 	}
@@ -42,10 +42,19 @@ func (pm BeltManager) DrinkPotion(data game.Data, potionType game.PotionType, me
 func (pm BeltManager) ShouldBuyPotions(data game.Data) bool {
 	targetHealingAmount := config.Config.Inventory.BeltColumns.Healing * config.Config.Inventory.BeltRows
 	targetManaAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
+	targetRejuvAmount := config.Config.Inventory.BeltColumns.Rejuvenation * config.Config.Inventory.BeltRows
 
 	currentHealing, currentMana, currentRejuv := pm.getCurrentPotions(data)
 
-	pm.logger.Debug(fmt.Sprintf("Belt Health: %d healing, %d mana, %d rejuv.", currentHealing, currentMana, currentRejuv))
+	pm.logger.Debug(fmt.Sprintf(
+		"Belt Status Health: %d/%d healing, %d/%d mana, %d/%d rejuv.",
+		currentHealing,
+		targetHealingAmount,
+		currentMana,
+		targetManaAmount,
+		currentRejuv,
+		targetRejuvAmount,
+	))
 
 	if currentHealing < int(float32(targetHealingAmount)*0.75) || currentMana < int(float32(targetManaAmount)*0.75) {
 		pm.logger.Debug("Need more pots, let's buy them.")

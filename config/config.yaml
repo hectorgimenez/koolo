@@ -1,6 +1,7 @@
 display: 0
 debug: true
 logFilePath: log.txt
+maxGameLength: 300 # Max game length (in seconds), bot will try to quit game arrived that point
 
 health: # Healing configuration, all values in %
   healingPotionAt: 85
@@ -9,7 +10,7 @@ health: # Healing configuration, all values in %
   rejuvPotionAtMana: 0
   mercHealingPotionAt: 80
   mercRejuvPotionAt: 20
-  chickenAt: 30
+  chickenAt: 20
   mercChickenAt: 0
 
 bindings:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -32,10 +33,14 @@ func NewBot(
 }
 
 func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
+	b.logGameStart(runs)
+
+	gameStartedAt := time.Now()
+
 	for k, r := range runs {
 		stats.StartRun(r.Name())
 		runStart := time.Now()
-		b.logger.Debug(fmt.Sprintf("Running: %s", r.Name()))
+		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
 		actions := []action.Action{
 			b.ab.RecoverCorpse(),
@@ -60,6 +65,9 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 			if err := b.hm.HandleHealthAndMana(d); err != nil {
 				return err
 			}
+			if err := b.shouldEndCurrentGame(gameStartedAt); err != nil {
+				return err
+			}
 
 			for k, act := range actions {
 				if !act.Finished(d) {
@@ -79,4 +87,23 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 	}
 
 	return nil
+}
+
+func (b *Bot) shouldEndCurrentGame(startAt time.Time) error {
+	if time.Since(stats.Status.CurrentRunStart).Seconds() > float64(config.Config.MaxGameLength) {
+		return fmt.Errorf(
+			"max game length reached, try to exit game: %0.2f",
+			time.Since(stats.Status.CurrentRunStart).Seconds(),
+		)
+	}
+
+	return nil
+}
+
+func (b *Bot) logGameStart(runs []run.Run) {
+	runNames := ""
+	for _, r := range runs {
+		runNames += r.Name() + ", "
+	}
+	b.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stats.Status.TotalGames+1, runNames[:len(runNames)-2]))
 }

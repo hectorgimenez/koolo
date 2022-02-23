@@ -26,6 +26,7 @@ func StartRun(runName string) {
 		Status.RunStats[runName] = rs
 	}
 
+	Status.TotalGames++
 	Status.CurrentRun = runName
 	Status.CurrentRunStart = time.Now()
 }
@@ -70,8 +71,9 @@ func UsedPotion(potionType game.PotionType, onMerc bool) {
 }
 
 type GameStatus struct {
-	TotalTime time.Duration
-	RunStats  map[string]*RunStats
+	TotalTime  time.Duration
+	TotalGames int
+	RunStats   map[string]*RunStats
 
 	CurrentRun      string
 	CurrentRunStart time.Time

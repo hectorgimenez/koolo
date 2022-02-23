@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -17,12 +18,14 @@ type PickupItemStep struct {
 	item                  game.Item
 	waitingForInteraction bool
 	mouseOverAttempts     int
+	logger                *zap.Logger
 }
 
-func PickupItem(item game.Item) *PickupItemStep {
+func PickupItem(logger *zap.Logger, item game.Item) *PickupItemStep {
 	return &PickupItemStep{
 		basicStep: newBasicStep(),
 		item:      item,
+		logger:    logger,
 	}
 }
 
@@ -42,6 +45,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
+	p.logger.Info(fmt.Sprintf("Picking up: %s [%s]", p.item.Name, p.item.Quality))
 	if time.Since(p.lastRun) < time.Second {
 		return nil
 	}

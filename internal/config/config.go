@@ -13,10 +13,11 @@ var (
 )
 
 type StructConfig struct {
-	Display     int    `yaml:"display"`
-	Debug       bool   `yaml:"debug"`
-	LogFilePath string `yaml:"logFilePath"`
-	Health      struct {
+	Display       int    `yaml:"display"`
+	Debug         bool   `yaml:"debug"`
+	LogFilePath   string `yaml:"logFilePath"`
+	MaxGameLength int    `yaml:"maxGameLength"`
+	Health        struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`

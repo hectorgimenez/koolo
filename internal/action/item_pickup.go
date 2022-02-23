@@ -13,7 +13,7 @@ func (b Builder) ItemPickup() *BasicAction {
 		itemsToPickup := b.getItemsToPickup(data)
 		for _, item := range itemsToPickup {
 			b.logger.Debug(fmt.Sprintf("Item Detected: %s [%s] at X:%d Y:%d", item.Name, item.Quality, item.Position.X, item.Position.Y))
-			steps = append(steps, step.PickupItem(item))
+			steps = append(steps, step.PickupItem(b.logger, item))
 		}
 
 		return

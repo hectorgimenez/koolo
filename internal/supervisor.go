@@ -81,5 +81,12 @@ func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 10
 	time.Sleep(time.Second * 1)
 
+	s.logger.Info(fmt.Sprintf(
+		"Diablo II: Resurrected window detected, offsetX: %d offsetY: %d. Game Area Size X: %d Y: %d",
+		hid.WindowLeftX,
+		hid.WindowTopY,
+		hid.GameAreaSizeX,
+		hid.GameAreaSizeY,
+	))
 	return nil
 }
