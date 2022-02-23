@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -24,6 +25,7 @@ func (b Builder) Stash() *BasicAction {
 			return
 		}
 
+		b.logger.Info("Stashing items...")
 		steps = append(steps,
 			step.InteractObject("Bank", func(data game.Data) bool {
 				return data.OpenMenus.Stash
@@ -84,6 +86,7 @@ func (b Builder) stashInventory(data game.Data) {
 			continue
 		}
 		stashItemAction(i)
+		b.logger.Debug(fmt.Sprintf("Item %s [%s] stashed", i.Name, i.Quality))
 
 		for tab := 0; tab < 3; tab++ {
 			// TODO: Stash items in other tabs

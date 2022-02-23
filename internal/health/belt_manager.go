@@ -30,7 +30,7 @@ func (pm BeltManager) DrinkPotion(data game.Data, potionType game.PotionType, me
 			return true
 		}
 		hid.PressKey(binding)
-		pm.logger.Debug(fmt.Sprintf("Using %s potio [Row: %d]. HP: %d MP: %d", potionType, p.Position.X+1, data.Health.HPPercent(), data.Health.MPPercent()))
+		pm.logger.Debug(fmt.Sprintf("Using %s potion [Row: %d]. HP: %d MP: %d", potionType, p.Position.X+1, data.Health.HPPercent(), data.Health.MPPercent()))
 		stats.UsedPotion(potionType, false)
 		return true
 	}

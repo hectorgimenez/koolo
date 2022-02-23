@@ -44,8 +44,11 @@ func (p *PickupItemStep) Run(data game.Data) error {
 		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Name, p.item.Quality)
 	}
 
+	if p.status == StatusNotStarted {
+		p.logger.Info(fmt.Sprintf("Picking up: %s [%s]", p.item.Name, p.item.Quality))
+	}
+
 	p.tryTransitionStatus(StatusInProgress)
-	p.logger.Info(fmt.Sprintf("Picking up: %s [%s]", p.item.Name, p.item.Quality))
 	if time.Since(p.lastRun) < time.Second {
 		return nil
 	}
