@@ -33,8 +33,6 @@ func NewBot(
 }
 
 func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
-	b.logGameStart(runs)
-
 	gameStartedAt := time.Now()
 
 	for k, r := range runs {
@@ -98,12 +96,4 @@ func (b *Bot) shouldEndCurrentGame(startAt time.Time) error {
 	}
 
 	return nil
-}
-
-func (b *Bot) logGameStart(runs []run.Run) {
-	runNames := ""
-	for _, r := range runs {
-		runNames += r.Name() + ", "
-	}
-	b.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stats.Status.TotalGames+1, runNames[:len(runNames)-2]))
 }

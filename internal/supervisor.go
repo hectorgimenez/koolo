@@ -1,6 +1,7 @@
 package koolo
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"github.com/go-vgo/robotgo"
@@ -10,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
+	"os"
 	"time"
 )
 
@@ -49,6 +51,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		}
 
 		gameStart := time.Now()
+		s.logGameStart(runs)
 		err = s.bot.Run(ctx, runs)
 		if exitErr := helper.ExitGame(); exitErr != nil {
 			s.logger.Fatal(fmt.Sprintf("Error exiting game: %s, shutting down...", exitErr))
@@ -58,10 +61,66 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		if err != nil {
 			s.logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), gameDuration.Seconds()))
 		}
-		s.logger.Debug("Game stats:", zap.Any("stats", stats.Status))
+		s.updateGameStats()
 		helper.Sleep(10000)
 	}
 
+}
+
+func (s *Supervisor) updateGameStats() {
+	if _, err := os.Stat("stats"); os.IsNotExist(err) {
+		err = os.MkdirAll("stats", 0700)
+		if err != nil {
+			s.logger.Error("Error creating stats directory", zap.Error(err))
+			return
+		}
+	}
+
+	fileName := fmt.Sprintf("stats/stats_%s.txt", stats.Status.ApplicationStartedAt.Format("2006-02-01-15_04_05"))
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		s.logger.Error("Error writing game stats", zap.Error(err))
+		return
+	}
+	w := bufio.NewWriter(f)
+
+	for runName, rs := range stats.Status.RunStats {
+		avgRunTime := rs.TotalRunsTime.Seconds() / float64(rs.Errors+rs.Kills+rs.Deaths+rs.Chickens+rs.MerChicken)
+		statsRun := fmt.Sprintf("Stats for: %s\n"+
+			"    Run time: %0.2fs (Total) %0.2fs (Average)\n"+
+			"    Kills: %d\n"+
+			"    Deaths: %d\n"+
+			"    Chickens: %d\n"+
+			"    Merc Chickens: %d\n"+
+			"    Errors: %d\n"+
+			"    Items Found: %d\n"+
+			"    Used HP Potions: %d\n"+
+			"    Used MP Potions: %d\n"+
+			"    Used Rejuv Potions: %d\n"+
+			"    Used Merc HP Potions: %d\n"+
+			"    Used Merc Rejuv Potions: %d\n",
+			runName,
+			rs.TotalRunsTime.Seconds(), avgRunTime,
+			rs.Kills,
+			rs.Deaths,
+			rs.Chickens,
+			rs.MerChicken,
+			rs.Errors,
+			rs.ItemsFound,
+			rs.HealingPotionsUsed,
+			rs.ManaPotionsUsed,
+			rs.RejuvPotionsUsed,
+			rs.MercHealingPotionsUsed,
+			rs.MercRejuvPotionsUsed,
+		)
+		_, err = w.WriteString(statsRun + "\n")
+		if err != nil {
+			s.logger.Error("Error writing stats file", zap.Error(err))
+		}
+	}
+
+	w.Flush()
+	f.Close()
 }
 
 func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
@@ -88,5 +147,15 @@ func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 		hid.GameAreaSizeX,
 		hid.GameAreaSizeY,
 	))
+
+	stats.Status.ApplicationStartedAt = time.Now()
 	return nil
+}
+
+func (s *Supervisor) logGameStart(runs []run.Run) {
+	runNames := ""
+	for _, r := range runs {
+		runNames += r.Name() + ", "
+	}
+	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stats.Status.TotalGames+1, runNames[:len(runNames)-2]))
 }
