@@ -12,7 +12,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"log"
-	"time"
 )
 
 func main() {
@@ -40,23 +39,6 @@ func main() {
 	supervisor := koolo.NewSupervisor(logger, bot)
 
 	ctx := context.Background()
-	// TODO: Debug mouse
-	go func() {
-		if config.Config.Debug {
-			ticker := time.NewTicker(time.Second * 3)
-
-			for {
-				select {
-				case <-ticker.C:
-					//x, y := robotgo.GetMousePos()
-					//logger.Debug(fmt.Sprintf("Display mouse position: X %dpx Y%dpx", x-hid.WindowLeftX, y-hid.WindowTopY))
-				case <-ctx.Done():
-					return
-				}
-			}
-		}
-	}()
-
 	err = supervisor.Start(ctx, run.BuildRuns(ab, char))
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
