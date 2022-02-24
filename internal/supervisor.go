@@ -85,6 +85,10 @@ func (s *Supervisor) updateGameStats() {
 	w := bufio.NewWriter(f)
 
 	for runName, rs := range stats.Status.RunStats {
+		var items = ""
+		for _, item := range rs.ItemsFound {
+			items += fmt.Sprintf("%s [%s]\n", item.Name, item.Quality)
+		}
 		avgRunTime := rs.TotalRunsTime.Seconds() / float64(rs.Errors+rs.Kills+rs.Deaths+rs.Chickens+rs.MerChicken)
 		statsRun := fmt.Sprintf("Stats for: %s\n"+
 			"    Run time: %0.2fs (Total) %0.2fs (Average)\n"+
@@ -93,12 +97,13 @@ func (s *Supervisor) updateGameStats() {
 			"    Chickens: %d\n"+
 			"    Merc Chickens: %d\n"+
 			"    Errors: %d\n"+
-			"    Items Found: %d\n"+
 			"    Used HP Potions: %d\n"+
 			"    Used MP Potions: %d\n"+
 			"    Used Rejuv Potions: %d\n"+
 			"    Used Merc HP Potions: %d\n"+
-			"    Used Merc Rejuv Potions: %d\n",
+			"    Used Merc Rejuv Potions: %d\n"+
+			"    Items: \n"+
+			"    %s",
 			runName,
 			rs.TotalRunsTime.Seconds(), avgRunTime,
 			rs.Kills,
@@ -106,12 +111,12 @@ func (s *Supervisor) updateGameStats() {
 			rs.Chickens,
 			rs.MerChicken,
 			rs.Errors,
-			rs.ItemsFound,
 			rs.HealingPotionsUsed,
 			rs.ManaPotionsUsed,
 			rs.RejuvPotionsUsed,
 			rs.MercHealingPotionsUsed,
 			rs.MercRejuvPotionsUsed,
+			items,
 		)
 		_, err = w.WriteString(statsRun + "\n")
 		if err != nil {

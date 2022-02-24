@@ -69,6 +69,10 @@ func UsedPotion(potionType game.PotionType, onMerc bool) {
 	}
 }
 
+func PickupItem(item game.Item) {
+	Status.RunStats[Status.CurrentRun].ItemsFound = append(Status.RunStats[Status.CurrentRun].ItemsFound, item)
+}
+
 type GameStatus struct {
 	ApplicationStartedAt time.Time
 	TotalGames           int
@@ -86,7 +90,7 @@ type RunStats struct {
 	Chickens               int
 	MerChicken             int
 	Errors                 int
-	ItemsFound             int
+	ItemsFound             []game.Item
 	HealingPotionsUsed     int
 	ManaPotionsUsed        int
 	RejuvPotionsUsed       int

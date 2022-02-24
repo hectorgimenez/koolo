@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
 )
@@ -36,6 +37,7 @@ func (p *PickupItemStep) Status(data game.Data) Status {
 		}
 	}
 
+	stats.PickupItem(p.item)
 	return p.tryTransitionStatus(StatusCompleted)
 }
 
@@ -77,6 +79,11 @@ func (p *PickupItemStep) Run(data game.Data) error {
 				}
 				itemX := i.Position.X - 1
 				itemY := i.Position.Y - 1
+				if p.mouseOverAttempts == 5 || p.mouseOverAttempts == 8 {
+					p.mouseOverAttempts++
+					pather.RandomMovement()
+					return nil
+				}
 				if p.mouseOverAttempts > 3 {
 					itemX += helper.RandRng(-2, 2)
 					itemY += helper.RandRng(-2, 2)

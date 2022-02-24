@@ -81,6 +81,11 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				}
 				objectX := o.Position.X - 2
 				objectY := o.Position.Y - 2
+				if i.mouseOverAttempts == 5 || i.mouseOverAttempts == 8 {
+					i.mouseOverAttempts++
+					pather.RandomMovement()
+					return nil
+				}
 				if i.mouseOverAttempts > 3 {
 					objectX += helper.RandRng(-2, 2)
 					objectY += helper.RandRng(-2, 2)

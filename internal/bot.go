@@ -87,11 +87,11 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 	return nil
 }
 
-func (b *Bot) shouldEndCurrentGame(startAt time.Time) error {
-	if time.Since(stats.Status.CurrentRunStart).Seconds() > float64(config.Config.MaxGameLength) {
+func (b *Bot) shouldEndCurrentGame(startedAt time.Time) error {
+	if time.Since(startedAt).Seconds() > float64(config.Config.MaxGameLength) {
 		return fmt.Errorf(
 			"max game length reached, try to exit game: %0.2f",
-			time.Since(stats.Status.CurrentRunStart).Seconds(),
+			time.Since(startedAt).Seconds(),
 		)
 	}
 
