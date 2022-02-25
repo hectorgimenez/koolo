@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"strings"
+	"time"
 )
 
 const (
@@ -69,8 +70,8 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 			for i := 0; i < maxAttackLoops; i++ {
 				steps = append(steps,
 					// TODO: Move closer to the enemy to ensure is on screen
-					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, 200),
-					step.PrimaryAttack(game.NPCID(m.Name), 3, 300),
+					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second),
+					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration),
 				)
 			}
 		}
@@ -83,8 +84,8 @@ func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		for i := 0; i < maxAttackLoops; i++ {
 			steps = append(steps,
-				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, 200),
-				step.PrimaryAttack(npc, 3, 300),
+				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Second),
+				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration),
 			)
 		}
 

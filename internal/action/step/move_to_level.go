@@ -37,7 +37,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	m.tryTransitionStatus(StatusInProgress)
-	if time.Since(m.lastRun) < time.Millisecond*500 {
+	if time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 

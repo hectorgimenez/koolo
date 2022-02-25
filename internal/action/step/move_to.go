@@ -41,8 +41,7 @@ func (m *MoveToStep) Run(data game.Data) error {
 	}
 	m.tryTransitionStatus(StatusInProgress)
 
-	// TODO: In case of teleport, calculate fcr frames for waiting time
-	if time.Since(m.lastRun) < time.Millisecond*500 {
+	if m.teleport && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 

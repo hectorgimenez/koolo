@@ -19,7 +19,6 @@ type Character interface {
 	KillPindle() *action.BasicAction
 	KillNihlathak() *action.BasicAction
 	KillCouncil() *action.BasicAction
-	ReturnToTown() *action.BasicAction
 }
 
 func BuildCharacter() (Character, error) {
@@ -57,35 +56,4 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	}
 
 	return steps
-}
-
-func (bc BaseCharacter) ReturnToTown() *action.BasicAction {
-	return action.BuildOnRuntime(func(data game.Data) []step.Step {
-		return nil
-	})
-	//action.Run(
-	//	action.NewKeyPress(bc.cfg.Bindings.TP, time.Millisecond*200),
-	//	action.NewMouseClick(hid.RightButton, time.Second*1),
-	//)
-	//for i := 0; i <= 5; i++ {
-	//	for _, o := range game.Status().Objects {
-	//		if o.IsPortal() {
-	//			log.Println("Entering Portal...")
-	//			err := bc.pf.InteractToObject(o, func(data game.Data) bool {
-	//				return game.Status().Area.IsTown()
-	//			})
-	//			if err != nil {
-	//				return err
-	//			}
-	//
-	//			time.Sleep(time.Second)
-	//			break
-	//		}
-	//	}
-	//
-	//	if game.Status().Area.IsTown() {
-	//		return nil
-	//	}
-	//}
-
 }

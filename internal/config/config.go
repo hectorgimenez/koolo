@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 var (
@@ -57,10 +58,11 @@ type StructConfig struct {
 		BeltRows int `yaml:"beltRows"`
 	} `yaml:"inventory"`
 	Character struct {
-		Class      string `yaml:"class"`
-		Difficulty string `yaml:"difficulty"`
-		UseMerc    bool   `yaml:"useMerc"`
-		UseCTA     bool   `yaml:"useCTA"`
+		Class         string `yaml:"class"`
+		CastingFrames int    `yaml:"castingFrames"`
+		Difficulty    string `yaml:"difficulty"`
+		UseMerc       bool   `yaml:"useMerc"`
+		UseCTA        bool   `yaml:"useCTA"`
 	} `yaml:"character"`
 	Runs struct {
 		Countess   bool `yaml:"countess"`
@@ -71,6 +73,9 @@ type StructConfig struct {
 		Nihlathak  bool `yaml:"nihlathak"`
 		Council    bool `yaml:"council"`
 	} `yaml:"runs"`
+	Runtime struct {
+		CastDuration time.Duration
+	}
 }
 
 type StructPickit struct {
@@ -114,6 +119,9 @@ func Load() error {
 	}
 	items := parsePickitItems(m["items"].([]interface{}))
 	Pickit.Items = items
+
+	secs := float32(Config.Character.CastingFrames)*0.04 + 0.01
+	Config.Runtime.CastDuration = time.Duration(secs*1000) * time.Millisecond
 
 	return nil
 }

@@ -14,7 +14,7 @@ func (o Object) IsWaypoint() bool {
 }
 
 func (o Object) IsPortal() bool {
-	return strings.Contains(o.Name, "Portal")
+	return strings.Contains(o.Name, "TownPortal")
 }
 
 func (o Object) IsRedPortal() bool {

@@ -14,27 +14,27 @@ type AttackStep struct {
 	target                game.NPCID
 	standStillBinding     string
 	numOfAttacksRemaining int
-	delayBetweenAttacksMs int
+	castDuration          time.Duration
 	keyBinding            string
 }
 
-func PrimaryAttack(target game.NPCID, numOfAttacks, delayBetweenAttacksMs int) *AttackStep {
+func PrimaryAttack(target game.NPCID, numOfAttacks int, castDuration time.Duration) *AttackStep {
 	return &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
-		delayBetweenAttacksMs: delayBetweenAttacksMs,
+		castDuration:          castDuration,
 	}
 }
 
-func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks, delayBetweenAttacksMs int) *AttackStep {
+func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, castDuration time.Duration) *AttackStep {
 	return &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
-		delayBetweenAttacksMs: delayBetweenAttacksMs,
+		castDuration:          castDuration,
 		keyBinding:            keyBinding,
 	}
 }
@@ -47,7 +47,7 @@ func (p *AttackStep) Status(data game.Data) Status {
 			return p.tryTransitionStatus(StatusCompleted)
 		}
 	} else {
-		if p.numOfAttacksRemaining <= 0 {
+		if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > p.castDuration {
 			return p.tryTransitionStatus(StatusCompleted)
 		}
 	}
@@ -58,12 +58,11 @@ func (p *AttackStep) Status(data game.Data) Status {
 func (p *AttackStep) Run(data game.Data) error {
 	if p.status == StatusNotStarted && p.keyBinding != "" {
 		hid.PressKey(p.keyBinding)
-		// Let's wait the delay for the secondary attack before triggering it, sometimes it gets bugged
-		p.lastRun = time.Now()
+		helper.Sleep(20)
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > time.Duration(p.delayBetweenAttacksMs)*time.Millisecond {
+	if time.Since(p.lastRun) > p.castDuration && p.numOfAttacksRemaining > 0 {
 		monster, found := data.Monsters[p.target]
 		if !found {
 			// Monster is dead, let's skip the attack sequence
