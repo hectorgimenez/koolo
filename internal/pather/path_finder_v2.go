@@ -28,7 +28,7 @@ func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, d
 	p, distance, found := astar.Path(w.From(), w.To())
 
 	// Debug only, this will render a png file with map and origin/destination points
-	w.RenderPathImg(p)
+	//w.RenderPathImg(p)
 
 	return p, distance, found
 }
