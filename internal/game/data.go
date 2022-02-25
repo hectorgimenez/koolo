@@ -39,7 +39,7 @@ type Data struct {
 	AreaOrigin       Position
 	Corpse           Corpse
 	Monsters         map[NPCID]Monster
-	CollisionGrid    [][]int
+	CollisionGrid    [][]bool
 	PlayerUnit       PlayerUnit
 	NPCs             map[NPCID]NPC
 	Items            Items

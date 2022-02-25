@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/hectorgimenez/koolo/api";
+option csharp_namespace = "koolo.mapassist.api";
+
+service MapAssistApi {
+  rpc GetData(R) returns (Data) {};
+}
+message R{}
+message Data {
+  string area = 1;
+  Position area_origin = 2;
+  Status status = 3;
+  repeated Corpse corpses = 4;
+  PlayerUnit player_unit = 5;
+  repeated Item items = 6;
+  repeated Object objects = 7;
+  repeated Monster monsters = 8;
+  repeated NPC npcs = 9;
+  repeated CollisionGrid collision_grid = 10;
+  MenuOpen menu_open = 11;
+  repeated PointOfInterest points_of_interest = 12;
+  repeated AdjacentLevel adjacent_levels = 13;
+}
+
+message PointOfInterest {
+  string name = 1;
+  Position position = 2;
+}
+
+message AdjacentLevel {
+  string area = 1;
+  repeated Position positions = 2;
+  bool is_portal = 3;
+}
+
+message MenuOpen {
+  bool inventory = 1;
+  bool npc_interact = 2;
+  bool npc_shop = 3;
+  bool stash = 4;
+  bool waypoint = 5;
+}
+
+message CollisionGrid {
+  repeated bool walkable = 1;
+}
+
+message NPC {
+  string name = 1;
+  repeated Position positions = 2;
+}
+
+message Monster {
+  string name = 1;
+  Position position = 2;
+  bool hovered = 3;
+}
+
+message Object {
+  string name = 1;
+  Position position = 2;
+  bool hovered = 3;
+  bool selectable = 4;
+}
+
+message Item {
+  int32 id = 1;
+  Position position = 2;
+  string name = 3;
+  bool hovered = 4;
+  string place = 5;
+  string quality = 6;
+  bool ethereal = 7;
+  repeated Stat stats = 8;
+}
+
+message PlayerUnit {
+  string name = 1;
+  Position position = 2;
+  repeated Skill skills = 3;
+  repeated Stat stats = 4;
+  string class = 5;
+}
+
+message Stat {
+  string name = 1;
+  uint32 value = 2;
+}
+
+message Skill {
+  string name = 1;
+  uint32 points = 2;
+}
+
+message Corpse {
+  string name = 1;
+  bool hovered = 2;
+  Position position = 3;
+}
+
+message Status {
+  uint32 life = 1;
+  uint32 max_life = 2;
+  uint32 mana = 3;
+  uint32 max_mana = 4;
+  bool merc_alive = 5;
+  uint32 merc_life = 6;
+  uint32 merc_max_life = 7;
+}
+
+message Position {
+  float x = 1;
+  float y = 2;
+}

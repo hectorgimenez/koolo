@@ -2,15 +2,19 @@ package main
 
 import (
 	"context"
+	"github.com/hectorgimenez/koolo/api"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 )
 
@@ -26,6 +30,11 @@ func main() {
 	}
 	defer logger.Sync()
 
+	grpcClient, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Fatal("error dialing MapAssist", zap.Error(err))
+	}
+	game.GRPCClient = api.NewMapAssistApiClient(grpcClient)
 	bm := health.NewBeltManager(logger)
 	hm := health.NewHealthManager(logger, bm)
 	sm := town.NewShopManager(logger, bm)

@@ -179,13 +179,13 @@ func (w World) RenderPathImg(path []astar.Pather) {
 }
 
 // ParseWorld parses a textual representation of a world into a world map.
-func ParseWorld(collisionGrid [][]int, fromX, fromY, toX, toY int) World {
+func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int) World {
 	w := World{}
 
 	for x, xValues := range collisionGrid {
-		for y, collision := range xValues {
+		for y, walkable := range xValues {
 			kind := KindBlocker
-			if collision == 0 {
+			if walkable {
 				kind = KindPlain
 			}
 			w.SetTile(&Tile{

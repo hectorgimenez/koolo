@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -60,7 +61,7 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 						hid.Click(hid.LeftButton)
 
 						for i := 0; i < 10; i++ {
-							if game.Status().Area == area {
+							if game.Status(context.Background()).Area == area {
 								// Give some time to load the area
 								time.Sleep(time.Second * 4)
 								return nil
