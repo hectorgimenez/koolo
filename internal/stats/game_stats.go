@@ -2,6 +2,7 @@ package stats
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
+	"strings"
 	"time"
 )
 
@@ -70,6 +71,10 @@ func UsedPotion(potionType game.PotionType, onMerc bool) {
 }
 
 func PickupItem(item game.Item) {
+	if item.IsPotion() || strings.EqualFold(item.Name, "Gold") {
+		return
+	}
+
 	Status.RunStats[Status.CurrentRun].ItemsFound = append(Status.RunStats[Status.CurrentRun].ItemsFound, item)
 }
 

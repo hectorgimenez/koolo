@@ -31,6 +31,10 @@ func PickupItem(logger *zap.Logger, item game.Item) *PickupItemStep {
 }
 
 func (p *PickupItemStep) Status(data game.Data) Status {
+	if p.status == StatusCompleted {
+		return p.status
+	}
+
 	for _, i := range data.Items.Ground {
 		if i.ID == p.item.ID {
 			return p.status
