@@ -2,6 +2,7 @@ package koolo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -68,18 +69,24 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 			}
 
 			for k, act := range actions {
-				if !act.Finished(d) {
-					err := act.NextStep(d)
-					if err != nil {
-						fmt.Println(err)
+				err := act.NextStep(d)
+				if errors.Is(err, action.ErrNoMoreSteps) {
+					if len(actions)-1 == k {
+						stats.FinishCurrentRun(stats.EventKill)
+						b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
+						running = false
 					}
+					continue
+				}
+				if errors.Is(err, action.ErrWillBeRetried) {
+					b.logger.Warn("error occurred, will be retried", zap.Error(err))
 					break
 				}
-				if len(actions)-1 == k {
-					stats.FinishCurrentRun(stats.EventKill)
-					b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-					running = false
+				if err != nil {
+					stats.FinishCurrentRun(stats.EventError)
+					return err
 				}
+				break
 			}
 		}
 	}

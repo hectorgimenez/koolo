@@ -23,5 +23,5 @@ func (b Builder) VendorRefill() *BasicAction {
 		}
 
 		return
-	})
+	}, CanBeSkipped())
 }

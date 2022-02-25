@@ -17,7 +17,7 @@ func (b Builder) ItemPickup() *BasicAction {
 		}
 
 		return
-	})
+	}, CanBeSkipped())
 }
 
 func (b Builder) getItemsToPickup(data game.Data) []game.Item {

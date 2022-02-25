@@ -19,5 +19,5 @@ func (b Builder) ReviveMerc() *BasicAction {
 		}
 
 		return
-	})
+	}, CanBeSkipped())
 }

@@ -1,14 +1,20 @@
 package action
 
 import (
+	"errors"
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const maxRetries = 5
 
+var ErrWillBeRetried = errors.New("error occurred, but it will be retried")
+var ErrNoRecover = errors.New("unrecoverable error occurred, game can not continue")
+var ErrCanBeSkipped = errors.New("error occurred, but this action is not critical and game can continue")
+var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
+
 type Action interface {
-	Finished(data game.Data) bool
 	NextStep(data game.Data) error
 }
 
@@ -17,33 +23,37 @@ type BasicAction struct {
 	builder         func(data game.Data) []step.Step
 	builderExecuted bool
 	retries         int
+	canBeSkipped    bool
 }
 
-func BuildOnRuntime(builder func(data game.Data) []step.Step) *BasicAction {
-	return &BasicAction{
+func BuildOnRuntime(builder func(data game.Data) []step.Step, opts ...Option) *BasicAction {
+	a := &BasicAction{
 		builder: builder,
 	}
+
+	for _, opt := range opts {
+		opt(a)
+	}
+
+	return a
 }
 
-func (b *BasicAction) Finished(data game.Data) bool {
-	if b.retries >= maxRetries {
-		return true
-	}
+type Option func(action *BasicAction)
 
-	if b.builder != nil && !b.builderExecuted {
-		return false
+func CanBeSkipped() Option {
+	return func(action *BasicAction) {
+		action.canBeSkipped = true
 	}
-
-	for _, s := range b.Steps {
-		if s.Status(data) != step.StatusCompleted {
-			return false
-		}
-	}
-
-	return true
 }
 
 func (b *BasicAction) NextStep(data game.Data) error {
+	if b.retries >= maxRetries {
+		if b.canBeSkipped {
+			return fmt.Errorf("%w: attempt limit reached", ErrCanBeSkipped)
+		}
+		return fmt.Errorf("%w: attempt limit reached", ErrNoRecover)
+	}
+
 	if b.builder != nil && !b.builderExecuted {
 		b.Steps = b.builder(data)
 		b.builderExecuted = true
@@ -56,9 +66,9 @@ func (b *BasicAction) NextStep(data game.Data) error {
 				b.retries++
 			}
 
-			return err
+			return nil
 		}
 	}
 
-	return nil
+	return ErrNoMoreSteps
 }

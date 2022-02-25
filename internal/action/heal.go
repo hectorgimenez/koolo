@@ -15,5 +15,5 @@ func (b Builder) Heal() *BasicAction {
 		}
 
 		return
-	})
+	}, CanBeSkipped())
 }
