@@ -24,13 +24,15 @@ func (pm BeltManager) DrinkPotion(data game.Data, potionType game.PotionType, me
 	if found {
 		binding := pm.getBindingBasedOnColumn(p)
 		if merc {
-			hid.PressKeyCombination("shift", binding)
-			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Row: %d]. HP: %d", potionType, p.Position.X+1, data.Health.MercHPPercent()))
+			hid.KeyDown("shift")
+			hid.PressKey(binding)
+			hid.KeyUp("shift")
+			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.Position.X+1, data.Health.MercHPPercent()), zap.Any("p", p))
 			stats.UsedPotion(potionType, true)
 			return true
 		}
 		hid.PressKey(binding)
-		pm.logger.Debug(fmt.Sprintf("Using %s potion [Row: %d]. HP: %d MP: %d", potionType, p.Position.X+1, data.Health.HPPercent(), data.Health.MPPercent()))
+		pm.logger.Debug(fmt.Sprintf("Using %s potion [Column: %d]. HP: %d MP: %d", potionType, p.Position.X+1, data.Health.HPPercent(), data.Health.MPPercent()), zap.Any("p", p))
 		stats.UsedPotion(potionType, false)
 		return true
 	}
