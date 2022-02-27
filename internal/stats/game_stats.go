@@ -27,7 +27,6 @@ func StartRun(runName string) {
 		Status.RunStats[runName] = rs
 	}
 
-	Status.TotalGames++
 	Status.CurrentRun = runName
 	Status.CurrentRunStart = time.Now()
 }

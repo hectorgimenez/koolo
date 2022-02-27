@@ -162,5 +162,6 @@ func (s *Supervisor) logGameStart(runs []run.Run) {
 	for _, r := range runs {
 		runNames += r.Name() + ", "
 	}
-	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stats.Status.TotalGames+1, runNames[:len(runNames)-2]))
+	stats.Status.TotalGames++
+	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stats.Status.TotalGames, runNames[:len(runNames)-2]))
 }
