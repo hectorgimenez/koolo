@@ -34,14 +34,14 @@ func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
 	if config.Config.Runs.Mephisto {
 		runs = append(runs, Mephisto{baseRun})
 	}
+	if config.Config.Runs.Council {
+		runs = append(runs, Council{baseRun})
+	}
 	if config.Config.Runs.Pindleskin {
 		runs = append(runs, Pindleskin{baseRun})
 	}
 	if config.Config.Runs.Nihlathak {
 		runs = append(runs, Nihlathak{baseRun})
-	}
-	if config.Config.Runs.Council {
-		runs = append(runs, Council{baseRun})
 	}
 
 	return

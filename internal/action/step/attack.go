@@ -17,14 +17,16 @@ type AttackStep struct {
 	castDuration          time.Duration
 	keyBinding            string
 	followEnemy           bool
+	enemyDistance         int
 	moveToStep            *MoveToStep
 }
 
 type AttackOption func(step *AttackStep)
 
-func FollowEnemy() AttackOption {
+func FollowEnemy(distance int) AttackOption {
 	return func(step *AttackStep) {
 		step.followEnemy = true
+		step.enemyDistance = distance
 	}
 }
 
@@ -111,7 +113,11 @@ func (p *AttackStep) Run(data game.Data) error {
 }
 
 func (p *AttackStep) ensureEnemyIsCloseEnough(monster game.Monster, data game.Data) bool {
-	if distance := pather.DistanceFromPoint(data, monster.Position.X, monster.Position.Y); distance > 20 {
+	if !p.followEnemy {
+		return true
+	}
+
+	if distance := pather.DistanceFromPoint(data, monster.Position.X, monster.Position.Y); distance > p.enemyDistance {
 		if p.moveToStep == nil {
 			p.moveToStep = MoveTo(monster.Position.X, monster.Position.Y, true)
 		}

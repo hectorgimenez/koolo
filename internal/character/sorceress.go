@@ -87,9 +87,15 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 
 		for _, m := range councilMembers {
 			for i := 0; i < maxAttackLoops; i++ {
+				// Try to move closer after few attacks
+				maxDistance := 20
+				if i > 3 {
+					maxDistance = 0
+				}
+
 				steps = append(steps,
-					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.FollowEnemy()),
-					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.FollowEnemy()),
+					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.FollowEnemy(maxDistance)),
+					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.FollowEnemy(maxDistance)),
 				)
 			}
 		}
