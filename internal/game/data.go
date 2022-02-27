@@ -31,6 +31,9 @@ const (
 
 	// Skills
 	SkillBattleOrders Skill = "BattleOrders"
+
+	// Resistances
+	ResistCold = "Cold"
 )
 
 type Data struct {
@@ -38,7 +41,7 @@ type Data struct {
 	Area             Area
 	AreaOrigin       Position
 	Corpse           Corpse
-	Monsters         map[NPCID]Monster
+	Monsters         Monsters
 	CollisionGrid    [][]bool
 	PlayerUnit       PlayerUnit
 	NPCs             map[NPCID]NPC
@@ -72,9 +75,10 @@ type Corpse struct {
 	Position  Position
 }
 type Monster struct {
-	Name      string
-	IsHovered bool
-	Position  Position
+	Name       string
+	IsHovered  bool
+	Position   Position
+	Immunities []Resist
 }
 
 type Position struct {

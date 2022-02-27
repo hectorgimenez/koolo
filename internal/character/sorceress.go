@@ -7,6 +7,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"sort"
 	"strings"
 	"time"
 )
@@ -62,16 +64,32 @@ func (s Sorceress) KillNihlathak() *action.BasicAction {
 
 func (s Sorceress) KillCouncil() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		// Exclude monsters that are not council members
+		var councilMembers []game.Monster
 		for _, m := range data.Monsters {
 			if !strings.Contains(strings.ToLower(m.Name), "councilmember") {
 				continue
 			}
+			councilMembers = append(councilMembers, m)
+		}
 
+		// Order council members by distance and immunities
+		sort.Slice(councilMembers, func(i, j int) bool {
+			if councilMembers[j].IsImmune(game.ResistCold) {
+				return false
+			}
+
+			distanceI := pather.DistanceFromPoint(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
+			distanceJ := pather.DistanceFromPoint(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
+
+			return distanceI < distanceJ
+		})
+
+		for _, m := range councilMembers {
 			for i := 0; i < maxAttackLoops; i++ {
 				steps = append(steps,
-					// TODO: Move closer to the enemy to ensure is on screen
-					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second),
-					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration),
+					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.FollowEnemy()),
+					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.FollowEnemy()),
 				)
 			}
 		}

@@ -47,7 +47,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	}
 
 	i.lastRun = time.Now()
-	m, found := data.Monsters[i.NPC]
+	m, found := data.Monsters.FindOne(i.NPC)
 	if found {
 		if m.IsHovered {
 			hid.Click(hid.LeftButton)
@@ -77,7 +77,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 }
 
 func (i InteractNPCStep) getNPCPosition(d game.Data) (X, Y int) {
-	npc, found := d.Monsters[i.NPC]
+	npc, found := d.Monsters.FindOne(i.NPC)
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit
 		return npc.Position.X - 2, npc.Position.Y - 2

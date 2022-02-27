@@ -16,20 +16,35 @@ type AttackStep struct {
 	numOfAttacksRemaining int
 	castDuration          time.Duration
 	keyBinding            string
+	followEnemy           bool
+	moveToStep            *MoveToStep
 }
 
-func PrimaryAttack(target game.NPCID, numOfAttacks int, castDuration time.Duration) *AttackStep {
-	return &AttackStep{
+type AttackOption func(step *AttackStep)
+
+func FollowEnemy() AttackOption {
+	return func(step *AttackStep) {
+		step.followEnemy = true
+	}
+}
+
+func PrimaryAttack(target game.NPCID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		castDuration:          castDuration,
 	}
+
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
-func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, castDuration time.Duration) *AttackStep {
-	return &AttackStep{
+func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
@@ -37,10 +52,14 @@ func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, 
 		castDuration:          castDuration,
 		keyBinding:            keyBinding,
 	}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 func (p *AttackStep) Status(data game.Data) Status {
-	_, found := data.Monsters[p.target]
+	_, found := data.Monsters.FindOne(p.target)
 	// Give 1 sec before continuing, ensuring the items have been dropped before start the pickup process
 	if !found {
 		if time.Since(p.lastRun) > time.Second {
@@ -61,14 +80,18 @@ func (p *AttackStep) Run(data game.Data) error {
 		helper.Sleep(20)
 	}
 
+	monster, found := data.Monsters.FindOne(p.target)
+	if !found {
+		// Monster is dead, let's skip the attack sequence
+		return nil
+	}
+
+	if !p.ensureEnemyIsCloseEnough(monster, data) {
+		return nil
+	}
+
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > p.castDuration && p.numOfAttacksRemaining > 0 {
-		monster, found := data.Monsters[p.target]
-		if !found {
-			// Monster is dead, let's skip the attack sequence
-			return nil
-		}
-
 		hid.KeyDown(p.standStillBinding)
 		x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 		hid.MovePointer(x, y)
@@ -85,4 +108,20 @@ func (p *AttackStep) Run(data game.Data) error {
 	}
 
 	return nil
+}
+
+func (p *AttackStep) ensureEnemyIsCloseEnough(monster game.Monster, data game.Data) bool {
+	if distance := pather.DistanceFromPoint(data, monster.Position.X, monster.Position.Y); distance > 20 {
+		if p.moveToStep == nil {
+			p.moveToStep = MoveTo(monster.Position.X, monster.Position.Y, true)
+		}
+
+		if p.moveToStep.Status(data) != StatusCompleted {
+			p.moveToStep.Run(data)
+			return false
+		}
+		p.moveToStep = nil
+	}
+
+	return true
 }

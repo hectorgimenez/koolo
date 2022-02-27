@@ -6,11 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-const (
-	fixedPositionInsideCouncilBuildingX = 4817
-	fixedPositionInsideCouncilBuildingY = 2444
-)
-
 type Council struct {
 	baseRun
 }
@@ -27,11 +22,16 @@ func (s Council) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position
-	// Travel to boss position
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
-		return []step.Step{
-			step.MoveTo(fixedPositionInsideCouncilBuildingX, fixedPositionInsideCouncilBuildingY, true),
+	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		for _, o := range data.Objects {
+			if o.Name == "CompellingOrb" {
+				steps = append(steps,
+					step.MoveTo(o.Position.X, o.Position.Y+10, true),
+				)
+			}
 		}
+
+		return
 	}))
 
 	// Kill Council

@@ -32,3 +32,26 @@ const (
 )
 
 type NPCID string
+type Resist string
+
+type Monsters []Monster
+
+func (m Monsters) FindOne(npcid NPCID) (Monster, bool) {
+	for _, monster := range m {
+		if monster.Name == string(npcid) {
+			return monster, true
+		}
+	}
+
+	return Monster{}, false
+}
+
+func (m Monster) IsImmune(resist Resist) bool {
+	for _, i := range m.Immunities {
+		if i == resist {
+			return true
+		}
+	}
+
+	return false
+}

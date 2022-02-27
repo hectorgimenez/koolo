@@ -56,6 +56,7 @@ message Monster {
   string name = 1;
   Position position = 2;
   bool hovered = 3;
+  repeated string immunities = 4;
 }
 
 message Object {

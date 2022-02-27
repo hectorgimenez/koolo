@@ -36,16 +36,21 @@ func Status(ctx context.Context) Data {
 		skills[Skill(skill.GetName())] = int(skill.GetPoints())
 	}
 
-	monsters := map[NPCID]Monster{}
+	var monsters []Monster
 	for _, m := range d.GetMonsters() {
-		monsters[NPCID(m.GetName())] = Monster{
+		var immunities []Resist
+		for _, resist := range m.GetImmunities() {
+			immunities = append(immunities, Resist(resist))
+		}
+		monsters = append(monsters, Monster{
 			Name:      m.GetName(),
 			IsHovered: m.GetHovered(),
 			Position: Position{
 				X: int(m.GetPosition().GetX()),
 				Y: int(m.GetPosition().GetY()),
 			},
-		}
+			Immunities: immunities,
+		})
 	}
 
 	npcs := map[NPCID]NPC{}

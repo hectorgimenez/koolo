@@ -27,8 +27,8 @@ func MoveTo(toX, toY int, teleport bool) *MoveToStep {
 }
 
 func (m *MoveToStep) Status(data game.Data) Status {
-	_, distance, _ := pather.GetPathToDestination(data, m.toX, m.toY)
-	if distance < 8 {
+	distance := pather.DistanceFromPoint(data, m.toX, m.toY)
+	if distance < 5 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 

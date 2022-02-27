@@ -45,7 +45,7 @@ func (c Countess) BuildActions() (actions []action.Action) {
 
 	// Let's teleport over Countess
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		countess, found := data.Monsters[game.Countess]
+		countess, found := data.Monsters.FindOne(game.Countess)
 		if !found {
 			return
 		}
