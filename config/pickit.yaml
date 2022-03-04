@@ -1,3 +1,13 @@
+# Supported properties and possible values. All of them can be combined, but multiple combinations for the same
+# properties are not supported (OR operand), the best way to accomplish that is to duplicate the pickit line to
+# create a different property combination for the same item.
+
+# quality: rare, unique
+# ethereal: true/false
+# sockets: integer
+# enhanceddefense: integer
+# enhanceddamage: integer
+
 pickupGold: true
 minimumGoldToPickup: 5000
 
@@ -9,25 +19,25 @@ items:
   - fullrejuvenationpotion:
 
   # Runes
-  - elrune:
-  - eldrune:
-  - tirrune:
-  - nefrune:
-  - ethrune:
-  - ithrune:
-  - talrune:
-  - ralrune:
-  - ortrune:
-  - thulrune:
-  - amnrune:
-  - solrune:
-  - shaelrune:
-  - dolrune:
-  - helrune:
-  - iorune:
-  - lumrune:
-  - korune:
-  - falrune:
+#  - elrune:
+#  - eldrune:
+#  - tirrune:
+#  - nefrune:
+#  - ethrune:
+#  - ithrune:
+#  - talrune:
+#  - ralrune:
+#  - ortrune:
+#  - thulrune:
+#  - amnrune:
+#  - solrune:
+#  - shaelrune:
+#  - dolrune:
+#  - helrune:
+#  - iorune:
+#  - lumrune:
+#  - korune:
+#  - falrune:
   - lemrune:
   - pulrune:
   - umrune:
