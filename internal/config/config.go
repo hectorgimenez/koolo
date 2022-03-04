@@ -69,9 +69,9 @@ type StructConfig struct {
 		Andariel   bool `yaml:"andariel"`
 		Summoner   bool `yaml:"summoner"`
 		Mephisto   bool `yaml:"mephisto"`
+		Council    bool `yaml:"council"`
 		Pindleskin bool `yaml:"pindleskin"`
 		Nihlathak  bool `yaml:"nihlathak"`
-		Council    bool `yaml:"council"`
 	} `yaml:"runs"`
 	Runtime struct {
 		CastDuration time.Duration
@@ -85,8 +85,13 @@ type StructPickit struct {
 }
 
 type ItemPickit struct {
-	Name    string
-	Quality string
+	Name            string
+	Quality         string
+	Ethereal        *bool
+	Sockets         *int
+	EnhancedDefense *int
+	EnhancedDamage  *int
+	FCR             *int
 }
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
@@ -139,6 +144,37 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 				if found {
 					ip.Quality = quality.(string)
 				}
+
+				ethereal, found := props.(map[interface{}]interface{})["ethereal"]
+				if found {
+					eth := ethereal.(bool)
+					ip.Ethereal = &eth
+				}
+
+				sockets, found := props.(map[interface{}]interface{})["sockets"]
+				if found {
+					s := sockets.(int)
+					ip.Sockets = &s
+				}
+
+				enhanceddefense, found := props.(map[interface{}]interface{})["enhanceddefense"]
+				if found {
+					ed := enhanceddefense.(int)
+					ip.EnhancedDefense = &ed
+				}
+
+				enhanceddamage, found := props.(map[interface{}]interface{})["enhanceddamage"]
+				if found {
+					ed := enhanceddamage.(int)
+					ip.EnhancedDamage = &ed
+				}
+
+				fcr, found := props.(map[interface{}]interface{})["fcr"]
+				if found {
+					fcrp := fcr.(int)
+					ip.FCR = &fcrp
+				}
+
 			}
 			itemsToPickit = append(itemsToPickit, ip)
 		}
