@@ -54,7 +54,7 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 					break
 				}
 
-				if pickitItem.Quality == "" || strings.EqualFold(string(item.Quality), pickitItem.Quality) {
+				if b.shouldBePickedUp(item, pickitItem) {
 					itemsToPickup = append(itemsToPickup, item)
 					break
 				}
@@ -71,4 +71,28 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 	}
 
 	return itemsToPickup
+}
+
+func (b Builder) shouldBePickedUp(i game.Item, pi config.ItemPickit) bool {
+	if pi.Quality != "" && !strings.EqualFold(string(i.Quality), pi.Quality) {
+		return false
+	}
+
+	if pi.Ethereal != nil && i.Ethereal != *pi.Ethereal {
+		return false
+	}
+
+	pickup := true
+	for stat, value := range i.Stats {
+		for pickitStat, pickitValue := range pi.Stats {
+			if strings.EqualFold(string(stat), pickitStat) {
+				if value < pickitValue {
+					pickup = false
+					break
+				}
+			}
+		}
+	}
+
+	return pickup
 }

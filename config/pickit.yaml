@@ -1,12 +1,30 @@
 # Supported properties and possible values. All of them can be combined, but multiple combinations for the same
 # properties are not supported (OR operand), the best way to accomplish that is to duplicate the pickit line to
-# create a different property combination for the same item.
+# create a different property combination for the same item. All integer values (except sockets) are compared
+# with greater or equal. This means that if you put fcr: 10 and the item is 10% or greater, it will be picked up.
+# Operators will be added in the future.
 
 # quality: rare, unique
 # ethereal: true/false
 # sockets: integer
+# dexterity: integer
+# strength: integer
 # enhanceddefense: integer
 # enhanceddamage: integer
+# fcr: integer
+# defense: integer
+# fireresist: integer
+# coldresist: integer
+# poisonresist: integer
+# lightningresist: integer
+# maxmanapercent: integer
+# lifesteal: integer
+# manasteal: integer
+# magicfind: integer
+# magicdamagereduction: integer
+# absorbfirepercent: integer
+# attackrating: integer
+# allskills: integer
 
 pickupGold: true
 minimumGoldToPickup: 5000
@@ -64,8 +82,56 @@ items:
   - burningessenceofterror:
   - festeringessenceofdestruction:
 
-  - amulet: {quality: unique}
+  ########### Rings ###########
+  # Unique
   - ring: {quality: unique}
+#  - ring: {quality: unique, maxmanapercent: 25} # soj
+#  - ring: {quality: unique, lifesteal: 3} # bk
+#  - ring: {quality: unique, magicfind: 30} # nagel
+#  - ring: {quality: unique, dexterity: 20} # raven
+#  - ring: {quality: unique, magicdamagereduction: 15, absorbfirepercent: 15} # dwarf star
+
+  ########### Amulets ###########
+  # Unique
+  - amulet: {quality: unique}
+#  - amulet: {quality: unique, strength: 5, fireresist: 30} # mara
+#  - amulet: {quality: unique, lightresist: 35} # highlord
+#  - amulet: {quality: unique, dexterity: 25} # cat's eye
+#  - amulet: {quality: unique, attackrating: 450} # metalgrid
+
+  ########### Armors ###########
+  # Unique
+  - duskshroud: {quality: unique, ethereal: false} # Ormus
+  - wirefleece: {quality: unique, ethereal: true} # gladiator's bane
+  - balrogskin: {quality: unique, ethereal: true, allskills: 2} # arkaine's valor
+  - krakenshell: {quality: unique, strength: 50} # leviathan
+  - shadowplate: {quality: unique, ethereal: true, coldresist: 60} # steel carapace
+  - sacredarmor: {quality: unique, ethereal: true} # templar's might
+  - sacredarmor: {quality: unique, strength: 20} # tyrael's might
+  - serpentskinarmor: {quality: unique, fireresist: 35} # skin of the vipermagi
+  - wyrmhide: {quality: unique, fireresist: 35} # skin of the vipermagi
+  - demonhidearmor: {quality: unique, ethereal: true} # skin of the flayed one eth
+  - linkedmail: {quality: unique, ethereal: true} # spirit forge eth
+  - cuirass: {quality: unique, ethereal: true} # duriel's shell eth
+  - tigulatedmail: {quality: unique, ethereal: true} # crow caw eth
+  - mesharmor: {quality: unique, ethereal: true} # shaftstop eth
+  - russetarmor: {quality: unique, ethereal: true} # skullder's eth
+  - templarcoat: {quality: unique, ethereal: true} # guardian angel eth
+  - sharktootharmor: {quality: unique, ethereal: true} # toothrow
+  - krakenshell: {quality: unique, ethereal: true} # toothrow x1
+  - chaosarmor: {quality: unique, ethereal: true} # black hades
+
+  ########### Shields ###########
+  # Unique
+  - spikedshield: {quality: unique}
+  - monarch: {quality: unique}
+  - trollnest: {quality: unique}
+  - defender: {quality: unique}
+  - roundshield: {quality: unique}
+  - barbedshield: {quality: unique}
+  - grimshield: {quality: unique}
+  - bladebarrier: {quality: unique}
+  - luna: {quality: unique}
 
   ########### Helms ###########
   # Unique
