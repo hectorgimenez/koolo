@@ -85,14 +85,13 @@ type StructPickit struct {
 }
 
 type ItemPickit struct {
-	Name            string
-	Quality         string
-	Ethereal        *bool
-	Sockets         *int
-	EnhancedDefense *int
-	EnhancedDamage  *int
-	FCR             *int
+	Name     string
+	Quality  string
+	Ethereal *bool
+	Stats    map[string]int
 }
+
+type ItemStat *int
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
 func Load() error {
@@ -136,45 +135,22 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 	for _, item := range items {
 		for name, props := range item.(map[interface{}]interface{}) {
 			ip := ItemPickit{
-				Name: name.(string),
+				Name:  name.(string),
+				Stats: map[string]int{},
 			}
 
 			if props != nil {
-				quality, found := props.(map[interface{}]interface{})["quality"]
-				if found {
-					ip.Quality = quality.(string)
+				for statName, statValue := range props.(map[interface{}]interface{}) {
+					switch statName {
+					case "quality":
+						ip.Quality = statValue.(string)
+					case "ethereal":
+						ethp := statValue.(bool)
+						ip.Ethereal = &ethp
+					default:
+						ip.Stats[statName.(string)] = statValue.(int)
+					}
 				}
-
-				ethereal, found := props.(map[interface{}]interface{})["ethereal"]
-				if found {
-					eth := ethereal.(bool)
-					ip.Ethereal = &eth
-				}
-
-				sockets, found := props.(map[interface{}]interface{})["sockets"]
-				if found {
-					s := sockets.(int)
-					ip.Sockets = &s
-				}
-
-				enhanceddefense, found := props.(map[interface{}]interface{})["enhanceddefense"]
-				if found {
-					ed := enhanceddefense.(int)
-					ip.EnhancedDefense = &ed
-				}
-
-				enhanceddamage, found := props.(map[interface{}]interface{})["enhanceddamage"]
-				if found {
-					ed := enhanceddamage.(int)
-					ip.EnhancedDamage = &ed
-				}
-
-				fcr, found := props.(map[interface{}]interface{})["fcr"]
-				if found {
-					fcrp := fcr.(int)
-					ip.FCR = &fcrp
-				}
-
 			}
 			itemsToPickit = append(itemsToPickit, ip)
 		}
