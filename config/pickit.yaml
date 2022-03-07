@@ -37,25 +37,25 @@ items:
   - fullrejuvenationpotion:
 
   # Runes
-#  - elrune:
-#  - eldrune:
-#  - tirrune:
-#  - nefrune:
-#  - ethrune:
-#  - ithrune:
-#  - talrune:
-#  - ralrune:
-#  - ortrune:
-#  - thulrune:
-#  - amnrune:
-#  - solrune:
-#  - shaelrune:
-#  - dolrune:
-#  - helrune:
-#  - iorune:
-#  - lumrune:
-#  - korune:
-#  - falrune:
+  #  - elrune:
+  #  - eldrune:
+  #  - tirrune:
+  #  - nefrune:
+  #  - ethrune:
+  #  - ithrune:
+  #  - talrune:
+  #  - ralrune:
+  #  - ortrune:
+  #  - thulrune:
+  #  - amnrune:
+  #  - solrune:
+  #  - shaelrune:
+  #  - dolrune:
+  #  - helrune:
+  #  - iorune:
+  #  - lumrune:
+  #  - korune:
+  #  - falrune:
   - lemrune:
   - pulrune:
   - umrune:
@@ -84,78 +84,244 @@ items:
 
   ########### Rings ###########
   # Unique
-  - ring: {quality: unique}
-#  - ring: {quality: unique, maxmanapercent: 25} # soj
-#  - ring: {quality: unique, lifesteal: 3} # bk
-#  - ring: {quality: unique, magicfind: 30} # nagel
-#  - ring: {quality: unique, dexterity: 20} # raven
-#  - ring: {quality: unique, magicdamagereduction: 15, absorbfirepercent: 15} # dwarf star
+  - ring: { quality: unique }
+  #  - ring: {quality: unique, maxmanapercent: 25} # soj
+  #  - ring: {quality: unique, lifesteal: 3} # bk
+  #  - ring: {quality: unique, magicfind: 30} # nagel
+  #  - ring: {quality: unique, dexterity: 20} # raven
+  #  - ring: {quality: unique, magicdamagereduction: 15, absorbfirepercent: 15} # dwarf star
 
   ########### Amulets ###########
   # Unique
-  - amulet: {quality: unique}
-#  - amulet: {quality: unique, strength: 5, fireresist: 30} # mara
-#  - amulet: {quality: unique, lightresist: 35} # highlord
-#  - amulet: {quality: unique, dexterity: 25} # cat's eye
-#  - amulet: {quality: unique, attackrating: 450} # metalgrid
+  - amulet: { quality: unique }
+  #  - amulet: {quality: unique, strength: 5, fireresist: 30} # mara
+  #  - amulet: {quality: unique, lightningresist: 35} # highlord
+  #  - amulet: {quality: unique, dexterity: 25} # cat's eye
+  #  - amulet: {quality: unique, attackrating: 450} # metalgrid
 
   ########### Armors ###########
   # Unique
-  - duskshroud: {quality: unique, ethereal: false} # Ormus
-  - wirefleece: {quality: unique, ethereal: true} # gladiator's bane
-  - balrogskin: {quality: unique, ethereal: true, allskills: 2} # arkaine's valor
-  - krakenshell: {quality: unique, strength: 50} # leviathan
-  - shadowplate: {quality: unique, ethereal: true, coldresist: 60} # steel carapace
-  - sacredarmor: {quality: unique, ethereal: true} # templar's might
-  - sacredarmor: {quality: unique, strength: 20} # tyrael's might
-  - serpentskinarmor: {quality: unique, fireresist: 35} # skin of the vipermagi
-  - wyrmhide: {quality: unique, fireresist: 35} # skin of the vipermagi
-  - demonhidearmor: {quality: unique, ethereal: true} # skin of the flayed one eth
-  - linkedmail: {quality: unique, ethereal: true} # spirit forge eth
-  - cuirass: {quality: unique, ethereal: true} # duriel's shell eth
-  - tigulatedmail: {quality: unique, ethereal: true} # crow caw eth
-  - mesharmor: {quality: unique, ethereal: true} # shaftstop eth
-  - russetarmor: {quality: unique, ethereal: true} # skullder's eth
-  - templarcoat: {quality: unique, ethereal: true} # guardian angel eth
-  - sharktootharmor: {quality: unique, ethereal: true} # toothrow
-  - krakenshell: {quality: unique, ethereal: true} # toothrow x1
-  - chaosarmor: {quality: unique, ethereal: true} # black hades
+  - duskshroud: { quality: unique, ethereal: false } # Ormus
+  - wirefleece: { quality: unique, ethereal: true } # gladiator's bane
+  - balrogskin: { quality: unique, ethereal: true, allskills: 2 } # arkaine's valor
+  - krakenshell: { quality: unique, strength: 50 } # leviathan
+  - shadowplate: { quality: unique, ethereal: true, coldresist: 60 } # steel carapace
+  - sacredarmor: { quality: unique, ethereal: true } # templar's might
+  - sacredarmor: { quality: unique, strength: 20 } # tyrael's might
+  - serpentskinarmor: { quality: unique, fireresist: 35 } # skin of the vipermagi
+  - wyrmhide: { quality: unique, fireresist: 35 } # skin of the vipermagi
+  - demonhidearmor: { quality: unique, ethereal: true } # skin of the flayed one eth
+  - linkedmail: { quality: unique, ethereal: true } # spirit forge eth
+  - cuirass: { quality: unique, ethereal: true } # duriel's shell eth
+  - tigulatedmail: { quality: unique, ethereal: true } # crow caw eth
+  - mesharmor: { quality: unique, ethereal: true } # shaftstop eth
+  - russetarmor: { quality: unique, ethereal: true } # skullder's eth
+  - templarcoat: { quality: unique, ethereal: true } # guardian angel eth
+  - sharktootharmor: { quality: unique, ethereal: true } # toothrow
+  - krakenshell: { quality: unique, ethereal: true } # toothrow x1
+  - chaosarmor: { quality: unique, ethereal: true } # black hades
 
   ########### Shields ###########
   # Unique
-  - spikedshield: {quality: unique}
-  - monarch: {quality: unique}
-  - trollnest: {quality: unique}
-  - defender: {quality: unique}
-  - roundshield: {quality: unique}
-  - barbedshield: {quality: unique}
-  - grimshield: {quality: unique}
-  - bladebarrier: {quality: unique}
-  - luna: {quality: unique}
+  - spikedshield: { quality: unique }
+  - monarch: { quality: unique }
+  - trollnest: { quality: unique }
+  - defender: { quality: unique }
+  - roundshield: { quality: unique }
+  - barbedshield: { quality: unique }
+  - grimshield: { quality: unique }
+  - bladebarrier: { quality: unique }
+  - luna: { quality: unique }
 
   ########### Helms ###########
   # Unique
-  - shako: {quality: unique} # Harlequin Crest
-  - tiara: {quality: unique} # Kira's Guardian
-  - diadem: {quality: unique} # Griffon's Eye
-  - demonhead: {quality: unique} # Andariel's Visage
-  - grimhelm: {quality: unique} # Vampire Gaze
-  - corona: {quality: unique} # Crown of Ages
-  - grandcrown: {quality: unique} # Crown of Thieves
-  - spiredhelm: {quality: unique} # Nightwing's Veil
+  - shako: { quality: unique } # Harlequin Crest
+  - tiara: { quality: unique } # Kira's Guardian
+  - diadem: { quality: unique } # Griffon's Eye
+  - demonhead: { quality: unique } # Andariel's Visage
+  - grimhelm: { quality: unique } # Vampire Gaze
+  - corona: { quality: unique } # Crown of Ages
+  - grandcrown: { quality: unique } # Crown of Thieves
+  - spiredhelm: { quality: unique } # Nightwing's Veil
 
   ########### Gloves ###########
   # Unique
-  - vampirebonegloves: {quality: unique} # Dracul's Grasp
-  - ogregauntlets: {quality: unique} # Steelrend
-  - heavygloves: {quality: unique} # Bloodfist
-  - sharkskingloves: {quality: unique} # Bloodfist
-  - vampirebonegloves: {quality: unique} # Bloodfist
-  - chaingloves: {quality: unique} # Chance Guard
-  - lightgauntlets: {quality: unique} # Magefist
-  - battlegauntlets: {quality: unique} # Magefist
-  - crusadergauntlets: {quality: unique} # Magefist
-  - gauntlets: {quality: unique} # Frostburn
+  - vampirebonegloves: { quality: unique } # Dracul's Grasp
+  - ogregauntlets: { quality: unique } # Steelrend
+  - heavygloves: { quality: unique } # Bloodfist
+  - sharkskingloves: { quality: unique } # Bloodfist
+  - vampirebonegloves: { quality: unique } # Bloodfist
+  - chaingloves: { quality: unique } # Chance Guard
+  - lightgauntlets: { quality: unique } # Magefist
+  - battlegauntlets: { quality: unique } # Magefist
+  - crusadergauntlets: { quality: unique } # Magefist
+  - gauntlets: { quality: unique } # Frostburn
 
   ########### Boots ###########
   # Unique
+  - lightplatedboots: { quality: unique, ethereal: false } # goblin toe
+  - battleboots: { quality: unique, defense: 90 } # goblin toe
+  - mirroredboots: { quality: unique, defense: 123 } # goblin toe
+  - warboots: { quality: unique, ethereal: false } # gore rider
+  - myrmidongreaves: { quality: unique, defense: 213 } # gore rider
+  - scarabshellboots: { quality: unique, ethereal: true } # sandstorm trek
+  - boneweaveboots: { quality: unique, ethereal: false, strength: 20 } # marrowwalk
+  - myrmidongreaves: { quality: unique, ethereal: false, dexterity: 25 } # shadow dancer
+  - demonhideboots: { quality: unique, ethereal: false } # infernostride
+  - wyrmhideboots: { quality: unique, ethereal: false, defense: 170 } # infernostride
+  - sharkskinboots: { quality: unique, ethereal: false } # waterwalk
+  - scarabshellboots: { quality: unique, ethereal: false, defense: 201 } # waterwalk
+  - battleboots: { quality: unique, ethereal: false } # war traveler
+  - boots: { quality: unique, ethereal: false } # hotspur
+  - demonhideboots: { quality: unique, ethereal: false, defense: 48 } # hotspur
+  - wyrmhideboots: { quality: unique, ethereal: false, defense: 80 } # hotspur
+
+  ########### Belts ###########
+  # Unique
+  - spiderwebsash: { quality: unique, ethereal: false } # arachnid mesh
+  - vampirefangbelt: { quality: unique, ethereal: false, lifesteal: 7, defense: 63 } # nosferatu's coil
+  - mithrilcoil: { quality: unique, ethereal: false, vitality: 40 } # verdungo's hearty cord
+  - demonhidesash: { quality: unique, ethereal: false, lifesteal: 8 } # string of ears
+  - battlebelt: { quality: unique, ethereal: false } # snowclash
+  - warbelt: { quality: unique, ethereal: false } # thundergod's vigor
+  - heavybelt: { quality: unique, ethereal: false } # goldwrap
+  - battlebelt: { quality: unique, ethereal: false } # goldwrap
+  - trollbelt: { quality: unique, ethereal: false } # goldwrap
+
+
+  ########### Axes ###########
+  # Unique
+  - tomahawk: { quality: unique, ethereal: true, enhanceddamage: 225 } # razor's edge
+  - ettinaxe: { quality: unique, sockets: 5, ethereal: true, enhanceddamage: 270 } # rune master
+  - berserkeraxe: { quality: unique, ethereal: true } # death cleaver
+
+  ########### Bows ###########
+  # Unique
+  - wardbow: { quality: unique, enhanceddamage: 200 } # widowmaker
+  - hydrabow: { quality: unique, manasteal: 8 } # windforce
+
+  ########### Daggers ###########
+  # Unique
+  - dagger: { quality: unique } # gull
+  - boneknife: { quality: unique } # wizardspike
+  - fangedknife: { quality: unique, ethereal: true } # fleshripper
+
+  ########### Javelins ###########
+  # Unique
+  - ghostglaive: { quality: unique, enhanceddamage: 190, lifesteal: 13 }
+
+  ########### Maces ###########
+  # Unique
+  - scourge: { quality: unique, ethereal: true } # stormlash
+
+  ########### Polearms ###########
+  # Unique
+  - ogreaxe: { quality: unique, ethereal: true, enhanceddamage: 320 } # bonehew
+  - thresher: { quality: unique, ethereal: true, enhanceddamage: 240, lifesteal: 15 } # the reaper's toll
+  - crypticaxe: { quality: unique, ethereal: true, sockets: 3 } # tomb reaver
+
+  ########### Scepters ###########
+  # Unique
+  - mightyscepter: { quality: unique, ethereal: true, enhanceddamage: 300, sockets: 2 } # heaven's light
+  - mightyscepter: { quality: unique, ethereal: true, enhanceddamage: 300 } # redeemer
+  - caduceus: { quality: unique, ethereal: true, enhanceddamage: 290 } # astreon's iron ward
+
+  ########### Spears ###########
+  # Unique
+  - yari: { quality: unique, enhanceddamage: 200 } # hone sundan
+  - ghostspear: { quality: unique, enhanceddamage: 200 } # hone sundan
+
+  ########### Staves ###########
+  # Unique
+  - elderstaff: { quality: unique, allskills: 4 } # ondal's wisdom
+  - elderstaff: { quality: unique, ethereal: true } # ondal's wisdom
+  - quarterstaff: { quality: unique, ethereal: true , enhanceddamage: 300 } # ribcracker
+
+  ########### Swords ###########
+  # Unique
+  - espandon: { quality: unique, ethereal: true, enhanceddamage: 200 } # crainte vomir
+  - phaseblade: { quality: unique, enhanceddamage: 270, strength: 10 } # azurewrath
+  - tulwar: { quality: unique, ethereal: true, enhanceddamage: 120, dexterity: 15 } # blade of ali baba
+  - battlesword: { quality: unique, ethereal: true } # headstriker
+
+  ########### Throwing Weapons ###########
+  # Unique
+  - wingedknife: { quality: unique, ethereal: true, enhanceddamage: 250 } # warshrike
+  - wingedaxe: { quality: unique, ethereal: true, enhanceddamage: 210 } # lacerator
+  - flyingaxe: { quality: unique, ethereal: false, enhanceddamage: 210 } # gimmershard
+
+  ########### Wands ###########
+  # Unique
+  - unearthedwand: { quality: unique } # death's web
+  - burntwand: { quality: unique } # suicide branch
+
+  ########### Class Specific items ###########
+  # Amazon Unique
+  - ceremonialjavelin: { quality: unique, ethereal: true } # titan's revenge
+  - matriarchaljavelin: { quality: unique, enhanceddamage: 200 } # thunderstroke
+
+  # Assassin Unique
+  - greatertalons: { quality: unique, enhanceddamage: 200, lifesteal: 9 } # bartuc's cut-throat
+  - wristsword: { quality: unique, ethereal: true, fireresist: 50 } # jade talon
+
+  # Necromancer Unique
+  - hierophanttrophy: { quality: unique, ethereal: false } # homunculus
+  - bloodlordskull: { quality: unique, ethereal: false } # homunculus or darkforce spawn
+  - succubusskull: { quality: unique, ethereal: false, fireresist: 30 } # boneflame
+
+  # Barbarian Unique
+  - slayerguard: { quality: unique } # arreat's face
+  - guardiancrown: { quality: unique } # arreat's face
+  - furyvisor: { quality: unique, ethereal: false } # wolfhowl
+
+  # Sorceress Unique
+  - eldritchorb: { quality: unique } # eschuta's temper
+  - swirlingcrystal: { quality: unique } # oculus
+  - dimensionalshard: { quality: unique } # death's fathom
+
+  # Druid Unique
+  - totemicmask: { quality: unique } # jalal's mane
+  - bloodspirit: { quality: unique } # jalal's mane or cerebus' bite
+
+  # Paladin Unique
+  - sacredrondache: { quality: unique } # alma negra
+  - gildedshield: { quality: unique } # herald of zakarum
+
+  ########### Jewels ###########
+  # Unique
+  - jewel: { quality: unique }
+
+  ########### Charms ###########
+  # Small
+  - smallcharm: { quality: magic }
+
+  # Large
+  - largecharm: { quality: magic }
+
+  # Grand
+  - grandcharm: { quality: magic }
+  - grandcharm: { quality: unique } # gheed's fortune
+
+  ########### Set Items ###########
+  # Tal Rasha's
+  - swirlingcrystal: { quality: set }
+  - deathmask: { quality: set }
+  - lacqueredplate: { quality: set }
+  - amulet: { quality: set, lightningresist: 33 }
+  - meshbelt: { quality: set, magicfind: 15 }
+
+  # Immortal King's
+  - warboots: { quality: set }
+  - warbelt: { quality: set }
+  - ogremaul: { quality: set }
+  - avengerguard: { quality: set }
+
+  # Trang-Oul's
+  - heavybracers: { quality: set }
+  - trollbelt: { quality: set }
+  - bonevisage: { quality: set }
+
+  # Griswold's
+  - caduceus: { quality: set, sockets: 4 }
+  - corona: { quality: set, magicfind: 30 }
+  - vortexshield: { quality: set, defense: 333 }
