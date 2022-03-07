@@ -171,7 +171,7 @@ items:
   - wyrmhideboots: { quality: unique, ethereal: false, defense: 170 } # infernostride
   - sharkskinboots: { quality: unique, ethereal: false } # waterwalk
   - scarabshellboots: { quality: unique, ethereal: false, defense: 201 } # waterwalk
-  - battleboots: { quality: unique, ethereal: false } # war traveler
+  - battleboots: { quality: unique, ethereal: false, strength: 10 } # war traveler
   - boots: { quality: unique, ethereal: false } # hotspur
   - demonhideboots: { quality: unique, ethereal: false, defense: 48 } # hotspur
   - wyrmhideboots: { quality: unique, ethereal: false, defense: 80 } # hotspur

@@ -2,8 +2,10 @@ package town
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
 	"time"
@@ -13,6 +15,9 @@ const (
 	topCornerWindowWidthProportion  = 37.64
 	topCornerWindowHeightProportion = 7.85
 	ItemBoxSize                     = 40
+
+	InventoryTopLeftX = 1.494
+	InventoryTopLeftY = 2.071
 )
 
 type ShopManager struct {
@@ -27,7 +32,7 @@ func NewShopManager(logger *zap.Logger, bm health.BeltManager) ShopManager {
 	}
 }
 
-func (sm ShopManager) BuyPotsAndTPs(d game.Data) {
+func (sm ShopManager) BuyConsumables(d game.Data) {
 	missingHealingPots := sm.bm.GetMissingCount(d, game.HealingPotion)
 	missingManaPots := sm.bm.GetMissingCount(d, game.ManaPotion)
 
@@ -51,10 +56,37 @@ func (sm ShopManager) BuyPotsAndTPs(d game.Data) {
 	if d.Items.Inventory.ShouldBuyTPs() {
 		sm.logger.Debug("Filling TP Tome...")
 		for _, i := range d.Items.Shop {
-			if i.Name == game.ItemScrollTownPortal {
+			if i.Name == game.ItemScrollOfTownPortal {
 				sm.buyFullStack(i)
 				break
 			}
+		}
+	}
+
+	if d.Items.Inventory.ShouldBuyIDs() {
+		sm.logger.Debug("Filling IDs Tome...")
+		for _, i := range d.Items.Shop {
+			if i.Name == game.ItemScrollOfIdentify {
+				sm.buyFullStack(i)
+				break
+			}
+		}
+	}
+}
+
+func (sm ShopManager) SellJunk(d game.Data) {
+	for _, i := range d.Items.Inventory {
+		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+			x := int(float32(hid.GameAreaSizeX)/InventoryTopLeftX) + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
+			y := int(float32(hid.GameAreaSizeY)/InventoryTopLeftY) + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
+			hid.MovePointer(x, y)
+			helper.Sleep(100)
+			hid.KeyDown("control")
+			helper.Sleep(50)
+			hid.Click(hid.LeftButton)
+			helper.Sleep(150)
+			hid.KeyUp("control")
+			helper.Sleep(500)
 		}
 	}
 }
@@ -74,13 +106,13 @@ func (sm ShopManager) buyFullStack(i game.Item) {
 	x, y := sm.getScreenCordinatesForItem(i)
 
 	hid.MovePointer(x, y)
-	time.Sleep(time.Millisecond * 250)
+	helper.Sleep(250)
 	hid.KeyDown("shift")
-	time.Sleep(time.Millisecond * 100)
+	helper.Sleep(100)
 	hid.Click(hid.RightButton)
-	time.Sleep(time.Millisecond * 300)
+	helper.Sleep(300)
 	hid.KeyUp("shift")
-	time.Sleep(time.Second)
+	helper.Sleep(500)
 }
 
 func (sm ShopManager) getScreenCordinatesForItem(i game.Item) (int, int) {

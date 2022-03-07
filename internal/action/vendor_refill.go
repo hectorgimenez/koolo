@@ -8,14 +8,13 @@ import (
 
 func (b Builder) VendorRefill() *BasicAction {
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		shouldBuyTPs := data.Items.Inventory.ShouldBuyTPs()
-
-		if b.bm.ShouldBuyPotions(data) || shouldBuyTPs {
+		if b.shouldGoToVendor(data) {
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()),
 				step.KeySequence("up", "down", "enter"),
 				step.SyncStep(func(data game.Data) error {
-					b.sm.BuyPotsAndTPs(data)
+					b.sm.BuyConsumables(data)
+					b.sm.SellJunk(data)
 					return nil
 				}),
 				step.KeySequence("esc"),
@@ -24,4 +23,13 @@ func (b Builder) VendorRefill() *BasicAction {
 
 		return
 	}, CanBeSkipped())
+}
+
+func (b Builder) shouldGoToVendor(data game.Data) bool {
+	// Check if we should sell junk
+	if len(data.Items.Inventory.NonLockedItems()) > 0 {
+		return true
+	}
+
+	return data.Items.Inventory.ShouldBuyTPs() || data.Items.Inventory.ShouldBuyTPs() || data.Items.Inventory.ShouldBuyIDs()
 }

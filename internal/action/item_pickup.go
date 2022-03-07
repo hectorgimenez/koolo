@@ -54,7 +54,7 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 					break
 				}
 
-				if b.shouldBePickedUp(item, pickitItem) {
+				if b.shouldBePickedUp(data, item, pickitItem) {
 					itemsToPickup = append(itemsToPickup, item)
 					break
 				}
@@ -62,7 +62,7 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 
 			// Check if we should pickup gold, based on amount
 			if config.Pickit.PickupGold && strings.EqualFold(item.Name, "Gold") {
-				if item.Stats[game.StatGold] >= config.Pickit.MinimumGoldToPickup {
+				if item.Stats[game.StatGold] >= config.Pickit.MinimumGoldToPickup && data.PlayerUnit.Stats[game.StatGold] < data.PlayerUnit.MaxGold() {
 					itemsToPickup = append(itemsToPickup, item)
 					break
 				}
@@ -73,7 +73,7 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 	return itemsToPickup
 }
 
-func (b Builder) shouldBePickedUp(i game.Item, pi config.ItemPickit) bool {
+func (b Builder) shouldBePickedUp(d game.Data, i game.Item, pi config.ItemPickit) bool {
 	if pi.Quality != "" && !strings.EqualFold(string(i.Quality), pi.Quality) {
 		return false
 	}
@@ -82,17 +82,15 @@ func (b Builder) shouldBePickedUp(i game.Item, pi config.ItemPickit) bool {
 		return false
 	}
 
-	pickup := true
-	for stat, value := range i.Stats {
-		for pickitStat, pickitValue := range pi.Stats {
-			if strings.EqualFold(string(stat), pickitStat) {
-				if value < pickitValue {
-					pickup = false
-					break
-				}
+	// Exclude Gheed if we are already have one
+	if i.Name == game.ItemGrandCharm && i.Quality == game.ItemQualityUnique {
+		for _, invItem := range d.Items.Inventory {
+			if invItem.Name == game.ItemGrandCharm && invItem.Quality == game.ItemQualityUnique {
+				b.logger.Warn("Gheed's Fortune dropped, but you already have one in the inventory, skipping.")
+				return false
 			}
 		}
 	}
 
-	return pickup
+	return true
 }

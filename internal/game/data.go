@@ -1,6 +1,8 @@
 package game
 
 const (
+	goldPerLevel = 10000
+
 	// Towns
 	AreaRogueEncampment Area = "RogueEncampment"
 	AreaLutGholein      Area = "LutGholein"
@@ -94,6 +96,10 @@ type PlayerUnit struct {
 	Stats     map[Stat]int
 	Skills    map[Skill]int
 	Class     Class
+}
+
+func (pu PlayerUnit) MaxGold() int {
+	return goldPerLevel * pu.Stats[StatLevel]
 }
 
 type NPC struct {
