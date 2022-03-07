@@ -7,16 +7,15 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"strings"
 )
 
 const (
 	maxGoldPerStashTab = 2500000
 	stashGoldBtnX      = 1.2776
 	stashGoldBtnY      = 1.357
-
-	inventoryTopLeftX = 1.494
-	inventoryTopLeftY = 2.071
 )
 
 func (b Builder) Stash() *BasicAction {
@@ -49,8 +48,8 @@ func (b Builder) orderInventoryPotions(data game.Data) {
 			if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
 			}
-			x := int(float32(hid.GameAreaSizeX)/inventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-			y := int(float32(hid.GameAreaSizeY)/inventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+			x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+			y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 			hid.MovePointer(x, y)
 			helper.Sleep(100)
 			hid.Click(hid.RightButton)
@@ -61,7 +60,7 @@ func (b Builder) orderInventoryPotions(data game.Data) {
 
 func (b Builder) isStashingRequired(data game.Data) bool {
 	for _, i := range data.Items.Inventory {
-		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+		if b.shouldStashIt(i) {
 			return true
 		}
 	}
@@ -82,7 +81,7 @@ func stashGold(d game.Data) {
 
 func (b Builder) stashInventory(data game.Data) {
 	for _, i := range data.Items.Inventory {
-		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
+		if !b.shouldStashIt(i) {
 			continue
 		}
 		stashItemAction(i)
@@ -94,9 +93,53 @@ func (b Builder) stashInventory(data game.Data) {
 	}
 }
 
+func (b Builder) shouldStashIt(i game.Item) bool {
+	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
+		return false
+	}
+
+	// This workaround is to force stash everything if it's the first game, to prevent selling valuable items
+	for _, s := range stats.Status.RunStats {
+		if s.TotalRunsTime == 0 {
+			return true
+		}
+		break
+	}
+
+	for _, pi := range config.Pickit.Items {
+		if strings.EqualFold(i.Name, pi.Name) {
+			if pi.Quality != "" && !strings.EqualFold(string(i.Quality), pi.Quality) {
+				continue
+			}
+
+			if pi.Ethereal != nil && i.Ethereal != *pi.Ethereal {
+				continue
+			}
+
+			stash := true
+			for stat, value := range i.Stats {
+				for pickitStat, pickitValue := range pi.Stats {
+					if strings.EqualFold(string(stat), pickitStat) {
+						if value < pickitValue {
+							stash = false
+							break
+						}
+					}
+				}
+			}
+
+			if stash {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func stashItemAction(i game.Item) bool {
-	x := int(float32(hid.GameAreaSizeX)/inventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	y := int(float32(hid.GameAreaSizeY)/inventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
 	helper.Sleep(170)
 	hid.KeyDown("control")
