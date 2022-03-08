@@ -43,6 +43,7 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 
 		actions := []action.Action{
 			b.ab.RecoverCorpse(),
+			b.ab.IdentifyAll(),
 			b.ab.Stash(),
 			b.ab.VendorRefill(),
 			b.ab.ReviveMerc(),

@@ -29,6 +29,7 @@ type StructConfig struct {
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
 	Bindings struct {
+		OpenInventory    string `yaml:"openInventory"`
 		Potion1          string `yaml:"potion1"`
 		Potion2          string `yaml:"potion2"`
 		Potion3          string `yaml:"potion3"`
