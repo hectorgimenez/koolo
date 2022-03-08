@@ -75,6 +75,7 @@ message Item {
   string quality = 6;
   bool ethereal = 7;
   repeated Stat stats = 8;
+  bool identified = 9;
 }
 
 message PlayerUnit {

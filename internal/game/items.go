@@ -48,13 +48,14 @@ type Items struct {
 type Inventory []Item
 
 type Item struct {
-	ID        int
-	Name      string
-	Quality   Quality
-	Position  Position
-	Ethereal  bool
-	IsHovered bool
-	Stats     map[Stat]int
+	ID         int
+	Name       string
+	Quality    Quality
+	Position   Position
+	Ethereal   bool
+	IsHovered  bool
+	Stats      map[Stat]int
+	Identified bool
 }
 
 func (i Item) IsPotion() bool {

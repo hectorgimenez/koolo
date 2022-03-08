@@ -197,11 +197,12 @@ func organizeItem(items []*api.Item) Items {
 				X: int(i.GetPosition().GetX()),
 				Y: int(i.GetPosition().GetY()),
 			},
-			Name:      i.GetName(),
-			Quality:   Quality(i.GetQuality()),
-			Ethereal:  i.GetEthereal(),
-			IsHovered: i.GetHovered(),
-			Stats:     stats,
+			Name:       i.GetName(),
+			Quality:    Quality(i.GetQuality()),
+			Ethereal:   i.GetEthereal(),
+			IsHovered:  i.GetHovered(),
+			Stats:      stats,
+			Identified: i.GetIdentified(),
 		}
 		switch i.Place {
 		case "Vendor":
