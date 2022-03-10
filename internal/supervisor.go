@@ -61,6 +61,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 
 		gameDuration := time.Since(gameStart)
 		if err != nil {
+			helper.Screenshot()
 			s.logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), gameDuration.Seconds()))
 		}
 		s.updateGameStats()
