@@ -12,7 +12,6 @@ import (
 
 func (b Builder) IdentifyAll() *BasicAction {
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		b.logger.Info("Identifying items...")
 		steps = append(steps,
 			step.SyncStep(func(data game.Data) error {
 				hid.PressKey(config.Config.Bindings.OpenInventory)
@@ -43,9 +42,15 @@ func (b Builder) identifyItems(data game.Data) {
 
 	xIDTome := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + idTome.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	yIDTome := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + idTome.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	identifyNotified := false
 	for _, i := range data.Items.Inventory {
 		if i.Identified || i.Quality == game.ItemQualityNormal || i.Quality == game.ItemQualitySuperior {
 			continue
+		}
+
+		if !identifyNotified {
+			b.logger.Info("Identifying items...")
+			identifyNotified = true
 		}
 
 		hid.MovePointer(xIDTome, yIDTome)
