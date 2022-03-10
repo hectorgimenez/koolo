@@ -31,5 +31,5 @@ func (b Builder) shouldGoToVendor(data game.Data) bool {
 		return true
 	}
 
-	return data.Items.Inventory.ShouldBuyTPs() || data.Items.Inventory.ShouldBuyTPs() || data.Items.Inventory.ShouldBuyIDs()
+	return b.bm.ShouldBuyPotions(data) || data.Items.Inventory.ShouldBuyTPs() || data.Items.Inventory.ShouldBuyIDs()
 }
