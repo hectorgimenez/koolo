@@ -44,6 +44,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
 
+	firstRun := true
 	for {
 		if err = helper.NewGame(ctx); err != nil {
 			s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
@@ -52,10 +53,11 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 
 		gameStart := time.Now()
 		s.logGameStart(runs)
-		err = s.bot.Run(ctx, runs)
+		err = s.bot.Run(ctx, firstRun, runs)
 		if exitErr := helper.ExitGame(ctx); exitErr != nil {
 			s.logger.Fatal(fmt.Sprintf("Error exiting game: %s, shutting down...", exitErr))
 		}
+		firstRun = false
 
 		gameDuration := time.Since(gameStart)
 		if err != nil {

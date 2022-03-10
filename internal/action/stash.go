@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"strings"
 )
@@ -18,9 +17,9 @@ const (
 	stashGoldBtnY      = 1.357
 )
 
-func (b Builder) Stash() *BasicAction {
+func (b Builder) Stash(forceStash bool) *BasicAction {
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		if !b.isStashingRequired(data) {
+		if !b.isStashingRequired(data) && !forceStash {
 			return
 		}
 
@@ -96,14 +95,6 @@ func (b Builder) stashInventory(data game.Data) {
 func (b Builder) shouldStashIt(i game.Item) bool {
 	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
-	}
-
-	// This workaround is to force stash everything if it's the first game, to prevent selling valuable items
-	for _, s := range stats.Status.RunStats {
-		if s.TotalRunsTime == 0 {
-			return true
-		}
-		break
 	}
 
 	for _, pi := range config.Pickit.Items {

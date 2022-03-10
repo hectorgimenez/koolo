@@ -33,7 +33,7 @@ func NewBot(
 	}
 }
 
-func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
+func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	gameStartedAt := time.Now()
 
 	for k, r := range runs {
@@ -43,13 +43,14 @@ func (b *Bot) Run(ctx context.Context, runs []run.Run) error {
 
 		actions := []action.Action{
 			b.ab.RecoverCorpse(),
-			b.ab.IdentifyAll(),
-			b.ab.Stash(),
+			b.ab.IdentifyAll(firstRun),
+			b.ab.Stash(firstRun),
 			b.ab.VendorRefill(),
 			b.ab.ReviveMerc(),
 			b.ab.Repair(),
 			b.ab.Heal(),
 		}
+		firstRun = false
 
 		actions = append(actions, r.BuildActions()...)
 		actions = append(actions, b.ab.ItemPickup())
