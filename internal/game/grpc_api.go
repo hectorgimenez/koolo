@@ -79,6 +79,20 @@ func Status(ctx context.Context) Data {
 				Y: int(o.GetPosition().GetY()),
 			},
 		})
+
+		// Hacky thing to make sure we can arrive to Hratli
+		if o.GetName() == "HratliStartPosition" {
+			_, hratliFound := npcs[HratliNPC]
+			if !hratliFound {
+				npcs[HratliNPC] = NPC{
+					Name: string(HratliNPC),
+					Positions: []Position{{
+						X: int(o.GetPosition().GetX()),
+						Y: int(o.GetPosition().GetY()),
+					}},
+				}
+			}
+		}
 	}
 
 	var levels []Level
