@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
@@ -20,11 +21,13 @@ func (b Builder) Repair() *BasicAction {
 				step.InteractNPC(town.GetTownByArea(data.Area).RepairNPC()),
 				step.KeySequence("up", "down", "enter"),
 				step.SyncStep(func(_ game.Data) error {
+					helper.Sleep(100)
 					hid.MovePointer(x, y)
 					hid.Click(hid.LeftButton)
+					helper.Sleep(500)
+					hid.PressKey("esc")
 					return nil
 				}),
-				step.KeySequence("esc"),
 			)
 		}
 
