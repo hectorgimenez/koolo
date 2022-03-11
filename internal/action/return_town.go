@@ -19,7 +19,7 @@ func (b Builder) ReturnTown() *BasicAction {
 		steps = append(steps,
 			step.SyncStepWithCheck(func(data game.Data) error {
 				// Give some time to portal to popup before retrying...
-				if time.Since(lastRun) < time.Second {
+				if time.Since(lastRun) < time.Second*3 {
 					return nil
 				}
 
@@ -29,9 +29,13 @@ func (b Builder) ReturnTown() *BasicAction {
 				lastRun = time.Now()
 				return nil
 			}, func(data game.Data) step.Status {
-				for _, o := range data.Objects {
-					if o.IsPortal() {
-						return step.StatusCompleted
+				// Give some extra time, sometimes if we move the mouse over the portal before is shown
+				// and there is an intractable entity behind it, will keep it focused
+				if time.Since(lastRun) > time.Second*1 {
+					for _, o := range data.Objects {
+						if o.IsPortal() {
+							return step.StatusCompleted
+						}
 					}
 				}
 

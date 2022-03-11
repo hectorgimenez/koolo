@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const maxInteractions = 10
+const maxInteractions = 45
 
 type PickupItemStep struct {
 	basicStep
@@ -55,7 +55,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) < time.Second {
+	if time.Since(p.lastRun) < time.Millisecond*200 {
 		return nil
 	}
 
@@ -81,19 +81,12 @@ func (p *PickupItemStep) Run(data game.Data) error {
 					pather.MoveThroughPath(path, 15, true)
 					return nil
 				}
-				itemX := i.Position.X - 1
-				itemY := i.Position.Y - 1
-				if p.mouseOverAttempts == 5 || p.mouseOverAttempts == 8 {
-					p.mouseOverAttempts++
-					pather.RandomMovement()
-					return nil
-				}
-				if p.mouseOverAttempts > 3 {
-					itemX += helper.RandRng(-2, 2)
-					itemY += helper.RandRng(-2, 2)
-				}
-				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, itemX, itemY)
-				hid.MovePointer(x, y)
+
+				objectX := i.Position.X - 1
+				objectY := i.Position.Y - 1
+				mX, mY := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX, objectY)
+				x, y := helper.Spiral(p.mouseOverAttempts)
+				hid.MovePointer(mX+x, mY+y)
 				p.mouseOverAttempts++
 
 				return nil

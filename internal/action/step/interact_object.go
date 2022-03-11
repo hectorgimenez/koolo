@@ -76,22 +76,16 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 					i.lastRun = time.Now()
 					return nil
 				}
-				if time.Since(i.lastRun) < time.Second {
+				if time.Since(i.lastRun) < time.Millisecond*200 {
 					return nil
 				}
+
 				objectX := o.Position.X - 2
 				objectY := o.Position.Y - 2
-				if i.mouseOverAttempts == 5 || i.mouseOverAttempts == 8 {
-					i.mouseOverAttempts++
-					pather.RandomMovement()
-					return nil
-				}
-				if i.mouseOverAttempts > 3 {
-					objectX += helper.RandRng(-2, 2)
-					objectY += helper.RandRng(-2, 2)
-				}
-				x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX, objectY)
-				hid.MovePointer(x, y)
+				mX, mY := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX, objectY)
+
+				x, y := helper.Spiral(i.mouseOverAttempts)
+				hid.MovePointer(mX+x, mY+y)
 				i.mouseOverAttempts++
 
 				i.lastRun = time.Now()
