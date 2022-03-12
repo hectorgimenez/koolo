@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -137,6 +138,7 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 
 			if props != nil {
 				for statName, statValue := range props.(map[interface{}]interface{}) {
+					statName = strings.ToLower(statName.(string))
 					switch statName {
 					case "quality":
 						ip.Quality = statValue.(string)
