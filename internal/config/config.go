@@ -61,11 +61,11 @@ type StructConfig struct {
 	Character struct {
 		Class         string `yaml:"class"`
 		CastingFrames int    `yaml:"castingFrames"`
-		Difficulty    string `yaml:"difficulty"`
 		UseMerc       bool   `yaml:"useMerc"`
 		UseCTA        bool   `yaml:"useCTA"`
 	} `yaml:"character"`
 	Game struct {
+		Difficulty    string   `yaml:"difficulty"`
 		RandomizeRuns bool     `yaml:"randomizeRuns"`
 		Runs          []string `yaml:"runs"`
 	} `yaml:"game"`

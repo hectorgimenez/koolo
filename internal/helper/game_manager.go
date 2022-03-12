@@ -39,8 +39,8 @@ func NewGame(ctx context.Context) error {
 		"hell":      {X: 640, Y: 403},
 	}
 
-	createX := difficultyPosition[config.Config.Character.Difficulty].X
-	createY := difficultyPosition[config.Config.Character.Difficulty].Y
+	createX := difficultyPosition[config.Config.Game.Difficulty].X
+	createY := difficultyPosition[config.Config.Game.Difficulty].Y
 	hid.MovePointer(640, 672)
 	Sleep(50)
 	hid.Click(hid.LeftButton)
