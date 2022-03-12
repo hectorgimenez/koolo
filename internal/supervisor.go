@@ -5,12 +5,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-vgo/robotgo"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -52,6 +54,10 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		}
 
 		gameStart := time.Now()
+		if config.Config.Game.RandomizeRuns {
+			rand.Seed(time.Now().UnixNano())
+			rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
+		}
 		s.logGameStart(runs)
 		err = s.bot.Run(ctx, firstRun, runs)
 		if exitErr := helper.ExitGame(ctx); exitErr != nil {

@@ -65,15 +65,10 @@ type StructConfig struct {
 		UseMerc       bool   `yaml:"useMerc"`
 		UseCTA        bool   `yaml:"useCTA"`
 	} `yaml:"character"`
-	Runs struct {
-		Countess   bool `yaml:"countess"`
-		Andariel   bool `yaml:"andariel"`
-		Summoner   bool `yaml:"summoner"`
-		Mephisto   bool `yaml:"mephisto"`
-		Council    bool `yaml:"council"`
-		Pindleskin bool `yaml:"pindleskin"`
-		Nihlathak  bool `yaml:"nihlathak"`
-	} `yaml:"runs"`
+	Game struct {
+		RandomizeRuns bool     `yaml:"randomizeRuns"`
+		Runs          []string `yaml:"runs"`
+	} `yaml:"game"`
 	Runtime struct {
 		CastDuration time.Duration
 	}

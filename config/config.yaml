@@ -55,12 +55,8 @@ character:
   useMerc: true
   useCTA: true
 
-runs:
-  countess: false
-  andariel: true
-  summoner: true
-  mephisto: true
-  council: true
-  pindleskin: true
-  nihlathak: false
-
+game:
+  randomizeRuns: false
+  # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
+  # Available runs: countess, andariel, summoner, mephisto, council, pindleskin, nihlathak
+  runs: [countess, andariel, summoner, mephisto, council, pindleskin, nihlathak]

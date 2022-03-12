@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"strings"
 )
 
 type Run interface {
@@ -22,26 +23,24 @@ func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
 		char:    char,
 	}
 
-	if config.Config.Runs.Countess {
-		runs = append(runs, Countess{baseRun})
-	}
-	if config.Config.Runs.Andariel {
-		runs = append(runs, Andariel{baseRun})
-	}
-	if config.Config.Runs.Summoner {
-		runs = append(runs, Summoner{baseRun})
-	}
-	if config.Config.Runs.Mephisto {
-		runs = append(runs, Mephisto{baseRun})
-	}
-	if config.Config.Runs.Council {
-		runs = append(runs, Council{baseRun})
-	}
-	if config.Config.Runs.Pindleskin {
-		runs = append(runs, Pindleskin{baseRun})
-	}
-	if config.Config.Runs.Nihlathak {
-		runs = append(runs, Nihlathak{baseRun})
+	for _, run := range config.Config.Game.Runs {
+		run = strings.ToLower(run)
+		switch run {
+		case "countess":
+			runs = append(runs, Countess{baseRun})
+		case "andariel":
+			runs = append(runs, Andariel{baseRun})
+		case "summoner":
+			runs = append(runs, Summoner{baseRun})
+		case "mephisto":
+			runs = append(runs, Mephisto{baseRun})
+		case "council":
+			runs = append(runs, Council{baseRun})
+		case "pindleskin":
+			runs = append(runs, Pindleskin{baseRun})
+		case "nihlathak":
+			runs = append(runs, Nihlathak{baseRun})
+		}
 	}
 
 	return
