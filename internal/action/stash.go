@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -9,6 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"strings"
+	"time"
 )
 
 const (
@@ -19,7 +21,7 @@ const (
 
 func (b Builder) Stash(forceStash bool) *BasicAction {
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		if !b.isStashingRequired(data) && !forceStash {
+		if !b.isStashingRequired(data, forceStash) && !forceStash {
 			return
 		}
 
@@ -29,9 +31,9 @@ func (b Builder) Stash(forceStash bool) *BasicAction {
 				return data.OpenMenus.Stash
 			}),
 			step.SyncStep(func(data game.Data) error {
-				stashGold(data)
+				b.stashGold(data)
 				b.orderInventoryPotions(data)
-				b.stashInventory(data)
+				b.stashInventory(data, forceStash)
 				hid.PressKey("esc")
 				return nil
 			}),
@@ -57,9 +59,9 @@ func (b Builder) orderInventoryPotions(data game.Data) {
 	}
 }
 
-func (b Builder) isStashingRequired(data game.Data) bool {
+func (b Builder) isStashingRequired(data game.Data, forceStash bool) bool {
 	for _, i := range data.Items.Inventory {
-		if b.shouldStashIt(i) {
+		if b.shouldStashIt(i, forceStash) {
 			return true
 		}
 	}
@@ -67,37 +69,63 @@ func (b Builder) isStashingRequired(data game.Data) bool {
 	return false
 }
 
-func stashGold(d game.Data) {
-	// TODO: Handle multiple tabs
-	if d.PlayerUnit.Stats[game.StatGold] == 0 {
+func (b Builder) stashGold(d game.Data) {
+	gold, found := d.PlayerUnit.Stats[game.StatGold]
+	if !found || gold == 0 {
 		return
 	}
 
 	if d.PlayerUnit.Stats[game.StatStashGold] < maxGoldPerStashTab {
+		switchTab(1)
 		clickStashGoldBtn()
 	}
+
+	for i := 2; i < 5; i++ {
+		data := getData()
+		gold, found = data.PlayerUnit.Stats[game.StatGold]
+		if !found || gold == 0 {
+			return
+		}
+
+		switchTab(i)
+		clickStashGoldBtn()
+	}
+	b.logger.Info("All stash tabs are full of gold :D")
 }
 
-func (b Builder) stashInventory(data game.Data) {
+func (b Builder) stashInventory(data game.Data, forceStash bool) {
+	currentTab := 1
+	switchTab(currentTab)
+
 	for _, i := range data.Items.Inventory {
-		if !b.shouldStashIt(i) {
+		if !b.shouldStashIt(i, forceStash) {
 			continue
 		}
-		stashItemAction(i)
-		b.logger.Debug(fmt.Sprintf("Item %s [%s] stashed", i.Name, i.Quality))
-
-		for tab := 0; tab < 3; tab++ {
-			// TODO: Stash items in other tabs
+		for currentTab < 5 {
+			if stashItemAction(i) {
+				b.logger.Debug(fmt.Sprintf("Item %s [%s] stashed", i.Name, i.Quality))
+				break
+			}
+			if currentTab == 5 {
+				// TODO: Stop the bot, stash is full
+			}
+			b.logger.Debug(fmt.Sprintf("Tab %d is full, switching to next one", currentTab))
+			currentTab++
+			switchTab(currentTab)
 		}
 	}
 }
 
-func (b Builder) shouldStashIt(i game.Item) bool {
+func (b Builder) shouldStashIt(i game.Item, forceStash bool) bool {
 	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}
 
 	for _, pi := range config.Pickit.Items {
+		if forceStash {
+			return true
+		}
+
 		if strings.EqualFold(i.Name, pi.Name) {
 			if pi.Quality != "" && !strings.EqualFold(string(i.Quality), pi.Quality) {
 				continue
@@ -140,7 +168,13 @@ func stashItemAction(i game.Item) bool {
 	hid.KeyUp("control")
 	helper.Sleep(150)
 
-	// TODO: Check if item has been stored correctly
+	data := getData()
+	for _, it := range data.Items.Inventory {
+		if it.ID == i.ID {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -154,4 +188,23 @@ func clickStashGoldBtn() {
 	helper.Sleep(200)
 	hid.PressKey("enter")
 	helper.Sleep(500)
+}
+
+func switchTab(tab int) {
+	x := int(0.0258 * float32(hid.GameAreaSizeX))
+	y := int(0.108 * float32(hid.GameAreaSizeY))
+	tabSize := int(0.0750 * float32(hid.GameAreaSizeX))
+	x = x + tabSize*tab - tabSize/2
+
+	hid.MovePointer(x, y)
+	helper.Sleep(100)
+	hid.Click(hid.LeftButton)
+}
+
+func getData() game.Data {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	return game.Status(ctx)
 }
