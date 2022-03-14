@@ -35,6 +35,13 @@ bindings:
     staticField: e
     frozenArmor: a
 
+  hammerdin:
+    concentration: w
+    holyShield: a
+    vigor: e
+    redemption: r
+    cleansing: f
+
 inventory:
   inventoryLock:
     - [1, 1, 1, 1, 1, 1, 1, 0, 0, 0] # 0: Item locked and won't be moved.
@@ -49,7 +56,7 @@ inventory:
   beltRows: 4
   
 character:
-  class: Sorceress # Allowed values: Sorceress
+  class: hammerdin # Allowed values: sorceress, hammerdin
   castingFrames: 9 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
   useCTA: true

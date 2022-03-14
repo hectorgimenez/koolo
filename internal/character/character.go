@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"strings"
 )
 
 type Character interface {
@@ -23,9 +24,11 @@ type Character interface {
 
 func BuildCharacter() (Character, error) {
 	bc := BaseCharacter{}
-	switch game.Class(config.Config.Character.Class) {
-	case game.ClassSorceress:
+	switch strings.ToLower(config.Config.Character.Class) {
+	case "sorceress":
 		return Sorceress{BaseCharacter: bc}, nil
+	case "hammerdin":
+		return Hammerdin{BaseCharacter: bc}, nil
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", config.Config.Character.Class)

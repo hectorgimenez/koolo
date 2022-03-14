@@ -49,6 +49,13 @@ type StructConfig struct {
 			StaticField string `yaml:"staticField"`
 			FrozenArmor string `yaml:"frozenArmor"`
 		} `yaml:"sorceress"`
+		Hammerdin struct {
+			Concentration string `yaml:"concentration"`
+			HolyShield    string `yaml:"holyShield"`
+			Vigor         string `yaml:"vigor"`
+			Redemption    string `yaml:"redemption"`
+			Cleansing     string `yaml:"cleansing"`
+		} `yaml:"hammerdin"`
 	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`
