@@ -39,7 +39,7 @@ func (b Builder) Stash(forceStash bool) *BasicAction {
 		)
 
 		return
-	}, CanBeSkipped())
+	}, Resettable(), CanBeSkipped())
 }
 
 func (b Builder) orderInventoryPotions(data game.Data) {

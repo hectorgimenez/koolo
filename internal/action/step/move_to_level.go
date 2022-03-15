@@ -1,6 +1,7 @@
 package step
 
 import (
+	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -50,12 +51,15 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 		if l.Area == m.area {
 			distance := pather.DistanceFromPoint(data, l.Position.X, l.Position.Y)
 			if distance > 10 {
-				path, _, _ := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
+				path, _, found := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
+				if !found {
+					return errors.New("path could not be calculated, maybe there is an obstacle")
+				}
 				pather.MoveThroughPath(path, 25, true)
 				return nil
 			}
 
-			x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, l.Position.X, l.Position.Y)
+			x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
 			hid.MovePointer(x, y)
 			helper.Sleep(100)
 			hid.Click(hid.LeftButton)

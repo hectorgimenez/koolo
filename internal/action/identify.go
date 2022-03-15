@@ -46,7 +46,7 @@ func (b Builder) IdentifyAll(skipIdentify bool) *BasicAction {
 		)
 
 		return
-	}, CanBeSkipped())
+	}, Resettable(), CanBeSkipped())
 }
 
 func (b Builder) itemsToIdentify(data game.Data) (items []game.Item) {

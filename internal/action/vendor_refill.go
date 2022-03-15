@@ -22,7 +22,7 @@ func (b Builder) VendorRefill() *BasicAction {
 		}
 
 		return
-	}, CanBeSkipped())
+	}, Resettable(), CanBeSkipped())
 }
 
 func (b Builder) shouldGoToVendor(data game.Data) bool {

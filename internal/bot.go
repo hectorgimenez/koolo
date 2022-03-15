@@ -84,6 +84,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					b.logger.Warn("error occurred, will be retried", zap.Error(err))
 					break
 				}
+				if errors.Is(err, action.ErrCanBeSkipped) {
+					b.logger.Warn("error occurred on action that can be skipped, game will continue", zap.Error(err))
+					act.Skip()
+					break
+				}
 				if err != nil {
 					stats.FinishCurrentRun(stats.EventError)
 					return err

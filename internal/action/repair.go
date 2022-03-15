@@ -32,5 +32,5 @@ func (b Builder) Repair() *BasicAction {
 		}
 
 		return
-	}, CanBeSkipped())
+	}, Resettable(), CanBeSkipped())
 }

@@ -46,5 +46,5 @@ func (b Builder) ReturnTown() *BasicAction {
 			}),
 		)
 		return
-	})
+	}, Resettable())
 }

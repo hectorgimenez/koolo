@@ -1,6 +1,7 @@
 package step
 
 import (
+	"errors"
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -46,8 +47,10 @@ func (m *MoveToStep) Run(data game.Data) error {
 	}
 
 	if m.path == nil || !m.adjustPath(data) {
-		// TODO: Handle not found
-		path, _, _ := pather.GetPathToDestination(data, m.toX, m.toY)
+		path, _, found := pather.GetPathToDestination(data, m.toX, m.toY)
+		if !found {
+			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+		}
 		m.path = path
 	}
 

@@ -31,7 +31,7 @@ func (s Summoner) BuildActions() (actions []action.Action) {
 		return []step.Step{
 			step.MoveTo(npc.Positions[0].X, npc.Positions[0].Y, true),
 		}
-	}))
+	}, action.CanBeSkipped()))
 
 	// Kill Summoner
 	actions = append(actions, s.char.KillSummoner())

@@ -16,14 +16,17 @@ var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
 
 type Action interface {
 	NextStep(data game.Data) error
+	Skip()
 }
 
 type BasicAction struct {
-	Steps           []step.Step
-	builder         func(data game.Data) []step.Step
-	builderExecuted bool
-	retries         int
-	canBeSkipped    bool
+	Steps             []step.Step
+	builder           func(data game.Data) []step.Step
+	builderExecuted   bool
+	retries           int
+	canBeSkipped      bool
+	resetStepsOnError bool
+	markSkipped       bool
 }
 
 func BuildOnRuntime(builder func(data game.Data) []step.Step, opts ...Option) *BasicAction {
@@ -46,7 +49,33 @@ func CanBeSkipped() Option {
 	}
 }
 
+func Resettable() Option {
+	return func(action *BasicAction) {
+		action.resetStepsOnError = true
+	}
+}
+
+func (b *BasicAction) resetSteps() {
+	if !b.resetStepsOnError {
+		return
+	}
+
+	for _, s := range b.Steps {
+		s.Reset()
+	}
+}
+
+func (b *BasicAction) Skip() {
+	if b.retries >= maxRetries && b.canBeSkipped {
+		b.markSkipped = true
+	}
+}
+
 func (b *BasicAction) NextStep(data game.Data) error {
+	if b.markSkipped {
+		return ErrNoMoreSteps
+	}
+
 	if b.retries >= maxRetries {
 		if b.canBeSkipped {
 			return fmt.Errorf("%w: attempt limit reached", ErrCanBeSkipped)
@@ -64,6 +93,7 @@ func (b *BasicAction) NextStep(data game.Data) error {
 			err := s.Run(data)
 			if err != nil {
 				b.retries++
+				b.resetSteps()
 			}
 
 			return nil

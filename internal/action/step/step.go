@@ -15,12 +15,12 @@ type Status string
 type Step interface {
 	Status(game.Data) Status
 	Run(game.Data) error
+	Reset()
 }
 
 type basicStep struct {
-	status     Status
-	lastChange time.Time
-	lastRun    time.Time
+	status  Status
+	lastRun time.Time
 }
 
 func newBasicStep() basicStep {
@@ -38,6 +38,10 @@ func (bs *basicStep) tryTransitionStatus(to Status) Status {
 	}
 
 	bs.status = to
-	bs.lastChange = time.Now()
 	return to
+}
+
+func (bs *basicStep) Reset() {
+	bs.status = StatusNotStarted
+	bs.lastRun = time.Time{}
 }

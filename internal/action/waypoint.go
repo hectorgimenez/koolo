@@ -76,5 +76,5 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 		}
 
 		return
-	})
+	}, Resettable())
 }

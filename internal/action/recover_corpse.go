@@ -30,5 +30,5 @@ func (b Builder) RecoverCorpse() *BasicAction {
 		}
 
 		return
-	})
+	}, Resettable())
 }

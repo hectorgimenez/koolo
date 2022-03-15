@@ -100,7 +100,7 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 			}
 		}
 		return
-	})
+	}, action.CanBeSkipped())
 }
 
 func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
@@ -113,5 +113,5 @@ func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
 		}
 
 		return
-	})
+	}, action.CanBeSkipped())
 }
