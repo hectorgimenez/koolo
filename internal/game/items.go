@@ -61,7 +61,7 @@ type Item struct {
 func (i Item) PickupPass(checkStats bool) bool {
 	for _, ip := range config.Pickit.Items {
 		if !strings.EqualFold(i.Name, ip.Name) {
-			break
+			continue
 		}
 
 		// Check item Quality

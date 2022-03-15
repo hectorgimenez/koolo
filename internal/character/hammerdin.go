@@ -10,7 +10,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"sort"
 	"strings"
-	"time"
+)
+
+const (
+	hammerdinMaxAttacksLoop = 10
 )
 
 type Hammerdin struct {
@@ -21,8 +24,8 @@ func (s Hammerdin) Buff() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.SyncStep(func(data game.Data) error {
-			if config.Config.Bindings.Sorceress.FrozenArmor != "" {
-				hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
+			if config.Config.Bindings.Hammerdin.HolyShield != "" {
+				hid.PressKey(config.Config.Bindings.Hammerdin.HolyShield)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
 			}
@@ -69,12 +72,8 @@ func (s Hammerdin) KillCouncil() *action.BasicAction {
 			councilMembers = append(councilMembers, m)
 		}
 
-		// Order council members by distance and immunities
+		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			if councilMembers[j].IsImmune(game.ResistCold) {
-				return false
-			}
-
 			distanceI := pather.DistanceFromPoint(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
 			distanceJ := pather.DistanceFromPoint(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
 
@@ -82,30 +81,34 @@ func (s Hammerdin) KillCouncil() *action.BasicAction {
 		})
 
 		for _, m := range councilMembers {
-			for i := 0; i < sorceressMaxAttacksLoop; i++ {
-				// Try to move closer after few attacks
-				maxDistance := 20
-				if i > 3 {
-					maxDistance = 0
-				}
-
+			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 				steps = append(steps,
-					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.FollowEnemy(maxDistance)),
-					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.FollowEnemy(maxDistance)),
+					step.PrimaryAttack(
+						game.NPCID(m.Name),
+						8,
+						config.Config.Runtime.CastDuration,
+						step.FollowEnemy(0),
+						step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+					),
 				)
 			}
 		}
 		return
 	})
-
 }
 
 func (s Hammerdin) killMonster(npc game.NPCID) *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		for i := 0; i < sorceressMaxAttacksLoop; i++ {
+		helper.Sleep(100)
+		for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 			steps = append(steps,
-				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Second),
-				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration),
+				step.PrimaryAttack(
+					npc,
+					8,
+					config.Config.Runtime.CastDuration,
+					step.FollowEnemy(0),
+					step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+				),
 			)
 		}
 

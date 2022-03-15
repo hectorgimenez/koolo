@@ -19,6 +19,7 @@ type AttackStep struct {
 	followEnemy           bool
 	enemyDistance         int
 	moveToStep            *MoveToStep
+	auraKeyBinding        string
 }
 
 type AttackOption func(step *AttackStep)
@@ -27,6 +28,12 @@ func FollowEnemy(distance int) AttackOption {
 	return func(step *AttackStep) {
 		step.followEnemy = true
 		step.enemyDistance = distance
+	}
+}
+
+func EnsureAura(keyBinding string) AttackOption {
+	return func(step *AttackStep) {
+		step.auraKeyBinding = keyBinding
 	}
 }
 
@@ -90,6 +97,11 @@ func (p *AttackStep) Run(data game.Data) error {
 
 	if !p.ensureEnemyIsCloseEnough(monster, data) {
 		return nil
+	}
+
+	if p.auraKeyBinding != "" {
+		hid.PressKey(p.auraKeyBinding)
+		helper.Sleep(35)
 	}
 
 	p.tryTransitionStatus(StatusInProgress)

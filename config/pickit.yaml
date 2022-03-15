@@ -126,7 +126,7 @@ items:
 
   ########### Shields ###########
   # White
-  - monarch: { quality: superior, ethereal: false, socketss: [ 0, 4 ] } # Spirit
+  - monarch: { quality: superior, ethereal: false, sockets: [ 0, 4 ] } # Spirit
 
   # Unique
   - spikedshield: { quality: unique }
