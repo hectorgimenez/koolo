@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"strings"
 	"time"
 )
 
@@ -121,39 +120,7 @@ func (b Builder) shouldStashIt(i game.Item, forceStash bool) bool {
 		return false
 	}
 
-	for _, pi := range config.Pickit.Items {
-		if forceStash {
-			return true
-		}
-
-		if strings.EqualFold(i.Name, pi.Name) {
-			if pi.Quality != "" && !strings.EqualFold(string(i.Quality), pi.Quality) {
-				continue
-			}
-
-			if pi.Ethereal != nil && i.Ethereal != *pi.Ethereal {
-				continue
-			}
-
-			stash := true
-			for stat, value := range i.Stats {
-				for pickitStat, pickitValue := range pi.Stats {
-					if strings.EqualFold(string(stat), pickitStat) {
-						if value < pickitValue {
-							stash = false
-							break
-						}
-					}
-				}
-			}
-
-			if stash {
-				return true
-			}
-		}
-	}
-
-	return false
+	return forceStash || i.PickupPass(true)
 }
 
 func stashItemAction(i game.Item) bool {

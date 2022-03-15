@@ -90,7 +90,8 @@ type StructPickit struct {
 
 type ItemPickit struct {
 	Name     string
-	Quality  string
+	Quality  []string
+	Sockets  []int
 	Ethereal *bool
 	Stats    map[string]int
 }
@@ -147,8 +148,24 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 				for statName, statValue := range props.(map[interface{}]interface{}) {
 					statName = strings.ToLower(statName.(string))
 					switch statName {
+					case "sockets":
+						v, ok := statValue.(int)
+						if ok {
+							ip.Sockets = []int{v}
+						} else {
+							for _, val := range statValue.([]interface{}) {
+								ip.Sockets = append(ip.Sockets, val.(int))
+							}
+						}
 					case "quality":
-						ip.Quality = statValue.(string)
+						v, ok := statValue.(string)
+						if ok {
+							ip.Quality = []string{v}
+						} else {
+							for _, val := range statValue.([]interface{}) {
+								ip.Quality = append(ip.Quality, val.(string))
+							}
+						}
 					case "ethereal":
 						ethp := statValue.(bool)
 						ip.Ethereal = &ethp

@@ -58,6 +58,66 @@ type Item struct {
 	Identified bool
 }
 
+func (i Item) PickupPass(checkStats bool) bool {
+	for _, ip := range config.Pickit.Items {
+		if !strings.EqualFold(i.Name, ip.Name) {
+			break
+		}
+
+		// Check item Quality
+		if len(ip.Quality) > 0 {
+			found := false
+			for _, q := range ip.Quality {
+				if strings.EqualFold(q, string(i.Quality)) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+
+		// Check number of sockets
+		if len(ip.Sockets) > 0 {
+			found := false
+			for _, s := range ip.Sockets {
+				if s == i.Stats[StatNumSockets] {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+
+		if ip.Ethereal != nil && i.Ethereal != *ip.Ethereal {
+			continue
+		}
+
+		// Skip checking stats, for example when item is not identified we don't have them
+		if !checkStats {
+			return true
+		}
+
+		// Check for item stats, socket number skipped, already checked properly
+		for stat, value := range i.Stats {
+			for pickitStat, pickitValue := range ip.Stats {
+				if pickitStat != string(StatNumSockets) && strings.EqualFold(string(stat), pickitStat) {
+					if value < pickitValue {
+						continue
+					}
+				}
+			}
+		}
+
+		return true
+	}
+
+	return false
+}
+
 func (i Item) IsPotion() bool {
 	return i.IsHealingPotion() || i.IsManaPotion() || i.IsRejuvPotion()
 }

@@ -100,6 +100,9 @@ items:
   #  - amulet: {quality: unique, attackrating: 450} # metalgrid
 
   ########### Armors ###########
+  # White
+  - mageplate: { quality: superior, ethereal: false, sockets: [ 0, 3 ] } # Enigma
+
   # Unique
   - duskshroud: { quality: unique, ethereal: false } # Ormus
   - wirefleece: { quality: unique, ethereal: true } # gladiator's bane
@@ -122,6 +125,9 @@ items:
   - chaosarmor: { quality: unique, ethereal: true } # black hades
 
   ########### Shields ###########
+  # White
+  - monarch: { quality: superior, ethereal: false, socketss: [ 0, 4 ] } # Spirit
+
   # Unique
   - spikedshield: { quality: unique }
   - monarch: { quality: unique }
@@ -196,6 +202,11 @@ items:
   - berserkeraxe: { quality: unique, ethereal: true } # death cleaver
 
   ########### Bows ###########
+  # White
+  - greatbow: { quality: superior, sockets: 0 } # faith
+  - crusaderbow: { quality: superior, sockets: 0 } # breath of the dying
+  - hydrabow: { quality: superior, sockets: 0 } # breath of the dying
+
   # Unique
   - wardbow: { quality: unique, enhanceddamage: 200 } # widowmaker
   - hydrabow: { quality: unique, manasteal: 8 } # windforce
@@ -211,16 +222,27 @@ items:
   - ghostglaive: { quality: unique, enhanceddamage: 190, lifesteal: 13 }
 
   ########### Maces ###########
+  # White
+  - flail: { quality: [ normal, superior ], sockets: 4 } # heart of the oak
+
   # Unique
   - scourge: { quality: unique, ethereal: true } # stormlash
 
   ########### Polearms ###########
+  - tresher: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
+  - crypticaxe: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
+  - greatpoleaxe: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
+  - giantthresher: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
+
   # Unique
   - ogreaxe: { quality: unique, ethereal: true, enhanceddamage: 320 } # bonehew
   - thresher: { quality: unique, ethereal: true, enhanceddamage: 240, lifesteal: 15 } # the reaper's toll
   - crypticaxe: { quality: unique, ethereal: true, sockets: 3 } # tomb reaver
 
   ########### Scepters ###########
+  # White
+  - scepter: { quality: [ normal, superior ], ethereal: false, sockets: 5 } # call to arms
+
   # Unique
   - mightyscepter: { quality: unique, ethereal: true, enhanceddamage: 300, sockets: 2 } # heaven's light
   - mightyscepter: { quality: unique, ethereal: true, enhanceddamage: 300 } # redeemer
@@ -238,6 +260,13 @@ items:
   - quarterstaff: { quality: unique, ethereal: true , enhanceddamage: 300 } # ribcracker
 
   ########### Swords ###########
+  # White
+  - crystalsword: { quality: [ normal superior ], sockets: 5 } # call to arms
+  - zweihander: { quality: superior, ethereal: false, sockets: 5 } # grief
+  - colossusblade: { quality: superior, ethereal: false, sockets: 5 } # grief
+  - colossusblade: { quality: superior, ethereal: true, sockets: [ 0, 6 ] } # breath of the dying
+  - phaseblade: { quality: superior, sockets: [ 0, 6 ] } # last wish
+
   # Unique
   - espandon: { quality: unique, ethereal: true, enhanceddamage: 200 } # crainte vomir
   - phaseblade: { quality: unique, enhanceddamage: 270, strength: 10 } # azurewrath
@@ -269,6 +298,9 @@ items:
   - bloodlordskull: { quality: unique, ethereal: false } # homunculus or darkforce spawn
   - succubusskull: { quality: unique, ethereal: false, fireresist: 30 } # boneflame
 
+  # Barbarian White
+  - primalhelm: { quality: superior, ethereal: false, sockets: 3 } # Delirium
+
   # Barbarian Unique
   - slayerguard: { quality: unique } # arreat's face
   - guardiancrown: { quality: unique } # arreat's face
@@ -282,6 +314,9 @@ items:
   # Druid Unique
   - totemicmask: { quality: unique } # jalal's mane
   - bloodspirit: { quality: unique } # jalal's mane or cerebus' bite
+
+  # Paladin White
+  - auricshields: { quality: superior, sockets: 4 } # Spirit
 
   # Paladin Unique
   - sacredrondache: { quality: unique } # alma negra
