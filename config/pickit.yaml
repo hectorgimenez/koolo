@@ -101,7 +101,7 @@ items:
 
   ########### Armors ###########
   # White
-  - mageplate: { quality: superior, ethereal: false, sockets: [ 0, 3 ] } # Enigma
+  - mageplate: { quality: [ normal, superior ], ethereal: false, sockets: [ 0, 3 ] } # Enigma
 
   # Unique
   - duskshroud: { quality: unique, ethereal: false } # Ormus
@@ -126,7 +126,7 @@ items:
 
   ########### Shields ###########
   # White
-  - monarch: { quality: superior, ethereal: false, sockets: [ 0, 4 ] } # Spirit
+  - monarch: { quality: [ normal, superior ], ethereal: false, sockets: [ 0, 4 ] } # Spirit
 
   # Unique
   - spikedshield: { quality: unique }
@@ -316,7 +316,7 @@ items:
   - bloodspirit: { quality: unique } # jalal's mane or cerebus' bite
 
   # Paladin White
-  - auricshields: { quality: superior, sockets: 4 } # Spirit
+  - auricshields: { quality: [ normal, superior ], sockets: 4 } # Spirit
 
   # Paladin Unique
   - sacredrondache: { quality: unique } # alma negra
