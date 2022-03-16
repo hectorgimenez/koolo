@@ -1,7 +1,7 @@
 display: 0
 debug: true
 logFilePath: log.txt
-maxGameLength: 300 # Max game length (in seconds), bot will try to quit game arrived that point
+maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 
 health: # Healing configuration, all values in %
   healingPotionAt: 85
@@ -44,17 +44,17 @@ bindings:
 
 inventory:
   inventoryLock:
-    - [1, 1, 1, 1, 1, 1, 1, 0, 0, 0] # 0: Item locked and won't be moved.
-    - [1, 1, 1, 1, 1, 1, 1, 0, 0, 0] # 1: Item unlocked, it will be stashed, sold or dropped.
-    - [1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
-    - [1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
+    - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ] # 0: Item locked and won't be moved.
+    - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ] # 1: Item unlocked, it will be stashed, sold or dropped.
+    - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ]
+    - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ]
 
   beltColumns: # Amount of columns for each type of potion, sum of all should not be more than 4
     healing: 2
     mana: 1
     rejuvenation: 1
   beltRows: 4
-  
+
 character:
   class: hammerdin # Allowed values: sorceress, hammerdin
   castingFrames: 9 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
@@ -65,5 +65,5 @@ game:
   difficulty: hell # Allowed values: normal, nightmare, hell
   randomizeRuns: false
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
-  # Available runs: countess, andariel, summoner, mephisto, council, pindleskin, nihlathak
-  runs: [countess, andariel, summoner, mephisto, council, pindleskin, nihlathak]
+  # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, pindleskin, nihlathak
+  runs: [ countess, andariel, ancient_tunnels, summoner, mephisto, council, pindleskin, nihlathak ]
