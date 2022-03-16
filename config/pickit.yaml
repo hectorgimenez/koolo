@@ -229,10 +229,10 @@ items:
   - scourge: { quality: unique, ethereal: true } # stormlash
 
   ########### Polearms ###########
-  - tresher: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
-  - crypticaxe: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
-  - greatpoleaxe: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
-  - giantthresher: { quality: normal, ethereal: true, sockets: [ 4, 5, 6 ] }
+  - tresher: { quality: [ normal, superior ], ethereal: true, sockets: [ 4, 5, 6 ] }
+  - crypticaxe: { quality: [ normal, superior ], ethereal: true, sockets: [ 4, 5, 6 ] }
+  - greatpoleaxe: { quality: [ normal, superior ], ethereal: true, sockets: [ 4, 5, 6 ] }
+  - giantthresher: { quality: [ normal, superior ], ethereal: true, sockets: [ 4, 5, 6 ] }
 
   # Unique
   - ogreaxe: { quality: unique, ethereal: true, enhanceddamage: 320 } # bonehew
