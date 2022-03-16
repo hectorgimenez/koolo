@@ -62,6 +62,10 @@ func (s Sorceress) KillNihlathak() *action.BasicAction {
 	return s.killMonster(game.Nihlathak)
 }
 
+func (s Sorceress) ClearAncientTunnels() *action.BasicAction {
+	return nil
+}
+
 func (s Sorceress) KillCouncil() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members

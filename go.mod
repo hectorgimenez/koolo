@@ -7,7 +7,7 @@ require (
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	go.uber.org/zap v1.21.0
-	google.golang.org/grpc v1.44.0
+	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -15,7 +15,7 @@ require (
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
 	github.com/robotn/gohook v0.31.3 // indirect
 	github.com/robotn/xgb v0.0.0-20190912153532-2cb92d044934 // indirect

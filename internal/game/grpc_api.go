@@ -50,6 +50,7 @@ func Status(ctx context.Context) Data {
 				Y: int(m.GetPosition().GetY()),
 			},
 			Immunities: immunities,
+			Type:       MonsterType(m.GetType()),
 		})
 	}
 
@@ -74,6 +75,7 @@ func Status(ctx context.Context) Data {
 			Name:       o.GetName(),
 			IsHovered:  o.GetHovered(),
 			Selectable: o.GetSelectable(),
+			Chest:      o.GetChest(),
 			Position: Position{
 				X: int(o.GetPosition().GetX()),
 				Y: int(o.GetPosition().GetY()),

@@ -17,6 +17,8 @@ const (
 	AreaDuranceOfHateLevel2 Area = "DuranceOfHateLevel2"
 	AreaDuranceOfHateLevel3 Area = "DuranceOfHateLevel3"
 	AreaBlackMarsh          Area = "BlackMarsh"
+	AreaLostCity            Area = "LostCity"
+	AreaAncientTunnels      Area = "AncientTunnels"
 	AreaForgottenTower      Area = "ForgottenTower"
 	AreaTowerCellarLevel1   Area = "TowerCellarLevel1"
 	AreaTowerCellarLevel2   Area = "TowerCellarLevel2"
@@ -36,6 +38,11 @@ const (
 
 	// Resistances
 	ResistCold = "Cold"
+
+	// Monster Types
+	MonsterTypeChampion MonsterType = "Champion"
+	MonsterTypeMinion   MonsterType = "Minion"
+	MonsterTypeUnique   MonsterType = "Unique"
 )
 
 type Data struct {
@@ -71,6 +78,8 @@ func (a Area) IsTown() bool {
 }
 
 type Class string
+type MonsterType string
+
 type Corpse struct {
 	Found     bool
 	IsHovered bool
@@ -81,6 +90,7 @@ type Monster struct {
 	IsHovered  bool
 	Position   Position
 	Immunities []Resist
+	Type       MonsterType
 }
 
 type Position struct {

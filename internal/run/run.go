@@ -40,6 +40,8 @@ func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
 			runs = append(runs, Pindleskin{baseRun})
 		case "nihlathak":
 			runs = append(runs, Nihlathak{baseRun})
+		case "ancient_tunnels":
+			runs = append(runs, AncientTunnels{baseRun})
 		}
 	}
 

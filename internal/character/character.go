@@ -20,6 +20,7 @@ type Character interface {
 	KillPindle() *action.BasicAction
 	KillNihlathak() *action.BasicAction
 	KillCouncil() *action.BasicAction
+	ClearAncientTunnels() *action.BasicAction
 }
 
 func BuildCharacter() (Character, error) {

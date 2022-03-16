@@ -57,6 +57,7 @@ message Monster {
   Position position = 2;
   bool hovered = 3;
   repeated string immunities = 4;
+  string type = 5;
 }
 
 message Object {
@@ -64,6 +65,7 @@ message Object {
   Position position = 2;
   bool hovered = 3;
   bool selectable = 4;
+  bool chest = 5;
 }
 
 message Item {

@@ -6,6 +6,7 @@ type Object struct {
 	Name       string
 	IsHovered  bool
 	Selectable bool
+	Chest      bool
 	Position   Position
 }
 
