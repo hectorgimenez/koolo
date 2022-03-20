@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
 )
@@ -41,7 +40,6 @@ func (p *PickupItemStep) Status(data game.Data) Status {
 		}
 	}
 
-	stats.PickupItem(p.item)
 	return p.tryTransitionStatus(StatusCompleted)
 }
 

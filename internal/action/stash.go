@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"time"
 )
@@ -20,7 +21,7 @@ const (
 
 func (b Builder) Stash(forceStash bool) *BasicAction {
 	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		if !b.isStashingRequired(data, forceStash) && !forceStash {
+		if !b.isStashingRequired(data, forceStash) {
 			return
 		}
 
@@ -128,6 +129,7 @@ func stashItemAction(i game.Item) bool {
 	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
 	helper.Sleep(170)
+	stats.ItemStashed(i)
 	hid.KeyDown("control")
 	helper.Sleep(150)
 	hid.Click(hid.LeftButton)

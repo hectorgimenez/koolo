@@ -19,7 +19,12 @@ type StructConfig struct {
 	Debug         bool   `yaml:"debug"`
 	LogFilePath   string `yaml:"logFilePath"`
 	MaxGameLength int    `yaml:"maxGameLength"`
-	Health        struct {
+	Discord       struct {
+		Enabled   bool   `yaml:"enabled"`
+		ChannelID string `yaml:"channelId"`
+		Token     string `yaml:"token"`
+	} `yaml:"discord"`
+	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`

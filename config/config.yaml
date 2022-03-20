@@ -3,6 +3,12 @@ debug: true
 logFilePath: log.txt
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 
+# In order to use to Discord Bot, you need the Application Token. https://discord.com/developers/docs/intro
+discord:
+  enabled: false
+  channelId: ''
+  token: ''
+
 health: # Healing configuration, all values in %
   healingPotionAt: 85
   manaPotionAt: 10

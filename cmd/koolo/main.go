@@ -8,11 +8,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/discord"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
@@ -48,7 +51,27 @@ func main() {
 	supervisor := koolo.NewSupervisor(logger, bot)
 
 	ctx := context.Background()
-	err = supervisor.Start(ctx, run.BuildRuns(ab, char))
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return supervisor.Start(ctx, run.BuildRuns(ab, char))
+	})
+
+	discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+	if err != nil {
+		logger.Fatal("Discord could not been initialized", zap.Error(err))
+	}
+	eventListener := stats.NewEventListener(discordBot, logger)
+	if config.Config.Discord.Enabled {
+		g.Go(func() error {
+			return discordBot.Start(ctx)
+		})
+	}
+
+	g.Go(func() error {
+		return eventListener.Listen(ctx)
+	})
+
+	err = g.Wait()
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}
