@@ -102,7 +102,7 @@ func (b Builder) stashInventory(data game.Data, forceStash bool) {
 			continue
 		}
 		for currentTab < 5 {
-			if stashItemAction(i) {
+			if stashItemAction(i, forceStash) {
 				b.logger.Debug(fmt.Sprintf("Item %s [%s] stashed", i.Name, i.Quality))
 				break
 			}
@@ -124,12 +124,16 @@ func (b Builder) shouldStashIt(i game.Item, forceStash bool) bool {
 	return forceStash || i.PickupPass(true)
 }
 
-func stashItemAction(i game.Item) bool {
+func stashItemAction(i game.Item, forceStash bool) bool {
 	x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
 	helper.Sleep(170)
-	stats.ItemStashed(i)
+
+	// Don't log items that we already have in inventory during first run
+	if !forceStash {
+		stats.ItemStashed(i)
+	}
 	hid.KeyDown("control")
 	helper.Sleep(150)
 	hid.Click(hid.LeftButton)

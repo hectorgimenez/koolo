@@ -60,16 +60,16 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		}
 		s.logGameStart(runs)
 		err = s.bot.Run(ctx, firstRun, runs)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
+			stats.Events <- stats.EventWithScreenshot(errorMsg)
+			s.logger.Warn(errorMsg)
+		}
 		if exitErr := helper.ExitGame(ctx); exitErr != nil {
 			s.logger.Fatal(fmt.Sprintf("Error exiting game: %s, shutting down...", exitErr))
 		}
 		firstRun = false
 
-		gameDuration := time.Since(gameStart)
-		if err != nil {
-			stats.Events <- stats.EventWithScreenshot(err.Error())
-			s.logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), gameDuration.Seconds()))
-		}
 		s.updateGameStats()
 		helper.Sleep(10000)
 	}
