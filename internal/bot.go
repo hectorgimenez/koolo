@@ -85,6 +85,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					break
 				}
 				if errors.Is(err, action.ErrCanBeSkipped) {
+					stats.Events <- stats.EventWithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
 					b.logger.Warn("error occurred on action that can be skipped, game will continue", zap.Error(err))
 					act.Skip()
 					break
