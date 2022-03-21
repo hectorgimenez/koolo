@@ -3,6 +3,7 @@ package stats
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"image"
 	"strings"
 	"time"
 )
@@ -70,13 +71,16 @@ func UsedPotion(potionType game.PotionType, onMerc bool) {
 	}
 }
 
-func ItemStashed(item game.Item) {
+func ItemStashed(item game.Item, screenshot image.Image) {
 	if item.IsPotion() || strings.EqualFold(item.Name, "Gold") {
 		return
 	}
 
 	Status.RunStats[Status.CurrentRun].ItemsFound = append(Status.RunStats[Status.CurrentRun].ItemsFound, item)
-	Events <- EventWithScreenshot(fmt.Sprintf("Item stashed! %s", item.Name))
+	Events <- EventMsg{
+		Message: fmt.Sprintf("Item stashed! %s", item.Name),
+		Image:   screenshot,
+	}
 }
 
 type GameStatus struct {

@@ -129,11 +129,7 @@ func stashItemAction(i game.Item, forceStash bool) bool {
 	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
 	helper.Sleep(170)
-
-	// Don't log items that we already have in inventory during first run
-	if !forceStash {
-		stats.ItemStashed(i)
-	}
+	screenshot := helper.Screenshot()
 	hid.KeyDown("control")
 	helper.Sleep(150)
 	hid.Click(hid.LeftButton)
@@ -148,6 +144,10 @@ func stashItemAction(i game.Item, forceStash bool) bool {
 		}
 	}
 
+	// Don't log items that we already have in inventory during first run
+	if !forceStash {
+		stats.ItemStashed(i, screenshot)
+	}
 	return true
 }
 
