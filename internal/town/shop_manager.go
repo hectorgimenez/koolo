@@ -38,15 +38,16 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 
 	sm.logger.Debug(fmt.Sprintf("Buying: %d Healing potions and %d Mana potions", missingHealingPots, missingManaPots))
 
+	vendor := GetTownByArea(d.Area).RefillNPC()
 	for _, i := range d.Items.Shop {
-		if i.Name == game.ItemSuperHealingPotion && missingHealingPots > 1 {
+		if i.Name == game.ItemSuperHealingPotion && i.Vendor == vendor && missingHealingPots > 1 {
 			sm.buyItem(i, missingHealingPots)
 			missingHealingPots = 0
 			break
 		}
 	}
 	for _, i := range d.Items.Shop {
-		if i.Name == game.ItemSuperManaPotion && missingManaPots > 1 {
+		if i.Name == game.ItemSuperManaPotion && i.Vendor == vendor && missingManaPots > 1 {
 			sm.buyItem(i, missingManaPots)
 			missingManaPots = 0
 			break
@@ -56,7 +57,7 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 	if d.Items.Inventory.ShouldBuyTPs() {
 		sm.logger.Debug("Filling TP Tome...")
 		for _, i := range d.Items.Shop {
-			if i.Name == game.ItemScrollOfTownPortal {
+			if i.Name == game.ItemScrollOfTownPortal && i.Vendor == vendor {
 				sm.buyFullStack(i)
 				break
 			}
@@ -66,7 +67,7 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 	if d.Items.Inventory.ShouldBuyIDs() {
 		sm.logger.Debug("Filling IDs Tome...")
 		for _, i := range d.Items.Shop {
-			if i.Name == game.ItemScrollOfIdentify {
+			if i.Name == game.ItemScrollOfIdentify && i.Vendor == vendor {
 				sm.buyFullStack(i)
 				break
 			}
@@ -99,6 +100,7 @@ func (sm ShopManager) buyItem(i game.Item, quantity int) {
 	for k := 0; k < quantity; k++ {
 		hid.Click(hid.RightButton)
 		time.Sleep(time.Millisecond * 500)
+		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
 }
 

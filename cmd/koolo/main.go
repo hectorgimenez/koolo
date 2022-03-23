@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/discord"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -56,7 +55,7 @@ func main() {
 		return supervisor.Start(ctx, run.BuildRuns(ab, char))
 	})
 
-	discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+	discordBot, err := stats.NewDiscordBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
 	if err != nil {
 		logger.Fatal("Discord could not been initialized", zap.Error(err))
 	}

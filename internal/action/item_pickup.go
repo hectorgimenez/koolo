@@ -31,24 +31,30 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 			if missingHealingPotions == 0 {
 				break
 			}
-			itemsToPickup = append(itemsToPickup, item)
-			missingHealingPotions--
+			if b.shouldBePickedUp(data, item) {
+				itemsToPickup = append(itemsToPickup, item)
+				missingHealingPotions--
+			}
 			break
 		}
 		if item.IsManaPotion() {
 			if missingManaPotions == 0 {
 				break
 			}
-			itemsToPickup = append(itemsToPickup, item)
-			missingManaPotions--
+			if b.shouldBePickedUp(data, item) {
+				itemsToPickup = append(itemsToPickup, item)
+				missingManaPotions--
+			}
 			break
 		}
 		if item.IsRejuvPotion() {
 			if missingRejuvenationPotions == 0 {
 				break
 			}
-			itemsToPickup = append(itemsToPickup, item)
-			missingRejuvenationPotions--
+			if b.shouldBePickedUp(data, item) {
+				itemsToPickup = append(itemsToPickup, item)
+				missingRejuvenationPotions--
+			}
 			break
 		}
 

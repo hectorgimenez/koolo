@@ -219,6 +219,7 @@ func organizeItem(items []*api.Item) Items {
 			IsHovered:  i.GetHovered(),
 			Stats:      stats,
 			Identified: i.GetIdentified(),
+			Vendor:     NPCID(i.VendorName),
 		}
 		switch i.Place {
 		case "Vendor":

@@ -56,6 +56,7 @@ type Item struct {
 	IsHovered  bool
 	Stats      map[Stat]int
 	Identified bool
+	Vendor     NPCID
 }
 
 func (i Item) PickupPass(checkStats bool) bool {
