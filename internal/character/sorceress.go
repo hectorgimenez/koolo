@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -70,24 +71,36 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []game.Monster
+		var coldImmunes []game.Monster
 		for _, m := range data.Monsters {
 			if !strings.Contains(strings.ToLower(m.Name), "councilmember") {
 				continue
 			}
-			councilMembers = append(councilMembers, m)
+			if m.IsImmune(game.ResistCold) {
+				coldImmunes = append(coldImmunes, m)
+			} else {
+				councilMembers = append(councilMembers, m)
+			}
 		}
 
-		// Order council members by distance and immunities
+		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			if councilMembers[j].IsImmune(game.ResistCold) {
-				return false
-			}
-
 			distanceI := pather.DistanceFromPoint(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
 			distanceJ := pather.DistanceFromPoint(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
 
 			return distanceI < distanceJ
 		})
+
+		councilMembers = append(councilMembers, coldImmunes...)
+
+		for _, m := range councilMembers {
+			immunities := ""
+			for _, i := range m.Immunities {
+				immunities += string(i) + " "
+			}
+			dist := pather.DistanceFromPoint(data, m.Position.X, m.Position.Y)
+			fmt.Printf("Distance: %d, Immunities: %s, Cold detected: %t \n", dist, immunities, m.IsImmune(game.ResistCold))
+		}
 
 		for _, m := range councilMembers {
 			for i := 0; i < sorceressMaxAttacksLoop; i++ {
