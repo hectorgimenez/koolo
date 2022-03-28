@@ -1,7 +1,6 @@
 package character
 
 import (
-	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -92,15 +91,6 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 		})
 
 		councilMembers = append(councilMembers, coldImmunes...)
-
-		for _, m := range councilMembers {
-			immunities := ""
-			for _, i := range m.Immunities {
-				immunities += string(i) + " "
-			}
-			dist := pather.DistanceFromPoint(data, m.Position.X, m.Position.Y)
-			fmt.Printf("Distance: %d, Immunities: %s, Cold detected: %t \n", dist, immunities, m.IsImmune(game.ResistCold))
-		}
 
 		for _, m := range councilMembers {
 			for i := 0; i < sorceressMaxAttacksLoop; i++ {
