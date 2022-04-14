@@ -1,5 +1,5 @@
-display: 0
-debug: true
+display: 0 # Not supported yet
+debug: true # Prints extra log information
 logFilePath: log.txt
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 
