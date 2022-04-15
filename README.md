@@ -14,7 +14,8 @@ that provides all the required information to the bot. The bot simulates clicks/
 
 ## Getting started
 - If you haven't done yet, [install Diablo II: LOD 1.13c](https://github.com/OneXDeveloper/MapAssist/wiki/Installation#step-1-d2-lod-setup)
-- Open `MapAssist/KooloMA.exe` and set your Diablo II: LOD directory, close it.
+- Edit `config/config.yaml` and ensure `D2Path` is pointing to your Diablo II: LOd 1.13c installation directory.
+If not, MapAssist will try to autodetect it.
 - Configure custom bot settings under `config/config.yaml` and `config/pickit.yaml` files.
 - Open Diablo II: Resurrected and wait until character selection screen.
 - Run `koolo.exe`.
