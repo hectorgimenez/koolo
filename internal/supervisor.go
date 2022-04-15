@@ -3,6 +3,7 @@ package koolo
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -46,8 +47,10 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
 
+	// Throttling a bit, we don't need to waste cpu cycles
+	ticker := time.NewTicker(time.Millisecond * 35)
 	firstRun := true
-	for {
+	for range ticker.C {
 		if err = helper.NewGame(ctx); err != nil {
 			s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 			continue
@@ -66,7 +69,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 			s.logger.Warn(errorMsg)
 		}
 		if exitErr := helper.ExitGame(ctx); exitErr != nil {
-			s.logger.Fatal(fmt.Sprintf("Error exiting game: %s, shutting down...", exitErr))
+			return fmt.Errorf("error exiting game: %s", exitErr)
 		}
 		firstRun = false
 
@@ -74,6 +77,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		helper.Sleep(10000)
 	}
 
+	return nil
 }
 
 func (s *Supervisor) updateGameStats() {
@@ -140,7 +144,7 @@ func (s *Supervisor) updateGameStats() {
 func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 	window := robotgo.FindWindow("Diablo II: Resurrected")
 	if window == win.HWND_TOP {
-		s.logger.Fatal("Diablo II: Resurrected window can not be found! Are you sure game is open?")
+		return errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
 	}
 	win.SetForegroundWindow(window)
 

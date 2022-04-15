@@ -5,10 +5,8 @@ import (
 	"github.com/hectorgimenez/koolo/api"
 )
 
-var GRPCClient api.MapAssistApiClient
-
 func Status(ctx context.Context) Data {
-	d, err := GRPCClient.GetData(ctx, &api.R{})
+	d, err := api.GRPCClient.GetData(ctx, &api.R{})
 	if err != nil {
 		panic(err)
 	}

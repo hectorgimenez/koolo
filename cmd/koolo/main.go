@@ -8,15 +8,12 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 )
 
@@ -32,11 +29,14 @@ func main() {
 	}
 	defer logger.Sync()
 
-	grpcClient, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ctx := context.Background()
+	g, ctx := errgroup.WithContext(ctx)
+
+	err = api.StartAndConfigure(ctx)
 	if err != nil {
-		logger.Fatal("error dialing MapAssist", zap.Error(err))
+		logger.Fatal("error starting MapAssist", zap.Error(err))
 	}
-	game.GRPCClient = api.NewMapAssistApiClient(grpcClient)
+
 	bm := health.NewBeltManager(logger)
 	hm := health.NewHealthManager(logger, bm)
 	sm := town.NewShopManager(logger, bm)
@@ -49,8 +49,6 @@ func main() {
 	bot := koolo.NewBot(logger, hm, ab)
 	supervisor := koolo.NewSupervisor(logger, bot)
 
-	ctx := context.Background()
-	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		return supervisor.Start(ctx, run.BuildRuns(ab, char))
 	})
