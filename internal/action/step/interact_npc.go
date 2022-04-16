@@ -56,7 +56,10 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		}
 	}
 
-	x, y := i.getNPCPosition(data)
+	x, y, found := i.getNPCPosition(data)
+	if !found {
+		return fmt.Errorf("NPC not found")
+	}
 
 	distance := pather.DistanceFromPoint(data, x, y)
 	if distance > 15 {
@@ -76,12 +79,17 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	return nil
 }
 
-func (i InteractNPCStep) getNPCPosition(d game.Data) (X, Y int) {
-	npc, found := d.Monsters.FindOne(i.NPC)
+func (i InteractNPCStep) getNPCPosition(d game.Data) (X, Y int, found bool) {
+	monster, found := d.Monsters.FindOne(i.NPC)
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit
-		return npc.Position.X - 2, npc.Position.Y - 2
+		return monster.Position.X - 2, monster.Position.Y - 2, true
 	}
 
-	return d.NPCs[i.NPC].Positions[0].X, d.NPCs[i.NPC].Positions[0].Y
+	npc, found := d.NPCs.FindOne(i.NPC)
+	if !found {
+		return 0, 0, false
+	}
+
+	return npc.Positions[0].X, npc.Positions[0].Y, true
 }

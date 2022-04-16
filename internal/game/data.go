@@ -53,7 +53,7 @@ type Data struct {
 	Monsters         Monsters
 	CollisionGrid    [][]bool
 	PlayerUnit       PlayerUnit
-	NPCs             map[NPCID]NPC
+	NPCs             NPCs
 	Items            Items
 	Objects          []Object
 	AdjacentLevels   []Level

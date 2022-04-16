@@ -46,7 +46,7 @@ func (s Hammerdin) KillAndariel() *action.BasicAction {
 }
 
 func (s Hammerdin) KillSummoner() *action.BasicAction {
-	return s.killMonster(game.TheSummoner)
+	return s.killMonster(game.Summoner)
 }
 
 func (s Hammerdin) KillPindle() *action.BasicAction {

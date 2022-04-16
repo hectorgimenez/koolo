@@ -1,5 +1,7 @@
 package game
 
+import "strings"
+
 const (
 	// A1 Town NPCs
 	AkaraNPC  NPCID = "Akara"
@@ -20,25 +22,36 @@ const (
 	MalahNPC    NPCID = "Malah"
 	LarzukNPC   NPCID = "Larzuk"
 	QualKehkNPC NPCID = "Qual-Kehk"
-	CainNPC     NPCID = "Deckard Cain"
+	CainNPC     NPCID = "DeckardCain"
 
 	// Monsters
-	Countess    NPCID = "The Countess"
-	Andariel    NPCID = "Andariel"
-	Pindleskin  NPCID = "Pindleskin"
-	Mephisto    NPCID = "Mephisto"
-	TheSummoner NPCID = "The Summoner"
-	Nihlathak   NPCID = "Nihlathak"
+	Countess   NPCID = "The Countess"
+	Andariel   NPCID = "Andariel"
+	Pindleskin NPCID = "Pindleskin"
+	Mephisto   NPCID = "Mephisto"
+	Summoner   NPCID = "Summoner"
+	Nihlathak  NPCID = "Nihlathak"
 )
 
 type NPCID string
 type Resist string
 
 type Monsters []Monster
+type NPCs []NPC
+
+func (n NPCs) FindOne(npcid NPCID) (NPC, bool) {
+	for _, npc := range n {
+		if strings.EqualFold(npc.Name, string(npcid)) {
+			return npc, true
+		}
+	}
+
+	return NPC{}, false
+}
 
 func (m Monsters) FindOne(npcid NPCID) (Monster, bool) {
 	for _, monster := range m {
-		if monster.Name == string(npcid) {
+		if strings.EqualFold(monster.Name, string(npcid)) {
 			return monster, true
 		}
 	}
@@ -48,7 +61,7 @@ func (m Monsters) FindOne(npcid NPCID) (Monster, bool) {
 
 func (m Monster) IsImmune(resist Resist) bool {
 	for _, i := range m.Immunities {
-		if i == resist {
+		if strings.EqualFold(string(i), string(resist)) {
 			return true
 		}
 	}

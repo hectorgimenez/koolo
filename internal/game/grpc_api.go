@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"github.com/hectorgimenez/koolo/api"
+	"strings"
 )
 
 func Status(ctx context.Context) Data {
@@ -52,7 +53,7 @@ func Status(ctx context.Context) Data {
 		})
 	}
 
-	npcs := map[NPCID]NPC{}
+	var npcs []NPC
 	for _, npc := range d.GetNpcs() {
 		var positions []Position
 		for _, p := range npc.GetPositions() {
@@ -61,10 +62,10 @@ func Status(ctx context.Context) Data {
 				Y: int(p.GetY()),
 			})
 		}
-		npcs[NPCID(npc.GetName())] = NPC{
+		npcs = append(npcs, NPC{
 			Name:      npc.GetName(),
 			Positions: positions,
-		}
+		})
 	}
 
 	var objects []Object
@@ -81,16 +82,22 @@ func Status(ctx context.Context) Data {
 		})
 
 		// Hacky thing to make sure we can arrive to Hratli
-		if o.GetName() == "HratliStartPosition" {
-			_, hratliFound := npcs[HratliNPC]
+		if strings.EqualFold(o.GetName(), "HratliStartPosition") {
+			hratliFound := false
+			for _, npc := range npcs {
+				if strings.EqualFold(npc.Name, string(HratliNPC)) {
+					hratliFound = true
+					break
+				}
+			}
 			if !hratliFound {
-				npcs[HratliNPC] = NPC{
+				npcs = append(npcs, NPC{
 					Name: string(HratliNPC),
 					Positions: []Position{{
 						X: int(o.GetPosition().GetX()),
 						Y: int(o.GetPosition().GetY()),
 					}},
-				}
+				})
 			}
 		}
 	}

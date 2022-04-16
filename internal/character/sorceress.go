@@ -47,7 +47,7 @@ func (s Sorceress) KillAndariel() *action.BasicAction {
 }
 
 func (s Sorceress) KillSummoner() *action.BasicAction {
-	return s.killMonster(game.TheSummoner)
+	return s.killMonster(game.Summoner)
 }
 
 func (s Sorceress) KillPindle() *action.BasicAction {
