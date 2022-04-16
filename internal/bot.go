@@ -62,39 +62,48 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 		running := true
 		for running {
-			d := game.Status(ctx)
-			if err := b.hm.HandleHealthAndMana(d); err != nil {
-				return err
-			}
-			if err := b.shouldEndCurrentGame(gameStartedAt); err != nil {
-				return err
-			}
-
-			for k, act := range actions {
-				err := act.NextStep(d)
-				if errors.Is(err, action.ErrNoMoreSteps) {
-					if len(actions)-1 == k {
-						stats.FinishCurrentRun(stats.EventKill)
-						b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-						running = false
-					}
-					continue
-				}
-				if errors.Is(err, action.ErrWillBeRetried) {
-					b.logger.Warn("error occurred, will be retried", zap.Error(err))
-					break
-				}
-				if errors.Is(err, action.ErrCanBeSkipped) {
-					stats.Events <- stats.EventWithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
-					b.logger.Warn("error occurred on action that can be skipped, game will continue", zap.Error(err))
-					act.Skip()
-					break
-				}
+			select {
+			case <-ctx.Done():
+				return context.Canceled
+			default:
+				d, err := game.Status()
 				if err != nil {
-					stats.FinishCurrentRun(stats.EventError)
 					return err
 				}
-				break
+
+				if err := b.hm.HandleHealthAndMana(d); err != nil {
+					return err
+				}
+				if err := b.shouldEndCurrentGame(gameStartedAt); err != nil {
+					return err
+				}
+
+				for k, act := range actions {
+					err := act.NextStep(d)
+					if errors.Is(err, action.ErrNoMoreSteps) {
+						if len(actions)-1 == k {
+							stats.FinishCurrentRun(stats.EventKill)
+							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
+							running = false
+						}
+						continue
+					}
+					if errors.Is(err, action.ErrWillBeRetried) {
+						b.logger.Warn("error occurred, will be retried", zap.Error(err))
+						break
+					}
+					if errors.Is(err, action.ErrCanBeSkipped) {
+						stats.Events <- stats.EventWithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
+						b.logger.Warn("error occurred on action that can be skipped, game will continue", zap.Error(err))
+						act.Skip()
+						break
+					}
+					if err != nil {
+						stats.FinishCurrentRun(stats.EventError)
+						return err
+					}
+					break
+				}
 			}
 		}
 	}

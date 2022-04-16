@@ -1,7 +1,6 @@
 package action
 
 import (
-	"context"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -10,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"time"
 )
 
 const (
@@ -81,7 +79,7 @@ func (b Builder) stashGold(d game.Data) {
 	}
 
 	for i := 2; i < 5; i++ {
-		data := getData()
+		data, _ := game.Status()
 		gold, found = data.PlayerUnit.Stats[game.StatGold]
 		if !found || gold == 0 {
 			return
@@ -137,7 +135,7 @@ func stashItemAction(i game.Item, forceStash bool) bool {
 	hid.KeyUp("control")
 	helper.Sleep(150)
 
-	data := getData()
+	data, _ := game.Status()
 	for _, it := range data.Items.Inventory {
 		if it.ID == i.ID {
 			return false
@@ -172,12 +170,4 @@ func switchTab(tab int) {
 	hid.MovePointer(x, y)
 	helper.Sleep(100)
 	hid.Click(hid.LeftButton)
-}
-
-func getData() game.Data {
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-
-	return game.Status(ctx)
 }

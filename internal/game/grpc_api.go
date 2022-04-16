@@ -4,12 +4,16 @@ import (
 	"context"
 	"github.com/hectorgimenez/koolo/api"
 	"strings"
+	"time"
 )
 
-func Status(ctx context.Context) Data {
+func Status() (Data, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
 	d, err := api.GRPCClient.GetData(ctx, &api.R{})
 	if err != nil {
-		panic(err)
+		return Data{}, err
 	}
 
 	corpse := Corpse{}
@@ -175,7 +179,7 @@ func Status(ctx context.Context) Data {
 			Stash:       d.MenuOpen.GetStash(),
 			Waypoint:    d.MenuOpen.GetWaypoint(),
 		},
-	}
+	}, nil
 }
 
 func organizeItem(items []*api.Item) Items {

@@ -15,6 +15,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -29,10 +32,21 @@ func main() {
 	}
 	defer logger.Sync()
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	ma := api.NewMapAssistClient(logger)
+
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		<-ch
+		logger.Info("Shutting down...")
+		signal.Stop(ch)
+		cancel()
+		ma.Stop()
+	}()
 	g, ctx := errgroup.WithContext(ctx)
 
-	err = api.StartAndConfigure(ctx)
+	err = ma.StartAndConfigure(ctx)
 	if err != nil {
 		logger.Fatal("error starting MapAssist", zap.Error(err))
 	}

@@ -47,37 +47,41 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
 
-	// Throttling a bit, we don't need to waste cpu cycles
-	ticker := time.NewTicker(time.Millisecond * 35)
 	firstRun := true
-	for range ticker.C {
-		if err = helper.NewGame(ctx); err != nil {
-			s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-			continue
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			if err = helper.NewGame(); err != nil {
+				s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+				continue
+			}
 
-		gameStart := time.Now()
-		if config.Config.Game.RandomizeRuns {
-			rand.Seed(time.Now().UnixNano())
-			rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
-		}
-		s.logGameStart(runs)
-		err = s.bot.Run(ctx, firstRun, runs)
-		if err != nil {
-			errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
-			stats.Events <- stats.EventWithScreenshot(errorMsg)
-			s.logger.Warn(errorMsg)
-		}
-		if exitErr := helper.ExitGame(ctx); exitErr != nil {
-			return fmt.Errorf("error exiting game: %s", exitErr)
-		}
-		firstRun = false
+			gameStart := time.Now()
+			if config.Config.Game.RandomizeRuns {
+				rand.Seed(time.Now().UnixNano())
+				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
+			}
+			s.logGameStart(runs)
+			err = s.bot.Run(ctx, firstRun, runs)
+			if err != nil {
+				if errors.Is(context.Canceled, ctx.Err()) {
+					return nil
+				}
+				errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
+				stats.Events <- stats.EventWithScreenshot(errorMsg)
+				s.logger.Warn(errorMsg)
+			}
+			if exitErr := helper.ExitGame(); exitErr != nil {
+				return fmt.Errorf("error exiting game: %s", exitErr)
+			}
+			firstRun = false
 
-		s.updateGameStats()
-		helper.Sleep(10000)
+			s.updateGameStats()
+			helper.Sleep(10000)
+		}
 	}
-
-	return nil
 }
 
 func (s *Supervisor) updateGameStats() {
