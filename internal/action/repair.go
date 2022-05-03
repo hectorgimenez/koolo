@@ -19,7 +19,7 @@ func (b Builder) Repair() *BasicAction {
 
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).RepairNPC()),
-				step.KeySequence("up", "down", "enter"),
+				step.KeySequence("home", "down", "enter"),
 				step.SyncStep(func(_ game.Data) error {
 					helper.Sleep(100)
 					hid.MovePointer(x, y)

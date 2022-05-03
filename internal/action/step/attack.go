@@ -69,9 +69,9 @@ func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, 
 
 func (p *AttackStep) Status(data game.Data) Status {
 	_, found := data.Monsters.FindOne(p.target)
-	// Give 1 sec before continuing, ensuring the items have been dropped before start the pickup process
+	// Give 2 secs before continuing, ensuring the items have been dropped before start the pickup process
 	if !found {
-		if time.Since(p.lastRun) > time.Second {
+		if time.Since(p.lastRun) > time.Second*2 {
 			return p.tryTransitionStatus(StatusCompleted)
 		}
 	} else {

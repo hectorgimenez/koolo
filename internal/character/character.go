@@ -57,7 +57,15 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 			}),
 			step.SwapWeapon(),
 		)
+	} else {
+		// Add some delay when CTA is not enabled, because we can not control if weapon has been switched or not
+		// so the game can still be on loading screen.
+		steps = append(steps, step.SyncStep(func(data game.Data) error {
+			helper.Sleep(2000)
+
+			return nil
+		}))
 	}
 
-	return steps
+	return
 }

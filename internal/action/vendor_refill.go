@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
@@ -11,7 +12,13 @@ func (b Builder) VendorRefill() *BasicAction {
 		if b.shouldGoToVendor(data) {
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()),
-				step.KeySequence("up", "down", "enter"),
+				step.KeySequence("home", "down", "enter"),
+				step.SyncStep(func(data game.Data) error {
+					// Give some extra time to MapAssist in order to fetch all the data.
+					helper.Sleep(1000)
+
+					return nil
+				}),
 				step.SyncStep(func(data game.Data) error {
 					b.sm.BuyConsumables(data)
 					b.sm.SellJunk(data)

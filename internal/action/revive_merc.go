@@ -14,7 +14,7 @@ func (b Builder) ReviveMerc() *BasicAction {
 
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).MercContractorNPC()),
-				step.KeySequence("up", "down", "enter", "esc"),
+				step.KeySequence("home", "down", "enter", "esc"),
 			)
 		}
 

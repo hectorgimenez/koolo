@@ -71,6 +71,13 @@ items:
   - chamrune:
   - zodrune:
 
+  # Gems
+  - flawlessdiamond:
+  - flawlessemerald:
+  - flawlesstopaz:
+  - flawlessamethyst:
+  - flawlesssapphire:
+
   # Keys
   - keyofhate:
   - keyofterror:

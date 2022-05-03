@@ -45,10 +45,10 @@ func NewGame() error {
 
 	createX := difficultyPosition[config.Config.Game.Difficulty].X
 	createY := difficultyPosition[config.Config.Game.Difficulty].Y
-	hid.MovePointer(640, 672)
-	Sleep(50)
+	hid.MovePointer(600, 650)
+	Sleep(250)
 	hid.Click(hid.LeftButton)
-	Sleep(200)
+	Sleep(250)
 	hid.MovePointer(createX, createY)
 	hid.Click(hid.LeftButton)
 

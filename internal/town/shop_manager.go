@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -40,14 +41,14 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 
 	vendor := GetTownByArea(d.Area).RefillNPC()
 	for _, i := range d.Items.Shop {
-		if i.Name == game.ItemSuperHealingPotion && i.Vendor == vendor && missingHealingPots > 1 {
+		if strings.Contains(i.Name, "HealingPotion") && i.Vendor == vendor && missingHealingPots > 1 {
 			sm.buyItem(i, missingHealingPots)
 			missingHealingPots = 0
 			break
 		}
 	}
 	for _, i := range d.Items.Shop {
-		if i.Name == game.ItemSuperManaPotion && i.Vendor == vendor && missingManaPots > 1 {
+		if strings.Contains(i.Name, "ManaPotion") && i.Vendor == vendor && missingManaPots > 1 {
 			sm.buyItem(i, missingManaPots)
 			missingManaPots = 0
 			break
