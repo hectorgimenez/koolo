@@ -36,6 +36,11 @@ func (ma *MapAssistClient) StartAndConfigure(ctx context.Context) error {
 		return err
 	}
 
+	err = os.Chdir("../")
+	if err != nil {
+		return err
+	}
+
 	grpcClient, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("error dialing MapAssist: %w", err)

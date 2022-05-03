@@ -77,6 +77,7 @@ items:
   - flawlesstopaz:
   - flawlessamethyst:
   - flawlesssapphire:
+  - flawlessruby:
 
   # Keys
   - keyofhate:
@@ -268,7 +269,7 @@ items:
 
   ########### Swords ###########
   # White
-  - crystalsword: { quality: [ normal superior ], sockets: 5 } # call to arms
+  - crystalsword: { quality: [ normal, superior ], sockets: [ 4, 5 ] } # call to arms, spirit
   - zweihander: { quality: superior, ethereal: false, sockets: 5 } # grief
   - colossusblade: { quality: superior, ethereal: false, sockets: 5 } # grief
   - colossusblade: { quality: superior, ethereal: true, sockets: [ 0, 6 ] } # breath of the dying
