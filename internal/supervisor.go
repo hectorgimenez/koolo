@@ -24,15 +24,6 @@ type Supervisor struct {
 	bot    Bot
 }
 
-type RunStats struct {
-	ItemCounter int
-	Kills       int
-	Deaths      int
-	Chickens    int
-	Errors      int
-	Time        time.Duration
-}
-
 func NewSupervisor(logger *zap.Logger, bot Bot) Supervisor {
 	return Supervisor{
 		logger: logger,

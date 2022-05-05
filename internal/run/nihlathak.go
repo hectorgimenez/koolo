@@ -31,7 +31,9 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	// Move to Nilhatak
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
 		for _, n := range data.PointsOfInterest {
-			if n.Name == a.Name() {
+
+			// TODO: Temporary fix until MapAssist supports Nihlathak again.
+			if n.Name == "AreaNameNotFound" {
 				return []step.Step{step.MoveTo(n.Position.X, n.Position.Y, true)}
 			}
 		}

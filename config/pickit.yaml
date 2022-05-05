@@ -109,7 +109,8 @@ items:
 
   ########### Armors ###########
   # White
-  - mageplate: { quality: [ normal, superior ], ethereal: false, sockets: [ 0, 3 ] } # Enigma
+  - mageplate: { quality: [ normal, superior ], sockets: [ 0, 3 ] } # Enigma
+  - duskshroud: { quality: [ normal, superior ], sockets: [ 0, 3 ] } # treachery
 
   # Unique
   - duskshroud: { quality: unique, ethereal: false } # Ormus

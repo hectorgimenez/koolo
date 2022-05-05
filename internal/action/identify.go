@@ -66,12 +66,13 @@ func identifyItem(idTome game.Item, i game.Item) {
 	yIDTome := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + idTome.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 
 	hid.MovePointer(xIDTome, yIDTome)
-	helper.Sleep(100)
+	helper.Sleep(200)
 	hid.Click(hid.RightButton)
+	helper.Sleep(200)
 	x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
-	helper.Sleep(400)
+	helper.Sleep(300)
 	hid.Click(hid.LeftButton)
 	helper.Sleep(350)
 }

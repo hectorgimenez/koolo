@@ -39,27 +39,27 @@ func (s Sorceress) Buff() *action.BasicAction {
 }
 
 func (s Sorceress) KillCountess() *action.BasicAction {
-	return s.killMonster(game.Countess)
+	return s.killMonster(game.Countess, 20)
 }
 
 func (s Sorceress) KillAndariel() *action.BasicAction {
-	return s.killMonster(game.Andariel)
+	return s.killMonster(game.Andariel, 20)
 }
 
 func (s Sorceress) KillSummoner() *action.BasicAction {
-	return s.killMonster(game.Summoner)
+	return s.killMonster(game.Summoner, 10)
 }
 
 func (s Sorceress) KillPindle() *action.BasicAction {
-	return s.killMonster(game.Pindleskin)
+	return s.killMonster(game.Pindleskin, 30)
 }
 
 func (s Sorceress) KillMephisto() *action.BasicAction {
-	return s.killMonster(game.Mephisto)
+	return s.killMonster(game.Mephisto, 20)
 }
 
 func (s Sorceress) KillNihlathak() *action.BasicAction {
-	return s.killMonster(game.Nihlathak)
+	return s.killMonster(game.Nihlathak, 20)
 }
 
 func (s Sorceress) ClearAncientTunnels() *action.BasicAction {
@@ -110,12 +110,12 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 	}, action.CanBeSkipped())
 }
 
-func (s Sorceress) killMonster(npc game.NPCID) *action.BasicAction {
+func (s Sorceress) killMonster(npc game.NPCID, maxDistance int) *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		for i := 0; i < sorceressMaxAttacksLoop; i++ {
 			steps = append(steps,
-				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Second),
-				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration),
+				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Second, step.FollowEnemy(maxDistance)),
+				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.FollowEnemy(maxDistance)),
 			)
 		}
 

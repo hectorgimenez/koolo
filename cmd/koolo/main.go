@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/remote"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -34,6 +35,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	ma := api.NewMapAssistClient(logger)
+	controller := remote.New(config.Config.Controller.Port)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
@@ -43,6 +45,9 @@ func main() {
 		signal.Stop(ch)
 		cancel()
 		ma.Stop()
+		if config.Config.Controller.Webserver {
+			controller.Stop(ctx)
+		}
 	}()
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -66,6 +71,12 @@ func main() {
 	g.Go(func() error {
 		return supervisor.Start(ctx, run.BuildRuns(ab, char))
 	})
+
+	if config.Config.Controller.Webserver {
+		g.Go(func() error {
+			return controller.Run()
+		})
+	}
 
 	discordBot, err := stats.NewDiscordBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
 	if err != nil {

@@ -24,6 +24,11 @@ type StructConfig struct {
 		ChannelID string `yaml:"channelId"`
 		Token     string `yaml:"token"`
 	} `yaml:"discord"`
+	Controller struct {
+		Webserver bool `yaml:"webserver"`
+		Port      int  `yaml:"port"`
+		Webview   bool `yaml:"webview"`
+	} `yaml:"controller"`
 	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
