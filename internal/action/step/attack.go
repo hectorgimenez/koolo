@@ -17,17 +17,20 @@ type AttackStep struct {
 	castDuration          time.Duration
 	keyBinding            string
 	followEnemy           bool
-	enemyDistance         int
+	minDistance           int
+	maxDistance           int
 	moveToStep            *MoveToStep
 	auraKeyBinding        string
+	forceApplyKeyBinding  bool
 }
 
 type AttackOption func(step *AttackStep)
 
-func FollowEnemy(distance int) AttackOption {
+func Distance(minimum, maximum int) AttackOption {
 	return func(step *AttackStep) {
 		step.followEnemy = true
-		step.enemyDistance = distance
+		step.minDistance = minimum
+		step.maxDistance = maximum
 	}
 }
 
@@ -84,24 +87,29 @@ func (p *AttackStep) Status(data game.Data) Status {
 }
 
 func (p *AttackStep) Run(data game.Data) error {
-	if p.status == StatusNotStarted && p.keyBinding != "" {
-		hid.PressKey(p.keyBinding)
-		helper.Sleep(20)
-	}
-
 	monster, found := data.Monsters.FindOne(p.target)
 	if !found {
 		// Monster is dead, let's skip the attack sequence
 		return nil
 	}
 
+	// Move into the attack distance range before starting
 	if !p.ensureEnemyIsCloseEnough(monster, data) {
 		return nil
 	}
 
-	if p.auraKeyBinding != "" {
-		hid.PressKey(p.auraKeyBinding)
-		helper.Sleep(35)
+	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
+		helper.Sleep(80)
+		if p.keyBinding != "" {
+			hid.PressKey(p.keyBinding)
+			helper.Sleep(35)
+		}
+
+		if p.auraKeyBinding != "" {
+			hid.PressKey(p.auraKeyBinding)
+			helper.Sleep(35)
+		}
+		p.forceApplyKeyBinding = false
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
@@ -129,13 +137,27 @@ func (p *AttackStep) ensureEnemyIsCloseEnough(monster game.Monster, data game.Da
 		return true
 	}
 
-	if distance := pather.DistanceFromPoint(data, monster.Position.X, monster.Position.Y); distance > p.enemyDistance {
+	path, dstFloat, found := pather.GetPathToDestination(data, monster.Position.X, monster.Position.Y)
+	distance := int(dstFloat)
+
+	if distance > p.maxDistance {
 		if p.moveToStep == nil {
-			p.moveToStep = MoveTo(monster.Position.X, monster.Position.Y, true)
+			if found && p.minDistance > 0 {
+				// Try to move to the minimum distance
+				if len(path) > p.minDistance {
+					pos := path[p.minDistance-1].(*pather.Tile)
+					p.moveToStep = MoveTo(pos.X+data.AreaOrigin.X, pos.Y+data.AreaOrigin.Y, true)
+				}
+			}
+
+			if p.moveToStep == nil {
+				p.moveToStep = MoveTo(monster.Position.X, monster.Position.Y, true)
+			}
 		}
 
 		if p.moveToStep.Status(data) != StatusCompleted {
 			p.moveToStep.Run(data)
+			p.forceApplyKeyBinding = true
 			return false
 		}
 		p.moveToStep = nil

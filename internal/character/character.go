@@ -27,7 +27,7 @@ func BuildCharacter() (Character, error) {
 	bc := BaseCharacter{}
 	switch strings.ToLower(config.Config.Character.Class) {
 	case "sorceress":
-		return Sorceress{BaseCharacter: bc}, nil
+		return BlizzardSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":
 		return Hammerdin{BaseCharacter: bc}, nil
 	}

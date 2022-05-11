@@ -15,13 +15,14 @@ import (
 
 const (
 	sorceressMaxAttacksLoop = 10
+	sorceressMinDistance    = 15
 )
 
-type Sorceress struct {
+type BlizzardSorceress struct {
 	BaseCharacter
 }
 
-func (s Sorceress) Buff() *action.BasicAction {
+func (s BlizzardSorceress) Buff() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.SyncStep(func(data game.Data) error {
@@ -38,35 +39,35 @@ func (s Sorceress) Buff() *action.BasicAction {
 	})
 }
 
-func (s Sorceress) KillCountess() *action.BasicAction {
-	return s.killMonster(game.Countess, 20)
+func (s BlizzardSorceress) KillCountess() *action.BasicAction {
+	return s.killMonster(game.Countess, 20, true)
 }
 
-func (s Sorceress) KillAndariel() *action.BasicAction {
-	return s.killMonster(game.Andariel, 20)
+func (s BlizzardSorceress) KillAndariel() *action.BasicAction {
+	return s.killMonster(game.Andariel, 20, false)
 }
 
-func (s Sorceress) KillSummoner() *action.BasicAction {
-	return s.killMonster(game.Summoner, 10)
+func (s BlizzardSorceress) KillSummoner() *action.BasicAction {
+	return s.killMonster(game.Summoner, 10, false)
 }
 
-func (s Sorceress) KillPindle() *action.BasicAction {
-	return s.killMonster(game.Pindleskin, 30)
+func (s BlizzardSorceress) KillPindle() *action.BasicAction {
+	return s.killMonster(game.Pindleskin, 30, false)
 }
 
-func (s Sorceress) KillMephisto() *action.BasicAction {
-	return s.killMonster(game.Mephisto, 20)
+func (s BlizzardSorceress) KillMephisto() *action.BasicAction {
+	return s.killMonster(game.Mephisto, 20, true)
 }
 
-func (s Sorceress) KillNihlathak() *action.BasicAction {
-	return s.killMonster(game.Nihlathak, 20)
+func (s BlizzardSorceress) KillNihlathak() *action.BasicAction {
+	return s.killMonster(game.Nihlathak, 20, false)
 }
 
-func (s Sorceress) ClearAncientTunnels() *action.BasicAction {
+func (s BlizzardSorceress) ClearAncientTunnels() *action.BasicAction {
 	return nil
 }
 
-func (s Sorceress) KillCouncil() *action.BasicAction {
+func (s BlizzardSorceress) KillCouncil() *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []game.Monster
@@ -101,8 +102,8 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 				}
 
 				steps = append(steps,
-					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.FollowEnemy(maxDistance)),
-					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.FollowEnemy(maxDistance)),
+					step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.Distance(0, maxDistance)),
+					step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.Distance(0, maxDistance)),
 				)
 			}
 		}
@@ -110,13 +111,26 @@ func (s Sorceress) KillCouncil() *action.BasicAction {
 	}, action.CanBeSkipped())
 }
 
-func (s Sorceress) killMonster(npc game.NPCID, maxDistance int) *action.BasicAction {
+func (s BlizzardSorceress) killMonster(npc game.NPCID, maxDistance int, useStaticField bool) *action.BasicAction {
 	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+		if useStaticField {
+			steps = append(steps, step.NewSecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15)))
+		}
+
 		for i := 0; i < sorceressMaxAttacksLoop; i++ {
 			steps = append(steps,
-				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Second, step.FollowEnemy(maxDistance)),
-				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.FollowEnemy(maxDistance)),
+				step.NewSecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance)),
+				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, maxDistance)),
 			)
+			if i == 1 {
+				steps = append(steps,
+					step.SyncStep(func(data game.Data) error {
+						hid.MovePointer(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2)
+						hid.Click(hid.RightButton)
+						return nil
+					}),
+				)
+			}
 		}
 
 		return

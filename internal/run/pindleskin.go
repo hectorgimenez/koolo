@@ -10,8 +10,8 @@ const (
 	fixedPlaceNearRedPortalX = 5130
 	fixedPlaceNearRedPortalY = 5120
 
-	safeDistanceFromPindleX = 10056
-	safeDistanceFromPindleY = 13239
+	safeDistanceFromPindleX = 10058
+	safeDistanceFromPindleY = 13236
 )
 
 type Pindleskin struct {

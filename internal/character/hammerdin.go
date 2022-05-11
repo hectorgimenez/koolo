@@ -85,7 +85,7 @@ func (s Hammerdin) ClearAncientTunnels() *action.BasicAction {
 						game.NPCID(m.Name),
 						8,
 						config.Config.Runtime.CastDuration,
-						step.FollowEnemy(3),
+						step.Distance(2, 8),
 						step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
 					),
 				)
@@ -121,7 +121,7 @@ func (s Hammerdin) KillCouncil() *action.BasicAction {
 						game.NPCID(m.Name),
 						8,
 						config.Config.Runtime.CastDuration,
-						step.FollowEnemy(3),
+						step.Distance(2, 8),
 						step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
 					),
 				)
@@ -140,7 +140,7 @@ func (s Hammerdin) killMonster(npc game.NPCID) *action.BasicAction {
 					npc,
 					8,
 					config.Config.Runtime.CastDuration,
-					step.FollowEnemy(3),
+					step.Distance(2, 8),
 					step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
 				),
 			)
