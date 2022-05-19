@@ -23,7 +23,7 @@ func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, d
 		return []astar.Pather{}, 0, true
 	}
 
-	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY)
+	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY, d.Area)
 
 	p, distance, found := astar.Path(w.From(), w.To())
 

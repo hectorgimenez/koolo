@@ -3,6 +3,7 @@ package pather
 import (
 	"fmt"
 	"github.com/beefsack/go-astar"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"image"
 	"image/color"
 	"image/draw"
@@ -23,13 +24,16 @@ const (
 	KindTo
 	// KindPath (●) is a tile to represent where the path is in the output.
 	KindPath
+	// KindSoftBlocker (S) is a tile to fake some blocking areas with increased cost of moving, like Arcane Sanctuary platforms
+	KindSoftBlocker
 )
 
 // KindCosts map tile kinds to movement costs.
 var KindCosts = map[int]float64{
-	KindPlain: 1.0,
-	KindFrom:  1.0,
-	KindTo:    1.0,
+	KindPlain:       1.0,
+	KindFrom:        1.0,
+	KindTo:          1.0,
+	KindSoftBlocker: 3.0,
 }
 
 // A Tile is a tile in a grid which implements Pather.
@@ -179,12 +183,18 @@ func (w World) RenderPathImg(path []astar.Pather) {
 }
 
 // ParseWorld parses a textual representation of a world into a world map.
-func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int) World {
+func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, area game.Area) World {
 	w := World{}
 
 	for x, xValues := range collisionGrid {
 		for y, walkable := range xValues {
 			kind := KindBlocker
+
+			// Hacky solution to avoid Arcane Sanctuary A* errors
+			if area == game.AreaArcaneSanctuary {
+				kind = KindSoftBlocker
+			}
+
 			if walkable {
 				kind = KindPlain
 			}

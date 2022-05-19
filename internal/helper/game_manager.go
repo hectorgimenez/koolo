@@ -9,13 +9,13 @@ import (
 
 func ExitGame() error {
 	hid.PressKey("esc")
-	Sleep(150)
-	hid.PressKey("up")
 	Sleep(50)
 	hid.PressKey("up")
-	Sleep(50)
+	Sleep(20)
+	hid.PressKey("up")
+	Sleep(20)
 	hid.PressKey("down")
-	Sleep(50)
+	Sleep(20)
 	hid.PressKey("enter")
 
 	for i := 0; i < 30; i++ {
