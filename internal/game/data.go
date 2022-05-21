@@ -14,6 +14,7 @@ const (
 	AreaCatacombsLevel3     Area = "CatacombsLevel3"
 	AreaCatacombsLevel4     Area = "CatacombsLevel4"
 	AreaNihlathaksTemple    Area = "NihlathaksTemple"
+	AreaDuranceOfHateLevel1 Area = "DuranceOfHateLevel1"
 	AreaDuranceOfHateLevel2 Area = "DuranceOfHateLevel2"
 	AreaDuranceOfHateLevel3 Area = "DuranceOfHateLevel3"
 	AreaBlackMarsh          Area = "BlackMarsh"

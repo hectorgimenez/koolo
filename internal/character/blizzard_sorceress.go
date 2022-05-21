@@ -96,7 +96,7 @@ func (s BlizzardSorceress) KillCouncil() *action.BasicAction {
 		for _, m := range councilMembers {
 			for i := 0; i < sorceressMaxAttacksLoop; i++ {
 				// Try to move closer after few attacks
-				maxDistance := 20
+				maxDistance := 30
 				if i > 3 {
 					maxDistance = 0
 				}

@@ -23,11 +23,9 @@ func (s Council) BuildActions() (actions []action.Action) {
 
 	// Travel to boss position
 	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
-		for _, o := range data.Objects {
-			if o.Name == "CompellingOrb" {
-				steps = append(steps,
-					step.MoveTo(o.Position.X, o.Position.Y+10, true),
-				)
+		for _, al := range data.AdjacentLevels {
+			if al.Area == game.AreaDuranceOfHateLevel1 {
+				step.MoveTo(al.Position.X-1, al.Position.Y+3, true)
 			}
 		}
 
