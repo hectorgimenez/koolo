@@ -17,8 +17,8 @@ const (
 	stashGoldBtnY      = 1.357
 )
 
-func (b Builder) Stash(forceStash bool) *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) Stash(forceStash bool) *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if !b.isStashingRequired(data, forceStash) {
 			return
 		}

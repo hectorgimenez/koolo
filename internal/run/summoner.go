@@ -22,7 +22,7 @@ func (s Summoner) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		npc, found := data.NPCs.FindOne(game.Summoner)
 		if !found {
 			return nil

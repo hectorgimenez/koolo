@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func (b Builder) ItemPickup() *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) ItemPickup() *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		itemsToPickup := b.getItemsToPickup(data)
 		for _, item := range itemsToPickup {
 			b.logger.Debug(fmt.Sprintf("Item Detected: %s [%s] at X:%d Y:%d", item.Name, item.Quality, item.Position.X, item.Position.Y))

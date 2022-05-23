@@ -27,7 +27,7 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	actions = append(actions, p.builder.WayPoint(game.AreaHarrogath))
 
 	// Moving to starting point
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
 			step.InteractObject("PermanentTownPortal", func(data game.Data) bool {
@@ -40,7 +40,7 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	actions = append(actions, p.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),
 		}

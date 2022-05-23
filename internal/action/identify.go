@@ -9,8 +9,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) IdentifyAll(skipIdentify bool) *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		items := b.itemsToIdentify(data)
 
 		if len(items) == 0 || skipIdentify {

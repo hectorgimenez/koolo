@@ -9,8 +9,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) Repair() *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) Repair() *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		durabilityPct := float32(data.PlayerUnit.Stats[game.StatDurability]) / float32(data.PlayerUnit.Stats[game.StatMaxDurability])
 		if durabilityPct < 0.80 {
 			b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.80", durabilityPct))

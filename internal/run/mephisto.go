@@ -27,7 +27,7 @@ func (m Mephisto) BuildActions() (actions []action.Action) {
 	actions = append(actions, m.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(game.AreaDuranceOfHateLevel3),
 			step.MoveTo(safeDistanceFromMephistoX, safeDistanceFromMephistoY, true),

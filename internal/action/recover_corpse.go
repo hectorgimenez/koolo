@@ -8,8 +8,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b Builder) RecoverCorpse() *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) RecoverCorpse() *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if data.Corpse.Found {
 			b.logger.Info("Corpse found, let's recover our stuff...")
 			steps = append(steps,

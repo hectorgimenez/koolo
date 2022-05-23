@@ -20,8 +20,8 @@ type Hammerdin struct {
 	BaseCharacter
 }
 
-func (s Hammerdin) Buff() *action.BasicAction {
-	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (s Hammerdin) Buff() action.Action {
+	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.SyncStep(func(data game.Data) error {
 			if config.Config.Bindings.Hammerdin.HolyShield != "" {
@@ -37,33 +37,33 @@ func (s Hammerdin) Buff() *action.BasicAction {
 	})
 }
 
-func (s Hammerdin) KillCountess() *action.BasicAction {
+func (s Hammerdin) KillCountess() action.Action {
 	return s.killMonster(game.Countess)
 }
 
-func (s Hammerdin) KillAndariel() *action.BasicAction {
+func (s Hammerdin) KillAndariel() action.Action {
 	return s.killMonster(game.Andariel)
 }
 
-func (s Hammerdin) KillSummoner() *action.BasicAction {
+func (s Hammerdin) KillSummoner() action.Action {
 	return s.killMonster(game.Summoner)
 }
 
-func (s Hammerdin) KillPindle() *action.BasicAction {
+func (s Hammerdin) KillPindle() action.Action {
 	return s.killMonster(game.Pindleskin)
 }
 
-func (s Hammerdin) KillMephisto() *action.BasicAction {
+func (s Hammerdin) KillMephisto() action.Action {
 	return s.killMonster(game.Mephisto)
 }
 
-func (s Hammerdin) KillNihlathak() *action.BasicAction {
+func (s Hammerdin) KillNihlathak() action.Action {
 	return s.killMonster(game.Nihlathak)
 }
 
-func (s Hammerdin) ClearAncientTunnels() *action.BasicAction {
+func (s Hammerdin) ClearAncientTunnels() action.Action {
 	// Let's focus only on elite packs
-	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		var eliteMonsters []game.Monster
 		for _, m := range data.Monsters {
 			if m.Type == game.MonsterTypeMinion || m.Type == game.MonsterTypeUnique || m.Type == game.MonsterTypeChampion {
@@ -95,8 +95,8 @@ func (s Hammerdin) ClearAncientTunnels() *action.BasicAction {
 	}, action.CanBeSkipped())
 }
 
-func (s Hammerdin) KillCouncil() *action.BasicAction {
-	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (s Hammerdin) KillCouncil() action.Action {
+	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []game.Monster
 		for _, m := range data.Monsters {
@@ -131,8 +131,8 @@ func (s Hammerdin) KillCouncil() *action.BasicAction {
 	}, action.CanBeSkipped())
 }
 
-func (s Hammerdin) killMonster(npc game.NPCID) *action.BasicAction {
-	return action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (s Hammerdin) killMonster(npc game.NPCID) action.Action {
+	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		helper.Sleep(100)
 		for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 			steps = append(steps,

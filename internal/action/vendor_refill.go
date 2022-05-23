@@ -7,8 +7,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) VendorRefill() *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) VendorRefill() *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if b.shouldGoToVendor(data) {
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()),

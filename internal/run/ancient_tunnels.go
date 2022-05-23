@@ -22,14 +22,14 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.Buff())
 
 	// Travel to ancient tunnels
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(game.AreaAncientTunnels),
 		}
 	}))
 
 	// Open the chest
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		for _, o := range data.Objects {
 			if o.Name == "SparklyChest" && o.Chest {
 				return []step.Step{

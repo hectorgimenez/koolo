@@ -12,15 +12,15 @@ import (
 )
 
 type Character interface {
-	Buff() *action.BasicAction
-	KillCountess() *action.BasicAction
-	KillAndariel() *action.BasicAction
-	KillSummoner() *action.BasicAction
-	KillMephisto() *action.BasicAction
-	KillPindle() *action.BasicAction
-	KillNihlathak() *action.BasicAction
-	KillCouncil() *action.BasicAction
-	ClearAncientTunnels() *action.BasicAction
+	Buff() action.Action
+	KillCountess() action.Action
+	KillAndariel() action.Action
+	KillSummoner() action.Action
+	KillMephisto() action.Action
+	KillPindle() action.Action
+	KillNihlathak() action.Action
+	KillCouncil() action.Action
+	ClearAncientTunnels() action.Action
 }
 
 func BuildCharacter() (Character, error) {

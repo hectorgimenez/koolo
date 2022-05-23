@@ -17,7 +17,7 @@ const (
 	wpAreaBtnHeight = 49
 )
 
-func (b Builder) WayPoint(area game.Area) *BasicAction {
+func (b Builder) WayPoint(area game.Area) *StaticAction {
 	allowedAreas := map[game.Area][2]int{
 		game.AreaBlackMarsh:          {1, 5},
 		game.AreaCatacombsLevel2:     {1, 9},
@@ -29,7 +29,7 @@ func (b Builder) WayPoint(area game.Area) *BasicAction {
 		game.AreaTravincal:           {3, 8},
 	}
 
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		// We don't need to move
 		if data.Area == area {
 			return

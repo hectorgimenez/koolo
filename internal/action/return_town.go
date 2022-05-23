@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-func (b Builder) ReturnTown() *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) ReturnTown() *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if data.Area.IsTown() {
 			return
 		}

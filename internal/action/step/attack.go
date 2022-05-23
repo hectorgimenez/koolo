@@ -55,7 +55,7 @@ func PrimaryAttack(target game.NPCID, numOfAttacks int, castDuration time.Durati
 	return s
 }
 
-func NewSecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,

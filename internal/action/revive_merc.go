@@ -7,8 +7,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) ReviveMerc() *BasicAction {
-	return BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+func (b Builder) ReviveMerc() *StaticAction {
+	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if config.Config.Character.UseMerc && !data.Health.Merc.Alive {
 			b.logger.Info("Merc is dead, let's revive it!")
 

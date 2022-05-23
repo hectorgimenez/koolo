@@ -22,10 +22,10 @@ func (s Council) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildOnRuntime(func(data game.Data) (steps []step.Step) {
+	actions = append(actions, action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		for _, al := range data.AdjacentLevels {
 			if al.Area == game.AreaDuranceOfHateLevel1 {
-				step.MoveTo(al.Position.X-1, al.Position.Y+3, true)
+				steps = append(steps, step.MoveTo(al.Position.X-1, al.Position.Y+3, true))
 			}
 		}
 
