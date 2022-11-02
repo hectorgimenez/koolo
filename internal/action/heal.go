@@ -9,9 +9,9 @@ import (
 
 func (b Builder) Heal() *StaticAction {
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		if data.Health.HPPercent() < 80 {
-			b.logger.Info(fmt.Sprintf("Current life is %d, healing on NPC", data.Health.HPPercent()))
-			steps = append(steps, step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()))
+		if data.PlayerUnit.HPPercent() < 80 {
+			b.logger.Info(fmt.Sprintf("Current life is %d, healing on NPC", data.PlayerUnit.HPPercent()))
+			steps = append(steps, step.InteractNPC(town.GetTownByArea(data.PlayerUnit.Area).RefillNPC()))
 		}
 
 		return

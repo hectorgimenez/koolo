@@ -3,6 +3,8 @@ package step
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
@@ -10,11 +12,11 @@ import (
 
 type InteractNPCStep struct {
 	pathingStep
-	NPC                   game.NPCID
+	NPC                   npc.ID
 	waitingForInteraction bool
 }
 
-func InteractNPC(npc game.NPCID) *InteractNPCStep {
+func InteractNPC(npc npc.ID) *InteractNPCStep {
 	return &InteractNPCStep{
 		pathingStep: newPathingStep(),
 		NPC:         npc,
@@ -31,15 +33,16 @@ func (i *InteractNPCStep) Status(data game.Data) Status {
 }
 
 func (i *InteractNPCStep) Run(data game.Data) error {
+	// Throttle movement clicks
+	if time.Since(i.lastRun) < helper.RandomDurationMs(300, 600) {
+		return nil
+	}
+
 	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
 		return fmt.Errorf("error moving to %s: %w", i.NPC, errPathNotFound)
 	}
 
 	i.tryTransitionStatus(StatusInProgress)
-	// Throttle movement clicks
-	if time.Since(i.lastRun) < time.Millisecond*350 {
-		return nil
-	}
 
 	// Give some time before retrying the interaction
 	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*2 {
@@ -47,7 +50,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	}
 
 	i.lastRun = time.Now()
-	m, found := data.Monsters.FindOne(i.NPC)
+	m, found := data.Monsters.FindOne(i.NPC, game.MonsterTypeNone)
 	if found {
 		if m.IsHovered {
 			hid.Click(hid.LeftButton)
@@ -79,8 +82,8 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	return nil
 }
 
-func (i InteractNPCStep) getNPCPosition(d game.Data) (X, Y int, found bool) {
-	monster, found := d.Monsters.FindOne(i.NPC)
+func (i *InteractNPCStep) getNPCPosition(d game.Data) (X, Y int, found bool) {
+	monster, found := d.Monsters.FindOne(i.NPC, game.MonsterTypeNone)
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit
 		return monster.Position.X - 2, monster.Position.Y - 2, true

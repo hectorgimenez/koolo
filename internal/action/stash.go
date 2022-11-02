@@ -5,6 +5,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/object"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/stats"
@@ -25,7 +27,7 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 
 		b.logger.Info("Stashing items...")
 		steps = append(steps,
-			step.InteractObject("Bank", func(data game.Data) bool {
+			step.InteractObject(object.Bank, func(data game.Data) bool {
 				return data.OpenMenus.Stash
 			}),
 			step.SyncStep(func(data game.Data) error {
@@ -68,19 +70,19 @@ func (b Builder) isStashingRequired(data game.Data, forceStash bool) bool {
 }
 
 func (b Builder) stashGold(d game.Data) {
-	gold, found := d.PlayerUnit.Stats[game.StatGold]
+	gold, found := d.PlayerUnit.Stats[stat.Gold]
 	if !found || gold == 0 {
 		return
 	}
 
-	if d.PlayerUnit.Stats[game.StatStashGold] < maxGoldPerStashTab {
+	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
 		switchTab(1)
 		clickStashGoldBtn()
 	}
 
 	for i := 2; i < 5; i++ {
-		data, _ := game.Status()
-		gold, found = data.PlayerUnit.Stats[game.StatGold]
+		data := b.gr.GetData(false)
+		gold, found = data.PlayerUnit.Stats[stat.Gold]
 		if !found || gold == 0 {
 			return
 		}
@@ -100,7 +102,7 @@ func (b Builder) stashInventory(data game.Data, forceStash bool) {
 			continue
 		}
 		for currentTab < 5 {
-			if stashItemAction(i, forceStash) {
+			if b.stashItemAction(i, forceStash) {
 				b.logger.Debug(fmt.Sprintf("Item %s [%s] stashed", i.Name, i.Quality))
 				break
 			}
@@ -122,7 +124,7 @@ func (b Builder) shouldStashIt(i game.Item, forceStash bool) bool {
 	return forceStash || i.PickupPass(true)
 }
 
-func stashItemAction(i game.Item, forceStash bool) bool {
+func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
 	x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
@@ -135,9 +137,9 @@ func stashItemAction(i game.Item, forceStash bool) bool {
 	hid.KeyUp("control")
 	helper.Sleep(150)
 
-	data, _ := game.Status()
+	data := b.gr.GetData(false)
 	for _, it := range data.Items.Inventory {
-		if it.ID == i.ID {
+		if it.UnitID == i.UnitID {
 			return false
 		}
 	}

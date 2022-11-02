@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 )
 
 type Nihlathak struct {
@@ -16,7 +17,7 @@ func (a Nihlathak) Name() string {
 
 func (a Nihlathak) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Halls of Pain)
-	actions = append(actions, a.builder.WayPoint(game.AreaHallsOfPain))
+	actions = append(actions, a.builder.WayPoint(area.HallsOfPain))
 
 	// Buff
 	actions = append(actions, a.char.Buff())
@@ -24,7 +25,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	// Travel to boss position
 	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
-			step.MoveToLevel(game.AreaHallsOfVaught),
+			step.MoveToLevel(area.HallsOfVaught),
 		}
 	}))
 
@@ -32,7 +33,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		for _, n := range data.PointsOfInterest {
 
-			// TODO: Temporary fix until MapAssist supports Nihlathak again.
+			// TODO: Fix this for memreading
 			if n.Name == "AreaNameNotFound" {
 				return []step.Step{step.MoveTo(n.Position.X, n.Position.Y, true)}
 			}

@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
@@ -11,7 +12,7 @@ import (
 
 func (b Builder) ReturnTown() *StaticAction {
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		if data.Area.IsTown() {
+		if data.PlayerUnit.Area.IsTown() {
 			return
 		}
 
@@ -41,8 +42,8 @@ func (b Builder) ReturnTown() *StaticAction {
 
 				return step.StatusInProgress
 			}),
-			step.InteractObject("TownPortal", func(data game.Data) bool {
-				return data.Area.IsTown()
+			step.InteractObject(object.TownPortal, func(data game.Data) bool {
+				return data.PlayerUnit.Area.IsTown()
 			}),
 		)
 		return

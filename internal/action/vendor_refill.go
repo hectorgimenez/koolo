@@ -11,10 +11,10 @@ func (b Builder) VendorRefill() *StaticAction {
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if b.shouldGoToVendor(data) {
 			steps = append(steps,
-				step.InteractNPC(town.GetTownByArea(data.Area).RefillNPC()),
+				step.InteractNPC(town.GetTownByArea(data.PlayerUnit.Area).RefillNPC()),
 				step.KeySequence("home", "down", "enter"),
 				step.SyncStep(func(data game.Data) error {
-					// Give some extra time to MapAssist in order to fetch all the data.
+					// Small delay to allow the vendor window popup
 					helper.Sleep(1000)
 
 					return nil

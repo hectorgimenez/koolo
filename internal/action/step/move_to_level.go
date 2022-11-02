@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -13,11 +14,11 @@ import (
 
 type MoveToAreaStep struct {
 	basicStep
-	area                  game.Area
+	area                  area.Area
 	waitingForInteraction bool
 }
 
-func MoveToLevel(area game.Area) *MoveToAreaStep {
+func MoveToLevel(area area.Area) *MoveToAreaStep {
 	return &MoveToAreaStep{
 		basicStep: newBasicStep(),
 		area:      area,
@@ -25,8 +26,9 @@ func MoveToLevel(area game.Area) *MoveToAreaStep {
 }
 
 func (m *MoveToAreaStep) Status(data game.Data) Status {
-	// Give some extra time to render the UI
-	if data.Area == m.area && time.Since(m.lastRun) > time.Second*1 {
+	// Give
+	//some extra time to render the UI
+	if data.PlayerUnit.Area == m.area && time.Since(m.lastRun) > time.Second*1 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -50,7 +52,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
 			distance := pather.DistanceFromPoint(data, l.Position.X, l.Position.Y)
-			if distance > 10 {
+			if distance > 13 {
 				path, _, found := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
 				if !found {
 					return errors.New("path could not be calculated, maybe there is an obstacle")

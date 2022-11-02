@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -17,25 +18,25 @@ const (
 	wpAreaBtnHeight = 49
 )
 
-func (b Builder) WayPoint(area game.Area) *StaticAction {
-	allowedAreas := map[game.Area][2]int{
-		game.AreaBlackMarsh:          {1, 5},
-		game.AreaCatacombsLevel2:     {1, 9},
-		game.AreaLostCity:            {2, 6},
-		game.AreaArcaneSanctuary:     {2, 8},
-		game.AreaDuranceOfHateLevel2: {3, 9},
-		game.AreaHarrogath:           {5, 1},
-		game.AreaHallsOfPain:         {5, 6},
-		game.AreaTravincal:           {3, 8},
+func (b Builder) WayPoint(a area.Area) *StaticAction {
+	allowedAreas := map[area.Area][2]int{
+		area.BlackMarsh:          {1, 5},
+		area.CatacombsLevel2:     {1, 9},
+		area.LostCity:            {2, 6},
+		area.ArcaneSanctuary:     {2, 8},
+		area.DuranceOfHateLevel2: {3, 9},
+		area.Harrogath:           {5, 1},
+		area.HallsOfPain:         {5, 6},
+		area.Travincal:           {3, 8},
 	}
 
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		// We don't need to move
-		if data.Area == area {
+		if data.PlayerUnit.Area == a {
 			return
 		}
 
-		wpCoords, found := allowedAreas[area]
+		wpCoords, found := allowedAreas[a]
 		if !found {
 			panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
 		}
@@ -61,8 +62,8 @@ func (b Builder) WayPoint(area game.Area) *StaticAction {
 						hid.Click(hid.LeftButton)
 
 						for i := 0; i < 10; i++ {
-							d, _ := game.Status()
-							if d.Area == area {
+							d := b.gr.GetData(false)
+							if d.PlayerUnit.Area == a {
 								// Give some time to load the area
 								time.Sleep(time.Second * 4)
 								return nil

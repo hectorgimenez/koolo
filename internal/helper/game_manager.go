@@ -3,11 +3,12 @@ package helper
 import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/difficulty"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/memory"
 )
 
-func ExitGame() error {
+func ExitGame(gr *memory.GameReader) error {
 	hid.PressKey("esc")
 	Sleep(50)
 	hid.PressKey("up")
@@ -19,12 +20,7 @@ func ExitGame() error {
 	hid.PressKey("enter")
 
 	for i := 0; i < 30; i++ {
-		d, err := game.Status()
-		if err != nil {
-			return err
-		}
-
-		if d.Area == "" {
+		if !gr.InGame() {
 			return nil
 		}
 		Sleep(1000)
@@ -34,13 +30,13 @@ func ExitGame() error {
 }
 
 // TODO: Make this coords dynamic
-func NewGame() error {
-	difficultyPosition := map[string]struct {
+func NewGame(gr *memory.GameReader) error {
+	difficultyPosition := map[difficulty.Difficulty]struct {
 		X, Y int
 	}{
-		"normal":    {X: 640, Y: 311},
-		"nightmare": {X: 640, Y: 355},
-		"hell":      {X: 640, Y: 403},
+		difficulty.Normal:    {X: 640, Y: 311},
+		difficulty.Nightmare: {X: 640, Y: 355},
+		difficulty.Hell:      {X: 640, Y: 403},
 	}
 
 	createX := difficultyPosition[config.Config.Game.Difficulty].X
@@ -53,12 +49,7 @@ func NewGame() error {
 	hid.Click(hid.LeftButton)
 
 	for i := 0; i < 30; i++ {
-		d, err := game.Status()
-		if err != nil {
-			return err
-		}
-
-		if d.Area != "" {
+		if gr.InGame() {
 			return nil
 		}
 		Sleep(1000)

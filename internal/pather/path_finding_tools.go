@@ -3,7 +3,7 @@ package pather
 import (
 	"fmt"
 	"github.com/beefsack/go-astar"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 	"image"
 	"image/color"
 	"image/draw"
@@ -183,7 +183,7 @@ func (w World) RenderPathImg(path []astar.Pather) {
 }
 
 // ParseWorld parses a textual representation of a world into a world map.
-func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, area game.Area) World {
+func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area) World {
 	w := World{}
 
 	for x, xValues := range collisionGrid {
@@ -191,7 +191,7 @@ func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, area game.Ar
 			kind := KindBlocker
 
 			// Hacky solution to avoid Arcane Sanctuary A* errors
-			if area == game.AreaArcaneSanctuary {
+			if ar == area.ArcaneSanctuary {
 				kind = KindSoftBlocker
 			}
 

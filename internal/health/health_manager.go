@@ -44,13 +44,11 @@ func NewHealthManager(logger *zap.Logger, beltManager BeltManager) Manager {
 func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	hpConfig := config.Config.Health
 	// Safe area, skipping
-	if d.Area.IsTown() {
+	if d.PlayerUnit.Area.IsTown() {
 		return nil
 	}
 
-	status := d.Health
-
-	if status.Life == 0 {
+	if d.PlayerUnit.HPPercent() <= 0 {
 		// After dying we need to press esc and wait the loading screen until we can exit game, it's a bit hacky but it works
 		helper.Sleep(1000)
 		hid.PressKey("esc")
@@ -60,7 +58,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	usedRejuv := false
-	if time.Since(hm.lastRejuv) > rejuvInterval && (status.HPPercent() <= hpConfig.RejuvPotionAtLife || status.MPPercent() < hpConfig.RejuvPotionAtMana) {
+	if time.Since(hm.lastRejuv) > rejuvInterval && (d.PlayerUnit.HPPercent() <= hpConfig.RejuvPotionAtLife || d.PlayerUnit.MPPercent() < hpConfig.RejuvPotionAtMana) {
 		usedRejuv = hm.beltManager.DrinkPotion(d, game.RejuvenationPotion, false)
 		if usedRejuv {
 			hm.lastRejuv = time.Now()
@@ -68,26 +66,26 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	if !usedRejuv {
-		if status.HPPercent() <= hpConfig.ChickenAt {
+		if d.PlayerUnit.HPPercent() <= hpConfig.ChickenAt {
 			stats.FinishCurrentRun(stats.EventChicken)
-			return fmt.Errorf("%w: Current Health: %d (%d percent)", ErrChicken, status.Life, status.HPPercent())
+			return fmt.Errorf("%w: Current Health: %d percent", ErrChicken, d.PlayerUnit.HPPercent())
 		}
 
-		if status.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
+		if d.PlayerUnit.HPPercent() <= hpConfig.HealingPotionAt && time.Since(hm.lastHeal) > healingInterval {
 			hm.beltManager.DrinkPotion(d, game.HealingPotion, false)
 			hm.lastHeal = time.Now()
 		}
 
-		if status.MPPercent() <= hpConfig.ManaPotionAt && time.Since(hm.lastMana) > manaInterval {
+		if d.PlayerUnit.MPPercent() <= hpConfig.ManaPotionAt && time.Since(hm.lastMana) > manaInterval {
 			hm.beltManager.DrinkPotion(d, game.ManaPotion, false)
 			hm.lastMana = time.Now()
 		}
 	}
 
 	// Mercenary
-	if status.Merc.Alive {
+	if d.MercHPPercent() <= 0 {
 		usedMercRejuv := false
-		if time.Since(hm.lastRejuvMerc) > rejuvInterval && status.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
+		if time.Since(hm.lastRejuvMerc) > rejuvInterval && d.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
 			usedMercRejuv = hm.beltManager.DrinkPotion(d, game.RejuvenationPotion, true)
 			if usedMercRejuv {
 				hm.lastRejuvMerc = time.Now()
@@ -95,12 +93,12 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 		}
 
 		if !usedMercRejuv {
-			if status.MercHPPercent() <= hpConfig.MercChickenAt {
+			if d.MercHPPercent() <= hpConfig.MercChickenAt {
 				stats.FinishCurrentRun(stats.EventMercChicken)
-				return fmt.Errorf("%w: Current Merc Health: %d (%d percent)", ErrMercChicken, status.Merc.Life, status.MercHPPercent())
+				return fmt.Errorf("%w: Current Merc Health: %d percent", ErrMercChicken, d.MercHPPercent())
 			}
 
-			if status.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {
+			if d.MercHPPercent() <= hpConfig.MercHealingPotionAt && time.Since(hm.lastMercHeal) > healingMercInterval {
 				hm.beltManager.DrinkPotion(d, game.HealingPotion, true)
 				hm.lastMercHeal = time.Now()
 			}

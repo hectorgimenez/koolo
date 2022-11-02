@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/game/difficulty"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -83,9 +84,9 @@ type StructConfig struct {
 		UseCTA        bool   `yaml:"useCTA"`
 	} `yaml:"character"`
 	Game struct {
-		Difficulty    string   `yaml:"difficulty"`
-		RandomizeRuns bool     `yaml:"randomizeRuns"`
-		Runs          []string `yaml:"runs"`
+		Difficulty    difficulty.Difficulty `yaml:"difficulty"`
+		RandomizeRuns bool                  `yaml:"randomizeRuns"`
+		Runs          []string              `yaml:"runs"`
 	} `yaml:"game"`
 	Runtime struct {
 		CastDuration time.Duration

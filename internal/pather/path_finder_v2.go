@@ -23,12 +23,14 @@ func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, d
 		return []astar.Pather{}, 0, true
 	}
 
-	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY, d.Area)
+	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY, d.PlayerUnit.Area)
 
 	p, distance, found := astar.Path(w.From(), w.To())
 
 	// Debug only, this will render a png file with map and origin/destination points
-	//w.RenderPathImg(p)
+	if distance > 0 {
+		//w.RenderPathImg(p)
+	}
 
 	return p, distance, found
 }

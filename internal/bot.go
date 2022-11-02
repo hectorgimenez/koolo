@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
@@ -19,22 +19,28 @@ type Bot struct {
 	logger *zap.Logger
 	hm     health.Manager
 	ab     action.Builder
+	gr     *memory.GameReader
 }
 
 func NewBot(
 	logger *zap.Logger,
 	hm health.Manager,
 	ab action.Builder,
+	gr *memory.GameReader,
 ) Bot {
 	return Bot{
 		logger: logger,
 		hm:     hm,
 		ab:     ab,
+		gr:     gr,
 	}
 }
 
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	gameStartedAt := time.Now()
+
+	// TODO: Warmup cache, find a better way to do this shit
+	b.gr.GetData(true)
 
 	for k, r := range runs {
 		stats.StartRun(r.Name())
@@ -66,10 +72,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			case <-ctx.Done():
 				return context.Canceled
 			default:
-				d, err := game.Status()
-				if err != nil {
-					return err
-				}
+				d := b.gr.GetData(false)
 
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
 					return err

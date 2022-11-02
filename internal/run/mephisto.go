@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 )
 
 const (
@@ -21,7 +22,7 @@ func (m Mephisto) Name() string {
 
 func (m Mephisto) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Durance of Hate Level 2)
-	actions = append(actions, m.builder.WayPoint(game.AreaDuranceOfHateLevel2))
+	actions = append(actions, m.builder.WayPoint(area.DuranceOfHateLevel2))
 
 	// Buff
 	actions = append(actions, m.char.Buff())
@@ -29,7 +30,7 @@ func (m Mephisto) BuildActions() (actions []action.Action) {
 	// Travel to boss position
 	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
-			step.MoveToLevel(game.AreaDuranceOfHateLevel3),
+			step.MoveToLevel(area.DuranceOfHateLevel3),
 			step.MoveTo(safeDistanceFromMephistoX, safeDistanceFromMephistoY, true),
 		}
 	}))

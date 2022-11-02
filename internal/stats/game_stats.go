@@ -72,7 +72,7 @@ func UsedPotion(potionType game.PotionType, onMerc bool) {
 }
 
 func ItemStashed(item game.Item, screenshot image.Image) {
-	if item.IsPotion() || strings.EqualFold(item.Name, "Gold") {
+	if item.IsPotion() || strings.EqualFold(string(item.Name), "Gold") {
 		return
 	}
 

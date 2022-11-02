@@ -5,11 +5,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"sort"
-	"strings"
 )
 
 const (
@@ -38,27 +38,27 @@ func (s Hammerdin) Buff() action.Action {
 }
 
 func (s Hammerdin) KillCountess() action.Action {
-	return s.killMonster(game.Countess)
+	return s.killMonster(npc.DarkStalker, game.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillAndariel() action.Action {
-	return s.killMonster(game.Andariel)
+	return s.killMonster(npc.Andariel, game.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillSummoner() action.Action {
-	return s.killMonster(game.Summoner)
+	return s.killMonster(npc.Summoner, game.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillPindle() action.Action {
-	return s.killMonster(game.Pindleskin)
+	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillMephisto() action.Action {
-	return s.killMonster(game.Mephisto)
+	return s.killMonster(npc.Mephisto, game.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillNihlathak() action.Action {
-	return s.killMonster(game.Nihlathak)
+	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) ClearAncientTunnels() action.Action {
@@ -82,7 +82,7 @@ func (s Hammerdin) ClearAncientTunnels() action.Action {
 			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 				steps = append(steps,
 					step.PrimaryAttack(
-						game.NPCID(m.Name),
+						m.Name,
 						8,
 						config.Config.Runtime.CastDuration,
 						step.Distance(2, 8),
@@ -100,10 +100,9 @@ func (s Hammerdin) KillCouncil() action.Action {
 		// Exclude monsters that are not council members
 		var councilMembers []game.Monster
 		for _, m := range data.Monsters {
-			if !strings.Contains(strings.ToLower(m.Name), "councilmember") {
-				continue
+			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
+				councilMembers = append(councilMembers, m)
 			}
-			councilMembers = append(councilMembers, m)
 		}
 
 		// Order council members by distance
@@ -118,7 +117,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 				steps = append(steps,
 					step.PrimaryAttack(
-						game.NPCID(m.Name),
+						m.Name,
 						8,
 						config.Config.Runtime.CastDuration,
 						step.Distance(2, 8),
@@ -131,7 +130,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 	}, action.CanBeSkipped())
 }
 
-func (s Hammerdin) killMonster(npc game.NPCID) action.Action {
+func (s Hammerdin) killMonster(npc npc.ID, t game.MonsterType) action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		helper.Sleep(100)
 		for i := 0; i < hammerdinMaxAttacksLoop; i++ {
@@ -142,6 +141,7 @@ func (s Hammerdin) killMonster(npc game.NPCID) action.Action {
 					config.Config.Runtime.CastDuration,
 					step.Distance(2, 8),
 					step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+					step.MonsterType(t),
 				),
 			)
 		}

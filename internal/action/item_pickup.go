@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"strings"
 )
 
@@ -79,8 +80,8 @@ func (b Builder) shouldBePickedUp(d game.Data, i game.Item) bool {
 	}
 
 	// Check if we should pickup gold, based on amount
-	if config.Pickit.PickupGold && strings.EqualFold(i.Name, "Gold") {
-		if i.Stats[game.StatGold] >= config.Pickit.MinimumGoldToPickup && d.PlayerUnit.Stats[game.StatGold] < d.PlayerUnit.MaxGold() {
+	if config.Pickit.PickupGold && strings.EqualFold(string(i.Name), "Gold") {
+		if i.Stats[stat.Gold] >= config.Pickit.MinimumGoldToPickup && d.PlayerUnit.Stats[stat.Gold] < d.PlayerUnit.MaxGold() {
 			return true
 		}
 	}

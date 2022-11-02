@@ -1,22 +1,23 @@
 package town
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
 )
 
 type Town interface {
-	RefillNPC() game.NPCID
-	RepairNPC() game.NPCID
-	MercContractorNPC() game.NPCID
+	RefillNPC() npc.ID
+	RepairNPC() npc.ID
+	MercContractorNPC() npc.ID
 }
 
-func GetTownByArea(area game.Area) Town {
-	towns := map[game.Area]Town{
-		game.AreaRogueEncampment: A1{},
-		game.AreaLutGholein:      A2{},
-		game.AreaKurastDocks:     A3{},
-		game.AreaHarrogath:       A5{},
+func GetTownByArea(a area.Area) Town {
+	towns := map[area.Area]Town{
+		area.RogueEncampment: A1{},
+		area.LutGholein:      A2{},
+		area.KurastDocks:     A3{},
+		area.Harrogath:       A5{},
 	}
 
-	return towns[area]
+	return towns[a]
 }

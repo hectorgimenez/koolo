@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type BeltManager struct {
@@ -27,12 +28,12 @@ func (pm BeltManager) DrinkPotion(data game.Data, potionType game.PotionType, me
 			hid.KeyDown("shift")
 			hid.PressKey(binding)
 			hid.KeyUp("shift")
-			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.Position.X+1, data.Health.MercHPPercent()))
+			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.X+1, data.MercHPPercent()))
 			stats.UsedPotion(potionType, true)
 			return true
 		}
 		hid.PressKey(binding)
-		pm.logger.Debug(fmt.Sprintf("Using %s potion [Column: %d]. HP: %d MP: %d", potionType, p.Position.X+1, data.Health.HPPercent(), data.Health.MPPercent()))
+		pm.logger.Debug(fmt.Sprintf("Using %s potion [Column: %d]. HP: %d MP: %d", potionType, p.X+1, data.PlayerUnit.HPPercent(), data.PlayerUnit.MPPercent()))
 		stats.UsedPotion(potionType, false)
 		return true
 	}
@@ -70,14 +71,16 @@ func (pm BeltManager) getCurrentPotions(data game.Data) (int, int, int) {
 	currentHealing := 0
 	currentMana := 0
 	currentRejuv := 0
-	for _, p := range data.Items.Belt.Potions {
-		if p.Type == game.HealingPotion {
+	for _, i := range data.Items.Belt {
+		if strings.Contains(string(i.Name), string(game.HealingPotion)) {
 			currentHealing++
+			continue
 		}
-		if p.Type == game.ManaPotion {
+		if strings.Contains(string(i.Name), string(game.ManaPotion)) {
 			currentMana++
+			continue
 		}
-		if p.Type == game.RejuvenationPotion {
+		if strings.Contains(string(i.Name), string(game.RejuvenationPotion)) {
 			currentRejuv++
 		}
 	}
@@ -115,8 +118,8 @@ func (pm BeltManager) GetMissingCount(data game.Data, potionType game.PotionType
 	return 0
 }
 
-func (pm BeltManager) getBindingBasedOnColumn(potion game.Potion) string {
-	switch potion.Position.X {
+func (pm BeltManager) getBindingBasedOnColumn(position game.Position) string {
+	switch position.X {
 	case 0:
 		return config.Config.Bindings.Potion1
 	case 1:

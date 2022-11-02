@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/lxn/win"
@@ -22,12 +23,14 @@ import (
 type Supervisor struct {
 	logger *zap.Logger
 	bot    Bot
+	gr     *memory.GameReader
 }
 
-func NewSupervisor(logger *zap.Logger, bot Bot) Supervisor {
+func NewSupervisor(logger *zap.Logger, bot Bot, gr *memory.GameReader) Supervisor {
 	return Supervisor{
 		logger: logger,
 		bot:    bot,
+		gr:     gr,
 	}
 }
 
@@ -44,7 +47,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		case <-ctx.Done():
 			return nil
 		default:
-			if err = helper.NewGame(); err != nil {
+			if err = helper.NewGame(s.gr); err != nil {
 				s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 				continue
 			}
@@ -64,7 +67,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 				stats.Events <- stats.EventWithScreenshot(errorMsg)
 				s.logger.Warn(errorMsg)
 			}
-			if exitErr := helper.ExitGame(); exitErr != nil {
+			if exitErr := helper.ExitGame(s.gr); exitErr != nil {
 				return fmt.Errorf("error exiting game: %s", exitErr)
 			}
 			firstRun = false

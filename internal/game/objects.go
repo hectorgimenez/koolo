@@ -1,23 +1,24 @@
 package game
 
-import "strings"
+import (
+	"github.com/hectorgimenez/koolo/internal/game/object"
+)
 
 type Object struct {
-	Name       string
-	IsHovered  bool
-	Selectable bool
-	Chest      bool
-	Position   Position
+	Name      object.Name
+	IsHovered bool
+	IsChest   bool
+	Position  Position
 }
 
 func (o Object) IsWaypoint() bool {
-	return strings.Contains(o.Name, "Waypoint")
+	return o.Name == object.WaypointPortal || o.Name == object.Act2Waypoint || o.Name == object.Act3TownWaypoint || o.Name == object.PandamoniumFortressWaypoint || o.Name == object.ExpansionWaypoint
 }
 
 func (o Object) IsPortal() bool {
-	return strings.Contains(o.Name, "TownPortal")
+	return o.Name == object.TownPortal
 }
 
 func (o Object) IsRedPortal() bool {
-	return o.Name == "PermanentTownPortal"
+	return o.Name == object.PermanentTownPortal
 }

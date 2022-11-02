@@ -3,6 +3,7 @@ package step
 import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -11,7 +12,7 @@ import (
 
 type AttackStep struct {
 	basicStep
-	target                game.NPCID
+	target                npc.ID
 	standStillBinding     string
 	numOfAttacksRemaining int
 	castDuration          time.Duration
@@ -22,6 +23,7 @@ type AttackStep struct {
 	moveToStep            *MoveToStep
 	auraKeyBinding        string
 	forceApplyKeyBinding  bool
+	monsterType           game.MonsterType
 }
 
 type AttackOption func(step *AttackStep)
@@ -40,13 +42,20 @@ func EnsureAura(keyBinding string) AttackOption {
 	}
 }
 
-func PrimaryAttack(target game.NPCID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+func MonsterType(monsterType game.MonsterType) AttackOption {
+	return func(step *AttackStep) {
+		step.monsterType = monsterType
+	}
+}
+
+func PrimaryAttack(target npc.ID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		castDuration:          castDuration,
+		monsterType:           game.MonsterTypeNone,
 	}
 
 	for _, o := range opts {
@@ -55,7 +64,7 @@ func PrimaryAttack(target game.NPCID, numOfAttacks int, castDuration time.Durati
 	return s
 }
 
-func SecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(keyBinding string, target npc.ID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
@@ -63,6 +72,7 @@ func SecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, cas
 		numOfAttacksRemaining: numOfAttacks,
 		castDuration:          castDuration,
 		keyBinding:            keyBinding,
+		monsterType:           game.MonsterTypeNone,
 	}
 	for _, o := range opts {
 		o(s)
@@ -71,7 +81,7 @@ func SecondaryAttack(keyBinding string, target game.NPCID, numOfAttacks int, cas
 }
 
 func (p *AttackStep) Status(data game.Data) Status {
-	_, found := data.Monsters.FindOne(p.target)
+	_, found := data.Monsters.FindOne(p.target, p.monsterType)
 	// Give 2 secs before continuing, ensuring the items have been dropped before start the pickup process
 	if !found {
 		if time.Since(p.lastRun) > time.Second*2 {
@@ -87,7 +97,7 @@ func (p *AttackStep) Status(data game.Data) Status {
 }
 
 func (p *AttackStep) Run(data game.Data) error {
-	monster, found := data.Monsters.FindOne(p.target)
+	monster, found := data.Monsters.FindOne(p.target, p.monsterType)
 	if !found {
 		// Monster is dead, let's skip the attack sequence
 		return nil

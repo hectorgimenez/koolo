@@ -35,7 +35,7 @@ func (p *PickupItemStep) Status(data game.Data) Status {
 	}
 
 	for _, i := range data.Items.Ground {
-		if i.ID == p.item.ID {
+		if i.UnitID == p.item.UnitID {
 			return p.status
 		}
 	}
@@ -68,7 +68,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 
 	p.lastRun = time.Now()
 	for _, i := range data.Items.Ground {
-		if i.ID == p.item.ID {
+		if i.UnitID == p.item.UnitID {
 			if i.IsHovered {
 				hid.Click(hid.LeftButton)
 				p.waitingForInteraction = true

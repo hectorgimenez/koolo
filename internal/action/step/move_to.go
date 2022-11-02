@@ -5,6 +5,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
@@ -42,6 +43,13 @@ func (m *MoveToStep) Run(data game.Data) error {
 	}
 	m.tryTransitionStatus(StatusInProgress)
 
+	// Throttle movement clicks in town
+	if data.PlayerUnit.Area.IsTown() {
+		if time.Since(m.lastRun) < helper.RandomDurationMs(300, 600) {
+			return nil
+		}
+	}
+
 	if m.teleport && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
@@ -49,7 +57,7 @@ func (m *MoveToStep) Run(data game.Data) error {
 	if m.path == nil || !m.adjustPath(data) {
 		path, _, found := pather.GetPathToDestination(data, m.toX, m.toY)
 		if !found {
-			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+			return errors.New("path chould not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
 		m.path = path
 	}

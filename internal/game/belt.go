@@ -1,28 +1,24 @@
 package game
 
+import "strings"
+
 const (
-	HealingPotion      PotionType = "healing"
-	ManaPotion         PotionType = "mana"
-	RejuvenationPotion PotionType = "rejuvenation"
+	HealingPotion      PotionType = "HealingPotion"
+	ManaPotion         PotionType = "ManaPotion"
+	RejuvenationPotion PotionType = "RejuvenationPotion"
 )
 
-type Belt struct {
-	Potions []Potion
-}
+type Belt []Item
 
-func (b Belt) GetFirstPotion(potionType PotionType) (Potion, bool) {
-	for _, p := range b.Potions {
+func (b Belt) GetFirstPotion(potionType PotionType) (Position, bool) {
+	for _, i := range b {
 		// Ensure potion is in row 0 and one of the four columns
-		if p.Type == potionType && p.Position.Y == 0 && (p.Position.X == 0 || p.Position.X == 1 || p.Position.X == 2 || p.Position.X == 3) {
-			return p, true
+		if strings.Contains(string(i.Name), string(potionType)) && i.Position.Y == 0 && (i.Position.X == 0 || i.Position.X == 1 || i.Position.X == 2 || i.Position.X == 3) {
+			return i.Position, true
 		}
 	}
 
-	return Potion{}, false
+	return Position{}, false
 }
 
 type PotionType string
-type Potion struct {
-	Item
-	Type PotionType
-}

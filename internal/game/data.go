@@ -1,35 +1,12 @@
 package game
 
+import (
+	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
+)
+
 const (
 	goldPerLevel = 10000
-
-	// Towns
-	AreaRogueEncampment Area = "RogueEncampment"
-	AreaLutGholein      Area = "LutGholein"
-	AreaKurastDocks     Area = "KurastDocks"
-	AreaPandemonium     Area = "ThePandemoniumFortress"
-	AreaHarrogath       Area = "Harrogath"
-
-	AreaCatacombsLevel2     Area = "CatacombsLevel2"
-	AreaCatacombsLevel3     Area = "CatacombsLevel3"
-	AreaCatacombsLevel4     Area = "CatacombsLevel4"
-	AreaNihlathaksTemple    Area = "NihlathaksTemple"
-	AreaDuranceOfHateLevel1 Area = "DuranceOfHateLevel1"
-	AreaDuranceOfHateLevel2 Area = "DuranceOfHateLevel2"
-	AreaDuranceOfHateLevel3 Area = "DuranceOfHateLevel3"
-	AreaBlackMarsh          Area = "BlackMarsh"
-	AreaLostCity            Area = "LostCity"
-	AreaAncientTunnels      Area = "AncientTunnels"
-	AreaForgottenTower      Area = "ForgottenTower"
-	AreaTowerCellarLevel1   Area = "TowerCellarLevel1"
-	AreaTowerCellarLevel2   Area = "TowerCellarLevel2"
-	AreaTowerCellarLevel3   Area = "TowerCellarLevel3"
-	AreaTowerCellarLevel4   Area = "TowerCellarLevel4"
-	AreaTowerCellarLevel5   Area = "TowerCellarLevel5"
-	AreaArcaneSanctuary     Area = "ArcaneSanctuary"
-	AreaHallsOfPain         Area = "HallsOfPain"
-	AreaHallsOfVaught       Area = "HallsOfVaught"
-	AreaTravincal           Area = "Travincal"
 
 	// Classes
 	ClassSorceress Class = "Sorceress"
@@ -41,14 +18,14 @@ const (
 	ResistCold = "Cold"
 
 	// Monster Types
-	MonsterTypeChampion MonsterType = "Champion"
-	MonsterTypeMinion   MonsterType = "Minion"
-	MonsterTypeUnique   MonsterType = "Unique"
+	MonsterTypeNone        MonsterType = "None"
+	MonsterTypeChampion    MonsterType = "Champion"
+	MonsterTypeMinion      MonsterType = "Minion"
+	MonsterTypeUnique      MonsterType = "Unique"
+	MonsterTypeSuperUnique MonsterType = "SuperUnique"
 )
 
 type Data struct {
-	Health           Health
-	Area             Area
 	AreaOrigin       Position
 	Corpse           Corpse
 	Monsters         Monsters
@@ -62,36 +39,27 @@ type Data struct {
 	OpenMenus        OpenMenus
 }
 
-type Area string
+func (d Data) MercHPPercent() int {
+	for _, m := range d.Monsters {
+		if m.IsMerc() {
+			return int((float64(m.Stats[stat.Life]) / float64(m.Stats[stat.MaxLife])) * 100)
+		}
+	}
+
+	return 0
+}
 
 type Level struct {
-	Area     Area
+	Area     area.Area
 	Position Position
 }
 
-func (a Area) IsTown() bool {
-	switch a {
-	case AreaRogueEncampment, AreaLutGholein, AreaKurastDocks, AreaPandemonium, AreaHarrogath:
-		return true
-	}
-
-	return false
-}
-
 type Class string
-type MonsterType string
 
 type Corpse struct {
 	Found     bool
 	IsHovered bool
 	Position  Position
-}
-type Monster struct {
-	Name       string
-	IsHovered  bool
-	Position   Position
-	Immunities []Resist
-	Type       MonsterType
 }
 
 type Position struct {
@@ -101,21 +69,23 @@ type Position struct {
 
 type Skill string
 type PlayerUnit struct {
-	Name      string
-	IsHovered bool
-	Position  Position
-	Stats     map[Stat]int
-	Skills    map[Skill]int
-	Class     Class
+	Name     string
+	Area     area.Area
+	Position Position
+	Stats    map[stat.Stat]int
+	Skills   map[Skill]int
 }
 
 func (pu PlayerUnit) MaxGold() int {
-	return goldPerLevel * pu.Stats[StatLevel]
+	return goldPerLevel * pu.Stats[stat.Level]
 }
 
-type NPC struct {
-	Name      string
-	Positions []Position
+func (pu PlayerUnit) HPPercent() int {
+	return int((float64(pu.Stats[stat.Life]) / float64(pu.Stats[stat.MaxLife])) * 100)
+}
+
+func (pu PlayerUnit) MPPercent() int {
+	return int((float64(pu.Stats[stat.Mana]) / float64(pu.Stats[stat.MaxMana])) * 100)
 }
 
 type PointOfInterest struct {
@@ -124,9 +94,10 @@ type PointOfInterest struct {
 }
 
 type OpenMenus struct {
-	Inventory   bool
-	NPCInteract bool
-	NPCShop     bool
-	Stash       bool
-	Waypoint    bool
+	Inventory     bool
+	LoadingScreen bool
+	NPCInteract   bool
+	NPCShop       bool
+	Stash         bool
+	Waypoint      bool
 }

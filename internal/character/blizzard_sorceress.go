@@ -5,11 +5,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"sort"
-	"strings"
 	"time"
 )
 
@@ -40,27 +40,27 @@ func (s BlizzardSorceress) Buff() action.Action {
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
-	return s.killMonster(game.Countess, 20, true)
+	return s.killMonster(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, true)
 }
 
 func (s BlizzardSorceress) KillAndariel() action.Action {
-	return s.killMonster(game.Andariel, 20, false)
+	return s.killMonster(npc.Andariel, game.MonsterTypeNone, 20, false)
 }
 
 func (s BlizzardSorceress) KillSummoner() action.Action {
-	return s.killMonster(game.Summoner, 10, false)
+	return s.killMonster(npc.Summoner, game.MonsterTypeNone, 10, false)
 }
 
 func (s BlizzardSorceress) KillPindle() action.Action {
-	return s.killMonster(game.Pindleskin, 30, false)
+	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique, 30, false)
 }
 
 func (s BlizzardSorceress) KillMephisto() action.Action {
-	return s.killMonster(game.Mephisto, 20, true)
+	return s.killMonster(npc.Mephisto, game.MonsterTypeNone, 20, true)
 }
 
 func (s BlizzardSorceress) KillNihlathak() action.Action {
-	return s.killMonster(game.Nihlathak, 20, false)
+	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false)
 }
 
 func (s BlizzardSorceress) ClearAncientTunnels() action.Action {
@@ -74,13 +74,12 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 		var councilMembers []game.Monster
 		var coldImmunes []game.Monster
 		for _, m := range data.Monsters {
-			if !strings.Contains(strings.ToLower(m.Name), "councilmember") {
-				continue
-			}
-			if m.IsImmune(game.ResistCold) {
-				coldImmunes = append(coldImmunes, m)
-			} else {
-				councilMembers = append(councilMembers, m)
+			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
+				if m.IsImmune(game.ResistCold) {
+					coldImmunes = append(coldImmunes, m)
+				} else {
+					councilMembers = append(councilMembers, m)
+				}
 			}
 		}
 
@@ -97,27 +96,27 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 		for _, m := range councilMembers {
 			if toggleSeconday {
 				toggleSeconday = false
-				return step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, game.NPCID(m.Name), 1, time.Second, step.Distance(0, 30)), true
+				return step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.Name, 1, time.Second, step.Distance(0, 30)), true
 			}
 
 			toggleSeconday = true
-			return step.PrimaryAttack(game.NPCID(m.Name), 4, config.Config.Runtime.CastDuration, step.Distance(0, 30)), true
+			return step.PrimaryAttack(m.Name, 4, config.Config.Runtime.CastDuration, step.Distance(0, 30)), true
 		}
 
 		return nil, false
 	}, action.CanBeSkipped())
 }
 
-func (s BlizzardSorceress) killMonster(npc game.NPCID, maxDistance int, useStaticField bool) action.Action {
+func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistance int, useStaticField bool) action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		if useStaticField {
-			steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15)))
+			steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15), step.MonsterType(t)))
 		}
 
 		for i := 0; i < sorceressMaxAttacksLoop; i++ {
 			steps = append(steps,
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance)),
-				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, maxDistance)),
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
+				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
 			)
 			if i == 1 {
 				steps = append(steps,

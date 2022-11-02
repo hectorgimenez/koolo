@@ -1,45 +1,37 @@
 package game
 
-import "strings"
-
-const (
-	// A1 Town NPCs
-	AkaraNPC  NPCID = "Akara"
-	KashyaNPC NPCID = "Kashya"
-	CharsiNPC NPCID = "Charsi"
-
-	// A2 Town NPCs
-	DrognanNPC NPCID = "Drognan"
-	FaraNPC    NPCID = "Fara"
-	GreizNPC   NPCID = "Greiz"
-
-	// A3 Town NPCs
-	OrmusNPC   NPCID = "Ormus"
-	AshearaNPC NPCID = "Asheara"
-	HratliNPC  NPCID = "HratliNPC"
-
-	// A5 Town NPCs
-	MalahNPC    NPCID = "Malah"
-	LarzukNPC   NPCID = "Larzuk"
-	QualKehkNPC NPCID = "Qual-Kehk"
-	CainNPC     NPCID = "DeckardCain"
-
-	// Monsters
-	Countess   NPCID = "The Countess"
-	Andariel   NPCID = "Andariel"
-	Pindleskin NPCID = "Pindleskin"
-	Mephisto   NPCID = "Mephisto"
-	Summoner   NPCID = "Summoner"
-	Nihlathak  NPCID = "Nihlathak"
+import (
+	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"strings"
 )
 
-type NPCID string
 type Resist string
+
+type NPC struct {
+	Name      string
+	Positions []Position
+}
+
+type MonsterType string
+
+type Monster struct {
+	Name      npc.ID
+	IsHovered bool
+	Position  Position
+	Stats     map[stat.Stat]int
+	Type      MonsterType
+}
 
 type Monsters []Monster
 type NPCs []NPC
 
-func (n NPCs) FindOne(npcid NPCID) (NPC, bool) {
+const (
+	ColdImmune Resist = "ColdImmune"
+	FireImmune Resist = "FireImmune"
+)
+
+func (n NPCs) FindOne(npcid npc.ID) (NPC, bool) {
 	for _, npc := range n {
 		if strings.EqualFold(npc.Name, string(npcid)) {
 			return npc, true
@@ -49,10 +41,12 @@ func (n NPCs) FindOne(npcid NPCID) (NPC, bool) {
 	return NPC{}, false
 }
 
-func (m Monsters) FindOne(npcid NPCID) (Monster, bool) {
+func (m Monsters) FindOne(id npc.ID, t MonsterType) (Monster, bool) {
 	for _, monster := range m {
-		if strings.EqualFold(monster.Name, string(npcid)) {
-			return monster, true
+		if monster.Name == id {
+			if t == MonsterTypeNone || t == monster.Type {
+				return monster, true
+			}
 		}
 	}
 
@@ -60,10 +54,21 @@ func (m Monsters) FindOne(npcid NPCID) (Monster, bool) {
 }
 
 func (m Monster) IsImmune(resist Resist) bool {
-	for _, i := range m.Immunities {
-		if strings.EqualFold(string(i), string(resist)) {
+	for st, value := range m.Stats {
+		// We only want max resistance
+		if value < 100 {
+			continue
+		}
+		if resist == ColdImmune && st == stat.ColdResist {
 			return true
 		}
+	}
+	return false
+}
+
+func (m Monster) IsMerc() bool {
+	if m.Name == npc.Guard {
+		return true
 	}
 
 	return false

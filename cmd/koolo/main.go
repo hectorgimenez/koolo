@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/hectorgimenez/koolo/api"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/remote"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/stats"
@@ -34,7 +34,6 @@ func main() {
 	defer logger.Sync()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ma := api.NewMapAssistClient(logger)
 	controller := remote.New(config.Config.Controller.Port)
 
 	ch := make(chan os.Signal, 1)
@@ -44,17 +43,18 @@ func main() {
 		logger.Info("Shutting down...")
 		signal.Stop(ch)
 		cancel()
-		ma.Stop()
 		if config.Config.Controller.Webserver {
 			controller.Stop(ctx)
 		}
 	}()
 	g, ctx := errgroup.WithContext(ctx)
 
-	err = ma.StartAndConfigure(ctx)
+	process, err := memory.NewProcess()
 	if err != nil {
-		logger.Fatal("error starting MapAssist", zap.Error(err))
+		panic(err)
 	}
+
+	gr := memory.NewGameReader(process)
 
 	bm := health.NewBeltManager(logger)
 	hm := health.NewHealthManager(logger, bm)
@@ -64,9 +64,9 @@ func main() {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 
-	ab := action.NewBuilder(logger, sm, bm)
-	bot := koolo.NewBot(logger, hm, ab)
-	supervisor := koolo.NewSupervisor(logger, bot)
+	ab := action.NewBuilder(logger, sm, bm, gr)
+	bot := koolo.NewBot(logger, hm, ab, gr)
+	supervisor := koolo.NewSupervisor(logger, bot, gr)
 
 	g.Go(func() error {
 		return supervisor.Start(ctx, run.BuildRuns(ab, char))

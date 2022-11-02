@@ -4,6 +4,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/object"
 )
 
 const (
@@ -24,14 +26,14 @@ func (p Pindleskin) Name() string {
 
 func (p Pindleskin) BuildActions() (actions []action.Action) {
 	// Move to Act 5
-	actions = append(actions, p.builder.WayPoint(game.AreaHarrogath))
+	actions = append(actions, p.builder.WayPoint(area.Harrogath))
 
 	// Moving to starting point
 	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
-			step.InteractObject("PermanentTownPortal", func(data game.Data) bool {
-				return data.Area == game.AreaNihlathaksTemple
+			step.InteractObject(object.PermanentTownPortal, func(data game.Data) bool {
+				return data.PlayerUnit.Area == area.NihlathaksTemple
 			}),
 		}
 	}))

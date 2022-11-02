@@ -3,6 +3,7 @@ package step
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -11,23 +12,23 @@ import (
 
 type InteractObjectStep struct {
 	pathingStep
-	objectName            string
+	objectName            object.Name
 	waitingForInteraction bool
 	isCompleted           func(game.Data) bool
 	mouseOverAttempts     int
 }
 
-func InteractObject(objectName string, isCompleted func(game.Data) bool) *InteractObjectStep {
+func InteractObject(name object.Name, isCompleted func(game.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
 		pathingStep: newPathingStep(),
-		objectName:  objectName,
+		objectName:  name,
 		isCompleted: isCompleted,
 	}
 }
 
 func (i *InteractObjectStep) Status(data game.Data) Status {
 	// Give some extra time to render the UI
-	if i.isCompleted(data) && time.Since(i.lastRun) > time.Second*1 {
+	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted(data) {
 		return i.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -35,6 +36,11 @@ func (i *InteractObjectStep) Status(data game.Data) Status {
 }
 
 func (i *InteractObjectStep) Run(data game.Data) error {
+	// Throttle movement clicks
+	if time.Since(i.lastRun) < helper.RandomDurationMs(300, 600) {
+		return nil
+	}
+
 	if i.mouseOverAttempts > maxInteractions {
 		return fmt.Errorf("object %s could not be interacted", i.objectName)
 	}
@@ -44,10 +50,6 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 	}
 
 	i.tryTransitionStatus(StatusInProgress)
-	// Throttle movement clicks
-	if time.Since(i.lastRun) < time.Millisecond*350 {
-		return nil
-	}
 
 	// Give some time before retrying the interaction
 	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*3 {

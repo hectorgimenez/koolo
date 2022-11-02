@@ -2,6 +2,8 @@ package game
 
 import (
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game/item"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"math/rand"
 	"strings"
 	"time"
@@ -16,27 +18,15 @@ const (
 	ItemSuperManaPotion    = "SuperManaPotion"
 	ItemGrandCharm         = "GrandCharm"
 
-	ItemQualityNormal   Quality = "NORMAL"
-	ItemQualitySuperior Quality = "SUPERIOR"
-	ItemQualityMagic    Quality = "MAGIC"
-	ItemQualitySet      Quality = "SET"
-	ItemQualityRare     Quality = "RARE"
-	ItemQualityUnique   Quality = "UNIQUE"
-
-	StatQuantity       Stat = "Quantity"
-	StatGold           Stat = "Gold"
-	StatLevel          Stat = "Level"
-	StatStashGold      Stat = "StashGold"
-	StatDurability     Stat = "Durability"
-	StatMaxDurability  Stat = "MaxDurability"
-	StatNumSockets     Stat = "NumSockets"
-	StatFasterCastRate Stat = "FasterCastRate"
-	StatEnhancedDamage Stat = "EnhancedDamage"
-	StatDefense        Stat = "Defense"
+	ItemQualityNormal   Quality = 0x02
+	ItemQualitySuperior Quality = 0x03
+	ItemQualityMagic    Quality = 0x04
+	ItemQualitySet      Quality = 0x05
+	ItemQualityRare     Quality = 0x06
+	ItemQualityUnique   Quality = 0x07
 )
 
-type Stat string
-type Quality string
+type Quality int
 
 type Items struct {
 	Belt      Belt
@@ -46,22 +36,23 @@ type Items struct {
 }
 
 type Inventory []Item
+type UnitID int
 
 type Item struct {
-	ID         int
-	Name       string
+	UnitID
+	Name       item.Name
 	Quality    Quality
 	Position   Position
 	Ethereal   bool
 	IsHovered  bool
-	Stats      map[Stat]int
+	Stats      map[stat.Stat]int
 	Identified bool
-	Vendor     NPCID
+	IsVendor   bool
 }
 
 func (i Item) PickupPass(checkStats bool) bool {
 	for _, ip := range config.Pickit.Items {
-		if !strings.EqualFold(i.Name, ip.Name) {
+		if !strings.EqualFold(string(i.Name), ip.Name) {
 			continue
 		}
 
@@ -83,7 +74,7 @@ func (i Item) PickupPass(checkStats bool) bool {
 		if len(ip.Sockets) > 0 {
 			found := false
 			for _, s := range ip.Sockets {
-				if s == i.Stats[StatNumSockets] {
+				if s == i.Stats[stat.NumSockets] {
 					found = true
 					break
 				}
@@ -103,9 +94,10 @@ func (i Item) PickupPass(checkStats bool) bool {
 		}
 
 		// Check for item stats, socket number skipped, already checked properly
-		for stat, value := range i.Stats {
+		for s, value := range i.Stats {
 			for pickitStat, pickitValue := range ip.Stats {
-				if pickitStat != string(StatNumSockets) && strings.EqualFold(string(stat), pickitStat) {
+				// TODO: Fix this
+				if pickitStat != string(stat.NumSockets) && strings.EqualFold(string(s), pickitStat) {
 					if value < pickitValue {
 						continue
 					}
@@ -124,14 +116,14 @@ func (i Item) IsPotion() bool {
 }
 
 func (i Item) IsHealingPotion() bool {
-	return strings.Contains(strings.ToLower(i.Name), "healingpotion")
+	return strings.Contains(string(i.Name), string(HealingPotion))
 }
 
 func (i Item) IsManaPotion() bool {
-	return strings.Contains(strings.ToLower(i.Name), "manapotion")
+	return strings.Contains(string(i.Name), string(ManaPotion))
 }
 func (i Item) IsRejuvPotion() bool {
-	return strings.Contains(strings.ToLower(i.Name), "rejuvenationpotion")
+	return strings.Contains(string(i.Name), string(RejuvenationPotion))
 }
 
 func (i Inventory) ShouldBuyTPs() bool {
@@ -140,7 +132,7 @@ func (i Inventory) ShouldBuyTPs() bool {
 			continue
 		}
 
-		qty, found := it.Stats[StatQuantity]
+		qty, found := it.Stats[stat.Quantity]
 		rand.Seed(time.Now().UnixNano())
 		if qty <= rand.Intn(5-1)+1 || !found {
 			return true
@@ -155,7 +147,7 @@ func (i Inventory) ShouldBuyIDs() bool {
 			continue
 		}
 
-		qty, found := it.Stats[StatQuantity]
+		qty, found := it.Stats[stat.Quantity]
 		rand.Seed(time.Now().UnixNano())
 		if qty <= rand.Intn(7-3)+1 || !found {
 			return true
