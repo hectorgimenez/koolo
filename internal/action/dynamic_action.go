@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"go.uber.org/zap"
+	"reflect"
 )
 
 type DynamicAction struct {
@@ -24,7 +26,7 @@ func BuildDynamic(stepBuilder func(data game.Data) (step.Step, bool), opts ...Op
 	return a
 }
 
-func (a *DynamicAction) NextStep(data game.Data) error {
+func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}
@@ -45,7 +47,12 @@ func (a *DynamicAction) NextStep(data game.Data) error {
 	}
 
 	if a.currentStep.Status(data) != step.StatusCompleted {
+		logger.Debug("Running step", zap.String("step_name", reflect.TypeOf(a.currentStep).Elem().Name()))
+		lastRun := a.currentStep.LastRun()
 		err := a.currentStep.Run(data)
+		if a.currentStep.LastRun().After(lastRun) {
+			//logger.Debug("Executed step", zap.String("step_name", reflect.TypeOf(a.currentStep).Elem().Name()))
+		}
 		if err != nil {
 			a.retries++
 		}

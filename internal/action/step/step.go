@@ -16,6 +16,7 @@ type Step interface {
 	Status(game.Data) Status
 	Run(game.Data) error
 	Reset()
+	LastRun() time.Time
 }
 
 type basicStep struct {
@@ -27,6 +28,10 @@ func newBasicStep() basicStep {
 	return basicStep{
 		status: StatusNotStarted,
 	}
+}
+
+func (bs *basicStep) LastRun() time.Time {
+	return bs.lastRun
 }
 
 func (bs *basicStep) tryTransitionStatus(to Status) Status {

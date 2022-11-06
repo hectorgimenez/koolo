@@ -25,7 +25,7 @@ func (b Builder) ReturnTown() *StaticAction {
 				}
 
 				hid.PressKey(config.Config.Bindings.TP)
-				helper.Sleep(50)
+				helper.Sleep(400)
 				hid.Click(hid.RightButton)
 				lastRun = time.Now()
 				return nil
@@ -43,6 +43,8 @@ func (b Builder) ReturnTown() *StaticAction {
 				return step.StatusInProgress
 			}),
 			step.InteractObject(object.TownPortal, func(data game.Data) bool {
+				// This sleep prevents the action to exhaust the attempts because sometimes fetching status is too fast.
+				helper.Sleep(1000)
 				return data.PlayerUnit.Area.IsTown()
 			}),
 		)

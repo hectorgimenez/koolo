@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
+	"github.com/hectorgimenez/koolo/internal/game/object"
 	"image"
 	"image/color"
 	"image/draw"
@@ -106,9 +107,10 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 	return cg
 }
 
-func (md MapData) NPCsAndExits(areaOrigin game.Position, a area.Area) (game.NPCs, []game.Level) {
+func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (game.NPCs, []game.Level, []game.Object) {
 	var npcs []game.NPC
 	var exits []game.Level
+	var objects []game.Object
 
 	level := md.getLevel(a)
 
@@ -132,10 +134,19 @@ func (md MapData) NPCsAndExits(areaOrigin game.Position, a area.Area) (game.NPCs
 				},
 			}
 			exits = append(exits, lvl)
+		case "object":
+			o := game.Object{
+				Name: object.Name(obj.ID),
+				Position: game.Position{
+					X: obj.X + areaOrigin.X,
+					Y: obj.Y + areaOrigin.Y,
+				},
+			}
+			objects = append(objects, o)
 		}
 	}
 
-	return npcs, exits
+	return npcs, exits, objects
 }
 
 func (md MapData) Origin(area area.Area) game.Position {

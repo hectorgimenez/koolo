@@ -3,6 +3,7 @@ package action
 import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"go.uber.org/zap"
 )
 
 const maxRetries = 5
@@ -13,7 +14,7 @@ var ErrCanBeSkipped = errors.New("error occurred, but this action is not critica
 var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
 
 type Action interface {
-	NextStep(data game.Data) error
+	NextStep(logger *zap.Logger, data game.Data) error
 	Skip()
 }
 

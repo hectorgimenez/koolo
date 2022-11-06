@@ -2,8 +2,8 @@ package memory
 
 import (
 	"encoding/binary"
-	"fmt"
 	"github.com/winlabs/gowin32"
+	"go.uber.org/zap"
 	"golang.org/x/sys/windows"
 	"unsafe"
 )
@@ -16,9 +16,10 @@ type Process struct {
 	moduleBaseAddress    unsafe.Pointer
 	moduleBaseAddressPtr uintptr
 	moduleBaseSize       uint
+	logger               *zap.Logger
 }
 
-func NewProcess() (Process, error) {
+func NewProcess(logger *zap.Logger) (Process, error) {
 	module, err := getGameModule()
 	if err != nil {
 		return Process{}, err
@@ -35,6 +36,7 @@ func NewProcess() (Process, error) {
 		moduleBaseAddress:    unsafe.Pointer(module.ModuleBaseAddress),
 		moduleBaseAddressPtr: uintptr(unsafe.Pointer(module.ModuleBaseAddress)),
 		moduleBaseSize:       module.ModuleBaseSize,
+		logger:               logger,
 	}, nil
 }
 
@@ -75,7 +77,7 @@ func (p Process) getProcessMemory() []byte {
 	var data = make([]byte, p.moduleBaseSize)
 	err := windows.ReadProcessMemory(p.handler, uintptr(p.moduleBaseAddress), &data[0], uintptr(p.moduleBaseSize), nil)
 	if err != nil {
-		fmt.Printf("err: %s", err.Error())
+		p.logger.Debug("Error reading memory position", zap.Error(err))
 	}
 
 	return data
@@ -85,7 +87,7 @@ func (p Process) ReadBytesFromMemory(address uintptr, size uint) []byte {
 	var data = make([]byte, size)
 	err := windows.ReadProcessMemory(p.handler, address, &data[0], uintptr(size), nil)
 	if err != nil {
-		fmt.Printf("err: %s", err.Error())
+		p.logger.Debug("Error reading memory position", zap.Error(err))
 	}
 
 	return data
@@ -93,10 +95,12 @@ func (p Process) ReadBytesFromMemory(address uintptr, size uint) []byte {
 
 type IntType uint
 
-const IntTypeUInt8 = 1
-const IntTypeUInt16 = 2
-const IntTypeUInt32 = 4
-const IntTypeUInt64 = 8
+const (
+	IntTypeUInt8  = 1
+	IntTypeUInt16 = 2
+	IntTypeUInt32 = 4
+	IntTypeUInt64 = 8
+)
 
 func (p Process) ReadUInt(address uintptr, size IntType) uint {
 	bytes := p.ReadBytesFromMemory(address, uint(size))
@@ -135,24 +139,6 @@ func (p Process) ReadStringFromMemory(address uintptr, size uint) string {
 
 	return string(p.ReadBytesFromMemory(address, size))
 }
-
-//func (p Process) ReadBytesFromMemoryTimes(baseAddress uintptr, size uint, count int) []byte {
-//	var data []byte
-//	for i := 0; i < count; i++ {
-//		address := baseAddress + uintptr(int(size)*i)
-//		bytes := p.ReadBytesFromMemory(address, size)
-//		data = append(data, bytes...)
-//	}
-//
-//	return data
-//}
-
-//func (p Process) bytesToStruct(bytes []byte, v interface{}) error {
-//	r := binstruct.NewReaderFromBytes(bytes, binary.LittleEndian, true)
-//	d := binstruct.NewDecoder(r, binary.LittleEndian)
-//
-//	return d.Decode(v)
-//}
 
 func (p Process) findPattern(memory []byte, pattern, mask string) int {
 	patternLength := len(pattern)

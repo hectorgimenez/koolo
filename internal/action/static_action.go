@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"go.uber.org/zap"
 )
 
 type StaticAction struct {
@@ -25,7 +26,7 @@ func BuildStatic(builder func(data game.Data) []step.Step, opts ...Option) *Stat
 	return a
 }
 
-func (a *StaticAction) NextStep(data game.Data) error {
+func (a *StaticAction) NextStep(logger *zap.Logger, data game.Data) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}
@@ -44,7 +45,11 @@ func (a *StaticAction) NextStep(data game.Data) error {
 
 	for _, s := range a.Steps {
 		if s.Status(data) != step.StatusCompleted {
+			lastRun := s.LastRun()
 			err := s.Run(data)
+			if s.LastRun().After(lastRun) {
+				//logger.Debug("Executed step", zap.String("step_name", reflect.TypeOf(s).Elem().Name()))
+			}
 			if err != nil {
 				a.retries++
 				a.resetSteps()

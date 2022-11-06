@@ -33,7 +33,21 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	pu := gd.GetPlayerUnit(gd.cachedPlayerUnit)
 
 	origin := gd.cachedMapData.Origin(pu.Area)
-	npcs, exits := gd.cachedMapData.NPCsAndExits(origin, pu.Area)
+	npcs, exits, objects := gd.cachedMapData.NPCsExitsAndObjects(origin, pu.Area)
+
+	// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
+	memObjects := gd.Objects()
+	for _, clientObject := range objects {
+		found := false
+		for _, obj := range memObjects {
+			if obj.Name == clientObject.Name {
+				found = true
+			}
+		}
+		if !found {
+			memObjects = append(memObjects, clientObject)
+		}
+	}
 
 	return game.Data{
 		AreaOrigin:     origin,
@@ -43,7 +57,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 		PlayerUnit:     pu,
 		NPCs:           npcs,
 		Items:          gd.Items(),
-		Objects:        gd.Objects(),
+		Objects:        memObjects,
 		AdjacentLevels: exits,
 		OpenMenus:      gd.openMenus(),
 	}

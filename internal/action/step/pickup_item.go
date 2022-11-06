@@ -40,6 +40,8 @@ func (p *PickupItemStep) Status(data game.Data) Status {
 		}
 	}
 
+	p.logger.Info(fmt.Sprintf("Item picked up: %s [%s]", p.item.Name, p.item.Quality))
+
 	return p.tryTransitionStatus(StatusCompleted)
 }
 
@@ -49,11 +51,11 @@ func (p *PickupItemStep) Run(data game.Data) error {
 	}
 
 	if p.status == StatusNotStarted {
-		p.logger.Info(fmt.Sprintf("Picking up: %s [%s]", p.item.Name, p.item.Quality))
+		p.logger.Debug(fmt.Sprintf("Picking up: %s [%s]", p.item.Name, p.item.Quality))
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) < time.Millisecond*200 {
+	if time.Since(p.lastRun) < helper.RandomDurationMs(300, 978) {
 		return nil
 	}
 

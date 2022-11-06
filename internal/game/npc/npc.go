@@ -521,7 +521,7 @@ const (
 	QualKehk                 ID = 515
 	CatapultSpotterS         ID = 516
 	CatapultSpotterE         ID = 517
-	CatapultSpotterSiegeName    = 518
+	CatapultSpotterSiegeName ID = 518
 	CatapultSpotterW         ID = 519
 	DeckardCain6             ID = 520
 	Tyrael3                  ID = 521

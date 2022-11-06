@@ -49,7 +49,7 @@ func main() {
 	}()
 	g, ctx := errgroup.WithContext(ctx)
 
-	process, err := memory.NewProcess()
+	process, err := memory.NewProcess(logger)
 	if err != nil {
 		panic(err)
 	}

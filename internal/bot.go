@@ -40,7 +40,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	gameStartedAt := time.Now()
 
 	// TODO: Warmup cache, find a better way to do this shit
+	b.logger.Debug("Fetching map data...")
 	b.gr.GetData(true)
+	b.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(gameStartedAt).Milliseconds()))
 
 	for k, r := range runs {
 		stats.StartRun(r.Name())
@@ -82,11 +84,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				for k, act := range actions {
-					err := act.NextStep(d)
+					err := act.NextStep(b.logger, d)
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
-							stats.FinishCurrentRun(stats.EventKill)
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
+							stats.FinishCurrentRun(stats.EventKill)
 							running = false
 						}
 						continue
