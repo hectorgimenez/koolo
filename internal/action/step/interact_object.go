@@ -36,6 +36,10 @@ func (i *InteractObjectStep) Status(data game.Data) Status {
 }
 
 func (i *InteractObjectStep) Run(data game.Data) error {
+	if i.isCompleted(data) {
+		return nil
+	}
+
 	// Throttle movement clicks
 	if time.Since(i.lastRun) < helper.RandomDurationMs(300, 600) {
 		return nil
@@ -74,7 +78,7 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 						return nil
 					}
 					i.consecutivePathNotFound = 0
-					pather.MoveThroughPath(path, 12, false)
+					pather.MoveThroughPath(path, helper.RandRng(7, 17), false)
 					i.lastRun = time.Now()
 					return nil
 				}

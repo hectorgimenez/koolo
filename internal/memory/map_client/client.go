@@ -102,7 +102,7 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 		cg = append(cg, row)
 	}
 
-	renderCG(cg)
+	//renderCG(cg)
 
 	return cg
 }

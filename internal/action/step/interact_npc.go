@@ -73,7 +73,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 			return nil
 		}
 		i.consecutivePathNotFound = 0
-		pather.MoveThroughPath(path, 12, false)
+		pather.MoveThroughPath(path, helper.RandRng(7, 17), false)
 		return nil
 	}
 	x, y = pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, x, y)

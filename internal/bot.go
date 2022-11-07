@@ -69,11 +69,17 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		}
 
 		running := true
+		loopTime := time.Now()
 		for running {
 			select {
 			case <-ctx.Done():
 				return context.Canceled
 			default:
+				// Throttle loop a bit, don't need to waste CPU
+				if time.Since(loopTime) < time.Millisecond*30 {
+					time.Sleep(time.Millisecond*30 - time.Since(loopTime))
+				}
+
 				d := b.gr.GetData(false)
 
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
@@ -85,6 +91,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				for k, act := range actions {
 					err := act.NextStep(b.logger, d)
+					loopTime = time.Now()
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
