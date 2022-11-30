@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -49,7 +50,7 @@ func (s Hammerdin) KillSummoner() action.Action {
 	return s.killMonster(npc.Summoner, game.MonsterTypeNone)
 }
 
-func (s Hammerdin) KillPindle() action.Action {
+func (s Hammerdin) KillPindle(_ []stat.Resist) action.Action {
 	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique)
 }
 

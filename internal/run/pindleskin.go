@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/object"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 )
 
 const (
@@ -17,6 +18,7 @@ const (
 )
 
 type Pindleskin struct {
+	SkipOnImmunities []stat.Resist
 	baseRun
 }
 
@@ -49,6 +51,6 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	}))
 
 	// Kill Pindleskin
-	actions = append(actions, p.char.KillPindle())
+	actions = append(actions, p.char.KillPindle(p.SkipOnImmunities))
 	return
 }

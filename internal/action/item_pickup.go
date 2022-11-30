@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"strings"
 )
@@ -70,9 +71,9 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 
 func (b Builder) shouldBePickedUp(d game.Data, i game.Item) bool {
 	// Exclude Gheed if we are already have one
-	if i.Name == game.ItemGrandCharm && i.Quality == game.ItemQualityUnique {
+	if i.Name == game.ItemGrandCharm && i.Quality == item.ItemQualityUnique {
 		for _, invItem := range d.Items.Inventory {
-			if invItem.Name == game.ItemGrandCharm && invItem.Quality == game.ItemQualityUnique {
+			if invItem.Name == game.ItemGrandCharm && invItem.Quality == item.ItemQualityUnique {
 				b.logger.Warn("Gheed's Fortune dropped, but you already have one in the inventory, skipping.")
 				return false
 			}

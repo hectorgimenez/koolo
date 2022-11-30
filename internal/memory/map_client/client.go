@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/game/object"
 	"image"
 	"image/color"
@@ -117,14 +118,15 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (ga
 	for _, obj := range level.Objects {
 		switch obj.Type {
 		case "npc":
-			npc := game.NPC{
+			n := game.NPC{
+				ID:   npc.ID(obj.ID),
 				Name: obj.Name,
 				Positions: []game.Position{{
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				}},
 			}
-			npcs = append(npcs, npc)
+			npcs = append(npcs, n)
 		case "exit":
 			lvl := game.Level{
 				Area: area.Area(obj.ID),

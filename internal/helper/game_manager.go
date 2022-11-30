@@ -10,13 +10,10 @@ import (
 
 func ExitGame(gr *memory.GameReader) error {
 	hid.PressKey("esc")
-	Sleep(50)
+	Sleep(10)
 	hid.PressKey("up")
-	Sleep(20)
 	hid.PressKey("up")
-	Sleep(20)
 	hid.PressKey("down")
-	Sleep(20)
 	hid.PressKey("enter")
 
 	for i := 0; i < 30; i++ {

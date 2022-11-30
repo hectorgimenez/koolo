@@ -14,9 +14,6 @@ const (
 	// Skills
 	SkillBattleOrders Skill = "BattleOrders"
 
-	// Resistances
-	ResistCold = "Cold"
-
 	// Monster Types
 	MonsterTypeNone        MonsterType = "None"
 	MonsterTypeChampion    MonsterType = "Champion"
@@ -42,7 +39,14 @@ type Data struct {
 func (d Data) MercHPPercent() int {
 	for _, m := range d.Monsters {
 		if m.IsMerc() {
-			return int((float64(m.Stats[stat.Life]) / float64(m.Stats[stat.MaxLife])) * 100)
+			// Hacky thing to read merc life properly
+			maxLife := m.Stats[stat.MaxLife] >> 8
+			life := float64(m.Stats[stat.Life] >> 8)
+			if m.Stats[stat.Life] <= 32768 {
+				life = float64(m.Stats[stat.Life]) / 32768.0 * float64(maxLife)
+			}
+
+			return int(life / float64(maxLife) * 100)
 		}
 	}
 

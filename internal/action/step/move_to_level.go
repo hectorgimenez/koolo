@@ -44,7 +44,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 		return nil
 	}
 
-	if m.waitingForInteraction && time.Since(m.lastRun) < time.Second*3 {
+	if m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1 {
 		return nil
 	}
 

@@ -17,16 +17,7 @@ const (
 	ItemSuperHealingPotion = "SuperHealingPotion"
 	ItemSuperManaPotion    = "SuperManaPotion"
 	ItemGrandCharm         = "GrandCharm"
-
-	ItemQualityNormal   Quality = 0x02
-	ItemQualitySuperior Quality = 0x03
-	ItemQualityMagic    Quality = 0x04
-	ItemQualitySet      Quality = 0x05
-	ItemQualityRare     Quality = 0x06
-	ItemQualityUnique   Quality = 0x07
 )
-
-type Quality int
 
 type Items struct {
 	Belt      Belt
@@ -41,7 +32,7 @@ type UnitID int
 type Item struct {
 	UnitID
 	Name       item.Name
-	Quality    Quality
+	Quality    item.Quality
 	Position   Position
 	Ethereal   bool
 	IsHovered  bool
@@ -60,7 +51,7 @@ func (i Item) PickupPass(checkStats bool) bool {
 		if len(ip.Quality) > 0 {
 			found := false
 			for _, q := range ip.Quality {
-				if strings.EqualFold(q, string(i.Quality)) {
+				if q == i.Quality {
 					found = true
 					break
 				}
@@ -89,15 +80,14 @@ func (i Item) PickupPass(checkStats bool) bool {
 		}
 
 		// Skip checking stats, for example when item is not identified we don't have them
-		if !checkStats {
-			return true
-		}
+		//if !checkStats {
+		//	return true
+		//}
 
 		// Check for item stats, socket number skipped, already checked properly
 		for s, value := range i.Stats {
 			for pickitStat, pickitValue := range ip.Stats {
-				// TODO: Fix this
-				if pickitStat != string(stat.NumSockets) && strings.EqualFold(string(s), pickitStat) {
+				if pickitStat != "sockets" && strings.EqualFold(s.String(), pickitStat) {
 					if value < pickitValue {
 						continue
 					}
@@ -143,7 +133,7 @@ func (i Inventory) ShouldBuyTPs() bool {
 
 func (i Inventory) ShouldBuyIDs() bool {
 	for _, it := range i {
-		if it.Name != ItemTomeOfTownPortal {
+		if it.Name != ItemTomeOfIdentify {
 			continue
 		}
 

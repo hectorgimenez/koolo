@@ -83,7 +83,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	// Mercenary
-	if d.MercHPPercent() <= 0 {
+	if d.MercHPPercent() > 0 {
 		usedMercRejuv := false
 		if time.Since(hm.lastRejuvMerc) > rejuvInterval && d.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
 			usedMercRejuv = hm.beltManager.DrinkPotion(d, game.RejuvenationPotion, true)

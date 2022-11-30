@@ -3,12 +3,10 @@ package game
 import (
 	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
-	"strings"
 )
 
-type Resist string
-
 type NPC struct {
+	ID        npc.ID
 	Name      string
 	Positions []Position
 }
@@ -26,15 +24,10 @@ type Monster struct {
 type Monsters []Monster
 type NPCs []NPC
 
-const (
-	ColdImmune Resist = "ColdImmune"
-	FireImmune Resist = "FireImmune"
-)
-
 func (n NPCs) FindOne(npcid npc.ID) (NPC, bool) {
-	for _, npc := range n {
-		if strings.EqualFold(npc.Name, string(npcid)) {
-			return npc, true
+	for _, np := range n {
+		if np.ID == npcid {
+			return np, true
 		}
 	}
 
@@ -53,13 +46,13 @@ func (m Monsters) FindOne(id npc.ID, t MonsterType) (Monster, bool) {
 	return Monster{}, false
 }
 
-func (m Monster) IsImmune(resist Resist) bool {
+func (m Monster) IsImmune(resist stat.Resist) bool {
 	for st, value := range m.Stats {
 		// We only want max resistance
 		if value < 100 {
 			continue
 		}
-		if resist == ColdImmune && st == stat.ColdResist {
+		if resist == stat.ColdImmune && st == stat.ColdResist {
 			return true
 		}
 	}

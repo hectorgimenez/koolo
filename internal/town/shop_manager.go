@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
 	"strings"
-	"time"
 )
 
 const (
@@ -96,10 +95,10 @@ func (sm ShopManager) buyItem(i game.Item, quantity int) {
 	x, y := sm.getScreenCordinatesForItem(i)
 
 	hid.MovePointer(x, y)
-	time.Sleep(time.Millisecond * 250)
+	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
 		hid.Click(hid.RightButton)
-		time.Sleep(time.Millisecond * 500)
+		helper.Sleep(500)
 		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
 }

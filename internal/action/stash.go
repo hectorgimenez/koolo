@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -26,6 +27,14 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 		}
 
 		b.logger.Info("Stashing items...")
+
+		switch data.PlayerUnit.Area {
+		case area.KurastDocks:
+			steps = append(steps, step.MoveTo(5146, 5067, false))
+		case area.LutGholein:
+			steps = append(steps, step.MoveTo(5130, 5086, false))
+		}
+
 		steps = append(steps,
 			step.InteractObject(object.Bank, func(data game.Data) bool {
 				return data.OpenMenus.Stash

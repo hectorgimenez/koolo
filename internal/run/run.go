@@ -37,7 +37,10 @@ func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
 		case "council":
 			runs = append(runs, Council{baseRun})
 		case "pindleskin":
-			runs = append(runs, Pindleskin{baseRun})
+			runs = append(runs, Pindleskin{
+				SkipOnImmunities: config.Config.Game.Pindleskin.SkipOnImmunities,
+				baseRun:          baseRun,
+			})
 		case "nihlathak":
 			runs = append(runs, Nihlathak{baseRun})
 		case "ancient_tunnels":

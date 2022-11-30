@@ -21,6 +21,9 @@ func (b Builder) VendorRefill() *StaticAction {
 				}),
 				step.SyncStep(func(data game.Data) error {
 					b.sm.BuyConsumables(data)
+					return nil
+				}),
+				step.SyncStep(func(data game.Data) error {
 					b.sm.SellJunk(data)
 					return nil
 				}),

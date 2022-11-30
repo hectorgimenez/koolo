@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -51,7 +52,7 @@ func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
 
 func (b Builder) itemsToIdentify(data game.Data) (items []game.Item) {
 	for _, i := range data.Items.Inventory {
-		if i.Identified || i.Quality == game.ItemQualityNormal || i.Quality == game.ItemQualitySuperior {
+		if i.Identified || i.Quality == item.ItemQualityNormal || i.Quality == item.ItemQualitySuperior {
 			continue
 		}
 

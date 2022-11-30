@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,6 +28,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
+
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
 
 	logger, err := zapLogger.NewLogger(config.Config.Debug, config.Config.LogFilePath)
 	if err != nil {
@@ -51,7 +57,7 @@ func main() {
 
 	process, err := memory.NewProcess(logger)
 	if err != nil {
-		panic(err)
+		logger.Fatal("Error finding D2R.exe process", zap.Error(err))
 	}
 
 	gr := memory.NewGameReader(process)
@@ -59,7 +65,7 @@ func main() {
 	bm := health.NewBeltManager(logger)
 	hm := health.NewHealthManager(logger, bm)
 	sm := town.NewShopManager(logger, bm)
-	char, err := character.BuildCharacter()
+	char, err := character.BuildCharacter(logger)
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}

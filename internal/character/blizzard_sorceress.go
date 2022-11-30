@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -40,27 +41,27 @@ func (s BlizzardSorceress) Buff() action.Action {
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
-	return s.killMonster(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, true)
+	return s.killMonster(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, true, nil)
 }
 
 func (s BlizzardSorceress) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, game.MonsterTypeNone, 20, false)
+	return s.killMonster(npc.Andariel, game.MonsterTypeNone, 20, false, nil)
 }
 
 func (s BlizzardSorceress) KillSummoner() action.Action {
-	return s.killMonster(npc.Summoner, game.MonsterTypeNone, 10, false)
+	return s.killMonster(npc.Summoner, game.MonsterTypeNone, 10, false, nil)
 }
 
-func (s BlizzardSorceress) KillPindle() action.Action {
-	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique, 30, false)
+func (s BlizzardSorceress) KillPindle(skipOnImmunities []stat.Resist) action.Action {
+	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique, 30, false, skipOnImmunities)
 }
 
 func (s BlizzardSorceress) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, game.MonsterTypeNone, 20, true)
+	return s.killMonster(npc.Mephisto, game.MonsterTypeNone, 20, true, nil)
 }
 
 func (s BlizzardSorceress) KillNihlathak() action.Action {
-	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false)
+	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false, nil)
 }
 
 func (s BlizzardSorceress) ClearAncientTunnels() action.Action {
@@ -75,7 +76,7 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 		var coldImmunes []game.Monster
 		for _, m := range data.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				if m.IsImmune(game.ResistCold) {
+				if m.IsImmune(stat.ColdImmune) {
 					coldImmunes = append(coldImmunes, m)
 				} else {
 					councilMembers = append(councilMembers, m)
@@ -107,8 +108,12 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 	}, action.CanBeSkipped())
 }
 
-func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistance int, useStaticField bool) action.Action {
+func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
+		if !s.preBattleChecks(data, npc, t, skipOnImmunities) {
+			return
+		}
+
 		if useStaticField {
 			steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15), step.MonsterType(t)))
 		}

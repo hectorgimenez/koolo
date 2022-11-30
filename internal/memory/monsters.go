@@ -97,8 +97,7 @@ func (gd *GameReader) getMonsterStats(statCount uint, statPtr uintptr) map[stat.
 			offset := uint(i * 8)
 			statEnum := ReadUIntFromBuffer(statBuffer, offset, IntTypeUInt16)
 			statValue := ReadUIntFromBuffer(statBuffer, offset+0x2, IntTypeUInt32)
-			stat, value := getStatData(statEnum, statValue)
-			stats[stat] = value
+			stats[stat.Stat(statEnum)] = int(statValue)
 		}
 	}
 
@@ -118,6 +117,7 @@ func (gd *GameReader) shouldBeIgnored(txtNo uint) bool {
 		196, //Act2Female
 		197, //Act2Child
 		179, //Cow
+
 		185, //Camel
 		203, //Act2Guard
 		204, //Act2Vendor

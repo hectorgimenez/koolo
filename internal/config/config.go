@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
+	"github.com/hectorgimenez/koolo/internal/game/item"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -87,6 +89,9 @@ type StructConfig struct {
 		Difficulty    difficulty.Difficulty `yaml:"difficulty"`
 		RandomizeRuns bool                  `yaml:"randomizeRuns"`
 		Runs          []string              `yaml:"runs"`
+		Pindleskin    struct {
+			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
+		} `yaml:"pindleskin"`
 	} `yaml:"game"`
 	Runtime struct {
 		CastDuration time.Duration
@@ -101,7 +106,7 @@ type StructPickit struct {
 
 type ItemPickit struct {
 	Name     string
-	Quality  []string
+	Quality  []item.Quality
 	Sockets  []int
 	Ethereal *bool
 	Stats    map[string]int
@@ -148,8 +153,8 @@ func Load() error {
 
 func parsePickitItems(items []interface{}) []ItemPickit {
 	var itemsToPickit []ItemPickit
-	for _, item := range items {
-		for name, props := range item.(map[interface{}]interface{}) {
+	for _, it := range items {
+		for name, props := range it.(map[interface{}]interface{}) {
 			ip := ItemPickit{
 				Name:  name.(string),
 				Stats: map[string]int{},
@@ -171,10 +176,10 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 					case "quality":
 						v, ok := statValue.(string)
 						if ok {
-							ip.Quality = []string{v}
+							ip.Quality = []item.Quality{qualityToEnum(v)}
 						} else {
 							for _, val := range statValue.([]interface{}) {
-								ip.Quality = append(ip.Quality, val.(string))
+								ip.Quality = append(ip.Quality, qualityToEnum(val.(string)))
 							}
 						}
 					case "ethereal":
@@ -190,4 +195,23 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 	}
 
 	return itemsToPickit
+}
+
+func qualityToEnum(quality string) item.Quality {
+	switch quality {
+	case "normal":
+		return item.ItemQualityNormal
+	case "magic":
+		return item.ItemQualityMagic
+	case "rare":
+		return item.ItemQualityRare
+	case "unique":
+		return item.ItemQualityUnique
+	case "set":
+		return item.ItemQualitySet
+	case "superior":
+		return item.ItemQualitySuperior
+	}
+
+	return item.ItemQualityNormal
 }

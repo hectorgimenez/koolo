@@ -5,8 +5,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"time"
 )
 
 const (
@@ -54,21 +54,21 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 						areaBtnX := int(float32(hid.GameAreaSizeX) / wpListStartX)
 						areaBtnY := int(float32(hid.GameAreaSizeY)/wpListStartY) + (wpCoords[1]-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
 						hid.MovePointer(actTabX, actTabY)
-						time.Sleep(time.Millisecond * 200)
+						helper.Sleep(200)
 						hid.Click(hid.LeftButton)
-						time.Sleep(time.Millisecond * 200)
+						helper.Sleep(200)
 						hid.MovePointer(areaBtnX, areaBtnY)
-						time.Sleep(time.Millisecond * 200)
+						helper.Sleep(200)
 						hid.Click(hid.LeftButton)
 
 						for i := 0; i < 10; i++ {
 							d := b.gr.GetData(false)
 							if d.PlayerUnit.Area == a {
 								// Give some time to load the area
-								time.Sleep(time.Second * 4)
+								helper.Sleep(4000)
 								return nil
 							}
-							time.Sleep(time.Second * 1)
+							helper.Sleep(1000)
 						}
 
 						return errors.New("error changing area zone")

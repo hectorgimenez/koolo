@@ -6,8 +6,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"go.uber.org/zap"
 	"strings"
 )
 
@@ -17,14 +20,16 @@ type Character interface {
 	KillAndariel() action.Action
 	KillSummoner() action.Action
 	KillMephisto() action.Action
-	KillPindle() action.Action
+	KillPindle(skipOnImmunities []stat.Resist) action.Action
 	KillNihlathak() action.Action
 	KillCouncil() action.Action
 	ClearAncientTunnels() action.Action
 }
 
-func BuildCharacter() (Character, error) {
-	bc := BaseCharacter{}
+func BuildCharacter(logger *zap.Logger) (Character, error) {
+	bc := BaseCharacter{
+		logger: logger,
+	}
 	switch strings.ToLower(config.Config.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
@@ -36,6 +41,7 @@ func BuildCharacter() (Character, error) {
 }
 
 type BaseCharacter struct {
+	logger *zap.Logger
 }
 
 func (bc BaseCharacter) buffCTA() (steps []step.Step) {
@@ -68,4 +74,19 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	}
 
 	return
+}
+
+func (bc BaseCharacter) preBattleChecks(data game.Data, npc npc.ID, t game.MonsterType, skipOnImmunities []stat.Resist) bool {
+	monster, found := data.Monsters.FindOne(npc, t)
+	if !found {
+		return false
+	}
+	for _, i := range skipOnImmunities {
+		if monster.IsImmune(i) {
+			bc.logger.Info("Monster is immune! skipping", zap.String("immuneTo", string(i)))
+			return false
+		}
+	}
+
+	return true
 }

@@ -18,7 +18,11 @@ func main() {
 	gd := memory.NewGameReader(process)
 
 	start := time.Now()
-	d := gd.GetData(true)
-	fmt.Println(d)
+	for true {
+		d := gd.GetData(true)
+		fmt.Println(d.MercHPPercent())
+		time.Sleep(time.Second)
+	}
+
 	fmt.Printf("Read time: %dms\n", time.Since(start).Milliseconds())
 }

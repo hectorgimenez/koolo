@@ -26,6 +26,7 @@ func (gd *GameReader) Items() game.Items {
 			itemLoc := ReadUIntFromBuffer(itemDataBuffer, 0x0C, IntTypeUInt32)
 
 			if itemType != 4 {
+				itemUnitPtr = uintptr(gd.process.ReadUInt(itemUnitPtr+0x150, IntTypeUInt64))
 				continue
 			}
 
@@ -61,7 +62,7 @@ func (gd *GameReader) Items() game.Items {
 			itm := game.Item{
 				UnitID:  game.UnitID(unitID),
 				Name:    name,
-				Quality: game.Quality(itemQuality),
+				Quality: item.Quality(itemQuality),
 				Position: game.Position{
 					X: int(itemX),
 					Y: int(itemY),
@@ -73,10 +74,10 @@ func (gd *GameReader) Items() game.Items {
 
 			switch itemLoc {
 			case 0:
-				if invPage == 0 {
-					items.Inventory = append(items.Inventory, itm)
-				} else if itm.IsVendor {
+				if itm.IsVendor {
 					items.Shop = append(items.Shop, itm)
+				} else if invPage == 0 {
+					items.Inventory = append(items.Inventory, itm)
 				}
 			case 2:
 				items.Belt = append(items.Belt, itm)
