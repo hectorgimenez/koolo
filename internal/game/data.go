@@ -2,17 +2,12 @@ package game
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 )
 
 const (
 	goldPerLevel = 10000
-
-	// Classes
-	ClassSorceress Class = "Sorceress"
-
-	// Skills
-	SkillBattleOrders Skill = "BattleOrders"
 
 	// Monster Types
 	MonsterTypeNone        MonsterType = "None"
@@ -71,13 +66,12 @@ type Position struct {
 	Y int
 }
 
-type Skill string
 type PlayerUnit struct {
 	Name     string
 	Area     area.Area
 	Position Position
 	Stats    map[stat.Stat]int
-	Skills   map[Skill]int
+	Skills   map[skill.Skill]int
 }
 
 func (pu PlayerUnit) MaxGold() int {

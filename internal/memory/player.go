@@ -3,9 +3,12 @@ package memory
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"golang.org/x/sys/windows"
 )
+
+var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 
 func (gd *GameReader) getPlayerUnitPtr() uintptr {
 	for i := 1; i < 128; i++ {
@@ -65,6 +68,9 @@ func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 		}
 	}
 
+	// Skills
+	skills := gd.getSkills(playerUnit + 0x100)
+
 	// Level number
 	pathPtr := uintptr(gd.process.ReadUInt(playerUnit+0x38, IntTypeUInt64))
 	room1Ptr := uintptr(gd.process.ReadUInt(pathPtr+0x20, IntTypeUInt64))
@@ -80,7 +86,7 @@ func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 			Y: int(yPos),
 		},
 		Stats:  stats,
-		Skills: nil,
+		Skills: skills,
 	}
 }
 
@@ -92,8 +98,7 @@ func (gd *GameReader) getMapSeed(playerUnit uintptr) (uintptr, error) {
 	dwInitSeedHash2 := uintptr(gd.process.ReadUInt(actMiscPtr+0x844, IntTypeUInt32))
 	dwEndSeedHash1 := uintptr(gd.process.ReadUInt(actMiscPtr+0x868, IntTypeUInt32))
 
-	dll := windows.MustLoadDLL("rustdecrypt.dll")
-	p, err := dll.FindProc("get_seed")
+	p, err := dllSeed.FindProc("get_seed")
 	if err != nil {
 		return 0, err
 	}
@@ -104,4 +109,23 @@ func (gd *GameReader) getMapSeed(playerUnit uintptr) (uintptr, error) {
 	}
 
 	return mapSeed, nil
+}
+
+func (gd *GameReader) getSkills(skillsPtr uintptr) map[skill.Skill]int {
+	skills := make(map[skill.Skill]int)
+	skillListPtr := uintptr(gd.process.ReadUInt(skillsPtr, IntTypeUInt64))
+
+	skillPtr := uintptr(gd.process.ReadUInt(skillListPtr, IntTypeUInt64))
+
+	for skillPtr != 0 {
+		skillTxtPtr := uintptr(gd.process.ReadUInt(skillPtr, IntTypeUInt64))
+		skillTxt := uintptr(gd.process.ReadUInt(skillTxtPtr, IntTypeUInt16))
+		skillLvl := gd.process.ReadUInt(skillTxtPtr+0x34, IntTypeUInt16)
+
+		skills[skill.Skill(skillTxt)] = int(skillLvl)
+
+		skillPtr = uintptr(gd.process.ReadUInt(skillPtr+0x08, IntTypeUInt64))
+	}
+
+	return skills
 }

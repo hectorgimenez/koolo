@@ -3,6 +3,7 @@ package step
 import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -25,7 +26,7 @@ func (s *SwapWeaponStep) Status(data game.Data) Status {
 		return StatusNotStarted
 	}
 
-	_, found := data.PlayerUnit.Skills[game.SkillBattleOrders]
+	_, found := data.PlayerUnit.Skills[skill.BattleOrders]
 	if found && s.initialWeaponWasCTA || !found && !s.initialWeaponWasCTA {
 		return s.tryTransitionStatus(StatusInProgress)
 	}
@@ -40,7 +41,7 @@ func (s *SwapWeaponStep) Run(data game.Data) error {
 	}
 
 	s.tryTransitionStatus(StatusInProgress)
-	_, found := data.PlayerUnit.Skills[game.SkillBattleOrders]
+	_, found := data.PlayerUnit.Skills[skill.BattleOrders]
 	if found {
 		s.initialWeaponWasCTA = true
 	}
