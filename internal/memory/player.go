@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"github.com/hectorgimenez/koolo/internal/game/state"
 	"golang.org/x/sys/windows"
 )
 
@@ -68,6 +69,9 @@ func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 		}
 	}
 
+	// States (Buff, Debuff, Auras)
+	states := gd.getStates(statsListExPtr)
+
 	// Skills
 	skills := gd.getSkills(playerUnit + 0x100)
 
@@ -87,6 +91,7 @@ func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 		},
 		Stats:  stats,
 		Skills: skills,
+		States: states,
 	}
 }
 
@@ -128,4 +133,119 @@ func (gd *GameReader) getSkills(skillsPtr uintptr) map[skill.Skill]int {
 	}
 
 	return skills
+}
+
+func (gd *GameReader) getStates(statsListExPtr uintptr) []state.State {
+	var states []state.State
+	for i := 0; i < 6; i++ {
+		offset := i * 4
+		stateByte := gd.process.ReadUInt(statsListExPtr+0xAD0+uintptr(offset), IntTypeUInt32)
+
+		offset = (32 * i) - 1
+		states = append(states, calculateStates(stateByte, uint(offset))...)
+	}
+
+	return states
+}
+
+func calculateStates(stateFlag uint, offset uint) []state.State {
+	var states []state.State
+	if 0x00000001&stateFlag != 0 {
+		states = append(states, state.State(1+offset))
+	}
+	if 0x00000002&stateFlag != 0 {
+		states = append(states, state.State(2+offset))
+	}
+	if 0x00000004&stateFlag != 0 {
+		states = append(states, state.State(3+offset))
+	}
+	if 0x00000008&stateFlag != 0 {
+		states = append(states, state.State(4+offset))
+	}
+	if 0x00000010&stateFlag != 0 {
+		states = append(states, state.State(5+offset))
+	}
+	if 0x00000020&stateFlag != 0 {
+		states = append(states, state.State(6+offset))
+	}
+	if 0x00000040&stateFlag != 0 {
+		states = append(states, state.State(7+offset))
+	}
+	if 0x00000080&stateFlag != 0 {
+		states = append(states, state.State(8+offset))
+	}
+	if 0x00000100&stateFlag != 0 {
+		states = append(states, state.State(9+offset))
+	}
+	if 0x00000200&stateFlag != 0 {
+		states = append(states, state.State(10+offset))
+	}
+	if 0x00000400&stateFlag != 0 {
+		states = append(states, state.State(11+offset))
+	}
+	if 0x00000800&stateFlag != 0 {
+		states = append(states, state.State(12+offset))
+	}
+	if 0x00001000&stateFlag != 0 {
+		states = append(states, state.State(13+offset))
+	}
+	if 0x00002000&stateFlag != 0 {
+		states = append(states, state.State(14+offset))
+	}
+	if 0x00004000&stateFlag != 0 {
+		states = append(states, state.State(15+offset))
+	}
+	if 0x00008000&stateFlag != 0 {
+		states = append(states, state.State(16+offset))
+	}
+	if 0x00010000&stateFlag != 0 {
+		states = append(states, state.State(17+offset))
+	}
+	if 0x00020000&stateFlag != 0 {
+		states = append(states, state.State(18+offset))
+	}
+	if 0x00040000&stateFlag != 0 {
+		states = append(states, state.State(19+offset))
+	}
+	if 0x00080000&stateFlag != 0 {
+		states = append(states, state.State(20+offset))
+	}
+	if 0x00100000&stateFlag != 0 {
+		states = append(states, state.State(21+offset))
+	}
+	if 0x00200000&stateFlag != 0 {
+		states = append(states, state.State(22+offset))
+	}
+	if 0x00400000&stateFlag != 0 {
+		states = append(states, state.State(23+offset))
+	}
+	if 0x00800000&stateFlag != 0 {
+		states = append(states, state.State(24+offset))
+	}
+	if 0x01000000&stateFlag != 0 {
+		states = append(states, state.State(25+offset))
+	}
+	if 0x02000000&stateFlag != 0 {
+		states = append(states, state.State(26+offset))
+	}
+	if 0x04000000&stateFlag != 0 {
+		states = append(states, state.State(27+offset))
+	}
+	if 0x08000000&stateFlag != 0 {
+		states = append(states, state.State(28+offset))
+	}
+	if 0x10000000&stateFlag != 0 {
+		states = append(states, state.State(29+offset))
+	}
+	if 0x20000000&stateFlag != 0 {
+		states = append(states, state.State(30+offset))
+	}
+	if 0x40000000&stateFlag != 0 {
+		states = append(states, state.State(31+offset))
+	}
+	if 0x80000000&stateFlag != 0 {
+		states = append(states, state.State(32+offset))
+	}
+
+	return states
 }

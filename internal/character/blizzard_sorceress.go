@@ -115,7 +115,10 @@ func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistan
 		}
 
 		if useStaticField {
-			steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15), step.MonsterType(t)))
+			steps = append(steps,
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15), step.MonsterType(t)),
+			)
 		}
 
 		for i := 0; i < sorceressMaxAttacksLoop; i++ {
@@ -124,6 +127,7 @@ func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistan
 				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
 			)
 			if i == 1 {
+				// Cast a Blizzard over character, to clear possible trash mobs
 				steps = append(steps,
 					step.SyncStep(func(data game.Data) error {
 						hid.MovePointer(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2)

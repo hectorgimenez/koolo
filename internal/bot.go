@@ -54,9 +54,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			b.ab.IdentifyAll(firstRun),
 			b.ab.Stash(firstRun),
 			b.ab.VendorRefill(),
+			b.ab.Heal(),
 			b.ab.ReviveMerc(),
 			b.ab.Repair(),
-			b.ab.Heal(),
 		}
 		firstRun = false
 

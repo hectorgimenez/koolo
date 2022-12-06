@@ -4,7 +4,13 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"github.com/hectorgimenez/koolo/internal/game/state"
 )
+
+// since stat.MaxLife is returning max life without stats, we are setting the max life value that we read from the
+// game memory, overwriting this value each time it increases. It's not a good solution but it will provide
+// more accurate values for the life %. This value is checked for each memory iteration.
+var maxLife = 0
 
 const (
 	goldPerLevel = 10000
@@ -72,6 +78,7 @@ type PlayerUnit struct {
 	Position Position
 	Stats    map[stat.Stat]int
 	Skills   map[skill.Skill]int
+	States   []state.State
 }
 
 func (pu PlayerUnit) MaxGold() int {
@@ -79,11 +86,48 @@ func (pu PlayerUnit) MaxGold() int {
 }
 
 func (pu PlayerUnit) HPPercent() int {
-	return int((float64(pu.Stats[stat.Life]) / float64(pu.Stats[stat.MaxLife])) * 100)
+	if maxLife < pu.Stats[stat.Life] {
+		maxLife = pu.Stats[stat.Life]
+	}
+
+	return int((float64(pu.Stats[stat.Life]) / float64(maxLife)) * 100)
 }
 
 func (pu PlayerUnit) MPPercent() int {
 	return int((float64(pu.Stats[stat.Mana]) / float64(pu.Stats[stat.MaxMana])) * 100)
+}
+
+func (pu PlayerUnit) HasDebuff() bool {
+	debuffs := []state.State{
+		state.STATE_AMPLIFYDAMAGE,
+		state.STATE_ATTRACT,
+		state.STATE_CONFUSE,
+		state.STATE_CONVERSION,
+		state.STATE_DECREPIFY,
+		state.STATE_DIMVISION,
+		state.STATE_IRONMAIDEN,
+		state.STATE_LIFETAP,
+		state.STATE_LOWERRESIST,
+		state.STATE_TERROR,
+		state.STATE_WEAKEN,
+		state.STATE_CONVICTED,
+		state.STATE_CONVICTION,
+		state.STATE_POISON,
+		state.STATE_COLD,
+		state.STATE_SLOWED,
+		state.STATE_BLOOD_MANA,
+		state.STATE_DEFENSE_CURSE,
+	}
+
+	for _, s := range pu.States {
+		for _, d := range debuffs {
+			if s == d {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 type PointOfInterest struct {
