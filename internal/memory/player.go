@@ -12,11 +12,11 @@ import (
 var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 
 func (gd *GameReader) getPlayerUnitPtr() uintptr {
-	for i := 1; i < 128; i++ {
+	for i := 0; i < 128; i++ {
 		unitOffset := gd.offset.UnitTable + uintptr(i*8)
 		playerUnitAddr := gd.process.moduleBaseAddressPtr + unitOffset
 		playerUnit := gd.process.ReadUInt(playerUnitAddr, IntTypeUInt64)
-		if playerUnit > 0 {
+		for playerUnit > 0 {
 			pInventory := uintptr(playerUnit) + 0x90
 			inventoryAddr := uintptr(gd.process.ReadUInt(pInventory, IntTypeUInt64))
 
@@ -29,6 +29,8 @@ func (gd *GameReader) getPlayerUnitPtr() uintptr {
 			if inventoryAddr > 0 && xPos > 0 && yPos > 0 {
 				return uintptr(playerUnit)
 			}
+
+			playerUnit = gd.process.ReadUInt(uintptr(playerUnit)+0x150, IntTypeUInt64)
 		}
 	}
 
