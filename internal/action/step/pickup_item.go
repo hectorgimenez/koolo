@@ -77,7 +77,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 				return nil
 			} else {
 				path, distance, _ := pather.GetPathToDestination(data, i.Position.X, i.Position.Y)
-				if distance > 5 {
+				if distance > 10 {
 					pather.MoveThroughPath(path, 15, true)
 					return nil
 				}

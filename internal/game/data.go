@@ -11,6 +11,7 @@ import (
 // game memory, overwriting this value each time it increases. It's not a good solution but it will provide
 // more accurate values for the life %. This value is checked for each memory iteration.
 var maxLife = 0
+var maxLifeBO = 0
 
 const (
 	goldPerLevel = 10000
@@ -78,7 +79,7 @@ type PlayerUnit struct {
 	Position Position
 	Stats    map[stat.Stat]int
 	Skills   map[skill.Skill]int
-	States   []state.State
+	States   state.States
 }
 
 func (pu PlayerUnit) MaxGold() int {
@@ -86,6 +87,18 @@ func (pu PlayerUnit) MaxGold() int {
 }
 
 func (pu PlayerUnit) HPPercent() int {
+	if maxLifeBO == 0 && maxLife == 0 {
+		maxLife = pu.Stats[stat.MaxLife]
+		maxLifeBO = pu.Stats[stat.MaxLife]
+	}
+
+	if pu.States.HasState(state.STATE_BATTLEORDERS) {
+		if maxLifeBO < pu.Stats[stat.Life] {
+			maxLifeBO = pu.Stats[stat.Life]
+		}
+		return int((float64(pu.Stats[stat.Life]) / float64(maxLifeBO)) * 100)
+	}
+
 	if maxLife < pu.Stats[stat.Life] {
 		maxLife = pu.Stats[stat.Life]
 	}

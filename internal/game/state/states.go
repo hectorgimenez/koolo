@@ -1,5 +1,17 @@
 package state
 
+type States []State
+
+func (s States) HasState(state State) bool {
+	for _, st := range s {
+		if st == state {
+			return true
+		}
+	}
+
+	return false
+}
+
 type State uint
 
 const (
