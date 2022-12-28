@@ -20,6 +20,7 @@ const (
 
 func (b Builder) WayPoint(a area.Area) *StaticAction {
 	allowedAreas := map[area.Area][2]int{
+		area.StonyField:          {1, 3},
 		area.BlackMarsh:          {1, 5},
 		area.CatacombsLevel2:     {1, 9},
 		area.LostCity:            {2, 6},

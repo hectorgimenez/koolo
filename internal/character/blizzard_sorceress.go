@@ -23,6 +23,31 @@ type BlizzardSorceress struct {
 	BaseCharacter
 }
 
+func (s BlizzardSorceress) KillMonsterSequence(data game.Data, id game.UnitID) (steps []step.Step) {
+	if !s.preBattleChecks(data, id, []stat.Resist{}) {
+		return
+	}
+
+	for i := 0; i < sorceressMaxAttacksLoop; i++ {
+		steps = append(steps,
+			step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, 10)),
+			step.PrimaryAttack(id, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 10)),
+		)
+		if i == 1 {
+			// Cast a Blizzard over character, to clear possible trash mobs
+			steps = append(steps,
+				step.SyncStep(func(data game.Data) error {
+					hid.MovePointer(hid.GameAreaSizeX/2, hid.GameAreaSizeY/2)
+					hid.Click(hid.RightButton)
+					return nil
+				}),
+			)
+		}
+	}
+
+	return
+}
+
 func (s BlizzardSorceress) Buff() action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
@@ -41,27 +66,27 @@ func (s BlizzardSorceress) Buff() action.Action {
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
-	return s.killMonster(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, true, nil)
+	return s.killMonsterByName(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, true, nil)
 }
 
 func (s BlizzardSorceress) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, game.MonsterTypeNone, 20, false, nil)
+	return s.killMonsterByName(npc.Andariel, game.MonsterTypeNone, 20, false, nil)
 }
 
 func (s BlizzardSorceress) KillSummoner() action.Action {
-	return s.killMonster(npc.Summoner, game.MonsterTypeNone, 10, false, nil)
+	return s.killMonsterByName(npc.Summoner, game.MonsterTypeNone, 10, false, nil)
 }
 
 func (s BlizzardSorceress) KillPindle(skipOnImmunities []stat.Resist) action.Action {
-	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique, 30, false, skipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, game.MonsterTypeSuperUnique, 30, false, skipOnImmunities)
 }
 
 func (s BlizzardSorceress) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, game.MonsterTypeNone, 20, true, nil)
+	return s.killMonsterByName(npc.Mephisto, game.MonsterTypeNone, 20, true, nil)
 }
 
 func (s BlizzardSorceress) KillNihlathak() action.Action {
-	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false, nil)
+	return s.killMonsterByName(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false, nil)
 }
 
 func (s BlizzardSorceress) ClearAncientTunnels() action.Action {
@@ -70,7 +95,7 @@ func (s BlizzardSorceress) ClearAncientTunnels() action.Action {
 
 func (s BlizzardSorceress) KillCouncil() action.Action {
 	toggleSeconday := true
-	return action.BuildDynamic(func(data game.Data) (step.Step, bool) {
+	return action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
 		// Exclude monsters that are not council members
 		var councilMembers []game.Monster
 		var coldImmunes []game.Monster
@@ -86,8 +111,8 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromPoint(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
-			distanceJ := pather.DistanceFromPoint(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
+			distanceI := pather.DistanceFromMe(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
+			distanceJ := pather.DistanceFromMe(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
 
 			return distanceI < distanceJ
 		})
@@ -97,34 +122,45 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 		for _, m := range councilMembers {
 			if toggleSeconday {
 				toggleSeconday = false
-				return step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.Name, 1, time.Second, step.Distance(0, 30)), true
+				return []step.Step{step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, time.Second, step.Distance(0, 30))}, true
 			}
 
 			toggleSeconday = true
-			return step.PrimaryAttack(m.Name, 4, config.Config.Runtime.CastDuration, step.Distance(0, 30)), true
+			return []step.Step{step.PrimaryAttack(m.UnitID, 4, config.Config.Runtime.CastDuration, step.Distance(0, 30))}, true
 		}
 
 		return nil, false
 	}, action.CanBeSkipped())
 }
 
-func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) action.Action {
-	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
-		if !s.preBattleChecks(data, npc, t, skipOnImmunities) {
+func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType game.MonsterType, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) action.Action {
+	return action.BuildStatic(func(data game.Data) []step.Step {
+		m, found := data.Monsters.FindOne(id, monsterType)
+		if found {
+			return s.killMonsterSteps(m.UnitID, maxDistance, useStaticField, skipOnImmunities)(data)
+		}
+
+		return nil
+	})
+}
+
+func (s BlizzardSorceress) killMonsterSteps(id game.UnitID, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) func(data game.Data) (steps []step.Step) {
+	return func(data game.Data) (steps []step.Step) {
+		if !s.preBattleChecks(data, id, skipOnImmunities) {
 			return
 		}
 
 		if useStaticField {
 			steps = append(steps,
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, npc, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15), step.MonsterType(t)),
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance)),
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15)),
 			)
 		}
 
 		for i := 0; i < sorceressMaxAttacksLoop; i++ {
 			steps = append(steps,
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, npc, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
-				step.PrimaryAttack(npc, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, maxDistance), step.MonsterType(t)),
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance)),
+				step.PrimaryAttack(id, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, maxDistance)),
 			)
 			if i == 1 {
 				// Cast a Blizzard over character, to clear possible trash mobs
@@ -139,5 +175,5 @@ func (s BlizzardSorceress) killMonster(npc npc.ID, t game.MonsterType, maxDistan
 		}
 
 		return
-	}, action.CanBeSkipped())
+	}
 }

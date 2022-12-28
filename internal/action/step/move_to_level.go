@@ -51,7 +51,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	m.lastRun = time.Now()
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
-			distance := pather.DistanceFromPoint(data, l.Position.X, l.Position.Y)
+			distance := pather.DistanceFromMe(data, l.Position.X, l.Position.Y)
 			if distance > 13 {
 				path, _, found := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
 				if !found {

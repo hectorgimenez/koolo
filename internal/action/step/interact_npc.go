@@ -64,7 +64,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		return fmt.Errorf("NPC not found")
 	}
 
-	distance := pather.DistanceFromPoint(data, x, y)
+	distance := pather.DistanceFromMe(data, x, y)
 	if distance > 15 {
 		path, _, found := pather.GetPathToDestination(data, x, y)
 		if !found {

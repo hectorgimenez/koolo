@@ -14,6 +14,7 @@ type NPC struct {
 type MonsterType string
 
 type Monster struct {
+	UnitID
 	Name      npc.ID
 	IsHovered bool
 	Position  Position
@@ -40,6 +41,45 @@ func (m Monsters) FindOne(id npc.ID, t MonsterType) (Monster, bool) {
 			if t == MonsterTypeNone || t == monster.Type {
 				return monster, true
 			}
+		}
+	}
+
+	return Monster{}, false
+}
+
+func (m Monsters) Enemies(filters ...MonsterFilter) []Monster {
+	monsters := make([]Monster, 0)
+	for _, mo := range m {
+		if !mo.IsMerc() {
+			monsters = append(monsters, mo)
+		}
+	}
+
+	for _, f := range filters {
+		monsters = f(m)
+	}
+
+	return monsters
+}
+
+type MonsterFilter func(m Monsters) []Monster
+
+func MonsterEliteFilter() MonsterFilter {
+	return func(m Monsters) []Monster {
+		var filteredMonsters []Monster
+		for _, mo := range m {
+			if mo.Type == MonsterTypeMinion || mo.Type == MonsterTypeUnique || mo.Type == MonsterTypeChampion || mo.Type == MonsterTypeSuperUnique {
+				filteredMonsters = append(filteredMonsters, mo)
+			}
+		}
+
+		return filteredMonsters
+	}
+}
+func (m Monsters) FindByID(id UnitID) (Monster, bool) {
+	for _, monster := range m {
+		if monster.UnitID == id {
+			return monster, true
 		}
 	}
 

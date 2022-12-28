@@ -92,6 +92,10 @@ type StructConfig struct {
 		Pindleskin    struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
+		Tristram struct {
+			ClearPortal       bool `yaml:"clearPortal"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"tristram"`
 	} `yaml:"game"`
 	Runtime struct {
 		CastDuration time.Duration

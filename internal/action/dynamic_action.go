@@ -9,11 +9,12 @@ import (
 
 type DynamicAction struct {
 	basicAction
-	stepBuilder func(data game.Data) (step.Step, bool)
-	currentStep step.Step
+	stepBuilder func(data game.Data) ([]step.Step, bool)
+	steps       []step.Step
+	//currentStep step.Step
 }
 
-func BuildDynamic(stepBuilder func(data game.Data) (step.Step, bool), opts ...Option) *DynamicAction {
+func BuildDynamic(stepBuilder func(data game.Data) ([]step.Step, bool), opts ...Option) *DynamicAction {
 	a := &DynamicAction{
 		stepBuilder: stepBuilder,
 	}
@@ -37,27 +38,35 @@ func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
 		return fmt.Errorf("%w: attempt limit reached", ErrNoRecover)
 	}
 
-	if a.currentStep == nil {
-		nextStep, ok := a.stepBuilder(data)
+	if a.steps == nil {
+		steps, ok := a.stepBuilder(data)
 		if !ok {
 			return ErrNoMoreSteps
 		}
-		a.currentStep = nextStep
+		a.steps = steps
 	}
 
-	if a.currentStep.Status(data) != step.StatusCompleted {
-		//logger.Debug("Running step", zap.String("step_name", reflect.TypeOf(a.currentStep).Elem().Name()))
-		lastRun := a.currentStep.LastRun()
-		err := a.currentStep.Run(data)
-		if a.currentStep.LastRun().After(lastRun) {
-			//logger.Debug("Executed step", zap.String("step_name", reflect.TypeOf(a.currentStep).Elem().Name()))
+	for _, s := range a.steps {
+		if s.Status(data) != step.StatusCompleted {
+			//lastRun := s.LastRun()
+			//if s.LastRun().After(lastRun) {
+			//	logger.Debug("Executed step", zap.String("step_name", reflect.TypeOf(s).Elem().Name()))
+			//}
+			err := s.Run(data)
+			if err != nil {
+				a.retries++
+			}
+
+			return nil
 		}
-		if err != nil {
-			a.retries++
-		}
-	} else {
-		a.currentStep = nil
 	}
+
+	steps, ok := a.stepBuilder(data)
+	if !ok {
+		return ErrNoMoreSteps
+	}
+
+	a.steps = steps
 
 	return nil
 }

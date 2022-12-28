@@ -4,9 +4,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"sort"
 )
 
-func (gd *GameReader) Monsters() game.Monsters {
+func (gd *GameReader) Monsters(playerPositionX, playerPositionY int) game.Monsters {
 	hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
 
 	baseAddr := gd.process.moduleBaseAddressPtr + gd.offset.UnitTable + 1024
@@ -50,6 +52,7 @@ func (gd *GameReader) Monsters() game.Monsters {
 				stats := gd.getMonsterStats(statCount, statPtr)
 
 				m := game.Monster{
+					UnitID:    game.UnitID(unitID),
 					Name:      npc.ID(int(txtFileNo)),
 					IsHovered: hovered,
 					Position: game.Position{
@@ -69,6 +72,13 @@ func (gd *GameReader) Monsters() game.Monsters {
 			monsterUnitPtr = uintptr(gd.process.ReadUInt(monsterUnitPtr+0x150, IntTypeUInt64))
 		}
 	}
+
+	sort.SliceStable(monsters, func(i, j int) bool {
+		distanceI := pather.DistanceFromPoint(playerPositionX, playerPositionY, monsters[i].Position.X, monsters[i].Position.Y)
+		distanceJ := pather.DistanceFromPoint(playerPositionX, playerPositionY, monsters[j].Position.X, monsters[j].Position.Y)
+
+		return distanceI < distanceJ
+	})
 
 	return monsters
 }

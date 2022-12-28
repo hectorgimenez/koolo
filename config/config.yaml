@@ -11,14 +11,14 @@ discord:
   token: ''
 
 health: # Healing configuration, all values in %
-  healingPotionAt: 85
+  healingPotionAt: 75
   manaPotionAt: 10
-  rejuvPotionAtLife: 40
+  rejuvPotionAtLife: 50
   rejuvPotionAtMana: 0
   mercHealingPotionAt: 80
-  mercRejuvPotionAt: 20
-  chickenAt: 20
-  mercChickenAt: 0
+  mercRejuvPotionAt: 30
+  chickenAt: 30
+  mercChickenAt: 10
 
 bindings:
   openInventory: i
@@ -40,7 +40,7 @@ bindings:
   sorceress:
     blizzard: w
     staticField: e
-    frozenArmor: a
+    frozenArmor: ah
 
   hammerdin:
     concentration: w
@@ -63,17 +63,21 @@ inventory:
   beltRows: 4
 
 character:
-  class: hammerdin # Allowed values: sorceress, hammerdin
+  class: sorceress # Allowed values: sorceress, hammerdin
   castingFrames: 9 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
   useCTA: true
 
 game:
-  difficulty: hell # Allowed values: normal, nightmare, hell
-  randomizeRuns: false
+  difficulty: hell  # Allowed values: normal, nightmare, hell
+  randomizeRuns: true
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
-  # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, pindleskin, nihlathak
-  runs: [ countess, andariel, ancient_tunnels, summoner, mephisto, council, pindleskin, nihlathak ]
+  # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, pindleskin, nihlathak, tristram
+  runs: [ tristram ]
 
+  # Specific runs settings
   pindleskin:
-    skipOnImmunities: [cold] # Allowed values: cold, fire, light, poison
+    skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
+  tristram:
+    focusOnElitePacks: false # Will clear only Elite monsters
+    clearPortal: true # Kills Rakanishu and makes easier selecting the portal

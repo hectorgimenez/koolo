@@ -21,6 +21,11 @@ type Hammerdin struct {
 	BaseCharacter
 }
 
+func (s Hammerdin) KillMonsterSequence(data game.Data, id game.UnitID) []step.Step {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s Hammerdin) Buff() action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
@@ -73,8 +78,8 @@ func (s Hammerdin) ClearAncientTunnels() action.Action {
 		}
 
 		sort.Slice(eliteMonsters, func(i, j int) bool {
-			distanceI := pather.DistanceFromPoint(data, eliteMonsters[i].Position.X, eliteMonsters[i].Position.Y)
-			distanceJ := pather.DistanceFromPoint(data, eliteMonsters[j].Position.X, eliteMonsters[j].Position.Y)
+			distanceI := pather.DistanceFromMe(data, eliteMonsters[i].Position.X, eliteMonsters[i].Position.Y)
+			distanceJ := pather.DistanceFromMe(data, eliteMonsters[j].Position.X, eliteMonsters[j].Position.Y)
 
 			return distanceI > distanceJ
 		})
@@ -83,7 +88,7 @@ func (s Hammerdin) ClearAncientTunnels() action.Action {
 			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 				steps = append(steps,
 					step.PrimaryAttack(
-						m.Name,
+						m.UnitID,
 						8,
 						config.Config.Runtime.CastDuration,
 						step.Distance(2, 8),
@@ -108,8 +113,8 @@ func (s Hammerdin) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromPoint(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
-			distanceJ := pather.DistanceFromPoint(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
+			distanceI := pather.DistanceFromMe(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
+			distanceJ := pather.DistanceFromMe(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
 
 			return distanceI < distanceJ
 		})
@@ -118,7 +123,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 				steps = append(steps,
 					step.PrimaryAttack(
-						m.Name,
+						m.UnitID,
 						8,
 						config.Config.Runtime.CastDuration,
 						step.Distance(2, 8),
@@ -133,16 +138,20 @@ func (s Hammerdin) KillCouncil() action.Action {
 
 func (s Hammerdin) killMonster(npc npc.ID, t game.MonsterType) action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
+		m, found := data.Monsters.FindOne(npc, t)
+		if !found {
+			return nil
+		}
+
 		helper.Sleep(100)
 		for i := 0; i < hammerdinMaxAttacksLoop; i++ {
 			steps = append(steps,
 				step.PrimaryAttack(
-					npc,
+					m.UnitID,
 					8,
 					config.Config.Runtime.CastDuration,
 					step.Distance(2, 8),
 					step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
-					step.MonsterType(t),
 				),
 			)
 		}

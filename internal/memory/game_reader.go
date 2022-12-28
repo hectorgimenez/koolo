@@ -60,7 +60,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	return game.Data{
 		AreaOrigin:     origin,
 		Corpse:         game.Corpse{},
-		Monsters:       gd.Monsters(),
+		Monsters:       gd.Monsters(pu.Position.X, pu.Position.Y),
 		CollisionGrid:  gd.cachedMapData.CollisionGrid(pu.Area),
 		PlayerUnit:     pu,
 		NPCs:           npcs,

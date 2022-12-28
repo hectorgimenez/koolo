@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -23,7 +22,7 @@ type Character interface {
 	KillPindle(skipOnImmunities []stat.Resist) action.Action
 	KillNihlathak() action.Action
 	KillCouncil() action.Action
-	ClearAncientTunnels() action.Action
+	KillMonsterSequence(data game.Data, id game.UnitID) []step.Step
 }
 
 func BuildCharacter(logger *zap.Logger) (Character, error) {
@@ -76,8 +75,8 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	return
 }
 
-func (bc BaseCharacter) preBattleChecks(data game.Data, npc npc.ID, t game.MonsterType, skipOnImmunities []stat.Resist) bool {
-	monster, found := data.Monsters.FindOne(npc, t)
+func (bc BaseCharacter) preBattleChecks(data game.Data, id game.UnitID, skipOnImmunities []stat.Resist) bool {
+	monster, found := data.Monsters.FindByID(id)
 	if !found {
 		return false
 	}

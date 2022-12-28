@@ -19,6 +19,7 @@ func (gd *GameReader) Objects() []game.Object {
 			objectType := gd.process.ReadUInt(objectUnitPtr+0x00, IntTypeUInt32)
 			if objectType == 2 {
 				txtFileNo := gd.process.ReadUInt(objectUnitPtr+0x04, IntTypeUInt32)
+				mode := gd.process.ReadUInt(objectUnitPtr+0x0c, IntTypeUInt32)
 				unitID := gd.process.ReadUInt(objectUnitPtr+0x08, IntTypeUInt32)
 
 				// Coordinates (X, Y)
@@ -26,10 +27,14 @@ func (gd *GameReader) Objects() []game.Object {
 				posX := gd.process.ReadUInt(pathPtr+0x10, IntTypeUInt16)
 				posY := gd.process.ReadUInt(pathPtr+0x14, IntTypeUInt16)
 
+				unitDataPtr := uintptr(gd.process.ReadUInt(objectUnitPtr+0x10, IntTypeUInt64))
+				interactType := gd.process.ReadUInt(unitDataPtr+0x08, IntTypeUInt8)
+
 				obj := game.Object{
-					Name:      object.Name(int(txtFileNo)),
-					IsHovered: unitID == hoveredUnitID && hoveredType == 2 && isHovered,
-					IsChest:   false,
+					Name:         object.Name(int(txtFileNo)),
+					IsHovered:    unitID == hoveredUnitID && hoveredType == 2 && isHovered,
+					InteractType: object.InteractType(interactType),
+					Selectable:   mode == 0,
 					Position: game.Position{
 						X: int(posX),
 						Y: int(posY),

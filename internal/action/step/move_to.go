@@ -29,7 +29,7 @@ func MoveTo(toX, toY int, teleport bool) *MoveToStep {
 }
 
 func (m *MoveToStep) Status(data game.Data) Status {
-	distance := pather.DistanceFromPoint(data, m.toX, m.toY)
+	distance := pather.DistanceFromMe(data, m.toX, m.toY)
 	if distance < 5 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
@@ -73,7 +73,7 @@ func (m *MoveToStep) adjustPath(data game.Data) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
 	for k, pos := range m.path {
-		distance := pather.DistanceFromPoint(data, pos.(*pather.Tile).X+data.AreaOrigin.X, pos.(*pather.Tile).Y+data.AreaOrigin.Y)
+		distance := pather.DistanceFromMe(data, pos.(*pather.Tile).X+data.AreaOrigin.X, pos.(*pather.Tile).Y+data.AreaOrigin.Y)
 		if distance < nearestDistance {
 			nearestDistance = distance
 			nearestKey = k
