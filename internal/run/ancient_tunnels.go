@@ -5,8 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
+	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type AncientTunnels struct {
@@ -28,29 +27,24 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(area.AncientTunnels),
+			step.SyncStep(func(data game.Data) error {
+				// Add small delay to fetch the monsters
+				helper.Sleep(2000)
+				return nil
+			}),
 		}
 	}))
 
 	// Clear Ancient Tunnels
-	actions = append(actions, action.BuildStatic(func(data game.Data) (steps []step.Step) {
-		var eliteMonsters []game.Monster
-		for _, m := range data.Monsters {
-			if m.Type == game.MonsterTypeMinion || m.Type == game.MonsterTypeUnique || m.Type == game.MonsterTypeChampion {
-				eliteMonsters = append(eliteMonsters, m)
-			}
+	actions = append(actions, action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
+		// Clear only elite monsters
+		monsters := data.Monsters.Enemies(game.MonsterEliteFilter())
+		if len(monsters) == 0 {
+			return nil, false
 		}
 
-		sort.Slice(eliteMonsters, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(data, eliteMonsters[i].Position.X, eliteMonsters[i].Position.Y)
-			distanceJ := pather.DistanceFromMe(data, eliteMonsters[j].Position.X, eliteMonsters[j].Position.Y)
+		return a.char.KillMonsterSequence(data, monsters[0].UnitID), true
 
-			return distanceI > distanceJ
-		})
-
-		for _, m := range eliteMonsters {
-			return a.char.KillMonsterSequence(data, m.UnitID)
-		}
-		return
 	}, action.CanBeSkipped()))
 
 	// Open the chest

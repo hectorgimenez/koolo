@@ -67,40 +67,6 @@ func (s Hammerdin) KillNihlathak() action.Action {
 	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique)
 }
 
-func (s Hammerdin) ClearAncientTunnels() action.Action {
-	// Let's focus only on elite packs
-	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
-		var eliteMonsters []game.Monster
-		for _, m := range data.Monsters {
-			if m.Type == game.MonsterTypeMinion || m.Type == game.MonsterTypeUnique || m.Type == game.MonsterTypeChampion {
-				eliteMonsters = append(eliteMonsters, m)
-			}
-		}
-
-		sort.Slice(eliteMonsters, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(data, eliteMonsters[i].Position.X, eliteMonsters[i].Position.Y)
-			distanceJ := pather.DistanceFromMe(data, eliteMonsters[j].Position.X, eliteMonsters[j].Position.Y)
-
-			return distanceI > distanceJ
-		})
-
-		for _, m := range eliteMonsters {
-			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
-				steps = append(steps,
-					step.PrimaryAttack(
-						m.UnitID,
-						8,
-						config.Config.Runtime.CastDuration,
-						step.Distance(2, 8),
-						step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
-					),
-				)
-			}
-		}
-		return
-	}, action.CanBeSkipped())
-}
-
 func (s Hammerdin) KillCouncil() action.Action {
 	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members

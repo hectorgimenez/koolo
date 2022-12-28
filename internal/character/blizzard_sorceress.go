@@ -89,10 +89,6 @@ func (s BlizzardSorceress) KillNihlathak() action.Action {
 	return s.killMonsterByName(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false, nil)
 }
 
-func (s BlizzardSorceress) ClearAncientTunnels() action.Action {
-	return nil
-}
-
 func (s BlizzardSorceress) KillCouncil() action.Action {
 	toggleSeconday := true
 	return action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
