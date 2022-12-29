@@ -20,6 +20,7 @@ func (b Builder) VendorRefill() *StaticAction {
 					return nil
 				}),
 				step.SyncStep(func(data game.Data) error {
+					switchTab(4)
 					b.sm.BuyConsumables(data)
 					return nil
 				}),
