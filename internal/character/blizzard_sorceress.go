@@ -28,8 +28,8 @@ func (s BlizzardSorceress) KillMonsterSequence(data game.Data, id game.UnitID) (
 
 	for i := 0; i < sorceressMaxAttacksLoop; i++ {
 		steps = append(steps,
-			step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, 10)),
-			step.PrimaryAttack(id, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 10)),
+			step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, 25)),
+			step.PrimaryAttack(id, 4, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 25)),
 		)
 		if i == 1 {
 			// Cast a Blizzard over character, to clear possible trash mobs
