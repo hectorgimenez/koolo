@@ -9,8 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
 	"time"
 )
 
@@ -90,12 +88,11 @@ func (s BlizzardSorceress) KillNihlathak() action.Action {
 }
 
 func (s BlizzardSorceress) KillCouncil() action.Action {
-	toggleSeconday := true
 	return action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
 		// Exclude monsters that are not council members
 		var councilMembers []game.Monster
 		var coldImmunes []game.Monster
-		for _, m := range data.Monsters {
+		for _, m := range data.Monsters.Enemies() {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
 				if m.IsImmune(stat.ColdImmune) {
 					coldImmunes = append(coldImmunes, m)
@@ -105,24 +102,10 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 			}
 		}
 
-		// Order council members by distance
-		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
-			distanceJ := pather.DistanceFromMe(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
-
-			return distanceI < distanceJ
-		})
-
 		councilMembers = append(councilMembers, coldImmunes...)
 
 		for _, m := range councilMembers {
-			if toggleSeconday {
-				toggleSeconday = false
-				return []step.Step{step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, time.Second, step.Distance(0, 30))}, true
-			}
-
-			toggleSeconday = true
-			return []step.Step{step.PrimaryAttack(m.UnitID, 4, config.Config.Runtime.CastDuration, step.Distance(0, 30))}, true
+			return s.KillMonsterSequence(data, m.UnitID), true
 		}
 
 		return nil, false
