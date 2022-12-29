@@ -94,6 +94,8 @@ func (gd *GameReader) openMenus() game.OpenMenus {
 
 	buffer := gd.process.ReadBytesFromMemory(uiBase, 32)
 
+	isMapShown := gd.process.ReadUInt(gd.process.moduleBaseAddressPtr+gd.offset.UI, IntTypeUInt8)
+
 	return game.OpenMenus{
 		Inventory: buffer[0x01] != 0,
 		//LoadingScreen: buffer[0x16C] != 0,
@@ -101,6 +103,7 @@ func (gd *GameReader) openMenus() game.OpenMenus {
 		NPCShop:     buffer[0x0B] != 0,
 		Stash:       buffer[0x18] != 0,
 		Waypoint:    buffer[0x13] != 0,
+		MapShown:    isMapShown != 0,
 	}
 }
 

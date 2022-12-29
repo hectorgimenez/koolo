@@ -155,4 +155,5 @@ type OpenMenus struct {
 	NPCShop       bool
 	Stash         bool
 	Waypoint      bool
+	MapShown      bool
 }
