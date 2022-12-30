@@ -8,9 +8,9 @@ require (
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/winlabs/gowin32 v0.0.0-20221003142512-0d265587d3c9
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.2.0
+	golang.org/x/sys v0.3.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
