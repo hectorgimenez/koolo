@@ -10,11 +10,8 @@ import (
 
 func ExitGame(gr *memory.GameReader) error {
 	hid.PressKey("esc")
-	Sleep(10)
-	hid.PressKey("up")
-	hid.PressKey("up")
-	hid.PressKey("down")
-	hid.PressKey("enter")
+	hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
+	hid.Click(hid.LeftButton)
 
 	for i := 0; i < 30; i++ {
 		if !gr.InGame() {
