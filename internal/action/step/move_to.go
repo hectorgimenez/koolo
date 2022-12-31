@@ -47,7 +47,7 @@ func (m *MoveToStep) Run(data game.Data) error {
 
 	// Throttle movement clicks in town
 	if data.PlayerUnit.Area.IsTown() {
-		if time.Since(m.lastRun) < helper.RandomDurationMs(300, 600) {
+		if time.Since(m.lastRun) < helper.RandomDurationMs(200, 350) {
 			return nil
 		}
 	}
@@ -101,7 +101,7 @@ func (m *MoveToStep) adjustPath(data game.Data) bool {
 
 func (m *MoveToStep) isPlayerStuck(data game.Data) bool {
 	m.lastRunPositions = append(m.lastRunPositions, [2]int{data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y})
-	if len(m.lastRunPositions) > 3 {
+	if len(m.lastRunPositions) > 10 {
 		m.lastRunPositions = m.lastRunPositions[1:]
 	} else {
 		return false

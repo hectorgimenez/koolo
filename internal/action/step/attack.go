@@ -94,7 +94,7 @@ func (p *AttackStep) Run(data game.Data) error {
 	}
 
 	// Move into the attack distance range before starting
-	if !p.ensureEnemyIsCloseEnough(monster, data) {
+	if !p.ensureEnemyIsInRange(monster, data) {
 		return nil
 	}
 
@@ -132,7 +132,7 @@ func (p *AttackStep) Run(data game.Data) error {
 	return nil
 }
 
-func (p *AttackStep) ensureEnemyIsCloseEnough(monster game.Monster, data game.Data) bool {
+func (p *AttackStep) ensureEnemyIsInRange(monster game.Monster, data game.Data) bool {
 	if !p.followEnemy {
 		return true
 	}
