@@ -9,7 +9,7 @@ import (
 	"math/rand"
 )
 
-func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, distance float64, found bool) {
+func GetPathToDestination(d game.Data, destX, destY int, blacklistedCoords ...[2]int) (path []astar.Pather, distance float64, found bool) {
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
@@ -23,14 +23,40 @@ func GetPathToDestination(d game.Data, destX, destY int) (path []astar.Pather, d
 		return []astar.Pather{}, 0, true
 	}
 
-	w := ParseWorld(d.CollisionGrid, fromX, fromY, toX, toY, d.PlayerUnit.Area)
+	collisionGrid := d.CollisionGrid
+	for _, cord := range blacklistedCoords {
+		collisionGrid[cord[1]][cord[0]] = false
+	}
+
+	w := parseWorld(collisionGrid, fromX, fromY, toX, toY, d.PlayerUnit.Area)
 
 	p, distance, found := astar.Path(w.From(), w.To())
 
-	// Debug only, this will render a png file with map and origin/destination points
-	if distance > 0 {
-		//w.RenderPathImg(p)
+	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
+	// the path, so we fake some points around the character making them walkable even if they're not technically
+	if !found && len(blacklistedCoords) == 0 {
+		for i := -2; i < 3; i++ {
+			for k := -2; k < 3; k++ {
+				if i == 0 && k == 0 {
+					continue
+				}
+
+				w.SetTile(&Tile{
+					Kind: KindPlain,
+				}, fromX+i, fromY+k)
+
+				w.SetTile(&Tile{
+					Kind: KindPlain,
+				}, toX+i, toY+k)
+			}
+		}
+		p, distance, found = astar.Path(w.From(), w.To())
 	}
+
+	// Debug only, this will render a png file with map and origin/destination points
+	//if distance > 0 {
+	//	w.renderPathImg(p)
+	//}
 
 	return p, distance, found
 }

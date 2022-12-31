@@ -13,10 +13,12 @@ import (
 
 type MoveToStep struct {
 	basicStep
-	toX      int
-	toY      int
-	teleport bool
-	path     []astar.Pather
+	toX                  int
+	toY                  int
+	teleport             bool
+	path                 []astar.Pather
+	lastRunPositions     [][2]int
+	blacklistedPositions [][2]int
 }
 
 func MoveTo(toX, toY int, teleport bool) *MoveToStep {
@@ -54,8 +56,15 @@ func (m *MoveToStep) Run(data game.Data) error {
 		return nil
 	}
 
-	if m.path == nil || !m.adjustPath(data) {
-		path, _, found := pather.GetPathToDestination(data, m.toX, m.toY)
+	stuck := m.isPlayerStuck(data)
+
+	if m.path == nil || !m.adjustPath(data) || stuck {
+		if stuck {
+			tile := m.path[len(m.path)-1].(*pather.Tile)
+			m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
+		}
+
+		path, _, found := pather.GetPathToDestination(data, m.toX, m.toY, m.blacklistedPositions...)
 		if !found {
 			return errors.New("path chould not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
@@ -88,4 +97,21 @@ func (m *MoveToStep) adjustPath(data game.Data) bool {
 	}
 
 	return false
+}
+
+func (m *MoveToStep) isPlayerStuck(data game.Data) bool {
+	m.lastRunPositions = append(m.lastRunPositions, [2]int{data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y})
+	if len(m.lastRunPositions) > 3 {
+		m.lastRunPositions = m.lastRunPositions[1:]
+	} else {
+		return false
+	}
+
+	for _, pos := range m.lastRunPositions {
+		if pos[0] != data.PlayerUnit.Position.X || pos[1] != data.PlayerUnit.Position.Y {
+			return false
+		}
+	}
+
+	return true
 }

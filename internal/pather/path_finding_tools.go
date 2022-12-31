@@ -134,7 +134,7 @@ func (w World) To() *Tile {
 }
 
 // RenderPathImg renders a path on top of a world.
-func (w World) RenderPathImg(path []astar.Pather) {
+func (w World) renderPathImg(path []astar.Pather) {
 	width := len(w)
 	if width == 0 {
 		return
@@ -182,8 +182,8 @@ func (w World) RenderPathImg(path []astar.Pather) {
 	png.Encode(outFile, img)
 }
 
-// ParseWorld parses a textual representation of a world into a world map.
-func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area) World {
+// parseWorld parses a textual representation of a world into a world map.
+func parseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area) World {
 	w := World{}
 
 	for x, xValues := range collisionGrid {
@@ -212,25 +212,5 @@ func ParseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area
 		Kind: KindTo,
 	}, toX, toY)
 
-	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
-	// the path, so we fake some points around the character making them walkable even if they're not technically
-	for i := -2; i < 3; i++ {
-		for k := -2; k < 3; k++ {
-			if i == 0 && k == 0 {
-				continue
-			}
-
-			w.SetTile(&Tile{
-				Kind: KindPlain,
-			}, fromX+i, fromY+k)
-
-			w.SetTile(&Tile{
-				Kind: KindPlain,
-			}, toX+i, toY+k)
-		}
-	}
-
-	// Debug only, this will render a png file with map and origin/destination points
-	//w.RenderPathImg(nil)
 	return w
 }
