@@ -3,9 +3,11 @@ package memory
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/object"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"sort"
 )
 
-func (gd *GameReader) Objects() []game.Object {
+func (gd *GameReader) Objects(playerPositionX, playerPositionY int) []game.Object {
 	hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
 
 	baseAddr := gd.process.moduleBaseAddressPtr + gd.offset.UnitTable + (2 * 1024)
@@ -45,6 +47,13 @@ func (gd *GameReader) Objects() []game.Object {
 			objectUnitPtr = uintptr(gd.process.ReadUInt(objectUnitPtr+0x150, IntTypeUInt64))
 		}
 	}
+
+	sort.SliceStable(objects, func(i, j int) bool {
+		distanceI := pather.DistanceFromPoint(playerPositionX, playerPositionY, objects[i].Position.X, objects[i].Position.Y)
+		distanceJ := pather.DistanceFromPoint(playerPositionX, playerPositionY, objects[j].Position.X, objects[j].Position.Y)
+
+		return distanceI < distanceJ
+	})
 
 	return objects
 }

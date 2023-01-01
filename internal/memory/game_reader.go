@@ -44,7 +44,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	npcs, exits, objects := gd.cachedMapData.NPCsExitsAndObjects(origin, pu.Area)
 
 	// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
-	memObjects := gd.Objects()
+	memObjects := gd.Objects(pu.Position.X, pu.Position.Y)
 	for _, clientObject := range objects {
 		found := false
 		for _, obj := range memObjects {
