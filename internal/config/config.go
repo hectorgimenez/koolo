@@ -18,11 +18,12 @@ var (
 )
 
 type StructConfig struct {
-	Display       int    `yaml:"display"`
-	Debug         bool   `yaml:"debug"`
-	LogFilePath   string `yaml:"logFilePath"`
-	MaxGameLength int    `yaml:"maxGameLength"`
-	Discord       struct {
+	Display        int    `yaml:"display"`
+	Debug          bool   `yaml:"debug"`
+	LogFilePath    string `yaml:"logFilePath"`
+	MaxGameLength  int    `yaml:"maxGameLength"`
+	D2MapAPIServer string `yaml:"D2MapAPIServer"`
+	Discord        struct {
 		Enabled   bool   `yaml:"enabled"`
 		ChannelID string `yaml:"channelId"`
 		Token     string `yaml:"token"`

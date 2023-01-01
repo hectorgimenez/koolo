@@ -2,7 +2,7 @@ display: 0 # Not supported yet
 debug: true # Prints extra log information
 logFilePath: log.txt
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
-D2Path: ''
+D2MapAPIServer: 'http://localhost:8899'
 
 # In order to use to Discord Bot, you need the Application Token. https://discord.com/developers/docs/intro
 discord:
@@ -40,7 +40,7 @@ bindings:
   sorceress:
     blizzard: w
     staticField: e
-    frozenArmor: ah
+    frozenArmor: a
 
   hammerdin:
     concentration: w
@@ -64,7 +64,7 @@ inventory:
 
 character:
   class: sorceress # Allowed values: sorceress, hammerdin
-  castingFrames: 9 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
+  castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
   useCTA: true
 
@@ -73,7 +73,7 @@ game:
   randomizeRuns: true
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
   # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, pindleskin, nihlathak, tristram
-  runs: [ tristram ]
+  runs: [ andariel, summoner, mephisto, pindleskin ]
 
   # Specific runs settings
   pindleskin:

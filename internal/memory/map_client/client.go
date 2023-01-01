@@ -3,6 +3,7 @@ package map_client
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
@@ -19,7 +20,7 @@ import (
 func GetMapData(seed string, difficulty difficulty.Difficulty) MapData {
 	var mapData []serverResponse
 	for i := 0; i < 5; i++ {
-		url := fmt.Sprintf("http://localhost:8899/v1/map/%s/%d/%d.json", seed, getDifficultyAsInt(difficulty), i)
+		url := fmt.Sprintf(config.Config.D2MapAPIServer+"/v1/map/%s/%d/%d.json", seed, getDifficultyAsInt(difficulty), i)
 		r, err := http.Get(url)
 		if err != nil {
 			panic(err) // TODO
