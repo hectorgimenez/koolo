@@ -27,7 +27,7 @@
 # allskills: integer
 
 pickupGold: true
-minimumGoldToPickup: 5000
+minimumGoldToPickup: 3000
 
 items:
   # Potions
@@ -44,12 +44,12 @@ items:
   #  - ethrune:
   #  - ithrune:
   #  - talrune:
-  #  - ralrune:
+  # - ralrune:
   #  - ortrune:
-  #  - thulrune:
-  #  - amnrune:
-  #  - solrune:
-  #  - shaelrune:
+  - thulrune:
+  - amnrune:
+  - solrune:
+  # - shaelrune:
   #  - dolrune:
   #  - helrune:
   #  - iorune:
@@ -72,12 +72,12 @@ items:
   - zodrune:
 
   # Gems
-  - flawlessdiamond:
-  - flawlessemerald:
-  - flawlesstopaz:
-  - flawlessamethyst:
-  - flawlesssapphire:
-  - flawlessruby:
+#  - flawlessdiamond:
+#  - flawlessemerald:
+#  - flawlesstopaz:
+#  - flawlessamethyst:
+#  - flawlesssapphire:
+#  - flawlessruby:
 
   # Keys
   - keyofhate:
@@ -110,7 +110,7 @@ items:
   ########### Armors ###########
   # White
   - mageplate: { quality: [ normal, superior ], sockets: [ 0, 3 ] } # Enigma
-  - duskshroud: { quality: [ normal, superior ], sockets: [ 0, 3 ] } # treachery
+  - duskshroud: { quality: [ normal, superior ], ethereal: true, sockets: [ 0, 3 ] } # treachery
 
   # Unique
   - duskshroud: { quality: unique, ethereal: false } # Ormus
@@ -122,16 +122,16 @@ items:
   - sacredarmor: { quality: unique, strength: 20 } # tyrael's might
   - serpentskinarmor: { quality: unique, fireresist: 35 } # skin of the vipermagi
   - wyrmhide: { quality: unique, fireresist: 35 } # skin of the vipermagi
-  - demonhidearmor: { quality: unique, ethereal: true } # skin of the flayed one eth
-  - linkedmail: { quality: unique, ethereal: true } # spirit forge eth
-  - cuirass: { quality: unique, ethereal: true } # duriel's shell eth
-  - tigulatedmail: { quality: unique, ethereal: true } # crow caw eth
-  - mesharmor: { quality: unique, ethereal: true } # shaftstop eth
-  - russetarmor: { quality: unique, ethereal: true } # skullder's eth
-  - templarcoat: { quality: unique, ethereal: true } # guardian angel eth
-  - sharktootharmor: { quality: unique, ethereal: true } # toothrow
-  - krakenshell: { quality: unique, ethereal: true } # toothrow x1
-  - chaosarmor: { quality: unique, ethereal: true } # black hades
+  - demonhidearmor: { quality: unique } # skin of the flayed one eth
+  - linkedmail: { quality: unique } # spirit forge eth
+  - cuirass: { quality: unique } # duriel's shell eth
+  - tigulatedmail: { quality: unique } # crow caw eth
+  - mesharmor: { quality: unique } # shaftstop eth
+  - russetarmor: { quality: unique } # skullder's eth
+  - templarcoat: { quality: unique } # guardian angel eth
+  - sharktootharmor: { quality: unique } # toothrow
+  - krakenshell: { quality: unique } # toothrow x1
+  - chaosarmor: { quality: unique } # black hades
 
   ########### Shields ###########
   # White
@@ -163,9 +163,9 @@ items:
   # Unique
   - vampirebonegloves: { quality: unique } # Dracul's Grasp
   - ogregauntlets: { quality: unique } # Steelrend
-  - heavygloves: { quality: unique } # Bloodfist
-  - sharkskingloves: { quality: unique } # Bloodfist
-  - vampirebonegloves: { quality: unique } # Bloodfist
+  #- heavygloves: { quality: unique } # Bloodfist
+  #- sharkskingloves: { quality: unique } # Bloodfist
+  #- vampirebonegloves: { quality: unique } # Bloodfist
   - chaingloves: { quality: unique } # Chance Guard
   - lightgauntlets: { quality: unique } # Magefist
   - battlegauntlets: { quality: unique } # Magefist
@@ -186,7 +186,7 @@ items:
   - wyrmhideboots: { quality: unique, ethereal: false, defense: 170 } # infernostride
   - sharkskinboots: { quality: unique, ethereal: false } # waterwalk
   - scarabshellboots: { quality: unique, ethereal: false, defense: 201 } # waterwalk
-  - battleboots: { quality: unique, ethereal: false, strength: 10 } # war traveler
+  - battleboots: { quality: unique, ethereal: false } # war traveler
   - boots: { quality: unique, ethereal: false } # hotspur
   - demonhideboots: { quality: unique, ethereal: false, defense: 48 } # hotspur
   - wyrmhideboots: { quality: unique, ethereal: false, defense: 80 } # hotspur
@@ -218,7 +218,7 @@ items:
 
   # Unique
   - wardbow: { quality: unique, enhanceddamage: 200 } # widowmaker
-  - hydrabow: { quality: unique, manasteal: 8 } # windforce
+  - hydrabow: { quality: unique } # windforce
 
   ########### Daggers ###########
   # Unique
