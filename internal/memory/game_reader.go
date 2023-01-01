@@ -5,7 +5,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/memory/map_client"
-	"log"
 	"strconv"
 )
 
@@ -27,7 +26,6 @@ func NewGameReader(process Process) *GameReader {
 func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	// Check if offsets changed
 	if gd.getPlayerUnitPtr() == 0 || isNewGame {
-		log.Println("Player Unit pointer changed, recalculating offsets")
 		gd.offset = CalculateOffsets(gd.process)
 		isNewGame = true
 	}
