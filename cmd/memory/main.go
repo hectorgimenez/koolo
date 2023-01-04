@@ -5,10 +5,15 @@ import (
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/memory"
+	"log"
 	"time"
 )
 
 func main() {
+	err := config.Load()
+	if err != nil {
+		log.Fatalf("Error loading configuration: %s", err.Error())
+	}
 	logger, err := zapLogger.NewLogger(config.Config.Debug, config.Config.LogFilePath)
 	process, err := memory.NewProcess(logger)
 	if err != nil {
