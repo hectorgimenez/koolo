@@ -13,10 +13,11 @@ type Town interface {
 
 func GetTownByArea(a area.Area) Town {
 	towns := map[area.Area]Town{
-		area.RogueEncampment: A1{},
-		area.LutGholein:      A2{},
-		area.KurastDocks:     A3{},
-		area.Harrogath:       A5{},
+		area.RogueEncampment:        A1{},
+		area.LutGholein:             A2{},
+		area.KurastDocks:            A3{},
+		area.ThePandemoniumFortress: A4{},
+		area.Harrogath:              A5{},
 	}
 
 	return towns[a]
