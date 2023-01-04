@@ -29,14 +29,13 @@ type Data struct {
 	Corpse     Corpse
 	Monsters   Monsters
 	// First slice represents X and second Y
-	CollisionGrid    [][]bool
-	PlayerUnit       PlayerUnit
-	NPCs             NPCs
-	Items            Items
-	Objects          []Object
-	AdjacentLevels   []Level
-	PointsOfInterest []PointOfInterest
-	OpenMenus        OpenMenus
+	CollisionGrid  [][]bool
+	PlayerUnit     PlayerUnit
+	NPCs           NPCs
+	Items          Items
+	Objects        []Object
+	AdjacentLevels []Level
+	OpenMenus      OpenMenus
 }
 
 func (d Data) MercHPPercent() int {

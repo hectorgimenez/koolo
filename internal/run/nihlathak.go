@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/object"
 )
 
 type Nihlathak struct {
@@ -31,11 +32,9 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 
 	// Move to Nilhatak
 	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-		for _, n := range data.PointsOfInterest {
-
-			// TODO: Fix this for memreading
-			if n.Name == "AreaNameNotFound" {
-				return []step.Step{step.MoveTo(n.Position.X, n.Position.Y, true)}
+		for _, o := range data.Objects {
+			if o.Name == object.NihlathakWildernessStartPositionName {
+				return []step.Step{step.MoveTo(o.Position.X, o.Position.Y, true)}
 			}
 		}
 

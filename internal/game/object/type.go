@@ -464,7 +464,7 @@ const (
 	DrehyaTownStartPosition              Name = 459
 	DrehyaWildernessStartPosition        Name = 460
 	NihlathakTownStartPosition           Name = 461
-	NihlathakWildernessStartPositionName      = 462
+	NihlathakWildernessStartPositionName Name = 462
 	IceCaveHiddenStash                   Name = 463
 	IceCaveHealthShrine                  Name = 464
 	IceCaveManaShrine                    Name = 465
