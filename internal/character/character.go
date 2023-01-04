@@ -13,19 +13,7 @@ import (
 	"strings"
 )
 
-type Character interface {
-	Buff() action.Action
-	KillCountess() action.Action
-	KillAndariel() action.Action
-	KillSummoner() action.Action
-	KillMephisto() action.Action
-	KillPindle(skipOnImmunities []stat.Resist) action.Action
-	KillNihlathak() action.Action
-	KillCouncil() action.Action
-	KillMonsterSequence(data game.Data, id game.UnitID) []step.Step
-}
-
-func BuildCharacter(logger *zap.Logger) (Character, error) {
+func BuildCharacter(logger *zap.Logger) (action.Character, error) {
 	bc := BaseCharacter{
 		logger: logger,
 	}

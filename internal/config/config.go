@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -87,6 +86,7 @@ type StructConfig struct {
 		UseCTA        bool   `yaml:"useCTA"`
 	} `yaml:"character"`
 	Game struct {
+		ClearTPArea   bool                  `yaml:"clearTPArea"`
 		Difficulty    difficulty.Difficulty `yaml:"difficulty"`
 		RandomizeRuns bool                  `yaml:"randomizeRuns"`
 		Runs          []string              `yaml:"runs"`
@@ -141,7 +141,7 @@ func Load() error {
 		return fmt.Errorf("error reading pickit: %w", err)
 	}
 
-	b, err := ioutil.ReadFile("config/pickit.yaml")
+	b, err := os.ReadFile("config/pickit.yaml")
 	m := make(map[interface{}]interface{})
 	err = yaml.Unmarshal(b, &m)
 	if err != nil {

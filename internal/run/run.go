@@ -2,7 +2,6 @@ package run
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"strings"
 )
@@ -14,10 +13,10 @@ type Run interface {
 
 type baseRun struct {
 	builder action.Builder
-	char    character.Character
+	char    action.Character
 }
 
-func BuildRuns(builder action.Builder, char character.Character) (runs []Run) {
+func BuildRuns(builder action.Builder, char action.Character) (runs []Run) {
 	baseRun := baseRun{
 		builder: builder,
 		char:    char,

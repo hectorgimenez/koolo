@@ -65,6 +65,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 		// Don't return town on last run
 		if k != len(runs)-1 {
+			if config.Config.Game.ClearTPArea {
+				actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
+			}
 			actions = append(actions, b.ab.ReturnTown())
 		}
 

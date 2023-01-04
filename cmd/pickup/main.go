@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -29,7 +30,11 @@ func main() {
 	bm := health.NewBeltManager(logger)
 	//hm := health.NewHealthManager(logger, bm)
 	sm := town.NewShopManager(logger, bm)
-	b := action.NewBuilder(logger, sm, bm, gr)
+	char, err := character.BuildCharacter(logger)
+	if err != nil {
+		panic(err)
+	}
+	b := action.NewBuilder(logger, sm, bm, gr, char)
 	a := b.ItemPickup()
 
 	gr.GetData(true)

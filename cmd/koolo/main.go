@@ -70,7 +70,7 @@ func main() {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 
-	ab := action.NewBuilder(logger, sm, bm, gr)
+	ab := action.NewBuilder(logger, sm, bm, gr, char)
 	bot := koolo.NewBot(logger, hm, ab, gr)
 	supervisor := koolo.NewSupervisor(logger, bot, gr)
 

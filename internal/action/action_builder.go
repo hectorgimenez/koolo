@@ -12,13 +12,15 @@ type Builder struct {
 	sm     town.ShopManager
 	bm     health.BeltManager
 	gr     *memory.GameReader
+	ch     Character
 }
 
-func NewBuilder(logger *zap.Logger, sm town.ShopManager, bm health.BeltManager, gr *memory.GameReader) Builder {
+func NewBuilder(logger *zap.Logger, sm town.ShopManager, bm health.BeltManager, gr *memory.GameReader, ch Character) Builder {
 	return Builder{
 		logger: logger,
 		sm:     sm,
 		bm:     bm,
 		gr:     gr,
+		ch:     ch,
 	}
 }
