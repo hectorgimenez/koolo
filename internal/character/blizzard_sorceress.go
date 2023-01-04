@@ -64,7 +64,7 @@ func (s BlizzardSorceress) Buff() action.Action {
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
-	return s.killMonsterByName(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, true, nil)
+	return s.killMonsterByName(npc.DarkStalker, game.MonsterTypeSuperUnique, 20, false, nil)
 }
 
 func (s BlizzardSorceress) KillAndariel() action.Action {
@@ -72,7 +72,7 @@ func (s BlizzardSorceress) KillAndariel() action.Action {
 }
 
 func (s BlizzardSorceress) KillSummoner() action.Action {
-	return s.killMonsterByName(npc.Summoner, game.MonsterTypeNone, 10, false, nil)
+	return s.killMonsterByName(npc.Summoner, game.MonsterTypeNone, 15, false, nil)
 }
 
 func (s BlizzardSorceress) KillPindle(skipOnImmunities []stat.Resist) action.Action {
