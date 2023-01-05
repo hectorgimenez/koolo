@@ -19,6 +19,10 @@ func KeySequence(keysToPress ...string) *KeySequenceStep {
 }
 
 func (o *KeySequenceStep) Status(_ game.Data) Status {
+	if o.status == StatusCompleted {
+		return StatusCompleted
+	}
+
 	if len(o.keysToPress) > 0 {
 		return o.status
 	}

@@ -24,6 +24,10 @@ func InteractNPC(npc npc.ID) *InteractNPCStep {
 }
 
 func (i *InteractNPCStep) Status(data game.Data) Status {
+	if i.status == StatusCompleted {
+		return StatusCompleted
+	}
+
 	// Give some extra time to render the UI
 	if data.OpenMenus.NPCInteract && time.Since(i.lastRun) > time.Second*1 {
 		return i.tryTransitionStatus(StatusCompleted)

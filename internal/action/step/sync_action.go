@@ -26,6 +26,10 @@ func SyncStepWithCheck(action func(game.Data) error, statusChecker func(game.Dat
 }
 
 func (s *SyncActionStep) Status(d game.Data) Status {
+	if s.status == StatusCompleted {
+		return StatusCompleted
+	}
+
 	if s.statusChecker != nil {
 		s.tryTransitionStatus(s.statusChecker(d))
 	}

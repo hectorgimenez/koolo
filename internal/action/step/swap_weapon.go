@@ -25,7 +25,9 @@ func (s *SwapWeaponStep) Status(data game.Data) Status {
 	if s.status == StatusNotStarted {
 		return StatusNotStarted
 	}
-
+	if s.status == StatusCompleted {
+		return StatusCompleted
+	}
 	_, found := data.PlayerUnit.Skills[skill.BattleOrders]
 	if found && s.initialWeaponWasCTA || !found && !s.initialWeaponWasCTA {
 		return s.tryTransitionStatus(StatusInProgress)

@@ -26,8 +26,11 @@ func MoveToLevel(area area.Area) *MoveToAreaStep {
 }
 
 func (m *MoveToAreaStep) Status(data game.Data) Status {
-	// Give
-	//some extra time to render the UI
+	if m.status == StatusCompleted {
+		return StatusCompleted
+	}
+
+	// Give some extra time to render the UI
 	if data.PlayerUnit.Area == m.area && time.Since(m.lastRun) > time.Second*1 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}

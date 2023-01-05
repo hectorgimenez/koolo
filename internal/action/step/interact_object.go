@@ -27,6 +27,10 @@ func InteractObject(name object.Name, isCompleted func(game.Data) bool) *Interac
 }
 
 func (i *InteractObjectStep) Status(data game.Data) Status {
+	if i.status == StatusCompleted {
+		return StatusCompleted
+	}
+
 	// Give some extra time to render the UI
 	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted(data) {
 		return i.tryTransitionStatus(StatusCompleted)

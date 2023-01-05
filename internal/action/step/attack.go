@@ -71,6 +71,10 @@ func SecondaryAttack(keyBinding string, id game.UnitID, numOfAttacks int, castDu
 }
 
 func (p *AttackStep) Status(data game.Data) Status {
+	if p.status == StatusCompleted {
+		return StatusCompleted
+	}
+
 	_, found := data.Monsters.FindByID(p.target)
 	// Give 2 secs before continuing, ensuring the items have been dropped before start the pickup process
 	if !found {
