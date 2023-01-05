@@ -183,7 +183,7 @@ func (w World) renderPathImg(data game.Data, path []astar.Pather) {
 	}
 
 	for _, m := range data.Monsters {
-		img.Set(m.Position.X-data.AreaOrigin.X, m.Position.Y-data.AreaOrigin.Y, color.RGBA{230, 230, 250, 255})
+		img.Set(m.Position.X-data.AreaOrigin.X, m.Position.Y-data.AreaOrigin.Y, color.RGBA{255, 0, 255, 255})
 	}
 
 	outFile, _ := os.Create("cg.png")
