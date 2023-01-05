@@ -26,6 +26,7 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 		area.LostCity:            {2, 6},
 		area.ArcaneSanctuary:     {2, 8},
 		area.DuranceOfHateLevel2: {3, 9},
+		area.RiverOfFlame:        {4, 3},
 		area.Harrogath:           {5, 1},
 		area.FrigidHighlands:     {5, 2},
 		area.HallsOfPain:         {5, 6},

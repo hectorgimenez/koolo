@@ -396,11 +396,11 @@ const (
 	ArcaneLargeChestRight                Name = 389
 	ArcaneSmallChestLeft                 Name = 390
 	ArcaneSmallChestRight                Name = 391
-	DiabloSeal1                          Name = 392
-	DiabloSeal2                          Name = 393
-	DiabloSeal3                          Name = 394
-	DiabloSeal4                          Name = 395
-	DiabloSeal5                          Name = 396
+	DiabloSeal1                          Name = 392 // Top down 1
+	DiabloSeal2                          Name = 393 // Top down 2
+	DiabloSeal3                          Name = 394 // Top middle
+	DiabloSeal4                          Name = 395 // Top left 1
+	DiabloSeal5                          Name = 396 // Top left 2
 	SparklyChest                         Name = 397
 	PandamoniumFortressWaypoint          Name = 398
 	InnerHellFissure                     Name = 399
