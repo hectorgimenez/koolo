@@ -33,7 +33,7 @@ func main() {
 		log.Println(http.ListenAndServe(":6060", nil))
 	}()
 
-	logger, err := zapLogger.NewLogger(config.Config.Debug, config.Config.LogFilePath)
+	logger, err := zapLogger.NewLogger(config.Config.Debug.Log, config.Config.LogFilePath)
 	if err != nil {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}

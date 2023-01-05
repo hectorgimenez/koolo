@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
-	logger, err := zapLogger.NewLogger(config.Config.Debug, config.Config.LogFilePath)
+	logger, err := zapLogger.NewLogger(config.Config.Debug.Log, config.Config.LogFilePath)
 	process, err := memory.NewProcess(logger)
 	if err != nil {
 		panic(err)
