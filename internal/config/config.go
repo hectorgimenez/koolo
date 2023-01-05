@@ -17,8 +17,11 @@ var (
 )
 
 type StructConfig struct {
-	Display        int    `yaml:"display"`
-	Debug          bool   `yaml:"debug"`
+	Display int `yaml:"display"`
+	Debug   struct {
+		Log       bool `yaml:"log"`
+		RenderMap bool `yaml:"renderMap"`
+	} `yaml:"debug"`
 	LogFilePath    string `yaml:"logFilePath"`
 	MaxGameLength  int    `yaml:"maxGameLength"`
 	D2MapAPIServer string `yaml:"D2MapAPIServer"`

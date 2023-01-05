@@ -1,5 +1,8 @@
 display: 0 # Not supported yet
-debug: true # Prints extra log information
+debug:
+  log: true # Prints extra log information
+  renderMap: false # Render current map data into 'cg.png' file
+
 logFilePath: log.txt
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 D2MapAPIServer: 'http://localhost:8899'

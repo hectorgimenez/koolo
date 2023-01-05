@@ -3,6 +3,7 @@ package pather
 import (
 	"fmt"
 	"github.com/beefsack/go-astar"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"image"
 	"image/color"
@@ -134,7 +135,7 @@ func (w World) To() *Tile {
 }
 
 // RenderPathImg renders a path on top of a world.
-func (w World) renderPathImg(path []astar.Pather) {
+func (w World) renderPathImg(data game.Data, path []astar.Pather) {
 	width := len(w)
 	if width == 0 {
 		return
@@ -176,6 +177,14 @@ func (w World) renderPathImg(path []astar.Pather) {
 	img.Set(w.To().X, w.To().Y, color.RGBA{
 		R: 0, G: 0, B: 255, A: 255,
 	})
+
+	for _, o := range data.Objects {
+		img.Set(o.Position.X-data.AreaOrigin.X, o.Position.Y-data.AreaOrigin.Y, color.RGBA{255, 165, 0, 255})
+	}
+
+	for _, m := range data.Monsters {
+		img.Set(m.Position.X-data.AreaOrigin.X, m.Position.Y-data.AreaOrigin.Y, color.RGBA{230, 230, 250, 255})
+	}
 
 	outFile, _ := os.Create("cg.png")
 	defer outFile.Close()

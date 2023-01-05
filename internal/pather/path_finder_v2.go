@@ -54,9 +54,9 @@ func GetPathToDestination(d game.Data, destX, destY int, blacklistedCoords ...[2
 	}
 
 	// Debug only, this will render a png file with map and origin/destination points
-	//if distance > 0 {
-	//	w.renderPathImg(p)
-	//}
+	if config.Config.Debug.RenderMap {
+		w.renderPathImg(d, p)
+	}
 
 	return p, distance, found
 }
