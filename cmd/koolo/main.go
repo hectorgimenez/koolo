@@ -75,7 +75,7 @@ func main() {
 	supervisor := koolo.NewSupervisor(logger, bot, gr)
 
 	g.Go(func() error {
-		return supervisor.Start(ctx, run.BuildRuns(ab, char))
+		return supervisor.Start(ctx, run.BuildRuns(logger, ab, char))
 	})
 
 	if config.Config.Controller.Webserver {

@@ -3,6 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"go.uber.org/zap"
 	"strings"
 )
 
@@ -14,12 +15,14 @@ type Run interface {
 type baseRun struct {
 	builder action.Builder
 	char    action.Character
+	logger  *zap.Logger
 }
 
-func BuildRuns(builder action.Builder, char action.Character) (runs []Run) {
+func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character) (runs []Run) {
 	baseRun := baseRun{
 		builder: builder,
 		char:    char,
+		logger:  logger,
 	}
 
 	for _, run := range config.Config.Game.Runs {
@@ -35,6 +38,10 @@ func BuildRuns(builder action.Builder, char action.Character) (runs []Run) {
 			runs = append(runs, Mephisto{baseRun})
 		case "council":
 			runs = append(runs, Council{baseRun})
+		case "diablo":
+			runs = append(runs, Diablo{
+				baseRun: baseRun,
+			})
 		case "eldritch":
 			runs = append(runs, Eldritch{
 				baseRun: baseRun,

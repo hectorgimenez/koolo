@@ -84,7 +84,7 @@ func (s BlizzardSorceress) KillMephisto() action.Action {
 }
 
 func (s BlizzardSorceress) KillNihlathak() action.Action {
-	return s.killMonsterByName(npc.Nihlathak, game.MonsterTypeSuperUnique, 20, false, nil)
+	return s.killMonsterByName(npc.Nihlathak, game.MonsterTypeSuperUnique, 30, false, nil)
 }
 
 func (s BlizzardSorceress) KillCouncil() action.Action {

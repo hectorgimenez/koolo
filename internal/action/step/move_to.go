@@ -16,23 +16,42 @@ type MoveToStep struct {
 	toX                  int
 	toY                  int
 	teleport             bool
+	stopAtDistance       int
 	path                 []astar.Pather
 	lastRunPositions     [][2]int
 	blacklistedPositions [][2]int
 }
 
-func MoveTo(toX, toY int, teleport bool) *MoveToStep {
-	return &MoveToStep{
+type MoveToStepOption func(step *MoveToStep)
+
+func MoveTo(toX, toY int, teleport bool, opts ...MoveToStepOption) *MoveToStep {
+	step := &MoveToStep{
 		basicStep: newBasicStep(),
 		toX:       toX,
 		toY:       toY,
 		teleport:  teleport,
 	}
+
+	for _, o := range opts {
+		o(step)
+	}
+
+	return step
+}
+
+func StopAtDistance(distance int) MoveToStepOption {
+	return func(step *MoveToStep) {
+		step.stopAtDistance = distance
+	}
 }
 
 func (m *MoveToStep) Status(data game.Data) Status {
+	if m.status == StatusCompleted {
+		return StatusCompleted
+	}
+
 	distance := pather.DistanceFromMe(data, m.toX, m.toY)
-	if distance < 5 {
+	if distance < 5 || distance <= m.stopAtDistance {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 

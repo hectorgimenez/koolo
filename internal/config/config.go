@@ -97,6 +97,9 @@ type StructConfig struct {
 			ClearPortal       bool `yaml:"clearPortal"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"tristram"`
+		Nihlathak struct {
+			ClearArea bool `yaml:"clearArea"`
+		}
 	} `yaml:"game"`
 	Runtime struct {
 		CastDuration time.Duration
