@@ -16,8 +16,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,10 +26,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
-
-	go func() {
-		log.Println(http.ListenAndServe(":6060", nil))
-	}()
 
 	logger, err := zapLogger.NewLogger(config.Config.Debug.Log, config.Config.LogFilePath)
 	if err != nil {
