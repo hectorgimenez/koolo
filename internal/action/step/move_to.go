@@ -2,7 +2,6 @@ package step
 
 import (
 	"errors"
-	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -12,24 +11,21 @@ import (
 )
 
 type MoveToStep struct {
-	basicStep
-	toX                  int
-	toY                  int
-	teleport             bool
-	stopAtDistance       int
-	path                 []astar.Pather
-	lastRunPositions     [][2]int
-	blacklistedPositions [][2]int
+	pathingStep
+	toX            int
+	toY            int
+	teleport       bool
+	stopAtDistance int
 }
 
 type MoveToStepOption func(step *MoveToStep)
 
 func MoveTo(toX, toY int, teleport bool, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
-		basicStep: newBasicStep(),
-		toX:       toX,
-		toY:       toY,
-		teleport:  teleport,
+		pathingStep: newPathingStep(),
+		toX:         toX,
+		toY:         toY,
+		teleport:    teleport,
 	}
 
 	for _, o := range opts {
@@ -77,7 +73,7 @@ func (m *MoveToStep) Run(data game.Data) error {
 
 	stuck := m.isPlayerStuck(data)
 
-	if m.path == nil || !m.adjustPath(data) || stuck {
+	if m.path == nil || !m.cachePath(data) || stuck {
 		if stuck {
 			tile := m.path[len(m.path)-1].(*pather.Tile)
 			m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
@@ -94,43 +90,4 @@ func (m *MoveToStep) Run(data game.Data) error {
 	pather.MoveThroughPath(m.path, 25, m.teleport)
 
 	return nil
-}
-
-// Cache the path and try to reuse it
-func (m *MoveToStep) adjustPath(data game.Data) bool {
-	nearestKey := 0
-	nearestDistance := 99999999
-	for k, pos := range m.path {
-		distance := pather.DistanceFromMe(data, pos.(*pather.Tile).X+data.AreaOrigin.X, pos.(*pather.Tile).Y+data.AreaOrigin.Y)
-		if distance < nearestDistance {
-			nearestDistance = distance
-			nearestKey = k
-		}
-	}
-
-	if nearestDistance < 5 && len(m.path) > nearestKey {
-		//fmt.Println(fmt.Sprintf("Max deviation: %d, using Path Key: %d [%d]", nearestDistance, nearestKey, len(m.path)-1))
-		m.path = m.path[:nearestKey]
-
-		return true
-	}
-
-	return false
-}
-
-func (m *MoveToStep) isPlayerStuck(data game.Data) bool {
-	m.lastRunPositions = append(m.lastRunPositions, [2]int{data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y})
-	if len(m.lastRunPositions) > 20 {
-		m.lastRunPositions = m.lastRunPositions[1:]
-	} else {
-		return false
-	}
-
-	for _, pos := range m.lastRunPositions {
-		if pos[0] != data.PlayerUnit.Position.X || pos[1] != data.PlayerUnit.Position.Y {
-			return false
-		}
-	}
-
-	return true
 }

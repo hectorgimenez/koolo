@@ -13,15 +13,15 @@ import (
 )
 
 type MoveToAreaStep struct {
-	basicStep
+	pathingStep
 	area                  area.Area
 	waitingForInteraction bool
 }
 
 func MoveToLevel(area area.Area) *MoveToAreaStep {
 	return &MoveToAreaStep{
-		basicStep: newBasicStep(),
-		area:      area,
+		pathingStep: newPathingStep(),
+		area:        area,
 	}
 }
 
@@ -55,12 +55,20 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
 			distance := pather.DistanceFromMe(data, l.Position.X, l.Position.Y)
-			if distance > 13 {
-				path, _, found := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
-				if !found {
-					return errors.New("path could not be calculated, maybe there is an obstacle")
+			if distance > 5 {
+				stuck := m.isPlayerStuck(data)
+				if m.path == nil || !m.cachePath(data) || stuck {
+					if stuck {
+						tile := m.path[len(m.path)-1].(*pather.Tile)
+						m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
+					}
+					path, _, found := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
+					if !found {
+						return errors.New("path could not be calculated, maybe there is an obstacle")
+					}
+					m.path = path
 				}
-				pather.MoveThroughPath(path, 25, true)
+				pather.MoveThroughPath(m.path, 25, true)
 				return nil
 			}
 
