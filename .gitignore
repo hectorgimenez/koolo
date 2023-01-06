@@ -1,8 +1,7 @@
-.idea
-build
-debug
-stats
-screenshots
-log.txt
-config/*.yaml
-config/*.yml
+/.idea
+/build
+/stats
+/screenshots
+/log.txt
+/config/*.yaml
+/config/*.yml
