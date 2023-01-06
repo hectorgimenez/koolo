@@ -37,24 +37,19 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	}))
 
 	// Try to move around Countess area
-	actions = append(actions, action.BuildStatic(func(data game.Data) (steps []step.Step) {
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 		for _, o := range data.Objects {
 			if o.Name == object.GoodChest {
-				steps = append(steps, step.MoveTo(o.Position.X, o.Position.Y, true))
+				return []step.Step{step.MoveTo(o.Position.X, o.Position.Y, true)}
 			}
 		}
-		return
-	}))
 
-	// Let's teleport over Countess
-	actions = append(actions, action.BuildStatic(func(data game.Data) (steps []step.Step) {
-		countess, found := data.Monsters.FindOne(npc.DarkStalker, game.MonsterTypeSuperUnique)
-		if !found {
-			return
+		// Try to teleport over Countess in case we are not able to find the chest position, a bit more risky
+		if countess, found := data.Monsters.FindOne(npc.DarkStalker, game.MonsterTypeSuperUnique); found {
+			return []step.Step{step.MoveTo(countess.Position.X, countess.Position.Y, true, step.StopAtDistance(15))}
 		}
 
-		steps = append(steps, step.MoveTo(countess.Position.X, countess.Position.Y, true))
-		return
+		return []step.Step{}
 	}))
 
 	// Kill Countess
