@@ -12,10 +12,16 @@ import (
 
 func (b Builder) Repair() *StaticAction {
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		durabilityPct := float32(data.PlayerUnit.Stats[stat.Durability]) / float32(data.PlayerUnit.Stats[stat.MaxDurability])
-		if durabilityPct < 0.80 {
-			b.logger.Info(fmt.Sprintf("Repairing, current durability: %0.2f is under 0.80", durabilityPct))
+		shouldRepair := false
+		for _, i := range data.Items.Equipped {
+			if d, found := i.Stats[stat.Durability]; found && d < 3 {
+				shouldRepair = true
+				b.logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, d))
+				break
+			}
+		}
 
+		if shouldRepair {
 			x, y := int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37)
 
 			steps = append(steps,

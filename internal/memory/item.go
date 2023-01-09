@@ -79,6 +79,8 @@ func (gd *GameReader) Items() game.Items {
 				} else if invPage == 0 {
 					items.Inventory = append(items.Inventory, itm)
 				}
+			case 1:
+				items.Equipped = append(items.Equipped, itm)
 			case 2:
 				items.Belt = append(items.Belt, itm)
 			case 3, 5:

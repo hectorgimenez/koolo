@@ -24,6 +24,7 @@ type Items struct {
 	Inventory Inventory
 	Shop      []Item
 	Ground    []Item
+	Equipped  []Item
 }
 
 type Inventory []Item
