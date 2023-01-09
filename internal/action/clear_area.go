@@ -12,12 +12,11 @@ func (b Builder) ClearAreaAroundPlayer(distance int) *DynamicAction {
 		for _, m := range data.Monsters.Enemies() {
 			d := pather.DistanceFromMe(data, m.Position.X, m.Position.Y)
 			if d <= distance {
-				b.logger.Debug("Killing monster before opening TP", zap.Int("monsterID", int(m.Name)))
+				b.logger.Debug("Clearing area...", zap.Int("monsterID", int(m.Name)))
 				return b.ch.KillMonsterSequence(data, m.UnitID), true
 			}
 		}
 
 		return nil, false
-
 	}, CanBeSkipped())
 }

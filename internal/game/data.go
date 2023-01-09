@@ -33,7 +33,7 @@ type Data struct {
 	PlayerUnit     PlayerUnit
 	NPCs           NPCs
 	Items          Items
-	Objects        []Object
+	Objects        Objects
 	AdjacentLevels []Level
 	OpenMenus      OpenMenus
 }

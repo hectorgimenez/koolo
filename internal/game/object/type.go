@@ -396,8 +396,8 @@ const (
 	ArcaneLargeChestRight                Name = 389
 	ArcaneSmallChestLeft                 Name = 390
 	ArcaneSmallChestRight                Name = 391
-	DiabloSeal1                          Name = 392 // Top down 1
-	DiabloSeal2                          Name = 393 // Top down 2
+	DiabloSeal1                          Name = 392 // Top right 1
+	DiabloSeal2                          Name = 393 // Top right 2
 	DiabloSeal3                          Name = 394 // Top middle
 	DiabloSeal4                          Name = 395 // Top left 1
 	DiabloSeal5                          Name = 396 // Top left 2

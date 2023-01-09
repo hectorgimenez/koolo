@@ -11,7 +11,7 @@ type DynamicAction struct {
 	basicAction
 	stepBuilder func(data game.Data) ([]step.Step, bool)
 	steps       []step.Step
-	//currentStep step.Step
+	finished    bool
 }
 
 func BuildDynamic(stepBuilder func(data game.Data) ([]step.Step, bool), opts ...Option) *DynamicAction {
@@ -27,7 +27,7 @@ func BuildDynamic(stepBuilder func(data game.Data) ([]step.Step, bool), opts ...
 }
 
 func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
-	if a.markSkipped {
+	if a.markSkipped || a.finished {
 		return ErrNoMoreSteps
 	}
 
@@ -63,6 +63,7 @@ func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
 
 	steps, ok := a.stepBuilder(data)
 	if !ok {
+		a.finished = true
 		return ErrNoMoreSteps
 	}
 

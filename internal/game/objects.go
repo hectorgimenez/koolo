@@ -12,6 +12,18 @@ type Object struct {
 	Position     Position
 }
 
+type Objects []Object
+
+func (o Objects) FindOne(name object.Name) (Object, bool) {
+	for _, obj := range o {
+		if obj.Name == name {
+			return obj, true
+		}
+	}
+
+	return Object{}, false
+}
+
 func (o Object) IsWaypoint() bool {
 	return o.Name == object.WaypointPortal || o.Name == object.Act2Waypoint || o.Name == object.Act3TownWaypoint || o.Name == object.PandamoniumFortressWaypoint || o.Name == object.ExpansionWaypoint
 }
