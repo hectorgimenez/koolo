@@ -7,6 +7,7 @@ import (
 
 type Town interface {
 	RefillNPC() npc.ID
+	HealNPC() npc.ID
 	RepairNPC() npc.ID
 	MercContractorNPC() npc.ID
 }

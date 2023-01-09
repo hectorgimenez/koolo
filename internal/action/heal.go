@@ -21,7 +21,7 @@ func (b Builder) Heal() *StaticAction {
 		}
 
 		if shouldHeal {
-			steps = append(steps, step.InteractNPC(town.GetTownByArea(data.PlayerUnit.Area).RefillNPC()))
+			steps = append(steps, step.InteractNPC(town.GetTownByArea(data.PlayerUnit.Area).HealNPC()))
 		}
 
 		return

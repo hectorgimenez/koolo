@@ -7,6 +7,10 @@ import (
 type A1 struct {
 }
 
+func (a A1) HealNPC() npc.ID {
+	return npc.Akara
+}
+
 func (a A1) MercContractorNPC() npc.ID {
 	return npc.Kashya
 }
