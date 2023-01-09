@@ -36,7 +36,6 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 		steps = append(steps,
 			step.SwapWeapon(),
 			step.SyncStep(func(data game.Data) error {
-				helper.Sleep(1000)
 				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
@@ -44,7 +43,7 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 				hid.PressKey(config.Config.Bindings.CTABattleOrders)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
-				helper.Sleep(1000)
+				helper.Sleep(100)
 
 				return nil
 			}),
