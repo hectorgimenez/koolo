@@ -44,8 +44,9 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 		}
 
 		return a.char.KillMonsterSequence(data, monsters[0].UnitID), true
-
 	}, action.CanBeSkipped()))
+
+	actions = append(actions, a.builder.ItemPickup(true))
 
 	// Open the chest
 	//actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {

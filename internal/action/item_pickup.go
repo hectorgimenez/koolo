@@ -7,18 +7,39 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"strings"
+	"time"
 )
 
-func (b Builder) ItemPickup() *StaticAction {
-	return BuildStatic(func(data game.Data) (steps []step.Step) {
+func (b Builder) ItemPickup(waitForDrop bool) *DynamicAction {
+	var firstCallTime = time.Now()
+	return BuildDynamic(func(data game.Data) ([]step.Step, bool) {
 		itemsToPickup := b.getItemsToPickup(data)
-		for _, item := range itemsToPickup {
-			b.logger.Debug(fmt.Sprintf("Item Detected: %s [%s] at X:%d Y:%d", item.Name, item.Quality, item.Position.X, item.Position.Y))
-			steps = append(steps, step.PickupItem(b.logger, item))
+		if len(itemsToPickup) > 0 {
+			i := itemsToPickup[0]
+			b.logger.Debug(fmt.Sprintf(
+				"Item Detected: %s [%s] at X:%d Y:%d",
+				i.Name,
+				i.Quality,
+				i.Position.X,
+				i.Position.Y,
+			))
+
+			return []step.Step{step.PickupItem(b.logger, i)}, true
 		}
 
-		return
+		// Add small delay, drop is not instant
+		if waitForDrop && time.Since(firstCallTime) < time.Second*2 {
+			return []step.Step{
+				step.SyncStep(func(data game.Data) error {
+					helper.Sleep(int((time.Second*2 - time.Since(firstCallTime)).Milliseconds()))
+					return nil
+				}),
+			}, true
+		}
+
+		return nil, false
 	}, CanBeSkipped())
 }
 
