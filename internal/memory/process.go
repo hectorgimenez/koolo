@@ -166,3 +166,7 @@ func (p Process) FindPattern(memory []byte, pattern, mask string) uintptr {
 
 	return 0
 }
+
+func (p Process) GetPID() uint {
+	return p.pid
+}

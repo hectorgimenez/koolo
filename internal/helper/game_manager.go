@@ -4,14 +4,15 @@ import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
+	"github.com/hectorgimenez/koolo/internal/helper/tcp"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/memory"
 )
 
+// ExitGame tries to close the socket and also exit via game menu, what happens faster.
 func ExitGame(gr *memory.GameReader) error {
-	hid.PressKey("esc")
-	hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
-	hid.Click(hid.LeftButton)
+	_ = tcp.CloseCurrentGameSocket(gr.GetPID())
+	exitGameUsingUIMenu()
 
 	for i := 0; i < 30; i++ {
 		if !gr.InGame() {
@@ -21,6 +22,12 @@ func ExitGame(gr *memory.GameReader) error {
 	}
 
 	return errors.New("error exiting game! Timeout")
+}
+
+func exitGameUsingUIMenu() {
+	hid.PressKey("esc")
+	hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
+	hid.Click(hid.LeftButton)
 }
 
 // TODO: Make this coords dynamic

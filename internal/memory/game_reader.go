@@ -9,8 +9,8 @@ import (
 )
 
 type GameReader struct {
-	offset           Offset
-	process          Process
+	offset Offset
+	Process
 	cachedMapSeed    uintptr
 	cachedPlayerUnit uintptr
 	cachedMapData    map_client.MapData
@@ -19,14 +19,14 @@ type GameReader struct {
 func NewGameReader(process Process) *GameReader {
 	return &GameReader{
 		offset:  CalculateOffsets(process),
-		process: process,
+		Process: process,
 	}
 }
 
 func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	// Check if offsets changed
 	if gd.getPlayerUnitPtr() == 0 || isNewGame {
-		gd.offset = CalculateOffsets(gd.process)
+		gd.offset = CalculateOffsets(gd.Process)
 		isNewGame = true
 	}
 
@@ -75,24 +75,24 @@ func (gd *GameReader) InGame() bool {
 
 //func (gd *GameReader) GameIP() string {
 //	IPOffset := gd.offset.GameData + 0x1D0
-//	IPAddressAddr := gd.process.moduleBaseAddressPtr + IPOffset
+//	IPAddressAddr := gd.Process.moduleBaseAddressPtr + IPOffset
 //
-//	return gd.process.ReadStringFromMemory(IPAddressAddr, 0)
+//	return gd.Process.ReadStringFromMemory(IPAddressAddr, 0)
 //}
 
 //func (gd *GameReader) ReadGameName() string {
 //	gameNameOffset := gd.offset.GameData + 0x40
-//	gameNameAddr := gd.process.moduleBaseAddressPtr + gameNameOffset
+//	gameNameAddr := gd.Process.moduleBaseAddressPtr + gameNameOffset
 //
-//	return gd.process.ReadStringFromMemory(gameNameAddr, 0)
+//	return gd.Process.ReadStringFromMemory(gameNameAddr, 0)
 //}
 
 func (gd *GameReader) openMenus() game.OpenMenus {
-	uiBase := gd.process.moduleBaseAddressPtr + gd.offset.UI - 0xA
+	uiBase := gd.Process.moduleBaseAddressPtr + gd.offset.UI - 0xA
 
-	buffer := gd.process.ReadBytesFromMemory(uiBase, 32)
+	buffer := gd.Process.ReadBytesFromMemory(uiBase, 32)
 
-	isMapShown := gd.process.ReadUInt(gd.process.moduleBaseAddressPtr+gd.offset.UI, IntTypeUInt8)
+	isMapShown := gd.Process.ReadUInt(gd.Process.moduleBaseAddressPtr+gd.offset.UI, IntTypeUInt8)
 
 	return game.OpenMenus{
 		Inventory: buffer[0x01] != 0,
@@ -106,8 +106,8 @@ func (gd *GameReader) openMenus() game.OpenMenus {
 }
 
 func (gd *GameReader) hoveredData() (hoveredUnitID uint, hoveredType uint, isHovered bool) {
-	hoverAddressPtr := gd.process.moduleBaseAddressPtr + gd.offset.Hover
-	hoverBuffer := gd.process.ReadBytesFromMemory(hoverAddressPtr, 12)
+	hoverAddressPtr := gd.Process.moduleBaseAddressPtr + gd.offset.Hover
+	hoverBuffer := gd.Process.ReadBytesFromMemory(hoverAddressPtr, 12)
 	isUnitHovered := ReadUIntFromBuffer(hoverBuffer, 0, IntTypeUInt16)
 	if isUnitHovered > 0 {
 		hoveredType = ReadUIntFromBuffer(hoverBuffer, 0x04, IntTypeUInt32)

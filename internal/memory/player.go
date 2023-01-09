@@ -14,23 +14,23 @@ var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 func (gd *GameReader) getPlayerUnitPtr() uintptr {
 	for i := 0; i < 128; i++ {
 		unitOffset := gd.offset.UnitTable + uintptr(i*8)
-		playerUnitAddr := gd.process.moduleBaseAddressPtr + unitOffset
-		playerUnit := gd.process.ReadUInt(playerUnitAddr, IntTypeUInt64)
+		playerUnitAddr := gd.Process.moduleBaseAddressPtr + unitOffset
+		playerUnit := gd.Process.ReadUInt(playerUnitAddr, IntTypeUInt64)
 		for playerUnit > 0 {
 			pInventory := uintptr(playerUnit) + 0x90
-			inventoryAddr := uintptr(gd.process.ReadUInt(pInventory, IntTypeUInt64))
+			inventoryAddr := uintptr(gd.Process.ReadUInt(pInventory, IntTypeUInt64))
 
 			pPath := uintptr(playerUnit) + 0x38
-			pathAddress := uintptr(gd.process.ReadUInt(pPath, IntTypeUInt64))
-			xPos := gd.process.ReadUInt(pathAddress+0x02, IntTypeUInt16)
-			yPos := gd.process.ReadUInt(pathAddress+0x06, IntTypeUInt16)
+			pathAddress := uintptr(gd.Process.ReadUInt(pPath, IntTypeUInt64))
+			xPos := gd.Process.ReadUInt(pathAddress+0x02, IntTypeUInt16)
+			yPos := gd.Process.ReadUInt(pathAddress+0x06, IntTypeUInt16)
 
 			// Only current player has inventory
 			if inventoryAddr > 0 && xPos > 0 && yPos > 0 {
 				return uintptr(playerUnit)
 			}
 
-			playerUnit = gd.process.ReadUInt(uintptr(playerUnit)+0x150, IntTypeUInt64)
+			playerUnit = gd.Process.ReadUInt(uintptr(playerUnit)+0x150, IntTypeUInt64)
 		}
 	}
 
@@ -40,25 +40,25 @@ func (gd *GameReader) getPlayerUnitPtr() uintptr {
 func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 	// Read X and Y Positions
 	pPath := playerUnit + 0x38
-	pathAddress := uintptr(gd.process.ReadUInt(pPath, IntTypeUInt64))
-	xPos := gd.process.ReadUInt(pathAddress+0x02, IntTypeUInt16)
-	yPos := gd.process.ReadUInt(pathAddress+0x06, IntTypeUInt16)
+	pathAddress := uintptr(gd.Process.ReadUInt(pPath, IntTypeUInt64))
+	xPos := gd.Process.ReadUInt(pathAddress+0x02, IntTypeUInt16)
+	yPos := gd.Process.ReadUInt(pathAddress+0x06, IntTypeUInt16)
 
 	// Player name
 	pUnitData := playerUnit + 0x10
-	playerNameAddr := uintptr(gd.process.ReadUInt(pUnitData, IntTypeUInt64))
-	name := gd.process.ReadStringFromMemory(playerNameAddr, 0)
+	playerNameAddr := uintptr(gd.Process.ReadUInt(pUnitData, IntTypeUInt64))
+	name := gd.Process.ReadStringFromMemory(playerNameAddr, 0)
 
 	// Get Stats
-	statsListExPtr := uintptr(gd.process.ReadUInt(playerUnit+0x88, IntTypeUInt64))
-	statPtr := gd.process.ReadUInt(statsListExPtr+0x30, IntTypeUInt64)
-	statCount := gd.process.ReadUInt(statsListExPtr+0x38, IntTypeUInt64)
+	statsListExPtr := uintptr(gd.Process.ReadUInt(playerUnit+0x88, IntTypeUInt64))
+	statPtr := gd.Process.ReadUInt(statsListExPtr+0x30, IntTypeUInt64)
+	statCount := gd.Process.ReadUInt(statsListExPtr+0x38, IntTypeUInt64)
 
 	stats := map[stat.Stat]int{}
 	for j := 0; j < int(statCount); j++ {
 		statOffset := uintptr(statPtr) + 0x2 + uintptr(j*8)
-		statNumber := gd.process.ReadUInt(statOffset, IntTypeUInt16)
-		statValue := gd.process.ReadUInt(statOffset+0x02, IntTypeUInt32)
+		statNumber := gd.Process.ReadUInt(statOffset, IntTypeUInt16)
+		statValue := gd.Process.ReadUInt(statOffset+0x02, IntTypeUInt32)
 
 		switch stat.Stat(statNumber) {
 		case stat.Life,
@@ -78,11 +78,11 @@ func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 	skills := gd.getSkills(playerUnit + 0x100)
 
 	// Level number
-	pathPtr := uintptr(gd.process.ReadUInt(playerUnit+0x38, IntTypeUInt64))
-	room1Ptr := uintptr(gd.process.ReadUInt(pathPtr+0x20, IntTypeUInt64))
-	room2Ptr := uintptr(gd.process.ReadUInt(room1Ptr+0x18, IntTypeUInt64))
-	levelPtr := uintptr(gd.process.ReadUInt(room2Ptr+0x90, IntTypeUInt64))
-	levelNo := gd.process.ReadUInt(levelPtr+0x1F8, IntTypeUInt32)
+	pathPtr := uintptr(gd.Process.ReadUInt(playerUnit+0x38, IntTypeUInt64))
+	room1Ptr := uintptr(gd.Process.ReadUInt(pathPtr+0x20, IntTypeUInt64))
+	room2Ptr := uintptr(gd.Process.ReadUInt(room1Ptr+0x18, IntTypeUInt64))
+	levelPtr := uintptr(gd.Process.ReadUInt(room2Ptr+0x90, IntTypeUInt64))
+	levelNo := gd.Process.ReadUInt(levelPtr+0x1F8, IntTypeUInt32)
 
 	return game.PlayerUnit{
 		Name: name,
@@ -98,12 +98,12 @@ func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
 }
 
 func (gd *GameReader) getMapSeed(playerUnit uintptr) (uintptr, error) {
-	actPtr := uintptr(gd.process.ReadUInt(playerUnit+0x20, IntTypeUInt64))
-	actMiscPtr := uintptr(gd.process.ReadUInt(actPtr+0x78, IntTypeUInt64))
+	actPtr := uintptr(gd.Process.ReadUInt(playerUnit+0x20, IntTypeUInt64))
+	actMiscPtr := uintptr(gd.Process.ReadUInt(actPtr+0x78, IntTypeUInt64))
 
-	dwInitSeedHash1 := uintptr(gd.process.ReadUInt(actMiscPtr+0x840, IntTypeUInt32))
-	dwInitSeedHash2 := uintptr(gd.process.ReadUInt(actMiscPtr+0x844, IntTypeUInt32))
-	dwEndSeedHash1 := uintptr(gd.process.ReadUInt(actMiscPtr+0x868, IntTypeUInt32))
+	dwInitSeedHash1 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x840, IntTypeUInt32))
+	dwInitSeedHash2 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x844, IntTypeUInt32))
+	dwEndSeedHash1 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x868, IntTypeUInt32))
 
 	p, err := dllSeed.FindProc("get_seed")
 	if err != nil {
@@ -120,18 +120,18 @@ func (gd *GameReader) getMapSeed(playerUnit uintptr) (uintptr, error) {
 
 func (gd *GameReader) getSkills(skillsPtr uintptr) map[skill.Skill]int {
 	skills := make(map[skill.Skill]int)
-	skillListPtr := uintptr(gd.process.ReadUInt(skillsPtr, IntTypeUInt64))
+	skillListPtr := uintptr(gd.Process.ReadUInt(skillsPtr, IntTypeUInt64))
 
-	skillPtr := uintptr(gd.process.ReadUInt(skillListPtr, IntTypeUInt64))
+	skillPtr := uintptr(gd.Process.ReadUInt(skillListPtr, IntTypeUInt64))
 
 	for skillPtr != 0 {
-		skillTxtPtr := uintptr(gd.process.ReadUInt(skillPtr, IntTypeUInt64))
-		skillTxt := uintptr(gd.process.ReadUInt(skillTxtPtr, IntTypeUInt16))
-		skillLvl := gd.process.ReadUInt(skillTxtPtr+0x34, IntTypeUInt16)
+		skillTxtPtr := uintptr(gd.Process.ReadUInt(skillPtr, IntTypeUInt64))
+		skillTxt := uintptr(gd.Process.ReadUInt(skillTxtPtr, IntTypeUInt16))
+		skillLvl := gd.Process.ReadUInt(skillTxtPtr+0x34, IntTypeUInt16)
 
 		skills[skill.Skill(skillTxt)] = int(skillLvl)
 
-		skillPtr = uintptr(gd.process.ReadUInt(skillPtr+0x08, IntTypeUInt64))
+		skillPtr = uintptr(gd.Process.ReadUInt(skillPtr+0x08, IntTypeUInt64))
 	}
 
 	return skills
@@ -141,7 +141,7 @@ func (gd *GameReader) getStates(statsListExPtr uintptr) []state.State {
 	var states []state.State
 	for i := 0; i < 6; i++ {
 		offset := i * 4
-		stateByte := gd.process.ReadUInt(statsListExPtr+0xAD0+uintptr(offset), IntTypeUInt32)
+		stateByte := gd.Process.ReadUInt(statsListExPtr+0xAD0+uintptr(offset), IntTypeUInt32)
 
 		offset = (32 * i) - 1
 		states = append(states, calculateStates(stateByte, uint(offset))...)
