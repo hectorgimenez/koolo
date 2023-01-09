@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/remote"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -57,7 +58,8 @@ func main() {
 	gr := memory.NewGameReader(process)
 
 	bm := health.NewBeltManager(logger)
-	hm := health.NewHealthManager(logger, bm)
+	gm := helper.NewGameManager(gr)
+	hm := health.NewHealthManager(logger, bm, gm)
 	sm := town.NewShopManager(logger, bm)
 	char, err := character.BuildCharacter(logger)
 	if err != nil {
@@ -66,7 +68,7 @@ func main() {
 
 	ab := action.NewBuilder(logger, sm, bm, gr, char)
 	bot := koolo.NewBot(logger, hm, ab, gr)
-	supervisor := koolo.NewSupervisor(logger, bot, gr)
+	supervisor := koolo.NewSupervisor(logger, bot, gr, gm)
 
 	g.Go(func() error {
 		return supervisor.Start(ctx, run.BuildRuns(logger, ab, char))

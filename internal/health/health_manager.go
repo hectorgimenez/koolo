@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
@@ -27,6 +26,7 @@ const (
 type Manager struct {
 	logger        *zap.Logger
 	beltManager   BeltManager
+	gameManager   helper.GameManager
 	lastRejuv     time.Time
 	lastRejuvMerc time.Time
 	lastHeal      time.Time
@@ -34,10 +34,11 @@ type Manager struct {
 	lastMercHeal  time.Time
 }
 
-func NewHealthManager(logger *zap.Logger, beltManager BeltManager) Manager {
+func NewHealthManager(logger *zap.Logger, beltManager BeltManager, gm helper.GameManager) Manager {
 	return Manager{
 		logger:      logger,
 		beltManager: beltManager,
+		gameManager: gm,
 	}
 }
 
@@ -49,10 +50,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	if d.PlayerUnit.HPPercent() <= 0 {
-		// After dying we need to press esc and wait the loading screen until we can exit game, it's a bit hacky but it works
-		helper.Sleep(1000)
-		hid.PressKey("esc")
-		helper.Sleep(10000)
+		hm.gameManager.ExitGame()
 		stats.FinishCurrentRun(stats.EventDeath)
 		return ErrDied
 	}

@@ -9,13 +9,21 @@ import (
 	"github.com/hectorgimenez/koolo/internal/memory"
 )
 
+type GameManager struct {
+	gr *memory.GameReader
+}
+
+func NewGameManager(gr *memory.GameReader) GameManager {
+	return GameManager{gr: gr}
+}
+
 // ExitGame tries to close the socket and also exit via game menu, what happens faster.
-func ExitGame(gr *memory.GameReader) error {
-	_ = tcp.CloseCurrentGameSocket(gr.GetPID())
+func (gm GameManager) ExitGame() error {
+	_ = tcp.CloseCurrentGameSocket(gm.gr.GetPID())
 	exitGameUsingUIMenu()
 
 	for i := 0; i < 30; i++ {
-		if !gr.InGame() {
+		if !gm.gr.InGame() {
 			return nil
 		}
 		Sleep(1000)
@@ -31,7 +39,7 @@ func exitGameUsingUIMenu() {
 }
 
 // TODO: Make this coords dynamic
-func NewGame(gr *memory.GameReader) error {
+func (gm GameManager) NewGame() error {
 	difficultyPosition := map[difficulty.Difficulty]struct {
 		X, Y int
 	}{
@@ -50,7 +58,7 @@ func NewGame(gr *memory.GameReader) error {
 	hid.Click(hid.LeftButton)
 
 	for i := 0; i < 30; i++ {
-		if gr.InGame() {
+		if gm.gr.InGame() {
 			return nil
 		}
 		Sleep(1000)

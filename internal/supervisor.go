@@ -24,13 +24,15 @@ type Supervisor struct {
 	logger *zap.Logger
 	bot    Bot
 	gr     *memory.GameReader
+	gm     helper.GameManager
 }
 
-func NewSupervisor(logger *zap.Logger, bot Bot, gr *memory.GameReader) Supervisor {
+func NewSupervisor(logger *zap.Logger, bot Bot, gr *memory.GameReader, gm helper.GameManager) Supervisor {
 	return Supervisor{
 		logger: logger,
 		bot:    bot,
 		gr:     gr,
+		gm:     gm,
 	}
 }
 
@@ -47,7 +49,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 		case <-ctx.Done():
 			return nil
 		default:
-			if err = helper.NewGame(s.gr); err != nil {
+			if err = s.gm.NewGame(); err != nil {
 				s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 				continue
 			}
@@ -67,7 +69,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 				stats.Events <- stats.EventWithScreenshot(errorMsg)
 				s.logger.Warn(errorMsg)
 			}
-			if exitErr := helper.ExitGame(s.gr); exitErr != nil {
+			if exitErr := s.gm.ExitGame(); exitErr != nil {
 				return fmt.Errorf("error exiting game: %s", exitErr)
 			}
 			firstRun = false
