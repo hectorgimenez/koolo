@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
@@ -10,9 +11,15 @@ import (
 func (b Builder) VendorRefill() *StaticAction {
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
 		if b.shouldGoToVendor(data) {
+			openShopStep := step.KeySequence("home", "down", "enter")
+			// Jamella trade button is the first one
+			if data.PlayerUnit.Area == area.ThePandemoniumFortress {
+				openShopStep = step.KeySequence("home", "enter")
+			}
+
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.PlayerUnit.Area).RefillNPC()),
-				step.KeySequence("home", "down", "enter"),
+				openShopStep,
 				step.SyncStep(func(data game.Data) error {
 					// Small delay to allow the vendor window popup
 					helper.Sleep(1000)

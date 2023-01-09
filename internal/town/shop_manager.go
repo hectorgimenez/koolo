@@ -15,9 +15,8 @@ const (
 	topCornerWindowWidthProportion  = 37.64
 	topCornerWindowHeightProportion = 7.85
 	ItemBoxSize                     = 40
-
-	InventoryTopLeftX = 1.494
-	InventoryTopLeftY = 2.071
+	InventoryTopLeftX               = 1.494
+	InventoryTopLeftY               = 2.071
 )
 
 type ShopManager struct {
@@ -98,7 +97,7 @@ func (sm ShopManager) buyItem(i game.Item, quantity int) {
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
 		hid.Click(hid.RightButton)
-		helper.Sleep(500)
+		helper.Sleep(800)
 		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
 }
