@@ -48,10 +48,6 @@ func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
 
 	for _, s := range a.steps {
 		if s.Status(data) != step.StatusCompleted {
-			//lastRun := s.LastRun()
-			//if s.LastRun().After(lastRun) {
-			//	logger.Debug("Executed step", zap.String("step_name", reflect.TypeOf(s).Elem().Name()))
-			//}
 			err := s.Run(data)
 			if err != nil {
 				a.retries++
