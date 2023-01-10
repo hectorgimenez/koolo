@@ -340,7 +340,7 @@ items:
   - smallcharm: { quality: magic }
 
   # Large
-  - largecharm: { quality: magic }
+  - largecharm: { quality: unique }
 
   # Grand
   - grandcharm: { quality: magic }
