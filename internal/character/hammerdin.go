@@ -21,7 +21,11 @@ type Hammerdin struct {
 	BaseCharacter
 }
 
-func (s Hammerdin) KillMonsterSequence(data game.Data, id game.UnitID) []step.Step {
+func (s Hammerdin) KillMonsterSequence(
+	monsterSelector func(data game.Data) (game.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+	opts ...step.AttackOption,
+) *action.DynamicAction {
 	//TODO implement me
 	panic("implement me")
 }
@@ -91,7 +95,6 @@ func (s Hammerdin) KillCouncil() action.Action {
 					step.PrimaryAttack(
 						m.UnitID,
 						8,
-						config.Config.Runtime.CastDuration,
 						step.Distance(2, 8),
 						step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
 					),
@@ -115,7 +118,6 @@ func (s Hammerdin) killMonster(npc npc.ID, t game.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					8,
-					config.Config.Runtime.CastDuration,
 					step.Distance(2, 8),
 					step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
 				),

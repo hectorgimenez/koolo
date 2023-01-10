@@ -90,17 +90,18 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.KillNihlathak())
 
 	// Clear monsters around the area, sometimes it makes difficult to pickup items if there are many monsters around the area
-	actions = append(actions, action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
-		if config.Config.Game.Nihlathak.ClearArea {
+	if config.Config.Game.Nihlathak.ClearArea {
+		actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 			for _, m := range data.Monsters.Enemies() {
 				if d := pather.DistanceFromPoint(nilaO.Position.X, nilaO.Position.Y, m.Position.X, m.Position.Y); d < 15 {
 					a.logger.Debug("Clearing monsters around Nihlathak position", zap.Any("monster", m))
-					return a.char.KillMonsterSequence(data, m.UnitID), true
+					return m.UnitID, true
 				}
 			}
-		}
 
-		return nil, false
-	}))
+			return 0, false
+		}, nil))
+	}
+
 	return
 }

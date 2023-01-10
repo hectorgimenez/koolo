@@ -36,15 +36,15 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 	}))
 
 	// Clear Ancient Tunnels
-	actions = append(actions, action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
+	actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 		// Clear only elite monsters
 		monsters := data.Monsters.Enemies(game.MonsterEliteFilter())
 		if len(monsters) == 0 {
-			return nil, false
+			return 0, false
 		}
 
-		return a.char.KillMonsterSequence(data, monsters[0].UnitID), true
-	}, action.CanBeSkipped()))
+		return monsters[0].UnitID, true
+	}, nil))
 
 	actions = append(actions, a.builder.ItemPickup(true))
 

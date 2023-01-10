@@ -15,5 +15,9 @@ type Character interface {
 	KillPindle(skipOnImmunities []stat.Resist) Action
 	KillNihlathak() Action
 	KillCouncil() Action
-	KillMonsterSequence(data game.Data, id game.UnitID) []step.Step
+	KillMonsterSequence(
+		monsterSelector func(data game.Data) (game.UnitID, bool),
+		skipOnImmunities []stat.Resist,
+		opts ...step.AttackOption,
+	) *DynamicAction
 }

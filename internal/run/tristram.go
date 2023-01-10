@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 type Tristram struct {
@@ -41,19 +40,7 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 
 	// Clear monsters around the portal
 	if config.Config.Game.Tristram.ClearPortal {
-		actions = append(actions, action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
-			var closeMonsters []game.Monster
-			for _, m := range data.Monsters.Enemies() {
-				if pather.DistanceFromMe(data, m.Position.X, m.Position.Y) < 2 {
-					closeMonsters = append(closeMonsters, m)
-				}
-			}
-			if len(closeMonsters) == 0 {
-				return nil, false
-			}
-
-			return a.char.KillMonsterSequence(data, closeMonsters[0].UnitID), true
-		}))
+		actions = append(actions, a.builder.ClearAreaAroundPlayer(5))
 	}
 
 	// Enter Tristram portal
@@ -71,7 +58,7 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 	}))
 
 	// Clear Tristram
-	actions = append(actions, action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
+	actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 		monsters := data.Monsters.Enemies()
 
 		// Clear only elite monsters
@@ -80,11 +67,11 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 		}
 
 		if len(monsters) == 0 {
-			return nil, false
+			return 0, false
 		}
 
-		return a.char.KillMonsterSequence(data, monsters[0].UnitID), true
+		return monsters[0].UnitID, true
+	}, nil))
 
-	}, action.CanBeSkipped()))
 	return
 }

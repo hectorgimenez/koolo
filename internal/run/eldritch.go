@@ -2,7 +2,6 @@ package run
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
@@ -23,13 +22,13 @@ func (a Eldritch) BuildActions() (actions []action.Action) {
 	// Buff
 	actions = append(actions, a.char.Buff())
 
-	actions = append(actions, action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
+	actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 		if m, found := data.Monsters.FindOne(npc.MinionExp, game.MonsterTypeSuperUnique); found {
-			return a.char.KillMonsterSequence(data, m.UnitID), true
+			return m.UnitID, true
 		}
 
-		return nil, false
-	}))
+		return 0, false
+	}, nil))
 
 	return
 }

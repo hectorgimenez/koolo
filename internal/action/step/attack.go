@@ -14,7 +14,6 @@ type AttackStep struct {
 	target                game.UnitID
 	standStillBinding     string
 	numOfAttacksRemaining int
-	castDuration          time.Duration
 	keyBinding            string
 	followEnemy           bool
 	minDistance           int
@@ -40,13 +39,12 @@ func EnsureAura(keyBinding string) AttackOption {
 	}
 }
 
-func PrimaryAttack(target game.UnitID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+func PrimaryAttack(target game.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
-		castDuration:          castDuration,
 	}
 
 	for _, o := range opts {
@@ -55,13 +53,12 @@ func PrimaryAttack(target game.UnitID, numOfAttacks int, castDuration time.Durat
 	return s
 }
 
-func SecondaryAttack(keyBinding string, id game.UnitID, numOfAttacks int, castDuration time.Duration, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(keyBinding string, id game.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                id,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
-		castDuration:          castDuration,
 		keyBinding:            keyBinding,
 	}
 	for _, o := range opts {
@@ -79,7 +76,7 @@ func (p *AttackStep) Status(data game.Data) Status {
 	if !found {
 		return p.tryTransitionStatus(StatusCompleted)
 	} else {
-		if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > p.castDuration {
+		if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > config.Config.Runtime.CastDuration {
 			return p.tryTransitionStatus(StatusCompleted)
 		}
 	}
@@ -113,7 +110,7 @@ func (p *AttackStep) Run(data game.Data) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > p.castDuration && p.numOfAttacksRemaining > 0 {
+	if time.Since(p.lastRun) > config.Config.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
 		hid.KeyDown(p.standStillBinding)
 		x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 		hid.MovePointer(x, y)
