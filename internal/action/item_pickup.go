@@ -5,7 +5,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"strings"
@@ -13,13 +12,17 @@ import (
 )
 
 func (b Builder) ItemPickup(waitForDrop bool) *DynamicAction {
-	var firstCallTime = time.Now()
+	firstCallTime := time.Time{}
 	return BuildDynamic(func(data game.Data) ([]step.Step, bool) {
+		if firstCallTime.IsZero() {
+			firstCallTime = time.Now()
+		}
+
 		itemsToPickup := b.getItemsToPickup(data)
 		if len(itemsToPickup) > 0 {
 			i := itemsToPickup[0]
 			b.logger.Debug(fmt.Sprintf(
-				"Item Detected: %s [%s] at X:%d Y:%d",
+				"Item Detected: %s [%d] at X:%d Y:%d",
 				i.Name,
 				i.Quality,
 				i.Position.X,
@@ -30,10 +33,11 @@ func (b Builder) ItemPickup(waitForDrop bool) *DynamicAction {
 		}
 
 		// Add small delay, drop is not instant
-		if waitForDrop && time.Since(firstCallTime) < time.Second*2 {
+		if waitForDrop && time.Since(firstCallTime) < time.Second {
+			b.logger.Debug("Waiting a second to check again for drop")
 			return []step.Step{
 				step.SyncStep(func(data game.Data) error {
-					helper.Sleep(int((time.Second*2 - time.Since(firstCallTime)).Milliseconds()))
+					helper.Sleep(int((time.Second - time.Since(firstCallTime)).Milliseconds()))
 					return nil
 				}),
 			}, true
@@ -48,41 +52,41 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 	missingManaPotions := b.bm.GetMissingCount(data, game.ManaPotion)
 	missingRejuvenationPotions := b.bm.GetMissingCount(data, game.RejuvenationPotion)
 	var itemsToPickup []game.Item
-	for _, item := range data.Items.Ground {
+	for _, itm := range data.Items.Ground {
 		// Pickup potions only if they are required
-		if item.IsHealingPotion() {
+		if itm.IsHealingPotion() {
 			if missingHealingPotions == 0 {
 				continue
 			}
-			if b.shouldBePickedUp(data, item) {
-				itemsToPickup = append(itemsToPickup, item)
+			if b.shouldBePickedUp(data, itm) {
+				itemsToPickup = append(itemsToPickup, itm)
 				missingHealingPotions--
 			}
 			continue
 		}
-		if item.IsManaPotion() {
+		if itm.IsManaPotion() {
 			if missingManaPotions == 0 {
 				continue
 			}
-			if b.shouldBePickedUp(data, item) {
-				itemsToPickup = append(itemsToPickup, item)
+			if b.shouldBePickedUp(data, itm) {
+				itemsToPickup = append(itemsToPickup, itm)
 				missingManaPotions--
 			}
 			continue
 		}
-		if item.IsRejuvPotion() {
+		if itm.IsRejuvPotion() {
 			if missingRejuvenationPotions == 0 {
 				continue
 			}
-			if b.shouldBePickedUp(data, item) {
-				itemsToPickup = append(itemsToPickup, item)
+			if b.shouldBePickedUp(data, itm) {
+				itemsToPickup = append(itemsToPickup, itm)
 				missingRejuvenationPotions--
 			}
 			continue
 		}
 
-		if b.shouldBePickedUp(data, item) {
-			itemsToPickup = append(itemsToPickup, item)
+		if b.shouldBePickedUp(data, itm) {
+			itemsToPickup = append(itemsToPickup, itm)
 			continue
 		}
 	}
@@ -91,16 +95,6 @@ func (b Builder) getItemsToPickup(data game.Data) []game.Item {
 }
 
 func (b Builder) shouldBePickedUp(d game.Data, i game.Item) bool {
-	// Exclude Gheed if we are already have one
-	if i.Name == game.ItemGrandCharm && i.Quality == item.ItemQualityUnique {
-		for _, invItem := range d.Items.Inventory {
-			if invItem.Name == game.ItemGrandCharm && invItem.Quality == item.ItemQualityUnique {
-				b.logger.Warn("Gheed's Fortune dropped, but you already have one in the inventory, skipping.")
-				return false
-			}
-		}
-	}
-
 	// Check if we should pickup gold, based on amount
 	if config.Pickit.PickupGold && strings.EqualFold(string(i.Name), "Gold") {
 		if i.Stats[stat.Gold] >= config.Pickit.MinimumGoldToPickup && d.PlayerUnit.Stats[stat.Gold] < d.PlayerUnit.MaxGold() {
