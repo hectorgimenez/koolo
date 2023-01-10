@@ -61,13 +61,14 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		firstRun = false
 
 		actions = append(actions, r.BuildActions()...)
+		actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
 		actions = append(actions, b.ab.ItemPickup(true))
 
 		// Don't return town on last run
 		if k != len(runs)-1 {
 			if config.Config.Game.ClearTPArea {
 				actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
-				actions = append(actions, b.ab.ItemPickup(true))
+				actions = append(actions, b.ab.ItemPickup(false))
 			}
 			actions = append(actions, b.ab.ReturnTown())
 		}
