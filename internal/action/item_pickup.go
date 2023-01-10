@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -34,10 +35,11 @@ func (b Builder) ItemPickup(waitForDrop bool) *DynamicAction {
 
 		// Add small delay, drop is not instant
 		if waitForDrop && time.Since(firstCallTime) < time.Second {
-			b.logger.Debug("Waiting a second to check again for drop")
+			msToWait := int((time.Second - time.Since(firstCallTime)).Milliseconds())
+			b.logger.Debug("No items detected, waiting a bit and will try again", zap.Int("waitMs", msToWait))
 			return []step.Step{
 				step.SyncStep(func(data game.Data) error {
-					helper.Sleep(int((time.Second - time.Since(firstCallTime)).Milliseconds()))
+					helper.Sleep(msToWait)
 					return nil
 				}),
 			}, true
