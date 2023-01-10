@@ -58,11 +58,11 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	return game.Data{
 		AreaOrigin:     origin,
 		Corpse:         game.Corpse{},
-		Monsters:       gd.Monsters(pu.Position.X, pu.Position.Y),
+		Monsters:       gd.Monsters(pu.Position),
 		CollisionGrid:  gd.cachedMapData.CollisionGrid(pu.Area),
 		PlayerUnit:     pu,
 		NPCs:           npcs,
-		Items:          gd.Items(),
+		Items:          gd.Items(pu.Position),
 		Objects:        memObjects,
 		AdjacentLevels: exits,
 		OpenMenus:      gd.openMenus(),

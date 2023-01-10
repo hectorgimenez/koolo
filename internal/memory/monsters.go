@@ -8,7 +8,7 @@ import (
 	"sort"
 )
 
-func (gd *GameReader) Monsters(playerPositionX, playerPositionY int) game.Monsters {
+func (gd *GameReader) Monsters(playerPosition game.Position) game.Monsters {
 	hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
 
 	baseAddr := gd.Process.moduleBaseAddressPtr + gd.offset.UnitTable + 1024
@@ -74,8 +74,8 @@ func (gd *GameReader) Monsters(playerPositionX, playerPositionY int) game.Monste
 	}
 
 	sort.SliceStable(monsters, func(i, j int) bool {
-		distanceI := pather.DistanceFromPoint(playerPositionX, playerPositionY, monsters[i].Position.X, monsters[i].Position.Y)
-		distanceJ := pather.DistanceFromPoint(playerPositionX, playerPositionY, monsters[j].Position.X, monsters[j].Position.Y)
+		distanceI := pather.DistanceFromPoint(playerPosition.X, playerPosition.Y, monsters[i].Position.X, monsters[i].Position.Y)
+		distanceJ := pather.DistanceFromPoint(playerPosition.X, playerPosition.Y, monsters[j].Position.X, monsters[j].Position.Y)
 
 		return distanceI < distanceJ
 	})

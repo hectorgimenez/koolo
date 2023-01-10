@@ -4,9 +4,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"sort"
 )
 
-func (gd *GameReader) Items() game.Items {
+func (gd *GameReader) Items(playerPosition game.Position) game.Items {
 	hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
 
 	baseAddr := gd.Process.moduleBaseAddressPtr + gd.offset.UnitTable + (4 * 1024)
@@ -91,6 +93,13 @@ func (gd *GameReader) Items() game.Items {
 		}
 	}
 
+	sort.SliceStable(items.Ground, func(i, j int) bool {
+		distanceI := pather.DistanceFromPoint(playerPosition.X, playerPosition.Y, items.Ground[i].Position.X, items.Ground[i].Position.Y)
+		distanceJ := pather.DistanceFromPoint(playerPosition.X, playerPosition.Y, items.Ground[j].Position.X, items.Ground[j].Position.Y)
+
+		return distanceI < distanceJ
+	})
+
 	return items
 }
 
@@ -103,8 +112,8 @@ func (gd *GameReader) getItemStats(statCount uint, statPtr uintptr, statExCount 
 			offset := uint(i * 8)
 			statEnum := ReadUIntFromBuffer(statBuffer, offset+0x2, IntTypeUInt16)
 			statValue := ReadUIntFromBuffer(statBuffer, offset+0x4, IntTypeUInt32)
-			stat, value := getStatData(statEnum, statValue)
-			stats[stat] = value
+			st, value := getStatData(statEnum, statValue)
+			stats[st] = value
 		}
 	}
 
@@ -114,8 +123,8 @@ func (gd *GameReader) getItemStats(statCount uint, statPtr uintptr, statExCount 
 			offset := uint(i * 8)
 			statEnum := ReadUIntFromBuffer(statBuffer, offset+0x2, IntTypeUInt16)
 			statValue := ReadUIntFromBuffer(statBuffer, offset+0x4, IntTypeUInt32)
-			stat, value := getStatData(statEnum, statValue)
-			stats[stat] = value
+			st, value := getStatData(statEnum, statValue)
+			stats[st] = value
 		}
 	}
 
