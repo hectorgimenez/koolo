@@ -41,6 +41,7 @@ func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
 	if a.steps == nil {
 		steps, ok := a.stepBuilder(data)
 		if !ok {
+			a.finished = true
 			return ErrNoMoreSteps
 		}
 		a.steps = steps

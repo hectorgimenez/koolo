@@ -72,7 +72,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		bestCornerDistance := 0
 		for i, c := range corners {
 			averageDistance := 0
-			for _, m := range data.Monsters {
+			for _, m := range data.Monsters.Enemies() {
 				averageDistance += pather.DistanceFromPoint(c.X, c.Y, m.Position.X, m.Position.Y)
 			}
 			if averageDistance > bestCornerDistance {

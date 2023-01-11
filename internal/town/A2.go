@@ -16,7 +16,7 @@ func (a A2) MercContractorNPC() npc.ID {
 }
 
 func (a A2) RefillNPC() npc.ID {
-	return npc.Drognan
+	return npc.Lysander
 }
 
 func (a A2) RepairNPC() npc.ID {
