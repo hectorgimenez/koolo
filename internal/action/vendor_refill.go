@@ -10,7 +10,7 @@ import (
 
 func (b Builder) VendorRefill() *StaticAction {
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		if b.shouldGoToVendor(data) {
+		if b.shouldVisitVendor(data) {
 			openShopStep := step.KeySequence("home", "down", "enter")
 			// Jamella trade button is the first one
 			if data.PlayerUnit.Area == area.ThePandemoniumFortress {
@@ -43,7 +43,7 @@ func (b Builder) VendorRefill() *StaticAction {
 	}, Resettable(), CanBeSkipped())
 }
 
-func (b Builder) shouldGoToVendor(data game.Data) bool {
+func (b Builder) shouldVisitVendor(data game.Data) bool {
 	// Check if we should sell junk
 	if len(data.Items.Inventory.NonLockedItems()) > 0 {
 		return true
