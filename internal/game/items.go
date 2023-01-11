@@ -4,8 +4,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"math/rand"
 	"strings"
+	"time"
 )
 
 const (
@@ -123,8 +124,8 @@ func (i Inventory) ShouldBuyTPs() bool {
 		}
 
 		qty, found := it.Stats[stat.Quantity]
-
-		if qty <= helper.RandRng(1, 3) || !found {
+		rand.Seed(time.Now().UnixNano())
+		if qty <= rand.Intn(5-1)+1 || !found {
 			return true
 		}
 	}
@@ -138,7 +139,8 @@ func (i Inventory) ShouldBuyIDs() bool {
 		}
 
 		qty, found := it.Stats[stat.Quantity]
-		if qty <= helper.RandRng(3, 7) || !found {
+		rand.Seed(time.Now().UnixNano())
+		if qty <= rand.Intn(7-3)+1 || !found {
 			return true
 		}
 	}
@@ -146,9 +148,9 @@ func (i Inventory) ShouldBuyIDs() bool {
 }
 
 func (i Inventory) NonLockedItems() (items []Item) {
-	for _, itm := range i {
-		if config.Config.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
-			items = append(items, itm)
+	for _, item := range i {
+		if config.Config.Inventory.InventoryLock[item.Position.Y][item.Position.X] == 1 {
+			items = append(items, item)
 		}
 	}
 
