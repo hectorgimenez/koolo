@@ -35,7 +35,7 @@ func main() {
 		panic(err)
 	}
 	b := action.NewBuilder(logger, sm, bm, gr, char)
-	a := b.ItemPickup()
+	a := b.ItemPickup(true, -1)
 
 	gr.GetData(true)
 
