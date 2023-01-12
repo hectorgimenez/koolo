@@ -123,12 +123,12 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 }
 
 func DistanceFromMe(data game.Data, p game.Position) int {
-	return DistanceFromPoint(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, p.X, p.Y)
+	return DistanceFromPoint(data.PlayerUnit.Position, p)
 }
 
-func DistanceFromPoint(originX, originY, toX, toY int) int {
-	first := math.Pow(float64(toX-originX), 2)
-	second := math.Pow(float64(toY-originY), 2)
+func DistanceFromPoint(from game.Position, to game.Position) int {
+	first := math.Pow(float64(to.X-from.X), 2)
+	second := math.Pow(float64(to.Y-from.Y), 2)
 
 	return int(math.Sqrt(first + second))
 }

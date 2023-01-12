@@ -7,10 +7,12 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
+	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"go.uber.org/zap"
 )
 
 const (
@@ -65,15 +67,21 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
 
 	// Move across all the seals, try to find the most clear spot around them, kill monsters and activate the seal.
-	for _, s := range seals {
+	for i, s := range seals {
 		seal := s
+		sealNumber := i
+		// Go to the seal and stop at distance 30, close enough to fetch monsters from memory
 		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
 			if obj, found := data.Objects.FindOne(seal); found {
+				a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
 				return []step.Step{step.MoveTo(obj.Position.X, obj.Position.Y, true, step.StopAtDistance(30))}
 			}
+			a.logger.Debug("SEAL NOT FOUND", zap.Int("seal", sealNumber+1))
 			return []step.Step{}
 		}))
 
+		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
 		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 			if obj, found := data.Objects.FindOne(seal); found {
 				pos := a.getLessConcurredCornerAroundSeal(data, obj.Position)
@@ -82,9 +90,11 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			return []step.Step{}
 		}))
 
+		// Kill all the monsters close to the seal and item pickup
 		actions = append(actions, a.builder.ClearAreaAroundPlayer(13))
-		actions = append(actions, a.builder.ItemPickup(false))
+		actions = append(actions, a.builder.ItemPickup(false, 40))
 
+		// Activate the seal
 		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
 			return []step.Step{
 				step.InteractObject(seal, func(data game.Data) bool {
@@ -96,15 +106,22 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			}
 		}))
 
+		// First clear close trash mobs, regardless if they are elite or not
+		actions = append(actions, a.builder.ClearAreaAroundPlayer(10))
+
+		// Now try to kill the Elite packs (maybe are already dead)
 		actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 			for _, m := range data.Monsters.Enemies(game.MonsterEliteFilter()) {
-				return m.UnitID, true
+				if a.isSealElite(m) {
+					a.logger.Debug("FOUND SEAL DEFENDER!!!")
+					return m.UnitID, true
+				}
 			}
 
 			return 0, false
 		}, nil))
 
-		actions = append(actions, a.builder.ItemPickup(false))
+		actions = append(actions, a.builder.ItemPickup(false, 40))
 	}
 
 	return
@@ -135,12 +152,12 @@ func (a Diablo) getLessConcurredCornerAroundSeal(data game.Data, sealPosition ga
 	for i, c := range corners {
 		averageDistance := 0
 		monstersFound := 0
-		for _, m := range data.Monsters {
-			distance := pather.DistanceFromPoint(c.X, c.Y, m.Position.X, m.Position.Y)
+		for _, m := range data.Monsters.Enemies() {
+			distance := pather.DistanceFromPoint(c, m.Position)
 			// Ignore enemies not close to the seal
-			if distance < 10 {
+			if distance < 5 {
 				monstersFound++
-				averageDistance += pather.DistanceFromPoint(c.X, c.Y, m.Position.X, m.Position.Y)
+				averageDistance += pather.DistanceFromPoint(c, m.Position)
 			}
 		}
 		if averageDistance > bestCornerDistance {
@@ -158,4 +175,21 @@ func (a Diablo) getLessConcurredCornerAroundSeal(data game.Data, sealPosition ga
 	fmt.Printf("Moving to corner %d. Average monster distance: %d\n", bestCorner, bestCornerDistance)
 
 	return corners[bestCorner]
+}
+
+func (a Diablo) isSealElite(monster game.Monster) bool {
+	switch monster.Type {
+	case game.MonsterTypeSuperUnique:
+		switch monster.Name {
+		case npc.OblivionKnight, npc.VenomLord, npc.StormCaster:
+			return true
+		}
+	case game.MonsterTypeMinion:
+		switch monster.Name {
+		case npc.DoomKnight, npc.VenomLord, npc.StormCaster:
+			return true
+		}
+	}
+
+	return false
 }

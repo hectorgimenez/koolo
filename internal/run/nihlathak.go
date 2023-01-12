@@ -73,7 +73,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		for i, c := range corners {
 			averageDistance := 0
 			for _, m := range data.Monsters.Enemies() {
-				averageDistance += pather.DistanceFromPoint(c.X, c.Y, m.Position.X, m.Position.Y)
+				averageDistance += pather.DistanceFromPoint(c, m.Position)
 			}
 			if averageDistance > bestCornerDistance {
 				bestCorner = i
@@ -93,7 +93,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	if config.Config.Game.Nihlathak.ClearArea {
 		actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 			for _, m := range data.Monsters.Enemies() {
-				if d := pather.DistanceFromPoint(nilaO.Position.X, nilaO.Position.Y, m.Position.X, m.Position.Y); d < 15 {
+				if d := pather.DistanceFromPoint(nilaO.Position, m.Position); d < 15 {
 					a.logger.Debug("Clearing monsters around Nihlathak position", zap.Any("monster", m))
 					return m.UnitID, true
 				}

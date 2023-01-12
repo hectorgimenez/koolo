@@ -74,8 +74,8 @@ func (gd *GameReader) Monsters(playerPosition game.Position) game.Monsters {
 	}
 
 	sort.SliceStable(monsters, func(i, j int) bool {
-		distanceI := pather.DistanceFromPoint(playerPosition.X, playerPosition.Y, monsters[i].Position.X, monsters[i].Position.Y)
-		distanceJ := pather.DistanceFromPoint(playerPosition.X, playerPosition.Y, monsters[j].Position.X, monsters[j].Position.Y)
+		distanceI := pather.DistanceFromPoint(playerPosition, monsters[i].Position)
+		distanceJ := pather.DistanceFromPoint(playerPosition, monsters[j].Position)
 
 		return distanceI < distanceJ
 	})
