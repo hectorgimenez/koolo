@@ -87,7 +87,7 @@ func (m *MoveToStep) Run(data game.Data) error {
 			m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 		}
 
-		path, _, found := pather.GetPath(data, m.destination.X, m.destination.Y, m.blacklistedPositions...)
+		path, _, found := pather.GetPath(data, m.destination, m.blacklistedPositions...)
 		if !found {
 			// Try to find the nearest walkable place
 			if m.nearestWalkable {

@@ -134,7 +134,7 @@ func (p *AttackStep) ensureEnemyIsInRange(monster game.Monster, data game.Data) 
 		return true
 	}
 
-	path, dstFloat, found := pather.GetPath(data, monster.Position.X, monster.Position.Y)
+	path, dstFloat, found := pather.GetPath(data, monster.Position)
 	distance := int(dstFloat)
 
 	if distance > p.maxDistance {

@@ -75,7 +75,7 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				distance := pather.DistanceFromMe(data, o.Position)
 
 				if distance > 15 {
-					path, _, found := pather.GetPath(data, o.Position.X, o.Position.Y)
+					path, _, found := pather.GetPath(data, o.Position)
 					if !found {
 						pather.RandomMovement()
 						i.consecutivePathNotFound++

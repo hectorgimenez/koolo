@@ -62,7 +62,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 						tile := m.path.AstarPather[m.path.Distance()-1].(*pather.Tile)
 						m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 					}
-					path, _, found := pather.GetPath(data, l.Position.X, l.Position.Y)
+					path, _, found := pather.GetPath(data, l.Position)
 					if !found {
 						return errors.New("path could not be calculated, maybe there is an obstacle")
 					}

@@ -9,14 +9,14 @@ import (
 	"math/rand"
 )
 
-func GetPath(d game.Data, destX, destY int, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
+func GetPath(d game.Data, to game.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
 
 	// Convert to relative coordinates (Target position)
-	toX := destX - d.AreaOrigin.X
-	toY := destY - d.AreaOrigin.Y
+	toX := to.X - d.AreaOrigin.X
+	toY := to.Y - d.AreaOrigin.Y
 
 	// Origin and destination are the same point
 	if fromX == toX && fromY == toY {
@@ -76,7 +76,10 @@ func GetClosestWalkablePath(d game.Data, dest game.Position, blacklistedCoords .
 					cgY := dest.Y - d.AreaOrigin.Y + j
 					cgX := dest.X - d.AreaOrigin.X + i
 					if len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
-						return GetPath(d, dest.X+i, dest.Y+j, blacklistedCoords...)
+						return GetPath(d, game.Position{
+							X: dest.X + i,
+							Y: dest.Y + j,
+						}, blacklistedCoords...)
 					}
 				}
 			}

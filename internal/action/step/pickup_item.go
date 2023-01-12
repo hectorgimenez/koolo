@@ -76,7 +76,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 				p.waitingForInteraction = true
 				return nil
 			} else {
-				path, distance, _ := pather.GetPath(data, i.Position.X, i.Position.Y)
+				path, distance, _ := pather.GetPath(data, i.Position)
 				if distance > 10 {
 					pather.MoveThroughPath(path, 15, true)
 					return nil
