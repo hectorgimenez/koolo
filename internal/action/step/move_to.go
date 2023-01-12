@@ -12,10 +12,10 @@ import (
 
 type MoveToStep struct {
 	pathingStep
-	toX            int
-	toY            int
-	teleport       bool
-	stopAtDistance int
+	destination     game.Position
+	teleport        bool
+	stopAtDistance  int
+	nearestWalkable bool
 }
 
 type MoveToStepOption func(step *MoveToStep)
@@ -23,9 +23,11 @@ type MoveToStepOption func(step *MoveToStep)
 func MoveTo(toX, toY int, teleport bool, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
 		pathingStep: newPathingStep(),
-		toX:         toX,
-		toY:         toY,
-		teleport:    teleport,
+		destination: game.Position{
+			X: toX,
+			Y: toY,
+		},
+		teleport: teleport,
 	}
 
 	for _, o := range opts {
@@ -41,12 +43,18 @@ func StopAtDistance(distance int) MoveToStepOption {
 	}
 }
 
+func ClosestWalkable() MoveToStepOption {
+	return func(step *MoveToStep) {
+		step.nearestWalkable = true
+	}
+}
+
 func (m *MoveToStep) Status(data game.Data) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
 
-	distance := pather.DistanceFromMe(data, m.toX, m.toY)
+	distance := pather.DistanceFromMe(data, m.destination)
 	if distance < 5 || distance <= m.stopAtDistance {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
@@ -75,18 +83,28 @@ func (m *MoveToStep) Run(data game.Data) error {
 
 	if m.path == nil || !m.cachePath(data) || stuck {
 		if stuck {
-			tile := m.path[len(m.path)-1].(*pather.Tile)
+			tile := m.path.AstarPather[len(m.path.AstarPather)-1].(*pather.Tile)
 			m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 		}
 
-		path, _, found := pather.GetPathToDestination(data, m.toX, m.toY, m.blacklistedPositions...)
+		path, _, found := pather.GetPath(data, m.destination.X, m.destination.Y, m.blacklistedPositions...)
 		if !found {
-			return errors.New("path chould not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+			// Try to find the nearest walkable place
+			if m.nearestWalkable {
+				path, _, found = pather.GetClosestWalkablePath(data, m.destination, m.blacklistedPositions...)
+				m.destination = path.Destination
+			}
+			if !found {
+				return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+			}
 		}
 		m.path = path
 	}
 
 	m.lastRun = time.Now()
+	if len(m.path.AstarPather) == 0 {
+		return nil
+	}
 	pather.MoveThroughPath(m.path, 25, m.teleport)
 
 	return nil

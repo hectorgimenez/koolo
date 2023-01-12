@@ -18,6 +18,7 @@ type serverLevel struct {
 		Height int `json:"height"`
 	} `json:"size"`
 	Objects []serverObject `json:"objects"`
+	Rooms   []serverRoom   `json:"rooms"`
 	Map     [][]int
 }
 
@@ -31,4 +32,10 @@ type serverObject struct {
 	Type string `json:"type"`
 	Name string `json:"name"`
 	serverPosition
+}
+
+type serverRoom struct {
+	serverPosition
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }

@@ -29,24 +29,16 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 			step.MoveToLevel(area.AncientTunnels),
 			step.SyncStep(func(data game.Data) error {
 				// Add small delay to fetch the monsters
-				helper.Sleep(2000)
+				helper.Sleep(1000)
 				return nil
 			}),
 		}
 	}))
 
 	// Clear Ancient Tunnels
-	actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
-		// Clear only elite monsters
-		monsters := data.Monsters.Enemies(game.MonsterEliteFilter())
-		if len(monsters) == 0 {
-			return 0, false
-		}
+	actions = append(actions, a.builder.ClearArea(true))
 
-		return monsters[0].UnitID, true
-	}, nil))
-
-	actions = append(actions, a.builder.ItemPickup(true))
+	//actions = append(actions, a.builder.ItemPickup(true))
 
 	// Open the chest
 	//actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
@@ -70,5 +62,11 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 	//	return []step.Step{}
 	//}, action.CanBeSkipped()))
 
+	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+		return []step.Step{step.SyncStep(func(data game.Data) error {
+			helper.Sleep(100000)
+			return nil
+		})}
+	}))
 	return
 }

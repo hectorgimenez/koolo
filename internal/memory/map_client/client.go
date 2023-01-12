@@ -104,17 +104,26 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 		cg = append(cg, row)
 	}
 
-	//renderCG(cg)
-
 	return cg
 }
 
-func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (game.NPCs, []game.Level, []game.Object) {
+func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (game.NPCs, []game.Level, []game.Object, []game.Room) {
 	var npcs []game.NPC
 	var exits []game.Level
 	var objects []game.Object
+	var rooms []game.Room
 
 	level := md.getLevel(a)
+
+	for _, r := range level.Rooms {
+		rooms = append(rooms, game.Room{
+			Position: game.Position{X: r.X,
+				Y: r.Y,
+			},
+			Width:  r.Width,
+			Height: r.Height,
+		})
+	}
 
 	for _, obj := range level.Objects {
 		switch obj.Type {
@@ -149,7 +158,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (ga
 		}
 	}
 
-	return npcs, exits, objects
+	return npcs, exits, objects, rooms
 }
 
 func (md MapData) Origin(area area.Area) game.Position {

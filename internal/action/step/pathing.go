@@ -2,7 +2,6 @@ package step
 
 import (
 	"errors"
-	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -16,7 +15,7 @@ var errPathNotFound = errors.New("path not found")
 type pathingStep struct {
 	basicStep
 	consecutivePathNotFound int
-	path                    []astar.Pather
+	path                    *pather.Pather
 	lastRunPositions        [][2]int
 	blacklistedPositions    [][2]int
 }
@@ -32,17 +31,22 @@ func newPathingStep() pathingStep {
 func (s *pathingStep) cachePath(data game.Data) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
-	for k, pos := range s.path {
-		distance := pather.DistanceFromMe(data, pos.(*pather.Tile).X+data.AreaOrigin.X, pos.(*pather.Tile).Y+data.AreaOrigin.Y)
+	for k, pos := range s.path.AstarPather {
+		destination := game.Position{
+			X: pos.(*pather.Tile).X + data.AreaOrigin.X,
+			Y: pos.(*pather.Tile).Y + data.AreaOrigin.Y,
+		}
+
+		distance := pather.DistanceFromMe(data, destination)
 		if distance < nearestDistance {
 			nearestDistance = distance
 			nearestKey = k
 		}
 	}
 
-	if nearestDistance < 5 && len(s.path) > nearestKey {
+	if nearestDistance < 5 && len(s.path.AstarPather) > nearestKey {
 		//fmt.Println(fmt.Sprintf("Max deviation: %d, using Path Key: %d [%d]", nearestDistance, nearestKey, len(s.path)-1))
-		s.path = s.path[:nearestKey]
+		s.path.AstarPather = s.path.AstarPather[:nearestKey]
 
 		return true
 	}

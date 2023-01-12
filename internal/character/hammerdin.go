@@ -83,8 +83,8 @@ func (s Hammerdin) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(data, councilMembers[i].Position.X, councilMembers[i].Position.Y)
-			distanceJ := pather.DistanceFromMe(data, councilMembers[j].Position.X, councilMembers[j].Position.Y)
+			distanceI := pather.DistanceFromMe(data, councilMembers[i].Position)
+			distanceJ := pather.DistanceFromMe(data, councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})

@@ -54,15 +54,15 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	m.lastRun = time.Now()
 	for _, l := range data.AdjacentLevels {
 		if l.Area == m.area {
-			distance := pather.DistanceFromMe(data, l.Position.X, l.Position.Y)
+			distance := pather.DistanceFromMe(data, l.Position)
 			if distance > 5 {
 				stuck := m.isPlayerStuck(data)
 				if m.path == nil || !m.cachePath(data) || stuck {
 					if stuck {
-						tile := m.path[len(m.path)-1].(*pather.Tile)
+						tile := m.path.AstarPather[m.path.Distance()-1].(*pather.Tile)
 						m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 					}
-					path, _, found := pather.GetPathToDestination(data, l.Position.X, l.Position.Y)
+					path, _, found := pather.GetPath(data, l.Position.X, l.Position.Y)
 					if !found {
 						return errors.New("path could not be calculated, maybe there is an obstacle")
 					}

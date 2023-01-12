@@ -9,7 +9,7 @@ import (
 	"math/rand"
 )
 
-func GetPathToDestination(d game.Data, destX, destY int, blacklistedCoords ...[2]int) (path []astar.Pather, distance float64, found bool) {
+func GetPath(d game.Data, destX, destY int, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
@@ -20,7 +20,7 @@ func GetPathToDestination(d game.Data, destX, destY int, blacklistedCoords ...[2
 
 	// Origin and destination are the same point
 	if fromX == toX && fromY == toY {
-		return []astar.Pather{}, 0, true
+		return nil, 0, true
 	}
 
 	collisionGrid := d.CollisionGrid
@@ -58,16 +58,42 @@ func GetPathToDestination(d game.Data, destX, destY int, blacklistedCoords ...[2
 		w.renderPathImg(d, p)
 	}
 
-	return p, distance, found
+	return &Pather{AstarPather: p, Destination: game.Position{
+		X: w.To().X + d.AreaOrigin.X,
+		Y: w.To().Y + d.AreaOrigin.Y,
+	}}, distance, found
 }
 
-func MoveThroughPath(p []astar.Pather, distance int, teleport bool) {
-	moveTo := p[0].(*Tile)
-	if distance > 0 && len(p) > distance {
-		moveTo = p[len(p)-distance].(*Tile)
+func GetClosestWalkablePath(d game.Data, dest game.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
+	maxRange := 20
+	step := 4
+	dst := 1
+
+	for dst < maxRange {
+		for i := -dst; i < dst; i += 1 {
+			for j := -dst; j < dst; j += 1 {
+				if math.Abs(float64(i)) >= math.Abs(float64(dst)) || math.Abs(float64(j)) >= math.Abs(float64(dst)) {
+					cgY := dest.Y - d.AreaOrigin.Y + j
+					cgX := dest.X - d.AreaOrigin.X + i
+					if len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
+						return GetPath(d, dest.X+i, dest.Y+j, blacklistedCoords...)
+					}
+				}
+			}
+		}
+		dst += step
 	}
 
-	screenX, screenY := GameCoordsToScreenCords(p[len(p)-1].(*Tile).X, p[len(p)-1].(*Tile).Y, moveTo.X, moveTo.Y)
+	return nil, 0, false
+}
+
+func MoveThroughPath(p *Pather, distance int, teleport bool) {
+	moveTo := p.AstarPather[0].(*Tile)
+	if distance > 0 && len(p.AstarPather) > distance {
+		moveTo = p.AstarPather[len(p.AstarPather)-distance].(*Tile)
+	}
+
+	screenX, screenY := GameCoordsToScreenCords(p.AstarPather[len(p.AstarPather)-1].(*Tile).X, p.AstarPather[len(p.AstarPather)-1].(*Tile).Y, moveTo.X, moveTo.Y)
 	// Prevent mouse overlap the HUD
 	if screenY > int(float32(hid.GameAreaSizeY)/1.21) {
 		screenY = int(float32(hid.GameAreaSizeY) / 1.21)
@@ -96,8 +122,8 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 	return screenX, screenY
 }
 
-func DistanceFromMe(data game.Data, toX, toY int) int {
-	return DistanceFromPoint(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, toX, toY)
+func DistanceFromMe(data game.Data, p game.Position) int {
+	return DistanceFromPoint(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, p.X, p.Y)
 }
 
 func DistanceFromPoint(originX, originY, toX, toY int) int {

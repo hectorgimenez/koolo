@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
-	"github.com/hectorgimenez/koolo/internal/helper/tcp"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/memory"
 )
@@ -19,7 +18,7 @@ func NewGameManager(gr *memory.GameReader) GameManager {
 
 // ExitGame tries to close the socket and also exit via game menu, what happens faster.
 func (gm GameManager) ExitGame() error {
-	_ = tcp.CloseCurrentGameSocket(gm.gr.GetPID())
+	//_ = tcp.CloseCurrentGameSocket(gm.gr.GetPID())
 	exitGameUsingUIMenu()
 
 	for i := 0; i < 30; i++ {

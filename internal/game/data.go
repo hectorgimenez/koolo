@@ -35,7 +35,29 @@ type Data struct {
 	Items          Items
 	Objects        Objects
 	AdjacentLevels []Level
+	Rooms          []Room
 	OpenMenus      OpenMenus
+}
+
+type Room struct {
+	Position
+	Width  int
+	Height int
+}
+
+func (r Room) GetCenter() Position {
+	return Position{
+		X: r.Position.X + r.Width/2,
+		Y: r.Position.Y + r.Height/2,
+	}
+}
+
+func (r Room) IsInside(p Position) bool {
+	if p.X >= r.X && p.X <= r.X+r.Width {
+		return p.Y >= r.Y && p.Y <= r.Y+r.Height
+	}
+
+	return false
 }
 
 func (d Data) MercHPPercent() int {

@@ -170,6 +170,15 @@ func (w World) renderPathImg(data game.Data, path []astar.Pather) {
 		}
 	}
 
+	for _, r := range data.Rooms {
+		img.Set(r.GetCenter().X-data.AreaOrigin.X, r.GetCenter().Y-data.AreaOrigin.Y, color.RGBA{204, 204, 0, 255})
+		//for x := 0; x < r.Width; x++ {
+		//	for y := 0; y < r.Height; y++ {
+		//		img.Set(r.X+x-data.AreaOrigin.X, r.Y+y-data.AreaOrigin.Y, color.RGBA{204, 204, 0, 255})
+		//	}
+		//}
+	}
+
 	img.Set(w.From().X, w.From().Y, color.RGBA{
 		R: 255, G: 0, B: 0, A: 255,
 	})

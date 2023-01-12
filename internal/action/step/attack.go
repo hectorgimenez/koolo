@@ -134,15 +134,15 @@ func (p *AttackStep) ensureEnemyIsInRange(monster game.Monster, data game.Data) 
 		return true
 	}
 
-	path, dstFloat, found := pather.GetPathToDestination(data, monster.Position.X, monster.Position.Y)
+	path, dstFloat, found := pather.GetPath(data, monster.Position.X, monster.Position.Y)
 	distance := int(dstFloat)
 
 	if distance > p.maxDistance {
 		if p.moveToStep == nil {
 			if found && p.minDistance > 0 {
 				// Try to move to the minimum distance
-				if len(path) > p.minDistance {
-					pos := path[p.minDistance-1].(*pather.Tile)
+				if path.Distance() > p.minDistance {
+					pos := path.AstarPather[p.minDistance-1].(*pather.Tile)
 					p.moveToStep = MoveTo(pos.X+data.AreaOrigin.X, pos.Y+data.AreaOrigin.Y, true)
 				}
 			}

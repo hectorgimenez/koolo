@@ -63,14 +63,14 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		}
 	}
 
-	x, y, found := i.getNPCPosition(data)
+	pos, found := i.getNPCPosition(data)
 	if !found {
 		return fmt.Errorf("NPC not found")
 	}
 
-	distance := pather.DistanceFromMe(data, x, y)
+	distance := pather.DistanceFromMe(data, pos)
 	if distance > 15 {
-		path, _, found := pather.GetPathToDestination(data, x, y)
+		path, _, found := pather.GetPath(data, pos.X, pos.Y)
 		if !found {
 			pather.RandomMovement()
 			i.consecutivePathNotFound++
@@ -80,23 +80,23 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		pather.MoveThroughPath(path, helper.RandRng(7, 17), false)
 		return nil
 	}
-	x, y = pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, x, y)
+	x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, pos.X, pos.Y)
 	hid.MovePointer(x, y)
 
 	return nil
 }
 
-func (i *InteractNPCStep) getNPCPosition(d game.Data) (X, Y int, found bool) {
+func (i *InteractNPCStep) getNPCPosition(d game.Data) (game.Position, bool) {
 	monster, found := d.Monsters.FindOne(i.NPC, game.MonsterTypeNone)
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit
-		return monster.Position.X - 2, monster.Position.Y - 2, true
+		return game.Position{X: monster.Position.X - 2, Y: monster.Position.Y - 2}, true
 	}
 
 	npc, found := d.NPCs.FindOne(i.NPC)
 	if !found {
-		return 0, 0, false
+		return game.Position{}, false
 	}
 
-	return npc.Positions[0].X, npc.Positions[0].Y, true
+	return npc.Positions[0], true
 }

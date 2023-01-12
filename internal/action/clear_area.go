@@ -9,7 +9,7 @@ import (
 func (b Builder) ClearAreaAroundPlayer(distance int) *DynamicAction {
 	return b.ch.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
 		for _, m := range data.Monsters.Enemies() {
-			d := pather.DistanceFromMe(data, m.Position.X, m.Position.Y)
+			d := pather.DistanceFromMe(data, m.Position)
 			if d <= distance {
 				b.logger.Debug("Clearing area...", zap.Int("monsterID", int(m.Name)))
 				return m.UnitID, true

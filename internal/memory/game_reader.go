@@ -39,7 +39,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	pu := gd.GetPlayerUnit(gd.cachedPlayerUnit)
 
 	origin := gd.cachedMapData.Origin(pu.Area)
-	npcs, exits, objects := gd.cachedMapData.NPCsExitsAndObjects(origin, pu.Area)
+	npcs, exits, objects, rooms := gd.cachedMapData.NPCsExitsAndObjects(origin, pu.Area)
 
 	// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
 	memObjects := gd.Objects(pu.Position.X, pu.Position.Y)
@@ -66,6 +66,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 		Objects:        memObjects,
 		AdjacentLevels: exits,
 		OpenMenus:      gd.openMenus(),
+		Rooms:          rooms,
 	}
 }
 
