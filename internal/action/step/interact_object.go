@@ -95,6 +95,12 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				mX, mY := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX, objectY)
 
 				x, y := helper.Spiral(i.mouseOverAttempts)
+
+				// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
+				if i.mouseOverAttempts == 2 && i.objectName == object.TownPortal {
+					mX, mY = pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX-4, objectY-4)
+				}
+
 				hid.MovePointer(mX+x, mY+y)
 				i.mouseOverAttempts++
 

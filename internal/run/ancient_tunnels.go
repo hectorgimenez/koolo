@@ -38,35 +38,5 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 	// Clear Ancient Tunnels
 	actions = append(actions, a.builder.ClearArea(true))
 
-	//actions = append(actions, a.builder.ItemPickup(true))
-
-	// Open the chest
-	//actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-	//	for _, o := range data.Objects {
-	//		if o.Name == object.SparklyChest && o.Selectable {
-	//			return []step.Step{
-	//				step.MoveTo(o.Position.X, o.Position.Y, true),
-	//				step.InteractObject(object.SparklyChest, func(data game.Data) bool {
-	//					for _, o := range data.Objects {
-	//						if o.Name == object.SparklyChest && o.Selectable {
-	//							return false
-	//						}
-	//					}
-	//
-	//					return true
-	//				}),
-	//			}
-	//		}
-	//	}
-	//
-	//	return []step.Step{}
-	//}, action.CanBeSkipped()))
-
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-		return []step.Step{step.SyncStep(func(data game.Data) error {
-			helper.Sleep(100000)
-			return nil
-		})}
-	}))
 	return
 }

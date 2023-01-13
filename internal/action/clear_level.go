@@ -89,7 +89,7 @@ func (b Builder) ClearArea(openChests bool) *Factory {
 			}
 		}
 
-		return b.ItemPickup(false, 40)
+		return b.ItemPickup(false, 60)
 	})
 }
 

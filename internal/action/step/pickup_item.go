@@ -55,7 +55,7 @@ func (p *PickupItemStep) Run(data game.Data) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) < helper.RandomDurationMs(300, 978) {
+	if time.Since(p.lastRun) < helper.RandomDurationMs(120, 320) {
 		return nil
 	}
 
