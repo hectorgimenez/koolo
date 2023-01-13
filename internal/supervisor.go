@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
 	"math/rand"
@@ -66,7 +67,7 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 					return nil
 				}
 				errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
-				stats.Events <- stats.EventWithScreenshot(errorMsg)
+				event.Events <- event.WithScreenshot(errorMsg)
 				s.logger.Warn(errorMsg)
 			}
 			if exitErr := s.gm.ExitGame(); exitErr != nil {
@@ -89,7 +90,7 @@ func (s *Supervisor) updateGameStats() {
 		}
 	}
 
-	fileName := fmt.Sprintf("stats/stats_%s.txt", stats.Status.ApplicationStartedAt.Format("2006-02-01-15_04_05"))
+	fileName := fmt.Sprintf("stats/stats_%s.txt", stat.Status.ApplicationStartedAt.Format("2006-02-01-15_04_05"))
 	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		s.logger.Error("Error writing game stats", zap.Error(err))
@@ -97,7 +98,7 @@ func (s *Supervisor) updateGameStats() {
 	}
 	w := bufio.NewWriter(f)
 
-	for runName, rs := range stats.Status.RunStats {
+	for runName, rs := range stat.Status.RunStats {
 		var items = ""
 		for _, item := range rs.ItemsFound {
 			items += fmt.Sprintf("%s [%s]\n", item.Name, item.Quality)
@@ -166,7 +167,7 @@ func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 		hid.GameAreaSizeY,
 	))
 
-	stats.Status.ApplicationStartedAt = time.Now()
+	stat.Status.ApplicationStartedAt = time.Now()
 	return nil
 }
 
@@ -175,6 +176,6 @@ func (s *Supervisor) logGameStart(runs []run.Run) {
 	for _, r := range runs {
 		runNames += r.Name() + ", "
 	}
-	stats.Status.TotalGames++
-	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stats.Status.TotalGames, runNames[:len(runNames)-2]))
+	stat.Status.TotalGames++
+	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stat.Status.TotalGames, runNames[:len(runNames)-2]))
 }

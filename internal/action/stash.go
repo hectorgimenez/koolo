@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
+	stat2 "github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
@@ -155,7 +155,7 @@ func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
 
 	// Don't log items that we already have in inventory during first run
 	if !forceStash {
-		stats.ItemStashed(i, screenshot)
+		stat2.ItemStashed(i, screenshot)
 	}
 	return true
 }

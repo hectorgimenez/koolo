@@ -3,9 +3,9 @@ package health
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"strings"
 )
@@ -29,12 +29,12 @@ func (pm BeltManager) DrinkPotion(data game.Data, potionType game.PotionType, me
 			hid.PressKey(binding)
 			hid.KeyUp("shift")
 			pm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.X+1, data.MercHPPercent()))
-			stats.UsedPotion(potionType, true)
+			stat.UsedPotion(potionType, true)
 			return true
 		}
 		hid.PressKey(binding)
 		pm.logger.Debug(fmt.Sprintf("Using %s potion [Column: %d]. HP: %d MP: %d", potionType, p.X+1, data.PlayerUnit.HPPercent(), data.PlayerUnit.MPPercent()))
-		stats.UsedPotion(potionType, false)
+		stat.UsedPotion(potionType, false)
 		return true
 	}
 

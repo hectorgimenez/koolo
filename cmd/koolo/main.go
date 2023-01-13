@@ -7,12 +7,13 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/memory"
-	"github.com/hectorgimenez/koolo/internal/remote"
+	"github.com/hectorgimenez/koolo/internal/remote/discord"
+	"github.com/hectorgimenez/koolo/internal/remote/web"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -35,7 +36,7 @@ func main() {
 	defer logger.Sync()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	controller := remote.New(config.Config.Controller.Port)
+	controller := web.New(config.Config.Controller.Port)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
@@ -80,12 +81,16 @@ func main() {
 		})
 	}
 
-	discordBot, err := stats.NewDiscordBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
-	if err != nil {
-		logger.Fatal("Discord could not been initialized", zap.Error(err))
-	}
-	eventListener := stats.NewEventListener(discordBot, logger)
+	eventListener := event.NewListener(logger)
+
+	// Discord Bot initialization
 	if config.Config.Discord.Enabled {
+		discordBot, err := discord.NewDiscordBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+		if err != nil {
+			logger.Fatal("Discord could not been initialized", zap.Error(err))
+		}
+		eventListener.Register(discordBot.Handle)
+
 		g.Go(func() error {
 			return discordBot.Start(ctx)
 		})

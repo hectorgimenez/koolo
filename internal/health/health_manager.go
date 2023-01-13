@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
 )
@@ -51,7 +52,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 
 	if d.PlayerUnit.HPPercent() <= 0 {
 		hm.gameManager.ExitGame()
-		stats.FinishCurrentRun(stats.EventDeath)
+		stat.FinishCurrentRun(event.Death)
 		return ErrDied
 	}
 
@@ -65,7 +66,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 
 	if !usedRejuv {
 		if d.PlayerUnit.HPPercent() <= hpConfig.ChickenAt {
-			stats.FinishCurrentRun(stats.EventChicken)
+			stat.FinishCurrentRun(event.Chicken)
 			return fmt.Errorf("%w: Current Health: %d percent", ErrChicken, d.PlayerUnit.HPPercent())
 		}
 
@@ -92,7 +93,7 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 
 		if !usedMercRejuv {
 			if d.MercHPPercent() <= hpConfig.MercChickenAt {
-				stats.FinishCurrentRun(stats.EventMercChicken)
+				stat.FinishCurrentRun(event.MercChicken)
 				return fmt.Errorf("%w: Current Merc Health: %d percent", ErrMercChicken, d.MercHPPercent())
 			}
 

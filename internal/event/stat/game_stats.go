@@ -1,7 +1,8 @@
-package stats
+package stat
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"image"
 	"strings"
@@ -9,14 +10,6 @@ import (
 )
 
 var Status = GameStatus{}
-
-const (
-	EventKill        Event = "kill"
-	EventDeath       Event = "death"
-	EventChicken     Event = "chicken"
-	EventMercChicken Event = "merc chicken"
-	EventError       Event = "error"
-)
 
 func StartRun(runName string) {
 	if Status.RunStats == nil {
@@ -33,18 +26,18 @@ func StartRun(runName string) {
 	Status.CurrentRunStart = time.Now()
 }
 
-func FinishCurrentRun(event Event) {
+func FinishCurrentRun(evt event.Event) {
 	rs := Status.RunStats[Status.CurrentRun]
-	switch event {
-	case EventKill:
+	switch evt {
+	case event.Kill:
 		rs.Kills++
-	case EventDeath:
+	case event.Death:
 		rs.Deaths++
-	case EventChicken:
+	case event.Chicken:
 		rs.Chickens++
-	case EventMercChicken:
+	case event.MercChicken:
 		rs.MerChicken++
-	case EventError:
+	case event.Error:
 		rs.Errors++
 	}
 
@@ -77,7 +70,7 @@ func ItemStashed(item game.Item, screenshot image.Image) {
 	}
 
 	Status.RunStats[Status.CurrentRun].ItemsFound = append(Status.RunStats[Status.CurrentRun].ItemsFound, item)
-	Events <- EventMsg{
+	event.Events <- event.Message{
 		Message: fmt.Sprintf("Item stashed! %s", item.Name),
 		Image:   screenshot,
 	}
@@ -92,7 +85,6 @@ type GameStatus struct {
 	CurrentRunStart time.Time
 }
 
-type Event string
 type RunStats struct {
 	TotalRunsTime          time.Duration
 	Kills                  int

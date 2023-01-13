@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/stats"
 	"go.uber.org/zap"
 	"time"
 )
@@ -45,7 +46,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	b.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(gameStartedAt).Milliseconds()))
 
 	for k, r := range runs {
-		stats.StartRun(r.Name())
+		stat.StartRun(r.Name())
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -100,7 +101,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-							stats.FinishCurrentRun(stats.EventKill)
+							stat.FinishCurrentRun(event.Kill)
 							running = false
 						}
 						continue
@@ -110,13 +111,13 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 						break
 					}
 					if errors.Is(err, action.ErrCanBeSkipped) {
-						stats.Events <- stats.EventWithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
+						event.Events <- event.WithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
 						b.logger.Warn("error occurred on action that can be skipped, game will continue", zap.Error(err))
 						act.Skip()
 						break
 					}
 					if err != nil {
-						stats.FinishCurrentRun(stats.EventError)
+						stat.FinishCurrentRun(event.Error)
 						return err
 					}
 					break
