@@ -28,8 +28,8 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	opts ...step.AttackOption,
 ) *action.DynamicAction {
 	completedAttackLoops := 0
-
 	previousUnitID := 0
+
 	return action.BuildDynamic(func(data game.Data) ([]step.Step, bool) {
 		id, found := monsterSelector(data)
 		if !found {
@@ -57,12 +57,14 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		}
 
 		steps := make([]step.Step, 0)
-		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player
-		for _, m := range data.Monsters.Enemies() {
-			if d := pather.DistanceFromMe(data, m.Position); d < 4 {
-				s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
-				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, opts...))
-				break
+		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
+		if completedAttackLoops%2 == 0 {
+			for _, m := range data.Monsters.Enemies() {
+				if d := pather.DistanceFromMe(data, m.Position); d < 4 {
+					s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
+					steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, opts...))
+					break
+				}
 			}
 		}
 
