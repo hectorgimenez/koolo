@@ -23,7 +23,6 @@ func NewGameReader(process Process) *GameReader {
 }
 
 func (gd *GameReader) GetData(isNewGame bool) game.Data {
-	// Check if offsets changed
 	if isNewGame {
 		gd.offset = CalculateOffsets(gd.Process)
 	}
