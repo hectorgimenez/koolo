@@ -11,9 +11,8 @@ import (
 type GameReader struct {
 	offset Offset
 	Process
-	cachedMapSeed    uintptr
-	cachedPlayerUnit uintptr
-	cachedMapData    map_client.MapData
+	cachedMapSeed uintptr
+	cachedMapData map_client.MapData
 }
 
 func NewGameReader(process Process) *GameReader {
@@ -25,18 +24,18 @@ func NewGameReader(process Process) *GameReader {
 
 func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	// Check if offsets changed
-	if gd.getPlayerUnitPtr() == 0 || isNewGame {
+	if isNewGame {
 		gd.offset = CalculateOffsets(gd.Process)
-		isNewGame = true
 	}
 
+	playerUnitPtr, corpse := gd.getPlayerUnitPtr()
+
 	if isNewGame {
-		gd.cachedPlayerUnit = gd.getPlayerUnitPtr()
-		gd.cachedMapSeed, _ = gd.getMapSeed(gd.cachedPlayerUnit)
+		gd.cachedMapSeed, _ = gd.getMapSeed(playerUnitPtr)
 		gd.cachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Config.Game.Difficulty)
 	}
 
-	pu := gd.GetPlayerUnit(gd.cachedPlayerUnit)
+	pu := gd.GetPlayerUnit(playerUnitPtr)
 
 	origin := gd.cachedMapData.Origin(pu.Area)
 	npcs, exits, objects, rooms := gd.cachedMapData.NPCsExitsAndObjects(origin, pu.Area)
@@ -57,7 +56,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 
 	return game.Data{
 		AreaOrigin:     origin,
-		Corpse:         game.Corpse{},
+		Corpse:         corpse,
 		Monsters:       gd.Monsters(pu.Position),
 		CollisionGrid:  gd.cachedMapData.CollisionGrid(pu.Area),
 		PlayerUnit:     pu,
@@ -71,7 +70,9 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 }
 
 func (gd *GameReader) InGame() bool {
-	return gd.getPlayerUnitPtr() > 0
+	pu, _ := gd.getPlayerUnitPtr()
+
+	return pu > 0
 }
 
 //func (gd *GameReader) GameIP() string {

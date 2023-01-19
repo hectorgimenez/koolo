@@ -11,30 +11,44 @@ import (
 
 var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 
-func (gd *GameReader) getPlayerUnitPtr() uintptr {
+func (gd *GameReader) getPlayerUnitPtr() (playerUnitPtr uintptr, corpse game.Corpse) {
 	for i := 0; i < 128; i++ {
 		unitOffset := gd.offset.UnitTable + uintptr(i*8)
 		playerUnitAddr := gd.Process.moduleBaseAddressPtr + unitOffset
-		playerUnit := gd.Process.ReadUInt(playerUnitAddr, IntTypeUInt64)
+		playerUnit := uintptr(gd.Process.ReadUInt(playerUnitAddr, IntTypeUInt64))
 		for playerUnit > 0 {
-			pInventory := uintptr(playerUnit) + 0x90
+			pInventory := playerUnit + 0x90
 			inventoryAddr := uintptr(gd.Process.ReadUInt(pInventory, IntTypeUInt64))
 
-			pPath := uintptr(playerUnit) + 0x38
+			pPath := playerUnit + 0x38
 			pathAddress := uintptr(gd.Process.ReadUInt(pPath, IntTypeUInt64))
 			xPos := gd.Process.ReadUInt(pathAddress+0x02, IntTypeUInt16)
 			yPos := gd.Process.ReadUInt(pathAddress+0x06, IntTypeUInt16)
 
 			// Only current player has inventory
 			if inventoryAddr > 0 && xPos > 0 && yPos > 0 {
-				return uintptr(playerUnit)
+				isCorpse := gd.Process.ReadUInt(playerUnit+0x1A6, IntTypeUInt8)
+				if isCorpse == 1 {
+					unitID := gd.Process.ReadUInt(playerUnit+0x08, IntTypeUInt32)
+					hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
+					corpse = game.Corpse{
+						Found:     true,
+						IsHovered: isHovered && hoveredUnitID == unitID && hoveredType == 0,
+						Position: game.Position{
+							X: int(xPos),
+							Y: int(yPos),
+						},
+					}
+				} else {
+					playerUnitPtr = playerUnit
+				}
 			}
 
-			playerUnit = gd.Process.ReadUInt(uintptr(playerUnit)+0x150, IntTypeUInt64)
+			playerUnit = uintptr(gd.Process.ReadUInt(playerUnit+0x150, IntTypeUInt64))
 		}
 	}
 
-	return 0
+	return
 }
 
 func (gd *GameReader) GetPlayerUnit(playerUnit uintptr) game.PlayerUnit {
