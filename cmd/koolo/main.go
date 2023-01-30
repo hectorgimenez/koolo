@@ -2,6 +2,11 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -17,10 +22,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -85,7 +86,7 @@ func main() {
 
 	// Discord Bot initialization
 	if config.Config.Discord.Enabled {
-		discordBot, err := discord.NewDiscordBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
 		if err != nil {
 			logger.Fatal("Discord could not been initialized", zap.Error(err))
 		}

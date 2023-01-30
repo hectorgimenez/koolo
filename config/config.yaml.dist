@@ -12,6 +12,10 @@ discord:
   enabled: false
   channelId: ''
   token: ''
+telegram:
+  enabled: false
+  chatId: ''
+  token: ''
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75
