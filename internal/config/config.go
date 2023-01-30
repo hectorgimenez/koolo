@@ -2,13 +2,14 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
 	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"gopkg.in/yaml.v2"
-	"os"
-	"strings"
-	"time"
 )
 
 var (
@@ -30,6 +31,11 @@ type StructConfig struct {
 		ChannelID string `yaml:"channelId"`
 		Token     string `yaml:"token"`
 	} `yaml:"discord"`
+	Telegram struct {
+		Enabled bool   `yaml:"enabled"`
+		ChatID  int64  `yaml:"chatId"`
+		Token   string `yaml:"token"`
+	}
 	Controller struct {
 		Webserver bool `yaml:"webserver"`
 		Port      int  `yaml:"port"`

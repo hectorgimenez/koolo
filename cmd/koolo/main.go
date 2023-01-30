@@ -17,6 +17,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
+	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/remote/web"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -94,6 +95,19 @@ func main() {
 
 		g.Go(func() error {
 			return discordBot.Start(ctx)
+		})
+	}
+
+	// Telegram Bot initialization
+	if config.Config.Telegram.Enabled {
+		telegramBot, err := telegram.NewBot(config.Config.Telegram.Token, config.Config.Telegram.ChatID, logger)
+		if err != nil {
+			logger.Fatal("Telegram could not been initialized", zap.Error(err))
+		}
+		eventListener.Register(telegramBot.Handle)
+
+		g.Go(func() error {
+			return telegramBot.Start(ctx)
 		})
 	}
 
