@@ -17,6 +17,7 @@ const (
 	ItemSuperHealingPotion = "SuperHealingPotion"
 	ItemSuperManaPotion    = "SuperManaPotion"
 	ItemGrandCharm         = "GrandCharm"
+	ItemKey                = "Key"
 )
 
 type Items struct {
@@ -145,6 +146,20 @@ func (i Inventory) ShouldBuyIDs() bool {
 		}
 	}
 	return false
+}
+
+func (i Inventory) ShouldBuyKeys() bool {
+	for _, it := range i {
+		if it.Name != ItemKey {
+			continue
+		}
+
+		qty, found := it.Stats[stat.Quantity]
+		if found && qty == 12 {
+			return false
+		}
+	}
+	return true
 }
 
 func (i Inventory) NonLockedItems() (items []Item) {

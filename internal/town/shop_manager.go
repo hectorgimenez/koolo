@@ -71,6 +71,16 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 			}
 		}
 	}
+
+	for _, i := range d.Items.Shop {
+		if string(i.Name) == "Key" && i.IsVendor {
+			if d.Items.Inventory.ShouldBuyKeys() {
+				sm.logger.Debug("Vendor with keys detected, provisioning...")
+				sm.buyFullStack(i)
+				break
+			}
+		}
+	}
 }
 
 func (sm ShopManager) SellJunk(d game.Data) {
