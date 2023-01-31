@@ -92,11 +92,12 @@ func (m *MoveToStep) Run(data game.Data) error {
 			// Try to find the nearest walkable place
 			if m.nearestWalkable {
 				path, _, found = pather.GetClosestWalkablePath(data, m.destination, m.blacklistedPositions...)
+				if !found {
+					return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+				}
 				m.destination = path.Destination
 			}
-			if !found {
-				return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
-			}
+
 		}
 		m.path = path
 	}

@@ -36,7 +36,7 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 	}))
 
 	// Clear Ancient Tunnels
-	actions = append(actions, a.builder.ClearArea(true))
+	actions = append(actions, a.builder.ClearArea(true, game.MonsterAnyFilter()))
 
 	return
 }

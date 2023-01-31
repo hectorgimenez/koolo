@@ -76,6 +76,13 @@ func MonsterEliteFilter() MonsterFilter {
 		return filteredMonsters
 	}
 }
+
+func MonsterAnyFilter() MonsterFilter {
+	return func(m Monsters) []Monster {
+		return m
+	}
+}
+
 func (m Monsters) FindByID(id UnitID) (Monster, bool) {
 	for _, monster := range m {
 		if monster.UnitID == id {
