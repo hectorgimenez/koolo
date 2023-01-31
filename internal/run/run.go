@@ -57,6 +57,8 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 			runs = append(runs, AncientTunnels{baseRun})
 		case "tristram":
 			runs = append(runs, Tristram{baseRun})
+		case "lower_kurast":
+			runs = append(runs, LowerKurast{baseRun})
 		}
 	}
 

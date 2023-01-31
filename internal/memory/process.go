@@ -5,6 +5,7 @@ import (
 	"github.com/winlabs/gowin32"
 	"go.uber.org/zap"
 	"golang.org/x/sys/windows"
+	"strings"
 	"unsafe"
 )
 
@@ -51,7 +52,7 @@ func getGameModule() (gowin32.ModuleInfo, error) {
 	for _, process := range processes {
 		module, _ := getMainModule(process)
 
-		if module.ExePath == "C:\\Program Files (x86)\\Diablo II Resurrected\\D2R.exe" {
+		if strings.Contains(module.ExePath, "D2R.exe") {
 			return module, nil
 		}
 	}

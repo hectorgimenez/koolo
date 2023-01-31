@@ -49,3 +49,12 @@ func (o Object) IsChest() bool {
 
 	return false
 }
+
+func (o Object) IsSuperChest() bool {
+	switch o.Name {
+	case 104, 181, 183, 580, 397, 387, 389, 390, 391, 455:
+		return true
+	}
+
+	return false
+}

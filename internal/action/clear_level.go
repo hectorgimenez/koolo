@@ -3,7 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/object"
+	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -55,6 +55,17 @@ func (b Builder) ClearArea(openChests bool, filter game.MonsterFilter) *Factory 
 
 			return BuildStatic(func(data game.Data) []step.Step {
 				b.logger.Debug("Room already cleared, moving to the next one.")
+				_, _, found := pather.GetPath(data, closestRoom.GetCenter())
+				// We don't need to be very precise, usually chests are not close to the map border tiles
+				if !found && data.PlayerUnit.Area != area.LowerKurast {
+					_, _, found = pather.GetClosestWalkablePath(data, closestRoom.GetCenter())
+				}
+				if !found {
+					b.logger.Debug("Next room is not walkable, skipping it.")
+					clearedRooms = append(clearedRooms, closestRoom)
+					return []step.Step{}
+				}
+
 				return []step.Step{step.MoveTo(
 					closestRoom.GetCenter().X,
 					closestRoom.GetCenter().Y,
@@ -70,13 +81,14 @@ func (b Builder) ClearArea(openChests bool, filter game.MonsterFilter) *Factory 
 		// Open chests if are inside this room
 		if openChests {
 			for _, o := range data.Objects {
-				if o.Name == object.SparklyChest && o.Selectable && currentRoom.IsInside(o.Position) {
+				if o.IsSuperChest() && o.Selectable && currentRoom.IsInside(o.Position) {
+					chest := o
 					return BuildStatic(func(data game.Data) []step.Step {
 						return []step.Step{
 							step.MoveTo(o.Position.X, o.Position.Y, true),
-							step.InteractObject(object.SparklyChest, func(data game.Data) bool {
-								for _, o := range data.Objects {
-									if o.Name == object.SparklyChest && o.Selectable {
+							step.InteractObject(o.Name, func(data game.Data) bool {
+								for _, obj := range data.Objects {
+									if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
 										return false
 									}
 								}
