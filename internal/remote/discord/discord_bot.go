@@ -3,10 +3,11 @@ package discord
 import (
 	"context"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"os"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/hectorgimenez/koolo/internal/event/stat"
 )
 
 type Bot struct {
@@ -14,7 +15,7 @@ type Bot struct {
 	channelID      string
 }
 
-func NewDiscordBot(token string, channelID string) (*Bot, error) {
+func NewBot(token, channelID string) (*Bot, error) {
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Discord session: %w", err)

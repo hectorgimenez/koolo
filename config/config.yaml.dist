@@ -13,6 +13,11 @@ discord:
   channelId: ''
   token: ''
 
+telegram:
+  enabled: false
+  chatId: 0
+  token: ''
+
 health: # Healing configuration, all values in %
   healingPotionAt: 75
   manaPotionAt: 10

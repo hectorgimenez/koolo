@@ -2,6 +2,11 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -12,15 +17,12 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
+	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/remote/web"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -85,7 +87,7 @@ func main() {
 
 	// Discord Bot initialization
 	if config.Config.Discord.Enabled {
-		discordBot, err := discord.NewDiscordBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
 		if err != nil {
 			logger.Fatal("Discord could not been initialized", zap.Error(err))
 		}
@@ -93,6 +95,19 @@ func main() {
 
 		g.Go(func() error {
 			return discordBot.Start(ctx)
+		})
+	}
+
+	// Telegram Bot initialization
+	if config.Config.Telegram.Enabled {
+		telegramBot, err := telegram.NewBot(config.Config.Telegram.Token, config.Config.Telegram.ChatID, logger)
+		if err != nil {
+			logger.Fatal("Telegram could not been initialized", zap.Error(err))
+		}
+		eventListener.Register(telegramBot.Handle)
+
+		g.Go(func() error {
+			return telegramBot.Start(ctx)
 		})
 	}
 
