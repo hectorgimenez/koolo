@@ -7,7 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b Builder) ClearArea(openChests bool) *Factory {
+func (b Builder) ClearArea(openChests bool, filter game.MonsterFilter) *Factory {
 	var clearedRooms []game.Room
 
 	return NewFactory(func(data game.Data) Action {
@@ -20,7 +20,7 @@ func (b Builder) ClearArea(openChests bool) *Factory {
 		}
 
 		monstersInRoom := make([]game.Monster, 0)
-		for _, m := range data.Monsters.Enemies() {
+		for _, m := range data.Monsters.Enemies(filter) {
 			if currentRoom.IsInside(m.Position) {
 				monstersInRoom = append(monstersInRoom, m)
 			}

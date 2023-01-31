@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
@@ -25,12 +26,13 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 		area.CatacombsLevel2:     {1, 9},
 		area.LostCity:            {2, 6},
 		area.ArcaneSanctuary:     {2, 8},
+		area.LowerKurast:         {3, 6},
+		area.Travincal:           {3, 8},
 		area.DuranceOfHateLevel2: {3, 9},
 		area.RiverOfFlame:        {4, 3},
 		area.Harrogath:           {5, 1},
 		area.FrigidHighlands:     {5, 2},
 		area.HallsOfPain:         {5, 6},
-		area.Travincal:           {3, 8},
 	}
 
 	return BuildStatic(func(data game.Data) (steps []step.Step) {
