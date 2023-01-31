@@ -32,7 +32,7 @@ func NewBot(token string, chatID int64, logger *zap.Logger) (*Bot, error) {
 
 func (b *Bot) Start(_ context.Context) error {
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 5
 
 	updates := b.bot.GetUpdatesChan(u)
 	for update := range updates {

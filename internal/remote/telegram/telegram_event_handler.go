@@ -16,10 +16,13 @@ func (b *Bot) Handle(_ context.Context, m event.Message) error {
 		return err
 	}
 
-	_, err = b.bot.Send(tgbotapi.NewPhoto(b.chatID, tgbotapi.FileBytes{
+	photo := tgbotapi.NewPhoto(b.chatID, tgbotapi.FileBytes{
 		Name:  m.Message,
 		Bytes: buf.Bytes(),
-	}))
+	})
+	photo.Caption = m.Message
+
+	_, err = b.bot.Send(photo)
 
 	return err
 }
