@@ -81,7 +81,7 @@ game:
   difficulty: hell  # Allowed values: normal, nightmare, hell
   randomizeRuns: true
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
-  # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak, tristram
+  # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak, tristram, lower_kurast
   runs: [ andariel, summoner, mephisto, pindleskin ]
 
   # Specific runs settings

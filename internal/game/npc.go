@@ -56,7 +56,7 @@ func (m Monsters) Enemies(filters ...MonsterFilter) []Monster {
 	}
 
 	for _, f := range filters {
-		monsters = f(m)
+		monsters = f(monsters)
 	}
 
 	return monsters
