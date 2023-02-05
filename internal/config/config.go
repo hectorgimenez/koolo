@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
 	"github.com/hectorgimenez/koolo/internal/game/item"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -171,15 +171,15 @@ func Load() error {
 func parsePickitItems(items []interface{}) []ItemPickit {
 	var itemsToPickit []ItemPickit
 	for _, it := range items {
-		for name, props := range it.(map[interface{}]interface{}) {
+		for name, props := range it.(map[string]interface{}) {
 			ip := ItemPickit{
-				Name:  name.(string),
+				Name:  name,
 				Stats: map[string]int{},
 			}
 
 			if props != nil {
-				for statName, statValue := range props.(map[interface{}]interface{}) {
-					statName = strings.ToLower(statName.(string))
+				for statName, statValue := range props.(map[string]interface{}) {
+					statName = strings.ToLower(statName)
 					switch statName {
 					case "sockets":
 						v, ok := statValue.(int)
@@ -203,7 +203,7 @@ func parsePickitItems(items []interface{}) []ItemPickit {
 						ethp := statValue.(bool)
 						ip.Ethereal = &ethp
 					default:
-						ip.Stats[statName.(string)] = statValue.(int)
+						ip.Stats[statName] = statValue.(int)
 					}
 				}
 			}
