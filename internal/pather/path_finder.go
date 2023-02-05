@@ -41,13 +41,8 @@ func GetPath(d game.Data, to game.Position, blacklistedCoords ...[2]int) (path *
 					continue
 				}
 
-				w.SetTile(&Tile{
-					Kind: KindPlain,
-				}, fromX+i, fromY+k)
-
-				w.SetTile(&Tile{
-					Kind: KindPlain,
-				}, toX+i, toY+k)
+				w.SetTile(w.NewTile(KindPlain, fromX+i, fromY+k))
+				w.SetTile(w.NewTile(KindPlain, toX+i, toY+k))
 			}
 		}
 		p, distance, found = astar.Path(w.From(), w.To())

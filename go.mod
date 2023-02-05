@@ -8,6 +8,7 @@ require (
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
+	github.com/stretchr/testify v1.8.0
 	github.com/winlabs/gowin32 v0.0.0-20221003142512-0d265587d3c9
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
@@ -17,9 +18,11 @@ require (
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robotn/gohook v0.31.3 // indirect
 	github.com/robotn/xgb v0.0.0-20190912153532-2cb92d044934 // indirect
 	github.com/robotn/xgbutil v0.0.0-20190912154524-c861d6f87770 // indirect
@@ -34,4 +37,5 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

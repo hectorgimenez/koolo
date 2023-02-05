@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/memory"
 	"log"
+	"os"
 	"time"
 )
 
@@ -25,6 +27,11 @@ func main() {
 	start := time.Now()
 	for true {
 		d := gd.GetData(true)
+		f, _ := os.Create("data.bin")
+		enc := gob.NewEncoder(f)
+		err := enc.Encode(&d)
+		fmt.Println(err)
+		f.Close()
 		fmt.Println(d.MercHPPercent())
 		time.Sleep(time.Second)
 	}
