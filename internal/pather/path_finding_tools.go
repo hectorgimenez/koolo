@@ -31,7 +31,7 @@ func (w World) SetTile(t *Tile) {
 	w[t.X][t.Y] = t
 }
 
-func (w World) NewTile(kind, x, y int) *Tile {
+func (w World) NewTile(kind uint8, x, y int) *Tile {
 	return &Tile{
 		Kind: kind,
 		X:    x,
@@ -42,7 +42,7 @@ func (w World) NewTile(kind, x, y int) *Tile {
 
 // FirstOfKind gets the first tile on the board of a kind, used to get the from
 // and to tiles as there should only be one of each.
-func (w World) FirstOfKind(kind int) *Tile {
+func (w World) FirstOfKind(kind uint8) *Tile {
 	for _, row := range w {
 		for _, t := range row {
 			if t.Kind == kind {

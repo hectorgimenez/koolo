@@ -5,7 +5,7 @@ import "github.com/beefsack/go-astar"
 // Kind* constants refer to tile kinds for input and output.
 const (
 	// KindPlain (.) is a plain tile with a movement cost of 1.
-	KindPlain = iota
+	KindPlain uint8 = iota
 	// KindBlocker (X) is a tile which blocks movement.
 	KindBlocker
 	// KindFrom (F) is a tile which marks where the path should be calculated
@@ -18,7 +18,7 @@ const (
 )
 
 // KindCosts map tile kinds to movement costs.
-var KindCosts = map[int]float64{
+var KindCosts = map[uint8]float64{
 	KindPlain:       1.0,
 	KindFrom:        1.0,
 	KindTo:          1.0,
@@ -28,7 +28,7 @@ var KindCosts = map[int]float64{
 // A Tile is a tile in a grid which implements Pather.
 type Tile struct {
 	// Kind is the kind of tile, potentially affecting movement.
-	Kind int
+	Kind uint8
 	// X and Y are the coordinates of the tile.
 	X, Y int
 	// W is a reference to the World that the tile is a part of.
@@ -58,8 +58,7 @@ func (t *Tile) PathNeighbors() []astar.Pather {
 
 // PathNeighborCost returns the movement cost of the directly neighboring tile.
 func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
-	toT := to.(*Tile)
-	return KindCosts[toT.Kind]
+	return KindCosts[to.(*Tile).Kind]
 }
 
 // PathEstimatedCost uses Manhattan distance to estimate orthogonal distance
