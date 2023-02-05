@@ -57,7 +57,6 @@ func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
 
 			gameStart := time.Now()
 			if config.Config.Game.RandomizeRuns {
-				rand.Seed(time.Now().UnixNano())
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
 			s.logGameStart(runs)

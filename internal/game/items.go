@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"math/rand"
 	"strings"
-	"time"
 )
 
 const (
@@ -125,7 +124,6 @@ func (i Inventory) ShouldBuyTPs() bool {
 		}
 
 		qty, found := it.Stats[stat.Quantity]
-		rand.Seed(time.Now().UnixNano())
 		if qty <= rand.Intn(5-1)+1 || !found {
 			return true
 		}
@@ -140,7 +138,6 @@ func (i Inventory) ShouldBuyIDs() bool {
 		}
 
 		qty, found := it.Stats[stat.Quantity]
-		rand.Seed(time.Now().UnixNano())
 		if qty <= rand.Intn(7-3)+1 || !found {
 			return true
 		}
