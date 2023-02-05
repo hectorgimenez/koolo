@@ -6,8 +6,10 @@ import (
 	"time"
 )
 
-const keyPressMinTime = 30  // ms
-const keyPressMaxTime = 160 // ms
+const (
+	keyPressMinTime = 30  // ms
+	keyPressMaxTime = 160 // ms
+)
 
 // PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly
 func PressKey(key string) {
