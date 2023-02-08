@@ -1,13 +1,5 @@
 package map_client
 
-type serverResponse struct {
-	ID         string        `json:"id"`
-	Seed       int           `json:"seed"`
-	Difficulty int           `json:"difficulty"`
-	Act        int           `json:"act"`
-	Levels     []serverLevel `json:"levels"`
-}
-
 type serverLevel struct {
 	Type   string         `json:"type"`
 	ID     int            `json:"id"`

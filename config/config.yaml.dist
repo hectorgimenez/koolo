@@ -5,7 +5,7 @@ debug:
 
 logFilePath: log.txt
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
-D2MapAPIServer: 'http://localhost:8899'
+D2LoDPath: 'E:\games\Diablo II'
 
 # In order to use to Discord Bot, you need the Application Token. https://discord.com/developers/docs/intro
 discord:

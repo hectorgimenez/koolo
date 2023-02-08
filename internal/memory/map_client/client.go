@@ -2,7 +2,6 @@ package map_client
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
@@ -13,43 +12,46 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"net/http"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 func GetMapData(seed string, difficulty difficulty.Difficulty) MapData {
-	var mapData []serverResponse
-	for i := 0; i < 5; i++ {
-		url := fmt.Sprintf(config.Config.D2MapAPIServer+"/v1/map/%s/%d/%d.json", seed, getDifficultyAsInt(difficulty), i)
-		r, err := http.Get(url)
-		if err != nil {
-			panic(err) // TODO
-		}
-
-		sr := serverResponse{}
-		json.NewDecoder(r.Body).Decode(&sr)
-		r.Body.Close()
-
-		mapData = append(mapData, sr)
+	stdout, err := exec.Command("./koolo-map.exe", config.Config.D2LoDPath, "-s", seed, "-d", getDifficultyAsNum(difficulty)).Output()
+	if err != nil {
+		panic(err)
 	}
 
-	return mapData
+	stdoutLines := strings.Split(string(stdout), "\r\n")
+
+	lvls := make([]serverLevel, 0)
+	for _, line := range stdoutLines {
+		var lvl serverLevel
+		err = json.Unmarshal([]byte(line), &lvl)
+		// Discard empty lines or lines that don't contain level information
+		if err == nil && lvl.Type != "" && len(lvl.Map) > 0 {
+			lvls = append(lvls, lvl)
+		}
+	}
+
+	return lvls
 }
 
-func getDifficultyAsInt(df difficulty.Difficulty) int {
+func getDifficultyAsNum(df difficulty.Difficulty) string {
 	switch df {
 	case difficulty.Normal:
-		return 0
+		return "0"
 	case difficulty.Nightmare:
-		return 1
+		return "1"
 	case difficulty.Hell:
-		return 2
+		return "2"
 	}
 
-	return 0
+	return "0"
 }
 
-type MapData []serverResponse
+type MapData []serverLevel
 
 func renderCG(cg [][]bool) {
 	img := image.NewRGBA(image.Rect(0, 0, len(cg[0]), len(cg)))
@@ -171,11 +173,9 @@ func (md MapData) Origin(area area.Area) game.Position {
 }
 
 func (md MapData) getLevel(area area.Area) serverLevel {
-	for _, sr := range md {
-		for _, level := range sr.Levels {
-			if level.ID == int(area) {
-				return level
-			}
+	for _, level := range md {
+		if level.ID == int(area) {
+			return level
 		}
 	}
 
