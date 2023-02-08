@@ -19,7 +19,7 @@ type World [][]*Tile
 
 // Tile gets the tile at the given coordinates in the world.
 func (w World) Tile(x, y int) *Tile {
-	if x > len(w)-1 || w[x] == nil || y > len(w[x])-1 {
+	if x > len(w)-1 || w[x] == nil || y > len(w[x])-1 || y < 0 {
 		return nil
 	}
 
