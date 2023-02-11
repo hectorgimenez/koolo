@@ -91,18 +91,18 @@ func (gd *GameReader) InGame() bool {
 func (gd *GameReader) openMenus() game.OpenMenus {
 	uiBase := gd.Process.moduleBaseAddressPtr + gd.offset.UI - 0xA
 
-	buffer := gd.Process.ReadBytesFromMemory(uiBase, 32)
+	buffer := gd.Process.ReadBytesFromMemory(uiBase, 0x169)
 
 	isMapShown := gd.Process.ReadUInt(gd.Process.moduleBaseAddressPtr+gd.offset.UI, IntTypeUInt8)
 
 	return game.OpenMenus{
-		Inventory: buffer[0x01] != 0,
-		//LoadingScreen: buffer[0x16C] != 0,
-		NPCInteract: buffer[0x08] != 0,
-		NPCShop:     buffer[0x0B] != 0,
-		Stash:       buffer[0x18] != 0,
-		Waypoint:    buffer[0x13] != 0,
-		MapShown:    isMapShown != 0,
+		Inventory:     buffer[0x01] != 0,
+		LoadingScreen: buffer[0x168] != 0,
+		NPCInteract:   buffer[0x08] != 0,
+		NPCShop:       buffer[0x0B] != 0,
+		Stash:         buffer[0x18] != 0,
+		Waypoint:      buffer[0x13] != 0,
+		MapShown:      isMapShown != 0,
 	}
 }
 
