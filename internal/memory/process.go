@@ -14,7 +14,6 @@ const moduleName = "D2R.exe"
 type Process struct {
 	handler              windows.Handle
 	pid                  uint
-	moduleBaseAddress    unsafe.Pointer
 	moduleBaseAddressPtr uintptr
 	moduleBaseSize       uint
 	logger               *zap.Logger
@@ -34,7 +33,6 @@ func NewProcess(logger *zap.Logger) (Process, error) {
 	return Process{
 		handler:              h,
 		pid:                  module.ProcessID,
-		moduleBaseAddress:    unsafe.Pointer(module.ModuleBaseAddress),
 		moduleBaseAddressPtr: uintptr(unsafe.Pointer(module.ModuleBaseAddress)),
 		moduleBaseSize:       module.ModuleBaseSize,
 		logger:               logger,
@@ -76,7 +74,7 @@ func getMainModule(pid uint32) (gowin32.ModuleInfo, error) {
 
 func (p Process) getProcessMemory() []byte {
 	var data = make([]byte, p.moduleBaseSize)
-	err := windows.ReadProcessMemory(p.handler, uintptr(p.moduleBaseAddress), &data[0], uintptr(p.moduleBaseSize), nil)
+	err := windows.ReadProcessMemory(p.handler, p.moduleBaseAddressPtr, &data[0], uintptr(p.moduleBaseSize), nil)
 	if err != nil {
 		p.logger.Debug("Error reading memory position", zap.Error(err))
 	}
@@ -97,10 +95,10 @@ func (p Process) ReadBytesFromMemory(address uintptr, size uint) []byte {
 type IntType uint
 
 const (
-	IntTypeUInt8  = 1
-	IntTypeUInt16 = 2
-	IntTypeUInt32 = 4
-	IntTypeUInt64 = 8
+	Uint8  = 1
+	Uint16 = 2
+	Uint32 = 4
+	Uint64 = 8
 )
 
 func (p Process) ReadUInt(address uintptr, size IntType) uint {
@@ -115,13 +113,13 @@ func ReadUIntFromBuffer(bytes []byte, offset uint, size IntType) uint {
 
 func bytesToUint(bytes []byte, size IntType) uint {
 	switch size {
-	case IntTypeUInt8:
+	case Uint8:
 		return uint(bytes[0])
-	case IntTypeUInt16:
+	case Uint16:
 		return uint(binary.LittleEndian.Uint16(bytes))
-	case IntTypeUInt32:
+	case Uint32:
 		return uint(binary.LittleEndian.Uint32(bytes))
-	case IntTypeUInt64:
+	case Uint64:
 		return uint(binary.LittleEndian.Uint64(bytes))
 	}
 

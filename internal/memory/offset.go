@@ -26,12 +26,12 @@ func CalculateOffsets(process Process) Offset {
 
 	// UI
 	pattern = process.FindPattern(memory, "\x40\x84\xed\x0f\x94\x05", "xxxxxx")
-	uiOffset := process.ReadUInt(pattern+6, IntTypeUInt32)
+	uiOffset := process.ReadUInt(pattern+6, Uint32)
 	uiOffsetPtr := (pattern - process.moduleBaseAddressPtr) + 10 + uintptr(uiOffset)
 
 	// Hover
 	pattern = process.FindPattern(memory, "\xc6\x84\xc2\x00\x00\x00\x00\x00\x48\x8b\x74\x24\x00", "xxx?????xxxx?")
-	hoverOffset := process.ReadUInt(pattern+3, IntTypeUInt32) - 1
+	hoverOffset := process.ReadUInt(pattern+3, Uint32) - 1
 
 	return Offset{
 		GameData:  gameDataOffset,

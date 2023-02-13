@@ -93,7 +93,7 @@ func (gd *GameReader) openMenus() game.OpenMenus {
 
 	buffer := gd.Process.ReadBytesFromMemory(uiBase, 0x169)
 
-	isMapShown := gd.Process.ReadUInt(gd.Process.moduleBaseAddressPtr+gd.offset.UI, IntTypeUInt8)
+	isMapShown := gd.Process.ReadUInt(gd.Process.moduleBaseAddressPtr+gd.offset.UI, Uint8)
 
 	return game.OpenMenus{
 		Inventory:     buffer[0x01] != 0,
@@ -109,10 +109,10 @@ func (gd *GameReader) openMenus() game.OpenMenus {
 func (gd *GameReader) hoveredData() (hoveredUnitID uint, hoveredType uint, isHovered bool) {
 	hoverAddressPtr := gd.Process.moduleBaseAddressPtr + gd.offset.Hover
 	hoverBuffer := gd.Process.ReadBytesFromMemory(hoverAddressPtr, 12)
-	isUnitHovered := ReadUIntFromBuffer(hoverBuffer, 0, IntTypeUInt16)
+	isUnitHovered := ReadUIntFromBuffer(hoverBuffer, 0, Uint16)
 	if isUnitHovered > 0 {
-		hoveredType = ReadUIntFromBuffer(hoverBuffer, 0x04, IntTypeUInt32)
-		hoveredUnitID = ReadUIntFromBuffer(hoverBuffer, 0x08, IntTypeUInt32)
+		hoveredType = ReadUIntFromBuffer(hoverBuffer, 0x04, Uint32)
+		hoveredUnitID = ReadUIntFromBuffer(hoverBuffer, 0x08, Uint32)
 
 		return hoveredUnitID, hoveredType, true
 	}

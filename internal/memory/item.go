@@ -17,41 +17,41 @@ func (gd *GameReader) Items(playerPosition game.Position) game.Items {
 	items := game.Items{}
 	for i := 0; i < 128; i++ {
 		itemOffset := 8 * i
-		itemUnitPtr := uintptr(ReadUIntFromBuffer(unitTableBuffer, uint(itemOffset), IntTypeUInt64))
+		itemUnitPtr := uintptr(ReadUIntFromBuffer(unitTableBuffer, uint(itemOffset), Uint64))
 		for itemUnitPtr > 0 {
 			itemDataBuffer := gd.Process.ReadBytesFromMemory(itemUnitPtr, 144)
 			// itemQuality =
-			itemType := ReadUIntFromBuffer(itemDataBuffer, 0x00, IntTypeUInt32)
-			txtFileNo := ReadUIntFromBuffer(itemDataBuffer, 0x04, IntTypeUInt32)
-			unitID := ReadUIntFromBuffer(itemDataBuffer, 0x08, IntTypeUInt32)
+			itemType := ReadUIntFromBuffer(itemDataBuffer, 0x00, Uint32)
+			txtFileNo := ReadUIntFromBuffer(itemDataBuffer, 0x04, Uint32)
+			unitID := ReadUIntFromBuffer(itemDataBuffer, 0x08, Uint32)
 			// itemLoc = 0 in inventory, 1 equipped, 2 in belt, 3 on ground, 4 cursor, 5 dropping, 6 socketed
-			itemLoc := ReadUIntFromBuffer(itemDataBuffer, 0x0C, IntTypeUInt32)
+			itemLoc := ReadUIntFromBuffer(itemDataBuffer, 0x0C, Uint32)
 
 			if itemType != 4 {
-				itemUnitPtr = uintptr(gd.Process.ReadUInt(itemUnitPtr+0x150, IntTypeUInt64))
+				itemUnitPtr = uintptr(gd.Process.ReadUInt(itemUnitPtr+0x150, Uint64))
 				continue
 			}
 
-			unitDataPtr := uintptr(ReadUIntFromBuffer(itemDataBuffer, 0x10, IntTypeUInt64))
+			unitDataPtr := uintptr(ReadUIntFromBuffer(itemDataBuffer, 0x10, Uint64))
 			unitDataBuffer := gd.Process.ReadBytesFromMemory(unitDataPtr, 144)
-			flags := ReadUIntFromBuffer(unitDataBuffer, 0x18, IntTypeUInt32)
-			invPage := ReadUIntFromBuffer(unitDataBuffer, 0x55, IntTypeUInt8)
-			itemQuality := ReadUIntFromBuffer(unitDataBuffer, 0x00, IntTypeUInt32)
-			//itemOwnerNPC := ReadUIntFromBuffer(unitDataBuffer, 0x0C, IntTypeUInt32)
+			flags := ReadUIntFromBuffer(unitDataBuffer, 0x18, Uint32)
+			invPage := ReadUIntFromBuffer(unitDataBuffer, 0x55, Uint8)
+			itemQuality := ReadUIntFromBuffer(unitDataBuffer, 0x00, Uint32)
+			//itemOwnerNPC := ReadUIntFromBuffer(unitDataBuffer, 0x0C, Uint32)
 
 			// Item coordinates (X, Y)
-			pathPtr := uintptr(ReadUIntFromBuffer(itemDataBuffer, 0x38, IntTypeUInt64))
+			pathPtr := uintptr(ReadUIntFromBuffer(itemDataBuffer, 0x38, Uint64))
 			pathBuffer := gd.Process.ReadBytesFromMemory(pathPtr, 144)
-			itemX := ReadUIntFromBuffer(pathBuffer, 0x10, IntTypeUInt16)
-			itemY := ReadUIntFromBuffer(pathBuffer, 0x14, IntTypeUInt16)
+			itemX := ReadUIntFromBuffer(pathBuffer, 0x10, Uint16)
+			itemY := ReadUIntFromBuffer(pathBuffer, 0x14, Uint16)
 
 			// Item Stats
-			statsListExPtr := uintptr(ReadUIntFromBuffer(itemDataBuffer, 0x88, IntTypeUInt64))
+			statsListExPtr := uintptr(ReadUIntFromBuffer(itemDataBuffer, 0x88, Uint64))
 			statsListExBuffer := gd.Process.ReadBytesFromMemory(statsListExPtr, 180)
-			statPtr := uintptr(ReadUIntFromBuffer(statsListExBuffer, 0x30, IntTypeUInt64))
-			statCount := ReadUIntFromBuffer(statsListExBuffer, 0x38, IntTypeUInt32)
-			statExPtr := uintptr(ReadUIntFromBuffer(statsListExBuffer, 0x88, IntTypeUInt64))
-			statExCount := ReadUIntFromBuffer(statsListExBuffer, 0x90, IntTypeUInt32)
+			statPtr := uintptr(ReadUIntFromBuffer(statsListExBuffer, 0x30, Uint64))
+			statCount := ReadUIntFromBuffer(statsListExBuffer, 0x38, Uint32)
+			statExPtr := uintptr(ReadUIntFromBuffer(statsListExBuffer, 0x88, Uint64))
+			statExCount := ReadUIntFromBuffer(statsListExBuffer, 0x90, Uint32)
 
 			stats := gd.getItemStats(statCount, statPtr, statExCount, statExPtr)
 
@@ -89,7 +89,7 @@ func (gd *GameReader) Items(playerPosition game.Position) game.Items {
 				items.Ground = append(items.Ground, itm)
 			}
 
-			itemUnitPtr = uintptr(gd.Process.ReadUInt(itemUnitPtr+0x150, IntTypeUInt64))
+			itemUnitPtr = uintptr(gd.Process.ReadUInt(itemUnitPtr+0x150, Uint64))
 		}
 	}
 
@@ -110,8 +110,8 @@ func (gd *GameReader) getItemStats(statCount uint, statPtr uintptr, statExCount 
 		statBuffer := gd.Process.ReadBytesFromMemory(statPtr, statCount*10)
 		for i := 0; i < int(statCount); i++ {
 			offset := uint(i * 8)
-			statEnum := ReadUIntFromBuffer(statBuffer, offset+0x2, IntTypeUInt16)
-			statValue := ReadUIntFromBuffer(statBuffer, offset+0x4, IntTypeUInt32)
+			statEnum := ReadUIntFromBuffer(statBuffer, offset+0x2, Uint16)
+			statValue := ReadUIntFromBuffer(statBuffer, offset+0x4, Uint32)
 			st, value := getStatData(statEnum, statValue)
 			stats[st] = value
 		}
@@ -121,8 +121,8 @@ func (gd *GameReader) getItemStats(statCount uint, statPtr uintptr, statExCount 
 		statBuffer := gd.Process.ReadBytesFromMemory(statExPtr, statExCount*10)
 		for i := 0; i < int(statExCount); i++ {
 			offset := uint(i * 8)
-			statEnum := ReadUIntFromBuffer(statBuffer, offset+0x2, IntTypeUInt16)
-			statValue := ReadUIntFromBuffer(statBuffer, offset+0x4, IntTypeUInt32)
+			statEnum := ReadUIntFromBuffer(statBuffer, offset+0x2, Uint16)
+			statValue := ReadUIntFromBuffer(statBuffer, offset+0x4, Uint32)
 			st, value := getStatData(statEnum, statValue)
 			stats[st] = value
 		}

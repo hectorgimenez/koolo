@@ -16,21 +16,21 @@ func (gd *GameReader) Objects(playerPosition game.Position) []game.Object {
 	var objects []game.Object
 	for i := 0; i < 128; i++ {
 		objectOffset := 8 * i
-		objectUnitPtr := uintptr(ReadUIntFromBuffer(unitTableBuffer, uint(objectOffset), IntTypeUInt64))
+		objectUnitPtr := uintptr(ReadUIntFromBuffer(unitTableBuffer, uint(objectOffset), Uint64))
 		for objectUnitPtr > 0 {
-			objectType := gd.Process.ReadUInt(objectUnitPtr+0x00, IntTypeUInt32)
+			objectType := gd.Process.ReadUInt(objectUnitPtr+0x00, Uint32)
 			if objectType == 2 {
-				txtFileNo := gd.Process.ReadUInt(objectUnitPtr+0x04, IntTypeUInt32)
-				mode := gd.Process.ReadUInt(objectUnitPtr+0x0c, IntTypeUInt32)
-				unitID := gd.Process.ReadUInt(objectUnitPtr+0x08, IntTypeUInt32)
+				txtFileNo := gd.Process.ReadUInt(objectUnitPtr+0x04, Uint32)
+				mode := gd.Process.ReadUInt(objectUnitPtr+0x0c, Uint32)
+				unitID := gd.Process.ReadUInt(objectUnitPtr+0x08, Uint32)
 
 				// Coordinates (X, Y)
-				pathPtr := uintptr(gd.Process.ReadUInt(objectUnitPtr+0x38, IntTypeUInt64))
-				posX := gd.Process.ReadUInt(pathPtr+0x10, IntTypeUInt16)
-				posY := gd.Process.ReadUInt(pathPtr+0x14, IntTypeUInt16)
+				pathPtr := uintptr(gd.Process.ReadUInt(objectUnitPtr+0x38, Uint64))
+				posX := gd.Process.ReadUInt(pathPtr+0x10, Uint16)
+				posY := gd.Process.ReadUInt(pathPtr+0x14, Uint16)
 
-				unitDataPtr := uintptr(gd.Process.ReadUInt(objectUnitPtr+0x10, IntTypeUInt64))
-				interactType := gd.Process.ReadUInt(unitDataPtr+0x08, IntTypeUInt8)
+				unitDataPtr := uintptr(gd.Process.ReadUInt(objectUnitPtr+0x10, Uint64))
+				interactType := gd.Process.ReadUInt(unitDataPtr+0x08, Uint8)
 
 				obj := game.Object{
 					Name:         object.Name(int(txtFileNo)),
@@ -44,7 +44,7 @@ func (gd *GameReader) Objects(playerPosition game.Position) []game.Object {
 				}
 				objects = append(objects, obj)
 			}
-			objectUnitPtr = uintptr(gd.Process.ReadUInt(objectUnitPtr+0x150, IntTypeUInt64))
+			objectUnitPtr = uintptr(gd.Process.ReadUInt(objectUnitPtr+0x150, Uint64))
 		}
 	}
 
