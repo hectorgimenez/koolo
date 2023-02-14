@@ -88,6 +88,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				d := b.gr.GetData(false)
 
+				// Skip running stuff if loading screen is present
+				if d.OpenMenus.LoadingScreen {
+					continue
+				}
+
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
 					return err
 				}

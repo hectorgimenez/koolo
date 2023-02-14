@@ -1,8 +1,6 @@
 package action
 
 import (
-	"errors"
-
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
@@ -11,12 +9,12 @@ import (
 )
 
 const (
-	wpTabStartX     = 21.719
-	wpTabStartY     = 7.928
-	wpListStartX    = 5.37
-	wpListStartY    = 6.852
-	wpTabSize       = 69
-	wpAreaBtnHeight = 49
+	wpTabStartX     = 130
+	wpTabStartY     = 148
+	wpTabSizeX      = 57
+	wpListPositionX = 200
+	wpListStartY    = 158
+	wpAreaBtnHeight = 41
 )
 
 func (b Builder) WayPoint(a area.Area) *StaticAction {
@@ -52,31 +50,25 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 					step.InteractObject(o.Name, func(data game.Data) bool {
 						return data.OpenMenus.Waypoint
 					}),
-					step.SyncStep(func(data game.Data) error {
-						actTabX := int(float32(hid.GameAreaSizeX)/wpTabStartX) + (wpCoords[0]-1)*wpTabSize + (wpTabSize / 2)
-						actTabY := int(float32(hid.GameAreaSizeY) / wpTabStartY)
+					step.SyncStepWithCheck(func(data game.Data) error {
+						actTabX := wpTabStartX + (wpCoords[0]-1)*wpTabSizeX + (wpTabSizeX / 2)
 
-						areaBtnX := int(float32(hid.GameAreaSizeX) / wpListStartX)
-						areaBtnY := int(float32(hid.GameAreaSizeY)/wpListStartY) + (wpCoords[1]-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-						hid.MovePointer(actTabX, actTabY)
+						areaBtnY := wpListStartY + (wpCoords[1]-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
+						hid.MovePointer(actTabX, wpTabStartY)
 						helper.Sleep(200)
 						hid.Click(hid.LeftButton)
 						helper.Sleep(200)
-						hid.MovePointer(areaBtnX, areaBtnY)
+						hid.MovePointer(wpListPositionX, areaBtnY)
 						helper.Sleep(200)
 						hid.Click(hid.LeftButton)
 
-						for i := 0; i < 10; i++ {
-							d := b.gr.GetData(false)
-							if d.PlayerUnit.Area == a {
-								// Give some time to load the area
-								helper.Sleep(4000)
-								return nil
-							}
-							helper.Sleep(1000)
+						return nil
+					}, func(data game.Data) step.Status {
+						if data.PlayerUnit.Area == a && !data.OpenMenus.LoadingScreen {
+							return step.StatusCompleted
 						}
 
-						return errors.New("error changing area zone")
+						return step.StatusInProgress
 					}),
 				)
 			}

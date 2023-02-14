@@ -22,14 +22,12 @@ func (b Builder) Repair() *StaticAction {
 		}
 
 		if shouldRepair {
-			x, y := int(float32(hid.GameAreaSizeX)/3.52), int(float32(hid.GameAreaSizeY)/1.37)
-
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(data.PlayerUnit.Area).RepairNPC()),
 				step.KeySequence("home", "down", "enter"),
 				step.SyncStep(func(_ game.Data) error {
 					helper.Sleep(100)
-					hid.MovePointer(x, y)
+					hid.MovePointer(390, 515)
 					hid.Click(hid.LeftButton)
 					helper.Sleep(500)
 					hid.PressKey("esc")

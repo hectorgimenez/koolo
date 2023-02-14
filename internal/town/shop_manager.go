@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	topCornerWindowWidthProportion  = 37.64
-	topCornerWindowHeightProportion = 7.85
-	ItemBoxSize                     = 40
-	InventoryTopLeftX               = 1.494
-	InventoryTopLeftY               = 2.071
+	topCornerVendorWindowX = 109
+	topCornerVendorWindowY = 147
+	ItemBoxSize            = 33
+	InventoryTopLeftX      = 846
+	InventoryTopLeftY      = 369
 )
 
 type ShopManager struct {
@@ -86,8 +86,8 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 func (sm ShopManager) SellJunk(d game.Data) {
 	for _, i := range d.Items.Inventory {
 		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
-			x := int(float32(hid.GameAreaSizeX)/InventoryTopLeftX) + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
-			y := int(float32(hid.GameAreaSizeY)/InventoryTopLeftY) + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
+			x := InventoryTopLeftX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
+			y := InventoryTopLeftY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
 			hid.MovePointer(x, y)
 			helper.Sleep(100)
 			hid.KeyDown("control")
@@ -126,11 +126,8 @@ func (sm ShopManager) buyFullStack(i game.Item) {
 }
 
 func (sm ShopManager) getScreenCordinatesForItem(i game.Item) (int, int) {
-	topLeftShoppingWindowX := int(float32(hid.GameAreaSizeX) / topCornerWindowWidthProportion)
-	topLeftShoppingWindowY := int(float32(hid.GameAreaSizeY) / topCornerWindowHeightProportion)
-
-	x := topLeftShoppingWindowX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
-	y := topLeftShoppingWindowY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
+	x := topCornerVendorWindowX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
+	y := topCornerVendorWindowY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
 
 	return x, y
 }

@@ -63,15 +63,15 @@ func (b Builder) itemsToIdentify(data game.Data) (items []game.Item) {
 }
 
 func identifyItem(idTome game.Item, i game.Item) {
-	xIDTome := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + idTome.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	yIDTome := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + idTome.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	xIDTome := town.InventoryTopLeftX + idTome.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	yIDTome := town.InventoryTopLeftY + idTome.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 
 	hid.MovePointer(xIDTome, yIDTome)
 	helper.Sleep(200)
 	hid.Click(hid.RightButton)
 	helper.Sleep(200)
-	x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
 	helper.Sleep(300)
 	hid.Click(hid.LeftButton)

@@ -16,8 +16,8 @@ import (
 
 const (
 	maxGoldPerStashTab = 2500000
-	stashGoldBtnX      = 1.2776
-	stashGoldBtnY      = 1.357
+	stashGoldBtnX      = 966
+	stashGoldBtnY      = 526
 )
 
 func (b Builder) Stash(forceStash bool) *StaticAction {
@@ -58,8 +58,8 @@ func (b Builder) orderInventoryPotions(data game.Data) {
 			if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
 			}
-			x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-			y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+			x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+			y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 			hid.MovePointer(x, y)
 			helper.Sleep(100)
 			hid.Click(hid.RightButton)
@@ -87,6 +87,7 @@ func (b Builder) stashGold(d game.Data) {
 	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
 		switchTab(1)
 		clickStashGoldBtn()
+		helper.Sleep(200)
 	}
 
 	for i := 2; i < 5; i++ {
@@ -134,8 +135,8 @@ func (b Builder) shouldStashIt(i game.Item, forceStash bool) bool {
 }
 
 func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
-	x := int(float32(hid.GameAreaSizeX)/town.InventoryTopLeftX) + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	y := int(float32(hid.GameAreaSizeY)/town.InventoryTopLeftY) + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
+	y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
@@ -161,10 +162,7 @@ func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
 }
 
 func clickStashGoldBtn() {
-	btnX := int(float32(hid.GameAreaSizeX) / stashGoldBtnX)
-	btnY := int(float32(hid.GameAreaSizeY) / stashGoldBtnY)
-
-	hid.MovePointer(btnX, btnY)
+	hid.MovePointer(stashGoldBtnX, stashGoldBtnY)
 	helper.Sleep(170)
 	hid.Click(hid.LeftButton)
 	helper.Sleep(200)
@@ -173,9 +171,9 @@ func clickStashGoldBtn() {
 }
 
 func switchTab(tab int) {
-	x := int(0.0258 * float32(hid.GameAreaSizeX))
-	y := int(0.108 * float32(hid.GameAreaSizeY))
-	tabSize := int(0.0750 * float32(hid.GameAreaSizeX))
+	x := 107
+	y := 133
+	tabSize := 82
 	x = x + tabSize*tab - tabSize/2
 
 	hid.MovePointer(x, y)
