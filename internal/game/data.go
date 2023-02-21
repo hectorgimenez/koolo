@@ -109,6 +109,11 @@ func (pu PlayerUnit) MaxGold() int {
 }
 
 func (pu PlayerUnit) HPPercent() int {
+	_, found := pu.Stats[stat.MaxLife]
+	if !found {
+		return 100
+	}
+
 	if maxLifeBO == 0 && maxLife == 0 {
 		maxLife = pu.Stats[stat.MaxLife]
 		maxLifeBO = pu.Stats[stat.MaxLife]

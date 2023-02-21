@@ -141,11 +141,11 @@ func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
 	hid.KeyDown("control")
-	helper.Sleep(150)
+	helper.Sleep(300)
 	hid.Click(hid.LeftButton)
 	helper.Sleep(200)
 	hid.KeyUp("control")
-	helper.Sleep(150)
+	helper.Sleep(300)
 
 	data := b.gr.GetData(false)
 	for _, it := range data.Items.Inventory {
@@ -172,11 +172,11 @@ func clickStashGoldBtn() {
 
 func switchTab(tab int) {
 	x := 107
-	y := 133
+	y := 128
 	tabSize := 82
 	x = x + tabSize*tab - tabSize/2
 
 	hid.MovePointer(x, y)
-	helper.Sleep(100)
+	helper.Sleep(400)
 	hid.Click(hid.LeftButton)
 }

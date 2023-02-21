@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/go-vgo/robotgo"
+	hook "github.com/robotn/gohook"
 	"log"
 	"os"
 	"os/signal"
@@ -87,7 +89,7 @@ func main() {
 
 	// Discord Bot initialization
 	if config.Config.Discord.Enabled {
-		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID, supervisor)
 		if err != nil {
 			logger.Fatal("Discord could not been initialized", zap.Error(err))
 		}
@@ -100,7 +102,7 @@ func main() {
 
 	// Telegram Bot initialization
 	if config.Config.Telegram.Enabled {
-		telegramBot, err := telegram.NewBot(config.Config.Telegram.Token, config.Config.Telegram.ChatID, logger)
+		telegramBot, err := telegram.NewBot(config.Config.Telegram.Token, config.Config.Telegram.ChatID, logger, supervisor)
 		if err != nil {
 			logger.Fatal("Telegram could not been initialized", zap.Error(err))
 		}
@@ -115,8 +117,25 @@ func main() {
 		return eventListener.Listen(ctx)
 	})
 
+	registerKeyboardHooks(supervisor)
+
 	err = g.Wait()
 	if err != nil {
 		log.Fatalf("Error running Koolo: %s", err.Error())
 	}
+}
+
+func registerKeyboardHooks(s *koolo.Supervisor) {
+	// Pause Hook
+	robotgo.EventHook(hook.KeyDown, []string{"f8"}, func(h hook.Event) {
+		// TODO: Pending
+	})
+
+	// Stop Hook
+	robotgo.EventHook(hook.KeyDown, []string{"f12"}, func(h hook.Event) {
+		s.Stop()
+	})
+
+	es := robotgo.EventStart()
+	<-robotgo.EventProcess(es)
 }

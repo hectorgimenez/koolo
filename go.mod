@@ -1,6 +1,6 @@
 module github.com/hectorgimenez/koolo
 
-go 1.20
+go 1.19
 
 require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
@@ -8,11 +8,12 @@ require (
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
+	github.com/robotn/gohook v0.31.3
 	github.com/stretchr/testify v1.8.1
 	github.com/winlabs/gowin32 v0.0.0-20221003142512-0d265587d3c9
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.4.0
+	golang.org/x/sys v0.5.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -23,7 +24,6 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/robotn/gohook v0.31.3 // indirect
 	github.com/robotn/xgb v0.0.0-20190912153532-2cb92d044934 // indirect
 	github.com/robotn/xgbutil v0.0.0-20190912154524-c861d6f87770 // indirect
 	github.com/shirou/gopsutil v3.21.10+incompatible // indirect
@@ -35,6 +35,6 @@ require (
 	github.com/vcaesar/tt v0.20.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 )
