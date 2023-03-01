@@ -18,8 +18,7 @@ var (
 )
 
 type StructConfig struct {
-	Display int `yaml:"display"`
-	Debug   struct {
+	Debug struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`

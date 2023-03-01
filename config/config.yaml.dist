@@ -1,4 +1,3 @@
-display: 0 # Not supported yet
 debug:
   log: true # Prints extra log information
   renderMap: false # Render current map data into 'cg.png' file

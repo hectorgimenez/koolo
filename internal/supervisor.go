@@ -18,12 +18,17 @@ import (
 
 type baseSupervisor struct {
 	logger *zap.Logger
-	bot    Bot
+	bot    *Bot
 	gr     *memory.GameReader
 	gm     *helper.GameManager
 }
 
+func (s *baseSupervisor) TogglePause() {
+	s.bot.TogglePause()
+}
+
 func (s *baseSupervisor) Stop() {
+	s.logger.Info("Shutting down NOW")
 	os.Exit(0)
 }
 

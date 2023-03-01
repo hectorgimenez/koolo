@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/go-vgo/robotgo"
 	hook "github.com/robotn/gohook"
 	"log"
 	"os"
@@ -134,16 +133,16 @@ func main() {
 }
 
 func registerKeyboardHooks(s koolo.Supervisor) {
-	// Pause Hook
-	robotgo.EventHook(hook.KeyDown, []string{"f8"}, func(h hook.Event) {
-		// TODO: Pending
-	})
-
-	// Stop Hook
-	robotgo.EventHook(hook.KeyDown, []string{"f12"}, func(h hook.Event) {
+	// TogglePause Hook
+	hook.Register(hook.KeyDown, []string{"."}, func(e hook.Event) {
 		s.Stop()
 	})
 
-	es := robotgo.EventStart()
-	<-robotgo.EventProcess(es)
+	// TogglePause Hook
+	hook.Register(hook.KeyDown, []string{","}, func(e hook.Event) {
+		s.TogglePause()
+	})
+
+	evt := hook.Start()
+	<-hook.Process(evt)
 }

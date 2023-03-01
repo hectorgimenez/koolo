@@ -32,7 +32,7 @@ func (s *CompanionSupervisor) JoinGame(gameName, password string) {
 	s.companionCh <- CompanionGameData{GameName: gameName, Password: password}
 }
 
-func NewCompanionSupervisor(logger *zap.Logger, bot Bot, gr *memory.GameReader, gm *helper.GameManager) *CompanionSupervisor {
+func NewCompanionSupervisor(logger *zap.Logger, bot *Bot, gr *memory.GameReader, gm *helper.GameManager) *CompanionSupervisor {
 	return &CompanionSupervisor{
 		baseSupervisor: baseSupervisor{
 			logger: logger,

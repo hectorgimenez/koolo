@@ -21,6 +21,7 @@ type Bot struct {
 	hm     health.Manager
 	ab     action.Builder
 	gr     *memory.GameReader
+	paused bool
 }
 
 func NewBot(
@@ -28,8 +29,8 @@ func NewBot(
 	hm health.Manager,
 	ab action.Builder,
 	gr *memory.GameReader,
-) Bot {
-	return Bot{
+) *Bot {
+	return &Bot{
 		logger: logger,
 		hm:     hm,
 		ab:     ab,
@@ -62,6 +63,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			case <-ctx.Done():
 				return context.Canceled
 			default:
+				if b.paused {
+					time.Sleep(time.Second)
+					continue
+				}
+
 				// Throttle loop a bit, don't need to waste CPU
 				if time.Since(loopTime) < time.Millisecond*30 {
 					time.Sleep(time.Millisecond*30 - time.Since(loopTime))
@@ -165,4 +171,14 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 	}
 
 	return actions
+}
+
+func (b *Bot) TogglePause() {
+	if b.paused {
+		b.logger.Info("Resuming...")
+		b.paused = false
+	} else {
+		b.logger.Info("Pausing...")
+		b.paused = true
+	}
 }

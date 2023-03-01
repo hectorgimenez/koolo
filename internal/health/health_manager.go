@@ -52,11 +52,12 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	if d.PlayerUnit.HPPercent() <= 0 {
+		stat.FinishCurrentRun(event.Death)
 		helper.Sleep(2000)
 		hid.PressKey("esc")
 		helper.Sleep(4000)
 		hm.gameManager.ExitGame()
-		stat.FinishCurrentRun(event.Death)
+
 		return ErrDied
 	}
 

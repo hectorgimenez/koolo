@@ -76,6 +76,12 @@ func (p *PickupItemStep) Run(data game.Data) error {
 				p.waitingForInteraction = true
 				return nil
 			} else {
+				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
+				// on Andariel
+				if p.isChestHovered(data) {
+					hid.Click(hid.LeftButton)
+				}
+
 				path, distance, _ := pather.GetPath(data, i.Position)
 				if distance > 10 {
 					pather.MoveThroughPath(path, 15, true)
@@ -95,4 +101,14 @@ func (p *PickupItemStep) Run(data game.Data) error {
 	}
 
 	return fmt.Errorf("item %s not found", p.item.Name)
+}
+
+func (p *PickupItemStep) isChestHovered(data game.Data) bool {
+	for _, o := range data.Objects {
+		if o.IsChest() && o.IsHovered {
+			return true
+		}
+	}
+
+	return false
 }

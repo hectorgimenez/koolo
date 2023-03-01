@@ -84,5 +84,5 @@ func Click(btn MouseButton) {
 }
 
 func getCurrentPosition() (int, int) {
-	return robotgo.GetMousePos()
+	return robotgo.Location()
 }

@@ -17,6 +17,7 @@ import (
 type Supervisor interface {
 	Start(ctx context.Context, runs []run.Run) error
 	Stop()
+	TogglePause()
 }
 
 // SinglePlayerSupervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
@@ -24,7 +25,7 @@ type SinglePlayerSupervisor struct {
 	baseSupervisor
 }
 
-func NewSinglePlayerSupervisor(logger *zap.Logger, bot Bot, gr *memory.GameReader, gm *helper.GameManager) *SinglePlayerSupervisor {
+func NewSinglePlayerSupervisor(logger *zap.Logger, bot *Bot, gr *memory.GameReader, gm *helper.GameManager) *SinglePlayerSupervisor {
 	return &SinglePlayerSupervisor{
 		baseSupervisor: baseSupervisor{
 			logger: logger,
