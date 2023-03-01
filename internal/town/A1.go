@@ -1,6 +1,7 @@
 package town
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
 )
 
@@ -21,4 +22,10 @@ func (a A1) RefillNPC() npc.ID {
 
 func (a A1) RepairNPC() npc.ID {
 	return npc.Charsi
+}
+
+func (a A1) TPWaitingArea(d game.Data) game.Position {
+	cain, _ := d.NPCs.FindOne(npc.Kashya)
+
+	return cain.Positions[0]
 }

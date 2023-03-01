@@ -73,7 +73,15 @@ func main() {
 
 	ab := action.NewBuilder(logger, sm, bm, gr, char)
 	bot := koolo.NewBot(logger, hm, ab, gr)
-	supervisor := koolo.NewSupervisor(logger, bot, gr, gm)
+
+	var supervisor koolo.Supervisor
+	var companion koolo.Companion
+	if config.Config.Companion.Enabled {
+		supervisor = koolo.NewCompanionSupervisor(logger, bot, gr, gm)
+		companion = supervisor.(koolo.Companion)
+	} else {
+		supervisor = koolo.NewSinglePlayerSupervisor(logger, bot, gr, gm)
+	}
 
 	g.Go(func() error {
 		return supervisor.Start(ctx, run.BuildRuns(logger, ab, char))
@@ -89,7 +97,7 @@ func main() {
 
 	// Discord Bot initialization
 	if config.Config.Discord.Enabled {
-		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID, supervisor)
+		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID, supervisor, companion)
 		if err != nil {
 			logger.Fatal("Discord could not been initialized", zap.Error(err))
 		}
@@ -125,7 +133,7 @@ func main() {
 	}
 }
 
-func registerKeyboardHooks(s *koolo.Supervisor) {
+func registerKeyboardHooks(s koolo.Supervisor) {
 	// Pause Hook
 	robotgo.EventHook(hook.KeyDown, []string{"f8"}, func(h hook.Event) {
 		// TODO: Pending

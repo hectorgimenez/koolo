@@ -110,6 +110,13 @@ type StructConfig struct {
 			ClearArea bool `yaml:"clearArea"`
 		}
 	} `yaml:"game"`
+	Companion struct {
+		Enabled          bool   `yaml:"enabled"`
+		Leader           bool   `yaml:"leader"`
+		LeaderName       string `yaml:"leaderName"`
+		Remote           string `yaml:"remote"`
+		GameNameTemplate string `yaml:"gameNameTemplate"`
+	} `yaml:"companion"`
 	Runtime struct {
 		CastDuration time.Duration
 	}

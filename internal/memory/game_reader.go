@@ -22,12 +22,15 @@ func NewGameReader(process Process) *GameReader {
 	}
 }
 
+var previousData *game.Data
+
 func (gd *GameReader) GetData(isNewGame bool) game.Data {
 	if isNewGame {
 		gd.offset = CalculateOffsets(gd.Process)
 	}
 
-	playerUnitPtr, corpse := gd.getPlayerUnitPtr()
+	roster := gd.getRoster()
+	playerUnitPtr, corpse := gd.getPlayerUnitPtr(roster)
 
 	if isNewGame {
 		gd.cachedMapSeed, _ = gd.getMapSeed(playerUnitPtr)
@@ -53,7 +56,7 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 		}
 	}
 
-	return game.Data{
+	data := game.Data{
 		AreaOrigin:     origin,
 		Corpse:         corpse,
 		Monsters:       gd.Monsters(pu.Position),
@@ -65,11 +68,20 @@ func (gd *GameReader) GetData(isNewGame bool) game.Data {
 		AdjacentLevels: exits,
 		OpenMenus:      gd.openMenus(),
 		Rooms:          rooms,
+		Roster:         roster,
 	}
+
+	if playerUnitPtr == 0 {
+		return *previousData
+	}
+
+	previousData = &data
+
+	return data
 }
 
 func (gd *GameReader) InGame() bool {
-	pu, _ := gd.getPlayerUnitPtr()
+	pu, _ := gd.getPlayerUnitPtr([]game.RosterMember{})
 
 	return pu > 0
 }

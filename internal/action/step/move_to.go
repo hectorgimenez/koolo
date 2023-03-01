@@ -16,6 +16,8 @@ type MoveToStep struct {
 	teleport        bool
 	stopAtDistance  int
 	nearestWalkable bool
+	timeout         time.Duration
+	startedAt       time.Time
 }
 
 type MoveToStepOption func(step *MoveToStep)
@@ -28,6 +30,7 @@ func MoveTo(toX, toY int, teleport bool, opts ...MoveToStepOption) *MoveToStep {
 			Y: toY,
 		},
 		teleport: teleport,
+		timeout:  time.Second * 30,
 	}
 
 	for _, o := range opts {
@@ -49,6 +52,12 @@ func ClosestWalkable() MoveToStepOption {
 	}
 }
 
+func WithTimeout(timeout time.Duration) MoveToStepOption {
+	return func(step *MoveToStep) {
+		step.timeout = timeout
+	}
+}
+
 func (m *MoveToStep) Status(data game.Data) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
@@ -66,7 +75,16 @@ func (m *MoveToStep) Run(data game.Data) error {
 	if m.teleport && m.status == StatusNotStarted {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
+	if m.startedAt.IsZero() {
+		m.startedAt = time.Now()
+	}
+
 	m.tryTransitionStatus(StatusInProgress)
+
+	if m.timeout > 0 && time.Since(m.startedAt) > m.timeout {
+		m.tryTransitionStatus(StatusCompleted)
+		return nil
+	}
 
 	// Throttle movement clicks in town
 	if data.PlayerUnit.Area.IsTown() {

@@ -50,30 +50,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
-		actions := []action.Action{
-			b.ab.RecoverCorpse(),
-			b.ab.IdentifyAll(firstRun),
-			b.ab.Stash(firstRun),
-			b.ab.VendorRefill(),
-			b.ab.Heal(),
-			b.ab.ReviveMerc(),
-			b.ab.Repair(),
-		}
-		firstRun = false
-
+		actions := b.preRunActions(firstRun)
 		actions = append(actions, r.BuildActions()...)
-		actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
-		actions = append(actions, b.ab.ItemPickup(true, -1))
+		actions = append(actions, b.postRunActions(k, runs)...)
 
-		// Don't return town on last run
-		if k != len(runs)-1 {
-			if config.Config.Game.ClearTPArea {
-				actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
-				actions = append(actions, b.ab.ItemPickup(false, -1))
-			}
-			actions = append(actions, b.ab.ReturnTown())
-		}
-
+		firstRun = false
 		running := true
 		loopTime := time.Now()
 		for running {
@@ -143,4 +124,45 @@ func (b *Bot) shouldEndCurrentGame(startedAt time.Time) error {
 	}
 
 	return nil
+}
+
+func (b *Bot) preRunActions(firstRun bool) []action.Action {
+	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+		return []action.Action{
+			b.ab.RecoverCorpse(),
+			b.ab.Heal(),
+		}
+	}
+
+	return []action.Action{
+		b.ab.RecoverCorpse(),
+		b.ab.IdentifyAll(firstRun),
+		b.ab.Stash(firstRun),
+		b.ab.VendorRefill(),
+		b.ab.Heal(),
+		b.ab.ReviveMerc(),
+		b.ab.Repair(),
+	}
+}
+
+func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
+	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+		return []action.Action{}
+	}
+
+	actions := []action.Action{
+		b.ab.ClearAreaAroundPlayer(5),
+		b.ab.ItemPickup(true, -1),
+	}
+
+	// Don't return town on last run
+	if currentRun != len(runs)-1 {
+		if config.Config.Game.ClearTPArea {
+			actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
+			actions = append(actions, b.ab.ItemPickup(false, -1))
+		}
+		actions = append(actions, b.ab.ReturnTown())
+	}
+
+	return actions
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/game/state"
+	"strings"
 )
 
 // since stat.MaxLife is returning max life without stats, we are setting the max life value that we read from the
@@ -37,6 +38,7 @@ type Data struct {
 	AdjacentLevels []Level
 	Rooms          []Room
 	OpenMenus      OpenMenus
+	Roster         Roster
 }
 
 type Room struct {
@@ -75,6 +77,23 @@ func (d Data) MercHPPercent() int {
 	}
 
 	return 0
+}
+
+type RosterMember struct {
+	Name     string
+	Area     area.Area
+	Position Position
+}
+type Roster []RosterMember
+
+func (r Roster) FindByName(name string) (RosterMember, bool) {
+	for _, rm := range r {
+		if strings.EqualFold(rm.Name, name) {
+			return rm, true
+		}
+	}
+
+	return RosterMember{}, false
 }
 
 type Level struct {

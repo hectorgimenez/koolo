@@ -25,6 +25,10 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 		logger:  logger,
 	}
 
+	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+		return []Run{Companion{baseRun: baseRun}}
+	}
+
 	for _, run := range config.Config.Game.Runs {
 		run = strings.ToLower(run)
 		switch run {
@@ -59,6 +63,8 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 			runs = append(runs, Tristram{baseRun})
 		case "lower_kurast":
 			runs = append(runs, LowerKurast{baseRun})
+		case "baal":
+			runs = append(runs, Baal{baseRun})
 		}
 	}
 

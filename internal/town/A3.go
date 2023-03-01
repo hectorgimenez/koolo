@@ -1,6 +1,7 @@
 package town
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
 )
 
@@ -21,4 +22,11 @@ func (a A3) RefillNPC() npc.ID {
 
 func (a A3) RepairNPC() npc.ID {
 	return npc.Hratli
+}
+
+func (a A3) TPWaitingArea(_ game.Data) game.Position {
+	return game.Position{
+		X: 5151,
+		Y: 5068,
+	}
 }

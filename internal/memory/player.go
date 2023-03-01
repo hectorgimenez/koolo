@@ -11,7 +11,7 @@ import (
 
 var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 
-func (gd *GameReader) getPlayerUnitPtr() (playerUnitPtr uintptr, corpse game.Corpse) {
+func (gd *GameReader) getPlayerUnitPtr(roster game.Roster) (playerUnitPtr uintptr, corpse game.Corpse) {
 	for i := 0; i < 128; i++ {
 		unitOffset := gd.offset.UnitTable + uintptr(i*8)
 		playerUnitAddr := gd.Process.moduleBaseAddressPtr + unitOffset
@@ -27,20 +27,48 @@ func (gd *GameReader) getPlayerUnitPtr() (playerUnitPtr uintptr, corpse game.Cor
 
 			// Only current player has inventory
 			if inventoryAddr > 0 && xPos > 0 && yPos > 0 {
-				isCorpse := gd.Process.ReadUInt(playerUnit+0x1A6, Uint8)
-				if isCorpse == 1 {
-					unitID := gd.Process.ReadUInt(playerUnit+0x08, Uint32)
-					hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
-					corpse = game.Corpse{
-						Found:     true,
-						IsHovered: isHovered && hoveredUnitID == unitID && hoveredType == 0,
-						Position: game.Position{
-							X: int(xPos),
-							Y: int(yPos),
-						},
+				expCharPtr := uintptr(gd.Process.ReadUInt(gd.moduleBaseAddressPtr+gd.offset.Expansion, Uint64))
+				expChar := gd.Process.ReadUInt(expCharPtr+0x5C, Uint16)
+				baseCheck := gd.Process.ReadUInt(inventoryAddr+0x30, Uint16)
+				if expChar > 0 {
+					baseCheck = gd.Process.ReadUInt(inventoryAddr+0x70, Uint16)
+				}
+
+				if baseCheck > 0 {
+					isCorpse := gd.Process.ReadUInt(playerUnit+0x1A6, Uint8)
+
+					if isCorpse == 1 {
+						unitID := gd.Process.ReadUInt(playerUnit+0x08, Uint32)
+						hoveredUnitID, hoveredType, isHovered := gd.hoveredData()
+						corpse = game.Corpse{
+							Found:     true,
+							IsHovered: isHovered && hoveredUnitID == unitID && hoveredType == 0,
+							Position: game.Position{
+								X: int(xPos),
+								Y: int(yPos),
+							},
+						}
+					} else {
+						playerUnitPtr = playerUnit
 					}
 				} else {
-					playerUnitPtr = playerUnit
+					pUnitData := playerUnit + 0x10
+					playerNameAddr := uintptr(gd.Process.ReadUInt(pUnitData, Uint64))
+					name := gd.Process.ReadStringFromMemory(playerNameAddr, 0)
+					for k, rm := range roster {
+						if name != rm.Name {
+							continue
+						}
+
+						roster[k] = game.RosterMember{
+							Name: name,
+							Area: rm.Area,
+							Position: game.Position{
+								X: int(xPos),
+								Y: int(yPos),
+							},
+						}
+					}
 				}
 			}
 

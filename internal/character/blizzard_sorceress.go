@@ -148,7 +148,7 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 		}
 
 		return 0, false
-	}, nil)
+	}, nil, step.Distance(8, sorceressMaxDistance))
 }
 
 func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType game.MonsterType, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) action.Action {

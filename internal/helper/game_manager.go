@@ -2,6 +2,7 @@ package helper
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/difficulty"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -12,12 +13,12 @@ type GameManager struct {
 	gr *memory.GameReader
 }
 
-func NewGameManager(gr *memory.GameReader) GameManager {
-	return GameManager{gr: gr}
+func NewGameManager(gr *memory.GameReader) *GameManager {
+	return &GameManager{gr: gr}
 }
 
 // ExitGame tries to close the socket and also exit via game menu, what happens faster.
-func (gm GameManager) ExitGame() error {
+func (gm *GameManager) ExitGame() error {
 	//_ = tcp.CloseCurrentGameSocket(gm.gr.GetPID())
 	exitGameUsingUIMenu()
 
@@ -37,8 +38,7 @@ func exitGameUsingUIMenu() {
 	hid.Click(hid.LeftButton)
 }
 
-// TODO: Make this coords dynamic
-func (gm GameManager) NewGame() error {
+func (gm *GameManager) NewGame() error {
 	difficultyPosition := map[difficulty.Difficulty]struct {
 		X, Y int
 	}{
@@ -64,4 +64,84 @@ func (gm GameManager) NewGame() error {
 	}
 
 	return errors.New("error creating game! Timeout")
+}
+
+func (gm *GameManager) CreateOnlineGame(gameCounter int) (string, error) {
+	// Enter bnet lobby
+	hid.MovePointer(744, 650)
+	hid.Click(hid.LeftButton)
+	Sleep(1200)
+
+	// Click "Create game" tab
+	hid.MovePointer(845, 54)
+	hid.Click(hid.LeftButton)
+	Sleep(200)
+
+	// Click the game name textbox, delete text and type new game name
+	hid.MovePointer(925, 116)
+	hid.Click(hid.LeftButton)
+	hid.PressKeyCombination("lctrl", "a")
+	gameName := config.Config.Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
+	for _, ch := range gameName {
+		hid.PressKey(fmt.Sprintf("%c", ch))
+	}
+
+	// Same for password
+	hid.MovePointer(925, 161)
+	hid.Click(hid.LeftButton)
+	Sleep(200)
+	hid.PressKeyCombination("lctrl", "a")
+	hid.PressKey("x")
+	hid.PressKey("enter")
+
+	for i := 0; i < 30; i++ {
+		if gm.gr.InGame() {
+			return gameName, nil
+		}
+		Sleep(1000)
+	}
+
+	return gameName, errors.New("error creating game! Timeout")
+}
+
+func (gm *GameManager) JoinOnlineGame(gameName, password string) error {
+	// Enter bnet lobby
+	hid.MovePointer(744, 650)
+	hid.Click(hid.LeftButton)
+	Sleep(1200)
+
+	// Click "Join game" tab
+	hid.MovePointer(977, 54)
+	hid.Click(hid.LeftButton)
+	Sleep(200)
+
+	// Click the game name textbox, delete text and type new game name
+	hid.MovePointer(836, 100)
+	hid.Click(hid.LeftButton)
+	Sleep(200)
+	hid.PressKeyCombination("lctrl", "a")
+	Sleep(200)
+	for _, ch := range gameName {
+		hid.PressKey(fmt.Sprintf("%c", ch))
+	}
+
+	// Same for password
+	hid.MovePointer(1020, 100)
+	hid.Click(hid.LeftButton)
+	Sleep(200)
+	hid.PressKeyCombination("lctrl", "a")
+	Sleep(200)
+	for _, ch := range password {
+		hid.PressKey(fmt.Sprintf("%c", ch))
+	}
+	hid.PressKey("enter")
+
+	for i := 0; i < 30; i++ {
+		if gm.gr.InGame() {
+			return nil
+		}
+		Sleep(1000)
+	}
+
+	return errors.New("error joining game! Timeout")
 }

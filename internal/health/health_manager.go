@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
 	"time"
 )
@@ -18,7 +19,7 @@ var ErrMercChicken = errors.New("mercenary chicken")
 
 const (
 	healingInterval     = time.Second * 5
-	healingMercInterval = time.Second * 5
+	healingMercInterval = time.Second * 6
 	manaInterval        = time.Second * 8
 	rejuvInterval       = time.Second * 2
 )
@@ -27,7 +28,7 @@ const (
 type Manager struct {
 	logger        *zap.Logger
 	beltManager   BeltManager
-	gameManager   helper.GameManager
+	gameManager   *helper.GameManager
 	lastRejuv     time.Time
 	lastRejuvMerc time.Time
 	lastHeal      time.Time
@@ -35,7 +36,7 @@ type Manager struct {
 	lastMercHeal  time.Time
 }
 
-func NewHealthManager(logger *zap.Logger, beltManager BeltManager, gm helper.GameManager) Manager {
+func NewHealthManager(logger *zap.Logger, beltManager BeltManager, gm *helper.GameManager) Manager {
 	return Manager{
 		logger:      logger,
 		beltManager: beltManager,
@@ -51,6 +52,9 @@ func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	}
 
 	if d.PlayerUnit.HPPercent() <= 0 {
+		helper.Sleep(2000)
+		hid.PressKey("esc")
+		helper.Sleep(4000)
 		hm.gameManager.ExitGame()
 		stat.FinishCurrentRun(event.Death)
 		return ErrDied

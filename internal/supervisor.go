@@ -2,12 +2,9 @@ package koolo
 
 import (
 	"bufio"
-	"context"
 	"errors"
 	"fmt"
 	"github.com/go-vgo/robotgo"
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -15,72 +12,22 @@ import (
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
-	"math/rand"
 	"os"
 	"time"
 )
 
-// Supervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
-type Supervisor struct {
+type baseSupervisor struct {
 	logger *zap.Logger
 	bot    Bot
 	gr     *memory.GameReader
-	gm     helper.GameManager
+	gm     *helper.GameManager
 }
 
-func NewSupervisor(logger *zap.Logger, bot Bot, gr *memory.GameReader, gm helper.GameManager) Supervisor {
-	return Supervisor{
-		logger: logger,
-		bot:    bot,
-		gr:     gr,
-		gm:     gm,
-	}
+func (s *baseSupervisor) Stop() {
+	os.Exit(0)
 }
 
-// Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
-func (s *Supervisor) Start(ctx context.Context, runs []run.Run) error {
-	err := s.ensureProcessIsRunningAndPrepare()
-	if err != nil {
-		return fmt.Errorf("error preparing game: %w", err)
-	}
-
-	firstRun := true
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			if err = s.gm.NewGame(); err != nil {
-				s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-				continue
-			}
-
-			gameStart := time.Now()
-			if config.Config.Game.RandomizeRuns {
-				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
-			}
-			s.logGameStart(runs)
-			err = s.bot.Run(ctx, firstRun, runs)
-			if err != nil {
-				if errors.Is(context.Canceled, ctx.Err()) {
-					return nil
-				}
-				errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
-				event.Events <- event.WithScreenshot(errorMsg)
-				s.logger.Warn(errorMsg)
-			}
-			if exitErr := s.gm.ExitGame(); exitErr != nil {
-				return fmt.Errorf("error exiting game: %s", exitErr)
-			}
-			firstRun = false
-
-			s.updateGameStats()
-			helper.Sleep(10000)
-		}
-	}
-}
-
-func (s *Supervisor) updateGameStats() {
+func (s *baseSupervisor) updateGameStats() {
 	if _, err := os.Stat("stats"); os.IsNotExist(err) {
 		err = os.MkdirAll("stats", 0700)
 		if err != nil {
@@ -141,7 +88,7 @@ func (s *Supervisor) updateGameStats() {
 	f.Close()
 }
 
-func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
+func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 	window := robotgo.FindWindow("Diablo II: Resurrected")
 	if window == win.HWND_TOP {
 		return errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
@@ -170,7 +117,7 @@ func (s *Supervisor) ensureProcessIsRunningAndPrepare() error {
 	return nil
 }
 
-func (s *Supervisor) logGameStart(runs []run.Run) {
+func (s *baseSupervisor) logGameStart(runs []run.Run) {
 	runNames := ""
 	for _, r := range runs {
 		runNames += r.Name() + ", "

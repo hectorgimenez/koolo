@@ -31,6 +31,10 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 			if o.Name == object.CairnStoneAlpha {
 				return []step.Step{
 					step.MoveTo(o.Position.X, o.Position.Y, true),
+					step.SyncStep(func(data game.Data) error {
+						helper.Sleep(1000)
+						return nil
+					}),
 				}
 			}
 		}
@@ -57,21 +61,28 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 		}
 	}))
 
+	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
+		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+			return []step.Step{step.OpenPortal()}
+		}))
+	}
+
 	// Clear Tristram
-	actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
-		monsters := data.Monsters.Enemies()
-
-		// Clear only elite monsters
-		if config.Config.Game.Tristram.FocusOnElitePacks {
-			monsters = data.Monsters.Enemies(game.MonsterEliteFilter())
-		}
-
-		if len(monsters) == 0 {
-			return 0, false
-		}
-
-		return monsters[0].UnitID, true
-	}, nil))
+	actions = append(actions, a.builder.ClearArea(false, game.MonsterAnyFilter()))
+	//actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
+	//	monsters := data.Monsters.Enemies()
+	//
+	//	// Clear only elite monsters
+	//	if config.Config.Game.Tristram.FocusOnElitePacks {
+	//		monsters = data.Monsters.Enemies(game.MonsterEliteFilter())
+	//	}
+	//
+	//	if len(monsters) == 0 {
+	//		return 0, false
+	//	}
+	//
+	//	return monsters[0].UnitID, true
+	//}, nil))
 
 	return
 }

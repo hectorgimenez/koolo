@@ -19,18 +19,19 @@ const (
 
 func (b Builder) WayPoint(a area.Area) *StaticAction {
 	allowedAreas := map[area.Area][2]int{
-		area.StonyField:          {1, 3},
-		area.BlackMarsh:          {1, 5},
-		area.CatacombsLevel2:     {1, 9},
-		area.LostCity:            {2, 6},
-		area.ArcaneSanctuary:     {2, 8},
-		area.LowerKurast:         {3, 5},
-		area.Travincal:           {3, 8},
-		area.DuranceOfHateLevel2: {3, 9},
-		area.RiverOfFlame:        {4, 3},
-		area.Harrogath:           {5, 1},
-		area.FrigidHighlands:     {5, 2},
-		area.HallsOfPain:         {5, 6},
+		area.StonyField:              {1, 3},
+		area.BlackMarsh:              {1, 5},
+		area.CatacombsLevel2:         {1, 9},
+		area.LostCity:                {2, 6},
+		area.ArcaneSanctuary:         {2, 8},
+		area.LowerKurast:             {3, 5},
+		area.Travincal:               {3, 8},
+		area.DuranceOfHateLevel2:     {3, 9},
+		area.RiverOfFlame:            {4, 3},
+		area.Harrogath:               {5, 1},
+		area.FrigidHighlands:         {5, 2},
+		area.HallsOfPain:             {5, 6},
+		area.TheWorldStoneKeepLevel2: {5, 9},
 	}
 
 	return BuildStatic(func(data game.Data) (steps []step.Step) {

@@ -3,6 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -34,6 +35,12 @@ func (a AncientTunnels) BuildActions() (actions []action.Action) {
 			}),
 		}
 	}))
+
+	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
+		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+			return []step.Step{step.OpenPortal()}
+		}))
+	}
 
 	// Clear Ancient Tunnels
 	actions = append(actions, a.builder.ClearArea(true, game.MonsterAnyFilter()))

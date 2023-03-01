@@ -27,6 +27,12 @@ func KeyUp(key string) {
 	robotgo.KeyUp(key)
 }
 
-func PressKeyCombination(key string, keys ...string) {
-	robotgo.KeyTap(key, keys)
+func PressKeyCombination(keys ...string) {
+	for _, k := range keys {
+		robotgo.KeyDown(k)
+	}
+	time.Sleep(time.Millisecond * 200)
+	for _, k := range keys {
+		robotgo.KeyUp(k)
+	}
 }

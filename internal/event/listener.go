@@ -37,10 +37,12 @@ func (l *Listener) Listen(ctx context.Context) error {
 				}
 			}
 
-			fileName := fmt.Sprintf("screenshots/error-%s.png", time.Now().Format("2006-01-02 15_04_05"))
-			err := robotgo.SavePng(e.Image, fileName)
-			if err != nil {
-				l.logger.Error("error saving screenshot", zap.Error(err))
+			if e.Image != nil {
+				fileName := fmt.Sprintf("screenshots/error-%s.png", time.Now().Format("2006-01-02 15_04_05"))
+				err := robotgo.SavePng(e.Image, fileName)
+				if err != nil {
+					l.logger.Error("error saving screenshot", zap.Error(err))
+				}
 			}
 
 			for _, h := range l.handlers {

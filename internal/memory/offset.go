@@ -3,10 +3,12 @@ package memory
 import "encoding/binary"
 
 type Offset struct {
-	GameData  uintptr
-	UnitTable uintptr
-	UI        uintptr
-	Hover     uintptr
+	GameData     uintptr
+	UnitTable    uintptr
+	UI           uintptr
+	Hover        uintptr
+	Expansion    uintptr
+	RosterOffset uintptr
 }
 
 func CalculateOffsets(process Process) Offset {
@@ -33,10 +35,22 @@ func CalculateOffsets(process Process) Offset {
 	pattern = process.FindPattern(memory, "\xc6\x84\xc2\x00\x00\x00\x00\x00\x48\x8b\x74\x24\x00", "xxx?????xxxx?")
 	hoverOffset := process.ReadUInt(pattern+3, Uint32) - 1
 
+	// Expansion
+	pattern = process.FindPattern(memory, "\x48\x8B\x05\x00\x00\x00\x00\x48\x8B\xD9\xF3\x0F\x10\x50\x00", "xxx????xxxxxxx?")
+	offsetPtr := uintptr(process.ReadUInt(pattern+3, Uint32))
+	expOffset := pattern - process.moduleBaseAddressPtr + 7 + offsetPtr
+
+	// Party members offset
+	pattern = process.FindPattern(memory, "\x02\x45\x33\xD2\x4D\x8B", "xxxxxx")
+	offsetPtr = uintptr(process.ReadUInt(pattern-3, Uint32))
+	rosterOffset := pattern - process.moduleBaseAddressPtr + 1 + offsetPtr
+
 	return Offset{
-		GameData:  gameDataOffset,
-		UnitTable: unitTableOffset,
-		UI:        uiOffsetPtr,
-		Hover:     uintptr(hoverOffset),
+		GameData:     gameDataOffset,
+		UnitTable:    unitTableOffset,
+		UI:           uiOffsetPtr,
+		Hover:        uintptr(hoverOffset),
+		Expansion:    expOffset,
+		RosterOffset: rosterOffset,
 	}
 }

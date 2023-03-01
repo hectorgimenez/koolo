@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"bytes"
 	"encoding/binary"
 	"github.com/winlabs/gowin32"
 	"go.uber.org/zap"
@@ -131,12 +132,12 @@ func (p Process) ReadStringFromMemory(address uintptr, size uint) string {
 		for i := 1; true; i++ {
 			data := p.ReadBytesFromMemory(address, uint(i))
 			if data[i-1] == 0 {
-				return string(data)
+				return string(bytes.Trim(data, "\x00"))
 			}
 		}
 	}
 
-	return string(p.ReadBytesFromMemory(address, size))
+	return string(bytes.Trim(p.ReadBytesFromMemory(address, size), "\x00"))
 }
 
 func (p Process) findPattern(memory []byte, pattern, mask string) int {

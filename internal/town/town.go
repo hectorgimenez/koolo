@@ -1,6 +1,7 @@
 package town
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/game/npc"
 )
@@ -10,6 +11,7 @@ type Town interface {
 	HealNPC() npc.ID
 	RepairNPC() npc.ID
 	MercContractorNPC() npc.ID
+	TPWaitingArea(d game.Data) game.Position
 }
 
 func GetTownByArea(a area.Area) Town {

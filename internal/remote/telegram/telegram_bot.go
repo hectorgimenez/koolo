@@ -3,37 +3,42 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type Bot struct {
-	bot    *tgbotapi.BotAPI
-	chatID int64
-	logger *zap.Logger
+	bot        *tgbotapi.BotAPI
+	chatID     int64
+	logger     *zap.Logger
+	sueprvisor koolo.Supervisor
 }
 
-func NewBot(token string, chatID int64, logger *zap.Logger) (*Bot, error) {
+func NewBot(token string, chatID int64, logger *zap.Logger, supervisor koolo.Supervisor) (*Bot, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Bot{
-		bot:    bot,
-		chatID: chatID,
-		logger: logger,
+		bot:        bot,
+		chatID:     chatID,
+		logger:     logger,
+		sueprvisor: supervisor,
 	}, nil
 }
 
 func (b *Bot) Start(_ context.Context) error {
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 5
+	offset, err := b.getLatestOffset()
+	if err != nil {
+		return err
+	}
 
+	u := tgbotapi.NewUpdate(offset)
+	u.Timeout = 5
 	updates := b.bot.GetUpdatesChan(u)
 	for update := range updates {
 		if update.Message != nil && update.Message.Chat.ID == b.chatID { // If we got a message
@@ -45,13 +50,27 @@ func (b *Bot) Start(_ context.Context) error {
 			case "start":
 				// TODO: Implement
 			case "stop":
-				os.Exit(0)
-				// TODO: Implement correctly
+				b.sueprvisor.Stop()
 			}
 		}
 	}
 
 	return nil
+}
+
+func (b *Bot) getLatestOffset() (int, error) {
+	// Discard previous messages setting the offset to last msg + 1
+	upds, err := b.bot.GetUpdates(tgbotapi.NewUpdate(-1))
+	if err != nil {
+		return 0, err
+	}
+
+	offset := 0
+	if len(upds) > 0 {
+		offset = upds[0].UpdateID + 1
+	}
+
+	return offset, nil
 }
 
 func (b *Bot) publishStats() error {

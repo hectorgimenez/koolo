@@ -8,8 +8,8 @@ require (
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/go-vgo/robotgo v0.100.10
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
-	github.com/robotn/gohook v0.31.3
-	github.com/stretchr/testify v1.8.1
+	github.com/robotn/gohook v0.40.0
+	github.com/stretchr/testify v1.8.2
 	github.com/winlabs/gowin32 v0.0.0-20221003142512-0d265587d3c9
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0

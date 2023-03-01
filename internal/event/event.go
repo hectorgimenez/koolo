@@ -28,3 +28,9 @@ func WithScreenshot(message string) Message {
 		Image:   helper.Screenshot(),
 	}
 }
+
+func Text(message string) Message {
+	return Message{
+		Message: message,
+	}
+}
