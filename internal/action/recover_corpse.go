@@ -1,32 +1,32 @@
 package action
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 func (b Builder) RecoverCorpse() *StaticAction {
-	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		if data.Corpse.Found {
+	return BuildStatic(func(d data.Data) (steps []step.Step) {
+		if d.Corpse.Found {
 			b.logger.Info("Corpse found, let's recover our stuff...")
 			steps = append(steps,
-				step.SyncStepWithCheck(func(data game.Data) error {
+				step.SyncStepWithCheck(func(d data.Data) error {
 					x, y := pather.GameCoordsToScreenCords(
-						data.PlayerUnit.Position.X,
-						data.PlayerUnit.Position.Y,
-						data.Corpse.Position.X,
-						data.Corpse.Position.Y,
+						d.PlayerUnit.Position.X,
+						d.PlayerUnit.Position.Y,
+						d.Corpse.Position.X,
+						d.Corpse.Position.Y,
 					)
 					hid.MovePointer(x, y)
 					helper.Sleep(300)
 					hid.Click(hid.LeftButton)
 
 					return nil
-				}, func(data game.Data) step.Status {
-					if data.Corpse.Found {
+				}, func(d data.Data) step.Status {
+					if d.Corpse.Found {
 						return step.StatusInProgress
 					}
 

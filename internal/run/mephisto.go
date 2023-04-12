@@ -1,10 +1,10 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
 )
 
 const (
@@ -28,7 +28,7 @@ func (m Mephisto) BuildActions() (actions []action.Action) {
 	actions = append(actions, m.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(area.DuranceOfHateLevel3),
 			step.MoveTo(safeDistanceFromMephistoX, safeDistanceFromMephistoY, true),

@@ -1,13 +1,11 @@
 package main
 
 import (
-	"encoding/gob"
 	"fmt"
-	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
+	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"log"
-	"os"
 	"time"
 )
 
@@ -16,24 +14,28 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
-	logger, err := zapLogger.NewLogger(config.Config.Debug.Log, config.Config.LogFilePath)
-	process, err := memory.NewProcess(logger)
+	process, err := memory.NewProcess()
 	if err != nil {
 		panic(err)
 	}
 
 	gd := memory.NewGameReader(process)
+	gr := reader.GameReader{
+		GameReader: gd,
+	}
 
 	start := time.Now()
+	gr.GetData(true)
 	for true {
-		d := gd.GetData(true)
-		f, _ := os.Create("data.bin")
-		enc := gob.NewEncoder(f)
-		err := enc.Encode(&d)
-		fmt.Println(err)
-		f.Close()
-		fmt.Println(d.MercHPPercent())
-		time.Sleep(time.Second)
+		d := gr.GetData(false)
+		//f, _ := os.Create("data.bin")
+		//enc := gob.NewEncoder(f)
+		//err := enc.Encode(&d)
+		//fmt.Println(err)
+		//f.Close()
+		d.Roster.FindByName("Ayuso")
+		fmt.Println(d.PlayerUnit.HPPercent())
+		time.Sleep(time.Millisecond * 500)
 	}
 
 	fmt.Printf("Read time: %dms\n", time.Since(start).Milliseconds())

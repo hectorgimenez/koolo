@@ -1,19 +1,19 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
 )
 
 func (b Builder) ClearAreaAroundPlayer(distance int) *DynamicAction {
-	originalPosition := game.Position{}
-	return b.ch.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
+	originalPosition := data.Position{}
+	return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 		if originalPosition.X == 0 && originalPosition.Y == 0 {
-			originalPosition = data.PlayerUnit.Position
+			originalPosition = d.PlayerUnit.Position
 		}
 
-		for _, m := range data.Monsters.Enemies() {
+		for _, m := range d.Monsters.Enemies() {
 			d := pather.DistanceFromPoint(originalPosition, m.Position)
 			if d <= distance {
 				b.logger.Debug("Clearing area...", zap.Int("monsterID", int(m.Name)))

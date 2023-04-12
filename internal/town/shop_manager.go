@@ -2,12 +2,15 @@ package town
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
+	"math/rand"
 	"strings"
 )
 
@@ -31,9 +34,9 @@ func NewShopManager(logger *zap.Logger, bm health.BeltManager) ShopManager {
 	}
 }
 
-func (sm ShopManager) BuyConsumables(d game.Data) {
-	missingHealingPots := sm.bm.GetMissingCount(d, game.HealingPotion)
-	missingManaPots := sm.bm.GetMissingCount(d, game.ManaPotion)
+func (sm ShopManager) BuyConsumables(d data.Data) {
+	missingHealingPots := sm.bm.GetMissingCount(d, data.HealingPotion)
+	missingManaPots := sm.bm.GetMissingCount(d, data.ManaPotion)
 
 	sm.logger.Debug(fmt.Sprintf("Buying: %d Healing potions and %d Mana potions", missingHealingPots, missingManaPots))
 
@@ -52,20 +55,20 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 		}
 	}
 
-	if d.Items.Inventory.ShouldBuyTPs() {
+	if sm.ShouldBuyTPs(d) {
 		sm.logger.Debug("Filling TP Tome...")
 		for _, i := range d.Items.Shop {
-			if i.Name == game.ItemScrollOfTownPortal && i.IsVendor {
+			if i.Name == item.ScrollOfTownPortal && i.IsVendor {
 				sm.buyFullStack(i)
 				break
 			}
 		}
 	}
 
-	if d.Items.Inventory.ShouldBuyIDs() {
+	if sm.ShouldBuyIDs(d) {
 		sm.logger.Debug("Filling IDs Tome...")
 		for _, i := range d.Items.Shop {
-			if i.Name == game.ItemScrollOfIdentify && i.IsVendor {
+			if i.Name == item.ScrollOfIdentify && i.IsVendor {
 				sm.buyFullStack(i)
 				break
 			}
@@ -74,7 +77,7 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 
 	for _, i := range d.Items.Shop {
 		if string(i.Name) == "Key" && i.IsVendor {
-			if d.Items.Inventory.ShouldBuyKeys() {
+			if sm.ShouldBuyKeys(d) {
 				sm.logger.Debug("Vendor with keys detected, provisioning...")
 				sm.buyFullStack(i)
 				break
@@ -83,7 +86,49 @@ func (sm ShopManager) BuyConsumables(d game.Data) {
 	}
 }
 
-func (sm ShopManager) SellJunk(d game.Data) {
+func (sm ShopManager) ShouldBuyTPs(d data.Data) bool {
+	for _, it := range d.Items.Inventory {
+		if it.Name != item.TomeOfTownPortal {
+			continue
+		}
+
+		qty, found := it.Stats[stat.Quantity]
+		if qty.Value <= rand.Intn(5-1)+1 || !found {
+			return true
+		}
+	}
+	return false
+}
+
+func (sm ShopManager) ShouldBuyIDs(d data.Data) bool {
+	for _, it := range d.Items.Inventory {
+		if it.Name != item.TomeOfIdentify {
+			continue
+		}
+
+		qty, found := it.Stats[stat.Quantity]
+		if qty.Value <= rand.Intn(7-3)+1 || !found {
+			return true
+		}
+	}
+	return false
+}
+
+func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
+	for _, it := range d.Items.Inventory {
+		if it.Name != item.Key {
+			continue
+		}
+
+		qty, found := it.Stats[stat.Quantity]
+		if found && qty.Value == 12 {
+			return false
+		}
+	}
+	return true
+}
+
+func (sm ShopManager) SellJunk(d data.Data) {
 	for _, i := range d.Items.Inventory {
 		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			x := InventoryTopLeftX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
@@ -100,7 +145,7 @@ func (sm ShopManager) SellJunk(d game.Data) {
 	}
 }
 
-func (sm ShopManager) buyItem(i game.Item, quantity int) {
+func (sm ShopManager) buyItem(i data.Item, quantity int) {
 	x, y := sm.getScreenCordinatesForItem(i)
 
 	hid.MovePointer(x, y)
@@ -112,7 +157,7 @@ func (sm ShopManager) buyItem(i game.Item, quantity int) {
 	}
 }
 
-func (sm ShopManager) buyFullStack(i game.Item) {
+func (sm ShopManager) buyFullStack(i data.Item) {
 	x, y := sm.getScreenCordinatesForItem(i)
 
 	hid.MovePointer(x, y)
@@ -125,7 +170,7 @@ func (sm ShopManager) buyFullStack(i game.Item) {
 	helper.Sleep(500)
 }
 
-func (sm ShopManager) getScreenCordinatesForItem(i game.Item) (int, int) {
+func (sm ShopManager) getScreenCordinatesForItem(i data.Item) (int, int) {
 	x := topCornerVendorWindowX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
 	y := topCornerVendorWindowY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
 

@@ -1,9 +1,9 @@
 package action
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/stat"
 )
 
 type Character interface {
@@ -16,7 +16,7 @@ type Character interface {
 	KillNihlathak() Action
 	KillCouncil() Action
 	KillMonsterSequence(
-		monsterSelector func(data game.Data) (game.UnitID, bool),
+		monsterSelector func(d data.Data) (data.UnitID, bool),
 		skipOnImmunities []stat.Resist,
 		opts ...step.AttackOption,
 	) *DynamicAction

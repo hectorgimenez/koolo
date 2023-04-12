@@ -1,12 +1,12 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/object"
-	"github.com/hectorgimenez/koolo/internal/game/stat"
 )
 
 const (
@@ -31,11 +31,11 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	actions = append(actions, p.builder.WayPoint(area.Harrogath))
 
 	// Moving to starting point
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
-			step.InteractObject(object.PermanentTownPortal, func(data game.Data) bool {
-				return data.PlayerUnit.Area == area.NihlathaksTemple
+			step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+				return d.PlayerUnit.Area == area.NihlathaksTemple
 			}),
 		}
 	}))
@@ -44,7 +44,7 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	actions = append(actions, p.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),
 		}

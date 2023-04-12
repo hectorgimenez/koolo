@@ -2,8 +2,8 @@ package step
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -23,20 +23,20 @@ func InteractNPC(npc npc.ID) *InteractNPCStep {
 	}
 }
 
-func (i *InteractNPCStep) Status(data game.Data) Status {
+func (i *InteractNPCStep) Status(d data.Data) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
 
 	// Give some extra time to render the UI
-	if data.OpenMenus.NPCInteract && time.Since(i.lastRun) > time.Second*1 {
+	if d.OpenMenus.NPCInteract && time.Since(i.lastRun) > time.Second*1 {
 		return i.tryTransitionStatus(StatusCompleted)
 	}
 
 	return i.status
 }
 
-func (i *InteractNPCStep) Run(data game.Data) error {
+func (i *InteractNPCStep) Run(d data.Data) error {
 	// Throttle movement clicks
 	if time.Since(i.lastRun) < helper.RandomDurationMs(300, 600) {
 		return nil
@@ -54,7 +54,7 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 	}
 
 	i.lastRun = time.Now()
-	m, found := data.Monsters.FindOne(i.NPC, game.MonsterTypeNone)
+	m, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
 	if found {
 		if m.IsHovered {
 			hid.Click(hid.LeftButton)
@@ -63,14 +63,14 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		}
 	}
 
-	pos, found := i.getNPCPosition(data)
+	pos, found := i.getNPCPosition(d)
 	if !found {
 		return fmt.Errorf("NPC not found")
 	}
 
-	distance := pather.DistanceFromMe(data, pos)
+	distance := pather.DistanceFromMe(d, pos)
 	if distance > 15 {
-		path, _, found := pather.GetPath(data, pos)
+		path, _, found := pather.GetPath(d, pos)
 		if !found {
 			pather.RandomMovement()
 			i.consecutivePathNotFound++
@@ -80,22 +80,22 @@ func (i *InteractNPCStep) Run(data game.Data) error {
 		pather.MoveThroughPath(path, helper.RandRng(7, 17), false)
 		return nil
 	}
-	x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, pos.X, pos.Y)
+	x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, pos.X, pos.Y)
 	hid.MovePointer(x, y)
 
 	return nil
 }
 
-func (i *InteractNPCStep) getNPCPosition(d game.Data) (game.Position, bool) {
-	monster, found := d.Monsters.FindOne(i.NPC, game.MonsterTypeNone)
+func (i *InteractNPCStep) getNPCPosition(d data.Data) (data.Position, bool) {
+	monster, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
 	if found {
 		// Position is bottom hitbox by default, let's move it a bit
-		return game.Position{X: monster.Position.X - 2, Y: monster.Position.Y - 2}, true
+		return data.Position{X: monster.Position.X - 2, Y: monster.Position.Y - 2}, true
 	}
 
 	npc, found := d.NPCs.FindOne(i.NPC)
 	if !found {
-		return game.Position{}, false
+		return data.Position{}, false
 	}
 
 	return npc.Positions[0], true

@@ -1,9 +1,9 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
 )
 
 type LowerKurast struct {
@@ -22,7 +22,7 @@ func (a LowerKurast) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.Buff())
 
 	// Clear Lower Kurast
-	actions = append(actions, a.builder.ClearArea(true, game.MonsterEliteFilter()))
+	actions = append(actions, a.builder.ClearArea(true, data.MonsterEliteFilter()))
 
 	return
 }

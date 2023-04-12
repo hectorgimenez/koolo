@@ -1,7 +1,7 @@
 package step
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -18,7 +18,7 @@ func KeySequence(keysToPress ...string) *KeySequenceStep {
 	}
 }
 
-func (o *KeySequenceStep) Status(_ game.Data) Status {
+func (o *KeySequenceStep) Status(_ data.Data) Status {
 	if o.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -31,7 +31,7 @@ func (o *KeySequenceStep) Status(_ game.Data) Status {
 	return o.status
 }
 
-func (o *KeySequenceStep) Run(_ game.Data) error {
+func (o *KeySequenceStep) Run(_ data.Data) error {
 	if time.Since(o.lastRun) < time.Millisecond*200 {
 		return nil
 	}

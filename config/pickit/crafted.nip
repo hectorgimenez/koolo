@@ -1,0 +1,42 @@
+// blood rings
+[type] == ring 		&& [quality] == crafted # ([fcr]*18 + [strength]*8 + [dexterity]*10 + [maxhp]*4.5 + [coldresist]*2.8 + [fireresist]*2.8 + [lightresist]*2.8 + [poisonresist]*2.2 + [maxmana]*1.3 + [hpregen]*12 + [tohit]*1 + [mindamage]*12) >= 575
+
+// safety amulets
+//[type] == amulet 	&& [quality] == crafted # [itemaddclassskills] >= 2 && [toblock] >= 5 	&& ([fcr]*18 + [strength]*6.7 + [dexterity]*7.5 + [maxhp]*4.5 + [coldresist]*2.1 + [fireresist]*2.1 + [lightresist]*2.1 + [poisonresist]*1.65 + [maxmana]*1.3 + [hpregen]*10.8 + [toblock]*18 + [frw]*18) >= 575
+
+// blood amulets
+//[type] == amulet 	&& [quality] == crafted # [itemaddclassskills] >= 2 && [frw] >= 5 		&& ([fcr]*18 + [strength]*6.7 + [dexterity]*7.5 + [maxhp]*4.5 + [coldresist]*2.1 + [fireresist]*2.1 + [lightresist]*2.1 + [poisonresist]*1.65 + [maxmana]*1.3 + [hpregen]*10.8 + [toblock]*18 + [frw]*18) >= 575
+
+// caster amulets
+[type] == amulet 	&& [quality] == crafted # [itemaddclassskills] >= 2 && [fcr] >= 10 		&& ([fcr]*18 + [strength]*6.7 + [dexterity]*7.5 + [maxhp]*4.5 + [coldresist]*2.1 + [fireresist]*2.1 + [lightresist]*2.1 + [poisonresist]*1.65 + [maxmana]*1.3 + [hpregen]*10.8 + [toblock]*18 + [frw]*18) >= 575
+
+// blood belts
+//[type] == belt 	&& [quality] == crafted # [itemopenwounds] >= 5 && [maxhp] >= 40 && ([fhr] >= 24 || [strength] >= 19) && ([coldresist] >= 18 || [fireresist] >= 18 || [lightresist] >= 18 || [poisonresist] >= 22)
+//[type] == belt 	&& [quality] == crafted # [itemopenwounds] >= 5 && [maxhp] >= 55 && ([fhr] >= 24 || [strength] >= 19)
+//[type] == belt 	&& [quality] == crafted # [itemopenwounds] >= 5 && [maxhp] >= 55 && [coldresist]+[fireresist]+[lightresist]+[poisonresist] >= 55
+
+// caster belts
+//[type] == belt 	&& [quality] == crafted # [fcr] >= 10 && (([fhr] >= 24 && [maxhp] >= 20) || ([fhr] >= 24 && [strength] >= 10) || ([maxhp] >= 20 && [strength] >= 10))
+//[type] == belt 	&& [quality] == crafted # [fcr] >= 5  && (([fhr] >= 24 && [maxhp] >= 35) || ([fhr] >= 24 && [strength] >= 20) || ([maxhp] >= 30 && [strength] >= 20))
+//[type] == belt 	&& [quality] == crafted # [fcr] >= 10 && ([maxhp] >= 50 || [strength] >= 25)
+
+// hit power shields
+//[type] == shield 	&& [quality] == crafted # [sockets] == 2 && [toblock] >= 29 && [maxhp] >= 35
+
+// blood gloves
+//[type] == gloves	&& [quality] == crafted # [itemcrushingblow] >= 9 && [ias] == 20 && [dexterity]+[strength] >= 20
+//[type] == gloves	&& [quality] == crafted # [itemcrushingblow] >= 5 && [ias] == 20 && [dexterity]+[strength] >= 25 && [maxhp] >= 17
+
+// hit power gloves
+//[type] == gloves	&& [quality] == crafted # [itemknockback] >= 1 && [ias] == 20 && [dexterity]+[strength] >= 15 && ([coldresist]+[fireresist]+[lightresist]+[poisonresist] >= 22 || [itemaddskilltab] >= 2 || [dexterity]+[strength] >= 22)
+
+// blood boots
+//[type] == boots	&& [quality] == crafted # (([hpregen] >= 5 && [maxhp] >= 20) || ([hpregen] >= 10 && [maxhp] >= 10)) && ([frw] >= 20 || [fhr] >= 10) && (([coldresist]+[fireresist] >= 50) || ([coldresist]+[lightresist] >= 50) || ([fireresist]+[lightresist] >= 50) || [dexterity] >= 7)
+//[type] == boots	&& [quality] == crafted # (([hpregen] >= 5 && [maxhp] >= 20) || ([hpregen] >= 10 && [maxhp] >= 10)) && ([frw] >= 20 || [fhr] >= 10) && (([coldresist]+[fireresist]+[lightresist] >= 60) || ([coldresist]+[lightresist]+[poisonresist] >= 70) || ([fireresist]+[lightresist]+[poisonresist] >= 70))
+
+// caster boots
+//[type] == boots	&& [quality] == crafted # [itemmaxmanapercent] >= 2 && [manarecovery] >= 4 && [maxmana] >= 21 && ([frw] >= 20 || [fhr] >= 10) && ([coldresist] >= 10 || [fireresist] >= 10 || [lightresist] >= 10 || [dexterity] >= 5)
+//[type] == boots	&& [quality] == crafted # [itemmaxmanapercent] >= 2 && [manarecovery] >= 4 && [maxmana] >= 41 && ([frw] >= 20 || [fhr] >= 10)
+
+// blood helms
+//[type] == helm	&& [quality] == crafted # [itemdeadlystrike] >= 5 && [maxhp] >= 10 && [sockets] >= 2 && ([itemtohitpercentperlevel] >= 1 || [palicombatskilltab] >= 2 || [shadowdisciplinesskilltab] >= 2)

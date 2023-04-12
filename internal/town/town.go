@@ -1,9 +1,9 @@
 package town
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 )
 
 type Town interface {
@@ -11,7 +11,7 @@ type Town interface {
 	HealNPC() npc.ID
 	RepairNPC() npc.ID
 	MercContractorNPC() npc.ID
-	TPWaitingArea(d game.Data) game.Position
+	TPWaitingArea(d data.Data) data.Position
 }
 
 func GetTownByArea(a area.Area) Town {

@@ -1,11 +1,11 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
 )
 
 type Summoner struct {
@@ -24,8 +24,8 @@ func (s Summoner) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-		m, found := data.NPCs.FindOne(npc.Summoner)
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		m, found := d.NPCs.FindOne(npc.Summoner)
 		if !found {
 			return nil
 		}

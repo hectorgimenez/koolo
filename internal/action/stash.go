@@ -2,13 +2,14 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	stat2 "github.com/hectorgimenez/koolo/internal/event/stat"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/object"
-	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -21,14 +22,14 @@ const (
 )
 
 func (b Builder) Stash(forceStash bool) *StaticAction {
-	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		if !b.isStashingRequired(data, forceStash) {
+	return BuildStatic(func(d data.Data) (steps []step.Step) {
+		if !b.isStashingRequired(d, forceStash) {
 			return
 		}
 
 		b.logger.Info("Stashing items...")
 
-		switch data.PlayerUnit.Area {
+		switch d.PlayerUnit.Area {
 		case area.KurastDocks:
 			steps = append(steps, step.MoveTo(5146, 5067, false))
 		case area.LutGholein:
@@ -36,13 +37,13 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 		}
 
 		steps = append(steps,
-			step.InteractObject(object.Bank, func(data game.Data) bool {
-				return data.OpenMenus.Stash
+			step.InteractObject(object.Bank, func(d data.Data) bool {
+				return d.OpenMenus.Stash
 			}),
-			step.SyncStep(func(data game.Data) error {
-				b.stashGold(data)
-				b.orderInventoryPotions(data)
-				b.stashInventory(data, forceStash)
+			step.SyncStep(func(d data.Data) error {
+				b.stashGold(d)
+				b.orderInventoryPotions(d)
+				b.stashInventory(d, forceStash)
 				hid.PressKey("esc")
 				return nil
 			}),
@@ -52,8 +53,8 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 	}, Resettable(), CanBeSkipped())
 }
 
-func (b Builder) orderInventoryPotions(data game.Data) {
-	for _, i := range data.Items.Inventory {
+func (b Builder) orderInventoryPotions(d data.Data) {
+	for _, i := range d.Items.Inventory {
 		if i.IsPotion() {
 			if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
@@ -68,8 +69,8 @@ func (b Builder) orderInventoryPotions(data game.Data) {
 	}
 }
 
-func (b Builder) isStashingRequired(data game.Data, forceStash bool) bool {
-	for _, i := range data.Items.Inventory {
+func (b Builder) isStashingRequired(d data.Data, forceStash bool) bool {
+	for _, i := range d.Items.Inventory {
 		if b.shouldStashIt(i, forceStash) {
 			return true
 		}
@@ -78,7 +79,7 @@ func (b Builder) isStashingRequired(data game.Data, forceStash bool) bool {
 	return false
 }
 
-func (b Builder) stashGold(d game.Data) {
+func (b Builder) stashGold(d data.Data) {
 	gold, found := d.PlayerUnit.Stats[stat.Gold]
 	if !found || gold == 0 {
 		return
@@ -91,8 +92,8 @@ func (b Builder) stashGold(d game.Data) {
 	}
 
 	for i := 2; i < 5; i++ {
-		data := b.gr.GetData(false)
-		gold, found = data.PlayerUnit.Stats[stat.Gold]
+		d := b.gr.GetData(false)
+		gold, found = d.PlayerUnit.Stats[stat.Gold]
 		if !found || gold == 0 {
 			return
 		}
@@ -103,11 +104,11 @@ func (b Builder) stashGold(d game.Data) {
 	b.logger.Info("All stash tabs are full of gold :D")
 }
 
-func (b Builder) stashInventory(data game.Data, forceStash bool) {
+func (b Builder) stashInventory(d data.Data, forceStash bool) {
 	currentTab := 1
 	switchTab(currentTab)
 
-	for _, i := range data.Items.Inventory {
+	for _, i := range d.Items.Inventory {
 		if !b.shouldStashIt(i, forceStash) {
 			continue
 		}
@@ -126,15 +127,15 @@ func (b Builder) stashInventory(data game.Data, forceStash bool) {
 	}
 }
 
-func (b Builder) shouldStashIt(i game.Item, forceStash bool) bool {
+func (b Builder) shouldStashIt(i data.Item, forceStash bool) bool {
 	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}
 
-	return forceStash || i.PickupPass(true)
+	return forceStash || itemfilter.Evaluate(i, config.Config.Runtime.Rules)
 }
 
-func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
+func (b Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
 	hid.MovePointer(x, y)
@@ -147,8 +148,8 @@ func (b Builder) stashItemAction(i game.Item, forceStash bool) bool {
 	hid.KeyUp("control")
 	helper.Sleep(300)
 
-	data := b.gr.GetData(false)
-	for _, it := range data.Items.Inventory {
+	d := b.gr.GetData(false)
+	for _, it := range d.Items.Inventory {
 		if it.UnitID == i.UnitID {
 			return false
 		}

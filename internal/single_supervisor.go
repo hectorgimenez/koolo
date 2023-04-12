@@ -7,7 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"go.uber.org/zap"
 	"math/rand"
@@ -25,7 +25,7 @@ type SinglePlayerSupervisor struct {
 	baseSupervisor
 }
 
-func NewSinglePlayerSupervisor(logger *zap.Logger, bot *Bot, gr *memory.GameReader, gm *helper.GameManager) *SinglePlayerSupervisor {
+func NewSinglePlayerSupervisor(logger *zap.Logger, bot *Bot, gr *reader.GameReader, gm *helper.GameManager) *SinglePlayerSupervisor {
 	return &SinglePlayerSupervisor{
 		baseSupervisor: baseSupervisor{
 			logger: logger,

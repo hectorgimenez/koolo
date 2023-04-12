@@ -2,8 +2,8 @@ package stat
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"image"
 	"strings"
 	"time"
@@ -45,17 +45,17 @@ func FinishCurrentRun(evt event.Event) {
 	rs.TotalRunsTime += runTime
 }
 
-func UsedPotion(potionType game.PotionType, onMerc bool) {
+func UsedPotion(potionType data.PotionType, onMerc bool) {
 	switch potionType {
-	case game.HealingPotion:
+	case data.HealingPotion:
 		if onMerc {
 			Status.RunStats[Status.CurrentRun].MercHealingPotionsUsed++
 		} else {
 			Status.RunStats[Status.CurrentRun].HealingPotionsUsed++
 		}
-	case game.ManaPotion:
+	case data.ManaPotion:
 		Status.RunStats[Status.CurrentRun].ManaPotionsUsed++
-	case game.RejuvenationPotion:
+	case data.RejuvenationPotion:
 		if onMerc {
 			Status.RunStats[Status.CurrentRun].MercRejuvPotionsUsed++
 		} else {
@@ -64,7 +64,7 @@ func UsedPotion(potionType game.PotionType, onMerc bool) {
 	}
 }
 
-func ItemStashed(item game.Item, screenshot image.Image) {
+func ItemStashed(item data.Item, screenshot image.Image) {
 	if item.IsPotion() || strings.EqualFold(string(item.Name), "Gold") {
 		return
 	}
@@ -92,7 +92,7 @@ type RunStats struct {
 	Chickens               int
 	MerChicken             int
 	Errors                 int
-	ItemsFound             []game.Item
+	ItemsFound             []data.Item
 	HealingPotionsUsed     int
 	ManaPotionsUsed        int
 	RejuvPotionsUsed       int

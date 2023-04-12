@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ import (
 type baseSupervisor struct {
 	logger *zap.Logger
 	bot    *Bot
-	gr     *memory.GameReader
+	gr     *reader.GameReader
 	gm     *helper.GameManager
 }
 

@@ -3,17 +3,17 @@ package helper
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game/difficulty"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
 type GameManager struct {
-	gr *memory.GameReader
+	gr *reader.GameReader
 }
 
-func NewGameManager(gr *memory.GameReader) *GameManager {
+func NewGameManager(gr *reader.GameReader) *GameManager {
 	return &GameManager{gr: gr}
 }
 

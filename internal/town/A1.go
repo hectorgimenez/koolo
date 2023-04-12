@@ -1,8 +1,8 @@
 package town
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 )
 
 type A1 struct {
@@ -24,7 +24,7 @@ func (a A1) RepairNPC() npc.ID {
 	return npc.Charsi
 }
 
-func (a A1) TPWaitingArea(d game.Data) game.Position {
+func (a A1) TPWaitingArea(d data.Data) data.Position {
 	cain, _ := d.NPCs.FindOne(npc.Kashya)
 
 	return cain.Positions[0]

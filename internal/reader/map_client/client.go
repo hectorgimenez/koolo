@@ -2,12 +2,12 @@ package map_client
 
 import (
 	"encoding/json"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/difficulty"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
-	"github.com/hectorgimenez/koolo/internal/game/object"
 	"image"
 	"image/color"
 	"image/draw"
@@ -109,17 +109,17 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 	return cg
 }
 
-func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (game.NPCs, []game.Level, []game.Object, []game.Room) {
-	var npcs []game.NPC
-	var exits []game.Level
-	var objects []game.Object
-	var rooms []game.Room
+func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (data.NPCs, []data.Level, []data.Object, []data.Room) {
+	var npcs []data.NPC
+	var exits []data.Level
+	var objects []data.Object
+	var rooms []data.Room
 
 	level := md.getLevel(a)
 
 	for _, r := range level.Rooms {
-		rooms = append(rooms, game.Room{
-			Position: game.Position{X: r.X,
+		rooms = append(rooms, data.Room{
+			Position: data.Position{X: r.X,
 				Y: r.Y,
 			},
 			Width:  r.Width,
@@ -130,28 +130,28 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (ga
 	for _, obj := range level.Objects {
 		switch obj.Type {
 		case "npc":
-			n := game.NPC{
+			n := data.NPC{
 				ID:   npc.ID(obj.ID),
 				Name: obj.Name,
-				Positions: []game.Position{{
+				Positions: []data.Position{{
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				}},
 			}
 			npcs = append(npcs, n)
 		case "exit":
-			lvl := game.Level{
+			lvl := data.Level{
 				Area: area.Area(obj.ID),
-				Position: game.Position{
+				Position: data.Position{
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				},
 			}
 			exits = append(exits, lvl)
 		case "object":
-			o := game.Object{
+			o := data.Object{
 				Name: object.Name(obj.ID),
-				Position: game.Position{
+				Position: data.Position{
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				},
@@ -163,10 +163,10 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin game.Position, a area.Area) (ga
 	return npcs, exits, objects, rooms
 }
 
-func (md MapData) Origin(area area.Area) game.Position {
+func (md MapData) Origin(area area.Area) data.Position {
 	level := md.getLevel(area)
 
-	return game.Position{
+	return data.Position{
 		X: level.Offset.X,
 		Y: level.Offset.Y,
 	}

@@ -2,7 +2,7 @@ package step
 
 import (
 	"errors"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -28,16 +28,16 @@ func newPathingStep() pathingStep {
 	}
 }
 
-func (s *pathingStep) cachePath(data game.Data) bool {
+func (s *pathingStep) cachePath(d data.Data) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
 	for k, pos := range s.path.AstarPather {
-		destination := game.Position{
-			X: pos.(*pather.Tile).X + data.AreaOrigin.X,
-			Y: pos.(*pather.Tile).Y + data.AreaOrigin.Y,
+		destination := data.Position{
+			X: pos.(*pather.Tile).X + d.AreaOrigin.X,
+			Y: pos.(*pather.Tile).Y + d.AreaOrigin.Y,
 		}
 
-		distance := pather.DistanceFromMe(data, destination)
+		distance := pather.DistanceFromMe(d, destination)
 		if distance < nearestDistance {
 			nearestDistance = distance
 			nearestKey = k
@@ -54,8 +54,8 @@ func (s *pathingStep) cachePath(data game.Data) bool {
 	return false
 }
 
-func (s *pathingStep) isPlayerStuck(data game.Data) bool {
-	s.lastRunPositions = append(s.lastRunPositions, [2]int{data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y})
+func (s *pathingStep) isPlayerStuck(d data.Data) bool {
+	s.lastRunPositions = append(s.lastRunPositions, [2]int{d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y})
 	if len(s.lastRunPositions) > 20 {
 		s.lastRunPositions = s.lastRunPositions[1:]
 	} else {
@@ -63,7 +63,7 @@ func (s *pathingStep) isPlayerStuck(data game.Data) bool {
 	}
 
 	for _, pos := range s.lastRunPositions {
-		if pos[0] != data.PlayerUnit.Position.X || pos[1] != data.PlayerUnit.Position.Y {
+		if pos[0] != d.PlayerUnit.Position.X || pos[1] != d.PlayerUnit.Position.Y {
 			return false
 		}
 	}

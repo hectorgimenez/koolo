@@ -1,8 +1,8 @@
 package step
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -11,7 +11,7 @@ import (
 
 type AttackStep struct {
 	basicStep
-	target                game.UnitID
+	target                data.UnitID
 	standStillBinding     string
 	numOfAttacksRemaining int
 	keyBinding            string
@@ -39,7 +39,7 @@ func EnsureAura(keyBinding string) AttackOption {
 	}
 }
 
-func PrimaryAttack(target game.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                target,
@@ -53,7 +53,7 @@ func PrimaryAttack(target game.UnitID, numOfAttacks int, opts ...AttackOption) *
 	return s
 }
 
-func SecondaryAttack(keyBinding string, id game.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(keyBinding string, id data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		basicStep:             newBasicStep(),
 		target:                id,
@@ -67,12 +67,12 @@ func SecondaryAttack(keyBinding string, id game.UnitID, numOfAttacks int, opts .
 	return s
 }
 
-func (p *AttackStep) Status(data game.Data) Status {
+func (p *AttackStep) Status(d data.Data) Status {
 	if p.status == StatusCompleted {
 		return StatusCompleted
 	}
 
-	_, found := data.Monsters.FindByID(p.target)
+	_, found := d.Monsters.FindByID(p.target)
 	if !found {
 		return p.tryTransitionStatus(StatusCompleted)
 	} else {
@@ -84,15 +84,15 @@ func (p *AttackStep) Status(data game.Data) Status {
 	return p.status
 }
 
-func (p *AttackStep) Run(data game.Data) error {
-	monster, found := data.Monsters.FindByID(p.target)
+func (p *AttackStep) Run(d data.Data) error {
+	monster, found := d.Monsters.FindByID(p.target)
 	if !found {
 		// Monster is dead, let's skip the attack sequence
 		return nil
 	}
 
 	// Move into the attack distance range before starting
-	if !p.ensureEnemyIsInRange(monster, data) {
+	if !p.ensureEnemyIsInRange(monster, d) {
 		return nil
 	}
 
@@ -112,7 +112,7 @@ func (p *AttackStep) Run(data game.Data) error {
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > config.Config.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
 		hid.KeyDown(p.standStillBinding)
-		x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
+		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 		hid.MovePointer(x, y)
 
 		if p.keyBinding != "" {
@@ -129,12 +129,12 @@ func (p *AttackStep) Run(data game.Data) error {
 	return nil
 }
 
-func (p *AttackStep) ensureEnemyIsInRange(monster game.Monster, data game.Data) bool {
+func (p *AttackStep) ensureEnemyIsInRange(monster data.Monster, d data.Data) bool {
 	if !p.followEnemy {
 		return true
 	}
 
-	path, dstFloat, found := pather.GetPath(data, monster.Position)
+	path, dstFloat, found := pather.GetPath(d, monster.Position)
 	distance := int(dstFloat)
 
 	if distance > p.maxDistance {
@@ -143,7 +143,7 @@ func (p *AttackStep) ensureEnemyIsInRange(monster game.Monster, data game.Data) 
 				// Try to move to the minimum distance
 				if path.Distance() > p.minDistance {
 					pos := path.AstarPather[p.minDistance-1].(*pather.Tile)
-					p.moveToStep = MoveTo(pos.X+data.AreaOrigin.X, pos.Y+data.AreaOrigin.Y, true)
+					p.moveToStep = MoveTo(pos.X+d.AreaOrigin.X, pos.Y+d.AreaOrigin.Y, true)
 				}
 			}
 
@@ -152,8 +152,8 @@ func (p *AttackStep) ensureEnemyIsInRange(monster game.Monster, data game.Data) 
 			}
 		}
 
-		if p.moveToStep.Status(data) != StatusCompleted {
-			p.moveToStep.Run(data)
+		if p.moveToStep.Status(d) != StatusCompleted {
+			p.moveToStep.Run(d)
 			p.forceApplyKeyBinding = true
 			return false
 		}

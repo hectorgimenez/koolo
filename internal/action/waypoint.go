@@ -1,9 +1,9 @@
 package action
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 )
@@ -34,9 +34,9 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 		area.TheWorldStoneKeepLevel2: {5, 9},
 	}
 
-	return BuildStatic(func(data game.Data) (steps []step.Step) {
+	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		// We don't need to move
-		if data.PlayerUnit.Area == a {
+		if d.PlayerUnit.Area == a {
 			return
 		}
 
@@ -45,13 +45,13 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 			panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
 		}
 
-		for _, o := range data.Objects {
+		for _, o := range d.Objects {
 			if o.IsWaypoint() {
 				steps = append(steps,
-					step.InteractObject(o.Name, func(data game.Data) bool {
-						return data.OpenMenus.Waypoint
+					step.InteractObject(o.Name, func(d data.Data) bool {
+						return d.OpenMenus.Waypoint
 					}),
-					step.SyncStepWithCheck(func(data game.Data) error {
+					step.SyncStepWithCheck(func(d data.Data) error {
 						actTabX := wpTabStartX + (wpCoords[0]-1)*wpTabSizeX + (wpTabSizeX / 2)
 
 						areaBtnY := wpListStartY + (wpCoords[1]-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
@@ -64,8 +64,8 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 						hid.Click(hid.LeftButton)
 
 						return nil
-					}, func(data game.Data) step.Status {
-						if data.PlayerUnit.Area == a && !data.OpenMenus.LoadingScreen {
+					}, func(d data.Data) step.Status {
+						if d.PlayerUnit.Area == a && !d.OpenMenus.LoadingScreen {
 							return step.StatusCompleted
 						}
 

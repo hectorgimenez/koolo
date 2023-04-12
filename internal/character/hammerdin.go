@@ -1,12 +1,12 @@
 package character
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
-	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -22,7 +22,7 @@ type Hammerdin struct {
 }
 
 func (s Hammerdin) KillMonsterSequence(
-	monsterSelector func(data game.Data) (game.UnitID, bool),
+	monsterSelector func(d data.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
 ) *action.DynamicAction {
@@ -31,9 +31,9 @@ func (s Hammerdin) KillMonsterSequence(
 }
 
 func (s Hammerdin) Buff() action.Action {
-	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
+	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
-		steps = append(steps, step.SyncStep(func(data game.Data) error {
+		steps = append(steps, step.SyncStep(func(d data.Data) error {
 			if config.Config.Bindings.Hammerdin.HolyShield != "" {
 				hid.PressKey(config.Config.Bindings.Hammerdin.HolyShield)
 				helper.Sleep(100)
@@ -48,34 +48,34 @@ func (s Hammerdin) Buff() action.Action {
 }
 
 func (s Hammerdin) KillCountess() action.Action {
-	return s.killMonster(npc.DarkStalker, game.MonsterTypeSuperUnique)
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, game.MonsterTypeNone)
+	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillSummoner() action.Action {
-	return s.killMonster(npc.Summoner, game.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillPindle(_ []stat.Resist) action.Action {
-	return s.killMonster(npc.DefiledWarrior, game.MonsterTypeSuperUnique)
+	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, game.MonsterTypeNone)
+	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillNihlathak() action.Action {
-	return s.killMonster(npc.Nihlathak, game.MonsterTypeSuperUnique)
+	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillCouncil() action.Action {
-	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
+	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
-		var councilMembers []game.Monster
-		for _, m := range data.Monsters {
+		var councilMembers []data.Monster
+		for _, m := range d.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
 				councilMembers = append(councilMembers, m)
 			}
@@ -83,8 +83,8 @@ func (s Hammerdin) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(data, councilMembers[i].Position)
-			distanceJ := pather.DistanceFromMe(data, councilMembers[j].Position)
+			distanceI := pather.DistanceFromMe(d, councilMembers[i].Position)
+			distanceJ := pather.DistanceFromMe(d, councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
@@ -105,9 +105,9 @@ func (s Hammerdin) KillCouncil() action.Action {
 	}, action.CanBeSkipped())
 }
 
-func (s Hammerdin) killMonster(npc npc.ID, t game.MonsterType) action.Action {
-	return action.BuildStatic(func(data game.Data) (steps []step.Step) {
-		m, found := data.Monsters.FindOne(npc, t)
+func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return nil
 		}

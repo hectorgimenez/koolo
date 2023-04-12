@@ -2,19 +2,17 @@ package config
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"os"
-	"strings"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/game/difficulty"
-	"github.com/hectorgimenez/koolo/internal/game/item"
-	"github.com/hectorgimenez/koolo/internal/game/stat"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"gopkg.in/yaml.v3"
 )
 
 var (
 	Config StructConfig
-	Pickit StructPickit
 )
 
 type StructConfig struct {
@@ -118,24 +116,9 @@ type StructConfig struct {
 	} `yaml:"companion"`
 	Runtime struct {
 		CastDuration time.Duration
+		Rules        []nip.Rule
 	}
 }
-
-type StructPickit struct {
-	PickupGold          bool `yaml:"pickupGold"`
-	MinimumGoldToPickup int  `yaml:"minimumGoldToPickup"`
-	Items               []ItemPickit
-}
-
-type ItemPickit struct {
-	Name     string
-	Quality  []item.Quality
-	Sockets  []int
-	Ethereal *bool
-	Stats    map[string]int
-}
-
-type ItemStat *int
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
 func Load() error {
@@ -149,92 +132,15 @@ func Load() error {
 		return fmt.Errorf("error reading config: %w", err)
 	}
 
-	r, err = os.Open("config/pickit.yaml")
+	rules, err := nip.ReadDir("config/pickit/")
 	if err != nil {
-		return fmt.Errorf("error loading pickit.yaml: %w", err)
+		return err
 	}
 
-	d = yaml.NewDecoder(r)
-	if err = d.Decode(&Pickit); err != nil {
-		return fmt.Errorf("error reading pickit: %w", err)
-	}
-
-	b, err := os.ReadFile("config/pickit.yaml")
-	m := make(map[interface{}]interface{})
-	err = yaml.Unmarshal(b, &m)
-	if err != nil {
-		return fmt.Errorf("error decoding pickit items: %w", err)
-	}
-	items := parsePickitItems(m["items"].([]interface{}))
-	Pickit.Items = items
+	Config.Runtime.Rules = rules
 
 	secs := float32(Config.Character.CastingFrames)*0.04 + 0.01
 	Config.Runtime.CastDuration = time.Duration(secs*1000) * time.Millisecond
 
 	return nil
-}
-
-func parsePickitItems(items []interface{}) []ItemPickit {
-	var itemsToPickit []ItemPickit
-	for _, it := range items {
-		for name, props := range it.(map[string]interface{}) {
-			ip := ItemPickit{
-				Name:  name,
-				Stats: map[string]int{},
-			}
-
-			if props != nil {
-				for statName, statValue := range props.(map[string]interface{}) {
-					statName = strings.ToLower(statName)
-					switch statName {
-					case "sockets":
-						v, ok := statValue.(int)
-						if ok {
-							ip.Sockets = []int{v}
-						} else {
-							for _, val := range statValue.([]interface{}) {
-								ip.Sockets = append(ip.Sockets, val.(int))
-							}
-						}
-					case "quality":
-						v, ok := statValue.(string)
-						if ok {
-							ip.Quality = []item.Quality{qualityToEnum(v)}
-						} else {
-							for _, val := range statValue.([]interface{}) {
-								ip.Quality = append(ip.Quality, qualityToEnum(val.(string)))
-							}
-						}
-					case "ethereal":
-						ethp := statValue.(bool)
-						ip.Ethereal = &ethp
-					default:
-						ip.Stats[statName] = statValue.(int)
-					}
-				}
-			}
-			itemsToPickit = append(itemsToPickit, ip)
-		}
-	}
-
-	return itemsToPickit
-}
-
-func qualityToEnum(quality string) item.Quality {
-	switch quality {
-	case "normal":
-		return item.ItemQualityNormal
-	case "magic":
-		return item.ItemQualityMagic
-	case "rare":
-		return item.ItemQualityRare
-	case "unique":
-		return item.ItemQualityUnique
-	case "set":
-		return item.ItemQualitySet
-	case "superior":
-		return item.ItemQualitySuperior
-	}
-
-	return item.ItemQualityNormal
 }

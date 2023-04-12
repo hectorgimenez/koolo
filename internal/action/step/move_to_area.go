@@ -3,9 +3,9 @@ package step
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -25,20 +25,20 @@ func MoveToLevel(area area.Area) *MoveToAreaStep {
 	}
 }
 
-func (m *MoveToAreaStep) Status(data game.Data) Status {
+func (m *MoveToAreaStep) Status(d data.Data) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
 
 	// Give some extra time to render the UI
-	if data.PlayerUnit.Area == m.area && time.Since(m.lastRun) > time.Second*1 {
+	if d.PlayerUnit.Area == m.area && time.Since(m.lastRun) > time.Second*1 {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 
 	return m.status
 }
 
-func (m *MoveToAreaStep) Run(data game.Data) error {
+func (m *MoveToAreaStep) Run(d data.Data) error {
 	if m.status == StatusNotStarted {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
@@ -52,17 +52,17 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 	}
 
 	m.lastRun = time.Now()
-	for _, l := range data.AdjacentLevels {
+	for _, l := range d.AdjacentLevels {
 		if l.Area == m.area {
-			distance := pather.DistanceFromMe(data, l.Position)
+			distance := pather.DistanceFromMe(d, l.Position)
 			if distance > 5 {
-				stuck := m.isPlayerStuck(data)
-				if m.path == nil || !m.cachePath(data) || stuck {
+				stuck := m.isPlayerStuck(d)
+				if m.path == nil || !m.cachePath(d) || stuck {
 					if stuck {
 						tile := m.path.AstarPather[m.path.Distance()-1].(*pather.Tile)
 						m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 					}
-					path, _, found := pather.GetPath(data, l.Position)
+					path, _, found := pather.GetPath(d, l.Position)
 					if !found {
 						return errors.New("path could not be calculated, maybe there is an obstacle")
 					}
@@ -72,7 +72,7 @@ func (m *MoveToAreaStep) Run(data game.Data) error {
 				return nil
 			}
 
-			x, y := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
+			x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
 			hid.MovePointer(x, y)
 			helper.Sleep(100)
 			hid.Click(hid.LeftButton)

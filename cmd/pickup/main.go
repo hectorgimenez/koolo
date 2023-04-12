@@ -1,12 +1,13 @@
 package main
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"log"
@@ -20,15 +21,14 @@ func main() {
 
 	logger := zap.NewNop()
 
-	process, err := memory.NewProcess(logger)
+	process, err := memory.NewProcess()
 	if err != nil {
 		panic(err)
 	}
 
-	gr := memory.NewGameReader(process)
-
+	gd := memory.NewGameReader(process)
+	gr := &reader.GameReader{GameReader: gd}
 	bm := health.NewBeltManager(logger)
-	//hm := health.NewHealthManager(logger, bm)
 	sm := town.NewShopManager(logger, bm)
 	char, err := character.BuildCharacter(logger)
 	if err != nil {

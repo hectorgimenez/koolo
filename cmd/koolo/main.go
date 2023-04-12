@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/hectorgimenez/d2go/pkg/memory"
 	hook "github.com/robotn/gohook"
 	"log"
 	"os"
@@ -16,7 +17,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/remote/web"
@@ -54,12 +55,14 @@ func main() {
 	}()
 	g, ctx := errgroup.WithContext(ctx)
 
-	process, err := memory.NewProcess(logger)
+	process, err := memory.NewProcess()
 	if err != nil {
 		logger.Fatal("Error finding D2R.exe process", zap.Error(err))
 	}
 
-	gr := memory.NewGameReader(process)
+	gr := &reader.GameReader{
+		GameReader: memory.NewGameReader(process),
+	}
 
 	bm := health.NewBeltManager(logger)
 	gm := helper.NewGameManager(gr)

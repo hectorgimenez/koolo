@@ -1,8 +1,8 @@
 package town
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 )
 
 type A5 struct {
@@ -24,8 +24,8 @@ func (a A5) RepairNPC() npc.ID {
 	return npc.Larzuk
 }
 
-func (a A5) TPWaitingArea(_ game.Data) game.Position {
-	return game.Position{
+func (a A5) TPWaitingArea(_ data.Data) data.Position {
+	return data.Position{
 		X: 5104,
 		Y: 5019,
 	}

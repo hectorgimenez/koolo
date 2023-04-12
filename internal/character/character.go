@@ -2,11 +2,11 @@ package character
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
@@ -35,7 +35,7 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	if config.Config.Character.UseCTA {
 		steps = append(steps,
 			step.SwapWeapon(),
-			step.SyncStep(func(data game.Data) error {
+			step.SyncStep(func(d data.Data) error {
 				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
@@ -54,8 +54,8 @@ func (bc BaseCharacter) buffCTA() (steps []step.Step) {
 	return
 }
 
-func (bc BaseCharacter) preBattleChecks(data game.Data, id game.UnitID, skipOnImmunities []stat.Resist) bool {
-	monster, found := data.Monsters.FindByID(id)
+func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
+	monster, found := d.Monsters.FindByID(id)
 	if !found {
 		return false
 	}

@@ -1,12 +1,12 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -31,14 +31,14 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(area.TheWorldStoneKeepLevel3),
 			step.MoveToLevel(area.ThroneOfDestruction),
 		}
 	}))
 
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 		return []step.Step{step.MoveTo(baalThronePositionX, baalThronePositionY, true)}
 	}))
 
@@ -47,40 +47,40 @@ func (s Baal) BuildActions() (actions []action.Action) {
 
 	// Let's move to a safe area and open the portal in companion mode
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
-		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 			return []step.Step{step.MoveTo(15116, 5071, true), step.OpenPortal()}
 		}))
 	}
 
 	// Come back to previous position
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 		return []step.Step{step.MoveTo(baalThronePositionX, baalThronePositionY, true)}
 	}))
 
 	lastWave := false
-	actions = append(actions, action.NewFactory(func(data game.Data) action.Action {
+	actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
 		if !lastWave {
-			if _, found := data.Monsters.FindOne(npc.BaalsMinion, game.MonsterTypeMinion); found {
+			if _, found := d.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
 				lastWave = true
 			}
 
 			enemies := false
-			for _, e := range data.Monsters.Enemies() {
-				d := pather.DistanceFromPoint(game.Position{
+			for _, e := range d.Monsters.Enemies() {
+				dist := pather.DistanceFromPoint(data.Position{
 					X: baalThronePositionX,
 					Y: baalThronePositionY,
 				}, e.Position)
-				if d > 50 {
+				if dist > 50 {
 					enemies = true
 				}
 			}
 			if !enemies {
-				d := pather.DistanceFromMe(data, game.Position{
+				dist := pather.DistanceFromMe(d, data.Position{
 					X: baalThronePositionX,
 					Y: baalThronePositionY,
 				})
-				if d > 5 {
-					return action.BuildStatic(func(data game.Data) []step.Step {
+				if dist > 5 {
+					return action.BuildStatic(func(d data.Data) []step.Step {
 						return []step.Step{step.MoveTo(baalThronePositionX, baalThronePositionY, true)}
 					})
 				}

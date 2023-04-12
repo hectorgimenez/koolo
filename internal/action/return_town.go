@@ -1,21 +1,21 @@
 package action
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/object"
 )
 
 func (b Builder) ReturnTown() *StaticAction {
-	return BuildStatic(func(data game.Data) (steps []step.Step) {
-		if data.PlayerUnit.Area.IsTown() {
+	return BuildStatic(func(d data.Data) (steps []step.Step) {
+		if d.PlayerUnit.Area.IsTown() {
 			return
 		}
 
 		return []step.Step{
 			step.OpenPortal(),
-			step.InteractObject(object.TownPortal, func(data game.Data) bool {
-				return data.PlayerUnit.Area.IsTown()
+			step.InteractObject(object.TownPortal, func(d data.Data) bool {
+				return d.PlayerUnit.Area.IsTown()
 			}),
 		}
 	}, Resettable())

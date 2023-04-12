@@ -2,19 +2,20 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"go.uber.org/zap"
+	"reflect"
 )
 
 type DynamicAction struct {
 	basicAction
-	stepBuilder func(data game.Data) ([]step.Step, bool)
+	stepBuilder func(d data.Data) ([]step.Step, bool)
 	steps       []step.Step
 	finished    bool
 }
 
-func BuildDynamic(stepBuilder func(data game.Data) ([]step.Step, bool), opts ...Option) *DynamicAction {
+func BuildDynamic(stepBuilder func(d data.Data) ([]step.Step, bool), opts ...Option) *DynamicAction {
 	a := &DynamicAction{
 		stepBuilder: stepBuilder,
 	}
@@ -26,20 +27,13 @@ func BuildDynamic(stepBuilder func(data game.Data) ([]step.Step, bool), opts ...
 	return a
 }
 
-func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
+func (a *DynamicAction) NextStep(logger *zap.Logger, d data.Data) error {
 	if a.markSkipped || a.finished {
 		return ErrNoMoreSteps
 	}
 
-	if a.retries >= maxRetries {
-		if a.canBeSkipped {
-			return fmt.Errorf("%w: attempt limit reached", ErrCanBeSkipped)
-		}
-		return fmt.Errorf("%w: attempt limit reached", ErrNoRecover)
-	}
-
 	if a.steps == nil {
-		steps, ok := a.stepBuilder(data)
+		steps, ok := a.stepBuilder(d)
 		if !ok {
 			a.finished = true
 			return ErrNoMoreSteps
@@ -48,17 +42,24 @@ func (a *DynamicAction) NextStep(logger *zap.Logger, data game.Data) error {
 	}
 
 	for _, s := range a.steps {
-		if s.Status(data) != step.StatusCompleted {
-			err := s.Run(data)
+		if s.Status(d) != step.StatusCompleted {
+			err := s.Run(d)
 			if err != nil {
 				a.retries++
+			}
+
+			if a.retries >= maxRetries {
+				if a.canBeSkipped {
+					return fmt.Errorf("%w: attempt limit reached on step: %s: %v", ErrCanBeSkipped, reflect.TypeOf(s).Elem().Name(), err)
+				}
+				return fmt.Errorf("%w: attempt limit reached on step: %s: %v", ErrNoRecover, reflect.TypeOf(s).Elem().Name(), err)
 			}
 
 			return nil
 		}
 	}
 
-	steps, ok := a.stepBuilder(data)
+	steps, ok := a.stepBuilder(d)
 	if !ok {
 		a.finished = true
 		return ErrNoMoreSteps

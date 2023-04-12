@@ -1,9 +1,9 @@
 package step
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/skill"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"time"
 )
@@ -21,14 +21,14 @@ func SwapWeapon() *SwapWeaponStep {
 	}
 }
 
-func (s *SwapWeaponStep) Status(data game.Data) Status {
+func (s *SwapWeaponStep) Status(d data.Data) Status {
 	if s.status == StatusNotStarted {
 		return StatusNotStarted
 	}
 	if s.status == StatusCompleted {
 		return StatusCompleted
 	}
-	_, found := data.PlayerUnit.Skills[skill.BattleOrders]
+	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if found && s.initialWeaponWasCTA || !found && !s.initialWeaponWasCTA {
 		return s.tryTransitionStatus(StatusInProgress)
 	}
@@ -36,14 +36,14 @@ func (s *SwapWeaponStep) Status(data game.Data) Status {
 	return s.tryTransitionStatus(StatusCompleted)
 }
 
-func (s *SwapWeaponStep) Run(data game.Data) error {
+func (s *SwapWeaponStep) Run(d data.Data) error {
 	// Add some delay to let the weapon switch
 	if time.Since(s.lastRun) < time.Second {
 		return nil
 	}
 
 	s.tryTransitionStatus(StatusInProgress)
-	_, found := data.PlayerUnit.Skills[skill.BattleOrders]
+	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if found {
 		s.initialWeaponWasCTA = true
 	}

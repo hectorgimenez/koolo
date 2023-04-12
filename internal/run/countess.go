@@ -1,12 +1,12 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
-	"github.com/hectorgimenez/koolo/internal/game/object"
 )
 
 type Countess struct {
@@ -25,7 +25,7 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	actions = append(actions, c.char.Buff())
 
 	// Travel to boss level
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(area.ForgottenTower),
 			step.MoveToLevel(area.TowerCellarLevel1),
@@ -37,15 +37,15 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	}))
 
 	// Try to move around Countess area
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-		for _, o := range data.Objects {
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		for _, o := range d.Objects {
 			if o.Name == object.GoodChest {
 				return []step.Step{step.MoveTo(o.Position.X, o.Position.Y, true)}
 			}
 		}
 
 		// Try to teleport over Countess in case we are not able to find the chest position, a bit more risky
-		if countess, found := data.Monsters.FindOne(npc.DarkStalker, game.MonsterTypeSuperUnique); found {
+		if countess, found := d.Monsters.FindOne(npc.DarkStalker, data.MonsterTypeSuperUnique); found {
 			return []step.Step{step.MoveTo(countess.Position.X, countess.Position.Y, true, step.StopAtDistance(15))}
 		}
 

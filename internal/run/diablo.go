@@ -2,13 +2,13 @@ package run
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
-	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -39,20 +39,20 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.Buff())
 
 	// Travel to diablo spawn location
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
 			step.MoveTo(chaosSanctuaryEntranceX, chaosSanctuaryEntranceY, true),
 
 			// This hacky thing is forcing the player to move to the new area, because Pather can not [yet]
 			// walk through different areas without a game loading screen.
-			step.SyncStepWithCheck(func(data game.Data) error {
+			step.SyncStepWithCheck(func(d data.Data) error {
 				hid.KeyDown(config.Config.Bindings.ForceMove)
 				helper.Sleep(500)
 				hid.KeyUp(config.Config.Bindings.ForceMove)
 
 				return nil
-			}, func(data game.Data) step.Status {
-				if data.PlayerUnit.Area == area.ChaosSanctuary {
+			}, func(d data.Data) step.Status {
+				if d.PlayerUnit.Area == area.ChaosSanctuary {
 					return step.StatusCompleted
 				}
 
@@ -71,9 +71,9 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		seal := s
 		sealNumber := i
 		// Go to the seal and stop at distance 30, close enough to fetch monsters from memory
-		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
-			if obj, found := data.Objects.FindOne(seal); found {
+			if obj, found := d.Objects.FindOne(seal); found {
 				a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
 				return []step.Step{step.MoveTo(obj.Position.X, obj.Position.Y, true, step.StopAtDistance(30))}
 			}
@@ -82,9 +82,9 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		}))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
-		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-			if obj, found := data.Objects.FindOne(seal); found {
-				pos := a.getLessConcurredCornerAroundSeal(data, obj.Position)
+		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+			if obj, found := d.Objects.FindOne(seal); found {
+				pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
 				return []step.Step{step.MoveTo(pos.X, pos.Y, true)}
 			}
 			return []step.Step{}
@@ -95,10 +95,10 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.builder.ItemPickup(false, 40))
 
 		// Activate the seal
-		actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 			return []step.Step{
-				step.InteractObject(seal, func(data game.Data) bool {
-					if obj, found := data.Objects.FindOne(seal); found {
+				step.InteractObject(seal, func(d data.Data) bool {
+					if obj, found := d.Objects.FindOne(seal); found {
 						return !obj.Selectable
 					}
 					return false
@@ -110,8 +110,8 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.builder.ClearAreaAroundPlayer(10))
 
 		// Now try to kill the Elite packs (maybe are already dead)
-		actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
-			for _, m := range data.Monsters.Enemies(game.MonsterEliteFilter()) {
+		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 				if a.isSealElite(m) {
 					a.logger.Debug("FOUND SEAL DEFENDER!!!")
 					return m.UnitID, true
@@ -127,8 +127,8 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	return
 }
 
-func (a Diablo) getLessConcurredCornerAroundSeal(data game.Data, sealPosition game.Position) game.Position {
-	corners := [4]game.Position{
+func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.Position) data.Position {
+	corners := [4]data.Position{
 		{
 			X: sealPosition.X + 7,
 			Y: sealPosition.Y + 7,
@@ -152,7 +152,7 @@ func (a Diablo) getLessConcurredCornerAroundSeal(data game.Data, sealPosition ga
 	for i, c := range corners {
 		averageDistance := 0
 		monstersFound := 0
-		for _, m := range data.Monsters.Enemies() {
+		for _, m := range d.Monsters.Enemies() {
 			distance := pather.DistanceFromPoint(c, m.Position)
 			// Ignore enemies not close to the seal
 			if distance < 5 {
@@ -177,14 +177,14 @@ func (a Diablo) getLessConcurredCornerAroundSeal(data game.Data, sealPosition ga
 	return corners[bestCorner]
 }
 
-func (a Diablo) isSealElite(monster game.Monster) bool {
+func (a Diablo) isSealElite(monster data.Monster) bool {
 	switch monster.Type {
-	case game.MonsterTypeSuperUnique:
+	case data.MonsterTypeSuperUnique:
 		switch monster.Name {
 		case npc.OblivionKnight, npc.VenomLord, npc.StormCaster:
 			return true
 		}
-	case game.MonsterTypeMinion:
+	case data.MonsterTypeMinion:
 		switch monster.Name {
 		case npc.DoomKnight, npc.VenomLord, npc.StormCaster:
 			return true

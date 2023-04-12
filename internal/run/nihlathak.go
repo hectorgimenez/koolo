@@ -2,12 +2,12 @@ package run
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/object"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
 )
@@ -28,16 +28,16 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
+	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(area.HallsOfVaught),
 		}
 	}))
 
 	// Move close to Nilhatak, but don't teleport over all the monsters
-	var nilaO game.Object
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-		for _, o := range data.Objects {
+	var nilaO data.Object
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		for _, o := range d.Objects {
 			if o.Name == object.NihlathakWildernessStartPositionName {
 				nilaO = o
 				return []step.Step{step.MoveTo(o.Position.X, o.Position.Y, true, step.StopAtDistance(40))}
@@ -48,8 +48,8 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	}))
 
 	// Try to find the safest place
-	actions = append(actions, action.BuildStatic(func(data game.Data) []step.Step {
-		corners := [4]game.Position{
+	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		corners := [4]data.Position{
 			{
 				X: nilaO.Position.X + 13,
 				Y: nilaO.Position.Y + 13,
@@ -72,7 +72,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		bestCornerDistance := 0
 		for i, c := range corners {
 			averageDistance := 0
-			for _, m := range data.Monsters.Enemies() {
+			for _, m := range d.Monsters.Enemies() {
 				averageDistance += pather.DistanceFromPoint(c, m.Position)
 			}
 			if averageDistance > bestCornerDistance {
@@ -91,8 +91,8 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 
 	// Clear monsters around the area, sometimes it makes difficult to pickup items if there are many monsters around the area
 	if config.Config.Game.Nihlathak.ClearArea {
-		actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
-			for _, m := range data.Monsters.Enemies() {
+		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			for _, m := range d.Monsters.Enemies() {
 				if d := pather.DistanceFromPoint(nilaO.Position, m.Position); d < 15 {
 					a.logger.Debug("Clearing monsters around Nihlathak position", zap.Any("monster", m))
 					return m.UnitID, true

@@ -2,12 +2,12 @@ package pather
 
 import (
 	"github.com/beefsack/go-astar"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
 type Pather struct {
 	AstarPather
-	Destination game.Position
+	Destination data.Position
 }
 
 type AstarPather []astar.Pather

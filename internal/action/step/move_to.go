@@ -2,8 +2,8 @@ package step
 
 import (
 	"errors"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -12,7 +12,7 @@ import (
 
 type MoveToStep struct {
 	pathingStep
-	destination     game.Position
+	destination     data.Position
 	teleport        bool
 	stopAtDistance  int
 	nearestWalkable bool
@@ -25,7 +25,7 @@ type MoveToStepOption func(step *MoveToStep)
 func MoveTo(toX, toY int, teleport bool, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
 		pathingStep: newPathingStep(),
-		destination: game.Position{
+		destination: data.Position{
 			X: toX,
 			Y: toY,
 		},
@@ -58,12 +58,12 @@ func WithTimeout(timeout time.Duration) MoveToStepOption {
 	}
 }
 
-func (m *MoveToStep) Status(data game.Data) Status {
+func (m *MoveToStep) Status(d data.Data) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
 
-	distance := pather.DistanceFromMe(data, m.destination)
+	distance := pather.DistanceFromMe(d, m.destination)
 	if distance < 5 || distance <= m.stopAtDistance {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
@@ -71,7 +71,7 @@ func (m *MoveToStep) Status(data game.Data) Status {
 	return m.status
 }
 
-func (m *MoveToStep) Run(data game.Data) error {
+func (m *MoveToStep) Run(d data.Data) error {
 	if m.teleport && m.status == StatusNotStarted {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
@@ -87,7 +87,7 @@ func (m *MoveToStep) Run(data game.Data) error {
 	}
 
 	// Throttle movement clicks in town
-	if data.PlayerUnit.Area.IsTown() {
+	if d.PlayerUnit.Area.IsTown() {
 		if time.Since(m.lastRun) < helper.RandomDurationMs(200, 350) {
 			return nil
 		}
@@ -97,19 +97,26 @@ func (m *MoveToStep) Run(data game.Data) error {
 		return nil
 	}
 
-	stuck := m.isPlayerStuck(data)
+	stuck := m.isPlayerStuck(d)
 
-	if m.path == nil || !m.cachePath(data) || stuck {
+	if m.path == nil || !m.cachePath(d) || stuck {
 		if stuck {
-			tile := m.path.AstarPather[len(m.path.AstarPather)-1].(*pather.Tile)
-			m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
+			if len(m.path.AstarPather) == 0 {
+				pather.RandomMovement()
+				m.lastRun = time.Now()
+
+				return nil
+			} else {
+				tile := m.path.AstarPather[len(m.path.AstarPather)-1].(*pather.Tile)
+				m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
+			}
 		}
 
-		path, _, found := pather.GetPath(data, m.destination, m.blacklistedPositions...)
+		path, _, found := pather.GetPath(d, m.destination, m.blacklistedPositions...)
 		if !found {
 			// Try to find the nearest walkable place
 			if m.nearestWalkable {
-				path, _, found = pather.GetClosestWalkablePath(data, m.destination, m.blacklistedPositions...)
+				path, _, found = pather.GetClosestWalkablePath(d, m.destination, m.blacklistedPositions...)
 				if !found {
 					return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 				}

@@ -1,7 +1,7 @@
 package step
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"time"
 )
 
@@ -13,8 +13,8 @@ const (
 
 type Status string
 type Step interface {
-	Status(game.Data) Status
-	Run(game.Data) error
+	Status(data.Data) Status
+	Run(data.Data) error
 	Reset()
 	LastRun() time.Time
 }

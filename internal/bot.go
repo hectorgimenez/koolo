@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"go.uber.org/zap"
 	"time"
@@ -20,7 +20,7 @@ type Bot struct {
 	logger *zap.Logger
 	hm     health.Manager
 	ab     action.Builder
-	gr     *memory.GameReader
+	gr     *reader.GameReader
 	paused bool
 }
 
@@ -28,7 +28,7 @@ func NewBot(
 	logger *zap.Logger,
 	hm health.Manager,
 	ab action.Builder,
-	gr *memory.GameReader,
+	gr *reader.GameReader,
 ) *Bot {
 	return &Bot{
 		logger: logger,

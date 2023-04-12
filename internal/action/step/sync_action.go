@@ -1,23 +1,21 @@
 package step
 
-import (
-	"github.com/hectorgimenez/koolo/internal/game"
-)
+import "github.com/hectorgimenez/d2go/pkg/data"
 
 type SyncActionStep struct {
 	basicStep
-	action        func(game.Data) error
-	statusChecker func(game.Data) Status
+	action        func(data.Data) error
+	statusChecker func(data.Data) Status
 }
 
-func SyncStep(action func(game.Data) error) *SyncActionStep {
+func SyncStep(action func(data.Data) error) *SyncActionStep {
 	return &SyncActionStep{
 		basicStep: newBasicStep(),
 		action:    action,
 	}
 }
 
-func SyncStepWithCheck(action func(game.Data) error, statusChecker func(game.Data) Status) *SyncActionStep {
+func SyncStepWithCheck(action func(data.Data) error, statusChecker func(data.Data) Status) *SyncActionStep {
 	return &SyncActionStep{
 		basicStep:     newBasicStep(),
 		action:        action,
@@ -25,7 +23,7 @@ func SyncStepWithCheck(action func(game.Data) error, statusChecker func(game.Dat
 	}
 }
 
-func (s *SyncActionStep) Status(d game.Data) Status {
+func (s *SyncActionStep) Status(d data.Data) Status {
 	if s.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -37,7 +35,7 @@ func (s *SyncActionStep) Status(d game.Data) Status {
 	return s.status
 }
 
-func (s *SyncActionStep) Run(d game.Data) error {
+func (s *SyncActionStep) Run(d data.Data) error {
 	if s.statusChecker == nil {
 		s.tryTransitionStatus(StatusCompleted)
 	}

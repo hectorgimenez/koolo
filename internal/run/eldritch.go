@@ -1,10 +1,10 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/area"
-	"github.com/hectorgimenez/koolo/internal/game/npc"
 )
 
 type Eldritch struct {
@@ -22,8 +22,8 @@ func (a Eldritch) BuildActions() (actions []action.Action) {
 	// Buff
 	actions = append(actions, a.char.Buff())
 
-	actions = append(actions, a.char.KillMonsterSequence(func(data game.Data) (game.UnitID, bool) {
-		if m, found := data.Monsters.FindOne(npc.MinionExp, game.MonsterTypeSuperUnique); found {
+	actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+		if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
 			return m.UnitID, true
 		}
 

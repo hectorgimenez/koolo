@@ -2,8 +2,8 @@ package step
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/game/object"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -14,11 +14,11 @@ type InteractObjectStep struct {
 	pathingStep
 	objectName            object.Name
 	waitingForInteraction bool
-	isCompleted           func(game.Data) bool
+	isCompleted           func(data.Data) bool
 	mouseOverAttempts     int
 }
 
-func InteractObject(name object.Name, isCompleted func(game.Data) bool) *InteractObjectStep {
+func InteractObject(name object.Name, isCompleted func(data.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
 		pathingStep: newPathingStep(),
 		objectName:  name,
@@ -26,21 +26,21 @@ func InteractObject(name object.Name, isCompleted func(game.Data) bool) *Interac
 	}
 }
 
-func (i *InteractObjectStep) Status(data game.Data) Status {
+func (i *InteractObjectStep) Status(d data.Data) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
 
 	// Give some extra time to render the UI
-	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted(data) {
+	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted(d) {
 		return i.tryTransitionStatus(StatusCompleted)
 	}
 
 	return i.status
 }
 
-func (i *InteractObjectStep) Run(data game.Data) error {
-	if i.isCompleted(data) {
+func (i *InteractObjectStep) Run(d data.Data) error {
+	if i.isCompleted(d) {
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 		return nil
 	}
 
-	for _, o := range data.Objects {
+	for _, o := range d.Objects {
 		if o.Name == i.objectName {
 			if o.IsHovered {
 				hid.Click(hid.LeftButton)
@@ -72,10 +72,10 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 				i.lastRun = time.Now()
 				return nil
 			} else {
-				distance := pather.DistanceFromMe(data, o.Position)
+				distance := pather.DistanceFromMe(d, o.Position)
 
 				if distance > 15 {
-					path, _, found := pather.GetPath(data, o.Position)
+					path, _, found := pather.GetPath(d, o.Position)
 					if !found {
 						pather.RandomMovement()
 						i.consecutivePathNotFound++
@@ -92,13 +92,13 @@ func (i *InteractObjectStep) Run(data game.Data) error {
 
 				objectX := o.Position.X - 2
 				objectY := o.Position.Y - 2
-				mX, mY := pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX, objectY)
+				mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 
 				x, y := helper.Spiral(i.mouseOverAttempts)
 
 				// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
 				if i.mouseOverAttempts == 2 && i.objectName == object.TownPortal {
-					mX, mY = pather.GameCoordsToScreenCords(data.PlayerUnit.Position.X, data.PlayerUnit.Position.Y, objectX-4, objectY-4)
+					mX, mY = pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX-4, objectY-4)
 				}
 
 				hid.MovePointer(mX+x, mY+y)

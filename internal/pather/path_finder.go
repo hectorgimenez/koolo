@@ -2,14 +2,14 @@ package pather
 
 import (
 	"github.com/beefsack/go-astar"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"math"
 	"math/rand"
 )
 
-func GetPath(d game.Data, to game.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
+func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
 	// Convert to relative coordinates (Current player position)
 	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
 	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
@@ -53,13 +53,13 @@ func GetPath(d game.Data, to game.Position, blacklistedCoords ...[2]int) (path *
 		w.renderPathImg(d, p)
 	}
 
-	return &Pather{AstarPather: p, Destination: game.Position{
+	return &Pather{AstarPather: p, Destination: data.Position{
 		X: w.To().X + d.AreaOrigin.X,
 		Y: w.To().Y + d.AreaOrigin.Y,
 	}}, distance, found
 }
 
-func GetClosestWalkablePath(d game.Data, dest game.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
+func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
 	maxRange := 20
 	step := 4
 	dst := 1
@@ -71,7 +71,7 @@ func GetClosestWalkablePath(d game.Data, dest game.Position, blacklistedCoords .
 					cgY := dest.Y - d.AreaOrigin.Y + j
 					cgX := dest.X - d.AreaOrigin.X + i
 					if len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
-						return GetPath(d, game.Position{
+						return GetPath(d, data.Position{
 							X: dest.X + i,
 							Y: dest.Y + j,
 						}, blacklistedCoords...)
@@ -120,11 +120,11 @@ func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (
 	return screenX, screenY
 }
 
-func DistanceFromMe(data game.Data, p game.Position) int {
-	return DistanceFromPoint(data.PlayerUnit.Position, p)
+func DistanceFromMe(d data.Data, p data.Position) int {
+	return DistanceFromPoint(d.PlayerUnit.Position, p)
 }
 
-func DistanceFromPoint(from game.Position, to game.Position) int {
+func DistanceFromPoint(from data.Position, to data.Position) int {
 	first := math.Pow(float64(to.X-from.X), 2)
 	second := math.Pow(float64(to.Y-from.Y), 2)
 
