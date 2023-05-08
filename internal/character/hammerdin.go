@@ -1,6 +1,8 @@
 package character
 
 import (
+	"sort"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -10,11 +12,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
 )
 
 const (
-	hammerdinMaxAttacksLoop = 10
+	hammerdinMaxAttacksLoop = 20
 )
 
 type Hammerdin struct {
@@ -26,8 +27,44 @@ func (s Hammerdin) KillMonsterSequence(
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
 ) *action.DynamicAction {
-	//TODO implement me
-	panic("implement me")
+	completedAttackLoops := 0
+	previousUnitID := 0
+
+	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+		id, found := monsterSelector(d)
+		if !found {
+			return []step.Step{}, false
+		}
+		if previousUnitID != int(id) {
+			completedAttackLoops = 0
+		}
+
+		if !s.preBattleChecks(d, id, skipOnImmunities) {
+			return []step.Step{}, false
+		}
+
+		if len(opts) == 0 {
+			opts = append(opts, step.Distance(1, 5))
+		}
+
+		if completedAttackLoops >= hammerdinMaxAttacksLoop {
+			return []step.Step{}, false
+		}
+
+		steps := make([]step.Step, 0)
+		steps = append(steps,
+			step.PrimaryAttack(
+				id,
+				8,
+				step.Distance(2, 8),
+				step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+			),
+		)
+		completedAttackLoops++
+		previousUnitID = int(id)
+
+		return steps, true
+	})
 }
 
 func (s Hammerdin) Buff() action.Action {
