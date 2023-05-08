@@ -29,6 +29,21 @@ It uses the following third party libraries:
 - Open Diablo II: Resurrected and wait until character selection screen.
 - Run `koolo.exe`.
 
+## Features
+
+- Blizzard Sorceress and Hammerdin are currently supported
+- Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch, Pindleskin, Nihlathak, Tristram, Lower Kurast, Baal (WIP), Diablo (WIP)
+- Bot integration for Discord and Telegram
+- "Companion mode" one leader bot will be creating games and the rest of the bots will join the game... and sometimes it works
+- Pickit based on NIP files
+- Auto potion for health and mana (also mercenary)
+- Chicken when low health
+- Inventory slot locking
+- Revive mercenary
+- CTA buff and class buffs
+- Auto repair
+- Skip on immune
+
 ## Development environment
 
 Setting the development environment is pretty straightforward, but MinGW is required to build the project.
