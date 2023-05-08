@@ -2,6 +2,9 @@ package town
 
 import (
 	"fmt"
+	"math/rand"
+	"strings"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -10,8 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
-	"math/rand"
-	"strings"
 )
 
 const (
@@ -131,6 +132,7 @@ func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
 func (sm ShopManager) SellJunk(d data.Data) {
 	for _, i := range d.Items.Inventory {
 		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+			sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Name, i.Quality))
 			x := InventoryTopLeftX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
 			y := InventoryTopLeftY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
 			hid.MovePointer(x, y)
