@@ -2,14 +2,15 @@ package pather
 
 import (
 	"fmt"
-	"github.com/beefsack/go-astar"
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
 	"os"
+
+	"github.com/beefsack/go-astar"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 )
 
 // World is a two dimensional map of Tiles.
@@ -65,7 +66,6 @@ func (w World) To() *Tile {
 
 // parseWorld parses a textual representation of a world into a world map.
 func parseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area) World {
-	//w := World{}
 	w := make(World, len(collisionGrid[0]))
 
 	for x := 0; x < len(collisionGrid[0]); x++ {
@@ -96,7 +96,7 @@ func parseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area
 }
 
 // RenderPathImg renders a path on top of a world.
-func (w World) renderPathImg(d data.Data, path []astar.Pather) {
+func (w World) renderPathImg(d data.Data, path []astar.Pather, expandedCG bool) {
 	width := len(w)
 	if width == 0 {
 		return
@@ -132,12 +132,8 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather) {
 	}
 
 	for _, r := range d.Rooms {
-		img.Set(r.GetCenter().X-d.AreaOrigin.X, r.GetCenter().Y-d.AreaOrigin.Y, color.RGBA{204, 204, 0, 255})
-		//for x := 0; x < r.Width; x++ {
-		//	for y := 0; y < r.Height; y++ {
-		//		img.Set(r.X+x-data.AreaOrigin.X, r.Y+y-data.AreaOrigin.Y, color.RGBA{204, 204, 0, 255})
-		//	}
-		//}
+		rPosX, rPosY := relativePosition(d, r.GetCenter(), expandedCG)
+		img.Set(rPosX, rPosY, color.RGBA{204, 204, 0, 255})
 	}
 
 	img.Set(w.From().X, w.From().Y, color.RGBA{
@@ -149,11 +145,13 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather) {
 	})
 
 	for _, o := range d.Objects {
-		img.Set(o.Position.X-d.AreaOrigin.X, o.Position.Y-d.AreaOrigin.Y, color.RGBA{255, 165, 0, 255})
+		oPosX, oPosY := relativePosition(d, o.Position, expandedCG)
+		img.Set(oPosX, oPosY, color.RGBA{255, 165, 0, 255})
 	}
 
 	for _, m := range d.Monsters {
-		img.Set(m.Position.X-d.AreaOrigin.X, m.Position.Y-d.AreaOrigin.Y, color.RGBA{255, 0, 255, 255})
+		mPosX, mPosY := relativePosition(d, m.Position, expandedCG)
+		img.Set(mPosX, mPosY, color.RGBA{255, 0, 255, 255})
 	}
 
 	outFile, _ := os.Create("cg.png")

@@ -2,19 +2,15 @@ package map_client
 
 import (
 	"encoding/json"
+	"os/exec"
+	"strings"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 func GetMapData(seed string, difficulty difficulty.Difficulty) MapData {
@@ -53,24 +49,6 @@ func getDifficultyAsNum(df difficulty.Difficulty) string {
 
 type MapData []serverLevel
 
-func renderCG(cg [][]bool) {
-	img := image.NewRGBA(image.Rect(0, 0, len(cg[0]), len(cg)))
-	draw.Draw(img, img.Bounds(), img, image.Point{}, draw.Over)
-
-	for y := 0; y < len(cg); y++ {
-		for x := 0; x < len(cg[0]); x++ {
-			if cg[y][x] {
-				img.Set(x, y, color.White)
-			} else {
-				img.Set(x, y, color.Black)
-			}
-		}
-	}
-
-	outFile, _ := os.Create("cg.png")
-	defer outFile.Close()
-	png.Encode(outFile, img)
-}
 func (md MapData) CollisionGrid(area area.Area) [][]bool {
 	level := md.getLevel(area)
 
@@ -146,6 +124,8 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				},
+				IsGoodExit:  obj.IsGoodExit,
+				CanInteract: true,
 			}
 			exits = append(exits, lvl)
 		case "object":
@@ -158,6 +138,33 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 			}
 			objects = append(objects, o)
 		}
+	}
+
+	for _, obj := range level.Objects {
+		switch obj.Type {
+		case "exit_area":
+			found := false
+			for _, exit := range exits {
+				if exit.Area == area.Area(obj.ID) {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				lvl := data.Level{
+					Area: area.Area(obj.ID),
+					Position: data.Position{
+						X: obj.X + areaOrigin.X,
+						Y: obj.Y + areaOrigin.Y,
+					},
+					IsGoodExit:  obj.IsGoodExit,
+					CanInteract: true,
+				}
+				exits = append(exits, lvl)
+			}
+		}
+
 	}
 
 	return npcs, exits, objects, rooms

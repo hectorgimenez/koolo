@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"go.uber.org/zap"
-	"math/rand"
-	"time"
 )
 
 type Supervisor interface {
@@ -20,7 +21,6 @@ type Supervisor interface {
 	TogglePause()
 }
 
-// SinglePlayerSupervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type SinglePlayerSupervisor struct {
 	baseSupervisor
 }

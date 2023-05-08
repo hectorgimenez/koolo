@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Companion interface {
@@ -22,7 +23,6 @@ type CompanionGameData struct {
 	Password string
 }
 
-// CompanionSupervisor is the main bot entrypoint, it will handle all the parallel processes and ensure everything is up and running
 type CompanionSupervisor struct {
 	baseSupervisor
 	companionCh chan CompanionGameData

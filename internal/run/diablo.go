@@ -2,23 +2,18 @@ package run
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
 )
 
 const (
-	chaosSanctuaryEntranceX = 7800
-	chaosSanctuaryEntranceY = 5600
-
 	diabloSpawnX = 7800
 	diabloSpawnY = 5286
 )
@@ -41,24 +36,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	// Travel to diablo spawn location
 	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
-			step.MoveTo(chaosSanctuaryEntranceX, chaosSanctuaryEntranceY, true),
-
-			// This hacky thing is forcing the player to move to the new area, because Pather can not [yet]
-			// walk through different areas without a game loading screen.
-			step.SyncStepWithCheck(func(d data.Data) error {
-				hid.KeyDown(config.Config.Bindings.ForceMove)
-				helper.Sleep(500)
-				hid.KeyUp(config.Config.Bindings.ForceMove)
-
-				return nil
-			}, func(d data.Data) step.Status {
-				if d.PlayerUnit.Area == area.ChaosSanctuary {
-					return step.StatusCompleted
-				}
-
-				return step.StatusInProgress
-			}),
-
+			step.MoveToLevel(area.ChaosSanctuary),
 			// We move to the center in order to load all the seals in memory
 			step.MoveTo(diabloSpawnX, diabloSpawnY, true),
 		}

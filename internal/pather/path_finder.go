@@ -1,22 +1,24 @@
 package pather
 
 import (
+	"math"
+	"math/rand"
+
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"math"
-	"math/rand"
 )
 
+const expandedGridPadding = 3000
+
 func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
+	expandedCG := shouldExpandCollisionGrid(d, to)
 	// Convert to relative coordinates (Current player position)
-	fromX := d.PlayerUnit.Position.X - d.AreaOrigin.X
-	fromY := d.PlayerUnit.Position.Y - d.AreaOrigin.Y
+	fromX, fromY := relativePosition(d, d.PlayerUnit.Position, expandedCG)
 
 	// Convert to relative coordinates (Target position)
-	toX := to.X - d.AreaOrigin.X
-	toY := to.Y - d.AreaOrigin.Y
+	toX, toY := relativePosition(d, to, expandedCG)
 
 	// Origin and destination are the same point
 	if fromX == toX && fromY == toY {
@@ -26,6 +28,22 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 	collisionGrid := d.CollisionGrid
 	for _, cord := range blacklistedCoords {
 		collisionGrid[cord[1]][cord[0]] = false
+	}
+
+	if expandedCG {
+		bigCG := make([][]bool, 3000)
+		for x := range bigCG {
+			emptyXs := make([]bool, 3000)
+			for y := 0; y < len(emptyXs); y++ {
+				if x >= 1500 && x <= 1500+len(collisionGrid)-1 && y >= 1500 && y < 1500+len(collisionGrid[0])-1 {
+					emptyXs[y] = collisionGrid[x-1500][y-1500]
+				} else {
+					emptyXs[y] = true
+				}
+			}
+			bigCG[x] = emptyXs
+		}
+		collisionGrid = bigCG
 	}
 
 	w := parseWorld(collisionGrid, fromX, fromY, toX, toY, d.PlayerUnit.Area)
@@ -50,12 +68,13 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 
 	// Debug only, this will render a png file with map and origin/destination points
 	if config.Config.Debug.RenderMap {
-		w.renderPathImg(d, p)
+		w.renderPathImg(d, p, expandedCG)
 	}
 
+	x, y := relativePosition(d, data.Position{X: w.To().X, Y: w.To().Y}, expandedCG)
 	return &Pather{AstarPather: p, Destination: data.Position{
-		X: w.To().X + d.AreaOrigin.X,
-		Y: w.To().Y + d.AreaOrigin.Y,
+		X: x,
+		Y: y,
 	}}, distance, found
 }
 
@@ -86,6 +105,15 @@ func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords .
 }
 
 func MoveThroughPath(p *Pather, distance int, teleport bool) {
+	if len(p.AstarPather) == 0 {
+		if teleport {
+			hid.Click(hid.RightButton)
+		} else {
+			hid.PressKey(config.Config.Bindings.ForceMove)
+		}
+		return
+	}
+
 	moveTo := p.AstarPather[0].(*Tile)
 	if distance > 0 && len(p.AstarPather) > distance {
 		moveTo = p.AstarPather[len(p.AstarPather)-distance].(*Tile)
@@ -138,4 +166,19 @@ func RandomMovement() {
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
 	hid.MovePointer(x, y)
 	hid.PressKey(config.Config.Bindings.ForceMove)
+}
+
+func relativePosition(d data.Data, p data.Position, expandedCG bool) (int, int) {
+	if expandedCG {
+		return p.X - d.AreaOrigin.X + expandedGridPadding/2, p.Y - d.AreaOrigin.Y + expandedGridPadding/2
+	}
+
+	return p.X - d.AreaOrigin.X, p.Y - d.AreaOrigin.Y
+}
+
+func shouldExpandCollisionGrid(d data.Data, p data.Position) bool {
+	relativeToX := p.X - d.AreaOrigin.X
+	relativeToY := p.Y - d.AreaOrigin.Y
+
+	return relativeToX < 0 || relativeToY < 0 || relativeToX > len(d.CollisionGrid) || relativeToY > len(d.CollisionGrid[0])
 }

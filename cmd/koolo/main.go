@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/hectorgimenez/d2go/pkg/memory"
-	hook "github.com/robotn/gohook"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/hectorgimenez/d2go/pkg/memory"
+	hook "github.com/robotn/gohook"
 
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"

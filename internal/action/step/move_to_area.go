@@ -3,13 +3,15 @@ package step
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"time"
 )
 
 type MoveToAreaStep struct {
@@ -39,7 +41,7 @@ func (m *MoveToAreaStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToAreaStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted {
+	if m.status == StatusNotStarted && m.canTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	m.tryTransitionStatus(StatusInProgress)
@@ -47,7 +49,7 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 		return nil
 	}
 
-	if m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1 {
+	if (m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1) || d.PlayerUnit.Area == m.area {
 		return nil
 	}
 
@@ -68,18 +70,28 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 					}
 					m.path = path
 				}
-				pather.MoveThroughPath(m.path, 25, true)
+				pather.MoveThroughPath(m.path, 25, m.canTeleport(d))
 				return nil
 			}
 
-			x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
-			hid.MovePointer(x, y)
-			helper.Sleep(100)
-			hid.Click(hid.LeftButton)
-			m.waitingForInteraction = true
-			return nil
+			if l.CanInteract {
+				x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
+				hid.MovePointer(x, y)
+				helper.Sleep(100)
+				hid.Click(hid.LeftButton)
+				m.waitingForInteraction = true
+				return nil
+			} else {
+				hid.PressKey(config.Config.Bindings.ForceMove)
+			}
 		}
 	}
 
 	return fmt.Errorf("area %s not found", m.area)
+}
+
+func (m *MoveToAreaStep) canTeleport(d data.Data) bool {
+	_, found := d.PlayerUnit.Skills[skill.Teleport]
+
+	return found && config.Config.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
 }

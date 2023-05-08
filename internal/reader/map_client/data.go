@@ -20,9 +20,10 @@ type serverPosition struct {
 }
 
 type serverObject struct {
-	ID   int    `json:"id"`
-	Type string `json:"type"`
-	Name string `json:"name"`
+	ID         int    `json:"id"`
+	Type       string `json:"type"`
+	Name       string `json:"name"`
+	IsGoodExit bool   `json:"isGoodExit"`
 	serverPosition
 }
 
