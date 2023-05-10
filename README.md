@@ -26,7 +26,8 @@ It uses the following third party libraries:
 - Edit `config/config.yaml` and ensure `D2LoDPath` is pointing to your Diablo II: LOD 1.13c installation directory.
 - Run d2.install.reg to install the required registry key.
 - Configure custom bot settings under `config/config.yaml` and `config/pickit/*.nip` files for pickit rules.
-- Open Diablo II: Resurrected and wait until character selection screen.
+- Open Diablo II: Resurrected and ensure the game resolution is set to 1280x720 or 1920x1080 in HiDPI mode.
+- Enter the game with your character.
 - Run `koolo.exe`.
 
 ## Features
