@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -16,7 +17,7 @@ func (b Builder) Repair() *StaticAction {
 		for _, i := range d.Items.Equipped {
 			if du, found := i.Stats[stat.Durability]; found && du.Value < 3 {
 				shouldRepair = true
-				b.logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, d))
+				b.logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))
 				break
 			}
 		}
