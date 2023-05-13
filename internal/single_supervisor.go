@@ -49,9 +49,11 @@ func (s *SinglePlayerSupervisor) Start(ctx context.Context, runs []run.Run) erro
 		case <-ctx.Done():
 			return nil
 		default:
-			if err = s.gm.NewGame(); err != nil {
-				s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-				continue
+			if !s.gm.InGame() {
+				if err = s.gm.NewGame(); err != nil {
+					s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+					continue
+				}
 			}
 
 			gameStart := time.Now()

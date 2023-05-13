@@ -3,6 +3,7 @@ package helper
 import (
 	"errors"
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -144,4 +145,8 @@ func (gm *GameManager) JoinOnlineGame(gameName, password string) error {
 	}
 
 	return errors.New("error joining game! Timeout")
+}
+
+func (gm *GameManager) InGame() bool {
+	return gm.gr.InGame()
 }
