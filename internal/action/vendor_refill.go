@@ -50,6 +50,12 @@ func (b Builder) shouldVisitVendor(d data.Data) bool {
 		return true
 	}
 
+	// Skip the vendor if we don't have enough gold to do anything... this is not the optimal scenario,
+	// but I have no idea how to check vendor item prices.
+	if d.PlayerUnit.TotalGold() < 1000 {
+		return false
+	}
+
 	return b.bm.ShouldBuyPotions(d) || b.sm.ShouldBuyTPs(d) || b.sm.ShouldBuyIDs(d)
 }
 
