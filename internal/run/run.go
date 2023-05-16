@@ -1,10 +1,11 @@
 package run
 
 import (
+	"strings"
+
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"go.uber.org/zap"
-	"strings"
 )
 
 type Run interface {
@@ -65,6 +66,8 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 			runs = append(runs, LowerKurast{baseRun})
 		case "baal":
 			runs = append(runs, Baal{baseRun})
+		case "leveling":
+			runs = append(runs, Leveling{baseRun})
 		}
 	}
 

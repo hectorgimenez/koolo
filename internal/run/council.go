@@ -26,7 +26,10 @@ func (s Council) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(d data.Data) (steps []step.Step) {
 		for _, al := range d.AdjacentLevels {
 			if al.Area == area.DuranceOfHateLevel1 {
-				steps = append(steps, step.MoveTo(al.Position.X-1, al.Position.Y+3, true))
+				steps = append(steps, step.MoveTo(data.Position{
+					X: al.Position.X - 1,
+					Y: al.Position.Y + 3,
+				}))
 			}
 		}
 

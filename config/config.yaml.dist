@@ -29,6 +29,8 @@ health: # Healing configuration, all values in %
 
 bindings:
   openInventory: i
+  openCharacterScreen: c
+  openSkillTree: t
   potion1: 1
   potion2: 2
   potion3: 3
@@ -67,7 +69,6 @@ inventory:
     healing: 2
     mana: 1
     rejuvenation: 1
-  beltRows: 4
 
 character:
   class: sorceress # Allowed values: sorceress, hammerdin

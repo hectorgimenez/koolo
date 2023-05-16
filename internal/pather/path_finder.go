@@ -53,8 +53,8 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
 	// the path, so we fake some points around the character making them walkable even if they're not technically
 	if !found && len(blacklistedCoords) == 0 {
-		for i := -2; i < 3; i++ {
-			for k := -2; k < 3; k++ {
+		for i := -3; i < 4; i++ {
+			for k := -3; k < 4; k++ {
 				if i == 0 && k == 0 {
 					continue
 				}
@@ -71,10 +71,9 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 		w.renderPathImg(d, p, expandedCG)
 	}
 
-	x, y := relativePosition(d, data.Position{X: w.To().X, Y: w.To().Y}, expandedCG)
 	return &Pather{AstarPather: p, Destination: data.Position{
-		X: x,
-		Y: y,
+		X: w.To().X + d.AreaOrigin.X,
+		Y: w.To().Y + d.AreaOrigin.Y,
 	}}, distance, found
 }
 

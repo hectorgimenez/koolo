@@ -31,7 +31,7 @@ func (s Summoner) BuildActions() (actions []action.Action) {
 		}
 
 		return []step.Step{
-			step.MoveTo(m.Positions[0].X, m.Positions[0].Y, true),
+			step.MoveTo(m.Positions[0]),
 		}
 	}, action.CanBeSkipped()))
 

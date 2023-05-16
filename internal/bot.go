@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -12,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"go.uber.org/zap"
-	"time"
 )
 
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
@@ -108,6 +109,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 						act.Skip()
 						break
 					}
+					if errors.Is(err, action.ErrLogAndContinue) {
+						b.logger.Warn(err.Error())
+						break
+					}
 					if err != nil {
 						stat.FinishCurrentRun(event.Error)
 						return err
@@ -141,10 +146,12 @@ func (b *Bot) preRunActions(firstRun bool) []action.Action {
 	}
 
 	return []action.Action{
+		b.ab.EnsureStatPoints(),
+		b.ab.EnsureSkillPoints(),
 		b.ab.RecoverCorpse(),
 		b.ab.IdentifyAll(firstRun),
-		b.ab.Stash(firstRun),
-		b.ab.VendorRefill(),
+		//b.ab.Stash(firstRun),
+		//b.ab.VendorRefill(),
 		b.ab.Heal(),
 		b.ab.ReviveMerc(),
 		b.ab.Repair(),

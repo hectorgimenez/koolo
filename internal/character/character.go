@@ -2,6 +2,8 @@ package character
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -10,13 +12,18 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
-	"strings"
 )
 
 func BuildCharacter(logger *zap.Logger) (action.Character, error) {
 	bc := BaseCharacter{
 		logger: logger,
 	}
+
+	// TODO: Refactor this, using a constant maybe
+	if config.Config.Game.Runs[0] == "leveling" {
+		return SorceressLeveling{BaseCharacter: bc}, nil
+	}
+
 	switch strings.ToLower(config.Config.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil

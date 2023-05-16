@@ -13,10 +13,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	diabloSpawnX = 7800
-	diabloSpawnY = 5286
-)
+var diabloSpawnPosition = data.Position{
+	X: 7800,
+	Y: 5286,
+}
 
 type Diablo struct {
 	baseRun
@@ -38,7 +38,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		return []step.Step{
 			step.MoveToLevel(area.ChaosSanctuary),
 			// We move to the center in order to load all the seals in memory
-			step.MoveTo(diabloSpawnX, diabloSpawnY, true),
+			step.MoveTo(diabloSpawnPosition),
 		}
 	}))
 
@@ -53,7 +53,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
 			if obj, found := d.Objects.FindOne(seal); found {
 				a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
-				return []step.Step{step.MoveTo(obj.Position.X, obj.Position.Y, true, step.StopAtDistance(30))}
+				return []step.Step{step.MoveTo(obj.Position, step.StopAtDistance(30))}
 			}
 			a.logger.Debug("SEAL NOT FOUND", zap.Int("seal", sealNumber+1))
 			return []step.Step{}
@@ -63,7 +63,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 			if obj, found := d.Objects.FindOne(seal); found {
 				pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
-				return []step.Step{step.MoveTo(pos.X, pos.Y, true)}
+				return []step.Step{step.MoveTo(pos)}
 			}
 			return []step.Step{}
 		}))

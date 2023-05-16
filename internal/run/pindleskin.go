@@ -9,13 +9,15 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
-const (
-	fixedPlaceNearRedPortalX = 5130
-	fixedPlaceNearRedPortalY = 5120
+var fixedPlaceNearRedPortal = data.Position{
+	X: 5130,
+	Y: 5120,
+}
 
-	safeDistanceFromPindleX = 10058
-	safeDistanceFromPindleY = 13236
-)
+var pindleSafePosition = data.Position{
+	X: 10058,
+	Y: 13236,
+}
 
 type Pindleskin struct {
 	SkipOnImmunities []stat.Resist
@@ -33,7 +35,7 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	// Moving to starting point
 	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
-			step.MoveTo(fixedPlaceNearRedPortalX, fixedPlaceNearRedPortalY, false),
+			step.MoveTo(fixedPlaceNearRedPortal),
 			step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 				return d.PlayerUnit.Area == area.NihlathaksTemple
 			}),
@@ -46,7 +48,7 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	// Travel to boss position
 	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		return []step.Step{
-			step.MoveTo(safeDistanceFromPindleX, safeDistanceFromPindleY, true),
+			step.MoveTo(pindleSafePosition),
 		}
 	}))
 

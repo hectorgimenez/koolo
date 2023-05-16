@@ -30,7 +30,7 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 		for _, o := range d.Objects {
 			if o.Name == object.CairnStoneAlpha {
 				return []step.Step{
-					step.MoveTo(o.Position.X, o.Position.Y, true),
+					step.MoveTo(o.Position),
 					step.SyncStep(func(d data.Data) error {
 						helper.Sleep(1000)
 						return nil
@@ -69,20 +69,6 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 
 	// Clear Tristram
 	actions = append(actions, a.builder.ClearArea(false, data.MonsterAnyFilter()))
-	//actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-	//	monsters := d.Monsters.Enemies()
-	//
-	//	// Clear only elite monsters
-	//	if config.Config.Game.Tristram.FocusOnElitePacks {
-	//		monsters = d.Monsters.Enemies(data.MonsterEliteFilter())
-	//	}
-	//
-	//	if len(monsters) == 0 {
-	//		return 0, false
-	//	}
-	//
-	//	return monsters[0].UnitID, true
-	//}, nil))
 
 	return
 }

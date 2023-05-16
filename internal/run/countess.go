@@ -40,13 +40,13 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		for _, o := range d.Objects {
 			if o.Name == object.GoodChest {
-				return []step.Step{step.MoveTo(o.Position.X, o.Position.Y, true)}
+				return []step.Step{step.MoveTo(o.Position)}
 			}
 		}
 
 		// Try to teleport over Countess in case we are not able to find the chest position, a bit more risky
 		if countess, found := d.Monsters.FindOne(npc.DarkStalker, data.MonsterTypeSuperUnique); found {
-			return []step.Step{step.MoveTo(countess.Position.X, countess.Position.Y, true, step.StopAtDistance(15))}
+			return []step.Step{step.MoveTo(countess.Position, step.StopAtDistance(15))}
 		}
 
 		return []step.Step{}

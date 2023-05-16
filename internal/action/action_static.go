@@ -1,11 +1,13 @@
 package action
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"go.uber.org/zap"
-	"reflect"
 )
 
 type StaticAction struct {
@@ -50,6 +52,10 @@ func (a *StaticAction) NextStep(logger *zap.Logger, d data.Data) error {
 			}
 
 			if a.retries >= maxRetries {
+				if a.ignoreErrors {
+					a.markSkipped = true
+					return errors.Join(err, ErrLogAndContinue)
+				}
 				if a.canBeSkipped {
 					return fmt.Errorf("%w: attempt limit reached on step: %s: %v", ErrCanBeSkipped, reflect.TypeOf(s).Elem().Name(), err)
 				}

@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"go.uber.org/zap"
 )
@@ -34,6 +35,9 @@ func (f *Factory) NextStep(logger *zap.Logger, d data.Data) error {
 	err := f.action.NextStep(logger, d)
 	if errors.Is(err, ErrNoMoreSteps) {
 		f.action = nil
+		return nil
+	}
+	if errors.Is(err, ErrLogAndContinue) {
 		return nil
 	}
 

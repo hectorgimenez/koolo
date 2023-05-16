@@ -7,10 +7,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
-const (
-	andarielStartingPositionX = 22561
-	andarielStartingPositionY = 9553
-)
+var andarielStartingPosition = data.Position{
+	X: 22561,
+	Y: 9553,
+}
 
 type Andariel struct {
 	baseRun
@@ -32,7 +32,7 @@ func (a Andariel) BuildActions() (actions []action.Action) {
 		return []step.Step{
 			step.MoveToLevel(area.CatacombsLevel3),
 			step.MoveToLevel(area.CatacombsLevel4),
-			step.MoveTo(andarielStartingPositionX, andarielStartingPositionY, true),
+			step.MoveTo(andarielStartingPosition),
 		}
 	}))
 

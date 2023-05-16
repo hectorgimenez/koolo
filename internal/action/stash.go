@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -31,9 +32,9 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 
 		switch d.PlayerUnit.Area {
 		case area.KurastDocks:
-			steps = append(steps, step.MoveTo(5146, 5067, false))
+			steps = append(steps, step.MoveTo(data.Position{X: 5146, Y: 5067}))
 		case area.LutGholein:
-			steps = append(steps, step.MoveTo(5130, 5086, false))
+			steps = append(steps, step.MoveTo(data.Position{X: 5130, Y: 5086}))
 		}
 
 		steps = append(steps,

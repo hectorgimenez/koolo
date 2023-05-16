@@ -2,18 +2,18 @@ package step
 
 import (
 	"errors"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"time"
 )
 
 type MoveToStep struct {
 	pathingStep
 	destination     data.Position
-	teleport        bool
 	stopAtDistance  int
 	nearestWalkable bool
 	timeout         time.Duration
@@ -22,15 +22,11 @@ type MoveToStep struct {
 
 type MoveToStepOption func(step *MoveToStep)
 
-func MoveTo(toX, toY int, teleport bool, opts ...MoveToStepOption) *MoveToStep {
+func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
 		pathingStep: newPathingStep(),
-		destination: data.Position{
-			X: toX,
-			Y: toY,
-		},
-		teleport: teleport,
-		timeout:  time.Second * 30,
+		destination: destination,
+		timeout:     time.Second * 30,
 	}
 
 	for _, o := range opts {
@@ -72,7 +68,11 @@ func (m *MoveToStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToStep) Run(d data.Data) error {
-	if m.teleport && m.status == StatusNotStarted {
+	if m.status == StatusNotStarted && canTeleport(d) {
+		hid.PressKey(config.Config.Bindings.Teleport)
+	}
+
+	if canTeleport(d) && m.status == StatusNotStarted {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	if m.startedAt.IsZero() {
@@ -93,7 +93,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 		}
 	}
 
-	if m.teleport && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if canTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 
@@ -131,7 +131,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	pather.MoveThroughPath(m.path, 25, m.teleport)
+	pather.MoveThroughPath(m.path, calculateMaxDistance(d), canTeleport(d))
 
 	return nil
 }
