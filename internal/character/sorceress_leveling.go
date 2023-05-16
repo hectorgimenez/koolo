@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 type SorceressLeveling struct {
@@ -81,12 +82,6 @@ func (s SorceressLeveling) EnsureSkillPoints() action.Action {
 		}
 
 		return nil
-	})
-}
-
-func (s SorceressLeveling) Buff() action.Action {
-	return action.BuildStatic(func(_ data.Data) []step.Step {
-		return []step.Step{}
 	})
 }
 
@@ -171,15 +166,29 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Ac
 		for i := 0; i < 10; i++ {
 			steps = append(steps,
 				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, step.Distance(1, 7)),
-				//step.PrimaryAttack(
-				//	m.UnitID,
-				//	1,
-				//
-				//	step.Distance(1, 3),
-				//),
 			)
 		}
 
 		return
 	}, action.CanBeSkipped())
+}
+
+func (s SorceressLeveling) Buff() action.Action {
+	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+		return []step.Step{
+			step.SyncStep(func(d data.Data) error {
+				if _, found := d.PlayerUnit.Skills[skill.FrozenArmor]; !found {
+					return nil
+				}
+
+				if config.Config.Bindings.Sorceress.FrozenArmor != "" {
+					hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
+					helper.Sleep(100)
+					hid.Click(hid.RightButton)
+				}
+
+				return nil
+			}),
+		}
+	})
 }
