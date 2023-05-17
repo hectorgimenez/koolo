@@ -33,6 +33,8 @@ github.com/hectorgimenez/d2go v0.0.0-20230513110911-cb7d2e5a347c h1:Ey7GZ/aWMxQw
 github.com/hectorgimenez/d2go v0.0.0-20230513110911-cb7d2e5a347c/go.mod h1:/niMV1/U5eogErjwgCQERiAbleNftvtKRE+xbiHe6VQ=
 github.com/hectorgimenez/d2go v0.0.0-20230515135402-63d1206fc49d h1:gPMgb/5+ugUged8EKWydzUqP4xRj6C6jgAuE9PT4v5Y=
 github.com/hectorgimenez/d2go v0.0.0-20230515135402-63d1206fc49d/go.mod h1:/niMV1/U5eogErjwgCQERiAbleNftvtKRE+xbiHe6VQ=
+github.com/hectorgimenez/d2go v0.0.0-20230517120335-de57c70f2593 h1:+xfG5QIQjGbBTx3sll2ps1r0yUhC8cpjDFyWbceuSWU=
+github.com/hectorgimenez/d2go v0.0.0-20230517120335-de57c70f2593/go.mod h1:/niMV1/U5eogErjwgCQERiAbleNftvtKRE+xbiHe6VQ=
 github.com/jezek/xgb v0.0.0-20210312150743-0e0f116e1240 h1:dy+DS31tGEGCsZzB45HmJJNHjur8GDgtRNX9U7HnSX4=
 github.com/jezek/xgb v0.0.0-20210312150743-0e0f116e1240/go.mod h1:3P4UH/k22rXyHIJD2w4h2XMqPX4Of/eySEZq9L6wqc4=
 github.com/kbinani/screenshot v0.0.0-20210720154843-7d3a670d8329 h1:qq2nCpSrXrmvDGRxW0ruW9BVEV1CN2a9YDOExdt+U0o=

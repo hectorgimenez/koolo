@@ -2,12 +2,13 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"time"
 )
 
 type InteractObjectStep struct {
@@ -31,8 +32,13 @@ func (i *InteractObjectStep) Status(d data.Data) Status {
 		return StatusCompleted
 	}
 
+	// If isCompleted is nil, we run it at least once, sometimes there is no good way to check interaction
+	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted == nil && i.waitingForInteraction {
+		i.tryTransitionStatus(StatusCompleted)
+	}
+
 	// Give some extra time to render the UI
-	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted(d) {
+	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted != nil && i.isCompleted(d) {
 		return i.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -40,7 +46,7 @@ func (i *InteractObjectStep) Status(d data.Data) Status {
 }
 
 func (i *InteractObjectStep) Run(d data.Data) error {
-	if i.isCompleted(d) {
+	if i.isCompleted != nil && i.isCompleted(d) {
 		return nil
 	}
 

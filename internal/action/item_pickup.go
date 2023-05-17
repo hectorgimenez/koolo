@@ -33,7 +33,16 @@ func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 			}
 			if !townCycle["vendor"] {
 				townCycle["vendor"] = true
-				return b.VendorRefill()
+				return NewChain(func(d data.Data) []Action {
+					return []Action{
+						b.IdentifyAll(false),
+						b.Stash(false),
+						b.ReviveMerc(),
+						b.Repair(),
+						b.VendorRefill(),
+					}
+				})
+
 			}
 
 			return BuildStatic(func(d data.Data) []step.Step {
@@ -42,6 +51,7 @@ func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 						return []step.Step{
 							step.InteractObject(object.TownPortal, func(d data.Data) bool {
 								if !d.PlayerUnit.Area.IsTown() {
+									helper.Sleep(500)
 									sellingJunk = false
 									itemBeingPickedUp = -1
 									return true
@@ -162,7 +172,10 @@ func (b Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 func (b Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 	// Only during leveling if gold amount is low pickup items to sell as junk
 	_, isLevelingChar := b.ch.(LevelingCharacter)
-	if isLevelingChar && d.PlayerUnit.TotalGold() < 10000 {
+
+	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
+	// stay away of that
+	if isLevelingChar && d.PlayerUnit.TotalGold() < 50000 && i.Name != "Gold" {
 		return true
 	}
 
