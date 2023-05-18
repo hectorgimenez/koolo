@@ -21,20 +21,17 @@ func (a Leveling) act1() (actions []action.Action) {
 	actions = append(actions, a.denOfEvil())
 
 	// Blood Raven
-	actions = append(actions, a.bloodRaven())
+	//actions = append(actions, a.bloodRaven())
 
-	// Deckar Cain
-	//actions = append(actions, a.deckardCain())
+	// Deckard Cain - Will try after level 15, it's easier to farm Countess by this stupid useless bot
+	actions = append(actions, a.deckardCain())
 
 	// Countess - Farm until level 15
 	actions = append(actions, a.countess())
 
-	// Andariel - Pre-quest, discovering up to Catacombs Level 2
-	//actions = append(actions, a.wayToCatacombs()...)
-	//
-	//// Andariel
-	//actions = append(actions, a.andariel())
-	//
+	// Andariel
+	actions = append(actions, a.andariel())
+
 	//// Talk to Warriv and move to Act 2
 	//actions = append(actions, a.moveToAct2())
 
@@ -143,8 +140,8 @@ func (a Leveling) countess() action.Action {
 
 func (a Leveling) deckardCain() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		if a.isCainInTown(d) {
-			a.logger.Info("Skipping Deckard Cain quest, he is already in town")
+		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 14 {
+			a.logger.Info("Skipping Deckard Cain quest, he is already in town or still not level 15")
 			return []action.Action{}
 		}
 
@@ -217,24 +214,31 @@ func (a Leveling) deckardCain() action.Action {
 }
 
 func (a Leveling) andariel() action.Action {
-	return nil
+	return action.NewChain(func(d data.Data) []action.Action {
+		if !a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 14 {
+			a.logger.Info("Skipping Andariel, Cain is not in town or still not level 15")
+			return []action.Action{}
+		}
+
+		return []action.Action{a.builder.WayPoint(area.CatacombsLevel2)}
+	})
 }
 
-func (a Leveling) wayToCatacombs() (actions []action.Action) {
-	return []action.Action{
-		a.builder.WayPoint(area.BlackMarsh),
-		a.builder.MoveToAreaAndKill(area.TamoeHighland),
-		a.builder.MoveToAreaAndKill(area.OuterCloister),
-		a.builder.MoveToAreaAndKill(area.JailLevel1),
-		a.builder.DiscoverWaypoint(),
-		a.builder.MoveToAreaAndKill(area.JailLevel2),
-		a.builder.MoveToAreaAndKill(area.JailLevel3),
-		a.builder.MoveToAreaAndKill(area.InnerCloister),
-		a.builder.MoveToAreaAndKill(area.CatacombsLevel1),
-		a.builder.MoveToAreaAndKill(area.CatacombsLevel2),
-		a.builder.DiscoverWaypoint(),
-	}
-}
+//func (a Leveling) wayToCatacombs() (actions []action.Action) {
+//	return []action.Action{
+//		a.builder.WayPoint(area.BlackMarsh),
+//		a.builder.MoveToAreaAndKill(area.TamoeHighland),
+//		a.builder.MoveToAreaAndKill(area.OuterCloister),
+//		a.builder.MoveToAreaAndKill(area.JailLevel1),
+//		a.builder.DiscoverWaypoint(),
+//		a.builder.MoveToAreaAndKill(area.JailLevel2),
+//		a.builder.MoveToAreaAndKill(area.JailLevel3),
+//		a.builder.MoveToAreaAndKill(area.InnerCloister),
+//		a.builder.MoveToAreaAndKill(area.CatacombsLevel1),
+//		a.builder.MoveToAreaAndKill(area.CatacombsLevel2),
+//		a.builder.DiscoverWaypoint(),
+//	}
+//}
 
 func (a Leveling) moveToAct2() action.Action {
 	return action.BuildStatic(func(d data.Data) []step.Step {

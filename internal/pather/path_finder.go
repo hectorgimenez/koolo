@@ -30,23 +30,11 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 		collisionGrid[cord[1]][cord[0]] = false
 	}
 
-	if expandedCG {
-		bigCG := make([][]bool, 3000)
-		for x := range bigCG {
-			emptyXs := make([]bool, 3000)
-			for y := 0; y < len(emptyXs); y++ {
-				if x >= 1500 && x <= 1500+len(collisionGrid)-1 && y >= 1500 && y < 1500+len(collisionGrid[0])-1 {
-					emptyXs[y] = collisionGrid[x-1500][y-1500]
-				} else {
-					emptyXs[y] = true
-				}
-			}
-			bigCG[x] = emptyXs
-		}
-		collisionGrid = bigCG
-	}
+	w := parseWorld(expandedCG, collisionGrid, d.PlayerUnit.Area)
 
-	w := parseWorld(collisionGrid, fromX, fromY, toX, toY, d.PlayerUnit.Area)
+	// Set Origin and Destination points
+	w.SetTile(w.NewTile(KindFrom, fromX, fromY))
+	w.SetTile(w.NewTile(KindTo, toX, toY))
 
 	p, distance, found := astar.Path(w.From(), w.To())
 

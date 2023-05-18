@@ -51,7 +51,10 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
 		for _, a := range areas {
-			actions = append(actions, b.MoveToAreaAndKill(a))
+			actions = append(actions,
+				b.ch.Buff(),
+				b.MoveToAreaAndKill(a),
+			)
 		}
 
 		actions = append(actions,

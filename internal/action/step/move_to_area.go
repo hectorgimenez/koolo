@@ -101,5 +101,5 @@ func calculateMaxDistance(d data.Data) int {
 		return 25
 	}
 
-	return 10
+	return 15
 }

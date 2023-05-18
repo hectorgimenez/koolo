@@ -72,9 +72,6 @@ func (m *MoveToStep) Run(d data.Data) error {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 
-	if canTeleport(d) && m.status == StatusNotStarted {
-		hid.PressKey(config.Config.Bindings.Teleport)
-	}
 	if m.startedAt.IsZero() {
 		m.startedAt = time.Now()
 	}
@@ -88,7 +85,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 
 	// Throttle movement clicks in town
 	if d.PlayerUnit.Area.IsTown() {
-		if time.Since(m.lastRun) < helper.RandomDurationMs(200, 350) {
+		if time.Since(m.lastRun) < helper.RandomDurationMs(150, 250) {
 			return nil
 		}
 	}

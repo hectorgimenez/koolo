@@ -1,19 +1,20 @@
 package reader
 
 import (
+	"strconv"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/reader/map_client"
 	"golang.org/x/sys/windows"
-	"strconv"
 )
 
 var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 
 type GameReader struct {
 	*memory.GameReader
-	cachedMapSeed uintptr
+	cachedMapSeed uint
 	cachedMapData map_client.MapData
 }
 
@@ -52,7 +53,7 @@ func (gd *GameReader) GetData(isNewGame bool) data.Data {
 	return d
 }
 
-func (gd *GameReader) getMapSeed(playerUnit uintptr) (uintptr, error) {
+func (gd *GameReader) getMapSeed(playerUnit uintptr) (uint, error) {
 	actPtr := uintptr(gd.Process.ReadUInt(playerUnit+0x20, memory.Uint64))
 	actMiscPtr := uintptr(gd.Process.ReadUInt(actPtr+0x78, memory.Uint64))
 
@@ -70,5 +71,5 @@ func (gd *GameReader) getMapSeed(playerUnit uintptr) (uintptr, error) {
 		return 0, err
 	}
 
-	return mapSeed, nil
+	return uint(mapSeed), nil
 }

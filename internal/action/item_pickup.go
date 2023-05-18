@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 )
 
@@ -40,6 +41,11 @@ func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 						b.ReviveMerc(),
 						b.Repair(),
 						b.VendorRefill(),
+						// Move close to the portal to get in range
+						BuildStatic(func(d data.Data) []step.Step {
+							tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
+							return []step.Step{step.MoveTo(tpArea)}
+						}),
 					}
 				})
 
