@@ -7,7 +7,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/go-vgo/robotgo v1.0.0-rc1
-	github.com/hectorgimenez/d2go v0.0.0-20230517120335-de57c70f2593
+	github.com/hectorgimenez/d2go v0.0.0-20230518130518-5dae8f019fda
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/robotn/gohook v0.40.0
 	github.com/stretchr/testify v1.8.2
