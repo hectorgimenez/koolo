@@ -18,25 +18,38 @@ func NewGameManager(gr *reader.GameReader) *GameManager {
 	return &GameManager{gr: gr}
 }
 
-// ExitGame tries to close the socket and also exit via game menu, what happens faster.
 func (gm *GameManager) ExitGame() error {
-	//_ = tcp.CloseCurrentGameSocket(gm.gr.GetPID())
-	exitGameUsingUIMenu()
+	// First try to exit game as fast as possible, without any check, useful when chickening
+	hid.PressKey("esc")
+	hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
+	hid.Click(hid.LeftButton)
 
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 5; i++ {
 		if !gm.gr.InGame() {
 			return nil
 		}
 		Sleep(1000)
 	}
 
-	return errors.New("error exiting game! Timeout")
-}
+	// If we are still in game, probably character is dead, so let's do it nicely.
+	// Probably closing the socket is more reliable, but was not working properly for me on singleplayer.
+	for i := 0; i < 10; i++ {
+		if gm.gr.GetData(false).OpenMenus.QuitMenu {
+			hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
+			hid.Click(hid.LeftButton)
 
-func exitGameUsingUIMenu() {
-	hid.PressKey("esc")
-	hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
-	hid.Click(hid.LeftButton)
+			for i := 0; i < 5; i++ {
+				if !gm.gr.InGame() {
+					return nil
+				}
+				Sleep(1000)
+			}
+		}
+		hid.PressKey("esc")
+		Sleep(1000)
+	}
+
+	return errors.New("error exiting game! Timeout")
 }
 
 func (gm *GameManager) NewGame() error {
