@@ -167,5 +167,5 @@ func shouldExpandCollisionGrid(d data.Data, p data.Position) bool {
 	relativeToX := p.X - d.AreaOrigin.X
 	relativeToY := p.Y - d.AreaOrigin.Y
 
-	return relativeToX < 0 || relativeToY < 0 || relativeToX > len(d.CollisionGrid) || relativeToY > len(d.CollisionGrid[0])
+	return relativeToX < 0 || relativeToY < 0 || relativeToX > len(d.CollisionGrid[0]) || relativeToY > len(d.CollisionGrid)
 }
