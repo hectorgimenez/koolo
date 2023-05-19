@@ -67,7 +67,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 	}
 
 	// Set teleport for first time
-	if p.lastRun.IsZero() && canTeleport(d) {
+	if p.lastRun.IsZero() && CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 
@@ -89,7 +89,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 
 				path, distance, _ := pather.GetPath(d, i.Position)
 				if distance > 6 {
-					pather.MoveThroughPath(path, 15, canTeleport(d))
+					pather.MoveThroughPath(path, 15, CanTeleport(d))
 					return nil
 				}
 

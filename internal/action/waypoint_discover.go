@@ -6,12 +6,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"go.uber.org/zap"
 )
 
 func (b Builder) DiscoverWaypoint() *Factory {
 	interacted := false
 
 	return NewFactory(func(d data.Data) Action {
+		b.logger.Info("Trying to autodiscover Waypoint for current area", zap.Any("area", d.PlayerUnit.Area))
 		if interacted {
 			return nil
 		}
@@ -47,6 +49,7 @@ func (b Builder) DiscoverWaypoint() *Factory {
 			}
 		}
 
+		b.logger.Info("Waypoint not found :(", zap.Any("area", d.PlayerUnit.Area))
 		return nil
 	})
 }

@@ -69,8 +69,22 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 		}))
 	}
 
-	// Clear Tristram
-	actions = append(actions, a.builder.ClearArea(false, data.MonsterAnyFilter()))
+	// Clear Tristram or rescue Cain
+	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+		if o, found := d.Objects.FindOne(object.CainGibbet); found && o.Selectable {
+			return []action.Action{action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.InteractObject(object.CainGibbet, func(d data.Data) bool {
+						o, _ := d.Objects.FindOne(object.CainGibbet)
+
+						return !o.Selectable
+					}),
+				}
+			})}
+		} else {
+			return []action.Action{a.builder.ClearArea(false, data.MonsterAnyFilter())}
+		}
+	}))
 
 	return
 }

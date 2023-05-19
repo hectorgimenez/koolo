@@ -10,6 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 type SorceressLeveling struct {
@@ -33,33 +34,27 @@ func (s SorceressLeveling) SkillPoints() []skill.Skill {
 		skill.ChargedBolt,
 		skill.FrozenArmor,
 		skill.StaticField,
-		skill.FrostNova,
+		skill.ChargedBolt,
 		skill.StaticField,
 		skill.StaticField,
 		skill.StaticField,
 		skill.Telekinesis,
 		skill.Nova,
 		skill.Nova,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
-		skill.FireBall,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Teleport,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
+		skill.Nova,
 	}
 }
 
@@ -116,6 +111,7 @@ func (s SorceressLeveling) KillCouncil() action.Action {
 func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) *action.DynamicAction {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	staticFieldUsed := false
 
 	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		id, found := monsterSelector(d)
@@ -134,11 +130,27 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 			opts = append(opts, step.Distance(1, 25))
 		}
 
-		if completedAttackLoops >= hammerdinMaxAttacksLoop {
+		if completedAttackLoops >= sorceressMaxAttacksLoop {
 			return []step.Step{}, false
 		}
 
 		steps := make([]step.Step, 0)
+
+		// Try to static field when monsters around character are > 5 or elite enemy is close enough
+		numberOfCloseMonsters := 0
+		eliteFound := false
+		for _, m := range d.Monsters.Enemies() {
+			if pather.DistanceFromMe(d, m.Position) < 5 {
+				numberOfCloseMonsters++
+				if m.IsElite() {
+					eliteFound = true
+				}
+			}
+		}
+		if !staticFieldUsed && (numberOfCloseMonsters > 5 || eliteFound) {
+			staticFieldUsed = true
+			steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 4, step.Distance(1, 5)))
+		}
 
 		// During early game stages amount of mana is ridiculous...
 		if d.PlayerUnit.MPPercent() < 15 && d.PlayerUnit.Stats[stat.Level] < 15 {

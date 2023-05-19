@@ -68,7 +68,7 @@ func (m *MoveToStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted && canTeleport(d) {
+	if m.status == StatusNotStarted && CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 
@@ -90,7 +90,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 		}
 	}
 
-	if canTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 
@@ -128,7 +128,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	pather.MoveThroughPath(m.path, calculateMaxDistance(d), canTeleport(d))
+	pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
 
 	return nil
 }

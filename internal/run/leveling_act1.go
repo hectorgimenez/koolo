@@ -29,11 +29,8 @@ func (a Leveling) act1() (actions []action.Action) {
 	// Countess - Farm until level 15
 	actions = append(actions, a.countess())
 
-	// Andariel
+	// Andariel and move to Act 2
 	actions = append(actions, a.andariel())
-
-	//// Talk to Warriv and move to Act 2
-	//actions = append(actions, a.moveToAct2())
 
 	return
 }
@@ -46,6 +43,7 @@ func (a Leveling) denOfEvil() action.Action {
 			return []action.Action{}
 		}
 
+		a.logger.Info("Starting Den of Evil run")
 		return []action.Action{
 			a.builder.MoveToAreaAndKill(area.BloodMoor),
 			a.char.Buff(),
@@ -66,6 +64,7 @@ func (a Leveling) bloodRaven() action.Action {
 		//	return []action.Action{}
 		//}
 
+		a.logger.Info("Starting Blood Raven quest")
 		return []action.Action{
 			a.builder.WayPoint(area.ColdPlains),
 			a.builder.MoveToAreaAndKill(area.BurialGrounds),
@@ -99,10 +98,12 @@ func (a Leveling) bloodRaven() action.Action {
 
 func (a Leveling) countess() action.Action {
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
-		if d.PlayerUnit.Stats[stat.Level] < 6 || d.PlayerUnit.Stats[stat.Level] > 14 {
+		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 6 || d.PlayerUnit.Stats[stat.Level] > 14 {
+			a.logger.Info("Skipping Countess farm, already level 15 or Cain in town")
 			return
 		}
 
+		a.logger.Info("Starting Countess run")
 		// Moving to starting point (Black Marsh)
 		actions = append(actions, a.builder.WayPoint(area.BlackMarsh))
 
@@ -140,11 +141,12 @@ func (a Leveling) countess() action.Action {
 
 func (a Leveling) deckardCain() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 14 {
+		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 15 {
 			a.logger.Info("Skipping Deckard Cain quest, he is already in town or still not level 15")
 			return []action.Action{}
 		}
 
+		a.logger.Info("Rescuing Cain")
 		actions := []action.Action{
 			a.builder.WayPoint(area.DarkWood),
 			a.char.Buff(),
@@ -176,6 +178,7 @@ func (a Leveling) deckardCain() action.Action {
 
 				return []step.Step{}
 			}),
+
 			action.BuildStatic(func(d data.Data) []step.Step {
 				for _, i := range d.Items.Ground {
 					if i.Name == scrollOfInifuss {
@@ -202,12 +205,8 @@ func (a Leveling) deckardCain() action.Action {
 			}),
 		}
 
-		// Reuse Tristram Run actions...
+		// Reuse Tristram Run actions
 		actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
-
-		//actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		//
-		//}))
 
 		return actions
 	})
@@ -215,42 +214,34 @@ func (a Leveling) deckardCain() action.Action {
 
 func (a Leveling) andariel() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		if !a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 14 {
+		if !a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 15 {
 			a.logger.Info("Skipping Andariel, Cain is not in town or still not level 15")
 			return []action.Action{}
 		}
 
-		return []action.Action{a.builder.WayPoint(area.CatacombsLevel2)}
-	})
-}
-
-//func (a Leveling) wayToCatacombs() (actions []action.Action) {
-//	return []action.Action{
-//		a.builder.WayPoint(area.BlackMarsh),
-//		a.builder.MoveToAreaAndKill(area.TamoeHighland),
-//		a.builder.MoveToAreaAndKill(area.OuterCloister),
-//		a.builder.MoveToAreaAndKill(area.JailLevel1),
-//		a.builder.DiscoverWaypoint(),
-//		a.builder.MoveToAreaAndKill(area.JailLevel2),
-//		a.builder.MoveToAreaAndKill(area.JailLevel3),
-//		a.builder.MoveToAreaAndKill(area.InnerCloister),
-//		a.builder.MoveToAreaAndKill(area.CatacombsLevel1),
-//		a.builder.MoveToAreaAndKill(area.CatacombsLevel2),
-//		a.builder.DiscoverWaypoint(),
-//	}
-//}
-
-func (a Leveling) moveToAct2() action.Action {
-	return action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.InteractNPC(npc.Warriv),
-			step.KeySequence("home", "down", "enter"),
+		a.logger.Info("Starting Andariel run")
+		return []action.Action{
+			a.builder.WayPoint(area.CatacombsLevel2),
+			a.char.Buff(),
+			a.builder.MoveToAreaAndKill(area.CatacombsLevel3),
+			a.builder.MoveToAreaAndKill(area.CatacombsLevel4),
+			a.builder.MoveAndKill(func(d data.Data) (data.Position, bool) {
+				return andarielStartingPosition, true
+			}),
+			a.builder.ReturnTown(),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.InteractNPC(npc.Warriv),
+					step.KeySequence("home", "down", "enter"),
+				}
+			}),
 		}
 	})
 }
 
 func (a Leveling) isCainInTown(d data.Data) bool {
-	_, found := d.NPCs.FindOne(npc.DeckardCain)
+	// TODO This fails if Cain is out of range, ideally we should move closer to his place
+	_, found := d.Monsters.FindOne(npc.DeckardCain5, data.MonsterTypeNone)
 
 	return found
 }

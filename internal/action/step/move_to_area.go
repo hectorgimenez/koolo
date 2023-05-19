@@ -41,11 +41,11 @@ func (m *MoveToAreaStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToAreaStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted && canTeleport(d) {
+	if m.status == StatusNotStarted && CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	m.tryTransitionStatus(StatusInProgress)
-	if canTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 
@@ -70,7 +70,7 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 					}
 					m.path = path
 				}
-				pather.MoveThroughPath(m.path, calculateMaxDistance(d), canTeleport(d))
+				pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
 				return nil
 			}
 
@@ -90,14 +90,14 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 	return fmt.Errorf("area %s not found", m.area)
 }
 
-func canTeleport(d data.Data) bool {
+func CanTeleport(d data.Data) bool {
 	_, found := d.PlayerUnit.Skills[skill.Teleport]
 
 	return found && config.Config.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
 }
 
 func calculateMaxDistance(d data.Data) int {
-	if canTeleport(d) {
+	if CanTeleport(d) {
 		return 25
 	}
 

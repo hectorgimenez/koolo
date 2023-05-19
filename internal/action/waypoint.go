@@ -55,6 +55,19 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 				b.ch.Buff(),
 				b.MoveToAreaAndKill(a),
 			)
+
+			// The connection between the Monastery Gate and Tamoe Highland is a bit tricky
+			if a == area.MonasteryGate {
+				actions = append(actions,
+					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+						b.logger.Debug("Monastery Gate detected, moving to static coords")
+						return data.Position{X: 15139, Y: 5098}, true
+					}),
+					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+						return data.Position{X: 15148, Y: 4978}, true
+					}),
+				)
+			}
 		}
 
 		actions = append(actions,
