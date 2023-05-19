@@ -40,16 +40,16 @@ bindings:
   forceMove: e
   standStill: shift
   swapWeapon: w
-  teleport: q
-  tp: t
-  CTABattleCommand: s
-  CTABattleOrders: d
+  teleport: f1
+  tp: f4
+  CTABattleCommand: f6
+  CTABattleOrders: f7
 
   # Class specific bindings
   sorceress:
-    blizzard: w
-    staticField: e
-    frozenArmor: a
+    blizzard: f2
+    staticField: f3
+    frozenArmor: f4
 
   hammerdin:
     concentration: w
