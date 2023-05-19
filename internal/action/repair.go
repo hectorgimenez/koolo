@@ -16,7 +16,6 @@ func (b Builder) Repair() *DynamicAction {
 	return BuildDynamic(func(d data.Data) (steps []step.Step, valid bool) {
 		if repaired {
 			if d.OpenMenus.NPCShop {
-				b.logger.Info("ESC")
 				steps = append(steps,
 					step.SyncStep(func(_ data.Data) error {
 						hid.PressKey("esc")

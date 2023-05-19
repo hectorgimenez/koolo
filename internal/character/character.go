@@ -19,8 +19,10 @@ func BuildCharacter(logger *zap.Logger) (action.Character, error) {
 		logger: logger,
 	}
 
-	// TODO: Refactor this, using a constant maybe
 	if config.Config.Game.Runs[0] == "leveling" {
+		if strings.ToLower(config.Config.Character.Class) != "sorceress" {
+			return nil, fmt.Errorf("leveling only available for sorceress")
+		}
 		return SorceressLeveling{BaseCharacter: bc}, nil
 	}
 
