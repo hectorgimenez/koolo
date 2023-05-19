@@ -7,10 +7,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
-const (
-	safeDistanceFromMephistoX = 17568
-	safeDistanceFromMephistoY = 8069
-)
+var mephistoSafePosition = data.Position{
+	X: 17568,
+	Y: 8069,
+}
 
 type Mephisto struct {
 	baseRun
@@ -31,7 +31,7 @@ func (m Mephisto) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
 		return []step.Step{
 			step.MoveToLevel(area.DuranceOfHateLevel3),
-			step.MoveTo(safeDistanceFromMephistoX, safeDistanceFromMephistoY, true),
+			step.MoveTo(mephistoSafePosition),
 		}
 	}))
 

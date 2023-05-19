@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/nip"
 	"os"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/nip"
 
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -49,18 +50,20 @@ type StructConfig struct {
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
 	Bindings struct {
-		OpenInventory    string `yaml:"openInventory"`
-		Potion1          string `yaml:"potion1"`
-		Potion2          string `yaml:"potion2"`
-		Potion3          string `yaml:"potion3"`
-		Potion4          string `yaml:"potion4"`
-		ForceMove        string `yaml:"forceMove"`
-		StandStill       string `yaml:"standStill"`
-		SwapWeapon       string `yaml:"swapWeapon"`
-		Teleport         string `yaml:"teleport"`
-		TP               string `yaml:"tp"`
-		CTABattleCommand string `yaml:"CTABattleCommand"`
-		CTABattleOrders  string `yaml:"CTABattleOrders"`
+		OpenInventory       string `yaml:"openInventory"`
+		OpenCharacterScreen string `yaml:"openCharacterScreen"`
+		OpenSkillTree       string `yaml:"openSkillTree"`
+		Potion1             string `yaml:"potion1"`
+		Potion2             string `yaml:"potion2"`
+		Potion3             string `yaml:"potion3"`
+		Potion4             string `yaml:"potion4"`
+		ForceMove           string `yaml:"forceMove"`
+		StandStill          string `yaml:"standStill"`
+		SwapWeapon          string `yaml:"swapWeapon"`
+		Teleport            string `yaml:"teleport"`
+		TP                  string `yaml:"tp"`
+		CTABattleCommand    string `yaml:"CTABattleCommand"`
+		CTABattleOrders     string `yaml:"CTABattleOrders"`
 
 		// Class Specific bindings
 		Sorceress struct {
@@ -83,7 +86,6 @@ type StructConfig struct {
 			Mana         int `yaml:"mana"`
 			Rejuvenation int `yaml:"rejuvenation"`
 		} `yaml:"beltColumns"`
-		BeltRows int `yaml:"beltRows"`
 	} `yaml:"inventory"`
 	Character struct {
 		Class         string `yaml:"class"`

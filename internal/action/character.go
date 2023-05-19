@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
@@ -20,4 +21,11 @@ type Character interface {
 		skipOnImmunities []stat.Resist,
 		opts ...step.AttackOption,
 	) *DynamicAction
+}
+
+type LevelingCharacter interface {
+	Character
+	// StatPoints Stats will be assigned in the order they are returned by this function.
+	StatPoints() map[stat.ID]int
+	SkillPoints() []skill.Skill
 }

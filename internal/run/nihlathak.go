@@ -2,6 +2,7 @@ package run
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -40,7 +41,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		for _, o := range d.Objects {
 			if o.Name == object.NihlathakWildernessStartPositionName {
 				nilaO = o
-				return []step.Step{step.MoveTo(o.Position.X, o.Position.Y, true, step.StopAtDistance(40))}
+				return []step.Step{step.MoveTo(o.Position, step.StopAtDistance(40))}
 			}
 		}
 
@@ -83,7 +84,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		}
 
 		fmt.Printf("Moving to corner %d. Average monster distance: %d\n", bestCorner, bestCornerDistance)
-		return []step.Step{step.MoveTo(corners[bestCorner].X, corners[bestCorner].Y, true)}
+		return []step.Step{step.MoveTo(corners[bestCorner])}
 	}))
 
 	// Kill Nihlathak

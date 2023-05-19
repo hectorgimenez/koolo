@@ -1,6 +1,8 @@
 package run
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -9,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"time"
 )
 
 type Companion struct {
@@ -23,7 +24,7 @@ func (s Companion) Name() string {
 func (s Companion) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
-		return []step.Step{step.MoveTo(tpArea.X, tpArea.Y, false)}
+		return []step.Step{step.MoveTo(tpArea)}
 	}))
 
 	// Wait for the portal, once it's up, enter and wait
@@ -68,7 +69,7 @@ func (s Companion) BuildActions() (actions []action.Action) {
 				})}
 			} else {
 				// Follow the leader
-				return []step.Step{step.MoveTo(rm.Position.X, rm.Position.Y, false, step.WithTimeout(time.Second*3))}
+				return []step.Step{step.MoveTo(rm.Position, step.WithTimeout(time.Second*3))}
 			}
 		})
 	}))

@@ -29,25 +29,27 @@ health: # Healing configuration, all values in %
 
 bindings:
   openInventory: i
+  openCharacterScreen: c
+  openSkillTree: t
   potion1: 1
   potion2: 2
   potion3: 3
   potion4: 4
 
   # Skills
-  forceMove: h
-  standStill: j
-  swapWeapon: g
-  teleport: q
-  tp: t
-  CTABattleCommand: s
-  CTABattleOrders: d
+  forceMove: e
+  standStill: shift
+  swapWeapon: w
+  teleport: f1
+  tp: f4
+  CTABattleCommand: f6
+  CTABattleOrders: f7
 
   # Class specific bindings
   sorceress:
-    blizzard: w
-    staticField: e
-    frozenArmor: a
+    blizzard: f2
+    staticField: f3
+    frozenArmor: f4
 
   hammerdin:
     concentration: w
@@ -67,7 +69,6 @@ inventory:
     healing: 2
     mana: 1
     rejuvenation: 1
-  beltRows: 4
 
 character:
   class: sorceress # Allowed values: sorceress, hammerdin

@@ -3,14 +3,14 @@ package health
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
-	"time"
 )
 
 var ErrDied = errors.New("you died :(")
@@ -53,10 +53,6 @@ func (hm *Manager) HandleHealthAndMana(d data.Data) error {
 
 	if d.PlayerUnit.HPPercent() <= 0 {
 		stat.FinishCurrentRun(event.Death)
-		helper.Sleep(2000)
-		hid.PressKey("esc")
-		helper.Sleep(4000)
-		hm.gameManager.ExitGame()
 
 		return ErrDied
 	}

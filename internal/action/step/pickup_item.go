@@ -2,13 +2,14 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
-	"time"
 )
 
 const maxInteractions = 45
@@ -16,7 +17,7 @@ const maxInteractions = 45
 type PickupItemStep struct {
 	basicStep
 	item                  data.Item
-	waitingForInteraction bool
+	waitingForInteraction time.Time
 	mouseOverAttempts     int
 	logger                *zap.Logger
 	startedAt             time.Time
@@ -47,7 +48,7 @@ func (p *PickupItemStep) Status(d data.Data) Status {
 }
 
 func (p *PickupItemStep) Run(d data.Data) error {
-	if p.mouseOverAttempts > maxInteractions {
+	if p.mouseOverAttempts > maxInteractions || !p.waitingForInteraction.IsZero() && time.Since(p.waitingForInteraction) > time.Second*5 {
 		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Name, p.item.Quality.ToString())
 	}
 
@@ -61,12 +62,12 @@ func (p *PickupItemStep) Run(d data.Data) error {
 		return nil
 	}
 
-	if p.waitingForInteraction && time.Since(p.lastRun) < time.Second*2 {
+	if !p.waitingForInteraction.IsZero() && time.Since(p.lastRun) < time.Second*2 {
 		return nil
 	}
 
 	// Set teleport for first time
-	if p.lastRun.IsZero() {
+	if p.lastRun.IsZero() && CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 
@@ -75,7 +76,9 @@ func (p *PickupItemStep) Run(d data.Data) error {
 		if i.UnitID == p.item.UnitID {
 			if i.IsHovered {
 				hid.Click(hid.LeftButton)
-				p.waitingForInteraction = true
+				if p.waitingForInteraction.IsZero() {
+					p.waitingForInteraction = time.Now()
+				}
 				return nil
 			} else {
 				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
@@ -86,7 +89,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 
 				path, distance, _ := pather.GetPath(d, i.Position)
 				if distance > 6 {
-					pather.MoveThroughPath(path, 15, true)
+					pather.MoveThroughPath(path, 15, CanTeleport(d))
 					return nil
 				}
 

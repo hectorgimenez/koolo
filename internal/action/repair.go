@@ -11,11 +11,28 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) Repair() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b Builder) Repair() *DynamicAction {
+	repaired := false
+	return BuildDynamic(func(d data.Data) (steps []step.Step, valid bool) {
+		if repaired {
+			if d.OpenMenus.NPCShop {
+				steps = append(steps,
+					step.SyncStep(func(_ data.Data) error {
+						hid.PressKey("esc")
+						return nil
+					}),
+				)
+
+				return steps, true
+
+			}
+
+			return nil, false
+		}
+
 		shouldRepair := false
 		for _, i := range d.Items.Equipped {
-			if du, found := i.Stats[stat.Durability]; found && du.Value < 3 {
+			if du, found := i.Stats[stat.Durability]; found && du.Value <= 1 {
 				shouldRepair = true
 				b.logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))
 				break
@@ -23,6 +40,7 @@ func (b Builder) Repair() *StaticAction {
 		}
 
 		if shouldRepair {
+			repaired = true
 			steps = append(steps,
 				step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()),
 				step.KeySequence("home", "down", "enter"),
@@ -31,12 +49,12 @@ func (b Builder) Repair() *StaticAction {
 					hid.MovePointer(390, 515)
 					hid.Click(hid.LeftButton)
 					helper.Sleep(500)
-					hid.PressKey("esc")
 					return nil
 				}),
 			)
+			return steps, true
 		}
 
 		return
-	}, Resettable(), CanBeSkipped())
+	}, CanBeSkipped())
 }

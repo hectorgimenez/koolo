@@ -1,6 +1,8 @@
 package action
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -21,12 +23,21 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 
 		monstersInRoom := make([]data.Monster, 0)
 		for _, m := range d.Monsters.Enemies(filter) {
-			if currentRoom.IsInside(m.Position) {
+			if currentRoom.IsInside(m.Position) || pather.DistanceFromMe(d, m.Position) < 30 {
 				monstersInRoom = append(monstersInRoom, m)
 			}
 		}
 
 		if len(monstersInRoom) > 0 {
+			// Check if there are monsters that can summon new monsters, and kill them first
+			for _, m := range monstersInRoom {
+				if m.IsMonsterRaiser() {
+					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+						return m.UnitID, true
+					}, nil, step.Distance(5, 15))
+				}
+			}
+
 			return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				return monstersInRoom[0].UnitID, true
 			}, nil, step.Distance(5, 15))
@@ -67,11 +78,9 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 				}
 
 				return []step.Step{step.MoveTo(
-					closestRoom.GetCenter().X,
-					closestRoom.GetCenter().Y,
-					true,
+					closestRoom.GetCenter(),
 					step.ClosestWalkable(),
-					step.StopAtDistance(5),
+					step.WithTimeout(time.Second),
 				)}
 			})
 		}
@@ -85,7 +94,7 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 					chest := o
 					return BuildStatic(func(d data.Data) []step.Step {
 						return []step.Step{
-							step.MoveTo(o.Position.X, o.Position.Y, true),
+							step.MoveTo(o.Position),
 							step.InteractObject(o.Name, func(d data.Data) bool {
 								for _, obj := range d.Objects {
 									if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {

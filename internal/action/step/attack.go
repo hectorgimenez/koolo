@@ -1,12 +1,13 @@
 package step
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"time"
 )
 
 type AttackStep struct {
@@ -143,12 +144,15 @@ func (p *AttackStep) ensureEnemyIsInRange(monster data.Monster, d data.Data) boo
 				// Try to move to the minimum distance
 				if path.Distance() > p.minDistance {
 					pos := path.AstarPather[p.minDistance-1].(*pather.Tile)
-					p.moveToStep = MoveTo(pos.X+d.AreaOrigin.X, pos.Y+d.AreaOrigin.Y, true)
+					p.moveToStep = MoveTo(data.Position{
+						X: pos.X + d.AreaOrigin.X,
+						Y: pos.Y + d.AreaOrigin.Y,
+					})
 				}
 			}
 
 			if p.moveToStep == nil {
-				p.moveToStep = MoveTo(monster.Position.X, monster.Position.Y, true)
+				p.moveToStep = MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
 			}
 		}
 

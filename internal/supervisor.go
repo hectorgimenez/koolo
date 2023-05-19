@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -12,8 +15,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
-	"os"
-	"time"
 )
 
 type baseSupervisor struct {

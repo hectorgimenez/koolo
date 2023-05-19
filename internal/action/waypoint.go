@@ -17,30 +17,76 @@ const (
 	wpAreaBtnHeight = 41
 )
 
-func (b Builder) WayPoint(a area.Area) *StaticAction {
-	allowedAreas := map[area.Area][2]int{
-		area.StonyField:              {1, 3},
-		area.BlackMarsh:              {1, 5},
-		area.CatacombsLevel2:         {1, 9},
-		area.LostCity:                {2, 6},
-		area.ArcaneSanctuary:         {2, 8},
-		area.LowerKurast:             {3, 5},
-		area.Travincal:               {3, 8},
-		area.DuranceOfHateLevel2:     {3, 9},
-		area.RiverOfFlame:            {4, 3},
-		area.Harrogath:               {5, 1},
-		area.FrigidHighlands:         {5, 2},
-		area.HallsOfPain:             {5, 6},
-		area.TheWorldStoneKeepLevel2: {5, 9},
-	}
+func (b Builder) WayPoint(a area.Area) *Factory {
+	usedWP := false
+	isChild := false
+	return NewFactory(func(d data.Data) Action {
+		if d.PlayerUnit.Area != a && !usedWP {
+			usedWP = true
+			return b.useWP(a)
+		}
 
+		if d.PlayerUnit.Area != a {
+			dstWP := area.WPAddresses[a]
+			if isChild {
+				b.logger.Info("Traversing to next WP")
+				return b.traverseNextWP(a, dstWP.LinkedFrom)
+			} else {
+				b.logger.Info("Waypoint not found (or error occurred) try to autodiscover it")
+
+				for nwA, wp := range area.WPAddresses {
+					if wp.Tab == dstWP.Tab && wp.Row == dstWP.Row-1 {
+						isChild = true
+						return b.WayPoint(nwA)
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+
+}
+
+func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
+	return NewChain(func(d data.Data) (actions []Action) {
+		for _, a := range areas {
+			actions = append(actions,
+				b.ch.Buff(),
+				b.MoveToAreaAndKill(a),
+			)
+
+			// The connection between the Monastery Gate and Tamoe Highland is a bit tricky
+			if a == area.MonasteryGate {
+				actions = append(actions,
+					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+						b.logger.Debug("Monastery Gate detected, moving to static coords")
+						return data.Position{X: 15139, Y: 5098}, true
+					}),
+					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+						return data.Position{X: 15148, Y: 4978}, true
+					}),
+				)
+			}
+		}
+
+		actions = append(actions,
+			b.MoveToAreaAndKill(dst),
+			b.DiscoverWaypoint(),
+		)
+
+		return
+	})
+}
+
+func (b Builder) useWP(a area.Area) Action {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		// We don't need to move
 		if d.PlayerUnit.Area == a {
 			return
 		}
 
-		wpCoords, found := allowedAreas[a]
+		wpCoords, found := area.WPAddresses[a]
 		if !found {
 			panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
 		}
@@ -51,10 +97,10 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 					step.InteractObject(o.Name, func(d data.Data) bool {
 						return d.OpenMenus.Waypoint
 					}),
-					step.SyncStepWithCheck(func(d data.Data) error {
-						actTabX := wpTabStartX + (wpCoords[0]-1)*wpTabSizeX + (wpTabSizeX / 2)
+					step.SyncStep(func(d data.Data) error {
+						actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
-						areaBtnY := wpListStartY + (wpCoords[1]-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
+						areaBtnY := wpListStartY + (wpCoords.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
 						hid.MovePointer(actTabX, wpTabStartY)
 						helper.Sleep(200)
 						hid.Click(hid.LeftButton)
@@ -62,19 +108,14 @@ func (b Builder) WayPoint(a area.Area) *StaticAction {
 						hid.MovePointer(wpListPositionX, areaBtnY)
 						helper.Sleep(200)
 						hid.Click(hid.LeftButton)
+						helper.Sleep(1000)
 
 						return nil
-					}, func(d data.Data) step.Status {
-						if d.PlayerUnit.Area == a && !d.OpenMenus.LoadingScreen {
-							return step.StatusCompleted
-						}
-
-						return step.StatusInProgress
 					}),
 				)
 			}
 		}
 
 		return
-	}, Resettable())
+	}, IgnoreErrors())
 }

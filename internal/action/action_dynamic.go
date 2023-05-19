@@ -2,10 +2,11 @@ package action
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"go.uber.org/zap"
-	"reflect"
 )
 
 type DynamicAction struct {

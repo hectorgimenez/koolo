@@ -2,12 +2,13 @@ package health
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
-	"strings"
 )
 
 type BeltManager struct {
@@ -43,9 +44,9 @@ func (pm BeltManager) DrinkPotion(d data.Data, potionType data.PotionType, merc 
 
 // ShouldBuyPotions will return true if more than 25% of belt is empty (ignoring rejuv)
 func (pm BeltManager) ShouldBuyPotions(d data.Data) bool {
-	targetHealingAmount := config.Config.Inventory.BeltColumns.Healing * config.Config.Inventory.BeltRows
-	targetManaAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
-	targetRejuvAmount := config.Config.Inventory.BeltColumns.Rejuvenation * config.Config.Inventory.BeltRows
+	targetHealingAmount := config.Config.Inventory.BeltColumns.Healing * d.Items.Belt.Rows()
+	targetManaAmount := config.Config.Inventory.BeltColumns.Mana * d.Items.Belt.Rows()
+	targetRejuvAmount := config.Config.Inventory.BeltColumns.Rejuvenation * d.Items.Belt.Rows()
 
 	currentHealing, currentMana, currentRejuv := pm.getCurrentPotions(d)
 
@@ -71,7 +72,7 @@ func (pm BeltManager) getCurrentPotions(d data.Data) (int, int, int) {
 	currentHealing := 0
 	currentMana := 0
 	currentRejuv := 0
-	for _, i := range d.Items.Belt {
+	for _, i := range d.Items.Belt.Items {
 		if strings.Contains(string(i.Name), string(data.HealingPotion)) {
 			currentHealing++
 			continue
@@ -93,21 +94,21 @@ func (pm BeltManager) GetMissingCount(d data.Data, potionType data.PotionType) i
 
 	switch potionType {
 	case data.HealingPotion:
-		targetAmount := config.Config.Inventory.BeltColumns.Healing * config.Config.Inventory.BeltRows
+		targetAmount := config.Config.Inventory.BeltColumns.Healing * d.Items.Belt.Rows()
 		missingPots := targetAmount - currentHealing
 		if missingPots < 0 {
 			return 0
 		}
 		return missingPots
 	case data.ManaPotion:
-		targetAmount := config.Config.Inventory.BeltColumns.Mana * config.Config.Inventory.BeltRows
+		targetAmount := config.Config.Inventory.BeltColumns.Mana * d.Items.Belt.Rows()
 		missingPots := targetAmount - currentMana
 		if missingPots < 0 {
 			return 0
 		}
 		return missingPots
 	case data.RejuvenationPotion:
-		targetAmount := config.Config.Inventory.BeltColumns.Rejuvenation * config.Config.Inventory.BeltRows
+		targetAmount := config.Config.Inventory.BeltColumns.Rejuvenation * d.Items.Belt.Rows()
 		missingPots := targetAmount - currentRejuv
 		if missingPots < 0 {
 			return 0

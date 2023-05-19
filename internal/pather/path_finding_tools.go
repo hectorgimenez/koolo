@@ -65,32 +65,53 @@ func (w World) To() *Tile {
 }
 
 // parseWorld parses a textual representation of a world into a world map.
-func parseWorld(collisionGrid [][]bool, fromX, fromY, toX, toY int, ar area.Area) World {
-	w := make(World, len(collisionGrid[0]))
+func parseWorld(expandedGrid bool, collisionGrid [][]bool, ar area.Area) World {
+	gridSizeX := len(collisionGrid[0])
+	gridSizeY := len(collisionGrid)
 
-	for x := 0; x < len(collisionGrid[0]); x++ {
-		w[x] = make([]*Tile, len(collisionGrid))
+	if expandedGrid {
+		gridSizeX = expandedGridPadding
+		gridSizeY = expandedGridPadding
 	}
 
-	for x, xValues := range collisionGrid {
-		for y, walkable := range xValues {
-			kind := KindBlocker
+	w := make(World, gridSizeX)
 
-			// Hacky solution to avoid Arcane Sanctuary A* errors
-			if ar == area.ArcaneSanctuary {
-				kind = KindSoftBlocker
+	for x := 0; x < gridSizeX; x++ {
+		w[x] = make([]*Tile, gridSizeY)
+	}
+
+	if expandedGrid {
+		for x := 0; x < gridSizeY; x++ {
+			for y := 0; y < gridSizeX; y++ {
+				if x >= 1500 && x <= 1500+len(collisionGrid)-1 && y >= 1500 && y < 1500+len(collisionGrid[0])-1 {
+					if collisionGrid[x-1500][y-1500] {
+						w.SetTile(w.NewTile(KindPlain, y, x))
+					} else {
+						w.SetTile(w.NewTile(KindBlocker, y, x))
+					}
+				} else {
+					w.SetTile(w.NewTile(KindSoftBlocker, y, x))
+				}
 			}
+		}
+	} else {
+		for x, xValues := range collisionGrid {
+			for y, walkable := range xValues {
+				kind := KindBlocker
 
-			if walkable {
-				kind = KindPlain
+				// Hacky solution to avoid Arcane Sanctuary A* errors
+				if ar == area.ArcaneSanctuary {
+					kind = KindSoftBlocker
+				}
+
+				if walkable {
+					kind = KindPlain
+				}
+
+				w.SetTile(w.NewTile(kind, y, x))
 			}
-
-			w.SetTile(w.NewTile(kind, y, x))
 		}
 	}
-
-	w.SetTile(w.NewTile(KindFrom, fromX, fromY))
-	w.SetTile(w.NewTile(KindTo, toX, toY))
 
 	return w
 }
@@ -122,10 +143,13 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather, expandedCG bool) 
 					A: 255,
 				})
 			} else if t != nil {
-				if t.Kind == KindPlain {
+				switch t.Kind {
+				case KindPlain:
 					img.Set(x, y, color.White)
-				} else {
+				case KindBlocker:
 					img.Set(x, y, color.Black)
+				case KindSoftBlocker:
+					img.Set(x, y, color.RGBA{238, 238, 238, 255})
 				}
 			}
 		}

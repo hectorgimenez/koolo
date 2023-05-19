@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"go.uber.org/zap"
 )
@@ -12,6 +13,7 @@ var ErrWillBeRetried = errors.New("error occurred, but it will be retried")
 var ErrNoRecover = errors.New("unrecoverable error occurred, game can not continue")
 var ErrCanBeSkipped = errors.New("error occurred, but this action is not critical and game can continue")
 var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
+var ErrLogAndContinue = errors.New("error occurred, but marking action as completed")
 
 type Action interface {
 	NextStep(logger *zap.Logger, d data.Data) error
@@ -23,6 +25,7 @@ type basicAction struct {
 	canBeSkipped      bool
 	resetStepsOnError bool
 	markSkipped       bool
+	ignoreErrors      bool
 }
 
 type Option func(action *basicAction)
@@ -30,6 +33,13 @@ type Option func(action *basicAction)
 func CanBeSkipped() Option {
 	return func(action *basicAction) {
 		action.canBeSkipped = true
+	}
+}
+
+// IgnoreErrors will ignore the errors and mark the action as succeeded
+func IgnoreErrors() Option {
+	return func(action *basicAction) {
+		action.ignoreErrors = true
 	}
 }
 

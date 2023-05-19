@@ -30,31 +30,19 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 		collisionGrid[cord[1]][cord[0]] = false
 	}
 
-	if expandedCG {
-		bigCG := make([][]bool, 3000)
-		for x := range bigCG {
-			emptyXs := make([]bool, 3000)
-			for y := 0; y < len(emptyXs); y++ {
-				if x >= 1500 && x <= 1500+len(collisionGrid)-1 && y >= 1500 && y < 1500+len(collisionGrid[0])-1 {
-					emptyXs[y] = collisionGrid[x-1500][y-1500]
-				} else {
-					emptyXs[y] = true
-				}
-			}
-			bigCG[x] = emptyXs
-		}
-		collisionGrid = bigCG
-	}
+	w := parseWorld(expandedCG, collisionGrid, d.PlayerUnit.Area)
 
-	w := parseWorld(collisionGrid, fromX, fromY, toX, toY, d.PlayerUnit.Area)
+	// Set Origin and Destination points
+	w.SetTile(w.NewTile(KindFrom, fromX, fromY))
+	w.SetTile(w.NewTile(KindTo, toX, toY))
 
 	p, distance, found := astar.Path(w.From(), w.To())
 
 	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
 	// the path, so we fake some points around the character making them walkable even if they're not technically
 	if !found && len(blacklistedCoords) == 0 {
-		for i := -2; i < 3; i++ {
-			for k := -2; k < 3; k++ {
+		for i := -3; i < 4; i++ {
+			for k := -3; k < 4; k++ {
 				if i == 0 && k == 0 {
 					continue
 				}
@@ -71,10 +59,9 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 		w.renderPathImg(d, p, expandedCG)
 	}
 
-	x, y := relativePosition(d, data.Position{X: w.To().X, Y: w.To().Y}, expandedCG)
 	return &Pather{AstarPather: p, Destination: data.Position{
-		X: x,
-		Y: y,
+		X: w.To().X + d.AreaOrigin.X,
+		Y: w.To().Y + d.AreaOrigin.Y,
 	}}, distance, found
 }
 
@@ -180,5 +167,5 @@ func shouldExpandCollisionGrid(d data.Data, p data.Position) bool {
 	relativeToX := p.X - d.AreaOrigin.X
 	relativeToY := p.Y - d.AreaOrigin.Y
 
-	return relativeToX < 0 || relativeToY < 0 || relativeToX > len(d.CollisionGrid) || relativeToY > len(d.CollisionGrid[0])
+	return relativeToX < 0 || relativeToY < 0 || relativeToX > len(d.CollisionGrid[0]) || relativeToY > len(d.CollisionGrid)
 }
