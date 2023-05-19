@@ -37,9 +37,9 @@ bindings:
   potion4: 4
 
   # Skills
-  forceMove: h
-  standStill: j
-  swapWeapon: g
+  forceMove: e
+  standStill: shift
+  swapWeapon: w
   teleport: q
   tp: t
   CTABattleCommand: s
