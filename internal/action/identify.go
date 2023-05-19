@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -14,11 +16,13 @@ func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		items := b.itemsToIdentify(d)
 
+		b.logger.Debug("Checking for items to identify...")
 		if len(items) == 0 || skipIdentify {
+			b.logger.Debug("No items to identify...")
 			return
 		}
 
-		b.logger.Info("Identifying items...")
+		b.logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
 		steps = append(steps,
 			step.SyncStepWithCheck(func(d data.Data) error {
 				hid.PressKey(config.Config.Bindings.OpenInventory)

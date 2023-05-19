@@ -12,6 +12,8 @@ import (
 func (b Builder) VendorRefill() *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		if b.shouldVisitVendor(d) {
+			b.logger.Info("Visiting vendor...")
+
 			openShopStep := step.KeySequence("home", "down", "enter")
 			// Jamella trade button is the first one
 			if d.PlayerUnit.Area == area.ThePandemoniumFortress {

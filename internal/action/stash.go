@@ -24,7 +24,9 @@ const (
 
 func (b Builder) Stash(forceStash bool) *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
+		b.logger.Debug("Checking for items to stash...")
 		if !b.isStashingRequired(d, forceStash) {
+			b.logger.Debug("No items to stash...")
 			return
 		}
 

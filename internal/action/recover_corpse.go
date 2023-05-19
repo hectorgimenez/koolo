@@ -10,6 +10,7 @@ import (
 
 func (b Builder) RecoverCorpse() *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
+		b.logger.Debug("Checking for character corpse...")
 		if d.Corpse.Found {
 			b.logger.Info("Corpse found, let's recover our stuff...")
 			steps = append(steps,
@@ -33,6 +34,8 @@ func (b Builder) RecoverCorpse() *StaticAction {
 					return step.StatusCompleted
 				}),
 			)
+		} else {
+			b.logger.Debug("Character corpse not found :D")
 		}
 
 		return

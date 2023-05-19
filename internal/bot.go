@@ -47,6 +47,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	b.gr.GetData(true)
 	b.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(gameStartedAt).Milliseconds()))
 
+	loadingScreensDetected := 0
 	for k, r := range runs {
 		stat.StartRun(r.Name())
 		runStart := time.Now()
@@ -78,7 +79,16 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				// Skip running stuff if loading screen is present
 				if d.OpenMenus.LoadingScreen {
+					if loadingScreensDetected == 10 {
+						b.logger.Debug("Loading screen detected, waiting until loading screen is gone")
+					}
+					loadingScreensDetected++
 					continue
+				} else {
+					if loadingScreensDetected >= 10 {
+						b.logger.Debug("Load completed, continuing execution")
+					}
+					loadingScreensDetected = 0
 				}
 
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
