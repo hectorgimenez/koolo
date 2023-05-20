@@ -149,7 +149,9 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 		}
 		if !staticFieldUsed && (numberOfCloseMonsters > 5 || eliteFound) {
 			staticFieldUsed = true
-			steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 4, step.Distance(1, 5)))
+			if d.PlayerUnit.Skills[skill.StaticField] > 0 {
+				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 4, step.Distance(1, 5)))
+			}
 		}
 
 		// During early game stages amount of mana is ridiculous...
