@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"go.uber.org/zap"
 )
 
 const (
@@ -29,10 +30,9 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 		if d.PlayerUnit.Area != a {
 			dstWP := area.WPAddresses[a]
 			if isChild {
-				b.logger.Info("Traversing to next WP")
 				return b.traverseNextWP(a, dstWP.LinkedFrom)
 			} else {
-				b.logger.Info("Waypoint not found (or error occurred) try to autodiscover it")
+				b.logger.Info("Waypoint not found (or error occurred) try to autodiscover it", zap.Any("area", a))
 
 				for nwA, wp := range area.WPAddresses {
 					if wp.Tab == dstWP.Tab && wp.Row == dstWP.Row-1 {
@@ -50,7 +50,10 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 
 func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
+		logAreas := make([]int, len(areas))
+		b.logger.Debug("Traversing to next WP...")
 		for _, a := range areas {
+			logAreas = append(logAreas, int(a))
 			actions = append(actions,
 				b.ch.Buff(),
 				b.MoveToAreaAndKill(a),
@@ -70,11 +73,13 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 			}
 		}
 
+		logAreas = append(logAreas, int(dst))
 		actions = append(actions,
 			b.MoveToAreaAndKill(dst),
 			b.DiscoverWaypoint(),
 		)
 
+		b.logger.Debug("Linked areas to traverse", zap.Ints("areas", logAreas))
 		return
 	})
 }

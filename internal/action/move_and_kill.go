@@ -46,9 +46,9 @@ func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
 			}
 		}
 
-		return BuildStatic(func(d data.Data) []step.Step {
-			for _, a := range d.AdjacentLevels {
-				if a.Area == area {
+		for _, a := range d.AdjacentLevels {
+			if a.Area == area {
+				return BuildStatic(func(d data.Data) []step.Step {
 					if d := pather.DistanceFromMe(d, a.Position); d < 10 {
 						return []step.Step{step.MoveToLevel(area)}
 					}
@@ -58,11 +58,13 @@ func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
 						step.ClosestWalkable(),
 						step.WithTimeout(1),
 					)}
-				}
-			}
+				})
 
-			return nil
-		})
+			}
+		}
+
+		b.logger.Debug("Destination area not found", zap.Any("area", area))
+		return nil
 	})
 }
 
