@@ -36,7 +36,7 @@ func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
 		// Check if there is a door blocking our way
 		if !step.CanTeleport(d) {
 			for _, o := range d.Objects {
-				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
+				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 7 && openedDoors[o.Name] != o.Position {
 					return BuildStatic(func(d data.Data) []step.Step {
 						b.logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
@@ -58,8 +58,7 @@ func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
 						step.ClosestWalkable(),
 						step.WithTimeout(1),
 					)}
-				})
-
+				}, CanBeSkipped())
 			}
 		}
 
@@ -99,12 +98,12 @@ func (b Builder) MoveAndKill(toFunc func(d data.Data) (data.Position, bool)) *Fa
 		// Check if there is a door blocking our way
 		if !step.CanTeleport(d) {
 			for _, o := range d.Objects {
-				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
+				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 7 && openedDoors[o.Name] != o.Position {
 					return BuildStatic(func(d data.Data) []step.Step {
 						b.logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
 						return []step.Step{step.InteractObject(o.Name, nil)}
-					})
+					}, CanBeSkipped())
 				}
 			}
 		}
