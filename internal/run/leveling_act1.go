@@ -18,21 +18,50 @@ const scrollOfInifuss = "ScrollOfInifuss"
 func (a Leveling) act1() (actions []action.Action) {
 	// ACT 1
 	// Den of Evil - Farm until level 6
-	actions = append(actions, a.denOfEvil())
+	actions = append(actions, a.act1RunPrepare(true), a.denOfEvil())
 
 	// Blood Raven
 	//actions = append(actions, a.bloodRaven())
 
 	// Deckard Cain - Will try after level 15, it's easier to farm Countess by this stupid useless bot
-	actions = append(actions, a.deckardCain())
+	actions = append(actions, a.act1RunPrepare(false), a.deckardCain())
 
 	// Countess - Farm until level 15
-	actions = append(actions, a.countess())
+	actions = append(actions, a.act1RunPrepare(false), a.countess())
 
 	// Andariel and move to Act 2
-	actions = append(actions, a.andariel())
+	actions = append(actions, a.act1RunPrepare(false), a.andariel())
 
 	return
+}
+
+func (a Leveling) act1RunPrepare(firstRun bool) action.Action {
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
+		if firstRun {
+			actions = append(actions,
+				a.builder.EnsureStatPoints(),
+				a.builder.EnsureSkillPoints(),
+				a.builder.RecoverCorpse(),
+				a.builder.IdentifyAll(false),
+				a.builder.Stash(false),
+				a.builder.VendorRefill(),
+				a.builder.Heal(),
+				a.builder.ReviveMerc(),
+				a.builder.Repair(),
+			)
+		}
+
+		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+			bank, found := d.Objects.FindOne(object.Bank)
+			if !found {
+				a.logger.Warn("Could not find stash")
+				return []step.Step{}
+			}
+			return []step.Step{step.MoveTo(bank.Position)}
+		}))
+
+		return
+	})
 }
 
 func (a Leveling) denOfEvil() action.Action {
@@ -203,6 +232,7 @@ func (a Leveling) deckardCain() action.Action {
 					}),
 				}
 			}),
+			a.act1RunPrepare(false),
 		}
 
 		// Reuse Tristram Run actions
