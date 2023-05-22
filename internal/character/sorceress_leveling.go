@@ -21,40 +21,46 @@ func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	return map[stat.ID]int{
 		stat.Dexterity: 0,
 		stat.Energy:    0,
-		stat.Strength:  15,
+		stat.Strength:  30,
 		stat.Vitality:  9999,
 	}
 }
 
 func (s SorceressLeveling) SkillPoints() []skill.Skill {
 	return []skill.Skill{
-		skill.ChargedBolt,
-		skill.ChargedBolt,
-		skill.ChargedBolt,
-		skill.ChargedBolt,
+		skill.FireBolt,
 		skill.FrozenArmor,
+		skill.FireBolt,
+		skill.FireBolt,
+		skill.FireBolt,
+		skill.FireBolt,
+		skill.FireBolt,
 		skill.StaticField,
-		skill.ChargedBolt,
-		skill.StaticField,
-		skill.StaticField,
-		skill.StaticField,
+		skill.FireBolt,
+		skill.FireBolt,
+		skill.FireBolt,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
 		skill.Telekinesis,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
+		skill.FireBall,
+		skill.FireBall,
 		skill.Teleport,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
-		skill.Nova,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
 	}
 }
 
@@ -150,7 +156,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 		if !staticFieldUsed && (numberOfCloseMonsters > 5 || eliteFound) {
 			staticFieldUsed = true
 			if d.PlayerUnit.Skills[skill.StaticField] > 0 {
-				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 4, step.Distance(1, 5)))
+				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 3, step.Distance(1, 5)))
 			}
 		}
 
@@ -159,7 +165,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 			steps = append(steps, step.PrimaryAttack(id, 1, step.Distance(1, 3)))
 		} else {
 			steps = append(steps,
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, step.Distance(1, 7)),
+				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, step.Distance(1, 25)),
 			)
 		}
 
@@ -171,20 +177,14 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 }
 
 func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
-			return nil
-		}
-		helper.Sleep(100)
-		for i := 0; i < 10; i++ {
-			steps = append(steps,
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, step.Distance(1, 7)),
-			)
+			return 0, false
 		}
 
-		return
-	}, action.CanBeSkipped())
+		return m.UnitID, true
+	}, nil)
 }
 
 func (s SorceressLeveling) Buff() action.Action {

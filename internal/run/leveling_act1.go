@@ -15,63 +15,32 @@ import (
 
 const scrollOfInifuss = "ScrollOfInifuss"
 
-func (a Leveling) act1() (actions []action.Action) {
-	// ACT 1
-	// Den of Evil - Farm until level 6
-	actions = append(actions, a.act1RunPrepare(true), a.denOfEvil())
+func (a Leveling) act1() action.Action {
+	running := false
+	return action.NewFactory(func(d data.Data) action.Action {
+		if running {
+			return nil
+		}
+		running = true
 
-	// Blood Raven
-	//actions = append(actions, a.bloodRaven())
-
-	// Deckard Cain - Will try after level 15, it's easier to farm Countess by this stupid useless bot
-	actions = append(actions, a.act1RunPrepare(false), a.deckardCain())
-
-	// Countess - Farm until level 15
-	actions = append(actions, a.act1RunPrepare(false), a.countess())
-
-	// Andariel and move to Act 2
-	actions = append(actions, a.act1RunPrepare(false), a.andariel())
-
-	return
-}
-
-func (a Leveling) act1RunPrepare(firstRun bool) action.Action {
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
-		if firstRun {
-			actions = append(actions,
-				a.builder.EnsureStatPoints(),
-				a.builder.EnsureSkillPoints(),
-				a.builder.RecoverCorpse(),
-				a.builder.IdentifyAll(false),
-				a.builder.Stash(false),
-				a.builder.VendorRefill(),
-				a.builder.Heal(),
-				a.builder.ReviveMerc(),
-				a.builder.Repair(),
-			)
+		if d.PlayerUnit.Stats[stat.Level] <= 5 {
+			return a.denOfEvil()
 		}
 
-		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-			bank, found := d.Objects.FindOne(object.Bank)
-			if !found {
-				a.logger.Warn("Could not find stash")
-				return []step.Step{}
-			}
-			return []step.Step{step.MoveTo(bank.Position)}
-		}))
+		if d.PlayerUnit.Stats[stat.Level] > 5 && d.PlayerUnit.Stats[stat.Level] < 15 {
+			return a.countess()
+		}
 
-		return
+		if !a.isCainInTown(d) {
+			return a.deckardCain()
+		}
+
+		return a.andariel()
 	})
 }
 
 func (a Leveling) denOfEvil() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] > 5 {
-			// TODO: Check if we have the Den of Evil quest completed
-			a.logger.Info("Skipping Den of Evil farming, character is already level 5 or cain is in town")
-			return []action.Action{}
-		}
-
 		a.logger.Info("Starting Den of Evil run")
 		return []action.Action{
 			a.builder.MoveToAreaAndKill(area.BloodMoor),
@@ -79,7 +48,6 @@ func (a Leveling) denOfEvil() action.Action {
 			a.builder.MoveToAreaAndKill(area.DenOfEvil),
 			a.char.Buff(),
 			a.builder.ClearArea(false, data.MonsterAnyFilter()),
-			a.builder.ReturnTown(),
 		}
 	})
 
@@ -87,12 +55,6 @@ func (a Leveling) denOfEvil() action.Action {
 
 func (a Leveling) bloodRaven() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		//if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 5 || d.PlayerUnit.Stats[stat.Level] > 14 {
-		//	// TODO: Check if we have the Blood Raven quest completed
-		//	a.logger.Info("Skipping Blood Raven conditions not met")
-		//	return []action.Action{}
-		//}
-
 		a.logger.Info("Starting Blood Raven quest")
 		return []action.Action{
 			a.builder.WayPoint(area.ColdPlains),
@@ -120,20 +82,16 @@ func (a Leveling) bloodRaven() action.Action {
 
 				return 0, false
 			}, nil, step.Distance(5, 15)),
-			a.builder.ReturnTown(),
 		}
 	})
 }
 
 func (a Leveling) countess() action.Action {
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
-		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 6 || d.PlayerUnit.Stats[stat.Level] > 14 {
-			a.logger.Info("Skipping Countess farm, already level 15 or Cain in town")
-			return
-		}
-
-		a.logger.Info("Starting Countess run")
 		// Moving to starting point (Black Marsh)
+		a.logger.Info("Starting Countess run")
+
+		// TODO Refactor Countess run to use MoveToAreaAndKill, and make MoveToAreaAndKill to be able to tele properly, with that we will be able to reuse Countess action
 		actions = append(actions, a.builder.WayPoint(area.BlackMarsh))
 
 		// Buff
@@ -164,17 +122,14 @@ func (a Leveling) countess() action.Action {
 			return data.Position{}, false
 		}))
 
+		actions = append(actions, a.char.KillCountess())
+
 		return actions
 	})
 }
 
 func (a Leveling) deckardCain() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		if a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 15 {
-			a.logger.Info("Skipping Deckard Cain quest, he is already in town or still not level 15")
-			return []action.Action{}
-		}
-
 		a.logger.Info("Rescuing Cain")
 		actions := []action.Action{
 			a.builder.WayPoint(area.DarkWood),
@@ -232,8 +187,10 @@ func (a Leveling) deckardCain() action.Action {
 					}),
 				}
 			}),
-			a.act1RunPrepare(false),
 		}
+
+		// Heal and refill pots
+		actions = append(actions, a.builder.PreRun(false)...)
 
 		// Reuse Tristram Run actions
 		actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
@@ -244,33 +201,34 @@ func (a Leveling) deckardCain() action.Action {
 
 func (a Leveling) andariel() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
-		if !a.isCainInTown(d) || d.PlayerUnit.Stats[stat.Level] < 15 {
-			a.logger.Info("Skipping Andariel, Cain is not in town or still not level 15")
-			return []action.Action{}
-		}
-
 		a.logger.Info("Starting Andariel run")
-		return []action.Action{
+		actions := []action.Action{
 			a.builder.WayPoint(area.CatacombsLevel2),
 			a.char.Buff(),
 			a.builder.MoveToAreaAndKill(area.CatacombsLevel3),
 			a.builder.MoveToAreaAndKill(area.CatacombsLevel4),
+		}
+		actions = append(actions, a.builder.ReturnTown()) // Return town to pickup pots and heal, just in case...
+		actions = append(actions, a.builder.PreRun(false)...)
+		actions = append(actions,
+			a.builder.UsePortalInTown(),
 			a.builder.MoveAndKill(func(d data.Data) (data.Position, bool) {
 				return andarielStartingPosition, true
 			}),
+			a.char.KillAndariel(),
 			a.builder.ReturnTown(),
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractNPC(npc.Warriv),
-					step.KeySequence("home", "down", "enter"),
+					step.KeySequence("esc", "home", "down", "enter"),
 				}
-			}),
-		}
+			}))
+
+		return actions
 	})
 }
 
 func (a Leveling) isCainInTown(d data.Data) bool {
-	// TODO This fails if Cain is out of range, ideally we should move closer to his place
 	_, found := d.Monsters.FindOne(npc.DeckardCain5, data.MonsterTypeNone)
 
 	return found

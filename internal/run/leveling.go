@@ -13,7 +13,7 @@ func (a Leveling) Name() string {
 }
 
 func (a Leveling) BuildActions() (actions []action.Action) {
-	actions = append(actions, a.act1()...)
+	actions = append(actions, a.act1())
 	//actions = append(actions, a.act2()...)
 
 	return
