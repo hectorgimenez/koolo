@@ -60,8 +60,7 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 			row = append(row, false)
 		}
 
-		// Let's do super weird and complicated mappings in the name of "performance" because we love performance
-		// but we don't give a fuck about making things easy to read and understand. We came to play.
+		// Documentation about how this works: https://github.com/blacha/diablo2/tree/master/packages/map
 		if len(level.Map) > y {
 			mapRow := level.Map[y]
 			isWalkable := false

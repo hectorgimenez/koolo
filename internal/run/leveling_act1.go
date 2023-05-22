@@ -18,11 +18,11 @@ const scrollOfInifuss = "ScrollOfInifuss"
 func (a Leveling) act1() action.Action {
 	running := false
 	return action.NewFactory(func(d data.Data) action.Action {
-		if running {
+		if running || d.PlayerUnit.Area != area.RogueEncampment {
 			return nil
 		}
-		running = true
 
+		running = true
 		if d.PlayerUnit.Stats[stat.Level] <= 5 {
 			return a.denOfEvil()
 		}

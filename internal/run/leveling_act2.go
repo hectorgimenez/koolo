@@ -8,7 +8,7 @@ import (
 
 func (a Leveling) act2() (actions []action.Action) {
 	actions = append(actions,
-		a.radament(),
+		//a.radament(),
 		a.findHoradricCube(),
 	)
 

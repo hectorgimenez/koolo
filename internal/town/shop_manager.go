@@ -41,16 +41,19 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 
 	sm.logger.Debug(fmt.Sprintf("Buying: %d Healing potions and %d Mana potions", missingHealingPots, missingManaPots))
 
-	for _, i := range d.Items.Shop {
-		if strings.Contains(string(i.Name), "HealingPotion") && i.IsVendor && missingHealingPots > 1 {
-			sm.buyItem(i, missingHealingPots)
+	// We traverse the items in reverse order because vendor has the best potions at the end
+	for i := len(d.Items.Shop) - 1; i >= 0; i-- {
+		it := d.Items.Shop[i]
+		if strings.Contains(string(it.Name), "HealingPotion") && it.IsVendor && missingHealingPots > 1 {
+			sm.buyItem(it, missingHealingPots)
 			missingHealingPots = 0
 			break
 		}
 	}
-	for _, i := range d.Items.Shop {
-		if strings.Contains(string(i.Name), "ManaPotion") && i.IsVendor && missingManaPots > 1 {
-			sm.buyItem(i, missingManaPots)
+	for i := len(d.Items.Shop) - 1; i >= 0; i-- {
+		it := d.Items.Shop[i]
+		if strings.Contains(string(it.Name), "ManaPotion") && it.IsVendor && missingManaPots > 1 {
+			sm.buyItem(it, missingManaPots)
 			missingManaPots = 0
 			break
 		}
