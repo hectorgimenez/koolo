@@ -43,9 +43,9 @@ func (a Leveling) denOfEvil() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		a.logger.Info("Starting Den of Evil run")
 		return []action.Action{
-			a.builder.MoveToAreaAndKill(area.BloodMoor),
+			a.builder.MoveToArea(area.BloodMoor),
 			a.char.Buff(),
-			a.builder.MoveToAreaAndKill(area.DenOfEvil),
+			a.builder.MoveToArea(area.DenOfEvil),
 			a.char.Buff(),
 			a.builder.ClearArea(false, data.MonsterAnyFilter()),
 		}
@@ -58,7 +58,7 @@ func (a Leveling) bloodRaven() action.Action {
 		a.logger.Info("Starting Blood Raven quest")
 		return []action.Action{
 			a.builder.WayPoint(area.ColdPlains),
-			a.builder.MoveToAreaAndKill(area.BurialGrounds),
+			a.builder.MoveToArea(area.BurialGrounds),
 			a.char.Buff(),
 			action.BuildStatic(func(d data.Data) []step.Step {
 				for _, l := range d.AdjacentLevels {
@@ -87,44 +87,11 @@ func (a Leveling) bloodRaven() action.Action {
 }
 
 func (a Leveling) countess() action.Action {
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d data.Data) []action.Action {
 		// Moving to starting point (Black Marsh)
 		a.logger.Info("Starting Countess run")
 
-		// TODO Refactor Countess run to use MoveToAreaAndKill, and make MoveToAreaAndKill to be able to tele properly, with that we will be able to reuse Countess action
-		actions = append(actions, a.builder.WayPoint(area.BlackMarsh))
-
-		// Buff
-		actions = append(actions, a.char.Buff())
-
-		// Travel to boss level
-		actions = append(actions,
-			a.builder.MoveToAreaAndKill(area.ForgottenTower),
-			a.builder.MoveToAreaAndKill(area.TowerCellarLevel1),
-			a.builder.MoveToAreaAndKill(area.TowerCellarLevel2),
-			a.builder.MoveToAreaAndKill(area.TowerCellarLevel3),
-			a.builder.MoveToAreaAndKill(area.TowerCellarLevel4),
-			a.builder.MoveToAreaAndKill(area.TowerCellarLevel5),
-		)
-
-		// Try to move around Countess area
-		actions = append(actions, a.builder.MoveAndKill(func(d data.Data) (data.Position, bool) {
-			if countess, found := d.Monsters.FindOne(npc.DarkStalker, data.MonsterTypeSuperUnique); found {
-				return countess.Position, true
-			}
-
-			for _, o := range d.Objects {
-				if o.Name == object.GoodChest {
-					return o.Position, true
-				}
-			}
-
-			return data.Position{}, false
-		}))
-
-		actions = append(actions, a.char.KillCountess())
-
-		return actions
+		return Countess{baseRun: a.baseRun}.BuildActions()
 	})
 }
 
@@ -134,7 +101,7 @@ func (a Leveling) deckardCain() action.Action {
 		actions := []action.Action{
 			a.builder.WayPoint(area.DarkWood),
 			a.char.Buff(),
-			a.builder.MoveAndKill(func(d data.Data) (data.Position, bool) {
+			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 				for _, o := range d.Objects {
 					if o.Name == object.InifussTree {
 						return o.Position, true
@@ -205,14 +172,14 @@ func (a Leveling) andariel() action.Action {
 		actions := []action.Action{
 			a.builder.WayPoint(area.CatacombsLevel2),
 			a.char.Buff(),
-			a.builder.MoveToAreaAndKill(area.CatacombsLevel3),
-			a.builder.MoveToAreaAndKill(area.CatacombsLevel4),
+			a.builder.MoveToArea(area.CatacombsLevel3),
+			a.builder.MoveToArea(area.CatacombsLevel4),
 		}
 		actions = append(actions, a.builder.ReturnTown()) // Return town to pickup pots and heal, just in case...
 		actions = append(actions, a.builder.PreRun(false)...)
 		actions = append(actions,
 			a.builder.UsePortalInTown(),
-			a.builder.MoveAndKill(func(d data.Data) (data.Position, bool) {
+			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 				return andarielStartingPosition, true
 			}),
 			a.char.KillAndariel(),

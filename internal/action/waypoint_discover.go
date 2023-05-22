@@ -37,7 +37,7 @@ func (b Builder) DiscoverWaypoint() *Factory {
 					})
 				}
 
-				return b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+				return b.MoveTo(func(d data.Data) (data.Position, bool) {
 					for _, o := range d.Objects {
 						if o.IsWaypoint() {
 							return o.Position, true

@@ -56,17 +56,17 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 			logAreas = append(logAreas, int(a))
 			actions = append(actions,
 				b.ch.Buff(),
-				b.MoveToAreaAndKill(a),
+				b.MoveToArea(a),
 			)
 
 			// The connection between the Monastery Gate and Tamoe Highland is a bit tricky
 			if a == area.MonasteryGate {
 				actions = append(actions,
-					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+					b.MoveTo(func(d data.Data) (data.Position, bool) {
 						b.logger.Debug("Monastery Gate detected, moving to static coords")
 						return data.Position{X: 15139, Y: 5098}, true
 					}),
-					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+					b.MoveTo(func(d data.Data) (data.Position, bool) {
 						return data.Position{X: 15148, Y: 4978}, true
 					}),
 				)
@@ -75,7 +75,7 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 
 		logAreas = append(logAreas, int(dst))
 		actions = append(actions,
-			b.MoveToAreaAndKill(dst),
+			b.MoveToArea(dst),
 			b.DiscoverWaypoint(),
 		)
 

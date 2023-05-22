@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
+func (b Builder) MoveToArea(area area.Area) Action {
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == area {
 			b.logger.Debug("Already in area", zap.Any("area", area))
@@ -27,10 +27,25 @@ func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
 		return data.Position{}, false
 	}
 
-	return b.MoveAndKill(toFun)
+	return NewChain(func(d data.Data) []Action {
+		return []Action{
+			b.MoveTo(toFun),
+			BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.MoveToLevel(area),
+				}
+			}),
+		}
+	})
 }
 
-func (b Builder) MoveAndKill(toFunc func(d data.Data) (data.Position, bool)) *Factory {
+func (b Builder) MoveToCoords(to data.Position) *Factory {
+	return b.MoveTo(func(d data.Data) (data.Position, bool) {
+		return to, true
+	})
+}
+
+func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory {
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 
@@ -41,11 +56,11 @@ func (b Builder) MoveAndKill(toFunc func(d data.Data) (data.Position, bool)) *Fa
 		}
 
 		// To stop the movement, not very accurate
-		if pather.DistanceFromMe(d, to) < 3 {
+		if pather.DistanceFromMe(d, to) < 5 {
 			return nil
 		}
 
-		// If we can teleport, just return the normal MoveTo step
+		// If we can teleport, just return the normal MoveTo step and stop here
 		if step.CanTeleport(d) {
 			return BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{step.MoveTo(to)}
