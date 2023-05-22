@@ -10,61 +10,24 @@ import (
 )
 
 func (b Builder) MoveToAreaAndKill(area area.Area) *Factory {
-	pickupBeforeMoving := false
-	openedDoors := make(map[object.Name]data.Position)
-
-	return NewFactory(func(d data.Data) Action {
+	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == area {
 			b.logger.Debug("Already in area", zap.Any("area", area))
-			return nil
-		}
-
-		for _, m := range d.Monsters.Enemies() {
-			if d := pather.DistanceFromMe(d, m.Position); d < 5 {
-				pickupBeforeMoving = true
-				return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-					return m.UnitID, true
-				}, nil)
-			}
-		}
-
-		if pickupBeforeMoving {
-			pickupBeforeMoving = false
-			return b.ItemPickup(false, 50)
-		}
-
-		// Check if there is a door blocking our way
-		if !step.CanTeleport(d) {
-			for _, o := range d.Objects {
-				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 7 && openedDoors[o.Name] != o.Position {
-					return BuildStatic(func(d data.Data) []step.Step {
-						b.logger.Info("Door detected and teleport is not available, trying to open it...")
-						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObject(o.Name, nil)}
-					})
-				}
-			}
+			return data.Position{}, false
 		}
 
 		for _, a := range d.AdjacentLevels {
 			if a.Area == area {
-				return BuildStatic(func(d data.Data) []step.Step {
-					if d := pather.DistanceFromMe(d, a.Position); d < 10 {
-						return []step.Step{step.MoveToLevel(area)}
-					}
-
-					return []step.Step{step.MoveTo(
-						a.Position,
-						step.ClosestWalkable(),
-						step.WithTimeout(1),
-					)}
-				}, CanBeSkipped())
+				return a.Position, true
 			}
 		}
 
 		b.logger.Debug("Destination area not found", zap.Any("area", area))
-		return nil
-	})
+
+		return data.Position{}, false
+	}
+
+	return b.MoveAndKill(toFun)
 }
 
 func (b Builder) MoveAndKill(toFunc func(d data.Data) (data.Position, bool)) *Factory {
@@ -77,10 +40,19 @@ func (b Builder) MoveAndKill(toFunc func(d data.Data) (data.Position, bool)) *Fa
 			return nil
 		}
 
-		if pather.DistanceFromMe(d, to) < 5 {
+		// To stop the movement, not very accurate
+		if pather.DistanceFromMe(d, to) < 3 {
 			return nil
 		}
 
+		// If we can teleport, just return the normal MoveTo step
+		if step.CanTeleport(d) {
+			return BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{step.MoveTo(to)}
+			})
+		}
+
+		// Detect if there are monsters close to the player
 		for _, m := range d.Monsters.Enemies() {
 			if d := pather.DistanceFromMe(d, m.Position); d < 5 {
 				pickupBeforeMoving = true
@@ -95,19 +67,18 @@ func (b Builder) MoveAndKill(toFunc func(d data.Data) (data.Position, bool)) *Fa
 			return b.ItemPickup(false, 50)
 		}
 
-		// Check if there is a door blocking our way
-		if !step.CanTeleport(d) {
-			for _, o := range d.Objects {
-				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 7 && openedDoors[o.Name] != o.Position {
-					return BuildStatic(func(d data.Data) []step.Step {
-						b.logger.Info("Door detected and teleport is not available, trying to open it...")
-						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObject(o.Name, nil)}
-					}, CanBeSkipped())
-				}
+		// Check if there is a door blocking our path
+		for _, o := range d.Objects {
+			if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 7 && openedDoors[o.Name] != o.Position {
+				return BuildStatic(func(d data.Data) []step.Step {
+					b.logger.Info("Door detected and teleport is not available, trying to open it...")
+					openedDoors[o.Name] = o.Position
+					return []step.Step{step.InteractObject(o.Name, nil)}
+				}, CanBeSkipped())
 			}
 		}
 
+		// Continue moving
 		return BuildStatic(func(d data.Data) []step.Step {
 			return []step.Step{step.MoveTo(
 				to,
