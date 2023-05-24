@@ -30,6 +30,19 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 		collisionGrid[cord[1]][cord[0]] = false
 	}
 
+	// Add some padding to the origin/destination, sometimes when the origin or destination are close to a non-walkable
+	// area, pather is not able to calculate the path, so we add some padding around origin/dest to avoid this
+	for i := -3; i < 4; i++ {
+		for k := -3; k < 4; k++ {
+			if i == 0 && k == 0 {
+				continue
+			}
+
+			collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
+			collisionGrid[ensureValueInCG(toY+i, len(collisionGrid))][ensureValueInCG(toX+k, len(collisionGrid[0]))] = true
+		}
+	}
+
 	w := parseWorld(expandedCG, collisionGrid, d.PlayerUnit.Area)
 
 	// Set Origin and Destination points
@@ -38,20 +51,8 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 
 	p, distance, found := astar.Path(w.From(), w.To())
 
-	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
-	// the path, so we fake some points around the character making them walkable even if they're not technically
-	if !found && len(blacklistedCoords) == 0 {
-		for i := -3; i < 4; i++ {
-			for k := -3; k < 4; k++ {
-				if i == 0 && k == 0 {
-					continue
-				}
-
-				w.SetTile(w.NewTile(KindPlain, fromX+i, fromY+k))
-				w.SetTile(w.NewTile(KindPlain, toX+i, toY+k))
-			}
-		}
-		p, distance, found = astar.Path(w.From(), w.To())
+	if config.Config.Debug.RenderMap {
+		w.renderPathImg(d, p, expandedCG)
 	}
 
 	// Debug only, this will render a png file with map and origin/destination points
@@ -63,6 +64,18 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 		X: w.To().X + d.AreaOrigin.X,
 		Y: w.To().Y + d.AreaOrigin.Y,
 	}}, distance, found
+}
+
+func ensureValueInCG(val, cgSize int) int {
+	if val < 0 {
+		return 0
+	}
+
+	if val >= cgSize {
+		return cgSize - 1
+	}
+
+	return val
 }
 
 func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
