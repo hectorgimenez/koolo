@@ -9,20 +9,29 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) MoveToArea(area area.Area) Action {
+func (b Builder) MoveToArea(dst area.Area) Action {
 	toFun := func(d data.Data) (data.Position, bool) {
-		if d.PlayerUnit.Area == area {
-			b.logger.Debug("Already in area", zap.Any("area", area))
+		if d.PlayerUnit.Area == dst {
+			b.logger.Debug("Already in area", zap.Any("area", dst))
 			return data.Position{}, false
 		}
 
 		for _, a := range d.AdjacentLevels {
-			if a.Area == area {
+			if a.Area == dst {
+				// To correctly detect the two possible exits from Lut Gholein
+				if dst == area.RockyWaste && d.PlayerUnit.Area == area.LutGholein {
+					if _, _, found := pather.GetPath(d, data.Position{X: 5004, Y: 5065}); found {
+						return data.Position{X: 4989, Y: 5063}, true
+					} else {
+						return data.Position{X: 5096, Y: 4997}, true
+					}
+				}
+
 				return a.Position, true
 			}
 		}
 
-		b.logger.Debug("Destination area not found", zap.Any("area", area))
+		b.logger.Debug("Destination area not found", zap.Any("area", dst))
 
 		return data.Position{}, false
 	}
@@ -32,7 +41,7 @@ func (b Builder) MoveToArea(area area.Area) Action {
 			b.MoveTo(toFun),
 			BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
-					step.MoveToLevel(area),
+					step.MoveToLevel(dst),
 				}
 			}),
 		}

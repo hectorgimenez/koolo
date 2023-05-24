@@ -50,32 +50,27 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 
 func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
+		areas = append(areas, dst)
 		logAreas := make([]int, len(areas))
 		b.logger.Debug("Traversing to next WP...")
 		for _, a := range areas {
 			logAreas = append(logAreas, int(a))
-			actions = append(actions,
-				b.ch.Buff(),
-				b.MoveToArea(a),
-			)
-
-			// The connection between the Monastery Gate and Tamoe Highland is a bit tricky
-			if a == area.MonasteryGate {
+			switch a {
+			case area.MonasteryGate:
+				b.logger.Debug("Monastery Gate detected, moving to static coords")
 				actions = append(actions,
-					b.MoveTo(func(d data.Data) (data.Position, bool) {
-						b.logger.Debug("Monastery Gate detected, moving to static coords")
-						return data.Position{X: 15139, Y: 5098}, true
-					}),
-					b.MoveTo(func(d data.Data) (data.Position, bool) {
-						return data.Position{X: 15148, Y: 4978}, true
-					}),
+					b.MoveToCoords(data.Position{X: 15139, Y: 5098}),
+					b.MoveToCoords(data.Position{X: 15148, Y: 4978}),
+				)
+			default:
+				actions = append(actions,
+					b.ch.Buff(),
+					b.MoveToArea(a),
 				)
 			}
 		}
 
-		logAreas = append(logAreas, int(dst))
 		actions = append(actions,
-			b.MoveToArea(dst),
 			b.DiscoverWaypoint(),
 		)
 
