@@ -34,17 +34,19 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 			} else {
 				b.logger.Info("Waypoint not found (or error occurred) try to autodiscover it", zap.Any("area", a))
 
-				for nwA, wp := range area.WPAddresses {
-					if wp.Tab == dstWP.Tab && wp.Row == dstWP.Row-1 {
-						isChild = true
-						return b.WayPoint(nwA)
-					}
+				_, found := area.WPAddresses[dstWP.LinkedFrom[0]]
+				if found {
+					isChild = true
+					return b.WayPoint(dstWP.LinkedFrom[0])
 				}
 			}
 		}
 
 		return nil
 	})
+}
+
+func (b Builder) getLinkedWP(a area.Area) {
 
 }
 
