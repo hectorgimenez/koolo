@@ -2,7 +2,7 @@
 
 echo Start building Koolo
 echo Cleaning up previous artifacts...
-rmdir /s /q build > NUL || goto :error
+if exist build rmdir /s /q build > NUL || goto :error
 
 echo Building Koolo binary...
 go build -tags static --ldflags -extldflags="-static" -o build/koolo.exe ./cmd/koolo/main.go > NUL || goto :error
