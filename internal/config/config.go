@@ -139,6 +139,14 @@ func Load() error {
 		return err
 	}
 
+	if Config.Game.Runs[0] == "leveling" {
+		levelingRules, err := nip.ReadDir("config/pickit_leveling/")
+		if err != nil {
+			return err
+		}
+		rules = append(rules, levelingRules...)
+	}
+
 	Config.Runtime.Rules = rules
 
 	secs := float32(Config.Character.CastingFrames)*0.04 + 0.01

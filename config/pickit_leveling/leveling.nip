@@ -1,0 +1,40 @@
+// IGNORED by default, this directory is ONLY evaluated DURING the character leveling process.
+// Rules here are included ADDITIONALLY to the main pickit rules
+
+[type] == gold # [gold] >= 200
+
+[name] == elrune
+[name] == eldrune
+[name] == tirrune
+[name] == nefrune
+[name] == ethrune
+[name] == ithrune
+[name] == talrune
+[name] == ralrune
+[name] == ortrune
+[name] == thulrune
+[name] == amnrune
+[name] == solrune
+[name] == shaelrune
+[name] == dolrune
+[name] == helrune
+[name] == iorune
+[name] == lumrune
+[name] == korune
+[name] == falrune
+[name] == lemrune
+[name] == pulrune
+
+// potions
+[name] == minorhealingpotion
+[name] == lighthealingpotion
+[name] == healingpotion
+[name] == greaterhealingpotion
+[name] == superhealingpotion
+[name] == minormanapotion
+[name] == lightmanapotion
+[name] == manapotion
+[name] == greatermanapotion
+[name] == supermanapotion
+[name] == rejuvenationpotion
+[name] == fullrejuvenationpotion
