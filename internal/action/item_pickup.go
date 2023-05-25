@@ -185,5 +185,18 @@ func (b Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 		return true
 	}
 
+	if isLevelingChar && isQuestItem(i) {
+		return true
+	}
+
 	return itemfilter.Evaluate(i, config.Config.Runtime.Rules)
+}
+
+func isQuestItem(i data.Item) bool {
+	switch i.Name {
+	case "HoradricCube", "AmuletOfTheViper", "StaffOfKings", "HoradricStaff":
+		return true
+	}
+
+	return false
 }
