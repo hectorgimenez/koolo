@@ -53,6 +53,10 @@ func (gd *GameReader) GetData(isNewGame bool) data.Data {
 	return d
 }
 
+func (gd *GameReader) CachedMapData() map_client.MapData {
+	return gd.cachedMapData
+}
+
 func (gd *GameReader) getMapSeed(playerUnit uintptr) (uint, error) {
 	actPtr := uintptr(gd.Process.ReadUInt(playerUnit+0x20, memory.Uint64))
 	actMiscPtr := uintptr(gd.Process.ReadUInt(actPtr+0x78, memory.Uint64))

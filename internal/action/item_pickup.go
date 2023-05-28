@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -126,7 +127,7 @@ func (b Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 	missingManaPotions := b.bm.GetMissingCount(d, data.ManaPotion)
 	missingRejuvenationPotions := b.bm.GetMissingCount(d, data.RejuvenationPotion)
 	var itemsToPickup []data.Item
-	for _, itm := range d.Items.Ground {
+	for _, itm := range d.Items.ByLocation(item.LocationGround) {
 		// Skip items that are outside pickup radius, this is useful when clearing big areas to prevent
 		// character going back to pickup potions all the time after using them
 		itemDistance := pather.DistanceFromMe(d, itm.Position)
@@ -185,18 +186,5 @@ func (b Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 		return true
 	}
 
-	if isLevelingChar && isQuestItem(i) {
-		return true
-	}
-
 	return itemfilter.Evaluate(i, config.Config.Runtime.Rules)
-}
-
-func isQuestItem(i data.Item) bool {
-	switch i.Name {
-	case "HoradricCube", "AmuletOfTheViper", "StaffOfKings", "HoradricStaff":
-		return true
-	}
-
-	return false
 }

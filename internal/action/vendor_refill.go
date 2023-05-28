@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -62,9 +63,9 @@ func (b Builder) shouldVisitVendor(d data.Data) bool {
 }
 
 func nonLockedItems(d data.Data) (items []data.Item) {
-	for _, item := range d.Items.Inventory {
-		if config.Config.Inventory.InventoryLock[item.Position.Y][item.Position.X] == 1 {
-			items = append(items, item)
+	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+		if config.Config.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
+			items = append(items, itm)
 		}
 	}
 

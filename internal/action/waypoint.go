@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -64,6 +65,15 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 					b.MoveToCoords(data.Position{X: 15139, Y: 5098}),
 					b.MoveToCoords(data.Position{X: 15148, Y: 4978}),
 				)
+			case area.ArcaneSanctuary:
+				b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+				actions = append(actions, BuildStatic(func(d data.Data) []step.Step {
+					return []step.Step{
+						step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+							return d.PlayerUnit.Area == area.ArcaneSanctuary
+						}),
+					}
+				}))
 			default:
 				actions = append(actions,
 					b.ch.Buff(),

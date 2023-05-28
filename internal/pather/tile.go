@@ -22,7 +22,7 @@ var KindCosts = map[uint8]float64{
 	KindPlain:       1.0,
 	KindFrom:        1.0,
 	KindTo:          1.0,
-	KindSoftBlocker: 3.0,
+	KindSoftBlocker: 20.0,
 }
 
 // A Tile is a tile in a grid which implements Pather.

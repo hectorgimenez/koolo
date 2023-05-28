@@ -38,3 +38,12 @@
 [name] == supermanapotion
 [name] == rejuvenationpotion
 [name] == fullrejuvenationpotion
+
+// Bases
+[name] == crystalsword && [flag] != ethereal # [sockets] == 4 // Spirit
+[type] == shield # [sockets] == 4 // Spirit
+[type] == shield # [sockets] == 3 // Ancient's Pledge
+[type] == polearm # [sockets] == 4 // Insight
+[type] == armor # [sockets] == 3 // Treachery
+[type] == armor # [sockets] == 2 // Stealth
+[type] == helm # [sockets] == 2 // Lore

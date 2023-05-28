@@ -3,6 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -131,11 +132,10 @@ func (a Leveling) deckardCain() action.Action {
 			}),
 
 			action.BuildStatic(func(d data.Data) []step.Step {
-				for _, i := range d.Items.Ground {
-					if i.Name == scrollOfInifuss {
-						return []step.Step{step.PickupItem(a.logger, i)}
-					}
+				if scroll, found := d.Items.Find(scrollOfInifuss, item.LocationGround); found {
+					return []step.Step{step.PickupItem(a.logger, scroll)}
 				}
+
 				return nil
 			}, action.IgnoreErrors()),
 			a.builder.ReturnTown(),

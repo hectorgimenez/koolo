@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 type SorceressLeveling struct {
@@ -117,7 +116,7 @@ func (s SorceressLeveling) KillCouncil() action.Action {
 func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) *action.DynamicAction {
 	completedAttackLoops := 0
 	previousUnitID := 0
-	staticFieldUsed := false
+	//staticFieldUsed := false
 
 	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		id, found := monsterSelector(d)
@@ -143,22 +142,22 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 		steps := make([]step.Step, 0)
 
 		// Try to static field when monsters around character are > 5 or elite enemy is close enough
-		numberOfCloseMonsters := 0
-		eliteFound := false
-		for _, m := range d.Monsters.Enemies() {
-			if pather.DistanceFromMe(d, m.Position) < 5 {
-				numberOfCloseMonsters++
-				if m.IsElite() {
-					eliteFound = true
-				}
-			}
-		}
-		if !staticFieldUsed && (numberOfCloseMonsters > 5 || eliteFound) {
-			staticFieldUsed = true
-			if d.PlayerUnit.Skills[skill.StaticField] > 0 {
-				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 3, step.Distance(1, 5)))
-			}
-		}
+		//numberOfCloseMonsters := 0
+		//eliteFound := false
+		//for _, m := range d.Monsters.Enemies() {
+		//	if pather.DistanceFromMe(d, m.Position) < 5 {
+		//		numberOfCloseMonsters++
+		//		if m.IsElite() {
+		//			eliteFound = true
+		//		}
+		//	}
+		//}
+		//if !staticFieldUsed && (numberOfCloseMonsters > 5 || eliteFound) {
+		//	staticFieldUsed = true
+		//	if d.PlayerUnit.Skills[skill.StaticField] > 0 {
+		//		steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 3, step.Distance(1, 5)))
+		//	}
+		//}
 
 		// During early game stages amount of mana is ridiculous...
 		if d.PlayerUnit.MPPercent() < 15 && d.PlayerUnit.Stats[stat.Level] < 15 {

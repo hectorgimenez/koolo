@@ -1,0 +1,7 @@
+// IGNORED by default, this directory is ONLY evaluated DURING the character leveling process.
+// Rules here are included ADDITIONALLY to the main pickit rules
+
+[name] == horadriccube
+[name] == amuletoftheviper
+[name] == staffofkings
+[name] == horadricstaff

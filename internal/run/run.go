@@ -5,6 +5,7 @@ import (
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +20,7 @@ type baseRun struct {
 	logger  *zap.Logger
 }
 
-func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character) (runs []Run) {
+func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character, gr *reader.GameReader) (runs []Run) {
 	baseRun := baseRun{
 		builder: builder,
 		char:    char,
@@ -67,7 +68,7 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 		case "baal":
 			runs = append(runs, Baal{baseRun})
 		case "leveling":
-			runs = append(runs, Leveling{baseRun})
+			runs = append(runs, Leveling{baseRun, gr})
 		}
 	}
 

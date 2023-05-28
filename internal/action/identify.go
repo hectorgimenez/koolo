@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
@@ -34,7 +34,7 @@ func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
 				return step.StatusInProgress
 			}),
 			step.SyncStep(func(d data.Data) error {
-				idTome, found := getIDTome(d)
+				idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
 				if !found {
 					b.logger.Warn("ID Tome not found, not identifying items")
 					return nil
@@ -55,7 +55,7 @@ func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
 }
 
 func (b Builder) itemsToIdentify(d data.Data) (items []data.Item) {
-	for _, i := range d.Items.Inventory {
+	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
 			continue
 		}
@@ -67,27 +67,15 @@ func (b Builder) itemsToIdentify(d data.Data) (items []data.Item) {
 }
 
 func identifyItem(idTome data.Item, i data.Item) {
-	xIDTome := town.InventoryTopLeftX + idTome.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	yIDTome := town.InventoryTopLeftY + idTome.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
-
-	hid.MovePointer(xIDTome, yIDTome)
+	screenPos := ui.GetScreenCoordsForItem(idTome)
+	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(200)
 	hid.Click(hid.RightButton)
 	helper.Sleep(200)
-	x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	hid.MovePointer(x, y)
+
+	screenPos = ui.GetScreenCoordsForItem(i)
+	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(300)
 	hid.Click(hid.LeftButton)
 	helper.Sleep(350)
-}
-
-func getIDTome(d data.Data) (data.Item, bool) {
-	for _, i := range d.Items.Inventory {
-		if i.Name == item.TomeOfIdentify {
-			return i, true
-		}
-	}
-
-	return data.Item{}, false
 }

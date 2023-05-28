@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -36,7 +37,7 @@ func (p *PickupItemStep) Status(d data.Data) Status {
 		return p.status
 	}
 
-	for _, i := range d.Items.Ground {
+	for _, i := range d.Items.ByLocation(item.LocationGround) {
 		if i.UnitID == p.item.UnitID {
 			return p.status
 		}
@@ -72,7 +73,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 	}
 
 	p.lastRun = time.Now()
-	for _, i := range d.Items.Ground {
+	for _, i := range d.Items.ByLocation(item.LocationGround) {
 		if i.UnitID == p.item.UnitID {
 			if i.IsHovered {
 				hid.Click(hid.LeftButton)
