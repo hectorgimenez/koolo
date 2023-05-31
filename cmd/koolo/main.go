@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	hook "github.com/robotn/gohook"
 
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
@@ -74,7 +75,12 @@ func main() {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 
-	ab := action.NewBuilder(logger, sm, bm, gr, char)
+	tf, err := ui.NewTemplateFinder(logger, "assets")
+	if err != nil {
+		logger.Fatal("Error creating template finder", zap.Error(err))
+	}
+
+	ab := action.NewBuilder(logger, sm, bm, gr, char, tf)
 	bot := koolo.NewBot(logger, hm, ab, gr)
 
 	var supervisor koolo.Supervisor

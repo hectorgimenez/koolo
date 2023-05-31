@@ -23,6 +23,7 @@ func (a Leveling) act1() action.Action {
 			return nil
 		}
 
+		a.builder.GetCompletedQuests(1)
 		running = true
 		if d.PlayerUnit.Stats[stat.Level] <= 5 {
 			return a.denOfEvil()

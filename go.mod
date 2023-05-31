@@ -12,6 +12,7 @@ require (
 	github.com/robotn/gohook v0.40.0
 	github.com/stretchr/testify v1.8.3
 	go.uber.org/zap v1.24.0
+	gocv.io/x/gocv v0.32.1
 	golang.org/x/sync v0.2.0
 	golang.org/x/sys v0.8.0
 	gopkg.in/yaml.v3 v3.0.1

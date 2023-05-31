@@ -16,6 +16,10 @@ type SorceressLeveling struct {
 	BaseCharacter
 }
 
+func (s SorceressLeveling) AssignSkillBindings() action.Action {
+	return nil
+}
+
 func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	return map[stat.ID]int{
 		stat.Dexterity: 0,
@@ -43,11 +47,11 @@ func (s SorceressLeveling) SkillPoints() []skill.Skill {
 		skill.FireBall,
 		skill.FireBall,
 		skill.FireBall,
-		skill.FireBall,
 		skill.Telekinesis,
-		skill.FireBall,
-		skill.FireBall,
 		skill.Teleport,
+		skill.FireBall,
+		skill.FireBall,
+		skill.FireBall,
 		skill.FireBall,
 		skill.FireBall,
 		skill.FireBall,

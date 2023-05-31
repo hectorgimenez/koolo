@@ -14,11 +14,9 @@ import (
 
 func (a Leveling) act2() action.Action {
 	return action.NewFactory(func(d data.Data) action.Action {
-		//if d.PlayerUnit.Area != area.LutGholein {
-		//	return nil
-		//}
-
-		return a.duriel()
+		if d.PlayerUnit.Area != area.LutGholein {
+			return nil
+		}
 
 		// Find Horadric Cube
 		_, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
@@ -27,6 +25,11 @@ func (a Leveling) act2() action.Action {
 		} else {
 			a.logger.Info("Horadric Cube not found, starting quest")
 			return a.findHoradricCube()
+		}
+
+		quests := a.builder.GetCompletedQuests(2)
+		if quests[4] {
+			return a.duriel()
 		}
 
 		// Find Staff of Kings
@@ -50,8 +53,6 @@ func (a Leveling) act2() action.Action {
 		// Summoner
 		a.logger.Info("Starting summoner quest")
 		return a.summoner()
-
-		return nil
 	})
 }
 
@@ -233,6 +234,7 @@ func (a Leveling) prepareStaff() action.Action {
 }
 
 func (a Leveling) duriel() action.Action {
+	a.logger.Info("Starting Duriel....")
 	md := a.gr.CachedMapData()
 	tombs := []area.Area{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
 
@@ -254,7 +256,7 @@ func (a Leveling) duriel() action.Action {
 
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		return []action.Action{
-			//a.prepareStaff(),
+			a.prepareStaff(),
 			a.builder.WayPoint(area.CanyonOfTheMagi),
 			a.char.Buff(),
 			a.builder.MoveToArea(realTomb),
@@ -297,9 +299,9 @@ func (a Leveling) duriel() action.Action {
 
 						return nil
 					}),
-					step.InteractObject(object.DurielsLairPortal, func(d data.Data) bool {
-						return d.PlayerUnit.Area == area.DurielsLair
-					}),
+					//step.InteractObject(object.DurielsLairPortal, func(d data.Data) bool {
+					//	return d.PlayerUnit.Area == area.DurielsLair
+					//}),
 				}
 			}),
 		}

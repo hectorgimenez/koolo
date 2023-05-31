@@ -28,4 +28,5 @@ type LevelingCharacter interface {
 	// StatPoints Stats will be assigned in the order they are returned by this function.
 	StatPoints() map[stat.ID]int
 	SkillPoints() []skill.Skill
+	AssignSkillBindings() Action
 }

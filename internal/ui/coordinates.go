@@ -19,6 +19,10 @@ const (
 	AnvilCenterY = 333
 	AnvilBtnX    = 272
 	AnvilBtnY    = 450
+
+	QuestFirstTabX    = 138
+	QuestFirstTabY    = 130
+	QuestTabXInterval = 68
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {

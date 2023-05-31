@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -8,6 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"go.uber.org/zap"
 )
 
@@ -143,4 +146,21 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 
 		return nil, false
 	}, CanBeSkipped())
+}
+
+func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
+	hid.PressKey(config.Config.Bindings.OpenQuestLog)
+	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
+	helper.Sleep(200)
+	hid.Click(hid.LeftButton)
+	helper.Sleep(5000)
+
+	sc := helper.Screenshot()
+	for i := 0; i < len(quests); i++ {
+		tm := b.tf.Find(fmt.Sprintf("quests_a%d_%d", act, i+1), sc)
+		quests[i] = tm.Found
+	}
+	hid.PressKey("esc")
+
+	return quests
 }

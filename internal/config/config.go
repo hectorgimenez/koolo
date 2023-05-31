@@ -53,6 +53,7 @@ type StructConfig struct {
 		OpenInventory       string `yaml:"openInventory"`
 		OpenCharacterScreen string `yaml:"openCharacterScreen"`
 		OpenSkillTree       string `yaml:"openSkillTree"`
+		OpenQuestLog        string `yaml:"openQuestLog"`
 		Potion1             string `yaml:"potion1"`
 		Potion2             string `yaml:"potion2"`
 		Potion3             string `yaml:"potion3"`
