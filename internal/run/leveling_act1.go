@@ -23,7 +23,6 @@ func (a Leveling) act1() action.Action {
 			return nil
 		}
 
-		a.builder.GetCompletedQuests(1)
 		running = true
 		if d.PlayerUnit.Stats[stat.Level] <= 5 {
 			return a.denOfEvil()
@@ -188,7 +187,7 @@ func (a Leveling) andariel() action.Action {
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractNPC(npc.Warriv),
-					step.KeySequence("esc", "home", "down", "enter"),
+					step.KeySequence("esc", "home", "home", "down", "enter"),
 				}
 			}))
 

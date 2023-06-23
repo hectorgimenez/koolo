@@ -6,6 +6,7 @@ import (
 
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
 )
@@ -26,6 +27,12 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 	}
 
 	collisionGrid := d.CollisionGrid
+
+	// Lut Gholein map is a bit bugged, we should close this fake path to avoid pathing issues
+	if d.PlayerUnit.Area == area.LutGholein {
+		collisionGrid[13][210] = false
+	}
+
 	for _, cord := range blacklistedCoords {
 		collisionGrid[cord[1]][cord[0]] = false
 	}
@@ -38,7 +45,7 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 				continue
 			}
 
-			collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
+			//collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
 			collisionGrid[ensureValueInCG(toY+i, len(collisionGrid))][ensureValueInCG(toX+k, len(collisionGrid[0]))] = true
 		}
 	}
@@ -89,7 +96,7 @@ func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords .
 				if math.Abs(float64(i)) >= math.Abs(float64(dst)) || math.Abs(float64(j)) >= math.Abs(float64(dst)) {
 					cgY := dest.Y - d.AreaOrigin.Y + j
 					cgX := dest.X - d.AreaOrigin.X + i
-					if len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
+					if cgX > 0 && cgY > 0 && len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
 						return GetPath(d, data.Position{
 							X: dest.X + i,
 							Y: dest.Y + j,

@@ -18,6 +18,7 @@ type MoveToAreaStep struct {
 	pathingStep
 	area                  area.Area
 	waitingForInteraction bool
+	mouseOverAttempts     int
 }
 
 func MoveToLevel(area area.Area) *MoveToAreaStep {
@@ -45,8 +46,17 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	m.tryTransitionStatus(StatusInProgress)
+
+	if !CanTeleport(d) && time.Since(m.lastRun) < helper.RandomDurationMs(400, 600) {
+		return nil
+	}
+
 	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
+	}
+
+	if m.mouseOverAttempts > maxInteractions {
+		return fmt.Errorf("area %d could not be interacted", m.area)
 	}
 
 	if (m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1) || d.PlayerUnit.Area == m.area {
@@ -75,11 +85,15 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 			}
 
 			if l.CanInteract {
-				x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
-				hid.MovePointer(x, y)
-				helper.Sleep(100)
-				hid.Click(hid.LeftButton)
-				m.waitingForInteraction = true
+				if d.HoverData.UnitType == 5 && d.HoverData.IsHovered {
+					hid.Click(hid.LeftButton)
+					m.waitingForInteraction = true
+				}
+
+				lx, ly := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
+				x, y := helper.Spiral(m.mouseOverAttempts)
+				hid.MovePointer(lx+x, ly+y)
+				m.mouseOverAttempts++
 				return nil
 			} else {
 				hid.PressKey(config.Config.Bindings.ForceMove)
@@ -101,5 +115,5 @@ func calculateMaxDistance(d data.Data) int {
 		return 25
 	}
 
-	return 15
+	return helper.RandRng(7, 11)
 }

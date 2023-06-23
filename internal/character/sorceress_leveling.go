@@ -1,6 +1,8 @@
 package character
 
 import (
+	"sort"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -10,6 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 type SorceressLeveling struct {
@@ -39,7 +42,6 @@ func (s SorceressLeveling) SkillPoints() []skill.Skill {
 		skill.FireBolt,
 		skill.FireBolt,
 		skill.StaticField,
-		skill.FireBolt,
 		skill.FireBolt,
 		skill.FireBolt,
 		skill.FireBall,
@@ -102,7 +104,17 @@ func (s SorceressLeveling) KillSummoner() action.Action {
 }
 
 func (s SorceressLeveling) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return action.NewChain(func(d data.Data) []action.Action {
+		return []action.Action{
+			action.BuildStatic(func(d data.Data) []step.Step {
+				mephisto, _ := d.Monsters.FindOne(npc.Mephisto, data.MonsterTypeNone)
+				return []step.Step{
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 8, step.Distance(1, 5)),
+				}
+			}),
+			s.killMonster(npc.Mephisto, data.MonsterTypeNone),
+		}
+	})
 }
 
 func (s SorceressLeveling) KillPindle(skipOnImmunities []stat.Resist) action.Action {
@@ -114,7 +126,28 @@ func (s SorceressLeveling) KillNihlathak() action.Action {
 }
 
 func (s SorceressLeveling) KillCouncil() action.Action {
-	panic("implement me")
+	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+		var councilMembers []data.Monster
+		for _, m := range d.Monsters {
+			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
+				councilMembers = append(councilMembers, m)
+			}
+		}
+
+		// Order council members by distance
+		sort.Slice(councilMembers, func(i, j int) bool {
+			distanceI := pather.DistanceFromMe(d, councilMembers[i].Position)
+			distanceJ := pather.DistanceFromMe(d, councilMembers[j].Position)
+
+			return distanceI < distanceJ
+		})
+
+		if len(councilMembers) > 0 {
+			return councilMembers[0].UnitID, true
+		}
+
+		return 0, false
+	}, nil)
 }
 
 func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) *action.DynamicAction {
@@ -167,9 +200,17 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 		if d.PlayerUnit.MPPercent() < 15 && d.PlayerUnit.Stats[stat.Level] < 15 {
 			steps = append(steps, step.PrimaryAttack(id, 1, step.Distance(1, 3)))
 		} else {
-			steps = append(steps,
-				step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, step.Distance(1, 25)),
-			)
+			m, _ := d.Monsters.FindByID(id)
+			if m.IsElite() {
+				steps = append(steps,
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 3, step.Distance(1, 25)),
+				)
+			} else {
+				steps = append(steps,
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, step.Distance(1, 25)),
+				)
+			}
+
 		}
 
 		completedAttackLoops++
@@ -181,6 +222,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 
 func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+		s.logger.Debug("STARTING MONSTER KILL SEQUENCE")
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false

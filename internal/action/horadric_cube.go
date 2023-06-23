@@ -110,6 +110,8 @@ func (b Builder) CubeTransmute() *Chain {
 			helper.Sleep(200)
 			hid.KeyUp("control")
 			helper.Sleep(300)
+			hid.PressKey("esc")
+			helper.Sleep(300)
 
 			return nil
 		}))

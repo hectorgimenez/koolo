@@ -138,7 +138,7 @@ func main() {
 
 	err = g.Wait()
 	if err != nil {
-		log.Fatalf("Error running Koolo: %s", err.Error())
+		logger.Fatal("Error running Koolo", zap.Error(err))
 	}
 }
 

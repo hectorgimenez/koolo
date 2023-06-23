@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
 )
@@ -27,20 +28,15 @@ func (a Diablo) Name() string {
 }
 
 func (a Diablo) BuildActions() (actions []action.Action) {
-	// Moving to starting point (RiverOfFlame)
-	actions = append(actions, a.builder.WayPoint(area.RiverOfFlame))
 
-	// Buff
-	actions = append(actions, a.char.Buff())
-
-	// Travel to diablo spawn location
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.ChaosSanctuary),
-			// We move to the center in order to load all the seals in memory
-			step.MoveTo(diabloSpawnPosition),
-		}
-	}))
+	actions = append(actions,
+		// Moving to starting point (RiverOfFlame)
+		a.builder.WayPoint(area.RiverOfFlame),
+		// Buff
+		a.char.Buff(),
+		// Travel to diablo spawn location
+		a.builder.MoveToCoords(diabloSpawnPosition),
+	)
 
 	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
 
@@ -48,29 +44,37 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	for i, s := range seals {
 		seal := s
 		sealNumber := i
-		// Go to the seal and stop at distance 30, close enough to fetch monsters from memory
-		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+
+		actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
 			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
-			if obj, found := d.Objects.FindOne(seal); found {
-				a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
-				return []step.Step{step.MoveTo(obj.Position, step.StopAtDistance(30))}
-			}
-			a.logger.Debug("SEAL NOT FOUND", zap.Int("seal", sealNumber+1))
-			return []step.Step{}
+			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+				if obj, found := d.Objects.FindOne(seal); found {
+					a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
+
+					return obj.Position, true
+				}
+				a.logger.Debug("SEAL NOT FOUND", zap.Int("seal", sealNumber+1))
+
+				return data.Position{}, false
+			})
+
+			return nil
 		}))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
-		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-			if obj, found := d.Objects.FindOne(seal); found {
-				pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
-				return []step.Step{step.MoveTo(pos)}
-			}
-			return []step.Step{}
-		}))
+		//actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		//	if obj, found := d.Objects.FindOne(seal); found {
+		//		pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
+		//		return []step.Step{step.MoveTo(pos)}
+		//	}
+		//	return []step.Step{}
+		//}))
 
 		// Kill all the monsters close to the seal and item pickup
-		actions = append(actions, a.builder.ClearAreaAroundPlayer(13))
-		actions = append(actions, a.builder.ItemPickup(false, 40))
+		//actions = append(actions,
+		//	a.builder.ClearAreaAroundPlayer(13),
+		//	a.builder.ItemPickup(false, 40),
+		//)
 
 		// Activate the seal
 		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
@@ -80,6 +84,12 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 						return !obj.Selectable
 					}
 					return false
+				}),
+
+				// Wait some time to let elite group to spawn
+				step.SyncStep(func(d data.Data) error {
+					helper.Sleep(4000)
+					return nil
 				}),
 			}
 		}))

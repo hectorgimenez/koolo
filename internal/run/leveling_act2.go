@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -235,12 +236,11 @@ func (a Leveling) prepareStaff() action.Action {
 
 func (a Leveling) duriel() action.Action {
 	a.logger.Info("Starting Duriel....")
-	md := a.gr.CachedMapData()
 	tombs := []area.Area{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
 
 	var realTomb area.Area
 	for _, tomb := range tombs {
-		_, _, objects, _ := md.NPCsExitsAndObjects(data.Position{}, tomb)
+		_, _, objects, _ := reader.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
 		for _, obj := range objects {
 			if obj.Name == object.HoradricOrifice {
 				realTomb = tomb

@@ -83,11 +83,8 @@ func (m *MoveToStep) Run(d data.Data) error {
 		return nil
 	}
 
-	// Throttle movement clicks in town
-	if d.PlayerUnit.Area.IsTown() {
-		if time.Since(m.lastRun) < helper.RandomDurationMs(150, 250) {
-			return nil
-		}
+	if !CanTeleport(d) && time.Since(m.lastRun) < helper.RandomDurationMs(400, 600) {
+		return nil
 	}
 
 	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
@@ -125,10 +122,17 @@ func (m *MoveToStep) Run(d data.Data) error {
 	}
 
 	m.lastRun = time.Now()
+	m.previousArea = d.PlayerUnit.Area
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
 	pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
 
 	return nil
+}
+
+func (m *MoveToStep) Reset() {
+	m.status = StatusNotStarted
+	m.lastRun = time.Time{}
+	m.startedAt = time.Time{}
 }

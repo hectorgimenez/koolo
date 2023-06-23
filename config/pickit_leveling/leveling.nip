@@ -41,6 +41,7 @@
 
 // Bases
 [name] == crystalsword && [flag] != ethereal # [sockets] == 4 // Spirit
+[name] == crystalsword && [flag] != ethereal // Spirit
 [type] == shield # [sockets] == 4 // Spirit
 [type] == shield # [sockets] == 3 // Ancient's Pledge
 [type] == polearm # [sockets] == 4 // Insight

@@ -18,5 +18,8 @@ func (a Leveling) BuildActions() []action.Action {
 	return []action.Action{
 		a.act1(),
 		a.act2(),
+		a.act3(),
+		a.act4(),
+		a.act5(),
 	}
 }

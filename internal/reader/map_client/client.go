@@ -187,3 +187,15 @@ func (md MapData) getLevel(area area.Area) serverLevel {
 
 	return serverLevel{}
 }
+
+func (md MapData) CollisionGridForCoords(p data.Position) ([][]bool, bool) {
+	for _, lvl := range md {
+		lvlMaxX := lvl.Offset.X + lvl.Size.Width
+		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
+		if lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
+			return md.CollisionGrid(area.Area(lvl.ID)), true
+		}
+	}
+
+	return nil, false
+}
