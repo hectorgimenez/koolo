@@ -2,18 +2,20 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"time"
 )
 
 type InteractNPCStep struct {
 	pathingStep
 	NPC                   npc.ID
 	waitingForInteraction bool
+	isCompletedFn         func(d data.Data) bool
 }
 
 func InteractNPC(npc npc.ID) *InteractNPCStep {
@@ -23,9 +25,21 @@ func InteractNPC(npc npc.ID) *InteractNPCStep {
 	}
 }
 
+func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool) *InteractNPCStep {
+	return &InteractNPCStep{
+		pathingStep:   newPathingStep(),
+		NPC:           npc,
+		isCompletedFn: isCompletedFn,
+	}
+}
+
 func (i *InteractNPCStep) Status(d data.Data) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
+	}
+
+	if i.isCompletedFn != nil && i.isCompletedFn(d) {
+		return i.tryTransitionStatus(StatusCompleted)
 	}
 
 	// Give some extra time to render the UI

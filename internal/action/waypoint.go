@@ -62,18 +62,21 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 			case area.MonasteryGate:
 				b.logger.Debug("Monastery Gate detected, moving to static coords")
 				actions = append(actions,
-					b.MoveToCoords(data.Position{X: 15139, Y: 5098}),
-					b.MoveToCoords(data.Position{X: 15148, Y: 4978}),
+					b.MoveToCoords(data.Position{X: 15139, Y: 5056}),
 				)
 			case area.ArcaneSanctuary:
 				b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
-				actions = append(actions, BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{
-						step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
-							return d.PlayerUnit.Area == area.ArcaneSanctuary
-						}),
-					}
-				}))
+				portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
+				actions = append(actions,
+					b.MoveToCoords(portal.Position),
+					BuildStatic(func(d data.Data) []step.Step {
+						return []step.Step{
+							step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+								return d.PlayerUnit.Area == area.ArcaneSanctuary
+							}),
+						}
+					}),
+				)
 			default:
 				actions = append(actions,
 					b.ch.Buff(),

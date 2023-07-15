@@ -7,14 +7,14 @@ require (
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/go-vgo/robotgo v1.0.0-rc1
-	github.com/hectorgimenez/d2go v0.0.0-20230601092436-38588fb6e88c
+	github.com/hectorgimenez/d2go v0.0.0-20230701095125-68ddbc812f2c
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/robotn/gohook v0.40.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0
 	gocv.io/x/gocv v0.33.0
-	golang.org/x/sync v0.2.0
-	golang.org/x/sys v0.8.0
+	golang.org/x/sync v0.3.0
+	golang.org/x/sys v0.10.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -42,6 +42,6 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/image v0.7.0 // indirect
 )

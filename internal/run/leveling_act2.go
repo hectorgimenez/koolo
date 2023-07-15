@@ -4,11 +4,14 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
@@ -30,12 +33,14 @@ func (a Leveling) act2() action.Action {
 
 		quests := a.builder.GetCompletedQuests(2)
 		if quests[4] {
-			return a.duriel()
+			return a.duriel(quests[1])
 		}
+
+		_, horadricStaffFound := d.Items.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 
 		// Find Staff of Kings
 		_, found = d.Items.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found {
+		if found || horadricStaffFound {
 			a.logger.Info("StaffOfKings found, skipping quest")
 		} else {
 			a.logger.Info("StaffOfKings not found, starting quest")
@@ -44,7 +49,7 @@ func (a Leveling) act2() action.Action {
 
 		// Find Amulet
 		_, found = d.Items.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found {
+		if found || horadricStaffFound {
 			a.logger.Info("Amulet of the Viper found, skipping quest")
 		} else {
 			a.logger.Info("Amulet of the Viper not found, starting quest")
@@ -159,8 +164,6 @@ func (a Leveling) summoner() action.Action {
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractObject(object.YetAnotherTome, func(d data.Data) bool {
-						helper.Sleep(500)
-						hid.PressKey("esc")
 						_, found := d.Objects.FindOne(object.PermanentTownPortal)
 						return found
 					}),
@@ -176,6 +179,16 @@ func (a Leveling) summoner() action.Action {
 			}),
 
 			a.builder.DiscoverWaypoint(),
+			a.builder.ReturnTown(),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.InteractNPC(npc.Atma),
+					step.SyncStep(func(d data.Data) error {
+						hid.PressKey("esc")
+						return nil
+					}),
+				}
+			}),
 		)
 
 		return
@@ -234,7 +247,7 @@ func (a Leveling) prepareStaff() action.Action {
 	})
 }
 
-func (a Leveling) duriel() action.Action {
+func (a Leveling) duriel(staffAlreadyUsed bool) action.Action {
 	a.logger.Info("Starting Duriel....")
 	tombs := []area.Area{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
 
@@ -255,8 +268,12 @@ func (a Leveling) duriel() action.Action {
 	}
 
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
-		return []action.Action{
-			a.prepareStaff(),
+		if !staffAlreadyUsed {
+			actions = append(actions, a.prepareStaff())
+		}
+
+		// Move close to the Horadric Orifice
+		actions = append(actions,
 			a.builder.WayPoint(area.CanyonOfTheMagi),
 			a.char.Buff(),
 			a.builder.MoveToArea(realTomb),
@@ -265,7 +282,91 @@ func (a Leveling) duriel() action.Action {
 
 				return orifice.Position, true
 			}),
-			a.builder.ClearAreaAroundPlayer(20),
+		)
+
+		// If staff has not been used, then put it in the orifice and wait for the entrance to open
+		if !staffAlreadyUsed {
+			actions = append(actions,
+				a.builder.ClearAreaAroundPlayer(20),
+				action.BuildStatic(func(d data.Data) []step.Step {
+					return []step.Step{
+						step.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
+							return d.OpenMenus.Anvil
+						}),
+						step.SyncStep(func(d data.Data) error {
+							staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
+
+							screenPos := ui.GetScreenCoordsForItem(staff)
+							hid.MovePointer(screenPos.X, screenPos.Y)
+
+							helper.Sleep(300)
+							hid.Click(hid.LeftButton)
+							hid.MovePointer(ui.AnvilCenterX, ui.AnvilCenterY)
+							helper.Sleep(300)
+							hid.Click(hid.LeftButton)
+							helper.Sleep(300)
+							hid.MovePointer(ui.AnvilBtnX, ui.AnvilBtnY)
+							helper.Sleep(500)
+							hid.Click(hid.LeftButton)
+							helper.Sleep(20000)
+
+							return nil
+						}),
+					}
+				}),
+			)
+		}
+
+		potsToBuy := 4
+		if d.MercHPPercent() > 0 {
+			potsToBuy = 8
+		}
+
+		// Return to the city, ensure we have pots and everything, and get some thawing potions
+		actions = append(actions,
+			a.builder.ReturnTown(),
+			a.builder.VendorRefill(),
+			a.builder.BuyAtVendor(npc.Lysander, action.VendorItemRequest{
+				Item:     "ThawingPotion",
+				Quantity: potsToBuy,
+				Tab:      4,
+			}),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.SyncStep(func(d data.Data) error {
+						hid.PressKey(config.Config.Bindings.OpenInventory)
+						x := 0
+						for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+							if itm.Name != "ThawingPotion" {
+								continue
+							}
+
+							pos := ui.GetScreenCoordsForItem(itm)
+							hid.MovePointer(pos.X, pos.Y)
+							helper.Sleep(500)
+
+							if x > 3 {
+								hid.Click(hid.LeftButton)
+								helper.Sleep(300)
+								hid.MovePointer(ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+								helper.Sleep(300)
+								hid.Click(hid.LeftButton)
+							} else {
+								hid.Click(hid.RightButton)
+							}
+							x++
+						}
+
+						hid.PressKey("esc")
+						return nil
+					}),
+				}
+			}),
+			a.builder.UsePortalInTown(),
+			a.char.Buff(),
+		)
+
+		return append(actions,
 			action.BuildStatic(func(d data.Data) []step.Step {
 				_, found := d.Objects.FindOne(object.DurielsLairPortal)
 				if found {
@@ -276,34 +377,46 @@ func (a Leveling) duriel() action.Action {
 					}
 				}
 
+				return nil
+			}),
+			a.char.KillDuriel(),
+			a.builder.MoveToCoords(data.Position{
+				X: 22577,
+				Y: 15613,
+			}),
+			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
-					step.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
-						return d.OpenMenus.Anvil
+					step.InteractNPCWithCheck(npc.Tyrael, func(d data.Data) bool {
+						obj, found := d.Objects.FindOne(object.TownPortal)
+						if found && pather.DistanceFromMe(d, obj.Position) < 10 {
+							return true
+						}
+
+						return false
 					}),
-					step.SyncStep(func(d data.Data) error {
-						staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
-
-						screenPos := ui.GetScreenCoordsForItem(staff)
-						hid.MovePointer(screenPos.X, screenPos.Y)
-
-						helper.Sleep(300)
-						hid.Click(hid.LeftButton)
-						hid.MovePointer(ui.AnvilCenterX, ui.AnvilCenterY)
-						helper.Sleep(300)
-						hid.Click(hid.LeftButton)
-						helper.Sleep(300)
-						hid.MovePointer(ui.AnvilBtnX, ui.AnvilBtnY)
-						helper.Sleep(500)
-						hid.Click(hid.LeftButton)
-						helper.Sleep(20000)
-
-						return nil
-					}),
-					//step.InteractObject(object.DurielsLairPortal, func(d data.Data) bool {
-					//	return d.PlayerUnit.Area == area.DurielsLair
-					//}),
+				}
+			}, action.CanBeSkipped()),
+			a.builder.ReturnTown(),
+			a.builder.MoveToCoords(data.Position{
+				X: 5092,
+				Y: 5144,
+			}),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.InteractNPC(npc.Jerhyn),
+					step.KeySequence("esc"),
 				}
 			}),
-		}
+			a.builder.MoveToCoords(data.Position{
+				X: 5195,
+				Y: 5060,
+			}),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.InteractNPC(npc.Meshif),
+					step.KeySequence("home", "down", "enter"),
+				}
+			}),
+		)
 	})
 }

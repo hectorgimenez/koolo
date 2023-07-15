@@ -131,6 +131,11 @@ func (b Builder) stashInventory(d data.Data, forceStash bool) {
 }
 
 func (b Builder) shouldStashIt(i data.Item, forceStash bool) bool {
+	// Don't stash items from quests during leveling process, it makes things easier to track
+	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
+		return false
+	}
+
 	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}

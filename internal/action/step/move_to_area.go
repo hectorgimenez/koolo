@@ -84,8 +84,8 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 				return nil
 			}
 
-			if l.CanInteract {
-				if d.HoverData.UnitType == 5 && d.HoverData.IsHovered {
+			if l.IsEntrance {
+				if d.HoverData.UnitType == 5 || d.HoverData.UnitType == 2 && d.HoverData.IsHovered {
 					hid.Click(hid.LeftButton)
 					m.waitingForInteraction = true
 				}
@@ -106,6 +106,11 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 
 func CanTeleport(d data.Data) bool {
 	_, found := d.PlayerUnit.Skills[skill.Teleport]
+
+	// Duriel's Lair is bugged and teleport doesn't work here
+	if d.PlayerUnit.Area == area.DurielsLair {
+		return false
+	}
 
 	return found && config.Config.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
 }

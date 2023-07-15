@@ -6,7 +6,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -49,7 +48,13 @@ func (p *PickupItemStep) Status(d data.Data) Status {
 }
 
 func (p *PickupItemStep) Run(d data.Data) error {
-	if p.mouseOverAttempts > maxInteractions || !p.waitingForInteraction.IsZero() && time.Since(p.waitingForInteraction) > time.Second*5 {
+	for _, m := range d.Monsters.Enemies() {
+		if dist := pather.DistanceFromMe(d, m.Position); dist < 7 && p.mouseOverAttempts > 1 {
+			return fmt.Errorf("monster %s [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Name, p.item.Quality.ToString())
+		}
+	}
+
+	if p.mouseOverAttempts > maxInteractions || !p.waitingForInteraction.IsZero() && time.Since(p.waitingForInteraction) > time.Second*3 {
 		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Name, p.item.Quality.ToString())
 	}
 
@@ -63,13 +68,8 @@ func (p *PickupItemStep) Run(d data.Data) error {
 		return nil
 	}
 
-	if !p.waitingForInteraction.IsZero() && time.Since(p.lastRun) < time.Second*2 {
+	if !p.waitingForInteraction.IsZero() && time.Since(p.lastRun) < time.Second {
 		return nil
-	}
-
-	// Set teleport for first time
-	if p.lastRun.IsZero() && CanTeleport(d) {
-		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 
 	p.lastRun = time.Now()
@@ -83,15 +83,15 @@ func (p *PickupItemStep) Run(d data.Data) error {
 				return nil
 			} else {
 				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
-				// on Andariel
+				// on Andariel, so we open it
 				if p.isChestHovered(d) {
 					hid.Click(hid.LeftButton)
 				}
 
-				path, distance, _ := pather.GetPath(d, i.Position)
-				if distance > 6 {
-					pather.MoveThroughPath(path, 15, CanTeleport(d))
-					return nil
+				distance := pather.DistanceFromMe(d, i.Position)
+				if distance > 7 {
+					p.logger.Info("item is too far away", zap.String("item", string(p.item.Name)))
+					return fmt.Errorf("item is too far away: %s", p.item.Name)
 				}
 
 				objectX := i.Position.X - 1

@@ -2,12 +2,14 @@ package run
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
 type Leveling struct {
 	baseRun
 	gr *reader.GameReader
+	bm health.BeltManager
 }
 
 func (a Leveling) Name() string {

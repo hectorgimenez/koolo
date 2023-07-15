@@ -6,8 +6,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/reader"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +28,21 @@ func (b Builder) MoveToArea(dst area.Area) Action {
 						return data.Position{X: 4989, Y: 5063}, true
 					} else {
 						return data.Position{X: 5096, Y: 4997}, true
+					}
+				}
+
+				// This means it's a cave, we don't want to load the map, just find the entrance and interact
+				if a.IsEntrance {
+					return a.Position, true
+				}
+
+				lvl, _ := reader.CachedMapData.GetLevelData(a.Area)
+				_, _, objects, _ := reader.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
+
+				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
+				for _, obj := range objects {
+					if pather.IsWalkable(obj.Position, lvl.Offset, lvl.CollisionGrid) {
+						return obj.Position, true
 					}
 				}
 
@@ -74,29 +91,28 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar {
+		if isLevelingChar && d.PlayerUnit.Stats[stat.Level] >= 15 {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
 			if (!healingPotsFound || !manaPotsFound) && d.PlayerUnit.TotalGold() > 1000 {
 				return NewChain(func(d data.Data) []Action {
-					return []Action{
-						b.ReturnTown(),
-						b.IdentifyAll(false),
-						b.Stash(false),
-						b.ReviveMerc(),
-						b.Repair(),
-						b.VendorRefill(),
-						b.UsePortalInTown(),
-					}
+					return b.InRunReturnTownRoutine()
 				})
 			}
 		}
 
-		// If we can teleport, just return the normal MoveTo step and stop here
 		if step.CanTeleport(d) {
-			if !isLevelingChar || d.PlayerUnit.TotalGold() > 10000 {
+			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
+			if !isLevelingChar {
 				return BuildStatic(func(d data.Data) []step.Step {
 					return []step.Step{step.MoveTo(to)}
+				})
+			}
+			// But if we are leveling and have enough money (to buy pots), let's teleport. We add the timeout
+			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
+			if d.PlayerUnit.TotalGold() > 10000 {
+				return BuildStatic(func(d data.Data) []step.Step {
+					return []step.Step{step.MoveTo(to, step.WithTimeout(5*time.Second))}
 				})
 			}
 		}
@@ -104,11 +120,12 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 		// Detect if there are monsters close to the player
 		closeEnemies := 0
 		for _, m := range d.Monsters.Enemies() {
-			if dist := pather.DistanceFromMe(d, m.Position); dist < 5 {
+			if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
 				closeEnemies++
+				a := d.PlayerUnit.Area
 				if closeEnemies > 1 || m.IsElite() ||
 					// This map is super narrow and monsters are blocking the path
-					(closeEnemies > 0 && (d.PlayerUnit.Area == area.MaggotLairLevel1 || d.PlayerUnit.Area == area.MaggotLairLevel2 || d.PlayerUnit.Area == area.MaggotLairLevel3)) {
+					(closeEnemies > 0 && (a == area.MaggotLairLevel1 || a == area.MaggotLairLevel2 || a == area.MaggotLairLevel3 || a == area.ArcaneSanctuary || a == area.ClawViperTempleLevel2 || a == area.RiverOfFlame || a == area.ChaosSanctuary)) {
 					pickupBeforeMoving = true
 					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
@@ -119,7 +136,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 
 		if pickupBeforeMoving {
 			pickupBeforeMoving = false
-			return b.ItemPickup(false, 50)
+			return b.ItemPickup(false, 30)
 		}
 
 		// Check if there is a door blocking our path
@@ -148,7 +165,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 				currentStep = step.MoveTo(
 					to,
 					step.ClosestWalkable(),
-					step.WithTimeout(time.Second),
+					step.WithTimeout(time.Millisecond*500),
 				)
 			} else {
 				currentStep.Reset()

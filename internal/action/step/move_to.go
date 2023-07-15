@@ -115,8 +115,9 @@ func (m *MoveToStep) Run(d data.Data) error {
 					return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 				}
 				m.destination = path.Destination
+			} else {
+				return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 			}
-
 		}
 		m.path = path
 	}

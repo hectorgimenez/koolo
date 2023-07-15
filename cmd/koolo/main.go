@@ -93,7 +93,7 @@ func main() {
 	}
 
 	g.Go(func() error {
-		return supervisor.Start(ctx, run.BuildRuns(logger, ab, char, gr))
+		return supervisor.Start(ctx, run.BuildRuns(logger, ab, char, gr, bm))
 	})
 
 	if config.Config.Controller.Webserver {

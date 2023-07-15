@@ -11,6 +11,8 @@ const (
 	inventoryTopLeftY      = 369
 	topCornerVendorWindowX = 109
 	topCornerVendorWindowY = 147
+	MercAvatarPositionX    = 36
+	MercAvatarPositionY    = 39
 
 	CubeTransmuteBtnX = 273
 	CubeTransmuteBtnY = 411

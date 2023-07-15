@@ -19,6 +19,24 @@ func (b Builder) PreRun(firstRun bool) []Action {
 		b.VendorRefill(),
 		b.Heal(),
 		b.ReviveMerc(),
+		b.HireMerc(),
 		b.Repair(),
+	}
+}
+
+func (b Builder) InRunReturnTownRoutine() []Action {
+	return []Action{
+		b.ReturnTown(),
+		b.EnsureStatPoints(),
+		b.EnsureSkillPoints(),
+		b.RecoverCorpse(),
+		b.IdentifyAll(false),
+		b.Stash(false),
+		b.VendorRefill(),
+		b.Heal(),
+		b.ReviveMerc(),
+		b.HireMerc(),
+		b.Repair(),
+		b.UsePortalInTown(),
 	}
 }

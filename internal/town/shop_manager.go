@@ -36,13 +36,17 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 	// We traverse the items in reverse order because vendor has the best potions at the end
 	pot, found := sm.findFirstMatch(d, "superhealingpotion", "greaterhealingpotion", "healingpotion", "lighthealingpotion", "minorhealingpotion")
 	if found && missingHealingPots > 0 {
-		sm.buyItem(pot, missingHealingPots)
+		sm.BuyItem(pot, missingHealingPots)
 		missingHealingPots = 0
 	}
 
 	pot, found = sm.findFirstMatch(d, "supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
+	// In Normal greater potions are expensive as we are low level, let's keep with cheap ones
+	if config.Config.Game.Difficulty == "normal" {
+		pot, found = sm.findFirstMatch(d, "manapotion", "lightmanapotion", "minormanapotion")
+	}
 	if found && missingManaPots > 0 {
-		sm.buyItem(pot, missingManaPots)
+		sm.BuyItem(pot, missingManaPots)
 		missingManaPots = 0
 	}
 
@@ -115,7 +119,7 @@ func (sm ShopManager) shouldBuyKeys(d data.Data) bool {
 }
 
 func (sm ShopManager) SellJunk(d data.Data) {
-	for _, i := range d.Items.ByLocation(item.LocationInventory) {
+	for _, i := range ItemsToBeSold(d) {
 		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Name, i.Quality))
 			screenPos := ui.GetScreenCoordsForItem(i)
@@ -131,7 +135,7 @@ func (sm ShopManager) SellJunk(d data.Data) {
 	}
 }
 
-func (sm ShopManager) buyItem(i data.Item, quantity int) {
+func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(250)
@@ -152,4 +156,18 @@ func (sm ShopManager) buyFullStack(i data.Item) {
 	helper.Sleep(300)
 	hid.KeyUp("shift")
 	helper.Sleep(500)
+}
+
+func ItemsToBeSold(d data.Data) (items []data.Item) {
+	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+		if itm.IsFromQuest() {
+			continue
+		}
+
+		if config.Config.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
+			items = append(items, itm)
+		}
+	}
+
+	return
 }

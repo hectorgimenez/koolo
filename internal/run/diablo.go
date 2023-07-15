@@ -2,6 +2,7 @@ package run
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -9,7 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
 )
@@ -19,8 +20,14 @@ var diabloSpawnPosition = data.Position{
 	Y: 5286,
 }
 
+var chaosSanctuaryEntrancePosition = data.Position{
+	X: 7796,
+	Y: 5561,
+}
+
 type Diablo struct {
 	baseRun
+	bm health.BeltManager
 }
 
 func (a Diablo) Name() string {
@@ -28,16 +35,16 @@ func (a Diablo) Name() string {
 }
 
 func (a Diablo) BuildActions() (actions []action.Action) {
-
 	actions = append(actions,
 		// Moving to starting point (RiverOfFlame)
 		a.builder.WayPoint(area.RiverOfFlame),
 		// Buff
 		a.char.Buff(),
 		// Travel to diablo spawn location
-		a.builder.MoveToCoords(diabloSpawnPosition),
+		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
 	)
 
+	actions = append(actions, a.builder.MoveToCoords(diabloSpawnPosition))
 	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
 
 	// Move across all the seals, try to find the most clear spot around them, kill monsters and activate the seal.
@@ -45,20 +52,31 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		seal := s
 		sealNumber := i
 
-		actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
-			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
-			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
-				if obj, found := d.Objects.FindOne(seal); found {
-					a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
-
-					return obj.Position, true
-				}
-				a.logger.Debug("SEAL NOT FOUND", zap.Int("seal", sealNumber+1))
-
-				return data.Position{}, false
-			})
+		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+			_, isLevelingChar := a.char.(action.LevelingCharacter)
+			if isLevelingChar && a.bm.ShouldBuyPotions(d) {
+				a.logger.Debug("Let's go back town to buy more pots", zap.Int("seal", sealNumber+1))
+				return a.builder.InRunReturnTownRoutine()
+			}
 
 			return nil
+		}))
+
+		actions = append(actions, a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
+			if obj, found := d.Objects.FindOne(seal); found {
+				if d := pather.DistanceFromMe(d, obj.Position); d < 7 {
+					a.logger.Debug("We are close enough to the seal", zap.Int("seal", sealNumber+1))
+					return data.Position{}, false
+				}
+
+				a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
+
+				return obj.Position, true
+			}
+			a.logger.Debug("Seal NOT found", zap.Int("seal", sealNumber+1))
+
+			return data.Position{}, false
 		}))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
@@ -77,25 +95,29 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		//)
 
 		// Activate the seal
-		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-			return []step.Step{
-				step.InteractObject(seal, func(d data.Data) bool {
-					if obj, found := d.Objects.FindOne(seal); found {
-						return !obj.Selectable
-					}
-					return false
-				}),
+		actions = append(actions,
+			a.builder.ClearAreaAroundPlayer(15),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				a.logger.Debug("Trying to activate seal...", zap.Int("seal", sealNumber+1))
+				return []step.Step{
+					step.InteractObject(seal, func(d data.Data) bool {
+						if obj, found := d.Objects.FindOne(seal); found {
+							if !obj.Selectable {
+								a.logger.Debug("Seal activated, waiting for elite group to spawn", zap.Int("seal", sealNumber+1))
+							}
+							return !obj.Selectable
+						}
+						return false
+					}),
 
-				// Wait some time to let elite group to spawn
-				step.SyncStep(func(d data.Data) error {
-					helper.Sleep(4000)
-					return nil
-				}),
-			}
-		}))
+					// Wait some time to let elite group to spawn
+					step.Wait(time.Second * 2),
+				}
+			}),
+		)
 
 		// First clear close trash mobs, regardless if they are elite or not
-		actions = append(actions, a.builder.ClearAreaAroundPlayer(10))
+		actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
 
 		// Now try to kill the Elite packs (maybe are already dead)
 		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
@@ -111,6 +133,21 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 		actions = append(actions, a.builder.ItemPickup(false, 40))
 	}
+
+	// Go back to town to buy potions if needed
+	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+		_, isLevelingChar := a.char.(action.LevelingCharacter)
+		if isLevelingChar && a.bm.ShouldBuyPotions(d) {
+			return a.builder.InRunReturnTownRoutine()
+		}
+
+		return nil
+	}))
+
+	actions = append(actions,
+		a.builder.MoveToCoords(diabloSpawnPosition),
+		a.char.KillDiablo(),
+	)
 
 	return
 }

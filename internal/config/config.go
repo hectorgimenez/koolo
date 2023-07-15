@@ -109,6 +109,9 @@ type StructConfig struct {
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
 		}
+		Baal struct {
+			KillBaal bool `yaml:"killBaal"`
+		}
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`

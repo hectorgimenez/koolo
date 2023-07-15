@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"go.uber.org/zap"
 )
@@ -55,7 +57,7 @@ func (b Builder) EnsureStatPoints() *DynamicAction {
 			return nil, false
 		}
 
-		for st, targetPoints := range char.StatPoints() {
+		for st, targetPoints := range char.StatPoints(d) {
 			currentPoints, found := d.PlayerUnit.Stats[st]
 			if !found || currentPoints >= targetPoints {
 				continue
@@ -87,10 +89,11 @@ func (b Builder) EnsureStatPoints() *DynamicAction {
 }
 
 func (b Builder) EnsureSkillPoints() *DynamicAction {
+	assignAttempts := 0
 	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
-		_, unusedSkillPoints := d.PlayerUnit.Stats[stat.SkillPoints]
-		if !isLevelingChar || !unusedSkillPoints {
+		availablePoints, unusedSkillPoints := d.PlayerUnit.Stats[stat.SkillPoints]
+		if !isLevelingChar || !unusedSkillPoints || assignAttempts >= availablePoints {
 			if d.OpenMenus.SkillTree {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
@@ -131,6 +134,7 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
+						assignAttempts++
 						helper.Sleep(100)
 						hid.MovePointer(uiSkillTabPosition[position.Tab].X, uiSkillTabPosition[position.Tab].Y)
 						hid.Click(hid.LeftButton)
@@ -153,7 +157,7 @@ func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
 	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
 	helper.Sleep(200)
 	hid.Click(hid.LeftButton)
-	helper.Sleep(5000)
+	helper.Sleep(3500)
 
 	sc := helper.Screenshot()
 	for i := 0; i < len(quests); i++ {
@@ -163,4 +167,41 @@ func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
 	hid.PressKey("esc")
 
 	return quests
+}
+
+func (b Builder) HireMerc() *Chain {
+	return NewChain(func(d data.Data) (actions []Action) {
+		_, isLevelingChar := b.ch.(LevelingCharacter)
+		// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
+		if isLevelingChar && config.Config.Character.UseMerc && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
+			b.logger.Info("Hiring merc...")
+			actions = append(actions,
+				BuildStatic(func(d data.Data) []step.Step {
+					return []step.Step{
+						step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC()),
+						step.KeySequence("home", "down", "enter"),
+					}
+				}),
+				BuildStatic(func(d data.Data) []step.Step {
+					sc := helper.Screenshot()
+					tm := b.tf.Find(fmt.Sprintf("skills_%d", skill.Prayer), sc)
+					if !tm.Found {
+						return nil
+					}
+
+					return []step.Step{
+						step.SyncStep(func(d data.Data) error {
+							hid.MovePointer(tm.PositionX-100, tm.PositionY)
+							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton)
+
+							return nil
+						}),
+					}
+				}),
+			)
+		}
+
+		return
+	})
 }

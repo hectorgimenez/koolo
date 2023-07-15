@@ -1,6 +1,8 @@
 package character
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -114,6 +116,10 @@ func (s BlizzardSorceress) KillSummoner() action.Action {
 	return s.killMonsterByName(npc.Summoner, data.MonsterTypeNone, sorceressMaxDistance, false, nil)
 }
 
+func (s BlizzardSorceress) KillDuriel() action.Action {
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeNone, sorceressMaxDistance, true, nil)
+}
+
 func (s BlizzardSorceress) KillPindle(skipOnImmunities []stat.Resist) action.Action {
 	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, skipOnImmunities)
 }
@@ -124,6 +130,80 @@ func (s BlizzardSorceress) KillMephisto() action.Action {
 
 func (s BlizzardSorceress) KillNihlathak() action.Action {
 	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil)
+}
+
+func (s BlizzardSorceress) KillDiablo() action.Action {
+	timeout := time.Second * 20
+	startedAt := time.Time{}
+
+	return action.NewFactory(func(d data.Data) action.Action {
+		if startedAt.IsZero() {
+			s.logger.Info("Waiting for Diablo to spawn")
+			startedAt = time.Now()
+		}
+
+		if time.Since(startedAt) < timeout {
+			return action.NewChain(func(d data.Data) []action.Action {
+				diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+				if !found {
+					return nil
+				}
+
+				s.logger.Info("Diablo detected, attacking")
+				return []action.Action{
+					action.BuildStatic(func(d data.Data) []step.Step {
+
+						return []step.Step{
+							step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, 8, step.Distance(1, 5)),
+						}
+					}),
+					s.killMonster(npc.Diablo, data.MonsterTypeNone),
+				}
+			})
+		}
+
+		s.logger.Info("Timeout waiting for Diablo to spawn")
+		return nil
+	})
+}
+
+func (s BlizzardSorceress) KillIzual() action.Action {
+	return action.NewChain(func(d data.Data) []action.Action {
+		return []action.Action{
+			action.BuildStatic(func(d data.Data) []step.Step {
+				mephisto, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
+				return []step.Step{
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 7, step.Distance(1, 4)),
+				}
+			}),
+			// We will need a lot of cycles to kill him probably
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+			s.killMonster(npc.Izual, data.MonsterTypeNone),
+		}
+	})
+}
+
+func (s BlizzardSorceress) KillBaal() action.Action {
+	return action.NewChain(func(d data.Data) []action.Action {
+		return []action.Action{
+			action.BuildStatic(func(d data.Data) []step.Step {
+				mephisto, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
+				return []step.Step{
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 7, step.Distance(1, 4)),
+				}
+			}),
+			// We will need a lot of cycles to kill him probably
+			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
+			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
+			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
+			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
+		}
+	})
 }
 
 func (s BlizzardSorceress) KillCouncil() action.Action {
@@ -159,4 +239,15 @@ func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.Monster
 
 		return 0, false
 	}, skipOnImmunities, step.Distance(sorceressMinDistance, maxDistance))
+}
+
+func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found {
+			return 0, false
+		}
+
+		return m.UnitID, true
+	}, nil)
 }

@@ -41,7 +41,7 @@ func (b Builder) CubeAddItems(items ...data.Item) *Chain {
 				continue
 			}
 
-			b.logger.Debug("Item found on the stash, picking it up", zap.String("item", string(nwIt.Name)))
+			b.logger.Debug("Item found on the stash, picking it up", zap.String("Item", string(nwIt.Name)))
 			actions = append(actions, BuildStatic(func(d data.Data) []step.Step {
 				screenPos := ui.GetScreenCoordsForItem(nwIt)
 				hid.MovePointer(screenPos.X, screenPos.Y)
@@ -64,7 +64,7 @@ func (b Builder) CubeAddItems(items ...data.Item) *Chain {
 			actions = append(actions, BuildStatic(func(d data.Data) []step.Step {
 				for _, updatedItem := range d.Items.AllItems {
 					if nwIt.UnitID == updatedItem.UnitID {
-						b.logger.Debug("Moving item to the Horadric Cube", zap.String("item", string(nwIt.Name)))
+						b.logger.Debug("Moving Item to the Horadric Cube", zap.String("Item", string(nwIt.Name)))
 						screenPos := ui.GetScreenCoordsForItem(updatedItem)
 						hid.MovePointer(screenPos.X, screenPos.Y)
 
@@ -102,7 +102,7 @@ func (b Builder) CubeTransmute() *Chain {
 			hid.Click(hid.LeftButton)
 			helper.Sleep(3000)
 
-			// Move the item back to the inventory
+			// Move the Item back to the inventory
 			hid.MovePointer(238, 262)
 			hid.KeyDown("control")
 			helper.Sleep(300)

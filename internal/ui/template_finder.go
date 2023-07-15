@@ -93,7 +93,7 @@ func createMask(tpl gocv.Mat) gocv.Mat {
 
 func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 	t := time.Now()
-	threshold := float32(0.65)
+	threshold := float32(0.83)
 
 	bigmat, err := gocv.ImageToMatRGB(img)
 	if err != nil {
@@ -101,7 +101,7 @@ func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 	}
 
 	mat := gocv.NewMat()
-	gocv.Resize(bigmat, &mat, image.Point{X: 1280, Y: 720}, 0.5, 0.5, gocv.InterpolationLinear)
+	gocv.Resize(bigmat, &mat, image.Point{X: 1280, Y: 720}, 0, 0, gocv.InterpolationLinear)
 
 	tpl, ok := tf.templates[tplName]
 	if !ok {

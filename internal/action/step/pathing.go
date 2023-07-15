@@ -69,6 +69,10 @@ func (s *pathingStep) cachePath(d data.Data) bool {
 }
 
 func (s *pathingStep) isPlayerStuck(d data.Data) bool {
+	if s.lastRun.IsZero() {
+		return false
+	}
+
 	s.lastRunPositions = append(s.lastRunPositions, [2]int{d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y})
 	if len(s.lastRunPositions) > 20 {
 		s.lastRunPositions = s.lastRunPositions[1:]

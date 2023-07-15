@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -23,12 +22,14 @@ func (a Leveling) act1() action.Action {
 			return nil
 		}
 
+		quests := a.builder.GetCompletedQuests(1)
+
 		running = true
-		if d.PlayerUnit.Stats[stat.Level] <= 5 {
+		if d.PlayerUnit.Stats[stat.Level] < 5 || !quests[0] {
 			return a.denOfEvil()
 		}
 
-		if d.PlayerUnit.Stats[stat.Level] > 5 && d.PlayerUnit.Stats[stat.Level] < 15 {
+		if d.PlayerUnit.Stats[stat.Level] >= 5 && d.PlayerUnit.Stats[stat.Level] < 15 {
 			return a.countess()
 		}
 
@@ -142,22 +143,16 @@ func (a Leveling) deckardCain() action.Action {
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractNPC(npc.Akara),
-					step.SyncStepWithCheck(func(d data.Data) error {
+					step.SyncStep(func(d data.Data) error {
 						hid.PressKey("esc")
-						helper.Sleep(1000)
 						return nil
-					}, func(data.Data) step.Status {
-						if d.OpenMenus.NPCInteract {
-							return step.StatusInProgress
-						}
-						return step.StatusCompleted
 					}),
 				}
 			}),
 		}
 
 		// Heal and refill pots
-		actions = append(actions, a.builder.PreRun(false)...)
+		actions = append(actions, a.builder.InRunReturnTownRoutine()...)
 
 		// Reuse Tristram Run actions
 		actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
@@ -176,7 +171,7 @@ func (a Leveling) andariel() action.Action {
 			a.builder.MoveToArea(area.CatacombsLevel4),
 		}
 		actions = append(actions, a.builder.ReturnTown()) // Return town to pickup pots and heal, just in case...
-		actions = append(actions, a.builder.PreRun(false)...)
+		actions = append(actions, a.builder.InRunReturnTownRoutine()...)
 		actions = append(actions,
 			a.builder.UsePortalInTown(),
 			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
@@ -187,7 +182,7 @@ func (a Leveling) andariel() action.Action {
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractNPC(npc.Warriv),
-					step.KeySequence("esc", "home", "home", "down", "enter"),
+					step.KeySequence("home", "down", "enter"),
 				}
 			}))
 

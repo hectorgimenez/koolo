@@ -96,6 +96,10 @@ func (s Hammerdin) KillSummoner() action.Action {
 	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
+func (s Hammerdin) KillDuriel() action.Action {
+	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+}
+
 func (s Hammerdin) KillPindle(_ []stat.Resist) action.Action {
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
@@ -106,6 +110,14 @@ func (s Hammerdin) KillMephisto() action.Action {
 
 func (s Hammerdin) KillNihlathak() action.Action {
 	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+}
+
+func (s Hammerdin) KillDiablo() action.Action {
+	panic("implement me")
+}
+
+func (s Hammerdin) KillIzual() action.Action {
+	panic("implement me")
 }
 
 func (s Hammerdin) KillCouncil() action.Action {
@@ -140,6 +152,11 @@ func (s Hammerdin) KillCouncil() action.Action {
 		}
 		return
 	}, action.CanBeSkipped())
+}
+
+func (s Hammerdin) KillBaal() action.Action {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {

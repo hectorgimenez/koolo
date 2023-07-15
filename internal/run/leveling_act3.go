@@ -20,7 +20,13 @@ func (a Leveling) act3() action.Action {
 		}
 
 		quests := a.builder.GetCompletedQuests(3)
-		if quests[4] {
+
+		_, willFound := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
+		if willFound {
+			return a.openMephistoStairs()
+		}
+
+		if quests[2] {
 			return action.NewChain(func(d data.Data) (actions []action.Action) {
 				actions = append(actions, Mephisto{baseRun: a.baseRun}.BuildActions()...)
 				actions = append(actions,
@@ -69,16 +75,8 @@ func (a Leveling) act3() action.Action {
 			return a.findKhalimsHeart()
 		}
 
-		// Find KhalimsFlail
-		_, found = d.Items.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
-		if found {
-			a.logger.Info("KhalimsFlail found, skipping quest")
-		} else {
-			a.logger.Info("KhalimsFlail not found, starting quest")
-			return a.openMephistoStairs()
-		}
-
-		return nil
+		// Trav
+		return a.openMephistoStairs()
 	})
 }
 
@@ -218,7 +216,7 @@ func (a Leveling) openMephistoStairs() action.Action {
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.SyncStep(func(d data.Data) error {
-						khalimsWill, found := d.Items.Find("KhalimsWill", item.LocationInventory)
+						khalimsWill, found := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationVendor)
 						if !found {
 							return nil
 						}
@@ -245,8 +243,14 @@ func (a Leveling) openMephistoStairs() action.Action {
 
 						return !o.Selectable
 					}),
+					// Switch back to our main weapon
 					step.SyncStep(func(d data.Data) error {
-						helper.Sleep(10000)
+						helper.Sleep(1000)
+						hid.PressKey(config.Config.Bindings.SwapWeapon)
+						return nil
+					}),
+					step.SyncStep(func(d data.Data) error {
+						helper.Sleep(12000)
 
 						return nil
 					}),

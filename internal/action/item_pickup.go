@@ -6,89 +6,41 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 )
 
 func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 	firstCallTime := time.Time{}
 	var itemBeingPickedUp data.UnitID
-	var townCycle = map[string]bool{
-		"town":   false,
-		"id":     false,
-		"vendor": false,
-	}
-	sellingJunk := false
 
 	return NewFactory(func(d data.Data) Action {
-		if sellingJunk {
-			// No comments... only bad practices here.
-			if !townCycle["id"] {
-				townCycle["id"] = true
-				return b.IdentifyAll(false)
-			}
-			if !townCycle["vendor"] {
-				townCycle["vendor"] = true
-				return NewChain(func(d data.Data) []Action {
-					return []Action{
-						b.IdentifyAll(false),
-						b.Stash(false),
-						b.ReviveMerc(),
-						b.Repair(),
-						b.VendorRefill(),
-						// Move close to the portal to get in range
-						BuildStatic(func(d data.Data) []step.Step {
-							tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
-							return []step.Step{step.MoveTo(tpArea)}
-						}),
-					}
-				})
-
-			}
-
-			return BuildStatic(func(d data.Data) []step.Step {
-				for _, o := range d.Objects {
-					if o.IsPortal() {
-						return []step.Step{
-							step.InteractObject(object.TownPortal, func(d data.Data) bool {
-								if !d.PlayerUnit.Area.IsTown() {
-									helper.Sleep(500)
-									sellingJunk = false
-									itemBeingPickedUp = -1
-									return true
-								}
-
-								return false
-							}),
-						}
-					}
-				}
-
-				return nil
-			})
-		}
-
 		if firstCallTime.IsZero() {
 			firstCallTime = time.Now()
 		}
 
 		itemsToPickup := b.getItemsToPickup(d, maxDistance)
 		if len(itemsToPickup) > 0 {
+			for _, m := range d.Monsters.Enemies() {
+				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
+					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+						return m.UnitID, true
+					}, nil)
+				}
+			}
+
 			i := itemsToPickup[0]
 
-			// Error picking up item, go back to town, sell junk, stash and try again.
+			// Error picking up Item, go back to town, sell junk, stash and try again.
 			if itemBeingPickedUp == i.UnitID {
 				b.logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
-				sellingJunk = true
-
-				townCycle["town"] = true
-				return b.ReturnTown()
+				return NewChain(func(d data.Data) []Action {
+					itemBeingPickedUp = -1
+					return b.InRunReturnTownRoutine()
+				})
 			}
 
 			b.logger.Debug(fmt.Sprintf(
@@ -99,22 +51,25 @@ func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 				i.Position.Y,
 			))
 
-			return BuildStatic(func(d data.Data) []step.Step {
+			return NewChain(func(d data.Data) []Action {
 				itemBeingPickedUp = i.UnitID
-				return []step.Step{step.PickupItem(b.logger, i)}
-			}, IgnoreErrors())
+
+				return []Action{
+					b.MoveToCoords(i.Position),
+					BuildStatic(func(d data.Data) []step.Step {
+						return []step.Step{step.PickupItem(b.logger, i)}
+					}, IgnoreErrors()),
+				}
+			})
 		}
 
 		// Add small delay, drop is not instant
 		if waitForDrop && time.Since(firstCallTime) < time.Second {
-			msToWait := int((time.Second - time.Since(firstCallTime)).Milliseconds())
-			b.logger.Debug("No items detected, waiting a bit and will try again", zap.Int("waitMs", msToWait))
+			msToWait := time.Second - time.Since(firstCallTime)
+			b.logger.Debug("No items detected, waiting a bit and will try again", zap.Int("waitMs", int(msToWait.Milliseconds())))
 
 			return BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{step.SyncStep(func(d data.Data) error {
-					helper.Sleep(msToWait)
-					return nil
-				})}
+				return []step.Step{step.Wait(msToWait)}
 			})
 		}
 
@@ -182,7 +137,7 @@ func (b Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that
-	if isLevelingChar && d.PlayerUnit.TotalGold() < 50000 && i.Name != "Gold" {
+	if isLevelingChar && d.PlayerUnit.TotalGold() < 500000 && i.Name != "Gold" {
 		return true
 	}
 

@@ -123,8 +123,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				},
-				IsGoodExit:  obj.IsGoodExit,
-				CanInteract: true,
+				IsEntrance: true,
 			}
 			exits = append(exits, lvl)
 		case "object":
@@ -145,6 +144,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 			found := false
 			for _, exit := range exits {
 				if exit.Area == area.Area(obj.ID) {
+					exit.IsEntrance = false
 					found = true
 					break
 				}
@@ -157,8 +157,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 						X: obj.X + areaOrigin.X,
 						Y: obj.Y + areaOrigin.Y,
 					},
-					IsGoodExit:  obj.IsGoodExit,
-					CanInteract: true,
+					IsEntrance: false,
 				}
 				exits = append(exits, lvl)
 			}
@@ -188,14 +187,48 @@ func (md MapData) getLevel(area area.Area) serverLevel {
 	return serverLevel{}
 }
 
-func (md MapData) CollisionGridForCoords(p data.Position) ([][]bool, bool) {
+func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool) {
 	for _, lvl := range md {
 		lvlMaxX := lvl.Offset.X + lvl.Size.Width
 		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
-		if lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
-			return md.CollisionGrid(area.Area(lvl.ID)), true
+		if area.Area(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
+			return LevelData{
+				Area: area.Area(lvl.ID),
+				Name: lvl.Name,
+				Offset: data.Position{
+					X: lvl.Offset.X,
+					Y: lvl.Offset.Y,
+				},
+				Size: data.Position{
+					X: lvl.Size.Width,
+					Y: lvl.Size.Height,
+				},
+				CollisionGrid: md.CollisionGrid(area.Area(lvl.ID)),
+			}, true
 		}
 	}
 
-	return nil, false
+	return LevelData{}, false
+}
+
+func (md MapData) GetLevelData(id area.Area) (LevelData, bool) {
+	for _, lvl := range md {
+		if lvl.ID == int(id) {
+			return LevelData{
+				Area: area.Area(lvl.ID),
+				Name: lvl.Name,
+				Offset: data.Position{
+					X: lvl.Offset.X,
+					Y: lvl.Offset.Y,
+				},
+				Size: data.Position{
+					X: lvl.Size.Width,
+					Y: lvl.Size.Height,
+				},
+				CollisionGrid: md.CollisionGrid(area.Area(lvl.ID)),
+			}, true
+		}
+	}
+
+	return LevelData{}, false
 }
