@@ -136,6 +136,11 @@ func (b Builder) shouldStashIt(i data.Item, forceStash bool) bool {
 		return false
 	}
 
+	// Don't stash the Tomes
+	if i.Name == item.TomeOfTownPortal || i.Name == item.TomeOfIdentify {
+		return false
+	}
+
 	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}
