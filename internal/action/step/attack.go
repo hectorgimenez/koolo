@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -71,7 +72,7 @@ func SecondaryAttack(keyBinding string, id data.UnitID, numOfAttacks int, opts .
 	return s
 }
 
-func (p *AttackStep) Status(d data.Data) Status {
+func (p *AttackStep) Status(_ data.Data) Status {
 	if p.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -85,7 +86,7 @@ func (p *AttackStep) Status(d data.Data) Status {
 
 func (p *AttackStep) Run(d data.Data) error {
 	monster, found := d.Monsters.FindByID(p.target)
-	if !found {
+	if !found || monster.Stats[stat.Life] <= 0 {
 		// Monster is dead, let's skip the attack sequence
 		p.tryTransitionStatus(StatusCompleted)
 		return nil
