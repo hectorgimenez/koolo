@@ -51,6 +51,12 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 	}
 
 	if sm.ShouldBuyTPs(d) {
+		if _, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
+			sm.logger.Info("TP Tome not found, buying one...")
+			if itm, itmFound := d.Items.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
+				sm.BuyItem(itm, 1)
+			}
+		}
 		sm.logger.Debug("Filling TP Tome...")
 		if itm, found := d.Items.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
 			sm.buyFullStack(itm)
@@ -58,6 +64,12 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 	}
 
 	if sm.ShouldBuyIDs(d) {
+		if _, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory); !found {
+			sm.logger.Info("ID Tome not found, buying one...")
+			if itm, itmFound := d.Items.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
+				sm.BuyItem(itm, 1)
+			}
+		}
 		sm.logger.Debug("Filling IDs Tome...")
 		if itm, found := d.Items.Find(item.ScrollOfIdentify, item.LocationVendor); found {
 			sm.buyFullStack(itm)
@@ -85,7 +97,7 @@ func (sm ShopManager) findFirstMatch(d data.Data, itemNames ...string) (data.Ite
 func (sm ShopManager) ShouldBuyTPs(d data.Data) bool {
 	portalTome, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if !found {
-		return false
+		return true
 	}
 
 	qty, found := portalTome.Stats[stat.Quantity]
@@ -96,7 +108,7 @@ func (sm ShopManager) ShouldBuyTPs(d data.Data) bool {
 func (sm ShopManager) ShouldBuyIDs(d data.Data) bool {
 	idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
-		return false
+		return true
 	}
 
 	qty, found := idTome.Stats[stat.Quantity]
