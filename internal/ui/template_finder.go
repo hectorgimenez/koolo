@@ -44,7 +44,7 @@ func NewTemplateFinder(logger *zap.Logger, templatesPath string) (*TemplateFinde
 			return nil
 		}
 
-		mat := gocv.IMRead(path, gocv.IMReadAnyColor)
+		mat := gocv.IMRead(path, gocv.IMReadUnchanged)
 		if mat.Empty() {
 			return nil
 		}
@@ -83,10 +83,10 @@ func NewTemplateFinder(logger *zap.Logger, templatesPath string) (*TemplateFinde
 
 func createMask(tpl gocv.Mat) gocv.Mat {
 	mask := gocv.NewMat()
-	if mask.Channels() == 4 {
-
+	if tpl.Channels() > 3 {
+		imgChannel := gocv.Split(tpl)
+		gocv.Threshold(imgChannel[3], &mask, 1, 255, gocv.ThresholdBinary)
 	}
-	gocv.Threshold(tpl, &mask, 1, 255, gocv.ThresholdBinary)
 
 	return mask
 }

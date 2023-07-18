@@ -40,6 +40,8 @@ func (b Builder) EnsureEmptyHand() *StaticAction {
 	})
 }
 
+var previousTotalSkillNumber = 0
+
 func (b Builder) EnsureStatPoints() *DynamicAction {
 	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
@@ -152,6 +154,42 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 	}, CanBeSkipped())
 }
 
+func (b Builder) EnsureSkillBindings() *StaticAction {
+	return BuildStatic(func(d data.Data) []step.Step {
+		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
+			return nil
+		}
+
+		return []step.Step{
+			step.SyncStep(func(_ data.Data) error {
+				char, _ := b.ch.(LevelingCharacter)
+				skillBindings := char.GetKeyBindings()
+				if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
+					hid.MovePointer(ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+					hid.Click(hid.LeftButton)
+					helper.Sleep(300)
+					hid.MovePointer(0, 0)
+					helper.Sleep(300)
+				}
+
+				sc := helper.Screenshot()
+				for sk, binding := range skillBindings {
+					tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
+					if !tm.Found {
+						continue
+					}
+					hid.MovePointer(tm.PositionX, tm.PositionY)
+					hid.PressKey(binding)
+					helper.Sleep(300)
+				}
+
+				previousTotalSkillNumber = len(d.PlayerUnit.Skills)
+				return nil
+			}),
+		}
+	})
+}
+
 func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
 	hid.PressKey(config.Config.Bindings.OpenQuestLog)
 	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
@@ -184,7 +222,7 @@ func (b Builder) HireMerc() *Chain {
 				}),
 				BuildStatic(func(d data.Data) []step.Step {
 					sc := helper.Screenshot()
-					tm := b.tf.Find(fmt.Sprintf("skills_%d", skill.Prayer), sc)
+					tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Prayer), sc)
 					if !tm.Found {
 						return nil
 					}

@@ -25,6 +25,12 @@ const (
 	QuestFirstTabX    = 138
 	QuestFirstTabY    = 130
 	QuestTabXInterval = 68
+
+	MainSkillButtonX = 596
+	MainSkillButtonY = 693
+
+	SecondarySkillButtonX = 686
+	SecondarySkillButtonY = 693
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {
