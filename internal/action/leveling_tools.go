@@ -27,6 +27,14 @@ var uiSkillTabPosition = []data.Position{
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
 var uiSkillColumnPosition = [3]int{920, 1010, 1095}
 
+
+func (b Builder) EnsureEmptyHand() *StaticAction {
+	return BuildStatic(func(d data.Data) (steps []step.Step) {
+		hid.Click(hid.LeftButton)
+		return nil
+	})
+}
+
 func (b Builder) EnsureStatPoints() *DynamicAction {
 	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		char, isLevelingChar := b.ch.(LevelingCharacter)

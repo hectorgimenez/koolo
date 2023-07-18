@@ -156,6 +156,7 @@ func (b *Bot) preRunActions(firstRun bool) []action.Action {
 	}
 
 	return []action.Action{
+		b.ab.EnsureEmptyHand(),
 		b.ab.EnsureStatPoints(),
 		b.ab.EnsureSkillPoints(),
 		b.ab.RecoverCorpse(),
