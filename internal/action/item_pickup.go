@@ -26,6 +26,8 @@ func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 		if len(itemsToPickup) > 0 {
 			for _, m := range d.Monsters.Enemies() {
 				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
+					b.logger.Debug("Aborting item pickup, monster nearby", zap.Any("monster", m))
+					itemBeingPickedUp = -1
 					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
 					}, nil)

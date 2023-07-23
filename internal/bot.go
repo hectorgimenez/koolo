@@ -71,8 +71,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				// Throttle loop a bit, don't need to waste CPU
-				if time.Since(loopTime) < time.Millisecond*30 {
-					time.Sleep(time.Millisecond*30 - time.Since(loopTime))
+				if time.Since(loopTime) < time.Millisecond*10 {
+					time.Sleep(time.Millisecond*10 - time.Since(loopTime))
 				}
 
 				d := b.gr.GetData(false)

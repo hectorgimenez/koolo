@@ -99,8 +99,8 @@ func (p *AttackStep) Run(d data.Data) error {
 		}
 	} else {
 		// Since we are not following the enemy, and it's not in range, we can't attack it
-		dist := pather.DistanceFromMe(d, monster.Position)
-		if dist > p.maxDistance {
+		_, distance, found := pather.GetPath(d, monster.Position)
+		if !found || distance > p.maxDistance {
 			p.tryTransitionStatus(StatusCompleted)
 			return nil
 		}
@@ -109,12 +109,11 @@ func (p *AttackStep) Run(d data.Data) error {
 	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
 		if p.keyBinding != "" {
 			hid.PressKey(p.keyBinding)
-			helper.Sleep(35)
+			helper.Sleep(100)
 		}
 
 		if p.auraKeyBinding != "" {
 			hid.PressKey(p.auraKeyBinding)
-			helper.Sleep(35)
 		}
 		p.forceApplyKeyBinding = false
 	}
@@ -155,7 +154,7 @@ func (p *AttackStep) ensureEnemyIsInRange(monster data.Monster, d data.Data) boo
 		if p.moveToStep == nil {
 			if found && p.minDistance > 0 {
 				// Try to move to the minimum distance
-				if path.Distance() > p.minDistance {
+				if distance > p.minDistance {
 					pos := path.AstarPather[p.minDistance-1].(*pather.Tile)
 					p.moveToStep = MoveTo(data.Position{
 						X: pos.X + d.AreaOrigin.X,

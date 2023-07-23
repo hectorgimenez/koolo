@@ -30,7 +30,8 @@ type Character interface {
 type LevelingCharacter interface {
 	Character
 	// StatPoints Stats will be assigned in the order they are returned by this function.
-	StatPoints(data2 data.Data) map[stat.ID]int
-	SkillPoints() []skill.Skill
-	GetKeyBindings() map[skill.Skill]string
+	StatPoints(data.Data) map[stat.ID]int
+	SkillPoints(data.Data) []skill.Skill
+	GetKeyBindings(data.Data) map[skill.Skill]string
+	ShouldResetSkills(data.Data) bool
 }

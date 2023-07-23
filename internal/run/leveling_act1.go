@@ -9,8 +9,11 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 const scrollOfInifuss = "ScrollOfInifuss"
@@ -29,11 +32,11 @@ func (a Leveling) act1() action.Action {
 			return a.denOfEvil()
 		}
 
-		if d.PlayerUnit.Stats[stat.Level] >= 5 && d.PlayerUnit.Stats[stat.Level] < 15 {
+		if d.PlayerUnit.Stats[stat.Level] >= 5 && d.PlayerUnit.Stats[stat.Level] < 11 {
 			return a.countess()
 		}
 
-		if !a.isCainInTown(d) {
+		if !a.isCainInTown(d) && !quests[2] {
 			return a.deckardCain()
 		}
 
@@ -152,7 +155,20 @@ func (a Leveling) deckardCain() action.Action {
 		}
 
 		// Heal and refill pots
-		actions = append(actions, a.builder.InRunReturnTownRoutine()...)
+		actions = append(actions,
+			a.builder.ReturnTown(),
+			a.builder.EnsureStatPoints(),
+			a.builder.EnsureSkillPoints(),
+			a.builder.RecoverCorpse(),
+			a.builder.IdentifyAll(false),
+			a.builder.Stash(false),
+			a.builder.VendorRefill(),
+			a.builder.EnsureSkillBindings(),
+			a.builder.Heal(),
+			a.builder.ReviveMerc(),
+			a.builder.HireMerc(),
+			a.builder.Repair(),
+		)
 
 		// Reuse Tristram Run actions
 		actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
@@ -171,7 +187,56 @@ func (a Leveling) andariel() action.Action {
 			a.builder.MoveToArea(area.CatacombsLevel4),
 		}
 		actions = append(actions, a.builder.ReturnTown()) // Return town to pickup pots and heal, just in case...
-		actions = append(actions, a.builder.InRunReturnTownRoutine()...)
+
+		potsToBuy := 4
+		if d.MercHPPercent() > 0 {
+			potsToBuy = 8
+		}
+
+		// Return to the city, ensure we have pots and everything, and get some antidote potions
+		actions = append(actions,
+			a.builder.ReturnTown(),
+			a.builder.VendorRefill(),
+			a.builder.BuyAtVendor(npc.Akara, action.VendorItemRequest{
+				Item:     "AntidotePotion",
+				Quantity: potsToBuy,
+				Tab:      4,
+			}),
+			action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.SyncStep(func(d data.Data) error {
+						hid.PressKey(config.Config.Bindings.OpenInventory)
+						x := 0
+						for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+							if itm.Name != "AntidotePotion" {
+								continue
+							}
+
+							pos := ui.GetScreenCoordsForItem(itm)
+							hid.MovePointer(pos.X, pos.Y)
+							helper.Sleep(500)
+
+							if x > 3 {
+								hid.Click(hid.LeftButton)
+								helper.Sleep(300)
+								hid.MovePointer(ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+								helper.Sleep(300)
+								hid.Click(hid.LeftButton)
+							} else {
+								hid.Click(hid.RightButton)
+							}
+							x++
+						}
+
+						hid.PressKey("esc")
+						return nil
+					}),
+				}
+			}),
+			a.builder.UsePortalInTown(),
+			a.char.Buff(),
+		)
+
 		actions = append(actions,
 			a.builder.UsePortalInTown(),
 			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {

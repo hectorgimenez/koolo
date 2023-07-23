@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	Config StructConfig
+	Config *StructConfig
 )
 
 type StructConfig struct {
@@ -72,6 +72,12 @@ type StructConfig struct {
 			StaticField string `yaml:"staticField"`
 			FrozenArmor string `yaml:"frozenArmor"`
 		} `yaml:"sorceress"`
+		SorceressLeveling struct {
+			Blizzard    string `yaml:"blizzard"`
+			StaticField string `yaml:"staticField"`
+			FrozenArmor string `yaml:"frozenArmor"`
+			FireBall    string `yaml:"fireBall"`
+		} `yaml:"sorceressLeveling"`
 		Hammerdin struct {
 			Concentration string `yaml:"concentration"`
 			HolyShield    string `yaml:"holyShield"`

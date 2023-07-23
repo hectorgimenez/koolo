@@ -76,9 +76,11 @@ func (b Builder) MoveToCoords(to data.Position) *Factory {
 func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory {
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
+	previousIterationPosition := data.Position{}
 	var currentStep step.Step
 
 	return NewFactory(func(d data.Data) Action {
+		start := time.Now()
 		to, found := toFunc(d)
 		if !found {
 			return nil
@@ -119,14 +121,26 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 
 		// Detect if there are monsters close to the player
 		closeEnemies := 0
+		minDistance := 6
+		if d.PlayerUnit.Area == area.RiverOfFlame {
+			minDistance = 20
+		}
 		for _, m := range d.Monsters.Enemies() {
-			if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
+			if dist := pather.DistanceFromMe(d, m.Position); dist < minDistance {
+				if previousPathDist := pather.DistanceFromMe(d, previousIterationPosition); previousPathDist < 2 {
+					b.logger.Info("Monster is blocking our path? Killing it")
+					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+						return m.UnitID, true
+					}, nil)
+				}
+
 				closeEnemies++
 				a := d.PlayerUnit.Area
-				if closeEnemies > 1 || m.IsElite() ||
+				if closeEnemies > 3 || m.IsElite() ||
 					// This map is super narrow and monsters are blocking the path
 					(closeEnemies > 0 && (a == area.MaggotLairLevel1 || a == area.MaggotLairLevel2 || a == area.MaggotLairLevel3 || a == area.ArcaneSanctuary || a == area.ClawViperTempleLevel2 || a == area.RiverOfFlame || a == area.ChaosSanctuary)) {
 					pickupBeforeMoving = true
+					b.logger.Info("Monster detected", zap.Int64("executionMillis", time.Since(start).Milliseconds()))
 					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
 					}, nil)
@@ -161,6 +175,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 
 		// Continue moving
 		return BuildStatic(func(d data.Data) []step.Step {
+			previousIterationPosition = d.PlayerUnit.Position
 			if currentStep == nil {
 				currentStep = step.MoveTo(
 					to,

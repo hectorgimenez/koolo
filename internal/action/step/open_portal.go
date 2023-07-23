@@ -1,11 +1,12 @@
 package step
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"time"
 )
 
 type OpenPortalStep struct {
@@ -36,7 +37,7 @@ func (s *OpenPortalStep) Status(d data.Data) Status {
 
 func (s *OpenPortalStep) Run(_ data.Data) error {
 	// Give some time to portal to popup before retrying...
-	if time.Since(s.LastRun()) < time.Second*3 {
+	if time.Since(s.LastRun()) < time.Second*2 {
 		return nil
 	}
 

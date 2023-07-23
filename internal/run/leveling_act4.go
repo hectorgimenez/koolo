@@ -9,12 +9,16 @@ import (
 )
 
 func (a Leveling) act4() action.Action {
+	running := false
 	return action.NewChain(func(d data.Data) []action.Action {
-		if d.PlayerUnit.Area != area.ThePandemoniumFortress {
+		if running || d.PlayerUnit.Area != area.ThePandemoniumFortress {
 			return nil
 		}
 
 		quests := a.builder.GetCompletedQuests(4)
+
+		running = true
+
 		if !quests[0] {
 			return a.izual()
 		}

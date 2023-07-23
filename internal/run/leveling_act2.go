@@ -17,11 +17,13 @@ import (
 )
 
 func (a Leveling) act2() action.Action {
+	running := false
 	return action.NewFactory(func(d data.Data) action.Action {
-		if d.PlayerUnit.Area != area.LutGholein {
+		if running || d.PlayerUnit.Area != area.LutGholein {
 			return nil
 		}
 
+		running = true
 		// Find Horadric Cube
 		_, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if found {
@@ -380,6 +382,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool) action.Action {
 				return nil
 			}),
 			a.char.KillDuriel(),
+			a.builder.ItemPickup(true, 30),
 			a.builder.MoveToCoords(data.Position{
 				X: 22577,
 				Y: 15613,

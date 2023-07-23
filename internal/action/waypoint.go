@@ -65,14 +65,18 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 					b.MoveToCoords(data.Position{X: 15139, Y: 5056}),
 				)
 			case area.ArcaneSanctuary:
-				b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
-				portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
 				actions = append(actions,
-					b.MoveToCoords(portal.Position),
-					BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
-								return d.PlayerUnit.Area == area.ArcaneSanctuary
+					NewChain(func(d data.Data) []Action {
+						b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+						portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
+						return []Action{
+							b.MoveToCoords(portal.Position),
+							BuildStatic(func(d data.Data) []step.Step {
+								return []step.Step{
+									step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+										return d.PlayerUnit.Area == area.ArcaneSanctuary
+									}),
+								}
 							}),
 						}
 					}),

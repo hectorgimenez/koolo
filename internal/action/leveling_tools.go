@@ -2,9 +2,11 @@ package action
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -31,14 +33,6 @@ var uiSkillTabPosition = []data.Position{
 
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
 var uiSkillColumnPosition = [3]int{920, 1010, 1095}
-
-
-func (b Builder) EnsureEmptyHand() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
-		hid.Click(hid.LeftButton)
-		return nil
-	})
-}
 
 var previousTotalSkillNumber = 0
 
@@ -109,7 +103,7 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 		}
 
 		assignedPoints := make(map[skill.Skill]int, 0)
-		for _, sk := range char.SkillPoints() {
+		for _, sk := range char.SkillPoints(d) {
 			currentPoints, found := assignedPoints[sk]
 			if !found {
 				currentPoints = 0
@@ -159,34 +153,59 @@ func (b Builder) EnsureSkillBindings() *StaticAction {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
 			return nil
 		}
+		char, _ := b.ch.(LevelingCharacter)
+		skillBindings := char.GetKeyBindings(d)
 
-		return []step.Step{
-			step.SyncStep(func(_ data.Data) error {
-				char, _ := b.ch.(LevelingCharacter)
-				skillBindings := char.GetKeyBindings()
-				if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
+		if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
+			return []step.Step{
+				step.SyncStep(func(_ data.Data) error {
 					hid.MovePointer(ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 					hid.Click(hid.LeftButton)
 					helper.Sleep(300)
-					hid.MovePointer(0, 0)
+					hid.MovePointer(10, 10)
 					helper.Sleep(300)
-				}
 
-				sc := helper.Screenshot()
-				for sk, binding := range skillBindings {
-					tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
-					if !tm.Found {
-						continue
+					sc := helper.Screenshot()
+					for sk, binding := range skillBindings {
+						tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
+						if !tm.Found {
+							continue
+						}
+						hid.MovePointer(tm.PositionX+10, tm.PositionY+10)
+						helper.Sleep(100)
+						hid.PressKey(binding)
+						helper.Sleep(300)
 					}
-					hid.MovePointer(tm.PositionX, tm.PositionY)
-					hid.PressKey(binding)
-					helper.Sleep(300)
-				}
 
-				previousTotalSkillNumber = len(d.PlayerUnit.Skills)
-				return nil
-			}),
+					previousTotalSkillNumber = len(d.PlayerUnit.Skills)
+					return nil
+				}),
+				step.SyncStep(func(_ data.Data) error {
+					for sk, binding := range skillBindings {
+						if binding != "" {
+							continue
+						}
+						hid.MovePointer(ui.MainSkillButtonX, ui.MainSkillButtonY)
+						hid.Click(hid.LeftButton)
+						helper.Sleep(300)
+						hid.MovePointer(10, 10)
+						helper.Sleep(300)
+
+						sc := helper.Screenshot()
+						tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
+						if !tm.Found {
+							continue
+						}
+						hid.MovePointer(tm.PositionX+10, tm.PositionY+10)
+						helper.Sleep(100)
+						hid.Click(hid.LeftButton)
+					}
+					return nil
+				}),
+			}
 		}
+
+		return nil
 	})
 }
 
@@ -222,7 +241,7 @@ func (b Builder) HireMerc() *Chain {
 				}),
 				BuildStatic(func(d data.Data) []step.Step {
 					sc := helper.Screenshot()
-					tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Prayer), sc)
+					tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
 					if !tm.Found {
 						return nil
 					}
@@ -238,6 +257,33 @@ func (b Builder) HireMerc() *Chain {
 					}
 				}),
 			)
+		}
+
+		return
+	})
+}
+
+func (b Builder) ResetStats() *Chain {
+	return NewChain(func(d data.Data) (actions []Action) {
+		ch, isLevelingChar := b.ch.(LevelingCharacter)
+		if isLevelingChar && ch.ShouldResetSkills(d) {
+			currentArea := d.PlayerUnit.Area
+			if d.PlayerUnit.Area != area.RogueEncampment {
+				actions = append(actions, b.WayPoint(area.RogueEncampment))
+			}
+			actions = append(actions,
+				BuildStatic(func(d data.Data) []step.Step {
+					return []step.Step{
+						step.InteractNPC(npc.Akara),
+						step.KeySequence("home", "down", "down", "enter"),
+						step.Wait(time.Second),
+						step.KeySequence("home", "enter"),
+					}
+				}),
+			)
+			if d.PlayerUnit.Area != area.RogueEncampment {
+				actions = append(actions, b.WayPoint(currentArea))
+			}
 		}
 
 		return

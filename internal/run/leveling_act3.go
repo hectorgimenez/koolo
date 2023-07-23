@@ -14,13 +14,15 @@ import (
 )
 
 func (a Leveling) act3() action.Action {
+	running := false
 	return action.NewFactory(func(d data.Data) action.Action {
-		if d.PlayerUnit.Area != area.KurastDocks {
+		if running || d.PlayerUnit.Area != area.KurastDocks {
 			return nil
 		}
 
 		quests := a.builder.GetCompletedQuests(3)
 
+		running = true
 		_, willFound := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
 		if willFound {
 			return a.openMephistoStairs()
@@ -212,16 +214,19 @@ func (a Leveling) openMephistoStairs() action.Action {
 					a.builder.CubeTransmute(),
 				}
 			}),
-			// Let's asume we don't have secondary weapon, so we swap to it and equip Khalim's Will
+
+			a.builder.UsePortalInTown(),
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
+					// Let's asume we don't have secondary weapon, so we swap to it and equip Khalim's Will
 					step.SyncStep(func(d data.Data) error {
-						khalimsWill, found := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationVendor)
+						khalimsWill, found := d.Items.Find("KhalimsWill")
 						if !found {
 							return nil
 						}
 
 						hid.PressKey(config.Config.Bindings.SwapWeapon)
+						hid.PressKey(config.Config.Bindings.OpenInventory)
 						screenPos := ui.GetScreenCoordsForItem(khalimsWill)
 						hid.MovePointer(screenPos.X, screenPos.Y)
 						hid.KeyDown("shift")
@@ -233,11 +238,6 @@ func (a Leveling) openMephistoStairs() action.Action {
 						hid.PressKey("esc")
 						return nil
 					}),
-				}
-			}),
-			a.builder.UsePortalInTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
 					step.InteractObject(object.CompellingOrb, func(d data.Data) bool {
 						o, _ := d.Objects.FindOne(object.CompellingOrb)
 

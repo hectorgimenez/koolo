@@ -10,6 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
@@ -54,7 +55,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 			_, isLevelingChar := a.char.(action.LevelingCharacter)
-			if isLevelingChar && a.bm.ShouldBuyPotions(d) {
+			if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (config.Config.Character.UseMerc && d.MercHPPercent() <= 0)) {
 				a.logger.Debug("Let's go back town to buy more pots", zap.Int("seal", sealNumber+1))
 				return a.builder.InRunReturnTownRoutine()
 			}
@@ -111,10 +112,17 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 					}),
 
 					// Wait some time to let elite group to spawn
-					step.Wait(time.Second * 2),
+					step.Wait(time.Second * 1),
 				}
 			}),
 		)
+
+		if sealNumber == 2 {
+			actions = append(actions, a.builder.MoveToCoords(data.Position{
+				X: 7785,
+				Y: 5237,
+			}))
+		}
 
 		// First clear close trash mobs, regardless if they are elite or not
 		actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
@@ -137,7 +145,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	// Go back to town to buy potions if needed
 	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 		_, isLevelingChar := a.char.(action.LevelingCharacter)
-		if isLevelingChar && a.bm.ShouldBuyPotions(d) {
+		if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (config.Config.Character.UseMerc && d.MercHPPercent() <= 0)) {
 			return a.builder.InRunReturnTownRoutine()
 		}
 

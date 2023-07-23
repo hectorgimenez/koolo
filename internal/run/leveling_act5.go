@@ -24,6 +24,7 @@ func (a Leveling) act5() action.Action {
 		quests := a.builder.GetCompletedQuests(5)
 		if quests[4] {
 			return action.NewChain(func(d data.Data) (actions []action.Action) {
+				a.logger.Info("Starting Baal run...")
 				actions = Baal{baseRun: a.baseRun}.BuildActions()
 				actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 					if d.PlayerUnit.Area == area.TheWorldstoneChamber && len(d.Monsters.Enemies()) == 0 {
@@ -60,6 +61,7 @@ func (a Leveling) act5() action.Action {
 
 func (a Leveling) anya() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
+		a.logger.Info("Rescuing Anya...")
 		return []action.Action{
 			a.builder.WayPoint(area.CrystallinePassage),
 			a.builder.MoveToArea(area.FrozenRiver),
@@ -100,8 +102,8 @@ func (a Leveling) anya() action.Action {
 					step.InteractNPC(npc.Malah),
 					step.SyncStep(func(d data.Data) error {
 						hid.PressKey("esc")
-						itm, _ := d.Items.Find("ScrollOfResistance")
 						hid.PressKey(config.Config.Bindings.OpenInventory)
+						itm, _ := d.Items.Find("ScrollOfResistance")
 						screenPos := ui.GetScreenCoordsForItem(itm)
 						hid.MovePointer(screenPos.X, screenPos.Y)
 						helper.Sleep(200)
@@ -118,6 +120,7 @@ func (a Leveling) anya() action.Action {
 
 func (a Leveling) ancients() action.Action {
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
+		a.logger.Info("Kill the Ancients...")
 		actions = append(actions,
 			a.builder.WayPoint(area.TheAncientsWay),
 			a.builder.MoveToArea(area.ArreatSummit),
@@ -134,14 +137,15 @@ func (a Leveling) ancients() action.Action {
 						if len(d.Monsters.Enemies()) > 0 {
 							return true
 						}
+						hid.Click(hid.LeftButton)
+						helper.Sleep(1000)
 						return false
 					}),
 				}
 			}),
 			a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-				ancients := []npc.ID{npc.AncientBarbarian, npc.AncientBarbarian2, npc.AncientBarbarian3}
-				for _, id := range ancients {
-					m, found := d.Monsters.FindOne(id, data.MonsterTypeSuperUnique)
+				for _, monster := range d.Monsters.Enemies() {
+					m, found := d.Monsters.FindOne(monster.Name, monster.Type)
 					if found {
 						return m.UnitID, true
 					}

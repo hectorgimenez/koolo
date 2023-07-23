@@ -11,6 +11,7 @@ func (b Builder) PreRun(firstRun bool) []Action {
 	}
 
 	return []Action{
+		b.ResetStats(),
 		b.EnsureStatPoints(),
 		b.EnsureSkillPoints(),
 		b.RecoverCorpse(),
