@@ -40,7 +40,7 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
 		for _, o := range d.Objects {
 			if o.Name == object.GoodChest {
-				return []step.Step{step.MoveTo(o.Position)}
+				return []step.Step{step.MoveTo(o.Position, step.StopAtDistance(10))}
 			}
 		}
 

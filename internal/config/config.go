@@ -70,6 +70,7 @@ type StructConfig struct {
 			Blizzard    string `yaml:"blizzard"`
 			StaticField string `yaml:"staticField"`
 			FrozenArmor string `yaml:"frozenArmor"`
+			FrostNova   string `yaml:"frostNova"`
 		} `yaml:"sorceress"`
 		Hammerdin struct {
 			Concentration string `yaml:"concentration"`

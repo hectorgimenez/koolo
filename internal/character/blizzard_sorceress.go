@@ -1,6 +1,8 @@
 package character
 
 import (
+	"fmt"
+	"math"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -85,6 +87,49 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	})
 }
 
+func (s BlizzardSorceress) CastProtectiveSpells() action.Action {
+	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+		near_by_count :=0
+		near_by_distance := 8
+		var nearest_moster *data.Monster
+		nearest_distance := math.MaxInt
+
+		monsters := d.Monsters.Enemies()
+		for i, m := range monsters {
+			distance := pather.DistanceFromMe(d, m.Position)
+			if distance < near_by_distance {
+				near_by_count++
+			}
+			if distance < nearest_distance {
+				nearest_distance = distance
+				nearest_moster = &monsters[i]
+			}
+			// fmt.Println(fmt.Sprintf( "enemy [%d] id [%d] at x:[%d] y:[%d], type:[%s], distance:[%d]", m.Name, m.UnitID, m.Position.X, m.Position.Y, m.Type, distance))
+		}
+
+		if near_by_count > 3 {
+			s.logger.Debug(fmt.Sprintf("Nearby enemy more than %d, cast frost nova", near_by_count))
+			steps = append(steps, step.SyncStep(func(d data.Data) error {
+				if config.Config.Bindings.Sorceress.FrostNova != "" {
+					hid.PressKey(config.Config.Bindings.Sorceress.FrostNova)
+					helper.Sleep(100)
+					hid.Click(hid.RightButton)
+				}
+
+				return nil
+			}))
+		}
+
+		// fmt.Println(fmt.Sprintf( "nearest monster [%d] id [%d] distance:[%d]", nearest_moster.Name, nearest_moster.UnitID, nearest_distance))
+		
+		steps = append(steps,
+			step.CastAt(config.Config.Bindings.Sorceress.Blizzard, nearest_moster.Position, 1),
+		)
+
+		return
+	})
+}
+
 func (s BlizzardSorceress) Buff() action.Action {
 	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
@@ -103,7 +148,13 @@ func (s BlizzardSorceress) Buff() action.Action {
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil)
+	return action.NewChain(func(d data.Data) (actions []action.Action){
+		actions = append(actions,
+			s.CastProtectiveSpells(),
+			s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil),
+		)
+		return
+	}) 
 }
 
 func (s BlizzardSorceress) KillAndariel() action.Action {
