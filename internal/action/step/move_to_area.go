@@ -19,6 +19,7 @@ type MoveToAreaStep struct {
 	area                  area.Area
 	waitingForInteraction bool
 	mouseOverAttempts     int
+	pathFindAttempts	  int
 }
 
 func MoveToLevel(area area.Area) *MoveToAreaStep {
@@ -67,6 +68,7 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 	for _, l := range d.AdjacentLevels {
 		if l.Area == m.area {
 			distance := pather.DistanceFromMe(d, l.Position)
+			destination := l.Position
 			if distance > 5 {
 				stuck := m.isPlayerStuck(d)
 				if m.path == nil || !m.cachePath(d) || stuck {
@@ -74,8 +76,15 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 						tile := m.path.AstarPather[m.path.Distance()-1].(*pather.Tile)
 						m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 					}
-					path, _, found := pather.GetPath(d, l.Position)
+					if m.pathFindAttempts > 0 {
+						var x_diff float64 = float64(l.Position.X - d.PlayerUnit.Position.X)
+						var y_diff float64 = float64(l.Position.Y - d.PlayerUnit.Position.Y)
+						destination.X = int(x_diff * float64(10 - m.pathFindAttempts) / 10.0) + d.PlayerUnit.Position.X
+						destination.Y = int(y_diff * float64(10 - m.pathFindAttempts) / 10.0) + d.PlayerUnit.Position.Y
+					}
+					path, _, found := pather.GetPath(d, destination)
 					if !found {
+						m.pathFindAttempts++
 						return errors.New("path could not be calculated, maybe there is an obstacle")
 					}
 					m.path = path
