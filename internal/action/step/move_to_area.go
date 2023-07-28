@@ -59,16 +59,18 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 			distance := pather.DistanceFromMe(d, l.Position)
 			if distance > 5 {
 				stuck := m.isPlayerStuck(d)
-				if m.path == nil || !m.cachePath(d) || stuck {
+				if m.path == nil || ! m.cachePath(d, m.expandedCG) || stuck {
 					if stuck {
 						tile := m.path.AstarPather[m.path.Distance()-1].(*pather.Tile)
 						m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 					}
+					expandedCG := pather.ShouldExpandCollisionGrid(d, l.Position)
 					path, _, found := pather.GetPath(d, l.Position)
 					if !found {
 						return errors.New("path could not be calculated, maybe there is an obstacle")
 					}
 					m.path = path
+					m.expandedCG = expandedCG
 				}
 				pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
 				return nil

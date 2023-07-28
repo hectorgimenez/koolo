@@ -60,6 +60,12 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 			runs = append(runs, Nihlathak{baseRun})
 		case "ancient_tunnels":
 			runs = append(runs, AncientTunnels{baseRun})
+		case "pit":
+			runs = append(runs, Pit{baseRun})
+		case "stony_tomb":
+			runs = append(runs, StonyTomb{baseRun})
+		case "arachnid_lair":
+			runs = append(runs, ArachnidLair{baseRun})
 		case "tristram":
 			runs = append(runs, Tristram{baseRun})
 		case "lower_kurast":

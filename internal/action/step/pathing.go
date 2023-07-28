@@ -16,26 +16,33 @@ type pathingStep struct {
 	basicStep
 	consecutivePathNotFound int
 	path                    *pather.Pather
+	expandedCG				bool
 	lastRunPositions        [][2]int
 	blacklistedPositions    [][2]int
 }
 
 func newPathingStep() pathingStep {
 	return pathingStep{
+		expandedCG: false,
 		basicStep: basicStep{
 			status: StatusNotStarted,
 		},
 	}
 }
 
-func (s *pathingStep) cachePath(d data.Data) bool {
+func (s *pathingStep) cachePath(d data.Data, expandedCG bool) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
 	for k, pos := range s.path.AstarPather {
+		
+		pos_data := data.Position{X: pos.(*pather.Tile).X, Y: pos.(*pather.Tile).Y}
+
+		X, Y := pather.RelativePositionReverse(d, pos_data, expandedCG)
 		destination := data.Position{
-			X: pos.(*pather.Tile).X + d.AreaOrigin.X,
-			Y: pos.(*pather.Tile).Y + d.AreaOrigin.Y,
+			X: X,
+			Y: Y,
 		}
+
 
 		distance := pather.DistanceFromMe(d, destination)
 		if distance < nearestDistance {

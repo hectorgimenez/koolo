@@ -90,7 +90,7 @@ func parseWorld(expandedGrid bool, collisionGrid [][]bool, ar area.Area) World {
 						w.SetTile(w.NewTile(KindBlocker, y, x))
 					}
 				} else {
-					w.SetTile(w.NewTile(KindSoftBlocker, y, x))
+					w.SetTile(w.NewTile(KindPlain, y, x))
 				}
 			}
 		}

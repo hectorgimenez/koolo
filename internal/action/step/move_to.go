@@ -96,7 +96,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 
 	stuck := m.isPlayerStuck(d)
 
-	if m.path == nil || !m.cachePath(d) || stuck {
+	if m.path == nil || !m.cachePath(d, false) || stuck {
 		if stuck {
 			if len(m.path.AstarPather) == 0 {
 				pather.RandomMovement()

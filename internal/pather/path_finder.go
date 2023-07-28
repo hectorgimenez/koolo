@@ -13,7 +13,7 @@ import (
 const expandedGridPadding = 3000
 
 func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
-	expandedCG := shouldExpandCollisionGrid(d, to)
+	expandedCG := ShouldExpandCollisionGrid(d, to)
 	// Convert to relative coordinates (Current player position)
 	fromX, fromY := relativePosition(d, d.PlayerUnit.Position, expandedCG)
 
@@ -163,7 +163,15 @@ func relativePosition(d data.Data, p data.Position, expandedCG bool) (int, int) 
 	return p.X - d.AreaOrigin.X, p.Y - d.AreaOrigin.Y
 }
 
-func shouldExpandCollisionGrid(d data.Data, p data.Position) bool {
+func RelativePositionReverse(d data.Data, p data.Position, expandedCG bool) (int, int) {
+	if expandedCG {
+		return p.X + d.AreaOrigin.X - expandedGridPadding/2, p.Y + d.AreaOrigin.Y - expandedGridPadding/2
+	}
+
+	return p.X + d.AreaOrigin.X, p.Y + d.AreaOrigin.Y
+}
+
+func ShouldExpandCollisionGrid(d data.Data, p data.Position) bool {
 	relativeToX := p.X - d.AreaOrigin.X
 	relativeToY := p.Y - d.AreaOrigin.Y
 
