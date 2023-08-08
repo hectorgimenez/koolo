@@ -2,6 +2,7 @@ package step
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -91,6 +92,14 @@ func (m *MoveToStep) Run(d data.Data) error {
 		return nil
 	}
 
+	since_last_tp :=  time.Now().Sub(last_tp_attmpt)
+	if CanTeleport(d) && since_last_tp.Milliseconds() < 500 {
+		if last_x == d.PlayerUnit.Position.X && last_y == d.PlayerUnit.Position.Y {
+			fmt.Println(fmt.Sprintf("%s My position has not changed since last tp %d, dont tele", time.Now(), since_last_tp.Milliseconds()))
+			return nil
+		}
+	}
+
 	stuck := m.isPlayerStuck(d)
 
 	if m.path == nil || !m.cachePath(d) || stuck {
@@ -128,6 +137,10 @@ func (m *MoveToStep) Run(d data.Data) error {
 		return nil
 	}
 	pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
+
+	last_x = d.PlayerUnit.Position.X
+	last_y = d.PlayerUnit.Position.Y
+	last_tp_attmpt = time.Now()
 
 	return nil
 }

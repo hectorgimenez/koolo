@@ -22,6 +22,10 @@ type MoveToAreaStep struct {
 	pathFindAttempts	  int
 }
 
+var last_x int = 0
+var last_y int = 0
+var last_tp_attmpt time.Time
+
 func MoveToLevel(area area.Area) *MoveToAreaStep {
 	return &MoveToAreaStep{
 		pathingStep: newPathingStep(),
@@ -69,6 +73,16 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 		if l.Area == m.area {
 			distance := pather.DistanceFromMe(d, l.Position)
 			destination := l.Position
+			can_tele := CanTeleport(d)
+			since_last_tp :=  time.Now().Sub(last_tp_attmpt)
+			if distance < 40 && can_tele && since_last_tp.Milliseconds() < 500 {
+				// if last position is the same as current position, dont do tele
+				if last_x == d.PlayerUnit.Position.X && last_y == d.PlayerUnit.Position.Y {
+					fmt.Println(fmt.Sprintf("%s My position has not changed since last tp %d, dont tele", time.Now(), since_last_tp.Milliseconds()))
+					return nil
+				}
+			}
+
 			if distance > 5 {
 				stuck := m.isPlayerStuck(d)
 				if m.path == nil || !m.cachePath(d) || stuck {
@@ -89,7 +103,13 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 					}
 					m.path = path
 				}
-				pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
+				pather.MoveThroughPath(m.path, calculateMaxDistance(d), can_tele)
+
+				// otherwise go ahead and tele, record position
+				last_x = d.PlayerUnit.Position.X
+				last_y = d.PlayerUnit.Position.Y
+				last_tp_attmpt = time.Now()
+				
 				return nil
 			}
 
