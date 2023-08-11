@@ -19,30 +19,12 @@ func (a StonyTomb) Name() string {
 
 func (a StonyTomb) BuildActions() (actions []action.Action) {
 	// actions = append(actions, a.builder.MoveToAreaAndKill(area.))
-	actions = append(actions, a.builder.WayPoint(area.DryHills))
-
-	// Buff
-	actions = append(actions, a.char.Buff())
-
-	// move to RockyWaste
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.RockyWaste),
-		}
-	}))
-
-	// move to StonyTombLevel1
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.StonyTombLevel1),
-			
-			step.SyncStep(func(_ data.Data) error {
-				// Add small delay to fetch the monsters
-				helper.Sleep(500)
-				return nil
-			}),
-		}
-	}))
+	actions = append(actions,
+		a.builder.WayPoint(area.DryHills),
+		a.char.Buff(),
+		a.builder.MoveToArea(area.RockyWaste),
+		a.builder.MoveToArea(area.StonyTombLevel1),
+	)
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
 		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
@@ -65,7 +47,7 @@ func (a StonyTomb) BuildActions() (actions []action.Action) {
 		}
 	}))
 
-	// Clear pit level 2
+	// Clear StonyTombLevel2
 	actions = append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
 
 	return

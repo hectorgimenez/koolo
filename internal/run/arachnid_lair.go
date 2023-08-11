@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type ArachnidLair struct {
@@ -18,23 +17,17 @@ func (a ArachnidLair) Name() string {
 }
 
 func (a ArachnidLair) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Lost City)
-	actions = append(actions, a.builder.WayPoint(area.SpiderForest))
+	
+	actions = append(actions, 
+		// Moving to starting point (Spider FOrest)
+		a.builder.WayPoint(area.SpiderForest),
 
-	// Buff
-	actions = append(actions, a.char.Buff())
+		// Buff
+		a.char.Buff(),
 
-	// Travel to ArachnidLair
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.SpiderCave),
-			step.SyncStep(func(_ data.Data) error {
-				// Add small delay to fetch the monsters
-				helper.Sleep(1000)
-				return nil
-			}),
-		}
-	}))
+		// Travel to ArachnidLair
+		a.builder.MoveToArea(area.SpiderCave),
+	)
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
 		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
