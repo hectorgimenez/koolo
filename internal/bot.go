@@ -47,6 +47,12 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	b.gr.GetData(true)
 	b.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(gameStartedAt).Milliseconds()))
 
+	defer func() {
+        if r := recover(); r != nil {
+            b.logger.Error(fmt.Sprintf("recover from panic %s", r))
+        }
+    }()
+
 	loadingScreensDetected := 0
 	for k, r := range runs {
 		stat.StartRun(r.Name())
