@@ -6,6 +6,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -229,34 +230,42 @@ func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
 func (b Builder) HireMerc() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
-		// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
-		if isLevelingChar && config.Config.Character.UseMerc && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
-			b.logger.Info("Hiring merc...")
-			actions = append(actions,
-				BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{
-						step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC()),
-						step.KeySequence("home", "down", "enter"),
-					}
-				}),
-				BuildStatic(func(d data.Data) []step.Step {
-					sc := helper.Screenshot()
-					tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
-					if !tm.Found {
-						return nil
-					}
-
-					return []step.Step{
-						step.SyncStep(func(d data.Data) error {
-							hid.MovePointer(tm.PositionX-100, tm.PositionY)
-							hid.Click(hid.LeftButton)
-							hid.Click(hid.LeftButton)
-
+		if isLevelingChar && config.Config.Character.UseMerc {
+			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
+			if config.Config.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
+				b.logger.Info("Hiring merc...")
+				actions = append(actions,
+					BuildStatic(func(d data.Data) []step.Step {
+						return []step.Step{
+							step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC()),
+							step.KeySequence("home", "down", "enter"),
+						}
+					}),
+					BuildStatic(func(d data.Data) []step.Step {
+						sc := helper.Screenshot()
+						tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
+						if !tm.Found {
 							return nil
-						}),
-					}
-				}),
-			)
+						}
+
+						return []step.Step{
+							step.SyncStep(func(d data.Data) error {
+								hid.MovePointer(tm.PositionX-100, tm.PositionY)
+								hid.Click(hid.LeftButton)
+								hid.Click(hid.LeftButton)
+
+								return nil
+							}),
+						}
+					}),
+				)
+			}
+
+			// We will change the Defiance merc to the holy freeze, much better to avoid being hit.
+			if config.Config.Game.Difficulty == difficulty.Nightmare && d.MercHPPercent() > 0 && d.PlayerUnit.TotalGold() > 50000 && d.PlayerUnit.Area == area.KurastDocks && d.PlayerUnit.Skills[skill.Defiance] > 0 {
+				b.logger.Info("Changing Defiance merc by Holy Freeze...")
+				// Remove merc items
+			}
 		}
 
 		return

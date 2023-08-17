@@ -69,6 +69,10 @@ func (a Leveling) anya() action.Action {
 				anya, found := d.NPCs.FindOne(793)
 				return anya.Positions[0], found
 			}),
+			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+				anya, found := d.Objects.FindOne(object.FrozenAnya)
+				return anya.Position, found
+			}),
 			action.NewChain(func(d data.Data) (actions []action.Action) {
 				return []action.Action{
 					a.builder.ClearAreaAroundPlayer(15),
@@ -119,6 +123,7 @@ func (a Leveling) anya() action.Action {
 }
 
 func (a Leveling) ancients() action.Action {
+	char := a.char.(action.LevelingCharacter)
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		a.logger.Info("Kill the Ancients...")
 		actions = append(actions,
@@ -131,6 +136,7 @@ func (a Leveling) ancients() action.Action {
 
 		actions = append(actions,
 			a.builder.UsePortalInTown(),
+			a.char.Buff(),
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractObject(object.AncientsAltar, func(d data.Data) bool {
@@ -143,16 +149,7 @@ func (a Leveling) ancients() action.Action {
 					}),
 				}
 			}),
-			a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-				for _, monster := range d.Monsters.Enemies() {
-					m, found := d.Monsters.FindOne(monster.Name, monster.Type)
-					if found {
-						return m.UnitID, true
-					}
-				}
-
-				return 0, false
-			}, nil),
+			char.KillAncients(),
 			action.BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractObject(object.ArreatSummitDoorToWorldstone, func(d data.Data) bool {

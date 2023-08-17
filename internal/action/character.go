@@ -34,4 +34,5 @@ type LevelingCharacter interface {
 	SkillPoints(data.Data) []skill.Skill
 	GetKeyBindings(data.Data) map[skill.Skill]string
 	ShouldResetSkills(data.Data) bool
+	KillAncients() Action
 }

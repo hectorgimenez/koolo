@@ -369,6 +369,27 @@ func (s SorceressLeveling) KillBaal() action.Action {
 	})
 }
 
+func (s SorceressLeveling) KillAncients() action.Action {
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
+		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
+			actions = append(actions,
+				action.BuildStatic(func(d data.Data) []step.Step {
+					m, _ := d.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
+					return []step.Step{
+						step.SecondaryAttack(config.Config.Bindings.SorceressLeveling.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10)),
+						step.MoveTo(data.Position{
+							X: 10062,
+							Y: 12639,
+						}),
+					}
+				}),
+				s.killMonster(m.Name, data.MonsterTypeSuperUnique),
+			)
+		}
+		return actions
+	})
+}
+
 func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) *action.DynamicAction {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -405,7 +426,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 					for _, m := range d.Monsters.Enemies() {
 						if d := pather.DistanceFromMe(d, m.Position); d < 4 {
 							s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
-							steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, opts...))
+							steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, step.Distance(25, 30)))
 							break
 						}
 					}
