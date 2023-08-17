@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"io/fs"
+	"math"
 	"path/filepath"
 	"strings"
 	"time"
@@ -94,6 +95,7 @@ func createMask(tpl gocv.Mat) gocv.Mat {
 func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 	t := time.Now()
 	threshold := float32(0.83)
+	colorDiffThreshold := float64(75)
 
 	bigmat, err := gocv.ImageToMatRGB(img)
 	if err != nil {
@@ -115,19 +117,27 @@ func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 	gocv.MatchTemplate(mat, tpl.RGB, &res, gocv.TmCcoeffNormed, tpl.Mask)
 	_, maxVal, _, maxPos := gocv.MinMaxLoc(res)
 	if maxVal > threshold {
-		tf.logger.Debug(fmt.Sprintf(
-			"Found Template (%dms): %s Score: %f",
-			time.Since(t).Milliseconds(),
-			tplName,
-			maxVal,
-		))
+		region := mat.Region(image.Rect(maxPos.X, maxPos.Y, maxPos.X+tpl.RGB.Cols(), maxPos.Y+tpl.RGB.Rows()))
+		regionMean := region.Mean()
+		tplMean := tpl.RGB.Mean()
+		absDiff := math.Abs((regionMean.Val1 - tplMean.Val1) + (regionMean.Val2 - tplMean.Val2) + (regionMean.Val3 - tplMean.Val3))
+		if absDiff < colorDiffThreshold {
+			tf.logger.Debug(fmt.Sprintf(
+				"Found Template (%dms): %s Score: %f, ColorDiff: %f",
+				time.Since(t).Milliseconds(),
+				tplName,
+				maxVal,
+				absDiff,
+			))
 
-		return TemplateMatch{
-			Score:     maxVal,
-			PositionX: maxPos.X,
-			PositionY: maxPos.Y,
-			Found:     true,
+			return TemplateMatch{
+				Score:     maxVal,
+				PositionX: maxPos.X,
+				PositionY: maxPos.Y,
+				Found:     true,
+			}
 		}
+
 	}
 
 	return TemplateMatch{}
