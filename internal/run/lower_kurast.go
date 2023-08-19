@@ -15,14 +15,9 @@ func (a LowerKurast) Name() string {
 }
 
 func (a LowerKurast) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Lower Kurast)
-	actions = append(actions, a.builder.WayPoint(area.LowerKurast))
-
-	// Buff
-	actions = append(actions, a.char.Buff())
-
-	// Clear Lower Kurast
-	actions = append(actions, a.builder.ClearArea(true, data.MonsterEliteFilter()))
-
-	return
+	return []action.Action{
+		a.builder.WayPoint(area.LowerKurast), // Moving to starting point (Lower Kurast)
+		a.char.Buff(),                        // Buff
+		a.builder.ClearArea(true, data.MonsterEliteFilter()),
+	}
 }

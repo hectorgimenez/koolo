@@ -17,14 +17,10 @@ func (c Countess) Name() string {
 }
 
 func (c Countess) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Black Marsh)
-	actions = append(actions, c.builder.WayPoint(area.BlackMarsh))
-
-	// Buff
-	actions = append(actions, c.char.Buff())
-
 	// Travel to boss level
 	actions = append(actions,
+		c.builder.WayPoint(area.BlackMarsh), // Moving to starting point (Black Marsh)
+		c.char.Buff(),                       // Buff
 		c.builder.MoveToArea(area.ForgottenTower),
 		c.builder.MoveToArea(area.TowerCellarLevel1),
 		c.builder.MoveToArea(area.TowerCellarLevel2),

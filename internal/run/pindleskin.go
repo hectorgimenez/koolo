@@ -29,30 +29,18 @@ func (p Pindleskin) Name() string {
 }
 
 func (p Pindleskin) BuildActions() (actions []action.Action) {
-	// Move to Act 5
-	actions = append(actions, p.builder.WayPoint(area.Harrogath))
-
-	// Moving to starting point
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveTo(fixedPlaceNearRedPortal),
-			step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
-				return d.PlayerUnit.Area == area.NihlathaksTemple
-			}),
-		}
-	}))
-
-	// Buff
-	actions = append(actions, p.char.Buff())
-
-	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveTo(pindleSafePosition),
-		}
-	}))
-
-	// Kill Pindleskin
-	actions = append(actions, p.char.KillPindle(p.SkipOnImmunities))
-	return
+	return []action.Action{
+		p.builder.WayPoint(area.Harrogath),              // Move to Act 5
+		p.builder.MoveToCoords(fixedPlaceNearRedPortal), // Moving closer to the portal to detect it
+		action.BuildStatic(func(d data.Data) []step.Step {
+			return []step.Step{
+				step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+					return d.PlayerUnit.Area == area.NihlathaksTemple
+				}),
+			}
+		}),
+		p.char.Buff(), // Buff
+		p.builder.MoveToCoords(pindleSafePosition), // Travel to boss position
+		p.char.KillPindle(p.SkipOnImmunities),      // Kill Pindleskin
+	}
 }

@@ -16,20 +16,14 @@ func (s Summoner) Name() string {
 }
 
 func (s Summoner) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Arcane Sanctuary)
-	actions = append(actions, s.builder.WayPoint(area.ArcaneSanctuary))
+	return []action.Action{
+		s.builder.WayPoint(area.ArcaneSanctuary), // Moving to starting point (Arcane Sanctuary)
+		s.char.Buff(),                            // Buff
+		s.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+			m, found := d.NPCs.FindOne(npc.Summoner)
 
-	// Buff
-	actions = append(actions, s.char.Buff())
-
-	// Travel to boss position
-	actions = append(actions, s.builder.MoveTo(func(d data.Data) (data.Position, bool) {
-		m, found := d.NPCs.FindOne(npc.Summoner)
-
-		return m.Positions[0], found
-	}))
-
-	// Kill Summoner
-	actions = append(actions, s.char.KillSummoner())
-	return
+			return m.Positions[0], found
+		}), // Travel to boss position
+		s.char.KillSummoner(), // Kill Summoner
+	}
 }

@@ -21,13 +21,10 @@ func (m Mephisto) Name() string {
 
 func (m Mephisto) BuildActions() []action.Action {
 	return []action.Action{
-		// Moving to starting point (Durance of Hate Level 2)
-		m.builder.WayPoint(area.DuranceOfHateLevel2),
-		m.char.Buff(),
-		// Travel to boss position
+		m.builder.WayPoint(area.DuranceOfHateLevel2), // Moving to starting point (Durance of Hate Level 2)
+		m.char.Buff(), // Buff
 		m.builder.MoveToArea(area.DuranceOfHateLevel3),
-		m.builder.MoveToCoords(mephistoSafePosition),
-		// Kill Mephisto
-		m.char.KillMephisto(),
+		m.builder.MoveToCoords(mephistoSafePosition), // Travel to boss position
+		m.char.KillMephisto(),                        // Kill Mephisto
 	}
 }
