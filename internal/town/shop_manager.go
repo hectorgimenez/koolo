@@ -3,7 +3,6 @@ package town
 import (
 	"fmt"
 	"math/rand"
-	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -12,15 +11,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"go.uber.org/zap"
-)
-
-const (
-	topCornerVendorWindowX = 109
-	topCornerVendorWindowY = 147
-	ItemBoxSize            = 33
-	InventoryTopLeftX      = 846
-	InventoryTopLeftY      = 369
 )
 
 type ShopManager struct {
@@ -41,101 +33,109 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 
 	sm.logger.Debug(fmt.Sprintf("Buying: %d Healing potions and %d Mana potions", missingHealingPots, missingManaPots))
 
-	for _, i := range d.Items.Shop {
-		if strings.Contains(string(i.Name), "HealingPotion") && i.IsVendor && missingHealingPots > 1 {
-			sm.buyItem(i, missingHealingPots)
-			missingHealingPots = 0
-			break
-		}
+	// We traverse the items in reverse order because vendor has the best potions at the end
+	pot, found := sm.findFirstMatch(d, "superhealingpotion", "greaterhealingpotion", "healingpotion", "lighthealingpotion", "minorhealingpotion")
+	if found && missingHealingPots > 0 {
+		sm.BuyItem(pot, missingHealingPots)
+		missingHealingPots = 0
 	}
-	for _, i := range d.Items.Shop {
-		if strings.Contains(string(i.Name), "ManaPotion") && i.IsVendor && missingManaPots > 1 {
-			sm.buyItem(i, missingManaPots)
-			missingManaPots = 0
-			break
-		}
+
+	pot, found = sm.findFirstMatch(d, "supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
+	// In Normal greater potions are expensive as we are low level, let's keep with cheap ones
+	if config.Config.Game.Difficulty == "normal" {
+		pot, found = sm.findFirstMatch(d, "manapotion", "lightmanapotion", "minormanapotion")
+	}
+	if found && missingManaPots > 0 {
+		sm.BuyItem(pot, missingManaPots)
+		missingManaPots = 0
 	}
 
 	if sm.ShouldBuyTPs(d) {
-		sm.logger.Debug("Filling TP Tome...")
-		for _, i := range d.Items.Shop {
-			if i.Name == item.ScrollOfTownPortal && i.IsVendor {
-				sm.buyFullStack(i)
-				break
+		if _, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
+			sm.logger.Info("TP Tome not found, buying one...")
+			if itm, itmFound := d.Items.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
+				sm.BuyItem(itm, 1)
 			}
+		}
+		sm.logger.Debug("Filling TP Tome...")
+		if itm, found := d.Items.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
+			sm.buyFullStack(itm)
 		}
 	}
 
 	if sm.ShouldBuyIDs(d) {
-		sm.logger.Debug("Filling IDs Tome...")
-		for _, i := range d.Items.Shop {
-			if i.Name == item.ScrollOfIdentify && i.IsVendor {
-				sm.buyFullStack(i)
-				break
+		if _, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory); !found {
+			sm.logger.Info("ID Tome not found, buying one...")
+			if itm, itmFound := d.Items.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
+				sm.BuyItem(itm, 1)
 			}
+		}
+		sm.logger.Debug("Filling IDs Tome...")
+		if itm, found := d.Items.Find(item.ScrollOfIdentify, item.LocationVendor); found {
+			sm.buyFullStack(itm)
 		}
 	}
 
-	for _, i := range d.Items.Shop {
-		if string(i.Name) == "Key" && i.IsVendor {
-			if sm.ShouldBuyKeys(d) {
-				sm.logger.Debug("Vendor with keys detected, provisioning...")
-				sm.buyFullStack(i)
-				break
-			}
+	if sm.shouldBuyKeys(d) {
+		if itm, found := d.Items.Find(item.Key, item.LocationVendor); found {
+			sm.logger.Debug("Vendor with keys detected, provisioning...")
+			sm.buyFullStack(itm)
 		}
 	}
+}
+
+func (sm ShopManager) findFirstMatch(d data.Data, itemNames ...string) (data.Item, bool) {
+	for _, name := range itemNames {
+		if itm, found := d.Items.Find(item.Name(name), item.LocationVendor); found {
+			return itm, true
+		}
+	}
+
+	return data.Item{}, false
 }
 
 func (sm ShopManager) ShouldBuyTPs(d data.Data) bool {
-	for _, it := range d.Items.Inventory {
-		if it.Name != item.TomeOfTownPortal {
-			continue
-		}
-
-		qty, found := it.Stats[stat.Quantity]
-		if qty.Value <= rand.Intn(5-1)+1 || !found {
-			return true
-		}
+	portalTome, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
+	if !found {
+		return true
 	}
-	return false
+
+	qty, found := portalTome.Stats[stat.Quantity]
+
+	return qty.Value <= rand.Intn(5-1)+1 || !found
 }
 
 func (sm ShopManager) ShouldBuyIDs(d data.Data) bool {
-	for _, it := range d.Items.Inventory {
-		if it.Name != item.TomeOfIdentify {
-			continue
-		}
-
-		qty, found := it.Stats[stat.Quantity]
-		if qty.Value <= rand.Intn(7-3)+1 || !found {
-			return true
-		}
+	idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
+	if !found {
+		return true
 	}
-	return false
+
+	qty, found := idTome.Stats[stat.Quantity]
+
+	return qty.Value <= rand.Intn(7-3)+1 || !found
 }
 
-func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
-	for _, it := range d.Items.Inventory {
-		if it.Name != item.Key {
-			continue
-		}
-
-		qty, found := it.Stats[stat.Quantity]
-		if found && qty.Value == 12 {
-			return false
-		}
+func (sm ShopManager) shouldBuyKeys(d data.Data) bool {
+	keys, found := d.Items.Find(item.Key, item.LocationInventory)
+	if !found {
+		return false
 	}
+
+	qty, found := keys.Stats[stat.Quantity]
+	if found && qty.Value == 12 {
+		return false
+	}
+
 	return true
 }
 
 func (sm ShopManager) SellJunk(d data.Data) {
-	for _, i := range d.Items.Inventory {
+	for _, i := range ItemsToBeSold(d) {
 		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Name, i.Quality))
-			x := InventoryTopLeftX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
-			y := InventoryTopLeftY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
-			hid.MovePointer(x, y)
+			screenPos := ui.GetScreenCoordsForItem(i)
+			hid.MovePointer(screenPos.X, screenPos.Y)
 			helper.Sleep(100)
 			hid.KeyDown("control")
 			helper.Sleep(50)
@@ -147,10 +147,9 @@ func (sm ShopManager) SellJunk(d data.Data) {
 	}
 }
 
-func (sm ShopManager) buyItem(i data.Item, quantity int) {
-	x, y := sm.getScreenCordinatesForItem(i)
-
-	hid.MovePointer(x, y)
+func (sm ShopManager) BuyItem(i data.Item, quantity int) {
+	screenPos := ui.GetScreenCoordsForItem(i)
+	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
 		hid.Click(hid.RightButton)
@@ -160,9 +159,8 @@ func (sm ShopManager) buyItem(i data.Item, quantity int) {
 }
 
 func (sm ShopManager) buyFullStack(i data.Item) {
-	x, y := sm.getScreenCordinatesForItem(i)
-
-	hid.MovePointer(x, y)
+	screenPos := ui.GetScreenCoordsForItem(i)
+	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(250)
 	hid.KeyDown("shift")
 	helper.Sleep(100)
@@ -172,9 +170,16 @@ func (sm ShopManager) buyFullStack(i data.Item) {
 	helper.Sleep(500)
 }
 
-func (sm ShopManager) getScreenCordinatesForItem(i data.Item) (int, int) {
-	x := topCornerVendorWindowX + i.Position.X*ItemBoxSize + (ItemBoxSize / 2)
-	y := topCornerVendorWindowY + i.Position.Y*ItemBoxSize + (ItemBoxSize / 2)
+func ItemsToBeSold(d data.Data) (items []data.Item) {
+	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+		if itm.IsFromQuest() {
+			continue
+		}
 
-	return x, y
+		if config.Config.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
+			items = append(items, itm)
+		}
+	}
+
+	return
 }

@@ -2,7 +2,9 @@ package step
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -18,6 +20,7 @@ type pathingStep struct {
 	path                    *pather.Pather
 	lastRunPositions        [][2]int
 	blacklistedPositions    [][2]int
+	previousArea            area.Area
 }
 
 func newPathingStep() pathingStep {
@@ -31,10 +34,21 @@ func newPathingStep() pathingStep {
 func (s *pathingStep) cachePath(d data.Data) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
+
+	if s.previousArea != d.PlayerUnit.Area {
+		return false
+	}
+
 	for k, pos := range s.path.AstarPather {
+		tile := pos.(*pather.Tile)
+		expandedGrid := 0
+		if len(tile.W) == 3000 {
+			expandedGrid = 1500
+		}
+
 		destination := data.Position{
-			X: pos.(*pather.Tile).X + d.AreaOrigin.X,
-			Y: pos.(*pather.Tile).Y + d.AreaOrigin.Y,
+			X: tile.X + (d.AreaOrigin.X - expandedGrid),
+			Y: tile.Y + (d.AreaOrigin.Y - expandedGrid),
 		}
 
 		distance := pather.DistanceFromMe(d, destination)
@@ -55,6 +69,10 @@ func (s *pathingStep) cachePath(d data.Data) bool {
 }
 
 func (s *pathingStep) isPlayerStuck(d data.Data) bool {
+	if s.lastRun.IsZero() {
+		return false
+	}
+
 	s.lastRunPositions = append(s.lastRunPositions, [2]int{d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y})
 	if len(s.lastRunPositions) > 20 {
 		s.lastRunPositions = s.lastRunPositions[1:]

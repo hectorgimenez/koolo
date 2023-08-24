@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -20,10 +21,15 @@ func (b Builder) DiscoverWaypoint() *Factory {
 
 		for _, o := range d.Objects {
 			if o.IsWaypoint() {
-				if pather.DistanceFromMe(d, o.Position) < 15 {
+				pos := o.Position
+				if d.PlayerUnit.Area == area.RiverOfFlame {
+					pos = data.Position{X: 7800, Y: 5919}
+				}
+
+				if pather.DistanceFromMe(d, pos) < 15 {
 					return BuildStatic(func(d data.Data) []step.Step {
 						return []step.Step{
-							step.MoveTo(o.Position),
+							step.MoveTo(pos),
 							step.InteractObject(o.Name, func(d data.Data) bool {
 								return d.OpenMenus.Waypoint
 							}),
@@ -37,10 +43,10 @@ func (b Builder) DiscoverWaypoint() *Factory {
 					})
 				}
 
-				return b.MoveAndKill(func(d data.Data) (data.Position, bool) {
+				return b.MoveTo(func(d data.Data) (data.Position, bool) {
 					for _, o := range d.Objects {
 						if o.IsWaypoint() {
-							return o.Position, true
+							return pos, true
 						}
 					}
 

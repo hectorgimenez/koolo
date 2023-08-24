@@ -1,14 +1,15 @@
 package hid
 
 import (
-	"github.com/go-vgo/robotgo"
 	"math/rand"
 	"time"
+
+	"github.com/go-vgo/robotgo"
 )
 
 const (
-	keyPressMinTime = 30  // ms
-	keyPressMaxTime = 160 // ms
+	keyPressMinTime = 10 // ms
+	keyPressMaxTime = 40 // ms
 )
 
 // PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly

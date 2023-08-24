@@ -21,6 +21,18 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 			}
 		}
 
+		// Let's go pickup more pots if we have less than 2 (only during leveling)
+		_, isLevelingChar := b.ch.(LevelingCharacter)
+		if isLevelingChar {
+			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
+			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+			if (!healingPotsFound || !manaPotsFound) && d.PlayerUnit.TotalGold() > 1000 {
+				return NewChain(func(d data.Data) []Action {
+					return b.InRunReturnTownRoutine()
+				})
+			}
+		}
+
 		monstersInRoom := make([]data.Monster, 0)
 		for _, m := range d.Monsters.Enemies(filter) {
 			if currentRoom.IsInside(m.Position) || pather.DistanceFromMe(d, m.Position) < 30 {

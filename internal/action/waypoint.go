@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -34,48 +35,61 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 			} else {
 				b.logger.Info("Waypoint not found (or error occurred) try to autodiscover it", zap.Any("area", a))
 
-				for nwA, wp := range area.WPAddresses {
-					if wp.Tab == dstWP.Tab && wp.Row == dstWP.Row-1 {
-						isChild = true
-						return b.WayPoint(nwA)
-					}
+				_, found := area.WPAddresses[dstWP.LinkedFrom[0]]
+				if found {
+					isChild = true
+					return b.WayPoint(dstWP.LinkedFrom[0])
 				}
 			}
 		}
 
 		return nil
 	})
+}
+
+func (b Builder) getLinkedWP(a area.Area) {
 
 }
 
 func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
+		areas = append(areas, dst)
 		logAreas := make([]int, len(areas))
 		b.logger.Debug("Traversing to next WP...")
 		for _, a := range areas {
 			logAreas = append(logAreas, int(a))
-			actions = append(actions,
-				b.ch.Buff(),
-				b.MoveToAreaAndKill(a),
-			)
-
-			// The connection between the Monastery Gate and Tamoe Highland is a bit tricky
-			if a == area.MonasteryGate {
+			switch a {
+			case area.MonasteryGate:
+				b.logger.Debug("Monastery Gate detected, moving to static coords")
 				actions = append(actions,
-					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
-						b.logger.Debug("Monastery Gate detected, moving to static coords")
-						return data.Position{X: 15139, Y: 5098}, true
+					b.MoveToCoords(data.Position{X: 15139, Y: 5056}),
+				)
+			case area.ArcaneSanctuary:
+				actions = append(actions,
+					NewChain(func(d data.Data) []Action {
+						b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+						portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
+						return []Action{
+							b.MoveToCoords(portal.Position),
+							BuildStatic(func(d data.Data) []step.Step {
+								return []step.Step{
+									step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+										return d.PlayerUnit.Area == area.ArcaneSanctuary
+									}),
+								}
+							}),
+						}
 					}),
-					b.MoveAndKill(func(d data.Data) (data.Position, bool) {
-						return data.Position{X: 15148, Y: 4978}, true
-					}),
+				)
+			default:
+				actions = append(actions,
+					b.ch.Buff(),
+					b.MoveToArea(a),
 				)
 			}
 		}
 
-		logAreas = append(logAreas, int(dst))
 		actions = append(actions,
-			b.MoveToAreaAndKill(dst),
 			b.DiscoverWaypoint(),
 		)
 

@@ -2,8 +2,11 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
@@ -21,7 +24,15 @@ func (b Builder) Heal() *StaticAction {
 		}
 
 		if shouldHeal {
-			steps = append(steps, step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).HealNPC()))
+			return []step.Step{
+				step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).HealNPC()),
+				step.SyncStep(func(d data.Data) error {
+					helper.Sleep(300)
+					hid.PressKey("esc")
+					helper.Sleep(100)
+					return nil
+				}),
+			}
 		}
 
 		return

@@ -4,7 +4,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
 var mephistoSafePosition = data.Position{
@@ -20,22 +19,12 @@ func (m Mephisto) Name() string {
 	return "Mephisto"
 }
 
-func (m Mephisto) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Durance of Hate Level 2)
-	actions = append(actions, m.builder.WayPoint(area.DuranceOfHateLevel2))
-
-	// Buff
-	actions = append(actions, m.char.Buff())
-
-	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.DuranceOfHateLevel3),
-			step.MoveTo(mephistoSafePosition),
-		}
-	}))
-
-	// Kill Mephisto
-	actions = append(actions, m.char.KillMephisto())
-	return
+func (m Mephisto) BuildActions() []action.Action {
+	return []action.Action{
+		m.builder.WayPoint(area.DuranceOfHateLevel2), // Moving to starting point (Durance of Hate Level 2)
+		m.char.Buff(), // Buff
+		m.builder.MoveToArea(area.DuranceOfHateLevel3),
+		m.builder.MoveToCoords(mephistoSafePosition), // Travel to boss position
+		m.char.KillMephisto(),                        // Kill Mephisto
+	}
 }

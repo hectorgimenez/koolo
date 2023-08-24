@@ -18,9 +18,9 @@ var ErrChicken = errors.New("chicken")
 var ErrMercChicken = errors.New("mercenary chicken")
 
 const (
-	healingInterval     = time.Second * 5
+	healingInterval     = time.Second * 4
 	healingMercInterval = time.Second * 6
-	manaInterval        = time.Second * 8
+	manaInterval        = time.Second * 5
 	rejuvInterval       = time.Second * 2
 )
 

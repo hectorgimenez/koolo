@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -31,7 +32,7 @@ func (b Builder) Repair() *DynamicAction {
 		}
 
 		shouldRepair := false
-		for _, i := range d.Items.Equipped {
+		for _, i := range d.Items.ByLocation(item.LocationEquipped) {
 			if du, found := i.Stats[stat.Durability]; found && du.Value <= 1 {
 				shouldRepair = true
 				b.logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))

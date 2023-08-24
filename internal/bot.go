@@ -53,7 +53,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
-		actions := b.preRunActions(firstRun)
+		actions := b.ab.PreRun(firstRun)
 		actions = append(actions, r.BuildActions()...)
 		actions = append(actions, b.postRunActions(k, runs)...)
 
@@ -71,8 +71,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				// Throttle loop a bit, don't need to waste CPU
-				if time.Since(loopTime) < time.Millisecond*30 {
-					time.Sleep(time.Millisecond*30 - time.Since(loopTime))
+				if time.Since(loopTime) < time.Millisecond*10 {
+					time.Sleep(time.Millisecond*10 - time.Since(loopTime))
 				}
 
 				d := b.gr.GetData(false)
@@ -145,28 +145,6 @@ func (b *Bot) shouldEndCurrentGame(startedAt time.Time) error {
 	}
 
 	return nil
-}
-
-func (b *Bot) preRunActions(firstRun bool) []action.Action {
-	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
-		return []action.Action{
-			b.ab.RecoverCorpse(),
-			b.ab.Heal(),
-		}
-	}
-
-	return []action.Action{
-		b.ab.EnsureEmptyHand(),
-		b.ab.EnsureStatPoints(),
-		b.ab.EnsureSkillPoints(),
-		b.ab.RecoverCorpse(),
-		b.ab.IdentifyAll(firstRun),
-		b.ab.Stash(firstRun),
-		b.ab.VendorRefill(),
-		b.ab.Heal(),
-		b.ab.ReviveMerc(),
-		b.ab.Repair(),
-	}
 }
 
 func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {

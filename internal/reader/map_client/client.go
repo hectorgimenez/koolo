@@ -60,8 +60,7 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 			row = append(row, false)
 		}
 
-		// Let's do super weird and complicated mappings in the name of "performance" because we love performance
-		// but we don't give a fuck about making things easy to read and understand. We came to play.
+		// Documentation about how this works: https://github.com/blacha/diablo2/tree/master/packages/map
 		if len(level.Map) > y {
 			mapRow := level.Map[y]
 			isWalkable := false
@@ -124,8 +123,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
 				},
-				IsGoodExit:  obj.IsGoodExit,
-				CanInteract: true,
+				IsEntrance: true,
 			}
 			exits = append(exits, lvl)
 		case "object":
@@ -146,6 +144,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 			found := false
 			for _, exit := range exits {
 				if exit.Area == area.Area(obj.ID) {
+					exit.IsEntrance = false
 					found = true
 					break
 				}
@@ -158,8 +157,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 						X: obj.X + areaOrigin.X,
 						Y: obj.Y + areaOrigin.Y,
 					},
-					IsGoodExit:  obj.IsGoodExit,
-					CanInteract: true,
+					IsEntrance: false,
 				}
 				exits = append(exits, lvl)
 			}
@@ -187,4 +185,50 @@ func (md MapData) getLevel(area area.Area) serverLevel {
 	}
 
 	return serverLevel{}
+}
+
+func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool) {
+	for _, lvl := range md {
+		lvlMaxX := lvl.Offset.X + lvl.Size.Width
+		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
+		if area.Area(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
+			return LevelData{
+				Area: area.Area(lvl.ID),
+				Name: lvl.Name,
+				Offset: data.Position{
+					X: lvl.Offset.X,
+					Y: lvl.Offset.Y,
+				},
+				Size: data.Position{
+					X: lvl.Size.Width,
+					Y: lvl.Size.Height,
+				},
+				CollisionGrid: md.CollisionGrid(area.Area(lvl.ID)),
+			}, true
+		}
+	}
+
+	return LevelData{}, false
+}
+
+func (md MapData) GetLevelData(id area.Area) (LevelData, bool) {
+	for _, lvl := range md {
+		if lvl.ID == int(id) {
+			return LevelData{
+				Area: area.Area(lvl.ID),
+				Name: lvl.Name,
+				Offset: data.Position{
+					X: lvl.Offset.X,
+					Y: lvl.Offset.Y,
+				},
+				Size: data.Position{
+					X: lvl.Size.Width,
+					Y: lvl.Size.Height,
+				},
+				CollisionGrid: md.CollisionGrid(area.Area(lvl.ID)),
+			}, true
+		}
+	}
+
+	return LevelData{}, false
 }

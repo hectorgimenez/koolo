@@ -6,57 +6,131 @@ import (
 
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
+	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
-const expandedGridPadding = 3000
+func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+	outsideCurrentLevel := outsideBoundary(d, to)
+	collisionGrid := d.CollisionGrid
 
-func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
-	expandedCG := shouldExpandCollisionGrid(d, to)
-	// Convert to relative coordinates (Current player position)
-	fromX, fromY := relativePosition(d, d.PlayerUnit.Position, expandedCG)
+	collisionGridOffset := data.Position{
+		X: 0,
+		Y: 0,
+	}
+
+	if outsideCurrentLevel {
+		lvl, lvlFound := reader.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
+		if !lvlFound {
+			panic("Error occurred calculating path, destination point outside current level and matching level not found")
+		}
+
+		// We're not going to calculate intersection, instead we're going to expand the collision grid, set the neew one
+		// starting point where is supposed to be and cross finger to make them match
+		relativeStartX, relativeStartY := lvl.Offset.X-d.AreaOrigin.X, lvl.Offset.Y-d.AreaOrigin.Y
+
+		collisionGridOffset = data.Position{
+			X: relativeStartX,
+			Y: relativeStartY,
+		}
+
+		// Let's create a new collision grid with the new size
+		expandedCG := make([][]bool, len(collisionGrid)+len(lvl.CollisionGrid))
+		for i := range expandedCG {
+			expandedCG[i] = make([]bool, len(collisionGrid[0])+len(lvl.CollisionGrid[0]))
+		}
+
+		// Let's copy both collision grids into the new one
+		for y, row := range d.CollisionGrid {
+			cgY := y
+			if relativeStartY < 0 {
+				cgY = y + int(math.Abs(float64(relativeStartY)))
+			}
+			for x := range row {
+				cgX := x
+				if relativeStartX < 0 {
+					cgX = int(math.Abs(float64(relativeStartX))) + x
+				}
+
+				if cgY >= len(expandedCG) {
+					continue
+				}
+				expandedCG[cgY][cgX] = d.CollisionGrid[y][x]
+			}
+		}
+
+		for y, row := range lvl.CollisionGrid {
+			cgY := y
+			if relativeStartY > 0 {
+				cgY = y + int(math.Abs(float64(relativeStartY)))
+			}
+			for x := range row {
+				cgX := x
+				if relativeStartX > 0 {
+					cgX = int(math.Abs(float64(relativeStartX))) + x
+				}
+
+				expandedCG[cgY][cgX] = lvl.CollisionGrid[y][x]
+			}
+		}
+
+		collisionGrid = expandedCG
+	}
+
+	// Convert to relative coordinates (Current pelayer position)
+	fromX, fromY := relativePosition(d, d.PlayerUnit.Position, collisionGridOffset)
 
 	// Convert to relative coordinates (Target position)
-	toX, toY := relativePosition(d, to, expandedCG)
+	toX, toY := relativePosition(d, to, collisionGridOffset)
 
 	// Origin and destination are the same point
 	if fromX == toX && fromY == toY {
 		return nil, 0, true
 	}
 
-	collisionGrid := d.CollisionGrid
+	// Lut Gholein map is a bit bugged, we should close this fake path to avoid pathing issues
+	if d.PlayerUnit.Area == area.LutGholein {
+		collisionGrid[13][210] = false
+	}
+
 	for _, cord := range blacklistedCoords {
 		collisionGrid[cord[1]][cord[0]] = false
 	}
 
-	w := parseWorld(expandedCG, collisionGrid, d.PlayerUnit.Area)
-
-	// Set Origin and Destination points
-	w.SetTile(w.NewTile(KindFrom, fromX, fromY))
-	w.SetTile(w.NewTile(KindTo, toX, toY))
-
-	p, distance, found := astar.Path(w.From(), w.To())
-
-	// Hacky solution, sometimes when the character or destination are near a wall pather is not able to calculate
-	// the path, so we fake some points around the character making them walkable even if they're not technically
-	if !found && len(blacklistedCoords) == 0 {
+	// Add some padding to the origin/destination, sometimes when the origin or destination are close to a non-walkable
+	// area, pather is not able to calculate the path, so we add some padding around origin/dest to avoid this
+	// If character can not teleport if apply this hacky thing it will try to kill monsters across walls
+	if helper.CanTeleport(d) {
 		for i := -3; i < 4; i++ {
 			for k := -3; k < 4; k++ {
 				if i == 0 && k == 0 {
 					continue
 				}
 
-				w.SetTile(w.NewTile(KindPlain, fromX+i, fromY+k))
-				w.SetTile(w.NewTile(KindPlain, toX+i, toY+k))
+				//collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
+				collisionGrid[ensureValueInCG(toY+i, len(collisionGrid))][ensureValueInCG(toX+k, len(collisionGrid[0]))] = true
 			}
 		}
-		p, distance, found = astar.Path(w.From(), w.To())
 	}
+
+	w := parseWorld(collisionGrid, d)
+
+	// Set Origin and Destination points
+	w.SetTile(w.NewTile(KindFrom, fromX, fromY))
+	w.SetTile(w.NewTile(KindTo, toX, toY))
+
+	//w.renderPathImg(d, nil, collisionGridOffset)
+
+	p, distFloat, found := astar.Path(w.From(), w.To())
+
+	distance = int(distFloat)
 
 	// Debug only, this will render a png file with map and origin/destination points
 	if config.Config.Debug.RenderMap {
-		w.renderPathImg(d, p, expandedCG)
+		w.renderPathImg(d, p, collisionGridOffset)
 	}
 
 	return &Pather{AstarPather: p, Destination: data.Position{
@@ -65,7 +139,19 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 	}}, distance, found
 }
 
-func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance float64, found bool) {
+func ensureValueInCG(val, cgSize int) int {
+	if val < 0 {
+		return 0
+	}
+
+	if val >= cgSize {
+		return cgSize - 1
+	}
+
+	return val
+}
+
+func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	maxRange := 20
 	step := 4
 	dst := 1
@@ -76,7 +162,7 @@ func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords .
 				if math.Abs(float64(i)) >= math.Abs(float64(dst)) || math.Abs(float64(j)) >= math.Abs(float64(dst)) {
 					cgY := dest.Y - d.AreaOrigin.Y + j
 					cgX := dest.X - d.AreaOrigin.X + i
-					if len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
+					if cgX > 0 && cgY > 0 && len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
 						return GetPath(d, data.Position{
 							X: dest.X + i,
 							Y: dest.Y + j,
@@ -155,15 +241,21 @@ func RandomMovement() {
 	hid.PressKey(config.Config.Bindings.ForceMove)
 }
 
-func relativePosition(d data.Data, p data.Position, expandedCG bool) (int, int) {
-	if expandedCG {
-		return p.X - d.AreaOrigin.X + expandedGridPadding/2, p.Y - d.AreaOrigin.Y + expandedGridPadding/2
+func relativePosition(d data.Data, p data.Position, cgOffset data.Position) (int, int) {
+	x, y := p.X-d.AreaOrigin.X, p.Y-d.AreaOrigin.Y
+
+	if cgOffset.X < 0 {
+		x += int(math.Abs(float64(cgOffset.X)))
 	}
 
-	return p.X - d.AreaOrigin.X, p.Y - d.AreaOrigin.Y
+	if cgOffset.Y < 0 {
+		y += int(math.Abs(float64(cgOffset.Y)))
+	}
+
+	return x, y
 }
 
-func shouldExpandCollisionGrid(d data.Data, p data.Position) bool {
+func outsideBoundary(d data.Data, p data.Position) bool {
 	relativeToX := p.X - d.AreaOrigin.X
 	relativeToY := p.Y - d.AreaOrigin.Y
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
@@ -13,7 +14,7 @@ import (
 	stat2 "github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 const (
@@ -57,14 +58,13 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 }
 
 func (b Builder) orderInventoryPotions(d data.Data) {
-	for _, i := range d.Items.Inventory {
+	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
 			if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
 			}
-			x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-			y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
-			hid.MovePointer(x, y)
+			screenPos := ui.GetScreenCoordsForItem(i)
+			hid.MovePointer(screenPos.X, screenPos.Y)
 			helper.Sleep(100)
 			hid.Click(hid.RightButton)
 			helper.Sleep(200)
@@ -73,7 +73,7 @@ func (b Builder) orderInventoryPotions(d data.Data) {
 }
 
 func (b Builder) isStashingRequired(d data.Data, forceStash bool) bool {
-	for _, i := range d.Items.Inventory {
+	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if b.shouldStashIt(i, forceStash) {
 			return true
 		}
@@ -111,7 +111,7 @@ func (b Builder) stashInventory(d data.Data, forceStash bool) {
 	currentTab := 1
 	switchTab(currentTab)
 
-	for _, i := range d.Items.Inventory {
+	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if !b.shouldStashIt(i, forceStash) {
 			continue
 		}
@@ -131,6 +131,16 @@ func (b Builder) stashInventory(d data.Data, forceStash bool) {
 }
 
 func (b Builder) shouldStashIt(i data.Item, forceStash bool) bool {
+	// Don't stash items from quests during leveling process, it makes things easier to track
+	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
+		return false
+	}
+
+	// Don't stash the Tomes and keys
+	if i.Name == item.TomeOfTownPortal || i.Name == item.TomeOfIdentify || i.Name == item.Key {
+		return false
+	}
+
 	if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}
@@ -139,9 +149,8 @@ func (b Builder) shouldStashIt(i data.Item, forceStash bool) bool {
 }
 
 func (b Builder) stashItemAction(i data.Item, forceStash bool) bool {
-	x := town.InventoryTopLeftX + i.Position.X*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	y := town.InventoryTopLeftY + i.Position.Y*town.ItemBoxSize + (town.ItemBoxSize / 2)
-	hid.MovePointer(x, y)
+	screenPos := ui.GetScreenCoordsForItem(i)
+	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
 	hid.KeyDown("control")
@@ -152,7 +161,7 @@ func (b Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	helper.Sleep(300)
 
 	d := b.gr.GetData(false)
-	for _, it := range d.Items.Inventory {
+	for _, it := range d.Items.ByLocation(item.LocationInventory) {
 		if it.UnitID == i.UnitID {
 			return false
 		}

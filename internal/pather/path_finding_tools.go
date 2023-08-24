@@ -11,6 +11,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 // World is a two dimensional map of Tiles.
@@ -65,51 +66,35 @@ func (w World) To() *Tile {
 }
 
 // parseWorld parses a textual representation of a world into a world map.
-func parseWorld(expandedGrid bool, collisionGrid [][]bool, ar area.Area) World {
+func parseWorld(collisionGrid [][]bool, d data.Data) World {
 	gridSizeX := len(collisionGrid[0])
 	gridSizeY := len(collisionGrid)
 
-	if expandedGrid {
-		gridSizeX = expandedGridPadding
-		gridSizeY = expandedGridPadding
-	}
-
 	w := make(World, gridSizeX)
-
 	for x := 0; x < gridSizeX; x++ {
 		w[x] = make([]*Tile, gridSizeY)
 	}
 
-	if expandedGrid {
-		for x := 0; x < gridSizeY; x++ {
-			for y := 0; y < gridSizeX; y++ {
-				if x >= 1500 && x <= 1500+len(collisionGrid)-1 && y >= 1500 && y < 1500+len(collisionGrid[0])-1 {
-					if collisionGrid[x-1500][y-1500] {
-						w.SetTile(w.NewTile(KindPlain, y, x))
-					} else {
-						w.SetTile(w.NewTile(KindBlocker, y, x))
-					}
-				} else {
-					w.SetTile(w.NewTile(KindSoftBlocker, y, x))
-				}
+	for x, xValues := range collisionGrid {
+		for y, walkable := range xValues {
+			kind := KindBlocker
+
+			// Hacky solution to avoid Arcane Sanctuary A* errors
+			if d.PlayerUnit.Area == area.ArcaneSanctuary && helper.CanTeleport(d) {
+				kind = KindSoftBlocker
 			}
-		}
-	} else {
-		for x, xValues := range collisionGrid {
-			for y, walkable := range xValues {
-				kind := KindBlocker
 
-				// Hacky solution to avoid Arcane Sanctuary A* errors
-				if ar == area.ArcaneSanctuary {
+			if walkable {
+				// Add some padding around non-walkable areas, this prevents problems when cornering
+				if (y > 1 && (!xValues[y-1] || !xValues[y-2])) || (y < len(xValues)-2 && (!xValues[y+1] || !xValues[y+2])) ||
+					(x > 1 && (!collisionGrid[x-1][y] || !collisionGrid[x-2][y])) || (x < len(collisionGrid)-2 && (!collisionGrid[x+1][y] || !collisionGrid[x+2][y])) {
 					kind = KindSoftBlocker
-				}
-
-				if walkable {
+				} else {
 					kind = KindPlain
 				}
-
-				w.SetTile(w.NewTile(kind, y, x))
 			}
+
+			w.SetTile(w.NewTile(kind, y, x))
 		}
 	}
 
@@ -117,7 +102,7 @@ func parseWorld(expandedGrid bool, collisionGrid [][]bool, ar area.Area) World {
 }
 
 // RenderPathImg renders a path on top of a world.
-func (w World) renderPathImg(d data.Data, path []astar.Pather, expandedCG bool) {
+func (w World) renderPathImg(d data.Data, path []astar.Pather, cgOffset data.Position) {
 	width := len(w)
 	if width == 0 {
 		return
@@ -156,7 +141,7 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather, expandedCG bool) 
 	}
 
 	for _, r := range d.Rooms {
-		rPosX, rPosY := relativePosition(d, r.GetCenter(), expandedCG)
+		rPosX, rPosY := relativePosition(d, r.GetCenter(), cgOffset)
 		img.Set(rPosX, rPosY, color.RGBA{204, 204, 0, 255})
 	}
 
@@ -169,16 +154,22 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather, expandedCG bool) 
 	})
 
 	for _, o := range d.Objects {
-		oPosX, oPosY := relativePosition(d, o.Position, expandedCG)
+		oPosX, oPosY := relativePosition(d, o.Position, cgOffset)
 		img.Set(oPosX, oPosY, color.RGBA{255, 165, 0, 255})
 	}
 
 	for _, m := range d.Monsters {
-		mPosX, mPosY := relativePosition(d, m.Position, expandedCG)
+		mPosX, mPosY := relativePosition(d, m.Position, cgOffset)
 		img.Set(mPosX, mPosY, color.RGBA{255, 0, 255, 255})
 	}
 
 	outFile, _ := os.Create("cg.png")
 	defer outFile.Close()
 	png.Encode(outFile, img)
+}
+
+func IsWalkable(pos data.Position, offset data.Position, cg [][]bool) bool {
+	absPosX, absPosY := pos.X-offset.X, pos.Y-offset.Y
+
+	return cg[absPosY][absPosX]
 }

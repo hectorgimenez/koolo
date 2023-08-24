@@ -12,10 +12,11 @@ import (
 
 var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
 
+var CachedMapData map_client.MapData
+
 type GameReader struct {
 	*memory.GameReader
 	cachedMapSeed uint
-	cachedMapData map_client.MapData
 }
 
 func (gd *GameReader) GetData(isNewGame bool) data.Data {
@@ -24,13 +25,13 @@ func (gd *GameReader) GetData(isNewGame bool) data.Data {
 	if isNewGame {
 		playerUnitPtr, _ := gd.GameReader.GetPlayerUnitPtr(d.Roster)
 		gd.cachedMapSeed, _ = gd.getMapSeed(playerUnitPtr)
-		gd.cachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Config.Game.Difficulty)
+		CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Config.Game.Difficulty)
 	}
 
-	origin := gd.cachedMapData.Origin(d.PlayerUnit.Area)
-	npcs, exits, objects, rooms := gd.cachedMapData.NPCsExitsAndObjects(origin, d.PlayerUnit.Area)
+	origin := CachedMapData.Origin(d.PlayerUnit.Area)
+	npcs, exits, objects, rooms := CachedMapData.NPCsExitsAndObjects(origin, d.PlayerUnit.Area)
 	// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
-	memObjects := gd.Objects(d.PlayerUnit.Position)
+	memObjects := gd.Objects(d.PlayerUnit.Position, d.HoverData)
 	for _, clientObject := range objects {
 		found := false
 		for _, obj := range memObjects {
@@ -48,7 +49,7 @@ func (gd *GameReader) GetData(isNewGame bool) data.Data {
 	d.AdjacentLevels = exits
 	d.Rooms = rooms
 	d.Objects = memObjects
-	d.CollisionGrid = gd.cachedMapData.CollisionGrid(d.PlayerUnit.Area)
+	d.CollisionGrid = CachedMapData.CollisionGrid(d.PlayerUnit.Area)
 
 	return d
 }

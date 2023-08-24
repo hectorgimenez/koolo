@@ -68,7 +68,7 @@ func (m *MoveToStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted && CanTeleport(d) {
+	if m.status == StatusNotStarted && helper.CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 
@@ -83,14 +83,13 @@ func (m *MoveToStep) Run(d data.Data) error {
 		return nil
 	}
 
-	// Throttle movement clicks in town
-	if d.PlayerUnit.Area.IsTown() {
-		if time.Since(m.lastRun) < helper.RandomDurationMs(150, 250) {
-			return nil
-		}
+	// Add some delay between clicks to let the character move to destination
+	walkDuration := helper.RandomDurationMs(600, 1200)
+	if !helper.CanTeleport(d) && time.Since(m.lastRun) < walkDuration {
+		return nil
 	}
 
-	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if helper.CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 
@@ -118,17 +117,41 @@ func (m *MoveToStep) Run(d data.Data) error {
 					return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 				}
 				m.destination = path.Destination
+			} else {
+				return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 			}
-
 		}
 		m.path = path
 	}
 
 	m.lastRun = time.Now()
+	m.previousArea = d.PlayerUnit.Area
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
+	pather.MoveThroughPath(m.path, calculateMaxDistance(d, m.path, walkDuration), helper.CanTeleport(d))
 
 	return nil
+}
+
+func (m *MoveToStep) Reset() {
+	m.status = StatusNotStarted
+	m.lastRun = time.Time{}
+	m.startedAt = time.Time{}
+}
+
+func calculateMaxDistance(d data.Data, path *pather.Pather, duration time.Duration) int {
+	// We don't care too much if teleport is available, we can ignore corners, 90 degrees turns, etc
+	if helper.CanTeleport(d) {
+		return 25
+	}
+
+	// If we are walking, we should take more things into consideration, for example, we can't ignore corners
+	// or the character will get stuck not being able to enter a room for example
+
+	// First calculate the distance we can walk in the given duration, based on the randomized time
+	proposedDistance := int(float64(25) * duration.Seconds())
+	realDistance := proposedDistance
+
+	return realDistance
 }

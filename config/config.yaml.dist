@@ -31,6 +31,7 @@ bindings:
   openInventory: i
   openCharacterScreen: c
   openSkillTree: t
+  openQuestLog: q
   potion1: 1
   potion2: 2
   potion3: 3
@@ -58,6 +59,11 @@ bindings:
     redemption: r
     cleansing: f
 
+  paladinLeveling:
+    concentration: w # Will be used for Might on low levels
+    holyShield: a
+    vigor: e
+
 inventory:
   inventoryLock:
     - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ] # 0: Item locked and won't be moved.
@@ -71,7 +77,7 @@ inventory:
     rejuvenation: 1
 
 character:
-  class: sorceress # Allowed values: sorceress, hammerdin
+  class: sorceress # Allowed values: sorceress, hammerdin, paladin (leveling only)
   castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
   useCTA: true
@@ -92,6 +98,8 @@ game:
     clearPortal: true # Kills Rakanishu and makes easier selecting the portal
   nihlathak:
     clearArea: true
+  baal:
+    killBaal: false
 
 companion:
   enabled: false

@@ -7,7 +7,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -18,6 +17,7 @@ type MoveToAreaStep struct {
 	pathingStep
 	area                  area.Area
 	waitingForInteraction bool
+	mouseOverAttempts     int
 }
 
 func MoveToLevel(area area.Area) *MoveToAreaStep {
@@ -41,12 +41,23 @@ func (m *MoveToAreaStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToAreaStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted && CanTeleport(d) {
+	if m.status == StatusNotStarted && helper.CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	m.tryTransitionStatus(StatusInProgress)
-	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+
+	// Add some delay between clicks to let the character move to destination
+	walkDuration := helper.RandomDurationMs(800, 2000)
+	if !helper.CanTeleport(d) && time.Since(m.lastRun) < walkDuration {
 		return nil
+	}
+
+	if helper.CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+		return nil
+	}
+
+	if m.mouseOverAttempts > maxInteractions {
+		return fmt.Errorf("area %d could not be interacted", m.area)
 	}
 
 	if (m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1) || d.PlayerUnit.Area == m.area {
@@ -70,16 +81,20 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 					}
 					m.path = path
 				}
-				pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
+				pather.MoveThroughPath(m.path, calculateMaxDistance(d, m.path, walkDuration), helper.CanTeleport(d))
 				return nil
 			}
 
-			if l.CanInteract {
-				x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
-				hid.MovePointer(x, y)
-				helper.Sleep(100)
-				hid.Click(hid.LeftButton)
-				m.waitingForInteraction = true
+			if l.IsEntrance {
+				if d.HoverData.UnitType == 5 || d.HoverData.UnitType == 2 && d.HoverData.IsHovered {
+					hid.Click(hid.LeftButton)
+					m.waitingForInteraction = true
+				}
+
+				lx, ly := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
+				x, y := helper.Spiral(m.mouseOverAttempts)
+				hid.MovePointer(lx+x, ly+y)
+				m.mouseOverAttempts++
 				return nil
 			} else {
 				hid.PressKey(config.Config.Bindings.ForceMove)
@@ -88,18 +103,4 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 	}
 
 	return fmt.Errorf("area %s not found", m.area)
-}
-
-func CanTeleport(d data.Data) bool {
-	_, found := d.PlayerUnit.Skills[skill.Teleport]
-
-	return found && config.Config.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
-}
-
-func calculateMaxDistance(d data.Data) int {
-	if CanTeleport(d) {
-		return 25
-	}
-
-	return 15
 }

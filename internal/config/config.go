@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	Config StructConfig
+	Config *StructConfig
 )
 
 type StructConfig struct {
@@ -53,6 +53,7 @@ type StructConfig struct {
 		OpenInventory       string `yaml:"openInventory"`
 		OpenCharacterScreen string `yaml:"openCharacterScreen"`
 		OpenSkillTree       string `yaml:"openSkillTree"`
+		OpenQuestLog        string `yaml:"openQuestLog"`
 		Potion1             string `yaml:"potion1"`
 		Potion2             string `yaml:"potion2"`
 		Potion3             string `yaml:"potion3"`
@@ -71,6 +72,12 @@ type StructConfig struct {
 			StaticField string `yaml:"staticField"`
 			FrozenArmor string `yaml:"frozenArmor"`
 		} `yaml:"sorceress"`
+		SorceressLeveling struct {
+			Blizzard    string `yaml:"blizzard"`
+			StaticField string `yaml:"staticField"`
+			FrozenArmor string `yaml:"frozenArmor"`
+			FireBall    string `yaml:"fireBall"`
+		} `yaml:"sorceressLeveling"`
 		Hammerdin struct {
 			Concentration string `yaml:"concentration"`
 			HolyShield    string `yaml:"holyShield"`
@@ -78,6 +85,11 @@ type StructConfig struct {
 			Redemption    string `yaml:"redemption"`
 			Cleansing     string `yaml:"cleansing"`
 		} `yaml:"hammerdin"`
+		PaladinLeveling struct {
+			Concentration string `yaml:"concentration"`
+			HolyShield    string `yaml:"holyShield"`
+			Vigor         string `yaml:"vigor"`
+		} `yaml:"paladinLeveling"`
 	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`
@@ -108,6 +120,9 @@ type StructConfig struct {
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
 		}
+		Baal struct {
+			KillBaal bool `yaml:"killBaal"`
+		}
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`
@@ -137,6 +152,14 @@ func Load() error {
 	rules, err := nip.ReadDir("config/pickit/")
 	if err != nil {
 		return err
+	}
+
+	if Config.Game.Runs[0] == "leveling" {
+		levelingRules, err := nip.ReadDir("config/pickit_leveling/")
+		if err != nil {
+			return err
+		}
+		rules = append(rules, levelingRules...)
 	}
 
 	Config.Runtime.Rules = rules

@@ -12,10 +12,14 @@ type Character interface {
 	KillCountess() Action
 	KillAndariel() Action
 	KillSummoner() Action
+	KillDuriel() Action
 	KillMephisto() Action
 	KillPindle(skipOnImmunities []stat.Resist) Action
 	KillNihlathak() Action
 	KillCouncil() Action
+	KillDiablo() Action
+	KillIzual() Action
+	KillBaal() Action
 	KillMonsterSequence(
 		monsterSelector func(d data.Data) (data.UnitID, bool),
 		skipOnImmunities []stat.Resist,
@@ -26,6 +30,10 @@ type Character interface {
 type LevelingCharacter interface {
 	Character
 	// StatPoints Stats will be assigned in the order they are returned by this function.
-	StatPoints() map[stat.ID]int
-	SkillPoints() []skill.Skill
+	StatPoints(data.Data) map[stat.ID]int
+	SkillPoints(data.Data) []skill.Skill
+	GetKeyBindings(data.Data) map[skill.Skill]string
+	ShouldResetSkills(data.Data) bool
+	KillAncients() Action
+	GetSkillTree() skill.Tree
 }

@@ -16,19 +16,15 @@ func (a Eldritch) Name() string {
 }
 
 func (a Eldritch) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Frigid Highlands)
-	actions = append(actions, a.builder.WayPoint(area.FrigidHighlands))
+	return []action.Action{
+		a.builder.WayPoint(area.FrigidHighlands), // Moving to starting point (Frigid Highlands)
+		a.char.Buff(),                            // Buff
+		a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
+				return m.UnitID, true
+			}
 
-	// Buff
-	actions = append(actions, a.char.Buff())
-
-	actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-		if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, nil))
-
-	return
+			return 0, false
+		}, nil),
+	}
 }
