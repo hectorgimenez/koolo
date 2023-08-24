@@ -69,7 +69,7 @@ func (b Builder) itemsToIdentify(d data.Data) (items []data.Item) {
 func identifyItem(idTome data.Item, i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(idTome)
 	hid.MovePointer(screenPos.X, screenPos.Y)
-	helper.Sleep(200)
+	helper.Sleep(350)
 	hid.Click(hid.RightButton)
 	helper.Sleep(200)
 

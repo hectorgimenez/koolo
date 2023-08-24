@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
 )
@@ -101,18 +102,21 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 
 	// Add some padding to the origin/destination, sometimes when the origin or destination are close to a non-walkable
 	// area, pather is not able to calculate the path, so we add some padding around origin/dest to avoid this
-	for i := -3; i < 4; i++ {
-		for k := -3; k < 4; k++ {
-			if i == 0 && k == 0 {
-				continue
-			}
+	// If character can not teleport if apply this hacky thing it will try to kill monsters across walls
+	if helper.CanTeleport(d) {
+		for i := -3; i < 4; i++ {
+			for k := -3; k < 4; k++ {
+				if i == 0 && k == 0 {
+					continue
+				}
 
-			//collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
-			collisionGrid[ensureValueInCG(toY+i, len(collisionGrid))][ensureValueInCG(toX+k, len(collisionGrid[0]))] = true
+				//collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
+				collisionGrid[ensureValueInCG(toY+i, len(collisionGrid))][ensureValueInCG(toX+k, len(collisionGrid[0]))] = true
+			}
 		}
 	}
 
-	w := parseWorld(collisionGrid, d.PlayerUnit.Area)
+	w := parseWorld(collisionGrid, d)
 
 	// Set Origin and Destination points
 	w.SetTile(w.NewTile(KindFrom, fromX, fromY))

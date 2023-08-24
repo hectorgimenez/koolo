@@ -20,10 +20,14 @@ func BuildCharacter(logger *zap.Logger) (action.Character, error) {
 	}
 
 	if config.Config.Game.Runs[0] == "leveling" {
-		if strings.ToLower(config.Config.Character.Class) != "sorceress" {
-			return nil, fmt.Errorf("leveling only available for sorceress")
+		switch strings.ToLower(config.Config.Character.Class) {
+		case "sorceress":
+			return SorceressLeveling{BaseCharacter: bc}, nil
+		case "paladin":
+			return PaladinLeveling{BaseCharacter: bc}, nil
 		}
-		return SorceressLeveling{BaseCharacter: bc}, nil
+
+		return nil, fmt.Errorf("leveling only available for sorceress and paladin")
 	}
 
 	switch strings.ToLower(config.Config.Character.Class) {

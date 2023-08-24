@@ -7,7 +7,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -42,16 +41,18 @@ func (m *MoveToAreaStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToAreaStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted && CanTeleport(d) {
+	if m.status == StatusNotStarted && helper.CanTeleport(d) {
 		hid.PressKey(config.Config.Bindings.Teleport)
 	}
 	m.tryTransitionStatus(StatusInProgress)
 
-	if !CanTeleport(d) && time.Since(m.lastRun) < helper.RandomDurationMs(400, 600) {
+	// Add some delay between clicks to let the character move to destination
+	walkDuration := helper.RandomDurationMs(800, 2000)
+	if !helper.CanTeleport(d) && time.Since(m.lastRun) < walkDuration {
 		return nil
 	}
 
-	if CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if helper.CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
 		return nil
 	}
 
@@ -80,7 +81,7 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 					}
 					m.path = path
 				}
-				pather.MoveThroughPath(m.path, calculateMaxDistance(d), CanTeleport(d))
+				pather.MoveThroughPath(m.path, calculateMaxDistance(d, m.path, walkDuration), helper.CanTeleport(d))
 				return nil
 			}
 
@@ -102,23 +103,4 @@ func (m *MoveToAreaStep) Run(d data.Data) error {
 	}
 
 	return fmt.Errorf("area %s not found", m.area)
-}
-
-func CanTeleport(d data.Data) bool {
-	_, found := d.PlayerUnit.Skills[skill.Teleport]
-
-	// Duriel's Lair is bugged and teleport doesn't work here
-	if d.PlayerUnit.Area == area.DurielsLair {
-		return false
-	}
-
-	return found && config.Config.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
-}
-
-func calculateMaxDistance(d data.Data) int {
-	if CanTeleport(d) {
-		return 25
-	}
-
-	return helper.RandRng(7, 11)
 }

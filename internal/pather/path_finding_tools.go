@@ -11,6 +11,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 // World is a two dimensional map of Tiles.
@@ -65,7 +66,7 @@ func (w World) To() *Tile {
 }
 
 // parseWorld parses a textual representation of a world into a world map.
-func parseWorld(collisionGrid [][]bool, ar area.Area) World {
+func parseWorld(collisionGrid [][]bool, d data.Data) World {
 	gridSizeX := len(collisionGrid[0])
 	gridSizeY := len(collisionGrid)
 
@@ -79,12 +80,18 @@ func parseWorld(collisionGrid [][]bool, ar area.Area) World {
 			kind := KindBlocker
 
 			// Hacky solution to avoid Arcane Sanctuary A* errors
-			if ar == area.ArcaneSanctuary {
+			if d.PlayerUnit.Area == area.ArcaneSanctuary && helper.CanTeleport(d) {
 				kind = KindSoftBlocker
 			}
 
 			if walkable {
-				kind = KindPlain
+				// Add some padding around non-walkable areas, this prevents problems when cornering
+				if (y > 1 && (!xValues[y-1] || !xValues[y-2])) || (y < len(xValues)-2 && (!xValues[y+1] || !xValues[y+2])) ||
+					(x > 1 && (!collisionGrid[x-1][y] || !collisionGrid[x-2][y])) || (x < len(collisionGrid)-2 && (!collisionGrid[x+1][y] || !collisionGrid[x+2][y])) {
+					kind = KindSoftBlocker
+				} else {
+					kind = KindPlain
+				}
 			}
 
 			w.SetTile(w.NewTile(kind, y, x))

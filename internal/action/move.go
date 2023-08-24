@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"go.uber.org/zap"
@@ -103,7 +104,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 			}
 		}
 
-		if step.CanTeleport(d) {
+		if helper.CanTeleport(d) {
 			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
 			if !isLevelingChar {
 				return BuildStatic(func(d data.Data) []step.Step {
@@ -116,6 +117,26 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 				return BuildStatic(func(d data.Data) []step.Step {
 					return []step.Step{step.MoveTo(to, step.WithTimeout(5*time.Second))}
 				})
+			}
+		}
+
+		// Check if there is a door blocking our path
+		for _, o := range d.Objects {
+			if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
+				if o.Selectable {
+					return BuildStatic(func(d data.Data) []step.Step {
+						b.logger.Info("Door detected and teleport is not available, trying to open it...")
+						openedDoors[o.Name] = o.Position
+						return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
+							for _, obj := range d.Objects {
+								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
+									return true
+								}
+							}
+							return false
+						})}
+					}, CanBeSkipped())
+				}
 			}
 		}
 
@@ -153,26 +174,6 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 			return b.ItemPickup(false, 30)
 		}
 
-		// Check if there is a door blocking our path
-		for _, o := range d.Objects {
-			if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
-				if o.Selectable {
-					return BuildStatic(func(d data.Data) []step.Step {
-						b.logger.Info("Door detected and teleport is not available, trying to open it...")
-						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
-							for _, obj := range d.Objects {
-								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
-									return true
-								}
-							}
-							return false
-						})}
-					}, CanBeSkipped())
-				}
-			}
-		}
-
 		// Continue moving
 		return BuildStatic(func(d data.Data) []step.Step {
 			previousIterationPosition = d.PlayerUnit.Position
@@ -180,7 +181,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 				currentStep = step.MoveTo(
 					to,
 					step.ClosestWalkable(),
-					step.WithTimeout(time.Millisecond*500),
+					step.WithTimeout(time.Millisecond*1000),
 				)
 			} else {
 				currentStep.Reset()

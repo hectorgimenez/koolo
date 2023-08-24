@@ -103,7 +103,8 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 			return nil, false
 		}
 
-		assignedPoints := make(map[skill.Skill]int, 0)
+		skillTree := char.GetSkillTree()
+		assignedPoints := make(map[skill.Skill]int)
 		for _, sk := range char.SkillPoints(d) {
 			currentPoints, found := assignedPoints[sk]
 			if !found {
@@ -114,7 +115,7 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 
 			characterPoints, found := d.PlayerUnit.Skills[sk]
 			if !found || characterPoints < assignedPoints[sk] {
-				position, skFound := skill.SorceressTree[sk]
+				position, skFound := skillTree[sk]
 				if !skFound {
 					b.logger.Error("skill not found for character", zap.Any("skill", sk))
 					return nil, false
@@ -156,6 +157,7 @@ func (b Builder) EnsureSkillBindings() *StaticAction {
 		}
 		char, _ := b.ch.(LevelingCharacter)
 		skillBindings := char.GetKeyBindings(d)
+		skillBindings[skill.TomeOfTownPortal] = config.Config.Bindings.TP
 
 		if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
 			return []step.Step{
@@ -168,6 +170,9 @@ func (b Builder) EnsureSkillBindings() *StaticAction {
 
 					sc := helper.Screenshot()
 					for sk, binding := range skillBindings {
+						if binding == "" {
+							continue
+						}
 						tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
 						if !tm.Found {
 							continue

@@ -85,6 +85,11 @@ type StructConfig struct {
 			Redemption    string `yaml:"redemption"`
 			Cleansing     string `yaml:"cleansing"`
 		} `yaml:"hammerdin"`
+		PaladinLeveling struct {
+			Concentration string `yaml:"concentration"`
+			HolyShield    string `yaml:"holyShield"`
+			Vigor         string `yaml:"vigor"`
+		} `yaml:"paladinLeveling"`
 	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`

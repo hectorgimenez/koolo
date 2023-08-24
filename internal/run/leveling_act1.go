@@ -28,11 +28,11 @@ func (a Leveling) act1() action.Action {
 		quests := a.builder.GetCompletedQuests(1)
 
 		running = true
-		if d.PlayerUnit.Stats[stat.Level] < 5 || !quests[0] {
+		if !quests[0] {
 			return a.denOfEvil()
 		}
 
-		if d.PlayerUnit.Stats[stat.Level] >= 5 && d.PlayerUnit.Stats[stat.Level] < 11 {
+		if d.PlayerUnit.Stats[stat.Level] < 11 {
 			return a.countess()
 		}
 
