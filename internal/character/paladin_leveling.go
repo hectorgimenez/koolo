@@ -181,7 +181,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 			steps = append(steps,
 				//step.SecondaryAttack(config.Config.Bindings.SorceressLeveling.Blizzard, id, 1, step.Distance(25, 30)),
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 1), step.EnsureAura(config.Config.Bindings.PaladinLeveling.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(config.Config.Bindings.PaladinLeveling.Concentration)),
 			)
 		}
 
@@ -192,7 +192,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 }
 
 func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {
-	if d.PlayerUnit.Stats[stat.Level] >= 18 && d.PlayerUnit.Stats[stat.Level] < 30 {
+	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Stats[stat.Level] < 30 {
 		return map[stat.ID]int{
 			stat.Strength: 35,
 			stat.Vitality: 200,
@@ -212,13 +212,13 @@ func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {
 	return map[stat.ID]int{
 		stat.Strength:  0,
 		stat.Dexterity: 25,
-		stat.Vitality:  100,
+		stat.Vitality:  150,
 		stat.Energy:    0,
 	}
 }
 
 func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
-	if d.PlayerUnit.Stats[stat.Level] < 18 {
+	if d.PlayerUnit.Stats[stat.Level] < 21 {
 		return []skill.Skill{
 			skill.Might,
 			skill.Sacrifice,
@@ -232,6 +232,9 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
 			skill.HolyFire,
 			skill.HolyFire,
 			skill.Zeal,
+			skill.HolyFire,
+			skill.HolyFire,
+			skill.HolyFire,
 			skill.HolyFire,
 			skill.HolyFire,
 			skill.HolyFire,
@@ -360,7 +363,7 @@ func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
 }
 
 func (p PaladinLeveling) ShouldResetSkills(d data.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 18 && d.PlayerUnit.Skills[skill.HolyFire] > 10 {
+	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Skills[skill.HolyFire] > 10 {
 		return true
 	}
 
@@ -368,6 +371,12 @@ func (p PaladinLeveling) ShouldResetSkills(d data.Data) bool {
 }
 
 func (p PaladinLeveling) KillAncients() action.Action {
-	//TODO implement me
-	panic("implement me")
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
+		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
+			actions = append(actions,
+				p.killMonster(m.Name, data.MonsterTypeSuperUnique),
+			)
+		}
+		return actions
+	})
 }
