@@ -33,7 +33,6 @@ bot. It's recommended to run it on a [virtual machine](https://github.com/jamess
 
 - If you haven't done yet, install Diablo II: LOD 1.13c
 - Edit `config/config.yaml` and ensure `D2LoDPath` is pointing to your Diablo II: LOD 1.13c installation directory.
-- Run d2.install.reg to install the required registry key.
 - Configure custom bot settings under `config/config.yaml` and `config/pickit/*.nip` files for pickit rules.
 - Open Diablo II: Resurrected and ensure the game resolution is set to 1280x720 or 1920x1080 in HiDPI mode.
 - Enter the game with your character.
@@ -66,7 +65,7 @@ Setting the development environment is pretty straightforward, but MinGW is **re
 - Download [MingGW](https://sourceforge.net/projects/mingw-w64/files/) ```x86_64-win32-seh``` should be fine, extract it
   and add it to the system PATH on Windows environment variables. For example if extracted in ```C:\mingw64``` add
   ```C:\mingw64\bin``` to the PATH. [Robotgo](https://github.com/go-vgo/robotgo) dependency requires MinGW to build.
-- [Download Go >= 1.20](https://go.dev/dl/)
+- [Download Go >= 1.21](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
 ```
