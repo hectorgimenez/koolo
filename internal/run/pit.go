@@ -1,14 +1,11 @@
 package run
 
 import (
-	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type Pit struct {
@@ -20,32 +17,15 @@ func (a Pit) Name() string {
 }
 
 func (a Pit) BuildActions() (actions []action.Action) {
-	// Moving to starting point (OuterCloister)
-	actions = append(actions, a.builder.WayPoint(area.BlackMarsh))
-
-	// Buff
-	actions = append(actions, a.char.Buff())
-
-	// move to TamoeHighland
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			// step.MoveToLevel(area.MonasteryGate),
-			step.MoveToLevel(area.TamoeHighland),
-		}
-	}))
+	actions = append(actions,
+		a.builder.WayPoint(area.BlackMarsh),      // Moving to starting point (OuterCloister)
+		a.char.Buff(),                            // Buff
+		a.builder.MoveToArea(area.TamoeHighland), // Move to TamoeHighland
+	)
 
 	// Travel to pit level 1
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		fmt.Println(fmt.Sprintf("Travel to pit level 1"))
-		return []step.Step{
-			step.MoveToLevel(area.PitLevel1),
-			step.SyncStep(func(_ data.Data) error {
-				// Add small delay to fetch the monsters
-				helper.Sleep(1000)
-				return nil
-			}),
-		}
-	}))
+	a.logger.Info("Travel to pit level 1")
+	actions = append(actions, a.builder.MoveToArea(area.PitLevel1))
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
 		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
@@ -53,23 +33,9 @@ func (a Pit) BuildActions() (actions []action.Action) {
 		}))
 	}
 
-	// Clear pit level 1
-	actions = append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
-
-	// Travel to pit level 2
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.PitLevel2),
-			step.SyncStep(func(_ data.Data) error {
-				// Add small delay to fetch the monsters
-				helper.Sleep(1000)
-				return nil
-			}),
-		}
-	}))
-
-	// Clear pit level 2
-	actions = append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
-
-	return
+	return append(actions,
+		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 1
+		a.builder.MoveToArea(area.PitLevel2),               // Travel to pit level 2
+		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 2
+	)
 }

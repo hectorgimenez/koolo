@@ -60,7 +60,7 @@ func (m *MoveToStep) Status(d data.Data) Status {
 	}
 
 	distance := pather.DistanceFromMe(d, m.destination)
-	if distance < 5 || distance <= m.stopAtDistance {
+	if distance < 3 || distance <= m.stopAtDistance {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -129,7 +129,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	pather.MoveThroughPath(m.path, calculateMaxDistance(d, m.path, walkDuration), helper.CanTeleport(d))
+	pather.MoveThroughPath(m.path, calculateMaxDistance(d, walkDuration), helper.CanTeleport(d))
 
 	return nil
 }
@@ -140,16 +140,13 @@ func (m *MoveToStep) Reset() {
 	m.startedAt = time.Time{}
 }
 
-func calculateMaxDistance(d data.Data, path *pather.Pather, duration time.Duration) int {
+func calculateMaxDistance(d data.Data, duration time.Duration) int {
 	// We don't care too much if teleport is available, we can ignore corners, 90 degrees turns, etc
 	if helper.CanTeleport(d) {
 		return 25
 	}
 
-	// If we are walking, we should take more things into consideration, for example, we can't ignore corners
-	// or the character will get stuck not being able to enter a room for example
-
-	// First calculate the distance we can walk in the given duration, based on the randomized time
+	// Calculate the distance we can walk in the given duration, based on the randomized time
 	proposedDistance := int(float64(25) * duration.Seconds())
 	realDistance := proposedDistance
 

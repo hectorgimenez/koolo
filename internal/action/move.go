@@ -61,7 +61,7 @@ func (b Builder) MoveToArea(dst area.Area) Action {
 			b.MoveTo(toFun),
 			BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
-					step.MoveToLevel(dst),
+					step.InteractEntrance(dst),
 				}
 			}),
 		}
@@ -143,11 +143,21 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 		// Detect if there are monsters close to the player
 		closeEnemies := 0
 		minDistance := 6
+		minDistanceForElites := 25 // This will make the character to kill elites even if they are far away, ONLY during leveling
 		if d.PlayerUnit.Area == area.RiverOfFlame {
 			minDistance = 20
 		}
 		for _, m := range d.Monsters.Enemies() {
-			if dist := pather.DistanceFromMe(d, m.Position); dist < minDistance {
+			dist := pather.DistanceFromMe(d, m.Position)
+			if dist < minDistanceForElites && m.IsElite() && isLevelingChar {
+				b.logger.Debug("Elite monster detected, killing it for experience!")
+				return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+					return m.UnitID, true
+				}, nil)
+			}
+
+			if dist < minDistance {
+				// Detect monsters blocking our path
 				if previousPathDist := pather.DistanceFromMe(d, previousIterationPosition); previousPathDist < 2 {
 					b.logger.Info("Monster is blocking our path? Killing it")
 					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
@@ -158,7 +168,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 				closeEnemies++
 				a := d.PlayerUnit.Area
 				if closeEnemies > 3 || m.IsElite() ||
-					// This map is super narrow and monsters are blocking the path
+					// Those maps are super narrow and monsters are blocking the path all the time
 					(closeEnemies > 0 && (a == area.MaggotLairLevel1 || a == area.MaggotLairLevel2 || a == area.MaggotLairLevel3 || a == area.ArcaneSanctuary || a == area.ClawViperTempleLevel2 || a == area.RiverOfFlame || a == area.ChaosSanctuary)) {
 					pickupBeforeMoving = true
 					b.logger.Info("Monster detected", zap.Int64("executionMillis", time.Since(start).Milliseconds()))

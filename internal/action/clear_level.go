@@ -11,12 +11,14 @@ import (
 
 func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
 	var clearedRooms []data.Room
+	var movingToRoom data.Room
 
 	return NewFactory(func(d data.Data) Action {
 		var currentRoom data.Room
 		for _, r := range d.Rooms {
 			if r.IsInside(d.PlayerUnit.Position) {
 				currentRoom = r
+				movingToRoom = data.Room{}
 				break
 			}
 		}
@@ -77,7 +79,11 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 			}
 
 			return BuildStatic(func(d data.Data) []step.Step {
-				b.logger.Debug("Room already cleared, moving to the next one.")
+				if movingToRoom != closestRoom {
+					movingToRoom = closestRoom
+					b.logger.Debug("Room already cleared, moving to the next one.")
+				}
+
 				_, _, found := pather.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {

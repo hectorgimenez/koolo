@@ -29,11 +29,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.Buff())
 
 	// Travel to boss position
-	actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
-		return []step.Step{
-			step.MoveToLevel(area.HallsOfVaught),
-		}
-	}))
+	actions = append(actions, a.builder.MoveToArea(area.HallsOfVaught))
 
 	// Move close to Nilhatak, but don't teleport over all the monsters
 	var nilaO data.Object
