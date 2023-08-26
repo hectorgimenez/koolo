@@ -139,7 +139,7 @@ func (b Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that
-	if isLevelingChar && d.PlayerUnit.TotalGold() < 500000 && i.Name != "Gold" {
+	if isLevelingChar && d.PlayerUnit.TotalGold() < 50000 && i.Name != "Gold" {
 		return true
 	}
 
