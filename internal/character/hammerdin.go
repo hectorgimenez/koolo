@@ -57,7 +57,7 @@ func (s Hammerdin) KillMonsterSequence(
 				id,
 				8,
 				step.Distance(2, 8),
-				step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+				step.EnsureAura(config.Config.Bindings.Paladin.Concentration),
 			),
 		)
 		completedAttackLoops++
@@ -71,8 +71,8 @@ func (s Hammerdin) Buff() action.Action {
 	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.SyncStep(func(d data.Data) error {
-			if config.Config.Bindings.Hammerdin.HolyShield != "" {
-				hid.PressKey(config.Config.Bindings.Hammerdin.HolyShield)
+			if config.Config.Bindings.Paladin.HolyShield != "" {
+				hid.PressKey(config.Config.Bindings.Paladin.HolyShield)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
 			}
@@ -145,7 +145,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 						m.UnitID,
 						8,
 						step.Distance(2, 8),
-						step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+						step.EnsureAura(config.Config.Bindings.Paladin.Concentration),
 					),
 				)
 			}
@@ -173,7 +173,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 					m.UnitID,
 					8,
 					step.Distance(2, 8),
-					step.EnsureAura(config.Config.Bindings.Hammerdin.Concentration),
+					step.EnsureAura(config.Config.Bindings.Paladin.Concentration),
 				),
 			)
 		}

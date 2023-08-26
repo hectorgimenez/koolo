@@ -71,25 +71,15 @@ type StructConfig struct {
 			Blizzard    string `yaml:"blizzard"`
 			StaticField string `yaml:"staticField"`
 			FrozenArmor string `yaml:"frozenArmor"`
-		} `yaml:"sorceress"`
-		SorceressLeveling struct {
-			Blizzard    string `yaml:"blizzard"`
-			StaticField string `yaml:"staticField"`
-			FrozenArmor string `yaml:"frozenArmor"`
 			FireBall    string `yaml:"fireBall"`
-		} `yaml:"sorceressLeveling"`
-		Hammerdin struct {
+		} `yaml:"sorceress"`
+		Paladin struct {
 			Concentration string `yaml:"concentration"`
 			HolyShield    string `yaml:"holyShield"`
 			Vigor         string `yaml:"vigor"`
 			Redemption    string `yaml:"redemption"`
 			Cleansing     string `yaml:"cleansing"`
-		} `yaml:"hammerdin"`
-		PaladinLeveling struct {
-			Concentration string `yaml:"concentration"`
-			HolyShield    string `yaml:"holyShield"`
-			Vigor         string `yaml:"vigor"`
-		} `yaml:"paladinLeveling"`
+		} `yaml:"paladin"`
 	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`

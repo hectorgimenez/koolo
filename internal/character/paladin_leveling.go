@@ -32,8 +32,8 @@ func (p PaladinLeveling) Buff() action.Action {
 					return nil
 				}
 
-				if config.Config.Bindings.PaladinLeveling.HolyShield != "" {
-					hid.PressKey(config.Config.Bindings.PaladinLeveling.HolyShield)
+				if config.Config.Bindings.Paladin.HolyShield != "" {
+					hid.PressKey(config.Config.Bindings.Paladin.HolyShield)
 					helper.Sleep(100)
 					hid.Click(hid.RightButton)
 				}
@@ -172,7 +172,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 		if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 {
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 5), step.EnsureAura(config.Config.Bindings.PaladinLeveling.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 5), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal] > 0 {
@@ -180,8 +180,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 			}
 
 			steps = append(steps,
-				//step.SecondaryAttack(config.Config.Bindings.SorceressLeveling.Blizzard, id, 1, step.Distance(25, 30)),
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(config.Config.Bindings.PaladinLeveling.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
 			)
 		}
 
@@ -339,8 +338,8 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
 
 func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
 	skillBindings := map[skill.Skill]string{
-		skill.Vigor:      config.Config.Bindings.PaladinLeveling.Vigor,
-		skill.HolyShield: config.Config.Bindings.PaladinLeveling.HolyShield,
+		skill.Vigor:      config.Config.Bindings.Paladin.Vigor,
+		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
 	}
 
 	if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
@@ -350,12 +349,12 @@ func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
 	}
 
 	if d.PlayerUnit.Skills[skill.Concentration] > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
-		skillBindings[skill.Concentration] = config.Config.Bindings.PaladinLeveling.Concentration
+		skillBindings[skill.Concentration] = config.Config.Bindings.Paladin.Concentration
 	} else {
 		if _, found := d.PlayerUnit.Skills[skill.HolyFire]; found {
-			skillBindings[skill.HolyFire] = config.Config.Bindings.PaladinLeveling.Concentration
+			skillBindings[skill.HolyFire] = config.Config.Bindings.Paladin.Concentration
 		} else if _, found := d.PlayerUnit.Skills[skill.Might]; found {
-			skillBindings[skill.Might] = config.Config.Bindings.PaladinLeveling.Concentration
+			skillBindings[skill.Might] = config.Config.Bindings.Paladin.Concentration
 		}
 	}
 

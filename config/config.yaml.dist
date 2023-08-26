@@ -50,19 +50,15 @@ bindings:
   sorceress:
     blizzard: f2
     staticField: f3
-    frozenArmor: f4
+    frozenArmor: f5
+    fireBall: f2 # During leveling only
 
-  hammerdin:
-    concentration: w
-    holyShield: a
-    vigor: e
-    redemption: r
-    cleansing: f
-
-  paladinLeveling:
-    concentration: w # Will be used for Might on low levels
-    holyShield: a
-    vigor: e
+  paladin:
+    concentration: f2 # Will be used for Might during leveling
+    holyShield: f5
+    vigor: f1
+    redemption: f8
+    cleansing: f4
 
 inventory:
   inventoryLock:
