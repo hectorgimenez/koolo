@@ -5,20 +5,21 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
 	var clearedRooms []data.Room
-	var movingToRoom data.Room
+	openedDoors := make(map[object.Name]data.Position)
 
 	return NewFactory(func(d data.Data) Action {
 		var currentRoom data.Room
 		for _, r := range d.Rooms {
 			if r.IsInside(d.PlayerUnit.Position) {
 				currentRoom = r
-				movingToRoom = data.Room{}
 				break
 			}
 		}
@@ -32,6 +33,28 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 				return NewChain(func(d data.Data) []Action {
 					return b.InRunReturnTownRoutine()
 				})
+			}
+		}
+
+		// Check if there is a door blocking our path
+		if !helper.CanTeleport(d) {
+			for _, o := range d.Objects {
+				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
+					if o.Selectable {
+						return BuildStatic(func(d data.Data) []step.Step {
+							b.logger.Info("Door detected and teleport is not available, trying to open it...")
+							openedDoors[o.Name] = o.Position
+							return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
+								for _, obj := range d.Objects {
+									if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
+										return true
+									}
+								}
+								return false
+							})}
+						}, CanBeSkipped())
+					}
+				}
 			}
 		}
 
@@ -79,11 +102,6 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 			}
 
 			return BuildStatic(func(d data.Data) []step.Step {
-				if movingToRoom != closestRoom {
-					movingToRoom = closestRoom
-					b.logger.Debug("Room already cleared, moving to the next one.")
-				}
-
 				_, _, found := pather.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {
