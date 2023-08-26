@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -68,8 +69,13 @@ func (m *MoveToStep) Status(d data.Data) Status {
 }
 
 func (m *MoveToStep) Run(d data.Data) error {
-	if m.status == StatusNotStarted && helper.CanTeleport(d) {
-		hid.PressKey(config.Config.Bindings.Teleport)
+	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
+	if m.status == StatusNotStarted {
+		if helper.CanTeleport(d) {
+			hid.PressKey(config.Config.Bindings.Teleport)
+		} else if d.PlayerUnit.Skills[skill.Vigor] > 0 && config.Config.Bindings.Paladin.Vigor != "" {
+			hid.PressKey(config.Config.Bindings.Paladin.Vigor)
+		}
 	}
 
 	if m.startedAt.IsZero() {
