@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -35,6 +36,13 @@ func (a Leveling) act2() action.Action {
 
 		quests := a.builder.GetCompletedQuests(2)
 		if quests[4] {
+			// It's difficult to kill Duriel with Holy Fire, so first we level up until we get few points in hammer
+			if d.PlayerUnit.Class == data.Paladin && d.PlayerUnit.Stats[stat.Level] < 21 {
+				return action.NewChain(func(d data.Data) []action.Action {
+					return TalRashaTombs{a.baseRun}.BuildActions()
+				})
+			}
+
 			return a.duriel(quests[1])
 		}
 
@@ -251,10 +259,9 @@ func (a Leveling) prepareStaff() action.Action {
 
 func (a Leveling) duriel(staffAlreadyUsed bool) action.Action {
 	a.logger.Info("Starting Duriel....")
-	tombs := []area.Area{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
 
 	var realTomb area.Area
-	for _, tomb := range tombs {
+	for _, tomb := range talRashaTombs {
 		_, _, objects, _ := reader.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
 		for _, obj := range objects {
 			if obj.Name == object.HoradricOrifice {

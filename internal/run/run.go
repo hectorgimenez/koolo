@@ -75,6 +75,8 @@ func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character
 			runs = append(runs, LowerKurast{baseRun})
 		case "baal":
 			runs = append(runs, Baal{baseRun})
+		case "tal_rasha_tombs":
+			runs = append(runs, TalRashaTombs{baseRun})
 		case "leveling":
 			runs = append(runs, Leveling{baseRun, gr, bm})
 		}

@@ -43,7 +43,7 @@ bot. It's recommended to run it on a [virtual machine](https://github.com/jamess
 
 - Blizzard Sorceress and Hammerdin are currently supported
 - Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch, Pindleskin, Nihlathak,
-  Tristram, Lower Kurast, Baal (WIP), Diablo (WIP)
+  Tristram, Lower Kurast, Stony Tomb, The Pit, Arachnid Lair, Baal, Tal Rasha Tombs, Diablo (WIP)
 - Bot integration for Discord and Telegram
 - "Companion mode" one leader bot will be creating games and the rest of the bots will join the game... and sometimes it
   works
