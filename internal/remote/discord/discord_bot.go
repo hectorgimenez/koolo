@@ -3,8 +3,9 @@ package discord
 import (
 	"context"
 	"fmt"
-	koolo "github.com/hectorgimenez/koolo/internal"
 	"strings"
+
+	koolo "github.com/hectorgimenez/koolo/internal"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hectorgimenez/koolo/internal/event/stat"

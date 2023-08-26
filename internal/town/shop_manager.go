@@ -133,7 +133,7 @@ func (sm ShopManager) shouldBuyKeys(d data.Data) bool {
 func (sm ShopManager) SellJunk(d data.Data) {
 	for _, i := range ItemsToBeSold(d) {
 		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
-			sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Name, i.Quality))
+			sm.logger.Debug(fmt.Sprintf("Item %s [%d] sold", i.Name, i.Quality))
 			screenPos := ui.GetScreenCoordsForItem(i)
 			hid.MovePointer(screenPos.X, screenPos.Y)
 			helper.Sleep(100)

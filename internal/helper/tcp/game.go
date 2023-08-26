@@ -2,8 +2,9 @@ package tcp
 
 import (
 	"errors"
-	"golang.org/x/sys/windows"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 func CloseCurrentGameSocket(gamePID uint) error {

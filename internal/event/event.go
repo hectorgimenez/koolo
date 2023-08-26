@@ -1,8 +1,9 @@
 package event
 
 import (
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"image"
+
+	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 const (

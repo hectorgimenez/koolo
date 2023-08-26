@@ -1,9 +1,10 @@
 package step
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"time"
 )
 
 type KeySequenceStep struct {

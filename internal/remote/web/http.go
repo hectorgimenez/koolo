@@ -2,9 +2,10 @@ package web
 
 import (
 	"embed"
-	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"html/template"
 	"net/http"
+
+	"github.com/hectorgimenez/koolo/internal/event/stat"
 )
 
 //go:embed static/index.gohtml

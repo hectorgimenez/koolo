@@ -50,7 +50,7 @@ func (p *PickupItemStep) Status(d data.Data) Status {
 func (p *PickupItemStep) Run(d data.Data) error {
 	for _, m := range d.Monsters.Enemies() {
 		if dist := pather.DistanceFromMe(d, m.Position); dist < 7 && p.mouseOverAttempts > 1 {
-			return fmt.Errorf("monster %s [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Name, p.item.Quality.ToString())
+			return fmt.Errorf("monster %d [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Name, p.item.Quality.ToString())
 		}
 	}
 

@@ -53,7 +53,7 @@ func (s *baseSupervisor) updateGameStats() {
 	for runName, rs := range stat.Status.RunStats {
 		var items = ""
 		for _, item := range rs.ItemsFound {
-			items += fmt.Sprintf("%s [%s]\n", item.Name, item.Quality)
+			items += fmt.Sprintf("%s [%d]\n", item.Name, item.Quality)
 		}
 		avgRunTime := rs.TotalRunsTime.Seconds() / float64(rs.Errors+rs.Kills+rs.Deaths+rs.Chickens+rs.MerChicken)
 		statsRun := fmt.Sprintf("Stats for: %s\n"+

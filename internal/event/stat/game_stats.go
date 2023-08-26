@@ -2,11 +2,12 @@ package stat
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/event"
 	"image"
 	"strings"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/event"
 )
 
 var Status = GameStatus{}

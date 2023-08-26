@@ -117,7 +117,7 @@ func (b Builder) stashInventory(d data.Data, forceStash bool) {
 		}
 		for currentTab < 5 {
 			if b.stashItemAction(i, forceStash) {
-				b.logger.Debug(fmt.Sprintf("Item %s [%s] stashed", i.Name, i.Quality))
+				b.logger.Debug(fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality))
 				break
 			}
 			if currentTab == 5 {

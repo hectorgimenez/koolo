@@ -3,9 +3,10 @@ package discord
 import (
 	"bytes"
 	"context"
+	"image/png"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"image/png"
 )
 
 func (b *Bot) Handle(_ context.Context, m event.Message) error {

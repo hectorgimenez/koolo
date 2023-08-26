@@ -3,11 +3,12 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"go.uber.org/zap"
-	"strings"
 )
 
 type Bot struct {

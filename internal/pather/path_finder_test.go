@@ -2,11 +2,12 @@ package pather
 
 import (
 	"encoding/gob"
+	"os"
+	"testing"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 func BenchmarkGetPath(b *testing.B) {

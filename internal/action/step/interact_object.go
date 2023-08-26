@@ -56,11 +56,11 @@ func (i *InteractObjectStep) Run(d data.Data) error {
 	}
 
 	if i.mouseOverAttempts > maxInteractions {
-		return fmt.Errorf("object %s could not be interacted", i.objectName)
+		return fmt.Errorf("object %d could not be interacted", i.objectName)
 	}
 
 	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
-		return fmt.Errorf("error moving to %s: %w", i.objectName, errPathNotFound)
+		return fmt.Errorf("error moving to %d: %w", i.objectName, errPathNotFound)
 	}
 
 	i.tryTransitionStatus(StatusInProgress)
@@ -117,5 +117,5 @@ func (i *InteractObjectStep) Run(d data.Data) error {
 	}
 
 	i.lastRun = time.Now()
-	return fmt.Errorf("object %s not found", i.objectName)
+	return fmt.Errorf("object %d not found", i.objectName)
 }

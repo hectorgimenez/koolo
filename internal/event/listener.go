@@ -3,10 +3,11 @@ package event
 import (
 	"context"
 	"fmt"
-	"github.com/go-vgo/robotgo"
-	"go.uber.org/zap"
 	"os"
 	"time"
+
+	"github.com/go-vgo/robotgo"
+	"go.uber.org/zap"
 )
 
 type Listener struct {

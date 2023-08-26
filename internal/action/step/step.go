@@ -1,8 +1,9 @@
 package step
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
 const (

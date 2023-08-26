@@ -1,9 +1,10 @@
 package helper
 
 import (
+	"image"
+
 	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"image"
 )
 
 func Screenshot() image.Image {

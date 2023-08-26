@@ -57,7 +57,7 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 	}
 
 	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
-		return fmt.Errorf("error moving to %s: %w", i.NPC, errPathNotFound)
+		return fmt.Errorf("error moving to %d: %w", i.NPC, errPathNotFound)
 	}
 
 	i.tryTransitionStatus(StatusInProgress)
@@ -107,10 +107,10 @@ func (i *InteractNPCStep) getNPCPosition(d data.Data) (data.Position, bool) {
 		return data.Position{X: monster.Position.X - 2, Y: monster.Position.Y - 2}, true
 	}
 
-	npc, found := d.NPCs.FindOne(i.NPC)
+	n, found := d.NPCs.FindOne(i.NPC)
 	if !found {
 		return data.Position{}, false
 	}
 
-	return npc.Positions[0], true
+	return n.Positions[0], true
 }
