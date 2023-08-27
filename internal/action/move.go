@@ -93,6 +93,13 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 			return nil
 		}
 
+		// If we are in town, skip all the logic and just move to the destination
+		if d.PlayerUnit.Area.IsTown() {
+			return BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{step.MoveTo(to)}
+			})
+		}
+
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar {
@@ -175,7 +182,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 			}
 		}
 
-		if len(targetedNormalEnemies) > 3 || len(targetedElites) > 0 {
+		if len(targetedNormalEnemies) > 3 || len(targetedElites) > 0 || (stuck && len(targetedNormalEnemies) > 0 || len(targetedElites) > 0) {
 			if stuck {
 				b.logger.Info("Character stuck and monsters detected, trying to kill monsters around")
 			} else {

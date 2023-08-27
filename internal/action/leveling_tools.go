@@ -240,12 +240,7 @@ func (b Builder) HireMerc() *Chain {
 			if config.Config.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
 				b.logger.Info("Hiring merc...")
 				actions = append(actions,
-					BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC()),
-							step.KeySequence("home", "down", "enter"),
-						}
-					}),
+					b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(), step.KeySequence("home", "down", "enter")),
 					BuildStatic(func(d data.Data) []step.Step {
 						sc := helper.Screenshot()
 						tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
@@ -286,14 +281,11 @@ func (b Builder) ResetStats() *Chain {
 				actions = append(actions, b.WayPoint(area.RogueEncampment))
 			}
 			actions = append(actions,
-				BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{
-						step.InteractNPC(npc.Akara),
-						step.KeySequence("home", "down", "down", "enter"),
-						step.Wait(time.Second),
-						step.KeySequence("home", "enter"),
-					}
-				}),
+				b.InteractNPC(npc.Akara,
+					step.KeySequence("home", "down", "down", "enter"),
+					step.Wait(time.Second),
+					step.KeySequence("home", "enter"),
+				),
 			)
 			if d.PlayerUnit.Area != area.RogueEncampment {
 				actions = append(actions, b.WayPoint(currentArea))

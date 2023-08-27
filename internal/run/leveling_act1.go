@@ -143,15 +143,10 @@ func (a Leveling) deckardCain() action.Action {
 				return nil
 			}, action.IgnoreErrors()),
 			a.builder.ReturnTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Akara),
-					step.SyncStep(func(d data.Data) error {
-						hid.PressKey("esc")
-						return nil
-					}),
-				}
-			}),
+			a.builder.InteractNPC(
+				npc.Akara,
+				step.KeySequence("esc"),
+			),
 		}
 
 		// Heal and refill pots
@@ -244,12 +239,8 @@ func (a Leveling) andariel() action.Action {
 			}),
 			a.char.KillAndariel(),
 			a.builder.ReturnTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Warriv),
-					step.KeySequence("home", "down", "enter"),
-				}
-			}))
+			a.builder.InteractNPC(npc.Warriv, step.KeySequence("home", "down", "enter")),
+		)
 
 		return actions
 	})

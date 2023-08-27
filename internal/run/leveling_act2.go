@@ -190,15 +190,7 @@ func (a Leveling) summoner() action.Action {
 
 			a.builder.DiscoverWaypoint(),
 			a.builder.ReturnTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Atma),
-					step.SyncStep(func(d data.Data) error {
-						hid.PressKey("esc")
-						return nil
-					}),
-				}
-			}),
+			a.builder.InteractNPC(npc.Atma, step.KeySequence("esc")),
 		)
 
 		return
@@ -394,39 +386,25 @@ func (a Leveling) duriel(staffAlreadyUsed bool) action.Action {
 				X: 22577,
 				Y: 15613,
 			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPCWithCheck(npc.Tyrael, func(d data.Data) bool {
-						obj, found := d.Objects.FindOne(object.TownPortal)
-						if found && pather.DistanceFromMe(d, obj.Position) < 10 {
-							return true
-						}
-
-						return false
-					}),
+			a.builder.InteractNPCWithCheck(npc.Tyrael, func(d data.Data) bool {
+				obj, found := d.Objects.FindOne(object.TownPortal)
+				if found && pather.DistanceFromMe(d, obj.Position) < 10 {
+					return true
 				}
-			}, action.CanBeSkipped()),
+
+				return false
+			}),
 			a.builder.ReturnTown(),
 			a.builder.MoveToCoords(data.Position{
 				X: 5092,
 				Y: 5144,
 			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Jerhyn),
-					step.KeySequence("esc"),
-				}
-			}),
+			a.builder.InteractNPC(npc.Jerhyn, step.KeySequence("esc")),
 			a.builder.MoveToCoords(data.Position{
 				X: 5195,
 				Y: 5060,
 			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Meshif),
-					step.KeySequence("home", "down", "enter"),
-				}
-			}),
+			a.builder.InteractNPC(npc.Meshif, step.KeySequence("home", "down", "enter")),
 		)
 	})
 }

@@ -6,13 +6,12 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 type InteractNPCStep struct {
-	pathingStep
+	basicStep
 	NPC                   npc.ID
 	waitingForInteraction bool
 	isCompletedFn         func(d data.Data) bool
@@ -20,14 +19,14 @@ type InteractNPCStep struct {
 
 func InteractNPC(npc npc.ID) *InteractNPCStep {
 	return &InteractNPCStep{
-		pathingStep: newPathingStep(),
-		NPC:         npc,
+		basicStep: newBasicStep(),
+		NPC:       npc,
 	}
 }
 
 func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool) *InteractNPCStep {
 	return &InteractNPCStep{
-		pathingStep:   newPathingStep(),
+		basicStep:     newBasicStep(),
 		NPC:           npc,
 		isCompletedFn: isCompletedFn,
 	}
@@ -51,15 +50,6 @@ func (i *InteractNPCStep) Status(d data.Data) Status {
 }
 
 func (i *InteractNPCStep) Run(d data.Data) error {
-	// Throttle movement clicks
-	if time.Since(i.lastRun) < helper.RandomDurationMs(300, 600) {
-		return nil
-	}
-
-	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
-		return fmt.Errorf("error moving to %d: %w", i.NPC, errPathNotFound)
-	}
-
 	i.tryTransitionStatus(StatusInProgress)
 
 	// Give some time before retrying the interaction
@@ -77,40 +67,13 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 		}
 	}
 
-	pos, found := i.getNPCPosition(d)
-	if !found {
-		return fmt.Errorf("NPC not found")
+	distance := pather.DistanceFromMe(d, m.Position)
+	if distance > 15 {
+		return fmt.Errorf("NPC is too far away: %d. Current distance: %d", i.NPC, distance)
 	}
 
-	distance := pather.DistanceFromMe(d, pos)
-	if distance > 15 {
-		path, _, found := pather.GetPath(d, pos)
-		if !found {
-			pather.RandomMovement()
-			i.consecutivePathNotFound++
-			return nil
-		}
-		i.consecutivePathNotFound = 0
-		pather.MoveThroughPath(path, helper.RandRng(7, 17), false)
-		return nil
-	}
-	x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, pos.X, pos.Y)
+	x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 	hid.MovePointer(x, y)
 
 	return nil
-}
-
-func (i *InteractNPCStep) getNPCPosition(d data.Data) (data.Position, bool) {
-	monster, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
-	if found {
-		// Position is bottom hitbox by default, let's move it a bit
-		return data.Position{X: monster.Position.X - 2, Y: monster.Position.Y - 2}, true
-	}
-
-	n, found := d.NPCs.FindOne(i.NPC)
-	if !found {
-		return data.Position{}, false
-	}
-
-	return n.Positions[0], true
 }
