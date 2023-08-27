@@ -1,11 +1,13 @@
 package action
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -41,7 +43,8 @@ func (b Builder) MoveToArea(dst area.Area) Action {
 
 				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 				for _, obj := range objects {
-					if pather.IsWalkable(obj.Position, lvl.Offset, lvl.CollisionGrid) {
+					_, _, found := pather.GetPath(d, obj.Position)
+					if found {
 						return obj.Position, true
 					}
 				}
@@ -80,7 +83,6 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 	var currentStep step.Step
 
 	return NewFactory(func(d data.Data) Action {
-		start := time.Now()
 		to, found := toFunc(d)
 		if !found {
 			return nil
@@ -140,42 +142,51 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 		}
 
 		// Detect if there are monsters close to the player
-		closeEnemies := 0
+		closestMonster := data.Monster{}
+		closestMonsterDistance := 9999999
+		targetedNormalEnemies := make([]data.Monster, 0)
+		targetedElites := make([]data.Monster, 0)
 		minDistance := 6
-		minDistanceForElites := 25 // This will make the character to kill elites even if they are far away, ONLY during leveling
-		if d.PlayerUnit.Area == area.RiverOfFlame {
-			minDistance = 20
-		}
+		minDistanceForElites := 20                                       // This will make the character to kill elites even if they are far away, ONLY during leveling
+		stuck := pather.DistanceFromMe(d, previousIterationPosition) < 5 // Detect if character was not able to move from last iteration
 		for _, m := range d.Monsters.Enemies() {
+			// Skip if monster is already dead
+			if m.Stats[stat.Life] <= 0 {
+				continue
+			}
+
 			dist := pather.DistanceFromMe(d, m.Position)
-			if dist < minDistanceForElites && m.IsElite() && isLevelingChar {
-				b.logger.Debug("Elite monster detected, killing it for experience!")
-				return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-					return m.UnitID, true
-				}, nil)
+			appended := false
+			if m.IsElite() && dist <= minDistanceForElites {
+				targetedElites = append(targetedElites, m)
+				appended = true
 			}
 
-			if dist < minDistance {
-				// Detect monsters blocking our path
-				if previousPathDist := pather.DistanceFromMe(d, previousIterationPosition); previousPathDist < 2 {
-					b.logger.Info("Monster is blocking our path? Killing it")
-					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-						return m.UnitID, true
-					}, nil)
-				}
+			if dist <= minDistance {
+				targetedNormalEnemies = append(targetedNormalEnemies, m)
+				appended = true
+			}
 
-				closeEnemies++
-				a := d.PlayerUnit.Area
-				if closeEnemies > 3 || m.IsElite() ||
-					// Those maps are super narrow and monsters are blocking the path all the time
-					(closeEnemies > 0 && (a == area.MaggotLairLevel1 || a == area.MaggotLairLevel2 || a == area.MaggotLairLevel3 || a == area.ArcaneSanctuary || a == area.ClawViperTempleLevel2 || a == area.RiverOfFlame || a == area.ChaosSanctuary)) {
-					pickupBeforeMoving = true
-					b.logger.Info("Monster detected", zap.Int64("executionMillis", time.Since(start).Milliseconds()))
-					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-						return m.UnitID, true
-					}, nil)
+			if appended {
+				if dist < closestMonsterDistance {
+					closestMonsterDistance = dist
+					closestMonster = m
 				}
 			}
+		}
+
+		if len(targetedNormalEnemies) > 3 || len(targetedElites) > 0 {
+			if stuck {
+				b.logger.Info("Character stuck and monsters detected, trying to kill monsters around")
+			} else {
+				b.logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
+			}
+
+			pickupBeforeMoving = true
+
+			return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+				return closestMonster.UnitID, true
+			}, nil)
 		}
 
 		if pickupBeforeMoving {

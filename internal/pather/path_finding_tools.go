@@ -168,8 +168,11 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather, cgOffset data.Pos
 	png.Encode(outFile, img)
 }
 
-func IsWalkable(pos data.Position, offset data.Position, cg [][]bool) bool {
-	absPosX, absPosY := pos.X-offset.X, pos.Y-offset.Y
+func IsNarrowMap(a area.Area) bool {
+	switch a {
+	case area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3, area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame, area.ChaosSanctuary:
+		return true
+	}
 
-	return cg[absPosY][absPosX]
+	return false
 }

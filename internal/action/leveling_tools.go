@@ -220,7 +220,7 @@ func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
 	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
 	helper.Sleep(200)
 	hid.Click(hid.LeftButton)
-	helper.Sleep(3500)
+	helper.Sleep(3000)
 
 	sc := helper.Screenshot()
 	for i := 0; i < len(quests); i++ {

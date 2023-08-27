@@ -172,7 +172,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 		if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 {
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 5), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(3, 5), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal] > 0 {
@@ -272,7 +272,6 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
 		skill.BlessedHammer,
 		skill.BlessedHammer,
 		skill.Vigor,
-		skill.Vigor,
 		skill.BlessedHammer,
 		skill.BlessedHammer,
 		skill.BlessedHammer,
@@ -294,6 +293,7 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
 		skill.Vigor,
 		skill.HolyShield,
 		skill.Concentration,
+		skill.Vigor,
 		skill.Vigor,
 		skill.Vigor,
 		skill.Vigor,
