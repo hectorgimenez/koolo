@@ -23,8 +23,8 @@ const (
 	stashGoldBtnY      = 526
 )
 
-func (b Builder) Stash(forceStash bool) *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b Builder) Stash(forceStash bool) *Chain {
+	return NewChain(func(d data.Data) (actions []Action) {
 		b.logger.Debug("Checking for items to stash...")
 		if !b.isStashingRequired(d, forceStash) {
 			b.logger.Debug("No items to stash...")
@@ -35,26 +35,26 @@ func (b Builder) Stash(forceStash bool) *StaticAction {
 
 		switch d.PlayerUnit.Area {
 		case area.KurastDocks:
-			steps = append(steps, step.MoveTo(data.Position{X: 5146, Y: 5067}))
+			actions = append(actions, b.MoveToCoords(data.Position{X: 5146, Y: 5067}))
 		case area.LutGholein:
-			steps = append(steps, step.MoveTo(data.Position{X: 5130, Y: 5086}))
+			actions = append(actions, b.MoveToCoords(data.Position{X: 5130, Y: 5086}))
 		}
 
-		steps = append(steps,
-			step.InteractObject(object.Bank, func(d data.Data) bool {
-				return d.OpenMenus.Stash
-			}),
-			step.SyncStep(func(d data.Data) error {
-				b.stashGold(d)
-				b.orderInventoryPotions(d)
-				b.stashInventory(d, forceStash)
-				hid.PressKey("esc")
-				return nil
-			}),
+		return append(actions,
+			b.InteractObject(object.Bank,
+				func(d data.Data) bool {
+					return d.OpenMenus.Stash
+				},
+				step.SyncStep(func(d data.Data) error {
+					b.stashGold(d)
+					b.orderInventoryPotions(d)
+					b.stashInventory(d, forceStash)
+					hid.PressKey("esc")
+					return nil
+				}),
+			),
 		)
-
-		return
-	}, Resettable(), CanBeSkipped())
+	})
 }
 
 func (b Builder) orderInventoryPotions(d data.Data) {

@@ -20,17 +20,11 @@ func (b Builder) CubeAddItems(items ...data.Item) *Chain {
 		}
 
 		// Ensure stash is open
-		actions = append(actions, BuildStatic(func(d data.Data) []step.Step {
-			if d.OpenMenus.Stash {
-				return nil
-			}
-
-			return []step.Step{
-				step.InteractObject(object.Bank, func(d data.Data) bool {
-					return d.OpenMenus.Stash
-				}),
-			}
-		}))
+		if !d.OpenMenus.Stash {
+			actions = append(actions, b.InteractObject(object.Bank, func(d data.Data) bool {
+				return d.OpenMenus.Stash
+			}))
+		}
 
 		b.logger.Info("Adding items to the Horadric Cube", zap.Any("items", items))
 

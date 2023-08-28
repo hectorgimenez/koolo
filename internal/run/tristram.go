@@ -1,6 +1,8 @@
 package run
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -50,18 +52,9 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.openPortalIfNotOpened())
 
 	// Enter Tristram portal
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-		return []step.Step{
-			step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
-				return d.PlayerUnit.Area == area.Tristram
-			}),
-			step.SyncStep(func(d data.Data) error {
-				// Add small delay to fetch the monsters
-				helper.Sleep(2000)
-				return nil
-			}),
-		}
-	}))
+	actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+		return d.PlayerUnit.Area == area.Tristram
+	}, step.Wait(time.Second*2)))
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
 		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
@@ -72,14 +65,10 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 	// Clear Tristram or rescue Cain
 	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 		if o, found := d.Objects.FindOne(object.CainGibbet); found && o.Selectable {
-			return []action.Action{action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.CainGibbet, func(d data.Data) bool {
-						o, _ := d.Objects.FindOne(object.CainGibbet)
+			return []action.Action{a.builder.InteractObject(object.CainGibbet, func(d data.Data) bool {
+				obj, _ := d.Objects.FindOne(object.CainGibbet)
 
-						return !o.Selectable
-					}),
-				}
+				return !obj.Selectable
 			})}
 		} else {
 			return []action.Action{a.builder.ClearArea(false, data.MonsterAnyFilter())}
@@ -113,16 +102,8 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 				object.CairnStoneLambda,
 			} {
 				st := cainStone
-				actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
-					stone, _ := d.Objects.FindOne(st)
-					return []step.Step{
-						step.InteractObject(stone.Name, nil),
-						step.SyncStep(func(d data.Data) error {
-							helper.Sleep(500)
-							return nil
-						}),
-					}
-				}))
+				stone, _ := d.Objects.FindOne(st)
+				actions = append(actions, a.builder.InteractObject(stone.Name, nil, step.Wait(time.Millisecond*500)))
 			}
 		}
 

@@ -65,15 +65,15 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 			i.waitingForInteraction = true
 			return nil
 		}
+
+		distance := pather.DistanceFromMe(d, m.Position)
+		if distance > 15 {
+			return fmt.Errorf("NPC is too far away: %d. Current distance: %d", i.NPC, distance)
+		}
+
+		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
+		hid.MovePointer(x, y)
 	}
 
-	distance := pather.DistanceFromMe(d, m.Position)
-	if distance > 15 {
-		return fmt.Errorf("NPC is too far away: %d. Current distance: %d", i.NPC, distance)
-	}
-
-	x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
-	hid.MovePointer(x, y)
-
-	return nil
+	return fmt.Errorf("npc %d not found", i.NPC)
 }

@@ -2,11 +2,13 @@ package action
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
-func (b Builder) InteractNPC(npc npc.ID, extraSteps ...step.Step) *Chain {
+func (b Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		pos, _ := b.getNPCPosition(npc, d)
 		//if !found {
@@ -17,7 +19,7 @@ func (b Builder) InteractNPC(npc npc.ID, extraSteps ...step.Step) *Chain {
 			b.MoveToCoords(pos),
 			BuildStatic(func(d data.Data) []step.Step {
 				steps := []step.Step{step.InteractNPC(npc)}
-				steps = append(steps, extraSteps...)
+				steps = append(steps, additionalSteps...)
 
 				return steps
 			}),
@@ -25,7 +27,7 @@ func (b Builder) InteractNPC(npc npc.ID, extraSteps ...step.Step) *Chain {
 	})
 }
 
-func (b Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool) *Chain {
+func (b Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		pos, _ := b.getNPCPosition(npc, d)
 		//if !found {
@@ -35,7 +37,34 @@ func (b Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data
 		return []Action{
 			b.MoveToCoords(pos),
 			BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn)}
+				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn)}
+				steps = append(steps, additionalSteps...)
+
+				return steps
+			}),
+		}
+	})
+}
+
+func (b Builder) InteractObject(name object.Name, isCompletedFn func(data.Data) bool, additionalSteps ...step.Step) *Chain {
+	return NewChain(func(d data.Data) []Action {
+		o, _ := d.Objects.FindOne(name)
+		//if !found {
+		//	return fmt.Errorf("NPC not found")
+		//}
+
+		pos := o.Position
+		if d.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
+			pos = data.Position{X: 7800, Y: 5919}
+		}
+
+		return []Action{
+			b.MoveToCoords(pos),
+			BuildStatic(func(d data.Data) []step.Step {
+				steps := []step.Step{step.InteractObject(o.Name, isCompletedFn)}
+				steps = append(steps, additionalSteps...)
+
+				return steps
 			}),
 		}
 	})

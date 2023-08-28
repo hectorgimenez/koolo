@@ -12,7 +12,7 @@ import (
 )
 
 type InteractObjectStep struct {
-	pathingStep
+	basicStep
 	objectName            object.Name
 	waitingForInteraction bool
 	isCompleted           func(data.Data) bool
@@ -21,7 +21,7 @@ type InteractObjectStep struct {
 
 func InteractObject(name object.Name, isCompleted func(data.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
-		pathingStep: newPathingStep(),
+		basicStep:   newBasicStep(),
 		objectName:  name,
 		isCompleted: isCompleted,
 	}
@@ -46,76 +46,45 @@ func (i *InteractObjectStep) Status(d data.Data) Status {
 }
 
 func (i *InteractObjectStep) Run(d data.Data) error {
-	if i.isCompleted != nil && i.isCompleted(d) {
-		return nil
-	}
-
-	// Throttle movement clicks
-	if time.Since(i.lastRun) < helper.RandomDurationMs(300, 600) {
-		return nil
-	}
+	i.tryTransitionStatus(StatusInProgress)
 
 	if i.mouseOverAttempts > maxInteractions {
 		return fmt.Errorf("object %d could not be interacted", i.objectName)
 	}
-
-	if i.consecutivePathNotFound >= maxPathNotFoundRetries {
-		return fmt.Errorf("error moving to %d: %w", i.objectName, errPathNotFound)
-	}
-
-	i.tryTransitionStatus(StatusInProgress)
 
 	// Give some time before retrying the interaction
 	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*1 {
 		return nil
 	}
 
-	for _, o := range d.Objects {
-		if o.Name == i.objectName {
-			if o.IsHovered {
-				hid.Click(hid.LeftButton)
-				i.waitingForInteraction = true
-				i.lastRun = time.Now()
-				return nil
-			} else {
-				distance := pather.DistanceFromMe(d, o.Position)
-
-				if distance > 15 {
-					path, _, found := pather.GetPath(d, o.Position)
-					if !found {
-						pather.RandomMovement()
-						i.consecutivePathNotFound++
-						return nil
-					}
-					i.consecutivePathNotFound = 0
-					pather.MoveThroughPath(path, helper.RandRng(7, 17), false)
-					i.lastRun = time.Now()
-					return nil
-				}
-				if time.Since(i.lastRun) < time.Millisecond*200 {
-					return nil
-				}
-
-				objectX := o.Position.X - 2
-				objectY := o.Position.Y - 2
-				mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
-
-				x, y := helper.Spiral(i.mouseOverAttempts)
-
-				// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
-				if i.mouseOverAttempts == 2 && i.objectName == object.TownPortal {
-					mX, mY = pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX-4, objectY-4)
-				}
-
-				hid.MovePointer(mX+x, mY+y)
-				i.mouseOverAttempts++
-
-				i.lastRun = time.Now()
-				return nil
+	i.lastRun = time.Now()
+	if o, found := d.Objects.FindOne(i.objectName); found {
+		if o.IsHovered {
+			hid.Click(hid.LeftButton)
+			i.waitingForInteraction = true
+			return nil
+		} else {
+			distance := pather.DistanceFromMe(d, o.Position)
+			if distance > 15 {
+				return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
 			}
+
+			objectX := o.Position.X - 2
+			objectY := o.Position.Y - 2
+			mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
+
+			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
+			if i.mouseOverAttempts == 2 && i.objectName == object.TownPortal {
+				mX, mY = pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX-4, objectY-4)
+			}
+
+			x, y := helper.Spiral(i.mouseOverAttempts)
+			hid.MovePointer(mX+x, mY+y)
+			i.mouseOverAttempts++
+
+			return nil
 		}
 	}
 
-	i.lastRun = time.Now()
 	return fmt.Errorf("object %d not found", i.objectName)
 }

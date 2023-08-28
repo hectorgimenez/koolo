@@ -71,12 +71,8 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 						portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
 						return []Action{
 							b.MoveToCoords(portal.Position),
-							BuildStatic(func(d data.Data) []step.Step {
-								return []step.Step{
-									step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
-										return d.PlayerUnit.Area == area.ArcaneSanctuary
-									}),
-								}
+							b.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+								return d.PlayerUnit.Area == area.ArcaneSanctuary
 							}),
 						}
 					}),
@@ -99,10 +95,10 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 }
 
 func (b Builder) useWP(a area.Area) Action {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+	return NewFactory(func(d data.Data) Action {
 		// We don't need to move
 		if d.PlayerUnit.Area == a {
-			return
+			return nil
 		}
 
 		wpCoords, found := area.WPAddresses[a]
@@ -112,10 +108,9 @@ func (b Builder) useWP(a area.Area) Action {
 
 		for _, o := range d.Objects {
 			if o.IsWaypoint() {
-				steps = append(steps,
-					step.InteractObject(o.Name, func(d data.Data) bool {
-						return d.OpenMenus.Waypoint
-					}),
+				return b.InteractObject(o.Name, func(d data.Data) bool {
+					return d.OpenMenus.Waypoint
+				},
 					step.SyncStep(func(d data.Data) error {
 						actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
@@ -135,6 +130,6 @@ func (b Builder) useWP(a area.Area) Action {
 			}
 		}
 
-		return
-	}, IgnoreErrors())
+		return nil
+	})
 }

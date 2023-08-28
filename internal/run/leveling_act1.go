@@ -115,26 +115,10 @@ func (a Leveling) deckardCain() action.Action {
 
 				return data.Position{}, false
 			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				for _, o := range d.Objects {
-					if o.Name == object.InifussTree {
-						return []step.Step{
-							step.InteractObject(o.Name, func(d data.Data) bool {
-								for _, o := range d.Objects {
-									if o.Name == object.InifussTree {
-										return !o.Selectable
-									}
-								}
-
-								return true
-							}),
-						}
-					}
-				}
-
-				return []step.Step{}
+			a.builder.InteractObject(object.InifussTree, func(d data.Data) bool {
+				obj, _ := d.Objects.FindOne(object.InifussTree)
+				return !obj.Selectable
 			}),
-
 			action.BuildStatic(func(d data.Data) []step.Step {
 				if scroll, found := d.Items.Find(scrollOfInifuss, item.LocationGround); found {
 					return []step.Step{step.PickupItem(a.logger, scroll)}

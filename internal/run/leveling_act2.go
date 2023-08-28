@@ -96,14 +96,9 @@ func (a Leveling) findHoradricCube() action.Action {
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(15),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				a.logger.Info("Opening Horadric cube chest...")
-				return []step.Step{
-					step.InteractObject(object.HoradricCubeChest, func(d data.Data) bool {
-						chest, _ := d.Objects.FindOne(object.HoradricCubeChest)
-						return !chest.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.HoradricCubeChest, func(d data.Data) bool {
+				chest, _ := d.Objects.FindOne(object.HoradricCubeChest)
+				return !chest.Selectable
 			}),
 			a.builder.ItemPickup(true, 10),
 		}
@@ -124,14 +119,9 @@ func (a Leveling) findStaff() action.Action {
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(15),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				a.logger.Info("Opening Staff Of Kings chest...")
-				return []step.Step{
-					step.InteractObject(object.StaffOfKingsChest, func(d data.Data) bool {
-						chest, _ := d.Objects.FindOne(object.StaffOfKingsChest)
-						return !chest.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.StaffOfKingsChest, func(d data.Data) bool {
+				chest, _ := d.Objects.FindOne(object.StaffOfKingsChest)
+				return !chest.Selectable
 			}),
 			a.builder.ItemPickup(true, 10),
 		}
@@ -151,14 +141,9 @@ func (a Leveling) findAmulet() action.Action {
 
 				return chest.Position, found
 			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				a.logger.Info("Opening altar...")
-				return []step.Step{
-					step.InteractObject(object.TaintedSunAltar, func(d data.Data) bool {
-						chest, _ := d.Objects.FindOne(object.TaintedSunAltar)
-						return !chest.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.TaintedSunAltar, func(d data.Data) bool {
+				chest, _ := d.Objects.FindOne(object.TaintedSunAltar)
+				return !chest.Selectable
 			}),
 			a.builder.ItemPickup(true, 10),
 		}
@@ -171,23 +156,13 @@ func (a Leveling) summoner() action.Action {
 
 		// Try to use the portal and discover the waypoint
 		actions = append(actions,
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.YetAnotherTome, func(d data.Data) bool {
-						_, found := d.Objects.FindOne(object.PermanentTownPortal)
-						return found
-					}),
-				}
+			a.builder.InteractObject(object.YetAnotherTome, func(d data.Data) bool {
+				_, found := d.Objects.FindOne(object.PermanentTownPortal)
+				return found
 			}),
-
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
-						return d.PlayerUnit.Area == area.CanyonOfTheMagi
-					}),
-				}
+			a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+				return d.PlayerUnit.Area == area.CanyonOfTheMagi
 			}),
-
 			a.builder.DiscoverWaypoint(),
 			a.builder.ReturnTown(),
 			a.builder.InteractNPC(npc.Atma, step.KeySequence("esc")),
@@ -205,11 +180,10 @@ func (a Leveling) prepareStaff() action.Action {
 			if horadricStaff.Location == item.LocationStash {
 				a.logger.Info("It's in the stash, let's pickup it (not done yet)")
 
-				return []action.Action{action.BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{
-						step.InteractObject(object.Bank, func(d data.Data) bool {
-							return d.OpenMenus.Stash
-						}),
+				return []action.Action{
+					a.builder.InteractObject(object.Bank, func(d data.Data) bool {
+						return d.OpenMenus.Stash
+					},
 						step.SyncStep(func(d data.Data) error {
 							screenPos := ui.GetScreenCoordsForItem(horadricStaff)
 							hid.MovePointer(screenPos.X, screenPos.Y)
@@ -223,8 +197,8 @@ func (a Leveling) prepareStaff() action.Action {
 							hid.PressKey("esc")
 							return nil
 						}),
-					}
-				})}
+					),
+				}
 			}
 
 			return nil
@@ -289,32 +263,29 @@ func (a Leveling) duriel(staffAlreadyUsed bool) action.Action {
 		if !staffAlreadyUsed {
 			actions = append(actions,
 				a.builder.ClearAreaAroundPlayer(20),
-				action.BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{
-						step.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
-							return d.OpenMenus.Anvil
-						}),
-						step.SyncStep(func(d data.Data) error {
-							staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
+				a.builder.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
+					return d.OpenMenus.Anvil
+				},
+					step.SyncStep(func(d data.Data) error {
+						staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
 
-							screenPos := ui.GetScreenCoordsForItem(staff)
-							hid.MovePointer(screenPos.X, screenPos.Y)
+						screenPos := ui.GetScreenCoordsForItem(staff)
+						hid.MovePointer(screenPos.X, screenPos.Y)
 
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
-							hid.MovePointer(ui.AnvilCenterX, ui.AnvilCenterY)
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
-							helper.Sleep(300)
-							hid.MovePointer(ui.AnvilBtnX, ui.AnvilBtnY)
-							helper.Sleep(500)
-							hid.Click(hid.LeftButton)
-							helper.Sleep(20000)
+						helper.Sleep(300)
+						hid.Click(hid.LeftButton)
+						hid.MovePointer(ui.AnvilCenterX, ui.AnvilCenterY)
+						helper.Sleep(300)
+						hid.Click(hid.LeftButton)
+						helper.Sleep(300)
+						hid.MovePointer(ui.AnvilBtnX, ui.AnvilBtnY)
+						helper.Sleep(500)
+						hid.Click(hid.LeftButton)
+						helper.Sleep(20000)
 
-							return nil
-						}),
-					}
-				}),
+						return nil
+					}),
+				),
 			)
 		}
 
@@ -368,16 +339,13 @@ func (a Leveling) duriel(staffAlreadyUsed bool) action.Action {
 		)
 
 		return append(actions,
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewFactory(func(d data.Data) action.Action {
 				_, found := d.Objects.FindOne(object.DurielsLairPortal)
 				if found {
-					return []step.Step{
-						step.InteractObject(object.DurielsLairPortal, func(d data.Data) bool {
-							return d.PlayerUnit.Area == area.DurielsLair
-						}),
-					}
+					return a.builder.InteractObject(object.DurielsLairPortal, func(d data.Data) bool {
+						return d.PlayerUnit.Area == area.DurielsLair
+					})
 				}
-
 				return nil
 			}),
 			a.char.KillDuriel(),
