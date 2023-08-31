@@ -73,6 +73,8 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 
 		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 		hid.MovePointer(x, y)
+
+		return nil
 	}
 
 	return fmt.Errorf("npc %d not found", i.NPC)
