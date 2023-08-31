@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) ReturnTown() *StaticAction {
+func (b *Builder) ReturnTown() *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		if d.PlayerUnit.Area.IsTown() {
 			return
@@ -23,7 +23,7 @@ func (b Builder) ReturnTown() *StaticAction {
 	}, Resettable())
 }
 
-func (b Builder) UsePortalInTown() *Chain {
+func (b *Builder) UsePortalInTown() *Chain {
 	return NewChain(func(d data.Data) []Action {
 		if !d.PlayerUnit.Area.IsTown() {
 			return nil

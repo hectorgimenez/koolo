@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) ReviveMerc() *Chain {
+func (b *Builder) ReviveMerc() *Chain {
 	return NewChain(func(d data.Data) []Action {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if config.Config.Character.UseMerc && d.MercHPPercent() <= 0 {

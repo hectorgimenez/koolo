@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
-func (b Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
+func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		pos, _ := b.getNPCPosition(npc, d)
 		//if !found {
@@ -27,7 +27,7 @@ func (b Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 	})
 }
 
-func (b Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool, additionalSteps ...step.Step) *Chain {
+func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		pos, _ := b.getNPCPosition(npc, d)
 		//if !found {
@@ -46,7 +46,7 @@ func (b Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data
 	})
 }
 
-func (b Builder) InteractObject(name object.Name, isCompletedFn func(data.Data) bool, additionalSteps ...step.Step) *Chain {
+func (b *Builder) InteractObject(name object.Name, isCompletedFn func(data.Data) bool, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		o, _ := d.Objects.FindOne(name)
 		//if !found {
@@ -70,7 +70,7 @@ func (b Builder) InteractObject(name object.Name, isCompletedFn func(data.Data) 
 	})
 }
 
-func (b Builder) getNPCPosition(npc npc.ID, d data.Data) (data.Position, bool) {
+func (b *Builder) getNPCPosition(npc npc.ID, d data.Data) (data.Position, bool) {
 	monster, found := d.Monsters.FindOne(npc, data.MonsterTypeNone)
 	if found {
 		// Position is bottom hitbox by default, let's add some offset to click in the middle of the NPC

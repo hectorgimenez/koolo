@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) VendorRefill() *Chain {
+func (b *Builder) VendorRefill() *Chain {
 	return NewChain(func(d data.Data) []Action {
 		if !b.shouldVisitVendor(d) {
 			return nil
@@ -44,7 +44,7 @@ func (b Builder) VendorRefill() *Chain {
 	})
 }
 
-func (b Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain {
+func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		openShopStep := step.KeySequence("home", "down", "enter")
 
@@ -81,7 +81,7 @@ type VendorItemRequest struct {
 	Tab      int // At this point I have no idea how to detect the Tab the Item is in the vendor (1-4)
 }
 
-func (b Builder) shouldVisitVendor(d data.Data) bool {
+func (b *Builder) shouldVisitVendor(d data.Data) bool {
 	// Check if we should sell junk
 	if len(town.ItemsToBeSold(d)) > 0 {
 		return true

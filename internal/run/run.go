@@ -16,12 +16,12 @@ type Run interface {
 }
 
 type baseRun struct {
-	builder action.Builder
+	builder *action.Builder
 	char    action.Character
 	logger  *zap.Logger
 }
 
-func BuildRuns(logger *zap.Logger, builder action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) (runs []Run) {
+func BuildRuns(logger *zap.Logger, builder *action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) (runs []Run) {
 	baseRun := baseRun{
 		builder: builder,
 		char:    char,

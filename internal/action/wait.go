@@ -7,7 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
-func (b Builder) Wait(duration time.Duration) *StaticAction {
+func (b *Builder) Wait(duration time.Duration) *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		return []step.Step{
 			step.Wait(duration),

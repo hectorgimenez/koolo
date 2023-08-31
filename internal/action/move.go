@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) MoveToArea(dst area.Area) Action {
+func (b *Builder) MoveToArea(dst area.Area) Action {
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.logger.Debug("Already in area", zap.Any("area", dst))
@@ -70,13 +70,13 @@ func (b Builder) MoveToArea(dst area.Area) Action {
 	})
 }
 
-func (b Builder) MoveToCoords(to data.Position) *Factory {
+func (b *Builder) MoveToCoords(to data.Position) *Factory {
 	return b.MoveTo(func(d data.Data) (data.Position, bool) {
 		return to, true
 	})
 }
 
-func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory {
+func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory {
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}

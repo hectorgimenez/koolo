@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) Heal() *Factory {
+func (b *Builder) Heal() *Factory {
 	return NewFactory(func(d data.Data) Action {
 		shouldHeal := false
 		if d.PlayerUnit.HPPercent() < 80 {

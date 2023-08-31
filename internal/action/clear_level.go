@@ -11,7 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
+func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
 	var clearedRooms []data.Room
 	openedDoors := make(map[object.Name]data.Position)
 

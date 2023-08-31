@@ -19,7 +19,7 @@ const (
 	wpAreaBtnHeight = 41
 )
 
-func (b Builder) WayPoint(a area.Area) *Factory {
+func (b *Builder) WayPoint(a area.Area) *Factory {
 	usedWP := false
 	isChild := false
 	return NewFactory(func(d data.Data) Action {
@@ -47,7 +47,7 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 	})
 }
 
-func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
+func (b *Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
 		areas = append(areas, dst)
 		logAreas := make([]int, len(areas))
@@ -95,7 +95,7 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	})
 }
 
-func (b Builder) useWP(a area.Area) Action {
+func (b *Builder) useWP(a area.Area) Action {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		// We don't need to move
 		if d.PlayerUnit.Area == a {

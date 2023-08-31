@@ -12,7 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) Repair() *Factory {
+func (b *Builder) Repair() *Factory {
 	return NewFactory(func(d data.Data) Action {
 		for _, i := range d.Items.ByLocation(item.LocationEquipped) {
 			du, found := i.Stats[stat.Durability]

@@ -17,8 +17,8 @@ type Builder struct {
 	tf     *ui.TemplateFinder
 }
 
-func NewBuilder(logger *zap.Logger, sm town.ShopManager, bm health.BeltManager, gr *reader.GameReader, ch Character, tf *ui.TemplateFinder) Builder {
-	return Builder{
+func NewBuilder(logger *zap.Logger, sm town.ShopManager, bm health.BeltManager, gr *reader.GameReader, ch Character, tf *ui.TemplateFinder) *Builder {
+	return &Builder{
 		logger: logger,
 		sm:     sm,
 		bm:     bm,

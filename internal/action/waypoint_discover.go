@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) DiscoverWaypoint() *Factory {
+func (b *Builder) DiscoverWaypoint() *Factory {
 	interacted := false
 
 	return NewFactory(func(d data.Data) Action {
