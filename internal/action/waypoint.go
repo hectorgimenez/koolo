@@ -47,10 +47,6 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 	})
 }
 
-func (b Builder) getLinkedWP(a area.Area) {
-
-}
-
 func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
 		areas = append(areas, dst)
@@ -71,8 +67,13 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 						portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
 						return []Action{
 							b.MoveToCoords(portal.Position),
-							b.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
-								return d.PlayerUnit.Area == area.ArcaneSanctuary
+							BuildStatic(func(d data.Data) []step.Step {
+								return []step.Step{
+									step.MoveTo(portal.Position),
+									step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+										return d.PlayerUnit.Area == area.ArcaneSanctuary
+									}),
+								}
 							}),
 						}
 					}),
@@ -95,10 +96,10 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 }
 
 func (b Builder) useWP(a area.Area) Action {
-	return NewFactory(func(d data.Data) Action {
+	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		// We don't need to move
 		if d.PlayerUnit.Area == a {
-			return nil
+			return
 		}
 
 		wpCoords, found := area.WPAddresses[a]
@@ -108,9 +109,11 @@ func (b Builder) useWP(a area.Area) Action {
 
 		for _, o := range d.Objects {
 			if o.IsWaypoint() {
-				return b.InteractObject(o.Name, func(d data.Data) bool {
-					return d.OpenMenus.Waypoint
-				},
+				steps = append(steps,
+					step.MoveTo(o.Position),
+					step.InteractObject(o.Name, func(d data.Data) bool {
+						return d.OpenMenus.Waypoint
+					}),
 					step.SyncStep(func(d data.Data) error {
 						actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
@@ -130,6 +133,6 @@ func (b Builder) useWP(a area.Area) Action {
 			}
 		}
 
-		return nil
-	})
+		return
+	}, IgnoreErrors())
 }
