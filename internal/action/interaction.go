@@ -16,7 +16,7 @@ func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 		//}
 
 		return []Action{
-			b.MoveToCoords(pos),
+			b.MoveToCoords(pos, step.StopAtDistance(5)),
 			BuildStatic(func(d data.Data) []step.Step {
 				steps := []step.Step{step.InteractNPC(npc)}
 				steps = append(steps, additionalSteps...)
@@ -35,7 +35,7 @@ func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Dat
 		//}
 
 		return []Action{
-			b.MoveToCoords(pos),
+			b.MoveToCoords(pos, step.StopAtDistance(5)),
 			BuildStatic(func(d data.Data) []step.Step {
 				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn)}
 				steps = append(steps, additionalSteps...)
@@ -59,7 +59,7 @@ func (b *Builder) InteractObject(name object.Name, isCompletedFn func(data.Data)
 		}
 
 		return []Action{
-			b.MoveToCoords(pos),
+			b.MoveToCoords(pos, step.StopAtDistance(5)),
 			BuildStatic(func(d data.Data) []step.Step {
 				steps := []step.Step{step.InteractObject(o.Name, isCompletedFn)}
 				steps = append(steps, additionalSteps...)

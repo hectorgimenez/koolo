@@ -136,7 +136,7 @@ func (b *Builder) shouldStashIt(i data.Item, forceStash bool) bool {
 		return false
 	}
 
-	// Don't stash the Tomes and keys
+	// Don't stash the Tomes and keyse
 	if i.Name == item.TomeOfTownPortal || i.Name == item.TomeOfIdentify || i.Name == item.Key {
 		return false
 	}

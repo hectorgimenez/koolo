@@ -28,16 +28,10 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.char.Buff())
 
 	// Travel to Tristram portal
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+	actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
 		for _, o := range d.Objects {
 			if o.Name == object.CairnStoneAlpha {
-				return []step.Step{
-					step.MoveTo(o.Position),
-					step.SyncStep(func(d data.Data) error {
-						helper.Sleep(1000)
-						return nil
-					}),
-				}
+				return a.builder.MoveToCoords(o.Position)
 			}
 		}
 
@@ -54,7 +48,7 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 	// Enter Tristram portal
 	actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 		return d.PlayerUnit.Area == area.Tristram
-	}, step.Wait(time.Second*2)))
+	}, step.Wait(time.Second)))
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
 		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
@@ -103,7 +97,7 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 			} {
 				st := cainStone
 				stone, _ := d.Objects.FindOne(st)
-				actions = append(actions, a.builder.InteractObject(stone.Name, nil, step.Wait(time.Millisecond*500)))
+				actions = append(actions, a.builder.InteractObject(stone.Name, nil))
 			}
 		}
 

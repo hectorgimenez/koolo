@@ -101,53 +101,49 @@ func (a Leveling) countess() action.Action {
 }
 
 func (a Leveling) deckardCain() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		a.logger.Info("Rescuing Cain")
-		actions := []action.Action{
-			a.builder.WayPoint(area.DarkWood),
-			a.char.Buff(),
-			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
-				for _, o := range d.Objects {
-					if o.Name == object.InifussTree {
-						return o.Position, true
+		if _, found := d.Items.Find("KeyToTheCairnStones"); !found {
+			actions = []action.Action{
+				a.builder.WayPoint(area.DarkWood),
+				a.char.Buff(),
+				a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+					for _, o := range d.Objects {
+						if o.Name == object.InifussTree {
+							return o.Position, true
+						}
 					}
-				}
 
-				return data.Position{}, false
-			}),
-			a.builder.InteractObject(object.InifussTree, func(d data.Data) bool {
-				obj, _ := d.Objects.FindOne(object.InifussTree)
-				return !obj.Selectable
-			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				if scroll, found := d.Items.Find(scrollOfInifuss, item.LocationGround); found {
-					return []step.Step{step.PickupItem(a.logger, scroll)}
-				}
+					return data.Position{}, false
+				}),
+				a.builder.InteractObject(object.InifussTree, func(d data.Data) bool {
+					_, found := d.Items.Find(scrollOfInifuss)
+					return found
+				}),
+				a.builder.ItemPickup(false, 30),
+				a.builder.ReturnTown(),
+				a.builder.InteractNPC(
+					npc.Akara,
+					step.KeySequence("esc"),
+				),
+			}
 
-				return nil
-			}, action.IgnoreErrors()),
-			a.builder.ReturnTown(),
-			a.builder.InteractNPC(
-				npc.Akara,
-				step.KeySequence("esc"),
-			),
+			// Heal and refill pots
+			actions = append(actions,
+				a.builder.ReturnTown(),
+				a.builder.EnsureStatPoints(),
+				a.builder.EnsureSkillPoints(),
+				a.builder.RecoverCorpse(),
+				a.builder.IdentifyAll(false),
+				a.builder.Stash(false),
+				a.builder.VendorRefill(),
+				a.builder.EnsureSkillBindings(),
+				a.builder.Heal(),
+				a.builder.ReviveMerc(),
+				a.builder.HireMerc(),
+				a.builder.Repair(),
+			)
 		}
-
-		// Heal and refill pots
-		actions = append(actions,
-			a.builder.ReturnTown(),
-			a.builder.EnsureStatPoints(),
-			a.builder.EnsureSkillPoints(),
-			a.builder.RecoverCorpse(),
-			a.builder.IdentifyAll(false),
-			a.builder.Stash(false),
-			a.builder.VendorRefill(),
-			a.builder.EnsureSkillBindings(),
-			a.builder.Heal(),
-			a.builder.ReviveMerc(),
-			a.builder.HireMerc(),
-			a.builder.Repair(),
-		)
 
 		// Reuse Tristram Run actions
 		actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
