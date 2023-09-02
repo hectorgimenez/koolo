@@ -21,11 +21,12 @@ type Action interface {
 }
 
 type basicAction struct {
-	retries           int
-	canBeSkipped      bool
-	resetStepsOnError bool
-	markSkipped       bool
-	ignoreErrors      bool
+	retries                int
+	canBeSkipped           bool
+	resetStepsOnError      bool
+	markSkipped            bool
+	ignoreErrors           bool
+	repeatUntilNoMoreSteps bool
 }
 
 type Option func(action *basicAction)
@@ -49,8 +50,12 @@ func Resettable() Option {
 	}
 }
 
-func (b *basicAction) Skip() {
-	if b.retries >= maxRetries && b.canBeSkipped {
-		b.markSkipped = true
+func RepeatUntilNoSteps() Option {
+	return func(action *basicAction) {
+		action.repeatUntilNoMoreSteps = true
 	}
+}
+
+func (b *basicAction) Skip() {
+	b.markSkipped = true
 }

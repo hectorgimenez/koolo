@@ -53,7 +53,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.builder.MoveToCoords(baalThronePosition))
 
 	lastWave := false
-	actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
+	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 		if !lastWave {
 			if _, found := d.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
 				lastWave = true
@@ -67,15 +67,13 @@ func (s Baal) BuildActions() (actions []action.Action) {
 				}
 			}
 			if !enemies {
-				return action.NewChain(func(d data.Data) []action.Action {
-					return []action.Action{
-						s.builder.ItemPickup(false, 50),
-						s.builder.MoveToCoords(baalThronePosition),
-					}
-				})
+				return []action.Action{
+					s.builder.ItemPickup(false, 50),
+					s.builder.MoveToCoords(baalThronePosition),
+				}
 			}
 
-			return s.builder.ClearAreaAroundPlayer(50)
+			return []action.Action{s.builder.ClearAreaAroundPlayer(50)}
 		}
 
 		return nil

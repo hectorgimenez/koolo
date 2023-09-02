@@ -176,7 +176,7 @@ func (s SorceressLeveling) SkillPoints(d data.Data) []skill.Skill {
 }
 
 func (s SorceressLeveling) EnsureStatPoints() action.Action {
-	return action.BuildStatic(func(d data.Data) []step.Step {
+	return action.NewStepChain(func(d data.Data) []step.Step {
 		_, found := d.PlayerUnit.Stats[stat.StatPoints]
 		if !found {
 			return []step.Step{}
@@ -187,7 +187,7 @@ func (s SorceressLeveling) EnsureStatPoints() action.Action {
 }
 
 func (s SorceressLeveling) EnsureSkillPoints() action.Action {
-	return action.BuildStatic(func(d data.Data) []step.Step {
+	return action.NewStepChain(func(d data.Data) []step.Step {
 		_, found := d.PlayerUnit.Stats[stat.SkillPoints]
 		if !found {
 			return []step.Step{}
@@ -204,7 +204,7 @@ func (s SorceressLeveling) KillCountess() action.Action {
 func (s SorceressLeveling) KillAndariel() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Andariel, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, m.UnitID, 1, step.Distance(25, 30)),
@@ -223,7 +223,7 @@ func (s SorceressLeveling) KillSummoner() action.Action {
 func (s SorceressLeveling) KillDuriel() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Duriel, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
@@ -240,7 +240,7 @@ func (s SorceressLeveling) KillMephisto() action.Action {
 		//if step.CanTeleport(d) {
 		//	moatTrickPosition := data.Position{X: 17611, Y: 8093}
 		//	return []action.Action{
-		//		action.BuildStatic(func(d data.Data) []step.Step {
+		//		action.NewStepChain(func(d data.Data) []step.Step {
 		//			mephisto, _ := d.Monsters.FindOne(npc.Mephisto, data.MonsterTypeNone)
 		//			return []step.Step{
 		//				step.Wait(time.Second * 2),
@@ -256,7 +256,7 @@ func (s SorceressLeveling) KillMephisto() action.Action {
 
 		// If teleport is not available, just try to kill him with Static Field and Fire Ball
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				mephisto, _ := d.Monsters.FindOne(npc.Mephisto, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
@@ -301,17 +301,12 @@ func (s SorceressLeveling) KillCouncil() action.Action {
 }
 
 func (s SorceressLeveling) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startedAt := time.Time{}
-
-	return action.NewFactory(func(d data.Data) action.Action {
-		if startedAt.IsZero() {
-			s.logger.Info("Waiting for Diablo to spawn")
-			startedAt = time.Now()
-		}
-
-		if time.Since(startedAt) < timeout {
-			return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) []action.Action {
+		return []action.Action{
+			action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Second * 20)}
+			}),
+			action.NewChain(func(d data.Data) []action.Action {
 				diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 				if !found {
 					return nil
@@ -319,25 +314,22 @@ func (s SorceressLeveling) KillDiablo() action.Action {
 
 				s.logger.Info("Diablo detected, attacking")
 				return []action.Action{
-					action.BuildStatic(func(d data.Data) []step.Step {
+					action.NewStepChain(func(d data.Data) []step.Step {
 						return []step.Step{
 							step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
 						}
 					}),
 					s.killMonster(npc.Diablo, data.MonsterTypeNone),
 				}
-			})
+			}),
 		}
-
-		s.logger.Info("Timeout waiting for Diablo to spawn")
-		return nil
 	})
 }
 
 func (s SorceressLeveling) KillIzual() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				monster, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, monster.UnitID, s.staticFieldCasts(), step.Distance(1, 4)),
@@ -358,7 +350,7 @@ func (s SorceressLeveling) KillIzual() action.Action {
 func (s SorceressLeveling) KillBaal() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				baal, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, baal.UnitID, s.staticFieldCasts(), step.Distance(1, 4)),
@@ -377,7 +369,7 @@ func (s SorceressLeveling) KillAncients() action.Action {
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 			actions = append(actions,
-				action.BuildStatic(func(d data.Data) []step.Step {
+				action.NewStepChain(func(d data.Data) []step.Step {
 					m, _ := d.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
 					return []step.Step{
 						step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10)),
@@ -394,21 +386,21 @@ func (s SorceressLeveling) KillAncients() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) *action.DynamicAction {
+func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+	return action.NewStepChain(func(d data.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
 		if !s.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		if len(opts) == 0 {
@@ -416,7 +408,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 		}
 
 		if completedAttackLoops >= sorceressMaxAttacksLoop {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		steps := make([]step.Step, 0)
@@ -448,8 +440,8 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d data.Data)
 		completedAttackLoops++
 		previousUnitID = int(id)
 
-		return steps, true
-	})
+		return steps
+	}, action.RepeatUntilNoSteps())
 }
 
 func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {
@@ -464,7 +456,7 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Ac
 }
 
 func (s SorceressLeveling) Buff() action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
 		return []step.Step{
 			step.SyncStep(func(d data.Data) error {
 				if _, found := d.PlayerUnit.Skills[skill.FrozenArmor]; !found {

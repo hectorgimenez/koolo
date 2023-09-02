@@ -19,13 +19,13 @@ const (
 	wpAreaBtnHeight = 41
 )
 
-func (b *Builder) WayPoint(a area.Area) *Factory {
+func (b *Builder) WayPoint(a area.Area) *Chain {
 	usedWP := false
 	isChild := false
-	return NewFactory(func(d data.Data) Action {
+	return NewChain(func(d data.Data) []Action {
 		if d.PlayerUnit.Area != a && !usedWP {
 			usedWP = true
-			return b.useWP(a)
+			return []Action{b.useWP(a)}
 		}
 
 		if d.PlayerUnit.Area != a {
@@ -38,7 +38,7 @@ func (b *Builder) WayPoint(a area.Area) *Factory {
 				_, found := area.WPAddresses[dstWP.LinkedFrom[0]]
 				if found {
 					isChild = true
-					return b.WayPoint(dstWP.LinkedFrom[0])
+					return []Action{b.WayPoint(dstWP.LinkedFrom[0])}
 				}
 			}
 		}
@@ -47,56 +47,54 @@ func (b *Builder) WayPoint(a area.Area) *Factory {
 	})
 }
 
-func (b *Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
-	return NewChain(func(d data.Data) (actions []Action) {
-		areas = append(areas, dst)
-		logAreas := make([]int, len(areas))
-		b.logger.Debug("Traversing to next WP...")
-		for _, a := range areas {
-			logAreas = append(logAreas, int(a))
-			switch a {
-			case area.MonasteryGate:
-				b.logger.Debug("Monastery Gate detected, moving to static coords")
-				actions = append(actions,
-					b.MoveToCoords(data.Position{X: 15139, Y: 5056}),
-				)
-			case area.ArcaneSanctuary:
-				actions = append(actions,
-					NewChain(func(d data.Data) []Action {
-						b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
-						portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
-						return []Action{
-							b.MoveToCoords(portal.Position),
-							BuildStatic(func(d data.Data) []step.Step {
-								return []step.Step{
-									step.MoveTo(portal.Position),
-									step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
-										return d.PlayerUnit.Area == area.ArcaneSanctuary
-									}),
-								}
-							}),
-						}
-					}),
-				)
-			default:
-				actions = append(actions,
-					b.ch.Buff(),
-					b.MoveToArea(a),
-				)
-			}
+func (b *Builder) traverseNextWP(dst area.Area, areas []area.Area) (actions []Action) {
+	areas = append(areas, dst)
+	logAreas := make([]int, len(areas))
+	b.logger.Debug("Traversing to next WP...")
+	for _, a := range areas {
+		logAreas = append(logAreas, int(a))
+		switch a {
+		case area.MonasteryGate:
+			b.logger.Debug("Monastery Gate detected, moving to static coords")
+			actions = append(actions,
+				b.MoveToCoords(data.Position{X: 15139, Y: 5056}),
+			)
+		case area.ArcaneSanctuary:
+			actions = append(actions,
+				NewChain(func(d data.Data) []Action {
+					b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+					portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
+					return []Action{
+						b.MoveToCoords(portal.Position),
+						NewStepChain(func(d data.Data) []step.Step {
+							return []step.Step{
+								step.MoveTo(portal.Position),
+								step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+									return d.PlayerUnit.Area == area.ArcaneSanctuary
+								}),
+							}
+						}),
+					}
+				}),
+			)
+		default:
+			actions = append(actions,
+				b.ch.Buff(),
+				b.MoveToArea(a),
+			)
 		}
+	}
 
-		actions = append(actions,
-			b.DiscoverWaypoint(),
-		)
+	actions = append(actions,
+		b.DiscoverWaypoint(),
+	)
 
-		b.logger.Debug("Linked areas to traverse", zap.Ints("areas", logAreas))
-		return
-	})
+	b.logger.Debug("Linked areas to traverse", zap.Ints("areas", logAreas))
+	return actions
 }
 
 func (b *Builder) useWP(a area.Area) Action {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+	return NewStepChain(func(d data.Data) (steps []step.Step) {
 		// We don't need to move
 		if d.PlayerUnit.Area == a {
 			return

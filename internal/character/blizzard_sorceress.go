@@ -28,21 +28,21 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	monsterSelector func(d data.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
-) *action.DynamicAction {
+) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+	return action.NewStepChain(func(d data.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
 		if !s.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		if len(opts) == 0 {
@@ -55,7 +55,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		//	)
 		//}
 		if completedAttackLoops >= sorceressMaxAttacksLoop {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		steps := make([]step.Step, 0)
@@ -83,12 +83,12 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		completedAttackLoops++
 		previousUnitID = int(id)
 
-		return steps, true
-	})
+		return steps
+	}, action.RepeatUntilNoSteps())
 }
 
 func (s BlizzardSorceress) Buff() action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.SyncStep(func(d data.Data) error {
 			if config.Config.Bindings.Sorceress.FrozenArmor != "" {
@@ -133,17 +133,12 @@ func (s BlizzardSorceress) KillNihlathak() action.Action {
 }
 
 func (s BlizzardSorceress) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startedAt := time.Time{}
-
-	return action.NewFactory(func(d data.Data) action.Action {
-		if startedAt.IsZero() {
-			s.logger.Info("Waiting for Diablo to spawn")
-			startedAt = time.Now()
-		}
-
-		if time.Since(startedAt) < timeout {
-			return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) []action.Action {
+		return []action.Action{
+			action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Second * 20)}
+			}),
+			action.NewChain(func(d data.Data) []action.Action {
 				diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 				if !found {
 					return nil
@@ -151,7 +146,7 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 
 				s.logger.Info("Diablo detected, attacking")
 				return []action.Action{
-					action.BuildStatic(func(d data.Data) []step.Step {
+					action.NewStepChain(func(d data.Data) []step.Step {
 
 						return []step.Step{
 							step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, 8, step.Distance(1, 5)),
@@ -159,18 +154,15 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 					}),
 					s.killMonster(npc.Diablo, data.MonsterTypeNone),
 				}
-			})
+			}),
 		}
-
-		s.logger.Info("Timeout waiting for Diablo to spawn")
-		return nil
 	})
 }
 
 func (s BlizzardSorceress) KillIzual() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				mephisto, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 7, step.Distance(1, 4)),
@@ -191,7 +183,7 @@ func (s BlizzardSorceress) KillIzual() action.Action {
 func (s BlizzardSorceress) KillBaal() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				mephisto, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
 				return []step.Step{
 					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 7, step.Distance(1, 4)),

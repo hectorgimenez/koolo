@@ -25,7 +25,7 @@ func (p PaladinLeveling) GetSkillTree() skill.Tree {
 }
 
 func (p PaladinLeveling) Buff() action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
 		return []step.Step{
 			step.SyncStep(func(d data.Data) error {
 				if _, found := d.PlayerUnit.Skills[skill.HolyShield]; !found {
@@ -109,17 +109,12 @@ func (p PaladinLeveling) KillCouncil() action.Action {
 }
 
 func (p PaladinLeveling) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startedAt := time.Time{}
-
-	return action.NewFactory(func(d data.Data) action.Action {
-		if startedAt.IsZero() {
-			p.logger.Info("Waiting for Diablo to spawn")
-			startedAt = time.Now()
-		}
-
-		if time.Since(startedAt) < timeout {
-			return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) []action.Action {
+		return []action.Action{
+			action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Second * 20)}
+			}),
+			action.NewChain(func(d data.Data) []action.Action {
 				_, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 				if !found {
 					return nil
@@ -129,11 +124,8 @@ func (p PaladinLeveling) KillDiablo() action.Action {
 				return []action.Action{
 					p.killMonster(npc.Diablo, data.MonsterTypeNone),
 				}
-			})
+			}),
 		}
-
-		p.logger.Info("Timeout waiting for Diablo to spawn")
-		return nil
 	})
 }
 
@@ -145,25 +137,25 @@ func (p PaladinLeveling) KillBaal() action.Action {
 	return p.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) *action.DynamicAction {
+func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+	return action.NewStepChain(func(d data.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
 		if !p.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		if completedAttackLoops >= 10 {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		steps := make([]step.Step, 0)
@@ -186,8 +178,8 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 		completedAttackLoops++
 		previousUnitID = int(id)
-		return steps, true
-	})
+		return steps
+	}, action.RepeatUntilNoSteps())
 }
 
 func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {

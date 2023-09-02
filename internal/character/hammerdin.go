@@ -26,21 +26,21 @@ func (s Hammerdin) KillMonsterSequence(
 	monsterSelector func(d data.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
-) *action.DynamicAction {
+) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+	return action.NewStepChain(func(d data.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
 		if !s.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		if len(opts) == 0 {
@@ -48,7 +48,7 @@ func (s Hammerdin) KillMonsterSequence(
 		}
 
 		if completedAttackLoops >= hammerdinMaxAttacksLoop {
-			return []step.Step{}, false
+			return []step.Step{}
 		}
 
 		steps := make([]step.Step, 0)
@@ -63,12 +63,12 @@ func (s Hammerdin) KillMonsterSequence(
 		completedAttackLoops++
 		previousUnitID = int(id)
 
-		return steps, true
-	})
+		return steps
+	}, action.RepeatUntilNoSteps())
 }
 
 func (s Hammerdin) Buff() action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
 		steps = append(steps, s.buffCTA()...)
 		steps = append(steps, step.SyncStep(func(d data.Data) error {
 			if config.Config.Bindings.Paladin.HolyShield != "" {
@@ -121,7 +121,7 @@ func (s Hammerdin) KillIzual() action.Action {
 }
 
 func (s Hammerdin) KillCouncil() action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
@@ -160,7 +160,7 @@ func (s Hammerdin) KillBaal() action.Action {
 }
 
 func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return action.BuildStatic(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return nil

@@ -13,11 +13,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
+func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 	firstCallTime := time.Time{}
 	var itemBeingPickedUp data.UnitID
 
-	return NewFactory(func(d data.Data) Action {
+	return NewChain(func(d data.Data) []Action {
 		if firstCallTime.IsZero() {
 			firstCallTime = time.Now()
 		}
@@ -28,9 +28,9 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
 					b.logger.Debug("Aborting item pickup, monster nearby", zap.Any("monster", m))
 					itemBeingPickedUp = -1
-					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
-					}, nil)
+					}, nil)}
 				}
 			}
 
@@ -39,10 +39,10 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 			// Error picking up Item, go back to town, sell junk, stash and try again.
 			if itemBeingPickedUp == i.UnitID {
 				b.logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
-				return NewChain(func(d data.Data) []Action {
+				return []Action{NewChain(func(d data.Data) []Action {
 					itemBeingPickedUp = -1
 					return b.InRunReturnTownRoutine()
-				})
+				})}
 			}
 
 			b.logger.Debug(fmt.Sprintf(
@@ -53,16 +53,13 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 				i.Position.Y,
 			))
 
-			return NewChain(func(d data.Data) []Action {
-				itemBeingPickedUp = i.UnitID
-
-				return []Action{
-					b.MoveToCoords(i.Position),
-					BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{step.PickupItem(b.logger, i)}
-					}, IgnoreErrors()),
-				}
-			})
+			itemBeingPickedUp = i.UnitID
+			return []Action{
+				b.MoveToCoords(i.Position),
+				NewStepChain(func(d data.Data) []step.Step {
+					return []step.Step{step.PickupItem(b.logger, i)}
+				}, IgnoreErrors()),
+			}
 		}
 
 		// Add small delay, drop is not instant
@@ -70,9 +67,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 			msToWait := time.Second - time.Since(firstCallTime)
 			b.logger.Debug("No items detected, waiting a bit and will try again", zap.Int("waitMs", int(msToWait.Milliseconds())))
 
-			return BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{step.Wait(msToWait)}
-			})
+			return []Action{b.Wait(msToWait)}
 		}
 
 		return nil

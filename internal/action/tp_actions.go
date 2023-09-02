@@ -8,8 +8,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b *Builder) ReturnTown() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b *Builder) ReturnTown() *StepChainAction {
+	return NewStepChain(func(d data.Data) (steps []step.Step) {
 		if d.PlayerUnit.Area.IsTown() {
 			return
 		}

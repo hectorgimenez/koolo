@@ -25,16 +25,15 @@ func (a StonyTomb) BuildActions() (actions []action.Action) {
 		a.builder.MoveToArea(area.RockyWaste),
 		a.builder.MoveToArea(area.StonyTombLevel1),
 	)
-	
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
-		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
+		actions = append(actions, action.NewStepChain(func(_ data.Data) []step.Step {
 			return []step.Step{step.OpenPortal()}
 		}))
 	}
 
 	// Clear both level of Stony Tomb
-	actions = append(actions, 
+	actions = append(actions,
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),
 		a.builder.MoveToArea(area.StonyTombLevel2),
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),

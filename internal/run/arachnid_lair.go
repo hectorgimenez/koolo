@@ -16,26 +16,19 @@ func (a ArachnidLair) Name() string {
 	return "ArachnidLair"
 }
 
-func (a ArachnidLair) BuildActions() (actions []action.Action) {
-	actions = append(actions, 
-		// Moving to starting point (Spider FOrest)
-		a.builder.WayPoint(area.SpiderForest),
-
-		// Buff
-		a.char.Buff(),
-
-		// Travel to ArachnidLair
-		a.builder.MoveToArea(area.SpiderCave),
-	)
+func (a ArachnidLair) BuildActions() []action.Action {
+	actions := []action.Action{
+		a.builder.WayPoint(area.SpiderForest), // Moving to starting point (Spider Forest)
+		a.char.Buff(),                         // Buff
+		a.builder.MoveToArea(area.SpiderCave), // Travel to ArachnidLair
+	}
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
-		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
+		actions = append(actions, action.NewStepChain(func(_ data.Data) []step.Step {
 			return []step.Step{step.OpenPortal()}
 		}))
 	}
 
 	// Clear ArachnidLair
-	actions = append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
-
-	return
+	return append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
 }

@@ -10,15 +10,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type StaticAction struct {
+type StepChainAction struct {
 	basicAction
 	Steps           []step.Step
 	builder         func(d data.Data) []step.Step
 	builderExecuted bool
 }
 
-func BuildStatic(builder func(d data.Data) []step.Step, opts ...Option) *StaticAction {
-	a := &StaticAction{
+func NewStepChain(builder func(d data.Data) []step.Step, opts ...Option) *StepChainAction {
+	a := &StepChainAction{
 		builder: builder,
 	}
 
@@ -29,7 +29,7 @@ func BuildStatic(builder func(d data.Data) []step.Step, opts ...Option) *StaticA
 	return a
 }
 
-func (a *StaticAction) NextStep(logger *zap.Logger, d data.Data) error {
+func (a *StepChainAction) NextStep(logger *zap.Logger, d data.Data) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}
@@ -66,10 +66,20 @@ func (a *StaticAction) NextStep(logger *zap.Logger, d data.Data) error {
 		}
 	}
 
+	if a.repeatUntilNoMoreSteps {
+		a.Steps = a.builder(d)
+		// Continue execution if builder still returns steps
+		if a.Steps != nil && len(a.Steps) > 0 {
+			return nil
+		} else {
+			a.Skip()
+		}
+	}
+
 	return ErrNoMoreSteps
 }
 
-func (a *StaticAction) resetSteps() {
+func (a *StepChainAction) resetSteps() {
 	if !a.resetStepsOnError {
 		return
 	}

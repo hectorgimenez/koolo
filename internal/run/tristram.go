@@ -20,23 +20,20 @@ func (a Tristram) Name() string {
 	return "Tristram"
 }
 
-func (a Tristram) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Stony Field)
-	actions = append(actions, a.builder.WayPoint(area.StonyField))
-
-	// Buff
-	actions = append(actions, a.char.Buff())
-
-	// Travel to Tristram portal
-	actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
-		for _, o := range d.Objects {
-			if o.Name == object.CairnStoneAlpha {
-				return a.builder.MoveToCoords(o.Position)
+func (a Tristram) BuildActions() []action.Action {
+	actions := []action.Action{
+		a.builder.WayPoint(area.StonyField), // Moving to starting point (Stony Field)
+		a.char.Buff(),                       // Buff
+		action.NewChain(func(d data.Data) []action.Action {
+			for _, o := range d.Objects {
+				if o.Name == object.CairnStoneAlpha {
+					return []action.Action{a.builder.MoveToCoords(o.Position)}
+				}
 			}
-		}
 
-		return nil
-	}))
+			return nil
+		}),
+	}
 
 	// Clear monsters around the portal
 	if config.Config.Game.Tristram.ClearPortal {
@@ -51,13 +48,13 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 	}, step.Wait(time.Second)))
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
-		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{step.OpenPortal()}
 		}))
 	}
 
 	// Clear Tristram or rescue Cain
-	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+	return append(actions, action.NewChain(func(d data.Data) []action.Action {
 		if o, found := d.Objects.FindOne(object.CainGibbet); found && o.Selectable {
 			return []action.Action{a.builder.InteractObject(object.CainGibbet, func(d data.Data) bool {
 				obj, _ := d.Objects.FindOne(object.CainGibbet)
@@ -68,8 +65,6 @@ func (a Tristram) BuildActions() (actions []action.Action) {
 			return []action.Action{a.builder.ClearArea(false, data.MonsterAnyFilter())}
 		}
 	}))
-
-	return
 }
 
 func (a Tristram) openPortalIfNotOpened() action.Action {
@@ -102,7 +97,7 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 		}
 
 		// Wait until portal is open
-		actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{
 				step.SyncStepWithCheck(func(d data.Data) error {
 					helper.Sleep(1000)

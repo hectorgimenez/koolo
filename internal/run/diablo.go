@@ -81,7 +81,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		}))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
-		//actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+		//actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 		//	if obj, found := d.Objects.FindOne(seal); found {
 		//		pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
 		//		return []step.Step{step.MoveTo(pos)}
@@ -98,7 +98,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		// Activate the seal
 		actions = append(actions,
 			a.builder.ClearAreaAroundPlayer(15),
-			action.BuildStatic(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d data.Data) []step.Step {
 				a.logger.Debug("Trying to activate seal...", zap.Int("seal", sealNumber+1))
 				return []step.Step{
 					step.InteractObject(seal, func(d data.Data) bool {
