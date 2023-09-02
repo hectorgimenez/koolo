@@ -1,18 +1,10 @@
 package step
 
 import (
-	"errors"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
-
-const (
-	maxPathNotFoundRetries = 5
-)
-
-var errPathNotFound = errors.New("path not found")
 
 type pathingStep struct {
 	basicStep

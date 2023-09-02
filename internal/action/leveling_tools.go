@@ -37,7 +37,7 @@ var uiSkillColumnPosition = [3]int{920, 1010, 1095}
 
 var previousTotalSkillNumber = 0
 
-func (b Builder) EnsureStatPoints() *DynamicAction {
+func (b *Builder) EnsureStatPoints() *DynamicAction {
 	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
 		_, unusedStatPoints := d.PlayerUnit.Stats[stat.StatPoints]
@@ -85,7 +85,7 @@ func (b Builder) EnsureStatPoints() *DynamicAction {
 	}, CanBeSkipped())
 }
 
-func (b Builder) EnsureSkillPoints() *DynamicAction {
+func (b *Builder) EnsureSkillPoints() *DynamicAction {
 	assignAttempts := 0
 	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
@@ -150,7 +150,7 @@ func (b Builder) EnsureSkillPoints() *DynamicAction {
 	}, CanBeSkipped())
 }
 
-func (b Builder) EnsureSkillBindings() *StaticAction {
+func (b *Builder) EnsureSkillBindings() *StaticAction {
 	return BuildStatic(func(d data.Data) []step.Step {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
 			return nil
@@ -215,7 +215,7 @@ func (b Builder) EnsureSkillBindings() *StaticAction {
 	})
 }
 
-func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
+func (b *Builder) GetCompletedQuests(act int) (quests [6]bool) {
 	hid.PressKey(config.Config.Bindings.OpenQuestLog)
 	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
 	helper.Sleep(200)
@@ -232,7 +232,7 @@ func (b Builder) GetCompletedQuests(act int) (quests [6]bool) {
 	return quests
 }
 
-func (b Builder) HireMerc() *Chain {
+func (b *Builder) HireMerc() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar && config.Config.Character.UseMerc {
@@ -240,12 +240,7 @@ func (b Builder) HireMerc() *Chain {
 			if config.Config.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
 				b.logger.Info("Hiring merc...")
 				actions = append(actions,
-					BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC()),
-							step.KeySequence("home", "down", "enter"),
-						}
-					}),
+					b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(), step.KeySequence("home", "down", "enter")),
 					BuildStatic(func(d data.Data) []step.Step {
 						sc := helper.Screenshot()
 						tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
@@ -277,7 +272,7 @@ func (b Builder) HireMerc() *Chain {
 	})
 }
 
-func (b Builder) ResetStats() *Chain {
+func (b *Builder) ResetStats() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		ch, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar && ch.ShouldResetSkills(d) {
@@ -286,14 +281,11 @@ func (b Builder) ResetStats() *Chain {
 				actions = append(actions, b.WayPoint(area.RogueEncampment))
 			}
 			actions = append(actions,
-				BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{
-						step.InteractNPC(npc.Akara),
-						step.KeySequence("home", "down", "down", "enter"),
-						step.Wait(time.Second),
-						step.KeySequence("home", "enter"),
-					}
-				}),
+				b.InteractNPC(npc.Akara,
+					step.KeySequence("home", "down", "down", "enter"),
+					step.Wait(time.Second),
+					step.KeySequence("home", "enter"),
+				),
 			)
 			if d.PlayerUnit.Area != area.RogueEncampment {
 				actions = append(actions, b.WayPoint(currentArea))

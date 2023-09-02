@@ -12,7 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
-func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
+func (b *Builder) IdentifyAll(skipIdentify bool) *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		items := b.itemsToIdentify(d)
 
@@ -54,7 +54,7 @@ func (b Builder) IdentifyAll(skipIdentify bool) *StaticAction {
 	}, Resettable(), CanBeSkipped())
 }
 
-func (b Builder) itemsToIdentify(d data.Data) (items []data.Item) {
+func (b *Builder) itemsToIdentify(d data.Data) (items []data.Item) {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
 			continue

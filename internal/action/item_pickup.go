@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
+func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 	firstCallTime := time.Time{}
 	var itemBeingPickedUp data.UnitID
 
@@ -79,7 +79,7 @@ func (b Builder) ItemPickup(waitForDrop bool, maxDistance int) Action {
 	})
 }
 
-func (b Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
+func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 	missingHealingPotions := b.bm.GetMissingCount(d, data.HealingPotion)
 	missingManaPotions := b.bm.GetMissingCount(d, data.ManaPotion)
 	missingRejuvenationPotions := b.bm.GetMissingCount(d, data.RejuvenationPotion)
@@ -133,7 +133,7 @@ func (b Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 	return itemsToPickup
 }
 
-func (b Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
+func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 	// Only during leveling if gold amount is low pickup items to sell as junk
 	_, isLevelingChar := b.ch.(LevelingCharacter)
 

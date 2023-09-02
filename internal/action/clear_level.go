@@ -11,7 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
+func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
 	var clearedRooms []data.Room
 	openedDoors := make(map[object.Name]data.Position)
 
@@ -41,18 +41,16 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 			for _, o := range d.Objects {
 				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 					if o.Selectable {
-						return BuildStatic(func(d data.Data) []step.Step {
-							b.logger.Info("Door detected and teleport is not available, trying to open it...")
-							openedDoors[o.Name] = o.Position
-							return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
-								for _, obj := range d.Objects {
-									if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
-										return true
-									}
+						b.logger.Info("Door detected and teleport is not available, trying to open it...")
+						return b.InteractObject(o.Name, func(d data.Data) bool {
+							for _, obj := range d.Objects {
+								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
+									openedDoors[o.Name] = o.Position
+									return true
 								}
-								return false
-							})}
-						}, CanBeSkipped())
+							}
+							return false
+						})
 					}
 				}
 			}
@@ -128,19 +126,14 @@ func (b Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory 
 			for _, o := range d.Objects {
 				if o.IsSuperChest() && o.Selectable && currentRoom.IsInside(o.Position) {
 					chest := o
-					return BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.MoveTo(o.Position),
-							step.InteractObject(o.Name, func(d data.Data) bool {
-								for _, obj := range d.Objects {
-									if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
-										return false
-									}
-								}
-
-								return true
-							}),
+					return b.InteractObject(chest.Name, func(d data.Data) bool {
+						for _, obj := range d.Objects {
+							if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
+								return false
+							}
 						}
+
+						return true
 					})
 				}
 			}

@@ -11,42 +11,41 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) VendorRefill() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
-		if b.shouldVisitVendor(d) {
-			b.logger.Info("Visiting vendor...")
-
-			openShopStep := step.KeySequence("home", "down", "enter")
-			vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).RefillNPC()
-
-			// Jamella trade button is the first one
-			if vendorNPC == npc.Jamella {
-				openShopStep = step.KeySequence("home", "enter")
-			}
-
-			steps = append(steps,
-				step.InteractNPC(vendorNPC),
-				openShopStep,
-				step.Wait(time.Second),
-				step.SyncStep(func(d data.Data) error {
-					switchTab(4)
-					b.sm.BuyConsumables(d)
-					return nil
-				}),
-				step.SyncStep(func(d data.Data) error {
-					b.sm.SellJunk(d)
-					return nil
-				}),
-				step.KeySequence("esc"),
-			)
+func (b *Builder) VendorRefill() *Chain {
+	return NewChain(func(d data.Data) []Action {
+		if !b.shouldVisitVendor(d) {
+			return nil
 		}
 
-		return
-	}, Resettable(), CanBeSkipped())
+		b.logger.Info("Visiting vendor...")
+
+		openShopStep := step.KeySequence("home", "down", "enter")
+		vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).RefillNPC()
+
+		// Jamella trade button is the first one
+		if vendorNPC == npc.Jamella {
+			openShopStep = step.KeySequence("home", "enter")
+		}
+
+		return []Action{b.InteractNPC(vendorNPC,
+			openShopStep,
+			step.Wait(time.Second),
+			step.SyncStep(func(d data.Data) error {
+				switchTab(4)
+				b.sm.BuyConsumables(d)
+				return nil
+			}),
+			step.SyncStep(func(d data.Data) error {
+				b.sm.SellJunk(d)
+				return nil
+			}),
+			step.KeySequence("esc"),
+		)}
+	})
 }
 
-func (b Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain {
+	return NewChain(func(d data.Data) []Action {
 		openShopStep := step.KeySequence("home", "down", "enter")
 
 		// Jamella trade button is the first one
@@ -54,8 +53,7 @@ func (b Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *StaticA
 			openShopStep = step.KeySequence("home", "enter")
 		}
 
-		return []step.Step{
-			step.InteractNPC(vendor),
+		return []Action{b.InteractNPC(vendor,
 			openShopStep,
 			step.Wait(time.Second),
 			step.SyncStep(func(d data.Data) error {
@@ -73,8 +71,8 @@ func (b Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *StaticA
 			}),
 
 			step.KeySequence("esc"),
-		}
-	}, Resettable(), CanBeSkipped())
+		)}
+	})
 }
 
 type VendorItemRequest struct {
@@ -83,7 +81,7 @@ type VendorItemRequest struct {
 	Tab      int // At this point I have no idea how to detect the Tab the Item is in the vendor (1-4)
 }
 
-func (b Builder) shouldVisitVendor(d data.Data) bool {
+func (b *Builder) shouldVisitVendor(d data.Data) bool {
 	// Check if we should sell junk
 	if len(town.ItemsToBeSold(d)) > 0 {
 		return true

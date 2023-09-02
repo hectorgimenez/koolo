@@ -10,8 +10,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) Heal() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b *Builder) Heal() *Factory {
+	return NewFactory(func(d data.Data) Action {
 		shouldHeal := false
 		if d.PlayerUnit.HPPercent() < 80 {
 			b.logger.Info(fmt.Sprintf("Current life is %d%%, healing on NPC", d.PlayerUnit.HPPercent()))
@@ -24,17 +24,17 @@ func (b Builder) Heal() *StaticAction {
 		}
 
 		if shouldHeal {
-			return []step.Step{
-				step.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).HealNPC()),
+			return b.InteractNPC(
+				town.GetTownByArea(d.PlayerUnit.Area).HealNPC(),
 				step.SyncStep(func(d data.Data) error {
 					helper.Sleep(300)
 					hid.PressKey("esc")
 					helper.Sleep(100)
 					return nil
 				}),
-			}
+			)
 		}
 
-		return
-	}, CanBeSkipped())
+		return nil
+	})
 }

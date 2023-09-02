@@ -19,7 +19,7 @@ const (
 	wpAreaBtnHeight = 41
 )
 
-func (b Builder) WayPoint(a area.Area) *Factory {
+func (b *Builder) WayPoint(a area.Area) *Factory {
 	usedWP := false
 	isChild := false
 	return NewFactory(func(d data.Data) Action {
@@ -47,11 +47,7 @@ func (b Builder) WayPoint(a area.Area) *Factory {
 	})
 }
 
-func (b Builder) getLinkedWP(a area.Area) {
-
-}
-
-func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
+func (b *Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	return NewChain(func(d data.Data) (actions []Action) {
 		areas = append(areas, dst)
 		logAreas := make([]int, len(areas))
@@ -73,6 +69,7 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 							b.MoveToCoords(portal.Position),
 							BuildStatic(func(d data.Data) []step.Step {
 								return []step.Step{
+									step.MoveTo(portal.Position),
 									step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
 										return d.PlayerUnit.Area == area.ArcaneSanctuary
 									}),
@@ -98,7 +95,7 @@ func (b Builder) traverseNextWP(dst area.Area, areas []area.Area) Action {
 	})
 }
 
-func (b Builder) useWP(a area.Area) Action {
+func (b *Builder) useWP(a area.Area) Action {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		// We don't need to move
 		if d.PlayerUnit.Area == a {
@@ -113,6 +110,7 @@ func (b Builder) useWP(a area.Area) Action {
 		for _, o := range d.Objects {
 			if o.IsWaypoint() {
 				steps = append(steps,
+					step.MoveTo(o.Position),
 					step.InteractObject(o.Name, func(d data.Data) bool {
 						return d.OpenMenus.Waypoint
 					}),

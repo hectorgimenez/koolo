@@ -2,7 +2,7 @@ package action
 
 import "github.com/hectorgimenez/koolo/internal/config"
 
-func (b Builder) PreRun(firstRun bool) []Action {
+func (b *Builder) PreRun(firstRun bool) []Action {
 	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
 		return []Action{
 			b.RecoverCorpse(),
@@ -26,7 +26,7 @@ func (b Builder) PreRun(firstRun bool) []Action {
 	}
 }
 
-func (b Builder) InRunReturnTownRoutine() []Action {
+func (b *Builder) InRunReturnTownRoutine() []Action {
 	return []Action{
 		b.ReturnTown(),
 		b.EnsureStatPoints(),

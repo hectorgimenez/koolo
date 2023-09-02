@@ -20,7 +20,7 @@ import (
 type Bot struct {
 	logger *zap.Logger
 	hm     health.Manager
-	ab     action.Builder
+	ab     *action.Builder
 	gr     *reader.GameReader
 	paused bool
 }
@@ -28,7 +28,7 @@ type Bot struct {
 func NewBot(
 	logger *zap.Logger,
 	hm health.Manager,
-	ab action.Builder,
+	ab *action.Builder,
 	gr *reader.GameReader,
 ) *Bot {
 	return &Bot{

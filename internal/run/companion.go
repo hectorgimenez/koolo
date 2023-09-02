@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
@@ -22,9 +21,10 @@ func (s Companion) Name() string {
 }
 
 func (s Companion) BuildActions() (actions []action.Action) {
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+	actions = append(actions, s.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 		tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
-		return []step.Step{step.MoveTo(tpArea)}
+
+		return tpArea, true
 	}))
 
 	// Wait for the portal, once it's up, enter and wait
@@ -37,18 +37,14 @@ func (s Companion) BuildActions() (actions []action.Action) {
 				}
 			}
 
-			return action.BuildStatic(func(d data.Data) []step.Step {
-				if portalFound {
-					return []step.Step{
-						step.InteractObject(object.TownPortal, func(d data.Data) bool {
-							return !d.PlayerUnit.Area.IsTown()
-						}),
-					}
-				}
+			if portalFound {
+				return s.builder.InteractObject(object.TownPortal, func(d data.Data) bool {
+					return !d.PlayerUnit.Area.IsTown()
+				})
+			}
 
-				return []step.Step{step.SyncStep(func(d data.Data) error {
-					return nil
-				})}
+			return action.BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Second)}
 			})
 		}
 
@@ -61,17 +57,11 @@ func (s Companion) BuildActions() (actions []action.Action) {
 			return nil
 		}
 
-		return action.BuildStatic(func(d data.Data) []step.Step {
-			if d.PlayerUnit.Area == area.ThroneOfDestruction {
-				return []step.Step{step.SyncStep(func(d data.Data) error {
-					helper.Sleep(1000)
-					return nil
-				})}
-			} else {
-				// Follow the leader
-				return []step.Step{step.MoveTo(rm.Position, step.WithTimeout(time.Second*3))}
-			}
-		})
+		if d.PlayerUnit.Area == area.ThroneOfDestruction {
+			return s.builder.Wait(time.Second)
+		}
+
+		return s.builder.MoveToCoords(rm.Position)
 	}))
 
 	return actions

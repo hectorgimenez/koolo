@@ -92,7 +92,7 @@ func createMask(tpl gocv.Mat) gocv.Mat {
 	return mask
 }
 
-func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
+func (tf *TemplateFinder) FindInArea(tplName string, img image.Image, x0, y0, x1, y1 int) TemplateMatch {
 	t := time.Now()
 	threshold := float32(0.83)
 	colorDiffThreshold := float64(75)
@@ -104,6 +104,11 @@ func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 
 	mat := gocv.NewMat()
 	gocv.Resize(bigmat, &mat, image.Point{X: 1280, Y: 720}, 0, 0, gocv.InterpolationLinear)
+
+	if x0 > 0 && y0 > 0 && x1 > 0 && y1 > 0 {
+		croppedMat := mat.Region(image.Rect(x0, y0, x1, y1))
+		mat = croppedMat.Clone()
+	}
 
 	tpl, ok := tf.templates[tplName]
 	if !ok {
@@ -141,4 +146,8 @@ func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
 	}
 
 	return TemplateMatch{}
+}
+
+func (tf *TemplateFinder) Find(tplName string, img image.Image) TemplateMatch {
+	return tf.FindInArea(tplName, img, 0, 0, 0, 0)
 }

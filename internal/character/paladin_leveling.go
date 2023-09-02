@@ -162,13 +162,13 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 			return []step.Step{}, false
 		}
 
-		if completedAttackLoops >= 70 {
+		if completedAttackLoops >= 10 {
 			return []step.Step{}, false
 		}
 
 		steps := make([]step.Step, 0)
 
-		numOfAttacks := 3
+		numOfAttacks := 10
 
 		if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 {
 			steps = append(steps,

@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) CubeAddItems(items ...data.Item) *Chain {
+func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
@@ -20,17 +20,11 @@ func (b Builder) CubeAddItems(items ...data.Item) *Chain {
 		}
 
 		// Ensure stash is open
-		actions = append(actions, BuildStatic(func(d data.Data) []step.Step {
-			if d.OpenMenus.Stash {
-				return nil
-			}
-
-			return []step.Step{
-				step.InteractObject(object.Bank, func(d data.Data) bool {
-					return d.OpenMenus.Stash
-				}),
-			}
-		}))
+		if !d.OpenMenus.Stash {
+			actions = append(actions, b.InteractObject(object.Bank, func(d data.Data) bool {
+				return d.OpenMenus.Stash
+			}))
+		}
 
 		b.logger.Info("Adding items to the Horadric Cube", zap.Any("items", items))
 
@@ -85,7 +79,7 @@ func (b Builder) CubeAddItems(items ...data.Item) *Chain {
 	})
 }
 
-func (b Builder) CubeTransmute() *Chain {
+func (b *Builder) CubeTransmute() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
@@ -120,7 +114,7 @@ func (b Builder) CubeTransmute() *Chain {
 	})
 }
 
-func (b Builder) ensureCubeIsOpen(cube data.Item) Action {
+func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 	return BuildStatic(func(d data.Data) []step.Step {
 		b.logger.Debug("Opening Horadric Cube...")
 		return []step.Step{

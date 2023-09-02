@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b Builder) ReturnTown() *StaticAction {
+func (b *Builder) ReturnTown() *StaticAction {
 	return BuildStatic(func(d data.Data) (steps []step.Step) {
 		if d.PlayerUnit.Area.IsTown() {
 			return
@@ -23,16 +23,16 @@ func (b Builder) ReturnTown() *StaticAction {
 	}, Resettable())
 }
 
-func (b Builder) UsePortalInTown() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b *Builder) UsePortalInTown() *Chain {
+	return NewChain(func(d data.Data) []Action {
 		if !d.PlayerUnit.Area.IsTown() {
-			return
+			return nil
 		}
 
 		tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
-		return []step.Step{
-			step.MoveTo(tpArea),
-			step.InteractObject(object.TownPortal, func(d data.Data) bool {
+		return []Action{
+			b.MoveToCoords(tpArea),
+			b.InteractObject(object.TownPortal, func(d data.Data) bool {
 				if !d.PlayerUnit.Area.IsTown() {
 					helper.Sleep(500)
 					return true
@@ -41,6 +41,5 @@ func (b Builder) UsePortalInTown() *StaticAction {
 				return false
 			}),
 		}
-
-	}, Resettable())
+	})
 }

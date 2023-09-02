@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) MoveToArea(dst area.Area) Action {
+func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) Action {
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.logger.Debug("Already in area", zap.Any("area", dst))
@@ -60,7 +60,7 @@ func (b Builder) MoveToArea(dst area.Area) Action {
 
 	return NewChain(func(d data.Data) []Action {
 		return []Action{
-			b.MoveTo(toFun),
+			b.MoveTo(toFun, opts...),
 			BuildStatic(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractEntrance(dst),
@@ -70,13 +70,13 @@ func (b Builder) MoveToArea(dst area.Area) Action {
 	})
 }
 
-func (b Builder) MoveToCoords(to data.Position) *Factory {
+func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Factory {
 	return b.MoveTo(func(d data.Data) (data.Position, bool) {
 		return to, true
-	})
+	}, opts...)
 }
 
-func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory {
+func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Factory {
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
@@ -89,8 +89,15 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 		}
 
 		// To stop the movement, not very accurate
-		if pather.DistanceFromMe(d, to) < 5 {
+		if pather.DistanceFromMe(d, to) < 7 {
 			return nil
+		}
+
+		// If we are in town, skip all the logic and just move to the destination
+		if d.PlayerUnit.Area.IsTown() {
+			return BuildStatic(func(d data.Data) []step.Step {
+				return []step.Step{step.MoveTo(to, opts...)}
+			})
 		}
 
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
@@ -109,14 +116,15 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
 			if !isLevelingChar {
 				return BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{step.MoveTo(to)}
+					return []step.Step{step.MoveTo(to, opts...)}
 				})
 			}
 			// But if we are leveling and have enough money (to buy pots), let's teleport. We add the timeout
 			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
 			if d.PlayerUnit.TotalGold() > 10000 {
 				return BuildStatic(func(d data.Data) []step.Step {
-					return []step.Step{step.MoveTo(to, step.WithTimeout(5*time.Second))}
+					newOpts := append(opts, step.WithTimeout(5*time.Second))
+					return []step.Step{step.MoveTo(to, newOpts...)}
 				})
 			}
 		}
@@ -175,7 +183,7 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 			}
 		}
 
-		if len(targetedNormalEnemies) > 3 || len(targetedElites) > 0 {
+		if len(targetedNormalEnemies) > 3 || len(targetedElites) > 0 || (stuck && len(targetedNormalEnemies) > 0 || len(targetedElites) > 0) {
 			if stuck {
 				b.logger.Info("Character stuck and monsters detected, trying to kill monsters around")
 			} else {
@@ -196,12 +204,12 @@ func (b Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool)) *Factory
 
 		// Continue moving
 		return BuildStatic(func(d data.Data) []step.Step {
+			newOpts := append(opts, step.ClosestWalkable(), step.WithTimeout(time.Millisecond*1000))
 			previousIterationPosition = d.PlayerUnit.Position
 			if currentStep == nil {
 				currentStep = step.MoveTo(
 					to,
-					step.ClosestWalkable(),
-					step.WithTimeout(time.Millisecond*1000),
+					newOpts...,
 				)
 			} else {
 				currentStep.Reset()

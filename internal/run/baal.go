@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -87,13 +86,9 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	_, isLevelingChar := s.char.(action.LevelingCharacter)
 	if config.Config.Game.Baal.KillBaal || isLevelingChar {
 		actions = append(actions,
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.Wait(time.Second * 10),
-					step.InteractObject(object.BaalsPortal, func(d data.Data) bool {
-						return d.PlayerUnit.Area == area.TheWorldstoneChamber
-					}),
-				}
+			s.builder.Wait(time.Second*10),
+			s.builder.InteractObject(object.BaalsPortal, func(d data.Data) bool {
+				return d.PlayerUnit.Area == area.TheWorldstoneChamber
 			}),
 			s.char.KillBaal(),
 			s.builder.ItemPickup(true, 50),

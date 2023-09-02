@@ -1,6 +1,8 @@
 package run
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -33,17 +35,8 @@ func (a Leveling) act3() action.Action {
 				actions = append(actions, Mephisto{baseRun: a.baseRun}.BuildActions()...)
 				actions = append(actions,
 					a.builder.ItemPickup(true, 25),
-					action.BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.SyncStep(func(d data.Data) error {
-								helper.Sleep(3000)
-
-								return nil
-							}),
-							step.InteractObject(object.HellGate, func(d data.Data) bool {
-								return d.PlayerUnit.Area == area.ThePandemoniumFortress
-							}),
-						}
+					a.builder.InteractObject(object.HellGate, func(d data.Data) bool {
+						return d.PlayerUnit.Area == area.ThePandemoniumFortress
 					}),
 				)
 				return
@@ -96,14 +89,9 @@ func (a Leveling) findKhalimsEye() action.Action {
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(15),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				a.logger.Info("Opening Khalim Eye chest...")
-				return []step.Step{
-					step.InteractObject(object.KhalimChest3, func(d data.Data) bool {
-						chest, _ := d.Objects.FindOne(object.KhalimChest3)
-						return !chest.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.KhalimChest3, func(d data.Data) bool {
+				chest, _ := d.Objects.FindOne(object.KhalimChest3)
+				return !chest.Selectable
 			}),
 			a.builder.ItemPickup(true, 10),
 		}
@@ -128,14 +116,9 @@ func (a Leveling) findKhalimsBrain() action.Action {
 				return chest.Position, found
 			}),
 			//a.builder.ClearAreaAroundPlayer(15),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				a.logger.Info("Opening Khalim Brain chest...")
-				return []step.Step{
-					step.InteractObject(object.KhalimChest2, func(d data.Data) bool {
-						chest, _ := d.Objects.FindOne(object.KhalimChest2)
-						return !chest.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.KhalimChest2, func(d data.Data) bool {
+				chest, _ := d.Objects.FindOne(object.KhalimChest2)
+				return !chest.Selectable
 			}),
 			a.builder.ItemPickup(true, 10),
 		}
@@ -158,21 +141,14 @@ func (a Leveling) findKhalimsHeart() action.Action {
 				return data.Position{}, false
 			}),
 			a.builder.ClearAreaAroundPlayer(10),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.Act3SewerStairsToLevel3, func(d data.Data) bool {
-						o, _ := d.Objects.FindOne(object.Act3SewerStairsToLevel3)
+			a.builder.InteractObject(object.Act3SewerStairsToLevel3, func(d data.Data) bool {
+				o, _ := d.Objects.FindOne(object.Act3SewerStairsToLevel3)
 
-						return !o.Selectable
-					}),
-					step.SyncStep(func(d data.Data) error {
-						helper.Sleep(3000)
-						return nil
-					}),
-					step.InteractObject(object.Act3SewerStairs, func(d data.Data) bool {
-						return d.PlayerUnit.Area == area.SewersLevel2Act3
-					}),
-				}
+				return !o.Selectable
+			}),
+			a.builder.Wait(time.Second * 3),
+			a.builder.InteractObject(object.Act3SewerStairs, func(d data.Data) bool {
+				return d.PlayerUnit.Area == area.SewersLevel2Act3
 			}),
 			a.char.Buff(),
 			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
@@ -182,14 +158,9 @@ func (a Leveling) findKhalimsHeart() action.Action {
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(15),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				a.logger.Info("Opening Khalim Heart chest...")
-				return []step.Step{
-					step.InteractObject(object.KhalimChest1, func(d data.Data) bool {
-						chest, _ := d.Objects.FindOne(object.KhalimChest1)
-						return !chest.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.KhalimChest1, func(d data.Data) bool {
+				chest, _ := d.Objects.FindOne(object.KhalimChest1)
+				return !chest.Selectable
 			}),
 			a.builder.ItemPickup(true, 10),
 		}
@@ -239,26 +210,22 @@ func (a Leveling) openMephistoStairs() action.Action {
 						hid.PressKey("esc")
 						return nil
 					}),
-					step.InteractObject(object.CompellingOrb, func(d data.Data) bool {
-						o, _ := d.Objects.FindOne(object.CompellingOrb)
-
-						return !o.Selectable
-					}),
-					// Switch back to our main weapon
-					step.SyncStep(func(d data.Data) error {
-						helper.Sleep(1000)
-						hid.PressKey(config.Config.Bindings.SwapWeapon)
-						return nil
-					}),
-					step.SyncStep(func(d data.Data) error {
-						helper.Sleep(12000)
-
-						return nil
-					}),
-					step.InteractObject(object.StairSR, func(d data.Data) bool {
-						return d.PlayerUnit.Area == area.DuranceOfHateLevel1
-					}),
 				}
+			}),
+			a.builder.InteractObject(object.CompellingOrb,
+				func(d data.Data) bool {
+					o, _ := d.Objects.FindOne(object.CompellingOrb)
+
+					return !o.Selectable
+				},
+				step.SyncStep(func(d data.Data) error {
+					helper.Sleep(1000)
+					hid.PressKey(config.Config.Bindings.SwapWeapon)
+					return nil
+				})),
+			a.builder.Wait(time.Second*12),
+			a.builder.InteractObject(object.StairSR, func(d data.Data) bool {
+				return d.PlayerUnit.Area == area.DuranceOfHateLevel1
 			}),
 			a.builder.MoveToArea(area.DuranceOfHateLevel2),
 			a.builder.DiscoverWaypoint(),

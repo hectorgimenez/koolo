@@ -101,74 +101,49 @@ func (a Leveling) countess() action.Action {
 }
 
 func (a Leveling) deckardCain() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		a.logger.Info("Rescuing Cain")
-		actions := []action.Action{
-			a.builder.WayPoint(area.DarkWood),
-			a.char.Buff(),
-			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
-				for _, o := range d.Objects {
-					if o.Name == object.InifussTree {
-						return o.Position, true
-					}
-				}
-
-				return data.Position{}, false
-			}),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				for _, o := range d.Objects {
-					if o.Name == object.InifussTree {
-						return []step.Step{
-							step.InteractObject(o.Name, func(d data.Data) bool {
-								for _, o := range d.Objects {
-									if o.Name == object.InifussTree {
-										return !o.Selectable
-									}
-								}
-
-								return true
-							}),
+		if _, found := d.Items.Find("KeyToTheCairnStones"); !found {
+			actions = []action.Action{
+				a.builder.WayPoint(area.DarkWood),
+				a.char.Buff(),
+				a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+					for _, o := range d.Objects {
+						if o.Name == object.InifussTree {
+							return o.Position, true
 						}
 					}
-				}
 
-				return []step.Step{}
-			}),
+					return data.Position{}, false
+				}),
+				a.builder.InteractObject(object.InifussTree, func(d data.Data) bool {
+					_, found := d.Items.Find(scrollOfInifuss)
+					return found
+				}),
+				a.builder.ItemPickup(false, 30),
+				a.builder.ReturnTown(),
+				a.builder.InteractNPC(
+					npc.Akara,
+					step.KeySequence("esc"),
+				),
+			}
 
-			action.BuildStatic(func(d data.Data) []step.Step {
-				if scroll, found := d.Items.Find(scrollOfInifuss, item.LocationGround); found {
-					return []step.Step{step.PickupItem(a.logger, scroll)}
-				}
-
-				return nil
-			}, action.IgnoreErrors()),
-			a.builder.ReturnTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Akara),
-					step.SyncStep(func(d data.Data) error {
-						hid.PressKey("esc")
-						return nil
-					}),
-				}
-			}),
+			// Heal and refill pots
+			actions = append(actions,
+				a.builder.ReturnTown(),
+				a.builder.EnsureStatPoints(),
+				a.builder.EnsureSkillPoints(),
+				a.builder.RecoverCorpse(),
+				a.builder.IdentifyAll(false),
+				a.builder.Stash(false),
+				a.builder.VendorRefill(),
+				a.builder.EnsureSkillBindings(),
+				a.builder.Heal(),
+				a.builder.ReviveMerc(),
+				a.builder.HireMerc(),
+				a.builder.Repair(),
+			)
 		}
-
-		// Heal and refill pots
-		actions = append(actions,
-			a.builder.ReturnTown(),
-			a.builder.EnsureStatPoints(),
-			a.builder.EnsureSkillPoints(),
-			a.builder.RecoverCorpse(),
-			a.builder.IdentifyAll(false),
-			a.builder.Stash(false),
-			a.builder.VendorRefill(),
-			a.builder.EnsureSkillBindings(),
-			a.builder.Heal(),
-			a.builder.ReviveMerc(),
-			a.builder.HireMerc(),
-			a.builder.Repair(),
-		)
 
 		// Reuse Tristram Run actions
 		actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
@@ -244,12 +219,8 @@ func (a Leveling) andariel() action.Action {
 			}),
 			a.char.KillAndariel(),
 			a.builder.ReturnTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Warriv),
-					step.KeySequence("home", "down", "enter"),
-				}
-			}))
+			a.builder.InteractNPC(npc.Warriv, step.KeySequence("home", "down", "enter")),
+		)
 
 		return actions
 	})

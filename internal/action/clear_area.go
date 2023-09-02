@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b Builder) ClearAreaAroundPlayer(distance int) *DynamicAction {
+func (b *Builder) ClearAreaAroundPlayer(distance int) *DynamicAction {
 	originalPosition := data.Position{}
 	return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 		if originalPosition.X == 0 && originalPosition.Y == 0 {

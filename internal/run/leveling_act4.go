@@ -5,7 +5,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
 func (a Leveling) act4() action.Action {
@@ -43,10 +42,6 @@ func (a Leveling) izual() []action.Action {
 		}),
 		a.char.KillIzual(),
 		a.builder.ReturnTown(),
-		action.BuildStatic(func(d data.Data) []step.Step {
-			return []step.Step{
-				step.InteractNPC(npc.Tyrael2),
-			}
-		}),
+		a.builder.InteractNPC(npc.Tyrael2),
 	}
 }

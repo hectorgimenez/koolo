@@ -73,51 +73,32 @@ func (a Leveling) anya() action.Action {
 				anya, found := d.Objects.FindOne(object.FrozenAnya)
 				return anya.Position, found
 			}),
-			action.NewChain(func(d data.Data) (actions []action.Action) {
-				return []action.Action{
-					a.builder.ClearAreaAroundPlayer(15),
-					action.BuildStatic(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.InteractObject(object.FrozenAnya, nil),
-						}
-					}),
-				}
-			}),
+			a.builder.ClearAreaAroundPlayer(15),
+			a.builder.InteractObject(object.FrozenAnya, nil),
 			a.builder.ReturnTown(),
 			a.builder.IdentifyAll(false),
 			a.builder.Stash(false),
 			a.builder.ReviveMerc(),
 			a.builder.Repair(),
 			a.builder.VendorRefill(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Malah),
-				}
-			}),
+			a.builder.InteractNPC(npc.Malah),
 			a.builder.UsePortalInTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.FrozenAnya, nil),
-				}
-			}),
+			a.builder.InteractObject(object.FrozenAnya, nil),
 			a.builder.ReturnTown(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractNPC(npc.Malah),
-					step.SyncStep(func(d data.Data) error {
-						hid.PressKey("esc")
-						hid.PressKey(config.Config.Bindings.OpenInventory)
-						itm, _ := d.Items.Find("ScrollOfResistance")
-						screenPos := ui.GetScreenCoordsForItem(itm)
-						hid.MovePointer(screenPos.X, screenPos.Y)
-						helper.Sleep(200)
-						hid.Click(hid.RightButton)
-						hid.PressKey("esc")
+			a.builder.InteractNPC(npc.Malah,
+				step.SyncStep(func(d data.Data) error {
+					hid.PressKey("esc")
+					hid.PressKey(config.Config.Bindings.OpenInventory)
+					itm, _ := d.Items.Find("ScrollOfResistance")
+					screenPos := ui.GetScreenCoordsForItem(itm)
+					hid.MovePointer(screenPos.X, screenPos.Y)
+					helper.Sleep(200)
+					hid.Click(hid.RightButton)
+					hid.PressKey("esc")
 
-						return nil
-					}),
-				}
-			}),
+					return nil
+				}),
+			),
 		}
 	})
 }
@@ -137,26 +118,18 @@ func (a Leveling) ancients() action.Action {
 		actions = append(actions,
 			a.builder.UsePortalInTown(),
 			a.char.Buff(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.AncientsAltar, func(d data.Data) bool {
-						if len(d.Monsters.Enemies()) > 0 {
-							return true
-						}
-						hid.Click(hid.LeftButton)
-						helper.Sleep(1000)
-						return false
-					}),
+			a.builder.InteractObject(object.AncientsAltar, func(d data.Data) bool {
+				if len(d.Monsters.Enemies()) > 0 {
+					return true
 				}
+				hid.Click(hid.LeftButton)
+				helper.Sleep(1000)
+				return false
 			}),
 			char.KillAncients(),
-			action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.InteractObject(object.ArreatSummitDoorToWorldstone, func(d data.Data) bool {
-						obj, _ := d.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
-						return !obj.Selectable
-					}),
-				}
+			a.builder.InteractObject(object.ArreatSummitDoorToWorldstone, func(d data.Data) bool {
+				obj, _ := d.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
+				return !obj.Selectable
 			}),
 			a.builder.MoveToArea(area.TheWorldStoneKeepLevel1),
 			a.builder.MoveToArea(area.TheWorldStoneKeepLevel2),

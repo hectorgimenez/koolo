@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
 var fixedPlaceNearRedPortal = data.Position{
@@ -32,13 +31,9 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 	return []action.Action{
 		p.builder.WayPoint(area.Harrogath),              // Move to Act 5
 		p.builder.MoveToCoords(fixedPlaceNearRedPortal), // Moving closer to the portal to detect it
-		action.BuildStatic(func(d data.Data) []step.Step {
-			return []step.Step{
-				step.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
-					return d.PlayerUnit.Area == area.NihlathaksTemple
-				}),
-			}
-		}),
+		p.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+			return d.PlayerUnit.Area == area.NihlathaksTemple
+		}), // Enter Nihlathak's Temple
 		p.char.Buff(), // Buff
 		p.builder.MoveToCoords(pindleSafePosition), // Travel to boss position
 		p.char.KillPindle(p.SkipOnImmunities),      // Kill Pindleskin
