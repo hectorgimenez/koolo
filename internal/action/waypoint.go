@@ -84,6 +84,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 					hid.MovePointer(wpListPositionX, areaBtnY)
 					helper.Sleep(200)
 					hid.Click(hid.LeftButton)
+					helper.Sleep(1000)
 
 					return nil
 				}),
