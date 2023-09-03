@@ -155,7 +155,11 @@ func (w World) renderPathImg(d data.Data, path []astar.Pather, cgOffset data.Pos
 
 	for _, o := range d.Objects {
 		oPosX, oPosY := relativePosition(d, o.Position, cgOffset)
-		img.Set(oPosX, oPosY, color.RGBA{255, 165, 0, 255})
+		if o.IsDoor() {
+			img.Set(oPosX, oPosY, color.RGBA{101, 67, 33, 255})
+		} else {
+			img.Set(oPosX, oPosY, color.RGBA{255, 165, 0, 255})
+		}
 	}
 
 	for _, m := range d.Monsters {
