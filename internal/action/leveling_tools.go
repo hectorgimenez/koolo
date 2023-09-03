@@ -37,8 +37,8 @@ var uiSkillColumnPosition = [3]int{920, 1010, 1095}
 
 var previousTotalSkillNumber = 0
 
-func (b *Builder) EnsureStatPoints() *DynamicAction {
-	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+func (b *Builder) EnsureStatPoints() *StepChainAction {
+	return NewStepChain(func(d data.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
 		_, unusedStatPoints := d.PlayerUnit.Stats[stat.StatPoints]
 		if !isLevelingChar || !unusedStatPoints {
@@ -48,10 +48,10 @@ func (b *Builder) EnsureStatPoints() *DynamicAction {
 						hid.PressKey("esc")
 						return nil
 					}),
-				}, true
+				}
 			}
 
-			return nil, false
+			return nil
 		}
 
 		for st, targetPoints := range char.StatPoints(d) {
@@ -66,7 +66,7 @@ func (b *Builder) EnsureStatPoints() *DynamicAction {
 						hid.PressKey(config.Config.Bindings.OpenCharacterScreen)
 						return nil
 					}),
-				}, true
+				}
 			}
 
 			statBtnPosition := uiStatButtonPosition[st]
@@ -78,16 +78,16 @@ func (b *Builder) EnsureStatPoints() *DynamicAction {
 					helper.Sleep(500)
 					return nil
 				}),
-			}, true
+			}
 		}
 
-		return nil, false
-	}, CanBeSkipped())
+		return nil
+	}, RepeatUntilNoSteps())
 }
 
-func (b *Builder) EnsureSkillPoints() *DynamicAction {
+func (b *Builder) EnsureSkillPoints() *StepChainAction {
 	assignAttempts := 0
-	return BuildDynamic(func(d data.Data) ([]step.Step, bool) {
+	return NewStepChain(func(d data.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
 		availablePoints, unusedSkillPoints := d.PlayerUnit.Stats[stat.SkillPoints]
 		if !isLevelingChar || !unusedSkillPoints || assignAttempts >= availablePoints {
@@ -97,10 +97,10 @@ func (b *Builder) EnsureSkillPoints() *DynamicAction {
 						hid.PressKey("esc")
 						return nil
 					}),
-				}, true
+				}
 			}
 
-			return nil, false
+			return nil
 		}
 
 		skillTree := char.GetSkillTree()
@@ -118,7 +118,7 @@ func (b *Builder) EnsureSkillPoints() *DynamicAction {
 				position, skFound := skillTree[sk]
 				if !skFound {
 					b.logger.Error("skill not found for character", zap.Any("skill", sk))
-					return nil, false
+					return nil
 				}
 
 				if !d.OpenMenus.SkillTree {
@@ -127,7 +127,7 @@ func (b *Builder) EnsureSkillPoints() *DynamicAction {
 							hid.PressKey(config.Config.Bindings.OpenSkillTree)
 							return nil
 						}),
-					}, true
+					}
 				}
 
 				return []step.Step{
@@ -142,16 +142,16 @@ func (b *Builder) EnsureSkillPoints() *DynamicAction {
 						helper.Sleep(500)
 						return nil
 					}),
-				}, true
+				}
 			}
 		}
 
-		return nil, false
-	}, CanBeSkipped())
+		return nil
+	}, RepeatUntilNoSteps())
 }
 
-func (b *Builder) EnsureSkillBindings() *StaticAction {
-	return BuildStatic(func(d data.Data) []step.Step {
+func (b *Builder) EnsureSkillBindings() *StepChainAction {
+	return NewStepChain(func(d data.Data) []step.Step {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
 			return nil
 		}
@@ -212,7 +212,7 @@ func (b *Builder) EnsureSkillBindings() *StaticAction {
 		}
 
 		return nil
-	})
+	}, RepeatUntilNoSteps())
 }
 
 func (b *Builder) GetCompletedQuests(act int) (quests [6]bool) {
@@ -241,7 +241,7 @@ func (b *Builder) HireMerc() *Chain {
 				b.logger.Info("Hiring merc...")
 				actions = append(actions,
 					b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(), step.KeySequence("home", "down", "enter")),
-					BuildStatic(func(d data.Data) []step.Step {
+					NewStepChain(func(d data.Data) []step.Step {
 						sc := helper.Screenshot()
 						tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
 						if !tm.Found {

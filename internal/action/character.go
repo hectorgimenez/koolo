@@ -24,7 +24,7 @@ type Character interface {
 		monsterSelector func(d data.Data) (data.UnitID, bool),
 		skipOnImmunities []stat.Resist,
 		opts ...step.AttackOption,
-	) *DynamicAction
+	) Action
 }
 
 type LevelingCharacter interface {

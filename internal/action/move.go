@@ -15,11 +15,36 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) Action {
+func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
+	// Exception for Arcane Sanctuary, we need to find the portal first
+	if dst == area.ArcaneSanctuary {
+		return NewChain(func(d data.Data) []Action {
+			b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+			portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
+			return []Action{
+				b.MoveToCoords(portal.Position),
+				NewStepChain(func(d data.Data) []step.Step {
+					return []step.Step{
+						step.MoveTo(portal.Position),
+						step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+							return d.PlayerUnit.Area == area.ArcaneSanctuary
+						}),
+					}
+				}),
+			}
+		})
+	}
+
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.logger.Debug("Already in area", zap.Any("area", dst))
 			return data.Position{}, false
+		}
+
+		switch dst {
+		case area.MonasteryGate:
+			b.logger.Debug("Monastery Gate detected, moving to static coords")
+			return data.Position{X: 15139, Y: 5056}, true
 		}
 
 		for _, a := range d.AdjacentLevels {
@@ -61,7 +86,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) Actio
 	return NewChain(func(d data.Data) []Action {
 		return []Action{
 			b.MoveTo(toFun, opts...),
-			BuildStatic(func(d data.Data) []step.Step {
+			NewStepChain(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractEntrance(dst),
 				}
@@ -70,19 +95,19 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) Actio
 	})
 }
 
-func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Factory {
+func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Chain {
 	return b.MoveTo(func(d data.Data) (data.Position, bool) {
 		return to, true
 	}, opts...)
 }
 
-func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Factory {
+func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
 	var currentStep step.Step
 
-	return NewFactory(func(d data.Data) Action {
+	return NewChain(func(d data.Data) []Action {
 		to, found := toFunc(d)
 		if !found {
 			return nil
@@ -95,9 +120,9 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 
 		// If we are in town, skip all the logic and just move to the destination
 		if d.PlayerUnit.Area.IsTown() {
-			return BuildStatic(func(d data.Data) []step.Step {
+			return []Action{NewStepChain(func(d data.Data) []step.Step {
 				return []step.Step{step.MoveTo(to, opts...)}
-			})
+			})}
 		}
 
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
@@ -106,26 +131,26 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
 			if (!healingPotsFound || !manaPotsFound) && d.PlayerUnit.TotalGold() > 1000 {
-				return NewChain(func(d data.Data) []Action {
+				return []Action{NewChain(func(d data.Data) []Action {
 					return b.InRunReturnTownRoutine()
-				})
+				})}
 			}
 		}
 
 		if helper.CanTeleport(d) {
 			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
 			if !isLevelingChar {
-				return BuildStatic(func(d data.Data) []step.Step {
+				return []Action{NewStepChain(func(d data.Data) []step.Step {
 					return []step.Step{step.MoveTo(to, opts...)}
-				})
+				})}
 			}
 			// But if we are leveling and have enough money (to buy pots), let's teleport. We add the timeout
 			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
 			if d.PlayerUnit.TotalGold() > 10000 {
-				return BuildStatic(func(d data.Data) []step.Step {
+				return []Action{NewStepChain(func(d data.Data) []step.Step {
 					newOpts := append(opts, step.WithTimeout(5*time.Second))
 					return []step.Step{step.MoveTo(to, newOpts...)}
-				})
+				})}
 			}
 		}
 
@@ -133,7 +158,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 		for _, o := range d.Objects {
 			if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 				if o.Selectable {
-					return BuildStatic(func(d data.Data) []step.Step {
+					return []Action{NewStepChain(func(d data.Data) []step.Step {
 						b.logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
 						return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
@@ -144,7 +169,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 							}
 							return false
 						})}
-					}, CanBeSkipped())
+					}, CanBeSkipped())}
 				}
 			}
 		}
@@ -192,18 +217,18 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 
 			pickupBeforeMoving = true
 
-			return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				return closestMonster.UnitID, true
-			}, nil)
+			}, nil)}
 		}
 
 		if pickupBeforeMoving {
 			pickupBeforeMoving = false
-			return b.ItemPickup(false, 30)
+			return []Action{b.ItemPickup(false, 30)}
 		}
 
 		// Continue moving
-		return BuildStatic(func(d data.Data) []step.Step {
+		return []Action{NewStepChain(func(d data.Data) []step.Step {
 			newOpts := append(opts, step.ClosestWalkable(), step.WithTimeout(time.Millisecond*1000))
 			previousIterationPosition = d.PlayerUnit.Position
 			if currentStep == nil {
@@ -216,6 +241,6 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			}
 
 			return []step.Step{currentStep}
-		})
-	})
+		})}
+	}, RepeatUntilNoSteps())
 }

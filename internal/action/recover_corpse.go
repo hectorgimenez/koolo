@@ -8,8 +8,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b *Builder) RecoverCorpse() *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b *Builder) RecoverCorpse() *StepChainAction {
+	return NewStepChain(func(d data.Data) (steps []step.Step) {
 		b.logger.Debug("Checking for character corpse...")
 		if d.Corpse.Found {
 			b.logger.Info("Corpse found, let's recover our stuff...")

@@ -28,7 +28,7 @@ func (a Pit) BuildActions() (actions []action.Action) {
 	actions = append(actions, a.builder.MoveToArea(area.PitLevel1))
 
 	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
-		actions = append(actions, action.BuildStatic(func(_ data.Data) []step.Step {
+		actions = append(actions, action.NewStepChain(func(_ data.Data) []step.Step {
 			return []step.Step{step.OpenPortal()}
 		}))
 	}

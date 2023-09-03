@@ -46,6 +46,5 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	}))
 
 	// Kill Countess
-	actions = append(actions, c.char.KillCountess())
-	return
+	return append(actions, c.char.KillCountess())
 }

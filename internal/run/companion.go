@@ -5,7 +5,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -29,39 +28,37 @@ func (s Companion) BuildActions() (actions []action.Action) {
 
 	// Wait for the portal, once it's up, enter and wait
 	portalFound := false
-	actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
+	actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 		if !portalFound {
 			for _, o := range d.Objects {
 				if o.IsPortal() {
 					portalFound = true
+					return []step.Step{
+						step.MoveTo(o.Position),
+						step.InteractObject(o.Name, func(d data.Data) bool {
+							return !d.PlayerUnit.Area.IsTown()
+						}),
+					}
 				}
 			}
 
-			if portalFound {
-				return s.builder.InteractObject(object.TownPortal, func(d data.Data) bool {
-					return !d.PlayerUnit.Area.IsTown()
-				})
-			}
-
-			return action.BuildStatic(func(d data.Data) []step.Step {
-				return []step.Step{step.Wait(time.Second)}
-			})
+			return []step.Step{step.Wait(time.Second)}
 		}
 
 		return nil
 	}))
 
-	actions = append(actions, action.NewFactory(func(d data.Data) action.Action {
+	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 		rm, found := d.Roster.FindByName(config.Config.Companion.LeaderName)
 		if !found {
 			return nil
 		}
 
 		if d.PlayerUnit.Area == area.ThroneOfDestruction {
-			return s.builder.Wait(time.Second)
+			return []action.Action{s.builder.Wait(time.Second)}
 		}
 
-		return s.builder.MoveToCoords(rm.Position)
+		return []action.Action{s.builder.MoveToCoords(rm.Position)}
 	}))
 
 	return actions

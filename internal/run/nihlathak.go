@@ -33,7 +33,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 
 	// Move close to Nilhatak, but don't teleport over all the monsters
 	var nilaO data.Object
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+	actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 		for _, o := range d.Objects {
 			if o.Name == object.NihlathakWildernessStartPositionName {
 				nilaO = o
@@ -45,7 +45,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	}))
 
 	// Try to find the safest place
-	actions = append(actions, action.BuildStatic(func(d data.Data) []step.Step {
+	actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 		corners := [4]data.Position{
 			{
 				X: nilaO.Position.X + 13,

@@ -12,8 +12,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
-func (b *Builder) IdentifyAll(skipIdentify bool) *StaticAction {
-	return BuildStatic(func(d data.Data) (steps []step.Step) {
+func (b *Builder) IdentifyAll(skipIdentify bool) *StepChainAction {
+	return NewStepChain(func(d data.Data) (steps []step.Step) {
 		items := b.itemsToIdentify(d)
 
 		b.logger.Debug("Checking for items to identify...")

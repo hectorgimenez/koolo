@@ -11,11 +11,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory {
+func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 	var clearedRooms []data.Room
 	openedDoors := make(map[object.Name]data.Position)
 
-	return NewFactory(func(d data.Data) Action {
+	return NewChain(func(d data.Data) []Action {
 		var currentRoom data.Room
 		for _, r := range d.Rooms {
 			if r.IsInside(d.PlayerUnit.Position) {
@@ -30,9 +30,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
 			if (!healingPotsFound || !manaPotsFound) && d.PlayerUnit.TotalGold() > 1000 {
-				return NewChain(func(d data.Data) []Action {
-					return b.InRunReturnTownRoutine()
-				})
+				return b.InRunReturnTownRoutine()
 			}
 		}
 
@@ -42,7 +40,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 					if o.Selectable {
 						b.logger.Info("Door detected and teleport is not available, trying to open it...")
-						return b.InteractObject(o.Name, func(d data.Data) bool {
+						return []Action{b.InteractObject(o.Name, func(d data.Data) bool {
 							for _, obj := range d.Objects {
 								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
 									openedDoors[o.Name] = o.Position
@@ -50,7 +48,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 								}
 							}
 							return false
-						})
+						})}
 					}
 				}
 			}
@@ -67,15 +65,15 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 			// Check if there are monsters that can summon new monsters, and kill them first
 			for _, m := range monstersInRoom {
 				if m.IsMonsterRaiser() {
-					return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
-					}, nil, step.Distance(5, 15))
+					}, nil, step.Distance(5, 15))}
 				}
 			}
 
-			return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				return monstersInRoom[0].UnitID, true
-			}, nil, step.Distance(5, 15))
+			}, nil, step.Distance(5, 15))}
 		}
 
 		if alreadyCleared(currentRoom, clearedRooms) {
@@ -99,7 +97,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 				}
 			}
 
-			return BuildStatic(func(d data.Data) []step.Step {
+			return []Action{NewStepChain(func(d data.Data) []step.Step {
 				_, _, found := pather.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {
@@ -116,7 +114,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 					step.ClosestWalkable(),
 					step.WithTimeout(time.Second),
 				)}
-			})
+			})}
 		}
 
 		clearedRooms = append(clearedRooms, currentRoom)
@@ -126,7 +124,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 			for _, o := range d.Objects {
 				if o.IsSuperChest() && o.Selectable && currentRoom.IsInside(o.Position) {
 					chest := o
-					return b.InteractObject(chest.Name, func(d data.Data) bool {
+					return []Action{b.InteractObject(chest.Name, func(d data.Data) bool {
 						for _, obj := range d.Objects {
 							if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
 								return false
@@ -134,12 +132,12 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Factory
 						}
 
 						return true
-					})
+					})}
 				}
 			}
 		}
 
-		return b.ItemPickup(false, 60)
+		return []Action{b.ItemPickup(false, 60)}
 	})
 }
 
