@@ -138,7 +138,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		}
 
 		return []Action{b.ItemPickup(false, 60)}
-	})
+	}, RepeatUntilNoSteps())
 }
 
 func alreadyCleared(room data.Room, clearedRooms []data.Room) bool {
