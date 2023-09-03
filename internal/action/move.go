@@ -16,10 +16,35 @@ import (
 )
 
 func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
+	// Exception for Arcane Sanctuary, we need to find the portal first
+	if dst == area.ArcaneSanctuary {
+		return NewChain(func(d data.Data) []Action {
+			b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+			portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
+			return []Action{
+				b.MoveToCoords(portal.Position),
+				NewStepChain(func(d data.Data) []step.Step {
+					return []step.Step{
+						step.MoveTo(portal.Position),
+						step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+							return d.PlayerUnit.Area == area.ArcaneSanctuary
+						}),
+					}
+				}),
+			}
+		})
+	}
+
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.logger.Debug("Already in area", zap.Any("area", dst))
 			return data.Position{}, false
+		}
+
+		switch dst {
+		case area.MonasteryGate:
+			b.logger.Debug("Monastery Gate detected, moving to static coords")
+			return data.Position{X: 15139, Y: 5056}, true
 		}
 
 		for _, a := range d.AdjacentLevels {
@@ -83,7 +108,6 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 	var currentStep step.Step
 
 	return NewChain(func(d data.Data) []Action {
-		b.logger.Info("CALLED MOVE TO")
 		to, found := toFunc(d)
 		if !found {
 			return nil

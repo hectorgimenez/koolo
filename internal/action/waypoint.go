@@ -3,7 +3,6 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -20,117 +19,92 @@ const (
 )
 
 func (b *Builder) WayPoint(a area.Area) *Chain {
-	usedWP := false
-	isChild := false
-	return NewChain(func(d data.Data) []Action {
-		if d.PlayerUnit.Area != a && !usedWP {
-			usedWP = true
-			return []Action{b.useWP(a)}
+	return NewChain(func(d data.Data) (actions []Action) {
+		// We don't need to move, we are already at destination area
+		if d.PlayerUnit.Area == a {
+			return nil
 		}
 
-		if d.PlayerUnit.Area != a {
-			dstWP := area.WPAddresses[a]
-			if isChild {
-				return b.traverseNextWP(a, dstWP.LinkedFrom)
-			} else {
-				b.logger.Info("Waypoint not found (or error occurred) try to autodiscover it", zap.Any("area", a))
-
-				_, found := area.WPAddresses[dstWP.LinkedFrom[0]]
-				if found {
-					isChild = true
-					return []Action{b.WayPoint(dstWP.LinkedFrom[0])}
-				}
-			}
+		return []Action{
+			b.openWPAndSelectTab(a, d),
+			b.useWP(a),
 		}
-
-		return nil
 	})
 }
 
-func (b *Builder) traverseNextWP(dst area.Area, areas []area.Area) (actions []Action) {
-	areas = append(areas, dst)
-	logAreas := make([]int, len(areas))
-	b.logger.Debug("Traversing to next WP...")
-	for _, a := range areas {
-		logAreas = append(logAreas, int(a))
-		switch a {
-		case area.MonasteryGate:
-			b.logger.Debug("Monastery Gate detected, moving to static coords")
-			actions = append(actions,
-				b.MoveToCoords(data.Position{X: 15139, Y: 5056}),
-			)
-		case area.ArcaneSanctuary:
-			actions = append(actions,
-				NewChain(func(d data.Data) []Action {
-					b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
-					portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
-					return []Action{
-						b.MoveToCoords(portal.Position),
-						NewStepChain(func(d data.Data) []step.Step {
-							return []step.Step{
-								step.MoveTo(portal.Position),
-								step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
-									return d.PlayerUnit.Area == area.ArcaneSanctuary
-								}),
-							}
-						}),
-					}
+func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
+	wpCoords, found := area.WPAddresses[a]
+	if !found {
+		panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
+	}
+
+	for _, o := range d.Objects {
+		if o.IsWaypoint() {
+			return b.InteractObject(o.Name, func(d data.Data) bool {
+				return d.OpenMenus.Waypoint
+			},
+				step.SyncStep(func(d data.Data) error {
+					actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
+
+					hid.MovePointer(actTabX, wpTabStartY)
+					helper.Sleep(200)
+					hid.Click(hid.LeftButton)
+					helper.Sleep(200)
+
+					return nil
 				}),
-			)
-		default:
-			actions = append(actions,
-				b.ch.Buff(),
-				b.MoveToArea(a),
 			)
 		}
 	}
 
-	actions = append(actions,
-		b.DiscoverWaypoint(),
-	)
-
-	b.logger.Debug("Linked areas to traverse", zap.Ints("areas", logAreas))
-	return actions
+	return nil
 }
 
-func (b *Builder) useWP(a area.Area) Action {
-	return NewStepChain(func(d data.Data) (steps []step.Step) {
-		// We don't need to move
-		if d.PlayerUnit.Area == a {
-			return
+func (b *Builder) useWP(a area.Area) *Chain {
+	return NewChain(func(d data.Data) []Action {
+		sc := helper.Screenshot()
+
+		nextAvailableWP := area.WPAddresses[a]
+		traverseAreas := make([]area.Area, 0)
+		for {
+			tm := b.tf.FindInArea("ui_discovered_wp", sc, wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+60, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
+			if !tm.Found {
+				traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
+				nextAvailableWP = area.WPAddresses[nextAvailableWP.LinkedFrom[0]]
+				continue
+			}
+			break
 		}
 
-		wpCoords, found := area.WPAddresses[a]
-		if !found {
-			panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
-		}
+		// First use the previous available waypoint that we have discovered
+		actions := []Action{NewStepChain(func(d data.Data) []step.Step {
+			return []step.Step{
+				step.SyncStep(func(d data.Data) error {
+					areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
+					hid.MovePointer(wpListPositionX, areaBtnY)
+					helper.Sleep(200)
+					hid.Click(hid.LeftButton)
 
-		for _, o := range d.Objects {
-			if o.IsWaypoint() {
-				steps = append(steps,
-					step.MoveTo(o.Position),
-					step.InteractObject(o.Name, func(d data.Data) bool {
-						return d.OpenMenus.Waypoint
-					}),
-					step.SyncStep(func(d data.Data) error {
-						actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
+					return nil
+				}),
+			}
+		})}
 
-						areaBtnY := wpListStartY + (wpCoords.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-						hid.MovePointer(actTabX, wpTabStartY)
-						helper.Sleep(200)
-						hid.Click(hid.LeftButton)
-						helper.Sleep(200)
-						hid.MovePointer(wpListPositionX, areaBtnY)
-						helper.Sleep(200)
-						hid.Click(hid.LeftButton)
-						helper.Sleep(1000)
+		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
+		if len(traverseAreas) > 0 {
+			// Remove the first area (we are on it) and append the destination area
+			traverseAreas = append(traverseAreas[1:], a)
+			b.logger.Info("Traversing areas to reach destination", zap.Any("areas", traverseAreas))
 
-						return nil
-					}),
+			for _, dst := range traverseAreas {
+				actions = append(actions,
+					b.ch.Buff(),
+					b.MoveToArea(dst),
+					b.DiscoverWaypoint(),
 				)
 			}
 		}
 
-		return
-	}, IgnoreErrors())
+		return actions
+	})
 }
