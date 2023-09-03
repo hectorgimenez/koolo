@@ -68,7 +68,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		traverseAreas := make([]area.Area, 0)
 		for {
 			tm := b.tf.FindInArea("ui_discovered_wp", sc, wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+60, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
-			if !tm.Found {
+			if !tm.Found && nextAvailableWP.Row != 1 {
 				traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
 				nextAvailableWP = area.WPAddresses[nextAvailableWP.LinkedFrom[0]]
 				continue
