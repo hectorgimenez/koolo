@@ -94,7 +94,7 @@ func createMask(tpl gocv.Mat) gocv.Mat {
 
 func (tf *TemplateFinder) FindInArea(tplName string, img image.Image, x0, y0, x1, y1 int) TemplateMatch {
 	t := time.Now()
-	threshold := float32(0.83)
+	threshold := float32(0.80)
 	colorDiffThreshold := float64(75)
 
 	bigmat, err := gocv.ImageToMatRGB(img)
@@ -112,6 +112,7 @@ func (tf *TemplateFinder) FindInArea(tplName string, img image.Image, x0, y0, x1
 
 	tpl, ok := tf.templates[tplName]
 	if !ok {
+		tf.logger.Error("Template not found", zap.String("template", tplName))
 		return TemplateMatch{
 			Score: 0,
 			Found: false,

@@ -25,7 +25,6 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 				b.MoveToCoords(portal.Position),
 				NewStepChain(func(d data.Data) []step.Step {
 					return []step.Step{
-						step.MoveTo(portal.Position),
 						step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
 							return d.PlayerUnit.Area == area.ArcaneSanctuary
 						}),
@@ -144,7 +143,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 					return []step.Step{step.MoveTo(to, opts...)}
 				})}
 			}
-			// But if we are leveling and have enough money (to buy pots), let's teleport. We add the timeout
+			// But if we are leveling and have enough money (to buy mana pots), let's teleport. We add the timeout
 			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
 			if d.PlayerUnit.TotalGold() > 10000 {
 				return []Action{NewStepChain(func(d data.Data) []step.Step {
@@ -217,9 +216,22 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 
 			pickupBeforeMoving = true
 
-			return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-				return closestMonster.UnitID, true
-			}, nil)}
+			path, _, mPathFound := pather.GetPath(d, closestMonster.Position)
+			if mPathFound {
+				doorIsBlocking := false
+				for _, o := range d.Objects {
+					if o.IsDoor() && o.Selectable && path.Intersects(d, o.Position, 4) {
+						b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
+						doorIsBlocking = true
+					}
+				}
+
+				if !doorIsBlocking {
+					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+						return closestMonster.UnitID, true
+					}, nil)}
+				}
+			}
 		}
 
 		if pickupBeforeMoving {

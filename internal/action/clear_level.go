@@ -62,18 +62,34 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		}
 
 		if len(monstersInRoom) > 0 {
+			targetMonster := monstersInRoom[0]
 			// Check if there are monsters that can summon new monsters, and kill them first
 			for _, m := range monstersInRoom {
 				if m.IsMonsterRaiser() {
-					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-						return m.UnitID, true
-					}, nil, step.Distance(5, 15))}
+					targetMonster = m
 				}
 			}
 
-			return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-				return monstersInRoom[0].UnitID, true
-			}, nil, step.Distance(5, 15))}
+			path, _, mPathFound := pather.GetPath(d, targetMonster.Position)
+			if mPathFound {
+				doorIsBlocking := false
+				if !helper.CanTeleport(d) {
+					for _, o := range d.Objects {
+						if o.IsDoor() && o.Selectable && path.Intersects(d, o.Position, 4) {
+							b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
+							doorIsBlocking = true
+						}
+					}
+				}
+
+				if !doorIsBlocking {
+					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+						return targetMonster.UnitID, true
+					}, nil, step.Distance(5, 15))}
+				} else {
+					b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
+				}
+			}
 		}
 
 		if alreadyCleared(currentRoom, clearedRooms) {
