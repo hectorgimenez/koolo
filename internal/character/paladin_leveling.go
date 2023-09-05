@@ -109,24 +109,35 @@ func (p PaladinLeveling) KillCouncil() action.Action {
 }
 
 func (p PaladinLeveling) KillDiablo() action.Action {
+	timeout := time.Second * 20
+	startTime := time.Time{}
+	diabloFound := false
 	return action.NewChain(func(d data.Data) []action.Action {
-		return []action.Action{
-			action.NewStepChain(func(d data.Data) []step.Step {
-				return []step.Step{step.Wait(time.Second * 20)}
-			}),
-			action.NewChain(func(d data.Data) []action.Action {
-				_, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
-				if !found {
-					return nil
-				}
-
-				p.logger.Info("Diablo detected, attacking")
-				return []action.Action{
-					p.killMonster(npc.Diablo, data.MonsterTypeNone),
-				}
-			}),
+		if startTime.IsZero() {
+			startTime = time.Now()
 		}
-	})
+
+		if time.Since(startTime) > timeout && !diabloFound {
+			p.logger.Error("Diablo was not found, timeout reached")
+			return nil
+		}
+
+		_, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		if !found {
+			// Keep waiting...
+			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Millisecond * 100)}
+			})}
+		}
+
+		p.logger.Info("Diablo detected, attacking")
+
+		return []action.Action{
+			p.killMonster(npc.Diablo, data.MonsterTypeNone),
+			p.killMonster(npc.Diablo, data.MonsterTypeNone),
+			p.killMonster(npc.Diablo, data.MonsterTypeNone),
+		}
+	}, action.RepeatUntilNoSteps())
 }
 
 func (p PaladinLeveling) KillIzual() action.Action {
@@ -139,14 +150,14 @@ func (p PaladinLeveling) KillBaal() action.Action {
 
 func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
-	previousUnitID := 0
+	var previousUnitID data.UnitID = 0
 
 	return action.NewStepChain(func(d data.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
 		}
-		if previousUnitID != int(id) {
+		if previousUnitID != id {
 			completedAttackLoops = 0
 		}
 
@@ -160,11 +171,21 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 		steps := make([]step.Step, 0)
 
-		numOfAttacks := 10
+		numOfAttacks := 5
 
+		//m, _ := d.Monsters.FindByID(id)
 		if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 {
+			// Add a random movement, maybe hammer is not hitting the target
+			if previousUnitID == id {
+				steps = append(steps,
+					step.SyncStep(func(_ data.Data) error {
+						pather.RandomMovement()
+						return nil
+					}),
+				)
+			}
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(3, 5), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 5), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal] > 0 {
@@ -177,7 +198,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 		}
 
 		completedAttackLoops++
-		previousUnitID = int(id)
+		previousUnitID = id
 		return steps
 	}, action.RepeatUntilNoSteps())
 }

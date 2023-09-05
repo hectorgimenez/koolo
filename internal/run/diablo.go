@@ -131,7 +131,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 			for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 				if a.isSealElite(m) {
-					a.logger.Debug("FOUND SEAL DEFENDER!!!")
+					a.logger.Debug("Found a seal defender")
 					return m.UnitID, true
 				}
 			}
