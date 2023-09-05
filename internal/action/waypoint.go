@@ -7,10 +7,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
+	"gocv.io/x/gocv"
 )
 
 const (
-	wpTabStartX     = 130
+	wpTabStartX     = 131
 	wpTabStartY     = 148
 	wpTabSizeX      = 57
 	wpListPositionX = 200
@@ -61,13 +62,14 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 }
 
 func (b *Builder) useWP(a area.Area) *Chain {
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d data.Data) (actions []Action) {
 		sc := helper.Screenshot()
 
 		nextAvailableWP := area.WPAddresses[a]
 		traverseAreas := make([]area.Area, 0)
 		for {
-			tm := b.tf.FindInArea("ui_discovered_wp", sc, wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+60, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
+			//tm := b.tf.FindInArea("ui_discovered_wp", sc, wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+60, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
+			tm := b.tf.MatchColorInArea(sc, gocv.NewScalar(3, 230, 230, 0), gocv.NewScalar(140, 255, 255, 0), wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+9, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
 			if !tm.Found && nextAvailableWP.Row != 1 {
 				traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
 				nextAvailableWP = area.WPAddresses[nextAvailableWP.LinkedFrom[0]]
@@ -77,33 +79,38 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		}
 
 		// First use the previous available waypoint that we have discovered
-		actions := []Action{NewStepChain(func(d data.Data) []step.Step {
-			return []step.Step{
-				step.SyncStep(func(d data.Data) error {
-					areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-					hid.MovePointer(wpListPositionX, areaBtnY)
-					helper.Sleep(200)
-					hid.Click(hid.LeftButton)
-					helper.Sleep(1000)
+		if nextAvailableWP.Row != 1 {
+			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{
+					step.SyncStep(func(d data.Data) error {
+						areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
+						hid.MovePointer(wpListPositionX, areaBtnY)
+						helper.Sleep(200)
+						hid.Click(hid.LeftButton)
+						helper.Sleep(1000)
 
-					return nil
-				}),
-			}
-		})}
+						return nil
+					}),
+				}
+			}))
+		}
+
+		traverseAreas = append(traverseAreas, a)
 
 		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
-		if len(traverseAreas) > 0 {
+		if len(traverseAreas) > 1 {
 			// Remove the first area (we are on it) and append the destination area
-			traverseAreas = append(traverseAreas[1:], a)
-			b.logger.Info("Traversing areas to reach destination", zap.Any("areas", traverseAreas))
+			traverseAreas = traverseAreas[1:]
+		}
 
-			for _, dst := range traverseAreas {
-				actions = append(actions,
-					b.ch.Buff(),
-					b.MoveToArea(dst),
-					b.DiscoverWaypoint(),
-				)
-			}
+		b.logger.Info("Traversing areas to reach destination", zap.Any("areas", traverseAreas))
+
+		for _, dst := range traverseAreas {
+			actions = append(actions,
+				b.ch.Buff(),
+				b.MoveToArea(dst),
+				b.DiscoverWaypoint(),
+			)
 		}
 
 		return actions
