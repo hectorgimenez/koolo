@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"go.uber.org/zap"
 )
 
 type PaladinLeveling struct {
@@ -173,7 +174,8 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 		numOfAttacks := 5
 
-		//m, _ := d.Monsters.FindByID(id)
+		m, _ := d.Monsters.FindByID(id)
+		p.logger.Debug("ATTACKING MONSTER", zap.Any("monster", m.Name))
 		if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 {
 			// Add a random movement, maybe hammer is not hitting the target
 			if previousUnitID == id {
@@ -185,7 +187,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 				)
 			}
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 5), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal] > 0 {
@@ -212,11 +214,20 @@ func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {
 		}
 	}
 
-	if d.PlayerUnit.Stats[stat.Level] >= 30 {
+	if d.PlayerUnit.Stats[stat.Level] >= 30 && d.PlayerUnit.Stats[stat.Level] < 45 {
 		return map[stat.ID]int{
-			stat.Strength:  48,
+			stat.Strength:  50,
 			stat.Dexterity: 40,
-			stat.Vitality:  200,
+			stat.Vitality:  220,
+			stat.Energy:    0,
+		}
+	}
+
+	if d.PlayerUnit.Stats[stat.Level] >= 45 {
+		return map[stat.ID]int{
+			stat.Strength:  86,
+			stat.Dexterity: 50,
+			stat.Vitality:  300,
 			stat.Energy:    0,
 		}
 	}

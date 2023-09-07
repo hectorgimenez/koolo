@@ -71,7 +71,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 		}
 
 		return nil
-	})
+	}, RepeatUntilNoSteps())
 }
 
 func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {

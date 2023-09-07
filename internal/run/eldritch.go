@@ -18,7 +18,6 @@ func (a Eldritch) Name() string {
 func (a Eldritch) BuildActions() (actions []action.Action) {
 	return []action.Action{
 		a.builder.WayPoint(area.FrigidHighlands), // Moving to starting point (Frigid Highlands)
-		a.char.Buff(),                            // Buff
 		a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 			if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
 				return m.UnitID, true

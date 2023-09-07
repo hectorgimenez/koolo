@@ -19,7 +19,6 @@ func (a Pit) Name() string {
 func (a Pit) BuildActions() (actions []action.Action) {
 	actions = append(actions,
 		a.builder.WayPoint(area.BlackMarsh),      // Moving to starting point (OuterCloister)
-		a.char.Buff(),                            // Buff
 		a.builder.MoveToArea(area.TamoeHighland), // Move to TamoeHighland
 	)
 

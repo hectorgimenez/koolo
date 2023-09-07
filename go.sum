@@ -24,8 +24,8 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/hectorgimenez/d2go v0.0.0-20230902045739-4d8e4c00a744 h1:Cc8BAREg/hI4SkWGAJPAWtPzhueMzjL8gAPhcz1Je2A=
-github.com/hectorgimenez/d2go v0.0.0-20230902045739-4d8e4c00a744/go.mod h1:AEioDWKUxWy8GYYS9nH9nyRrGflwRpnumXb6MH6tJE0=
+github.com/hectorgimenez/d2go v0.0.0-20230907133851-d2d954a65ad9 h1:iuXliYNFRjhhHRk0BiLsClcWVmtu7R70cJ+EQ7Gow50=
+github.com/hectorgimenez/d2go v0.0.0-20230907133851-d2d954a65ad9/go.mod h1:AEioDWKUxWy8GYYS9nH9nyRrGflwRpnumXb6MH6tJE0=
 github.com/hybridgroup/mjpeg v0.0.0-20140228234708-4680f319790e/go.mod h1:eagM805MRKrioHYuU7iKLUyFPVKqVV6um5DAvCkUtXs=
 github.com/jezek/xgb v1.1.0 h1:wnpxJzP1+rkbGclEkmwpVFQWpuE2PUGNUzP8SbfFobk=
 github.com/jezek/xgb v1.1.0/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=

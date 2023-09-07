@@ -20,7 +20,6 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	// Travel to boss level
 	actions = append(actions,
 		c.builder.WayPoint(area.BlackMarsh), // Moving to starting point (Black Marsh)
-		c.char.Buff(),                       // Buff
 		c.builder.MoveToArea(area.ForgottenTower),
 		c.builder.MoveToArea(area.TowerCellarLevel1),
 		c.builder.MoveToArea(area.TowerCellarLevel2),

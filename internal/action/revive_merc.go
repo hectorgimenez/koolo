@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -12,7 +13,7 @@ func (b *Builder) ReviveMerc() *Chain {
 	return NewChain(func(d data.Data) []Action {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if config.Config.Character.UseMerc && d.MercHPPercent() <= 0 {
-			if isLevelingChar && d.PlayerUnit.Area == area.RogueEncampment {
+			if isLevelingChar && d.PlayerUnit.Area == area.RogueEncampment && config.Config.Game.Difficulty == difficulty.Normal {
 				// Ignoring because merc is not hired yet
 				return nil
 			}

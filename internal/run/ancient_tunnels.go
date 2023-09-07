@@ -18,8 +18,7 @@ func (a AncientTunnels) Name() string {
 
 func (a AncientTunnels) BuildActions() []action.Action {
 	actions := []action.Action{
-		a.builder.WayPoint(area.LostCity), // Moving to starting point (Lost City)
-		a.char.Buff(),
+		a.builder.WayPoint(area.LostCity),         // Moving to starting point (Lost City)
 		a.builder.MoveToArea(area.AncientTunnels), // Travel to ancient tunnels
 	}
 

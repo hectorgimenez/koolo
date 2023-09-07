@@ -23,7 +23,6 @@ func (a Tristram) Name() string {
 func (a Tristram) BuildActions() []action.Action {
 	actions := []action.Action{
 		a.builder.WayPoint(area.StonyField), // Moving to starting point (Stony Field)
-		a.char.Buff(),                       // Buff
 		action.NewChain(func(d data.Data) []action.Action {
 			for _, o := range d.Objects {
 				if o.Name == object.CairnStoneAlpha {

@@ -53,7 +53,7 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 	i.tryTransitionStatus(StatusInProgress)
 
 	// Give some time before retrying the interaction
-	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*2 {
+	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second {
 		return nil
 	}
 

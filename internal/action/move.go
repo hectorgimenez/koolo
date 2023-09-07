@@ -117,16 +117,9 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			return nil
 		}
 
-		// If we are in town, skip all the logic and just move to the destination
-		if d.PlayerUnit.Area.IsTown() {
-			return []Action{NewStepChain(func(d data.Data) []step.Step {
-				return []step.Step{step.MoveTo(to, opts...)}
-			})}
-		}
-
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar {
+		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
 			if (!healingPotsFound || !manaPotsFound) && d.PlayerUnit.TotalGold() > 1000 {
@@ -214,8 +207,6 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 				b.logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
 			}
 
-			pickupBeforeMoving = true
-
 			path, _, mPathFound := pather.GetPath(d, closestMonster.Position)
 			if mPathFound {
 				doorIsBlocking := false
@@ -227,6 +218,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 				}
 
 				if !doorIsBlocking {
+					pickupBeforeMoving = true
 					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return closestMonster.UnitID, true
 					}, nil)}

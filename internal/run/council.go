@@ -17,7 +17,6 @@ func (s Council) Name() string {
 func (s Council) BuildActions() []action.Action {
 	return []action.Action{
 		s.builder.WayPoint(area.Travincal), // Moving to starting point (Travincal)
-		s.char.Buff(),                      // Buff
 		s.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			for _, al := range d.AdjacentLevels {
 				if al.Area == area.DuranceOfHateLevel1 {

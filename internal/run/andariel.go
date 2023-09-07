@@ -22,7 +22,6 @@ func (a Andariel) Name() string {
 func (a Andariel) BuildActions() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.CatacombsLevel2), // Moving to starting point (Catacombs Level 2)
-		a.char.Buff(),                            // Buff
 		a.builder.MoveToArea(area.CatacombsLevel3),
 		a.builder.MoveToArea(area.CatacombsLevel4),
 		a.builder.MoveToCoords(andarielStartingPosition), // Travel to boss position

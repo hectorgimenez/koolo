@@ -12,7 +12,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -21,6 +20,7 @@ func (a Leveling) act5() action.Action {
 		if d.PlayerUnit.Area != area.Harrogath {
 			return nil
 		}
+
 		quests := a.builder.GetCompletedQuests(5)
 		if quests[4] {
 			a.logger.Info("Starting Baal run...")
@@ -43,15 +43,16 @@ func (a Leveling) act5() action.Action {
 		}
 
 		wp, _ := d.Objects.FindOne(object.ExpansionWaypoint)
-		if dist := pather.DistanceFromMe(d, wp.Position); dist > 10 {
-			return []action.Action{a.builder.MoveToCoords(wp.Position)}
-		}
+		actions := []action.Action{a.builder.MoveToCoords(wp.Position)}
+		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+			if _, found := d.Monsters.FindOne(npc.Drehya, data.MonsterTypeNone); !found {
+				return a.anya()
+			}
 
-		if _, found := d.Monsters.FindOne(npc.Drehya, data.MonsterTypeNone); !found {
-			return a.anya()
-		}
+			return a.ancients()
+		}))
 
-		return a.ancients()
+		return actions
 	})
 }
 

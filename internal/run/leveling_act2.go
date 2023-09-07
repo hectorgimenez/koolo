@@ -286,6 +286,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	// Return to the city, ensure we have pots and everything, and get some thawing potions
 	actions = append(actions,
 		a.builder.ReturnTown(),
+		a.builder.ReviveMerc(),
 		a.builder.VendorRefill(),
 		a.builder.BuyAtVendor(npc.Lysander, action.VendorItemRequest{
 			Item:     "ThawingPotion",

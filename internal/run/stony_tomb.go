@@ -21,7 +21,6 @@ func (a StonyTomb) BuildActions() (actions []action.Action) {
 	// actions = append(actions, a.builder.MoveToAreaAndKill(area.))
 	actions = append(actions,
 		a.builder.WayPoint(area.DryHills),
-		a.char.Buff(),
 		a.builder.MoveToArea(area.RockyWaste),
 		a.builder.MoveToArea(area.StonyTombLevel1),
 	)
