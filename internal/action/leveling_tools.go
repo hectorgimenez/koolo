@@ -215,12 +215,17 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 	}, RepeatUntilNoSteps())
 }
 
-func (b *Builder) GetCompletedQuests(act int) (quests [6]bool) {
+func (b *Builder) GetCompletedQuests(act int) []bool {
 	hid.PressKey(config.Config.Bindings.OpenQuestLog)
 	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
 	helper.Sleep(200)
 	hid.Click(hid.LeftButton)
 	helper.Sleep(3000)
+
+	quests := make([]bool, 6)
+	if act == 4 {
+		quests = make([]bool, 3)
+	}
 
 	sc := helper.Screenshot()
 	for i := 0; i < len(quests); i++ {
