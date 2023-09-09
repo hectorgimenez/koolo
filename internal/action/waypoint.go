@@ -79,40 +79,35 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		}
 
 		// First use the previous available waypoint that we have discovered
-		if nextAvailableWP.Row != 1 {
-			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
-				return []step.Step{
-					step.SyncStep(func(d data.Data) error {
-						areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-						hid.MovePointer(wpListPositionX, areaBtnY)
-						helper.Sleep(200)
-						hid.Click(hid.LeftButton)
-						helper.Sleep(1000)
+		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+			return []step.Step{
+				step.SyncStep(func(d data.Data) error {
+					areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
+					hid.MovePointer(wpListPositionX, areaBtnY)
+					helper.Sleep(200)
+					hid.Click(hid.LeftButton)
+					helper.Sleep(1000)
 
-						return nil
-					}),
-				}
-			}))
-		}
+					return nil
+				}),
+			}
+		}))
 
 		traverseAreas = append(traverseAreas, a)
 
 		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
-		if len(traverseAreas) > 1 {
-			// Remove the first area (we are on it) and append the destination area
-			traverseAreas = traverseAreas[1:]
-		}
-
 		b.logger.Info("Traversing areas to reach destination", zap.Any("areas", traverseAreas))
 
 		for i, dst := range traverseAreas {
 			actions = append(actions,
 				b.ch.Buff(),
-				b.MoveToArea(dst),
 			)
 
 			if i > 0 {
-				actions = append(actions, b.DiscoverWaypoint())
+				actions = append(actions,
+					b.MoveToArea(dst),
+					b.DiscoverWaypoint(),
+				)
 			}
 		}
 
