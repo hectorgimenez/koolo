@@ -62,15 +62,18 @@ Setting the development environment is pretty straightforward, but MinGW is **re
 
 ### Dependencies
 
-- Download [MingGW](https://sourceforge.net/projects/mingw-w64/files/) ```x86_64-win32-seh``` should be fine, extract it
+- [Download MingGW](https://sourceforge.net/projects/mingw-w64/files/) ```x86_64-posix-seh``` should be fine, extract it
   and add it to the system PATH on Windows environment variables. For example if extracted in ```C:\mingw64``` add
-  ```C:\mingw64\bin``` to the PATH. [Robotgo](https://github.com/go-vgo/robotgo) dependency requires MinGW to build.
+  ```C:\mingw64\bin``` to the PATH. [Robotgo](https://github.com/go-vgo/robotgo) and [GoCV](https://github.com/hybridgroup/gocv#windows) dependencies requires MinGW to build.
+- [Download CMake](https://cmake.org/download/) select add it to the user path during the installation process.
 - [Download Go >= 1.21](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
+Open the terminal and run the following commands in project root directory:
 ```
 git clone https://github.com/hectorgimenez/koolo.git
 cd koolo
+prepare_env.bat
 go run cmd/koolo/main.go
 ```
 
