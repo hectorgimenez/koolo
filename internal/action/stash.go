@@ -91,11 +91,11 @@ func (b *Builder) stashGold(d data.Data) {
 	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
 		switchTab(1)
 		clickStashGoldBtn()
-		helper.Sleep(200)
+		helper.Sleep(500)
 	}
 
 	for i := 2; i < 5; i++ {
-		d := b.gr.GetData(false)
+		d = b.gr.GetData(false)
 		gold, found = d.PlayerUnit.Stats[stat.Gold]
 		if !found || gold == 0 {
 			return
@@ -154,11 +154,11 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
 	hid.KeyDown("control")
-	helper.Sleep(300)
+	helper.Sleep(500)
 	hid.Click(hid.LeftButton)
-	helper.Sleep(200)
+	helper.Sleep(500)
 	hid.KeyUp("control")
-	helper.Sleep(300)
+	helper.Sleep(500)
 
 	d := b.gr.GetData(false)
 	for _, it := range d.Items.ByLocation(item.LocationInventory) {
@@ -178,9 +178,9 @@ func clickStashGoldBtn() {
 	hid.MovePointer(stashGoldBtnX, stashGoldBtnY)
 	helper.Sleep(170)
 	hid.Click(hid.LeftButton)
-	helper.Sleep(200)
-	hid.PressKey("enter")
 	helper.Sleep(500)
+	hid.PressKey("enter")
+	helper.Sleep(700)
 }
 
 func switchTab(tab int) {
