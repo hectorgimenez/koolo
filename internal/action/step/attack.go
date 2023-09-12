@@ -155,7 +155,12 @@ func (p *AttackStep) ensureEnemyIsInRange(monster data.Monster, d data.Data) boo
 			if found && p.minDistance > 0 {
 				// Try to move to the minimum distance
 				if distance > p.minDistance {
-					pos := path.AstarPather[p.minDistance-1].(*pather.Tile)
+					moveTo := p.minDistance - 1
+					if len(path.AstarPather) < p.minDistance {
+						moveTo = 0
+					}
+
+					pos := path.AstarPather[moveTo].(*pather.Tile)
 					p.moveToStep = MoveTo(data.Position{
 						X: pos.X + d.AreaOrigin.X,
 						Y: pos.Y + d.AreaOrigin.Y,
