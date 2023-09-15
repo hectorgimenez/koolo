@@ -76,7 +76,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			a.logger.Debug("Seal NOT found", zap.Int("seal", sealNumber+1))
 
 			return data.Position{}, false
-		}))
+		}, step.StopAtDistance(7)))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
 		//actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
@@ -110,7 +110,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 					}),
 
 					// Wait some time to let elite group to spawn
-					step.Wait(time.Second * 1),
+					step.Wait(time.Millisecond * 1500),
 				}
 			}),
 		)
@@ -151,6 +151,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	}))
 
 	actions = append(actions,
+		a.char.Buff(),
 		a.builder.MoveToCoords(diabloSpawnPosition),
 		a.char.KillDiablo(),
 	)

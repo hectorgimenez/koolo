@@ -35,6 +35,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		s.builder.MoveToCoords(baalThronePosition),
 		// Kill monsters inside Baal throne
 		s.builder.ClearAreaAroundPlayer(50),
+		s.char.Buff(),
 	)
 
 	// Let's move to a safe area and open the portal in companion mode
@@ -83,6 +84,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	if config.Config.Game.Baal.KillBaal || isLevelingChar {
 		actions = append(actions,
 			s.builder.Wait(time.Second*10),
+			s.char.Buff(),
 			s.builder.InteractObject(object.BaalsPortal, func(d data.Data) bool {
 				return d.PlayerUnit.Area == area.TheWorldstoneChamber
 			}),
