@@ -8,14 +8,16 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 type GameManager struct {
 	gr *reader.GameReader
+	tf *ui.TemplateFinder
 }
 
-func NewGameManager(gr *reader.GameReader) *GameManager {
-	return &GameManager{gr: gr}
+func NewGameManager(gr *reader.GameReader, tf *ui.TemplateFinder) *GameManager {
+	return &GameManager{gr: gr, tf: tf}
 }
 
 func (gm *GameManager) ExitGame() error {
@@ -53,6 +55,17 @@ func (gm *GameManager) ExitGame() error {
 }
 
 func (gm *GameManager) NewGame() error {
+	if gm.gr.InGame() {
+		return errors.New("character still in a game")
+	}
+
+	for i := 0; i < 30; i++ {
+		if gm.tf.Find("ui_config_gear", Screenshot()).Found {
+			break
+		}
+		Sleep(500)
+	}
+
 	difficultyPosition := map[difficulty.Difficulty]struct {
 		X, Y int
 	}{

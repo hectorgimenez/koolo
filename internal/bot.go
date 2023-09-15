@@ -79,13 +79,13 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				// Skip running stuff if loading screen is present
 				if d.OpenMenus.LoadingScreen {
-					if loadingScreensDetected == 10 {
+					if loadingScreensDetected == 15 {
 						b.logger.Debug("Loading screen detected, waiting until loading screen is gone")
 					}
 					loadingScreensDetected++
 					continue
 				} else {
-					if loadingScreensDetected >= 10 {
+					if loadingScreensDetected >= 15 {
 						b.logger.Debug("Load completed, continuing execution")
 					}
 					loadingScreensDetected = 0

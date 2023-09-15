@@ -101,14 +101,15 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 	}
 	win.SetForegroundWindow(window)
 
-	// Exclude border offsets
-	// TODO: Improve this, maybe getting window content coordinates?
 	pos := win.WINDOWPLACEMENT{}
+	point := win.POINT{}
+	win.ClientToScreen(window, &point)
 	win.GetWindowPlacement(window, &pos)
-	hid.WindowLeftX = int(pos.RcNormalPosition.Left) + 8
-	hid.WindowTopY = int(pos.RcNormalPosition.Top) + 31
-	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 10
-	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 10
+
+	hid.WindowLeftX = int(point.X + 1)
+	hid.WindowTopY = int(point.Y)
+	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 9
+	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 9
 	helper.Sleep(1000)
 
 	s.logger.Info(fmt.Sprintf(

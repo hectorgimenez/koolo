@@ -82,7 +82,6 @@ func (s *SinglePlayerSupervisor) Start(ctx context.Context, runs []run.Run) erro
 			firstRun = false
 
 			s.updateGameStats()
-			helper.Sleep(5000)
 		}
 	}
 }

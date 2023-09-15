@@ -24,6 +24,14 @@ func MovePointer(x, y int) {
 	x = WindowLeftX + x
 	y = WindowTopY + y
 
+	// TODO this is a workaround to prevent moving the mouse outside the game window
+	if x > WindowLeftX+GameAreaSizeX {
+		x = WindowLeftX + GameAreaSizeX - 10
+	}
+	if y > WindowTopY+GameAreaSizeY {
+		y = WindowTopY + GameAreaSizeY - 10
+	}
+
 	robotgo.Move(x, y)
 }
 

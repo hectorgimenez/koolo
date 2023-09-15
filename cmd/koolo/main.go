@@ -66,18 +66,18 @@ func main() {
 		GameReader: memory.NewGameReader(process),
 	}
 
+	tf, err := ui.NewTemplateFinder(logger, "assets")
+	if err != nil {
+		logger.Fatal("Error creating template finder", zap.Error(err))
+	}
+
 	bm := health.NewBeltManager(logger)
-	gm := helper.NewGameManager(gr)
+	gm := helper.NewGameManager(gr, tf)
 	hm := health.NewHealthManager(logger, bm, gm)
 	sm := town.NewShopManager(logger, bm)
 	char, err := character.BuildCharacter(logger)
 	if err != nil {
 		logger.Fatal("Error creating character", zap.Error(err))
-	}
-
-	tf, err := ui.NewTemplateFinder(logger, "assets")
-	if err != nil {
-		logger.Fatal("Error creating template finder", zap.Error(err))
 	}
 
 	ab := action.NewBuilder(logger, sm, bm, gr, char, tf)

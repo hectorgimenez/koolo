@@ -11,7 +11,7 @@ require (
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/robotn/gohook v0.41.0
 	github.com/stretchr/testify v1.8.4
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 	gocv.io/x/gocv v0.33.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/sys v0.12.0
