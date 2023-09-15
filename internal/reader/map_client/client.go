@@ -2,6 +2,7 @@ package map_client
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -16,7 +17,10 @@ import (
 func GetMapData(seed string, difficulty difficulty.Difficulty) MapData {
 	stdout, err := exec.Command("./koolo-map.exe", config.Config.D2LoDPath, "-s", seed, "-d", getDifficultyAsNum(difficulty)).Output()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf(
+			"Error detected fetching Map Data from Diablo II: LoD 1.13c game, please make sure you have the classic expansion game installed AND config.yaml D2LoDPath is pointing to the correct game path. Error: %s",
+			stdout,
+		))
 	}
 
 	stdoutLines := strings.Split(string(stdout), "\r\n")

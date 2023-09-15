@@ -2,6 +2,7 @@ package reader
 
 import (
 	"strconv"
+	"syscall"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/memory"
@@ -10,7 +11,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var dllSeed = windows.MustLoadDLL("rustdecrypt.dll")
+var dllSeed = syscall.MustLoadDLL("rustdecrypt.dll")
 
 var CachedMapData map_client.MapData
 
