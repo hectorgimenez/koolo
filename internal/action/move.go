@@ -200,7 +200,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			}
 		}
 
-		if len(targetedNormalEnemies) > 3 || len(targetedElites) > 0 || (stuck && len(targetedNormalEnemies) > 0 || len(targetedElites) > 0) {
+		if len(targetedNormalEnemies) > 5 || len(targetedElites) > 0 || (stuck && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) || (pather.IsNarrowMap(d.PlayerUnit.Area) && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) {
 			if stuck {
 				b.logger.Info("Character stuck and monsters detected, trying to kill monsters around")
 			} else {
