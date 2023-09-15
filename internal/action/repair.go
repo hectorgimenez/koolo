@@ -33,6 +33,7 @@ func (b *Builder) Repair() *Chain {
 						helper.Sleep(500)
 						return nil
 					}),
+					step.KeySequence("esc"),
 				))
 			}
 		}
