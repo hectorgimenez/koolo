@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -44,15 +45,24 @@ type BaseCharacter struct {
 	logger *zap.Logger
 }
 
-func (bc BaseCharacter) buffCTA() (steps []step.Step) {
-	if config.Config.Character.UseCTA {
+func (bc BaseCharacter) buffCTA(d data.Data) (steps []step.Step) {
+	ctaFound := false
+	for _, itm := range d.Items.ByLocation(item.LocationEquipped) {
+		if itm.Stats[stat.NumSockets].Value == 5 && itm.Stats[stat.ReplenishLife].Value == 12 && itm.Stats[stat.NonClassSkill].Value > 0 && itm.Stats[stat.PreventMonsterHeal].Value > 0 {
+			ctaFound = true
+			bc.logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
+			break
+		}
+	}
+
+	if ctaFound && config.Config.Bindings.CTABattleCommand != "" && config.Config.Bindings.CTABattleOrders != "" {
 		steps = append(steps,
 			step.SwapWeapon(),
 			step.SyncStep(func(d data.Data) error {
 				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)
-				helper.Sleep(500)
+				helper.Sleep(300)
 				hid.PressKey(config.Config.Bindings.CTABattleOrders)
 				helper.Sleep(100)
 				hid.Click(hid.RightButton)

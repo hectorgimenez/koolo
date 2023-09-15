@@ -54,20 +54,24 @@ func (s SorceressLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
 }
 
 func (s SorceressLeveling) StatPoints(d data.Data) map[stat.ID]int {
+	if d.PlayerUnit.Stats[stat.Level] < 9 {
+		return map[stat.ID]int{
+			stat.Vitality: 9999,
+		}
+	}
+
 	if d.PlayerUnit.Stats[stat.Level] < 15 {
 		return map[stat.ID]int{
-			stat.Dexterity: 0,
-			stat.Energy:    45,
-			stat.Strength:  20,
-			stat.Vitality:  9999,
+			stat.Energy:   45,
+			stat.Strength: 25,
+			stat.Vitality: 9999,
 		}
 	}
 
 	return map[stat.ID]int{
-		stat.Dexterity: 0,
-		stat.Energy:    60,
-		stat.Strength:  50,
-		stat.Vitality:  9999,
+		stat.Energy:   60,
+		stat.Strength: 50,
+		stat.Vitality: 9999,
 	}
 }
 
@@ -301,29 +305,38 @@ func (s SorceressLeveling) KillCouncil() action.Action {
 }
 
 func (s SorceressLeveling) KillDiablo() action.Action {
+	timeout := time.Second * 20
+	startTime := time.Time{}
+	diabloFound := false
 	return action.NewChain(func(d data.Data) []action.Action {
+		if startTime.IsZero() {
+			startTime = time.Now()
+		}
+
+		if time.Since(startTime) > timeout && !diabloFound {
+			s.logger.Error("Diablo was not found, timeout reached")
+			return nil
+		}
+
+		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		if !found {
+			// Keep waiting...
+			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Millisecond * 100)}
+			})}
+		}
+
+		s.logger.Info("Diablo detected, attacking")
+
 		return []action.Action{
 			action.NewStepChain(func(d data.Data) []step.Step {
-				return []step.Step{step.Wait(time.Second * 20)}
-			}),
-			action.NewChain(func(d data.Data) []action.Action {
-				diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
-				if !found {
-					return nil
-				}
-
-				s.logger.Info("Diablo detected, attacking")
-				return []action.Action{
-					action.NewStepChain(func(d data.Data) []step.Step {
-						return []step.Step{
-							step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
-						}
-					}),
-					s.killMonster(npc.Diablo, data.MonsterTypeNone),
+				return []step.Step{
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
 				}
 			}),
+			s.killMonster(npc.Diablo, data.MonsterTypeNone),
 		}
-	})
+	}, action.RepeatUntilNoSteps())
 }
 
 func (s SorceressLeveling) KillIzual() action.Action {

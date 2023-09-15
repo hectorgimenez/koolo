@@ -93,7 +93,6 @@ type StructConfig struct {
 		Class         string `yaml:"class"`
 		CastingFrames int    `yaml:"castingFrames"`
 		UseMerc       bool   `yaml:"useMerc"`
-		UseCTA        bool   `yaml:"useCTA"`
 	} `yaml:"character"`
 	Game struct {
 		ClearTPArea   bool                  `yaml:"clearTPArea"`

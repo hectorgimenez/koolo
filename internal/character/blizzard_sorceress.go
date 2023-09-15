@@ -70,10 +70,12 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			}
 		}
 
-		// In case monster is stuck behind a wall or character is not able to reachh it we will short the distance
+		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
 		if completedAttackLoops > 5 {
-			s.logger.Debug("Looks like monster is not reachable, moving closer")
-			opts = append(opts, step.Distance(2, 8))
+			if completedAttackLoops == 6 {
+				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance")
+			}
+			opts = []step.AttackOption{step.Distance(1, 5)}
 		}
 
 		steps = append(steps,
@@ -89,7 +91,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 
 func (s BlizzardSorceress) Buff() action.Action {
 	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
-		steps = append(steps, s.buffCTA()...)
+		steps = append(steps, s.buffCTA(d)...)
 		steps = append(steps, step.SyncStep(func(d data.Data) error {
 			if config.Config.Bindings.Sorceress.FrozenArmor != "" {
 				hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
@@ -133,39 +135,47 @@ func (s BlizzardSorceress) KillNihlathak() action.Action {
 }
 
 func (s BlizzardSorceress) KillDiablo() action.Action {
+	timeout := time.Second * 20
+	startTime := time.Time{}
+	diabloFound := false
 	return action.NewChain(func(d data.Data) []action.Action {
+		if startTime.IsZero() {
+			startTime = time.Now()
+		}
+
+		if time.Since(startTime) > timeout && !diabloFound {
+			s.logger.Error("Diablo was not found, timeout reached")
+			return nil
+		}
+
+		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		if !found {
+			// Keep waiting...
+			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Millisecond * 100)}
+			})}
+		}
+
+		s.logger.Info("Diablo detected, attacking")
+
 		return []action.Action{
 			action.NewStepChain(func(d data.Data) []step.Step {
-				return []step.Step{step.Wait(time.Second * 20)}
-			}),
-			action.NewChain(func(d data.Data) []action.Action {
-				diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
-				if !found {
-					return nil
-				}
-
-				s.logger.Info("Diablo detected, attacking")
-				return []action.Action{
-					action.NewStepChain(func(d data.Data) []step.Step {
-
-						return []step.Step{
-							step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, 8, step.Distance(1, 5)),
-						}
-					}),
-					s.killMonster(npc.Diablo, data.MonsterTypeNone),
+				return []step.Step{
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, 5, step.Distance(3, 8)),
 				}
 			}),
+			s.killMonster(npc.Diablo, data.MonsterTypeNone),
 		}
-	})
+	}, action.RepeatUntilNoSteps())
 }
 
 func (s BlizzardSorceress) KillIzual() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d data.Data) []step.Step {
-				mephisto, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
+				m, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 7, step.Distance(1, 4)),
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, m.UnitID, 7, step.Distance(5, 8)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably
@@ -184,9 +194,9 @@ func (s BlizzardSorceress) KillBaal() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d data.Data) []step.Step {
-				mephisto, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
+				m, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, mephisto.UnitID, 7, step.Distance(1, 4)),
+					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, m.UnitID, 5, step.Distance(5, 8)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably

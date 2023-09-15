@@ -2,6 +2,7 @@ package character
 
 import (
 	"sort"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -43,15 +44,23 @@ func (s Hammerdin) KillMonsterSequence(
 			return []step.Step{}
 		}
 
-		if len(opts) == 0 {
-			opts = append(opts, step.Distance(1, 5))
-		}
-
 		if completedAttackLoops >= hammerdinMaxAttacksLoop {
 			return []step.Step{}
 		}
 
 		steps := make([]step.Step, 0)
+		// Add a random movement, maybe hammer is not hitting the target
+		if previousUnitID == int(id) {
+			steps = append(steps,
+				step.SyncStep(func(d data.Data) error {
+					monster, f := d.Monsters.FindByID(id)
+					if f && monster.Stats[stat.Life] > 0 {
+						pather.RandomMovement()
+					}
+					return nil
+				}),
+			)
+		}
 		steps = append(steps,
 			step.PrimaryAttack(
 				id,
@@ -69,7 +78,7 @@ func (s Hammerdin) KillMonsterSequence(
 
 func (s Hammerdin) Buff() action.Action {
 	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
-		steps = append(steps, s.buffCTA()...)
+		steps = append(steps, s.buffCTA(d)...)
 		steps = append(steps, step.SyncStep(func(d data.Data) error {
 			if config.Config.Bindings.Paladin.HolyShield != "" {
 				hid.PressKey(config.Config.Bindings.Paladin.HolyShield)
@@ -113,11 +122,39 @@ func (s Hammerdin) KillNihlathak() action.Action {
 }
 
 func (s Hammerdin) KillDiablo() action.Action {
-	panic("implement me")
+	timeout := time.Second * 20
+	startTime := time.Time{}
+	diabloFound := false
+	return action.NewChain(func(d data.Data) []action.Action {
+		if startTime.IsZero() {
+			startTime = time.Now()
+		}
+
+		if time.Since(startTime) > timeout && !diabloFound {
+			s.logger.Error("Diablo was not found, timeout reached")
+			return nil
+		}
+
+		_, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		if !found {
+			// Keep waiting...
+			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+				return []step.Step{step.Wait(time.Millisecond * 100)}
+			})}
+		}
+
+		s.logger.Info("Diablo detected, attacking")
+
+		return []action.Action{
+			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+		}
+	}, action.RepeatUntilNoSteps())
 }
 
 func (s Hammerdin) KillIzual() action.Action {
-	panic("implement me")
+	return s.killMonster(npc.Izual, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillCouncil() action.Action {
@@ -155,8 +192,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 }
 
 func (s Hammerdin) KillBaal() action.Action {
-	//TODO implement me
-	panic("implement me")
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
