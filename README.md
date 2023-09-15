@@ -34,8 +34,9 @@ bot. It's recommended to run it on a [virtual machine](https://github.com/jamess
 - If you haven't done yet, install Diablo II: LOD 1.13c
 - Edit `config/config.yaml` and ensure `D2LoDPath` is pointing to your Diablo II: LOD 1.13c installation directory.
 - Configure custom bot settings under `config/config.yaml` and `config/pickit/*.nip` files for pickit rules.
-- Open Diablo II: Resurrected and ensure the game resolution is set to 1280x720 or 1920x1080 in HiDPI mode.
+- Open Diablo II: Resurrected and ensure the game resolution is set to windowed mode and 1280x720 or 1920x1080 in HiDPI mode.
 - Enter the game with your character.
+- Download the latest release or [build it from source](#development-environment)
 - Run `koolo.exe`.
 - It should start the configured runs. You can pause/resume execution with ```,``` or stop it with ```.``` keys
 
@@ -55,10 +56,11 @@ bot. It's recommended to run it on a [virtual machine](https://github.com/jamess
 - CTA buff and class buffs
 - Auto repair
 - Skip on immune
+- Auto leveling sorceress and paladin (WIP)
 
 ## Development environment
 
-Setting the development environment is pretty straightforward, but MinGW is **required** to build the project.
+Setting the development environment is pretty straightforward, but the following dependencies are **required** to build the project.
 
 ### Dependencies
 
@@ -74,7 +76,7 @@ Open the terminal and run the following commands in project root directory:
 git clone https://github.com/hectorgimenez/koolo.git
 cd koolo
 prepare_env.bat
-go run cmd/koolo/main.go
+build.bat
 ```
 
-To produce a .exe build and prepare all the assets, the ```build.bat``` script can be used.
+This will produce the "build" directory with the executable file and all the required assets.
