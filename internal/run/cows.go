@@ -27,6 +27,7 @@ func (a Cows) BuildActions() (actions []action.Action) {
 		a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 			return d.PlayerUnit.Area == area.MooMooFarm
 		}),
+		a.char.Buff(),
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),
 	}
 }
