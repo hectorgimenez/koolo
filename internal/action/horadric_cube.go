@@ -104,10 +104,19 @@ func (b *Builder) CubeTransmute() *Chain {
 			helper.Sleep(200)
 			hid.KeyUp("control")
 			helper.Sleep(300)
-			hid.PressKey("esc")
-			helper.Sleep(300)
 
-			return nil
+			return []step.Step{
+				step.SyncStepWithCheck(func(d data.Data) error {
+					hid.PressKey("esc")
+					helper.Sleep(300)
+					return nil
+				}, func(d data.Data) step.Status {
+					if d.OpenMenus.Inventory {
+						return step.StatusInProgress
+					}
+					return step.StatusCompleted
+				}),
+			}
 		}))
 
 		return

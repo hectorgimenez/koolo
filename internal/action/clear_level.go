@@ -85,7 +85,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				if !doorIsBlocking {
 					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return targetMonster.UnitID, true
-					}, nil, step.Distance(5, 15))}
+					}, nil)}
 				} else {
 					b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
 				}
