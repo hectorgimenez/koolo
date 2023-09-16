@@ -129,6 +129,11 @@ func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 }
 
 func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
+	// Always pickup WirtsLeg!
+	if i.Name == "WirtsLeg" {
+		return true
+	}
+
 	// Only during leveling if gold amount is low pickup items to sell as junk
 	_, isLevelingChar := b.ch.(LevelingCharacter)
 
