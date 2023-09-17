@@ -61,7 +61,7 @@ func (m *MoveToStep) Status(d data.Data) Status {
 	}
 
 	distance := pather.DistanceFromMe(d, m.destination)
-	if distance < 3 || distance <= m.stopAtDistance {
+	if distance < 3 || distance < m.stopAtDistance {
 		return m.tryTransitionStatus(StatusCompleted)
 	}
 
