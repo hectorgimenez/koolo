@@ -153,10 +153,11 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
+	helper.Sleep(150)
 	hid.KeyDown("control")
-	helper.Sleep(500)
+	helper.Sleep(700)
 	hid.Click(hid.LeftButton)
-	helper.Sleep(500)
+	helper.Sleep(700)
 	hid.KeyUp("control")
 	helper.Sleep(500)
 
