@@ -49,7 +49,7 @@ func (a *Chain) NextStep(logger *zap.Logger, d data.Data) error {
 	}
 
 	// Reset actions, next iteration will try to build them again, if empty it will skip
-	if errors.Is(err, ErrNoMoreSteps) && a.repeatUntilNoMoreSteps {
+	if (errors.Is(err, ErrNoMoreSteps) || errors.Is(err, ErrLogAndContinue)) && a.repeatUntilNoMoreSteps {
 		a.actions = nil
 		return nil
 	}
