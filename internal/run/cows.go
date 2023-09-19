@@ -1,6 +1,8 @@
 package run
 
 import (
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -68,10 +70,18 @@ func (a Cows) getWirtsLeg() action.Action {
 
 func (a Cows) preparePortal() action.Action {
 	return action.NewChain(func(d data.Data) []action.Action {
+		currentWPTomes := make([]data.UnitID, 0)
 		leg, found := d.Items.Find("WirtsLeg")
 		if !found {
 			a.logger.Error("WirtsLeg could not be found, portal cannot be opened")
 			return nil
+		}
+
+		// Backup current WP tomes in inventory, before getting new one at Akara
+		for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+			if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) {
+				currentWPTomes = append(currentWPTomes, itm.UnitID)
+			}
 		}
 
 		actions := []action.Action{
@@ -81,14 +91,21 @@ func (a Cows) preparePortal() action.Action {
 				Tab:      4,
 			}),
 			action.NewChain(func(d data.Data) []action.Action {
-				tpTome, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
-				if !found {
+				// Ensure we are using the new WP tome and not the one that we are using for TPs
+				var newWPTome data.Item
+				for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+					if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) && !slices.Contains(currentWPTomes, itm.UnitID) {
+						newWPTome = itm
+					}
+				}
+
+				if newWPTome.UnitID == 0 {
 					a.logger.Error("TomeOfTownPortal could not be found, portal cannot be opened")
 					return nil
 				}
 
 				return []action.Action{
-					a.builder.CubeAddItems(leg, tpTome),
+					a.builder.CubeAddItems(leg, newWPTome),
 					a.builder.CubeTransmute(),
 				}
 			}),
