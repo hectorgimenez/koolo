@@ -127,7 +127,7 @@ func (a Leveling) deckardCain(d data.Data) (actions []action.Action) {
 			a.builder.RecoverCorpse(),
 			a.builder.IdentifyAll(false),
 			a.builder.Stash(false),
-			a.builder.VendorRefill(),
+			a.builder.VendorRefill(false, true),
 			a.builder.EnsureSkillBindings(),
 			a.builder.Heal(),
 			a.builder.ReviveMerc(),
@@ -160,7 +160,7 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 	// Return to the city, ensure we have pots and everything, and get some antidote potions
 	actions = append(actions,
 		a.builder.ReturnTown(),
-		a.builder.VendorRefill(),
+		a.builder.VendorRefill(false, true),
 		a.builder.BuyAtVendor(npc.Akara, action.VendorItemRequest{
 			Item:     "AntidotePotion",
 			Quantity: potsToBuy,

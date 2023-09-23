@@ -76,7 +76,7 @@ func (a Leveling) anya() []action.Action {
 		a.builder.Stash(false),
 		a.builder.ReviveMerc(),
 		a.builder.Repair(),
-		a.builder.VendorRefill(),
+		a.builder.VendorRefill(false, true),
 		a.builder.InteractNPC(npc.Malah),
 		a.builder.UsePortalInTown(),
 		a.builder.InteractObject(object.FrozenAnya, nil),

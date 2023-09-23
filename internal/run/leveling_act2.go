@@ -36,8 +36,8 @@ func (a Leveling) act2() action.Action {
 
 		quests := a.builder.GetCompletedQuests(2)
 		if quests[4] {
-			// It's difficult to kill Duriel with Holy Fire, so first we level up until we get few points in hammer
-			if d.PlayerUnit.Class == data.Paladin && d.PlayerUnit.Stats[stat.Level] < 21 {
+			// Try to get level 21 before moving to Duriel and Act3
+			if d.PlayerUnit.Stats[stat.Level] < 21 {
 				return TalRashaTombs{a.baseRun}.BuildActions()
 			}
 
@@ -287,7 +287,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	actions = append(actions,
 		a.builder.ReturnTown(),
 		a.builder.ReviveMerc(),
-		a.builder.VendorRefill(),
+		a.builder.VendorRefill(false, true),
 		a.builder.BuyAtVendor(npc.Lysander, action.VendorItemRequest{
 			Item:     "ThawingPotion",
 			Quantity: potsToBuy,

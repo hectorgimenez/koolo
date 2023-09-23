@@ -138,7 +138,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			}
 			// But if we are leveling and have enough money (to buy mana pots), let's teleport. We add the timeout
 			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
-			if d.PlayerUnit.TotalGold() > 10000 {
+			if d.PlayerUnit.TotalGold() > 30000 {
 				return []Action{NewStepChain(func(d data.Data) []step.Step {
 					newOpts := append(opts, step.WithTimeout(5*time.Second))
 					return []step.Step{step.MoveTo(to, newOpts...)}

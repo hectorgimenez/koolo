@@ -27,7 +27,7 @@ func NewShopManager(logger *zap.Logger, bm health.BeltManager) ShopManager {
 	}
 }
 
-func (sm ShopManager) BuyConsumables(d data.Data) {
+func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
 	missingHealingPots := sm.bm.GetMissingCount(d, data.HealingPotion)
 	missingManaPots := sm.bm.GetMissingCount(d, data.ManaPotion)
 
@@ -50,7 +50,7 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 		missingManaPots = 0
 	}
 
-	if sm.ShouldBuyTPs(d) {
+	if sm.ShouldBuyTPs(d) || forceRefill {
 		if _, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
 			sm.logger.Info("TP Tome not found, buying one...")
 			if itm, itmFound := d.Items.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
@@ -63,7 +63,7 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 		}
 	}
 
-	if sm.ShouldBuyIDs(d) {
+	if sm.ShouldBuyIDs(d) || forceRefill {
 		if _, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory); !found {
 			sm.logger.Info("ID Tome not found, buying one...")
 			if itm, itmFound := d.Items.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
@@ -76,7 +76,7 @@ func (sm ShopManager) BuyConsumables(d data.Data) {
 		}
 	}
 
-	if sm.shouldBuyKeys(d) {
+	if sm.shouldBuyKeys(d) || forceRefill {
 		if itm, found := d.Items.Find(item.Key, item.LocationVendor); found {
 			sm.logger.Debug("Vendor with keys detected, provisioning...")
 			sm.buyFullStack(itm)

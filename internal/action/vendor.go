@@ -11,13 +11,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b *Builder) VendorRefill() *Chain {
+func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 	return NewChain(func(d data.Data) []Action {
-		if !b.shouldVisitVendor(d) {
+		if !forceRefill && !b.shouldVisitVendor(d) {
 			return nil
 		}
 
-		b.logger.Info("Visiting vendor...")
+		b.logger.Info("Visiting vendor...", zap.Bool("forceRefill", forceRefill))
 
 		openShopStep := step.KeySequence("home", "down", "enter")
 		vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).RefillNPC()
@@ -32,11 +32,13 @@ func (b *Builder) VendorRefill() *Chain {
 			step.Wait(time.Second),
 			step.SyncStep(func(d data.Data) error {
 				switchTab(4)
-				b.sm.BuyConsumables(d)
+				b.sm.BuyConsumables(d, forceRefill)
 				return nil
 			}),
 			step.SyncStep(func(d data.Data) error {
-				b.sm.SellJunk(d)
+				if sellJunk {
+					b.sm.SellJunk(d)
+				}
 				return nil
 			}),
 			step.KeySequence("esc"),

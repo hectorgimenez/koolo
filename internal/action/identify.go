@@ -31,7 +31,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 
 		if st, statFound := idTome.Stats[stat.Quantity]; !statFound || st.Value < len(items) {
 			b.logger.Info("Not enough ID scrolls, refilling...")
-			actions = append(actions, b.VendorRefill())
+			actions = append(actions, b.VendorRefill(true, false))
 		}
 
 		b.logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
