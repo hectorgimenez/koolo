@@ -71,12 +71,20 @@ Setting the development environment is pretty straightforward, but the following
 - [Download Go >= 1.21](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
+### Building from source
 Open the terminal and run the following commands in project root directory:
-```
+```shell
 git clone https://github.com/hectorgimenez/koolo.git
 cd koolo
 prepare_env.bat
 build.bat
 ```
-
 This will produce the "build" directory with the executable file and all the required assets.
+
+### Updating with latest changes
+In order to fetch latest `main` branch changes run the following commands in project root directory:
+```shell
+git pull
+build.bat
+```
+**Note**: `build` directory **will be deleted**, so if you customized any file in there, make sure to backup it before running `build.bat`.
