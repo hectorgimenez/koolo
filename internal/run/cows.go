@@ -22,16 +22,22 @@ func (a Cows) Name() string {
 	return "Cows"
 }
 
-func (a Cows) BuildActions() (actions []action.Action) {
-	return []action.Action{
+func (a Cows) BuildActions() []action.Action {
+	actions := []action.Action{
 		a.getWirtsLeg(),
+	}
+
+	// Sell junk, refill potions, etc. (basically ensure space for getting the TP tome)
+	actions = append(actions, a.builder.PreRun(false)...)
+
+	return append(actions,
 		a.preparePortal(),
 		a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 			return d.PlayerUnit.Area == area.MooMooFarm
 		}),
 		a.char.Buff(),
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),
-	}
+	)
 }
 
 func (a Cows) getWirtsLeg() action.Action {
