@@ -108,9 +108,6 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 						}
 						return false
 					}),
-
-					// Wait some time to let elite group to spawn
-					step.Wait(time.Millisecond * 1500),
 				}
 			}),
 		)
@@ -122,20 +119,41 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			}))
 		}
 
-		// First clear close trash mobs, regardless if they are elite or not
-		actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
+		// We only want to look for seal defenders when activating those specific seals
+		if sealNumber == 1 || sealNumber == 2 || sealNumber == 4 {
+			// First clear close trash mobs, regardless if they are elite or not
+			actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
 
-		// Now try to kill the Elite packs (maybe are already dead)
-		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
-			for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
-				if a.isSealElite(m) {
-					a.logger.Debug("Found a seal defender")
-					return m.UnitID, true
+			// Now wait & try to kill the Elite packs (maybe are already dead, killed during previous action)
+			startTime := time.Time{}
+			actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
+				if startTime.IsZero() {
+					startTime = time.Now()
 				}
-			}
+				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
+					if a.isSealElite(m) {
+						a.logger.Debug("Seal defender found!")
+						return nil
+					}
+				}
 
-			return 0, false
-		}, nil))
+				if time.Since(startTime) < time.Second*5 {
+					return []step.Step{step.Wait(time.Millisecond * 100)}
+				}
+
+				return nil
+			}, action.RepeatUntilNoSteps()))
+
+			actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
+					if a.isSealElite(m) {
+						return m.UnitID, true
+					}
+				}
+
+				return 0, false
+			}, nil))
+		}
 
 		actions = append(actions, a.builder.ItemPickup(false, 40))
 	}

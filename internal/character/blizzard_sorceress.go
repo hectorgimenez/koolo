@@ -150,12 +150,18 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 
 		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 		if !found {
+			// Already dead
+			if diabloFound {
+				return nil
+			}
+
 			// Keep waiting...
 			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
 				return []step.Step{step.Wait(time.Millisecond * 100)}
 			})}
 		}
 
+		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
 		return []action.Action{

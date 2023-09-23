@@ -26,7 +26,7 @@ func (s SorceressLeveling) GetSkillTree() skill.Tree {
 }
 
 func (s SorceressLeveling) ShouldResetSkills(d data.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 26 && d.PlayerUnit.Skills[skill.FireBall] > 10 {
+	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.FireBall] > 10 {
 		return true
 	}
 
@@ -76,7 +76,7 @@ func (s SorceressLeveling) StatPoints(d data.Data) map[stat.ID]int {
 }
 
 func (s SorceressLeveling) SkillPoints(d data.Data) []skill.Skill {
-	if d.PlayerUnit.Stats[stat.Level] < 26 {
+	if d.PlayerUnit.Stats[stat.Level] < 25 {
 		return []skill.Skill{
 			skill.FireBolt,
 			skill.FrozenArmor,
@@ -128,7 +128,6 @@ func (s SorceressLeveling) SkillPoints(d data.Data) []skill.Skill {
 		skill.GlacialSpike,
 		skill.Blizzard,
 		skill.Blizzard,
-		skill.Blizzard,
 		skill.Warmth,
 		skill.GlacialSpike,
 		skill.GlacialSpike,
@@ -143,6 +142,7 @@ func (s SorceressLeveling) SkillPoints(d data.Data) []skill.Skill {
 		skill.IceBlast,
 		skill.IceBlast,
 		skill.IceBlast,
+		skill.Blizzard,
 		skill.Blizzard,
 		skill.Blizzard,
 		skill.Blizzard,
@@ -320,12 +320,18 @@ func (s SorceressLeveling) KillDiablo() action.Action {
 
 		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 		if !found {
+			// Already dead
+			if diabloFound {
+				return nil
+			}
+
 			// Keep waiting...
 			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
 				return []step.Step{step.Wait(time.Millisecond * 100)}
 			})}
 		}
 
+		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
 		return []action.Action{
