@@ -6,6 +6,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -129,6 +130,12 @@ func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 }
 
 func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
+	// Skip picking up gold if we can not carry more
+	if d.PlayerUnit.Stats[stat.Gold] >= d.PlayerUnit.MaxGold() {
+		b.logger.Debug("Skipping gold pickup, inventory full")
+		return false
+	}
+
 	// Always pickup WirtsLeg!
 	if i.Name == "WirtsLeg" {
 		return true

@@ -79,6 +79,10 @@ func (b *Builder) isStashingRequired(d data.Data, forceStash bool) bool {
 		}
 	}
 
+	if d.PlayerUnit.Stats[stat.Gold] > d.PlayerUnit.MaxGold()/3 {
+		return true
+	}
+
 	return false
 }
 
