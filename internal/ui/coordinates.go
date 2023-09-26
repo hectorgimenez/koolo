@@ -31,6 +31,9 @@ const (
 
 	SecondarySkillButtonX = 686
 	SecondarySkillButtonY = 693
+
+	GambleRefreshButtonX = 390
+	GambleRefreshButtonY = 515
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {

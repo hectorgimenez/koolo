@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -120,6 +121,10 @@ type StructConfig struct {
 		Remote           string `yaml:"remote"`
 		GameNameTemplate string `yaml:"gameNameTemplate"`
 	} `yaml:"companion"`
+	Gambling struct {
+		Enabled bool        `yaml:"enabled"`
+		Items   []item.Name `yaml:"items"`
+	}
 	Runtime struct {
 		CastDuration time.Duration
 		Rules        []nip.Rule

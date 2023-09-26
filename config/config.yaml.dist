@@ -104,3 +104,10 @@ companion:
   leaderName: ''
   remote: discord # Only discord supported, telegram doesn't allow interacting between bots
   gameNameTemplate:
+
+# Gambling settings. If enabled, bot will start gambling when all the gold stash tabs are full.
+# While gold > 500k it will iterate over the items list trying to buy one of each item type.
+# Item filtering will be done via the same pickup configuration, discarded items will be sold to vendor
+gambling:
+  enabled: true # If gambling is disabled, bot will stop picking up gold when can not carry more
+  items: [ coronet, amulet, ring ] # Items to gamble, same value as [name] in pickit files.

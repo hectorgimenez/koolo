@@ -11,6 +11,7 @@ type Town interface {
 	HealNPC() npc.ID
 	RepairNPC() npc.ID
 	MercContractorNPC() npc.ID
+	GamblingNPC() npc.ID
 	TPWaitingArea(d data.Data) data.Position
 }
 

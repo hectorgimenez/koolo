@@ -8,6 +8,10 @@ import (
 type A5 struct {
 }
 
+func (a A5) GamblingNPC() npc.ID {
+	return npc.Natalya // Anya
+}
+
 func (a A5) HealNPC() npc.ID {
 	return npc.Malah
 }
