@@ -57,6 +57,7 @@ bot. It's recommended to run it on a [virtual machine](https://github.com/jamess
 - Auto repair
 - Skip on immune
 - Auto leveling sorceress and paladin (WIP)
+- Auto gambling
 
 ## Development environment
 
