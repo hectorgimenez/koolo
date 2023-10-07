@@ -10,13 +10,10 @@ import (
 
 func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
-		pos, _ := b.getNPCPosition(npc, d)
-		//if !found {
-		//	return fmt.Errorf("NPC not found")
-		//}
-
 		return []Action{
-			b.MoveToCoords(pos, step.StopAtDistance(7)),
+			b.MoveTo(func(d data.Data) (data.Position, bool) {
+				return b.getNPCPosition(npc, d)
+			}, step.StopAtDistance(7)),
 			NewStepChain(func(d data.Data) []step.Step {
 				steps := []step.Step{step.InteractNPC(npc)}
 				steps = append(steps, additionalSteps...)
@@ -29,13 +26,10 @@ func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 
 func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
-		pos, _ := b.getNPCPosition(npc, d)
-		//if !found {
-		//	return fmt.Errorf("NPC not found")
-		//}
-
 		return []Action{
-			b.MoveToCoords(pos, step.StopAtDistance(7)),
+			b.MoveTo(func(d data.Data) (data.Position, bool) {
+				return b.getNPCPosition(npc, d)
+			}, step.StopAtDistance(7)),
 			NewStepChain(func(d data.Data) []step.Step {
 				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn)}
 				steps = append(steps, additionalSteps...)
@@ -73,8 +67,7 @@ func (b *Builder) InteractObject(name object.Name, isCompletedFn func(data.Data)
 func (b *Builder) getNPCPosition(npc npc.ID, d data.Data) (data.Position, bool) {
 	monster, found := d.Monsters.FindOne(npc, data.MonsterTypeNone)
 	if found {
-		// Position is bottom hitbox by default, let's add some offset to click in the middle of the NPC
-		return data.Position{X: monster.Position.X - 2, Y: monster.Position.Y - 2}, true
+		return data.Position{X: monster.Position.X, Y: monster.Position.Y}, true
 	}
 
 	n, found := d.NPCs.FindOne(npc)
@@ -82,5 +75,5 @@ func (b *Builder) getNPCPosition(npc npc.ID, d data.Data) (data.Position, bool) 
 		return data.Position{}, false
 	}
 
-	return data.Position{X: n.Positions[0].X - 2, Y: n.Positions[0].Y - 2}, true
+	return data.Position{X: n.Positions[0].X, Y: n.Positions[0].Y}, true
 }

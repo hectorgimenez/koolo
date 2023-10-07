@@ -104,12 +104,17 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
+	previousIterationTo := data.Position{}
 	var currentStep step.Step
 
 	return NewChain(func(d data.Data) []Action {
 		to, found := toFunc(d)
 		if !found {
 			return nil
+		}
+
+		if previousIterationTo != to && currentStep != nil {
+			currentStep = nil
 		}
 
 		// To stop the movement, not very accurate
