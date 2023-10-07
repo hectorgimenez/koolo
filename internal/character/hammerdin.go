@@ -6,12 +6,12 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -76,21 +76,10 @@ func (s Hammerdin) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Hammerdin) Buff() action.Action {
-	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
-		steps = append(steps, s.buffCTA(d)...)
-		steps = append(steps, step.SyncStep(func(d data.Data) error {
-			if config.Config.Bindings.Paladin.HolyShield != "" {
-				hid.PressKey(config.Config.Bindings.Paladin.HolyShield)
-				helper.Sleep(100)
-				hid.Click(hid.RightButton)
-			}
-
-			return nil
-		}))
-
-		return
-	})
+func (s Hammerdin) BuffSkills() map[skill.Skill]string {
+	return map[skill.Skill]string{
+		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
+	}
 }
 
 func (s Hammerdin) KillCountess() action.Action {

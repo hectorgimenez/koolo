@@ -8,7 +8,7 @@ import (
 )
 
 type Character interface {
-	Buff() Action
+	BuffSkills() map[skill.Skill]string
 	KillCountess() Action
 	KillAndariel() Action
 	KillSummoner() Action

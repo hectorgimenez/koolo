@@ -12,8 +12,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -474,24 +472,10 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Ac
 	}, nil)
 }
 
-func (s SorceressLeveling) Buff() action.Action {
-	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
-		return []step.Step{
-			step.SyncStep(func(d data.Data) error {
-				if _, found := d.PlayerUnit.Skills[skill.FrozenArmor]; !found {
-					return nil
-				}
-
-				if config.Config.Bindings.Sorceress.FrozenArmor != "" {
-					hid.PressKey(config.Config.Bindings.Sorceress.FrozenArmor)
-					helper.Sleep(100)
-					hid.Click(hid.RightButton)
-				}
-
-				return nil
-			}),
-		}
-	})
+func (s SorceressLeveling) BuffSkills() map[skill.Skill]string {
+	return map[skill.Skill]string{
+		skill.FrozenArmor: config.Config.Bindings.Sorceress.FrozenArmor,
+	}
 }
 
 func (s SorceressLeveling) staticFieldCasts() int {
