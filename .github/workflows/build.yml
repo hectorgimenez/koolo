@@ -1,0 +1,31 @@
+name: Koolo Build CI
+on:
+  push:
+  pull_request:
+  release:
+
+jobs:
+  build:
+    name: "Build Koolo binary"
+    runs-on: windows-2022
+    steps:
+      - name: "Install CMake & Mingw"
+        run: |
+          choco install cmake mingw
+      - name: "Checkout"
+        uses: actions/checkout@v4
+      - name: "Setup Go"
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      - name: "Building OpenCV"
+        run: |
+          set GOPATH=C:\Users\runneradmin\go
+          .\prepare_env.bat
+
+#      - name: "Archive"
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: koolo
+#          path: koolo.exe
+
