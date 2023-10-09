@@ -17,8 +17,6 @@ func (a StonyTomb) Name() string {
 }
 
 func (a StonyTomb) BuildActions() (actions []action.Action) {
-
-	// actions = append(actions, a.builder.MoveToAreaAndKill(area.))
 	actions = append(actions,
 		a.builder.WayPoint(area.DryHills),
 		a.builder.MoveToArea(area.RockyWaste),

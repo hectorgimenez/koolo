@@ -35,7 +35,7 @@ func (a Cows) BuildActions() []action.Action {
 		a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 			return d.PlayerUnit.Area == area.MooMooFarm
 		}),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),
 	)
 }
@@ -75,7 +75,11 @@ func (a Cows) getWirtsLeg() action.Action {
 }
 
 func (a Cows) preparePortal() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
+		if d.PlayerUnit.Area != area.RogueEncampment {
+			actions = append(actions, a.builder.WayPoint(area.RogueEncampment))
+		}
+
 		currentWPTomes := make([]data.UnitID, 0)
 		leg, found := d.Items.Find("WirtsLeg")
 		if !found {
@@ -90,7 +94,7 @@ func (a Cows) preparePortal() action.Action {
 			}
 		}
 
-		actions := []action.Action{
+		return append(actions,
 			a.builder.BuyAtVendor(npc.Akara, action.VendorItemRequest{
 				Item:     item.TomeOfTownPortal,
 				Quantity: 1,
@@ -115,8 +119,6 @@ func (a Cows) preparePortal() action.Action {
 					a.builder.CubeTransmute(),
 				}
 			}),
-		}
-
-		return actions
+		)
 	})
 }

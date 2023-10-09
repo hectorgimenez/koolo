@@ -29,9 +29,9 @@ func (a Leveling) act4() action.Action {
 func (a Leveling) izual() []action.Action {
 	return []action.Action{
 		a.builder.MoveToArea(area.OuterSteppes),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.PlainsOfDespair),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			izual, found := d.NPCs.FindOne(npc.Izual)
 			if !found {
