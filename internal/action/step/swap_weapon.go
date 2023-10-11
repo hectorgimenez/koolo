@@ -38,11 +38,6 @@ func (s *SwapWeaponStep) Status(d data.Data) Status {
 }
 
 func (s *SwapWeaponStep) Run(d data.Data) error {
-	// Add some delay to let the weapon switch
-	if time.Since(s.lastRun) < time.Second {
-		return nil
-	}
-
 	s.tryTransitionStatus(StatusInProgress)
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if found {

@@ -111,7 +111,7 @@ func (a Leveling) ancients() []action.Action {
 
 	return append(actions,
 		a.builder.UsePortalInTown(),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.InteractObject(object.AncientsAltar, func(d data.Data) bool {
 			if len(d.Monsters.Enemies()) > 0 {
 				return true

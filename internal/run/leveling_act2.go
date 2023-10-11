@@ -37,7 +37,7 @@ func (a Leveling) act2() action.Action {
 		quests := a.builder.GetCompletedQuests(2)
 		if quests[4] {
 			// Try to get level 21 before moving to Duriel and Act3
-			if d.PlayerUnit.Stats[stat.Level] < 21 {
+			if d.PlayerUnit.Stats[stat.Level] < 18 {
 				return TalRashaTombs{a.baseRun}.BuildActions()
 			}
 
@@ -239,7 +239,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	// Move close to the Horadric Orifice
 	actions = append(actions,
 		a.builder.WayPoint(area.CanyonOfTheMagi),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(realTomb),
 		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			orifice, _ := d.Objects.FindOne(object.HoradricOrifice)
@@ -325,7 +325,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 			}
 		}),
 		a.builder.UsePortalInTown(),
-		a.char.Buff(),
+		a.builder.Buff(),
 	)
 
 	return append(actions,

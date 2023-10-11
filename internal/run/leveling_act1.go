@@ -47,9 +47,9 @@ func (a Leveling) denOfEvil() []action.Action {
 	a.logger.Info("Starting Den of Evil run")
 	return []action.Action{
 		a.builder.MoveToArea(area.BloodMoor),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.DenOfEvil),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.ClearArea(false, data.MonsterAnyFilter()),
 	}
 }
@@ -97,7 +97,7 @@ func (a Leveling) deckardCain(d data.Data) (actions []action.Action) {
 	if _, found := d.Items.Find("KeyToTheCairnStones"); !found {
 		actions = []action.Action{
 			a.builder.WayPoint(area.DarkWood),
-			a.char.Buff(),
+			a.builder.Buff(),
 			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 				for _, o := range d.Objects {
 					if o.Name == object.InifussTree {
@@ -146,7 +146,7 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 	a.logger.Info("Starting Andariel run")
 	actions := []action.Action{
 		a.builder.WayPoint(area.CatacombsLevel2),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.CatacombsLevel3),
 		a.builder.MoveToArea(area.CatacombsLevel4),
 	}
@@ -198,7 +198,7 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 			}
 		}),
 		a.builder.UsePortalInTown(),
-		a.char.Buff(),
+		a.builder.Buff(),
 	)
 
 	actions = append(actions,

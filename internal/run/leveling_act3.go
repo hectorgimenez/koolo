@@ -74,9 +74,9 @@ func (a Leveling) act3() action.Action {
 func (a Leveling) findKhalimsEye() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.SpiderForest),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.SpiderCavern),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			a.logger.Info("Khalm Chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.KhalimChest3)
@@ -95,13 +95,13 @@ func (a Leveling) findKhalimsEye() []action.Action {
 func (a Leveling) findKhalimsBrain() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.FlayerJungle),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.FlayerDungeonLevel1),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.FlayerDungeonLevel2),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.FlayerDungeonLevel3),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			a.logger.Info("Khalm Chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.KhalimChest2)
@@ -120,9 +120,9 @@ func (a Leveling) findKhalimsBrain() []action.Action {
 func (a Leveling) findKhalimsHeart() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.KurastBazaar),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.SewersLevel1Act3),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			for _, l := range d.AdjacentLevels {
 				if l.Area == area.SewersLevel2Act3 {
@@ -141,7 +141,7 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 		a.builder.InteractObject(object.Act3SewerStairs, func(d data.Data) bool {
 			return d.PlayerUnit.Area == area.SewersLevel2Act3
 		}),
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
 			a.logger.Info("Khalm Chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.KhalimChest1)

@@ -23,7 +23,7 @@ func (a TalRashaTombs) BuildActions() (actions []action.Action) {
 		actions = append(actions,
 			a.builder.WayPoint(area.CanyonOfTheMagi),
 			a.builder.MoveToArea(tomb),
-			a.char.Buff(),
+			a.builder.Buff(),
 			a.builder.ClearArea(true, data.MonsterAnyFilter()),
 			a.builder.ReturnTown(),
 		)

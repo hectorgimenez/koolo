@@ -34,7 +34,6 @@ func (p Pindleskin) BuildActions() (actions []action.Action) {
 		p.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 			return d.PlayerUnit.Area == area.NihlathaksTemple
 		}), // Enter Nihlathak's Temple
-		p.char.Buff(), // Buff
 		p.builder.MoveToCoords(pindleSafePosition), // Travel to boss position
 		p.char.KillPindle(p.SkipOnImmunities),      // Kill Pindleskin
 	}

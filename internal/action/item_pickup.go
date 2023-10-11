@@ -150,5 +150,10 @@ func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 		return true
 	}
 
+	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
+	if d.PlayerUnit.TotalGold() < 500000 && i.Quality >= item.QualityMagic {
+		return true
+	}
+
 	return itemfilter.Evaluate(i, config.Config.Runtime.Rules)
 }

@@ -11,8 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"go.uber.org/zap"
 )
@@ -25,24 +23,10 @@ func (p PaladinLeveling) GetSkillTree() skill.Tree {
 	return skill.PaladinTree
 }
 
-func (p PaladinLeveling) Buff() action.Action {
-	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
-		return []step.Step{
-			step.SyncStep(func(d data.Data) error {
-				if _, found := d.PlayerUnit.Skills[skill.HolyShield]; !found {
-					return nil
-				}
-
-				if config.Config.Bindings.Paladin.HolyShield != "" {
-					hid.PressKey(config.Config.Bindings.Paladin.HolyShield)
-					helper.Sleep(100)
-					hid.Click(hid.RightButton)
-				}
-
-				return nil
-			}),
-		}
-	})
+func (p PaladinLeveling) BuffSkills() map[skill.Skill]string {
+	return map[skill.Skill]string{
+		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
+	}
 }
 
 func (p PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {

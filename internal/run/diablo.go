@@ -169,7 +169,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	}))
 
 	actions = append(actions,
-		a.char.Buff(),
+		a.builder.Buff(),
 		a.builder.MoveToCoords(diabloSpawnPosition),
 		a.char.KillDiablo(),
 	)

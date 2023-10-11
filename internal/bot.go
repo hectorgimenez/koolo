@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
@@ -60,6 +61,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		firstRun = false
 		running := true
 		loopTime := time.Now()
+		var buffAct *action.StepChainAction
 		for running {
 			select {
 			case <-ctx.Done():
@@ -84,18 +86,24 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					}
 					loadingScreensDetected++
 					continue
-				} else {
-					if loadingScreensDetected >= 15 {
-						b.logger.Debug("Load completed, continuing execution")
-					}
-					loadingScreensDetected = 0
 				}
+
+				if loadingScreensDetected >= 15 {
+					b.logger.Debug("Load completed, continuing execution")
+				}
+				loadingScreensDetected = 0
 
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
 					return err
 				}
-				if err := b.shouldEndCurrentGame(gameStartedAt); err != nil {
+				if err := b.maxGameLengthExceeded(gameStartedAt); err != nil {
 					return err
+				}
+
+				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration
+				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d) == step.StatusCompleted) {
+					buffAct = b.ab.Buff()
+					actions = append([]action.Action{buffAct}, actions...)
 				}
 
 				for k, act := range actions {
@@ -136,7 +144,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	return nil
 }
 
-func (b *Bot) shouldEndCurrentGame(startedAt time.Time) error {
+func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
 	if time.Since(startedAt).Seconds() > float64(config.Config.MaxGameLength) {
 		return fmt.Errorf(
 			"max game length reached, try to exit game: %0.2f",
