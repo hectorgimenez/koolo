@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: "Install CMake"
         run: |
-          choco install cmake 7zip.install wget opencv --version=4.7.0
+          choco install cmake 7zip.install wget
       - name: "Install MinGW"
         run: |
           wget -nv https://download.qt.io/development_releases/prebuilt/mingw_64/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
@@ -23,13 +23,17 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.21'
-#      - name: "Building OpenCV"
-#        run: |
-#          go mod vendor
-#          .\vendor\gocv.io\x\gocv\win_build_opencv.cmd static
+      - name: "Prepare env"
+        run: mkdir C:\go\pkg
+      - name: "Building OpenCV"
+        continue-on-error: true
+        env:
+          GOPATH: C:\go
+        run: .\prepare_env.bat
       - name: "Building Koolo artifacts"
-        run: |
-          .\build.bat
+        env:
+          GOPATH: C:\go
+        run: .\build.bat
 
 #      - name: "Archive"
 #        uses: actions/upload-artifact@v2
