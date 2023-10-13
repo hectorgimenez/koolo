@@ -99,6 +99,12 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		b.logger.Info("Traversing areas to reach destination", zap.Any("areas", traverseAreas))
 
 		for i, dst := range traverseAreas {
+			if !dst.IsTown() {
+				actions = append(actions,
+					b.Buff(),
+				)
+			}
+
 			if i > 0 {
 				actions = append(actions,
 					b.MoveToArea(dst),

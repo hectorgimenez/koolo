@@ -14,12 +14,16 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
+func (b *Builder) BuffIfRequired(d data.Data) *StepChainAction {
+	if !b.IsRebuffRequired(d) {
+		return nil
+	}
+
+	return b.Buff()
+}
+
 func (b *Builder) Buff() *StepChainAction {
 	return NewStepChain(func(d data.Data) (steps []step.Step) {
-		if !b.IsRebuffRequired(d) {
-			return nil
-		}
-
 		steps = append(steps, b.buffCTA(d)...)
 
 		for buff, kb := range b.ch.BuffSkills() {

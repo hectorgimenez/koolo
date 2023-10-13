@@ -102,7 +102,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration
 				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d) == step.StatusCompleted) {
-					buffAct = b.ab.Buff()
+					buffAct = b.ab.BuffIfRequired(d)
 					actions = append([]action.Action{buffAct}, actions...)
 				}
 
