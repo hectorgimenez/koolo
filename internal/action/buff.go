@@ -80,6 +80,9 @@ func (b *Builder) IsRebuffRequired(d data.Data) bool {
 			if buff == skill.FrozenArmor && (!d.PlayerUnit.States.HasState(state.Frozenarmor) && !d.PlayerUnit.States.HasState(state.Shiverarmor) && !d.PlayerUnit.States.HasState(state.Chillingarmor)) {
 				return true
 			}
+			if buff == skill.EnergyShield && !d.PlayerUnit.States.HasState(state.Energyshield) {
+				return true
+			}
 		}
 	}
 

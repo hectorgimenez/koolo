@@ -30,6 +30,8 @@ func BuildCharacter(logger *zap.Logger) (action.Character, error) {
 	switch strings.ToLower(config.Config.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
+	case "lightning":
+		return LightningSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":
 		return Hammerdin{BaseCharacter: bc}, nil
 	}
