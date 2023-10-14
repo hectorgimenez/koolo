@@ -70,10 +70,12 @@ func (m *MoveToStep) Status(d data.Data) Status {
 
 func (m *MoveToStep) Run(d data.Data) error {
 	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
-	if m.status == StatusNotStarted {
-		if helper.CanTeleport(d) {
+	if helper.CanTeleport(d) {
+		if d.PlayerUnit.RightSkill != skill.Teleport {
 			hid.PressKey(config.Config.Bindings.Teleport)
-		} else if d.PlayerUnit.Skills[skill.Vigor] > 0 && config.Config.Bindings.Paladin.Vigor != "" {
+		}
+	} else if d.PlayerUnit.Skills[skill.Vigor] > 0 && config.Config.Bindings.Paladin.Vigor != "" {
+		if d.PlayerUnit.RightSkill != skill.Vigor {
 			hid.PressKey(config.Config.Bindings.Paladin.Vigor)
 		}
 	}

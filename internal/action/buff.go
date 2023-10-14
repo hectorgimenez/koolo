@@ -14,6 +14,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
+var lastBuffedAt = time.Time{}
+
 func (b *Builder) BuffIfRequired(d data.Data) *StepChainAction {
 	if !b.IsRebuffRequired(d) {
 		return nil
@@ -46,7 +48,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 		if len(steps) > 0 {
 			b.logger.Debug("Buffing...")
-			steps = append(steps, step.Wait(time.Millisecond*200)) // Small delay to let the game detect the buff
+			lastBuffedAt = time.Now()
 		}
 
 		return steps
@@ -54,8 +56,8 @@ func (b *Builder) Buff() *StepChainAction {
 }
 
 func (b *Builder) IsRebuffRequired(d data.Data) bool {
-	// Don't buff if we are in town
-	if d.PlayerUnit.Area.IsTown() {
+	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
+	if d.PlayerUnit.Area.IsTown() || time.Since(lastBuffedAt) < time.Second*30 {
 		return false
 	}
 
