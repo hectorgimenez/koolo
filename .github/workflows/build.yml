@@ -19,8 +19,6 @@ jobs:
           "C:\mingw64\bin" >> $env:GITHUB_PATH
       - name: "Checkout"
         uses: actions/checkout@v4
-      - name: "Test cmd"
-        run: 7z a -tzip koolo_${{ github.ref_name }}.zip .\assets\*
       - name: "Setup Go"
         uses: actions/setup-go@v4
         with:
