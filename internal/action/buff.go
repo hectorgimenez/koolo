@@ -88,7 +88,7 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 
 		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 		if _, found := d.PlayerUnit.Skills[skill.BattleCommand]; !found {
-			steps = append(steps, step.SwapWeapon())
+			steps = append(steps, step.SwapToCTA())
 		}
 
 		steps = append(steps,
@@ -104,7 +104,7 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 
 				return nil
 			}),
-			step.SwapWeapon(),
+			step.SwapToMainWeapon(),
 		)
 	}
 

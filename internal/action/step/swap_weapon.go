@@ -11,37 +11,44 @@ import (
 
 type SwapWeaponStep struct {
 	basicStep
-	binding             string
-	initialWeaponWasCTA bool
+	binding string
+	wantCTA bool
 }
 
-func SwapWeapon() *SwapWeaponStep {
+func SwapToMainWeapon() *SwapWeaponStep {
 	return &SwapWeaponStep{
 		basicStep: newBasicStep(),
 		binding:   config.Config.Bindings.SwapWeapon,
 	}
 }
 
+func SwapToCTA() *SwapWeaponStep {
+	return &SwapWeaponStep{
+		basicStep: newBasicStep(),
+		binding:   config.Config.Bindings.SwapWeapon,
+		wantCTA:   true,
+	}
+}
+
 func (s *SwapWeaponStep) Status(d data.Data) Status {
-	if s.status == StatusNotStarted {
-		return StatusNotStarted
-	}
-	if s.status == StatusCompleted {
-		return StatusCompleted
-	}
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
-	if found && s.initialWeaponWasCTA || !found && !s.initialWeaponWasCTA {
-		return s.tryTransitionStatus(StatusInProgress)
+	if (s.wantCTA && found) || (!s.wantCTA && !found) {
+		s.tryTransitionStatus(StatusCompleted)
 	}
 
-	return s.tryTransitionStatus(StatusCompleted)
+	return s.status
 }
 
 func (s *SwapWeaponStep) Run(d data.Data) error {
 	s.tryTransitionStatus(StatusInProgress)
+
+	s.lastRun = time.Now()
+
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
-	if found {
-		s.initialWeaponWasCTA = true
+	if (s.wantCTA && found) || (!s.wantCTA && !found) {
+		s.tryTransitionStatus(StatusCompleted)
+
+		return nil
 	}
 
 	s.lastRun = time.Now()
