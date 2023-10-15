@@ -19,6 +19,8 @@ jobs:
           "C:\mingw64\bin" >> $env:GITHUB_PATH
       - name: "Checkout"
         uses: actions/checkout@v4
+      - name: "Test cmd"
+        run: 7z a -tzip koolo_${{ github.ref_name }}.zip .\assets\*
       - name: "Setup Go"
         uses: actions/setup-go@v4
         with:
@@ -34,10 +36,10 @@ jobs:
         env:
           GOPATH: C:\go
         run: .\build.bat
-
-#      - name: "Archive"
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: koolo
-#          path: koolo.exe
-
+      - name: "Packing the release"
+        run: 7z a -tzip koolo_${{ github.ref_name }}.zip .\build\*
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: koolo_${{ github.ref_name }}.zip
