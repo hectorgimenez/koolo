@@ -26,6 +26,10 @@ func (b *Builder) BuffIfRequired(d data.Data) *StepChainAction {
 
 func (b *Builder) Buff() *StepChainAction {
 	return NewStepChain(func(d data.Data) (steps []step.Step) {
+		if d.PlayerUnit.Area.IsTown() || time.Since(lastBuffedAt) < time.Second*30 {
+			return nil
+		}
+
 		steps = append(steps, b.buffCTA(d)...)
 
 		for buff, kb := range b.ch.BuffSkills() {
