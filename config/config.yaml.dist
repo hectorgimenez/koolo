@@ -83,8 +83,9 @@ game:
   randomizeRuns: true # Will randomize the order of the runs each game
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
   # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak,
-  #                 tristram, lower_kurast, stony_tomb, pit, arachnid_lair, tal_rasha_tombs, baal, diablo, cows
+  #                 tristram, lower_kurast, stony_tomb, pit, arachnid_lair, tal_rasha_tombs, baal, diablo, cows, terror_zone
   # leveling: there is a "leveling" run, in combination with "sorceress or paladin" class will be able to start leveling character from level 1 (don't expect too much)
+  # terror_zone: will detect current TZ and clear it
   runs: [stony_tomb, pit, arachnid_lair]
 
   # Specific runs settings
@@ -97,6 +98,83 @@ game:
     clearArea: true
   baal:
     killBaal: false
+  terrorZone:
+    skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
+    skipOtherRuns: false # If current TZ is allowed, will skip other runs and only do TZ instead
+    areas:
+      - 2 # Blood Moor
+      - 8 # Den of Evil
+      - 3 # Cold Plains
+      - 9 # Cave Level 1
+      - 10 # Cave Level 2
+      - 12 # Pit Level 1 (Will do Pit run)
+      - 17 # Burial Grounds
+      - 18 # Crypt
+      - 19 # Mausoleum
+      - 4 # Stony Field
+      - 5 # Dark Wood
+      - 10 # Underground Passage Level 1
+      - 14 # Underground Passage Level 2
+      - 6 # Black Marsh
+      - 11 # Hole Level 1
+      - 15 # Hole Level 2
+      - 20 # Forgotten Tower (Will do Countess run)
+      - 29 # Jail Level 1
+      - 30 # Jail Level 2
+      - 31 # Jail Level 3
+      - 32 # Inner Cloister
+      - 33 # Cathedral
+      - 34 # Catacombs Level 1
+      - 35 # Catacombs Level 2
+      - 36 # Catacombs Level 3
+      - 38 # Tristram (Will do Tristram run)
+      - 39 # Moo Moo Farm (Will do Cows run)
+      - 41 # Rocky Waste (Will do Stony Tomb run)
+      - 47 # Sewers Level 1
+      - 48 # Sewers Level 2
+      - 49 # Sewers Level 3
+      - 42 # Dry Hills
+      - 56 # Halls of the Dead Level 1
+      - 57 # Halls of the Dead Level 2
+      - 60 # Halls of the Dead Level 3
+      - 43 # Far Oasis
+      - 44 # Lost City
+      - 45 # Valley of Snakes
+      - 58 # Claw Viper Temple Level 1
+      - 61 # Claw Viper Temple Level 2
+      - 65 # Ancient Tunnels (Will do Ancient Tunnels run)
+      - 66 # Tal Rasha's Tomb 1 (Will do Tal Rasha Tombs run)
+      - 74 # Arcane Sanctuary (Will do Summoner run)
+      - 76 # Spider Forest
+      - 85 # Spider Cavern
+      - 83 # Travincal (Will do Council run)
+      - 77 # Great Marsh
+      - 78 # Flayer Jungle
+      - 88 # Flayer Dungeon Level 1
+      - 89 # Flayer Dungeon Level 2
+      - 91 # Flayer Dungeon Level 3
+      - 80 # Kurast Bazaar
+      - 94 # Ruined Temple
+      - 95 # Disused Fane
+      - 100 # Durance of Hate Level 1 (Will do Mephisto run)
+      - 104 # Outer Steppes
+      - 105 # Plains of Despair
+      - 106 # City of the Damned
+      - 107 # River of Flame
+      - 108 # Chaos Sanctuary (Will do Diablo run)
+      - 110 # Bloody Foothills
+      - 111 # Frigid Highlands
+      - 125 # Abaddon
+      - 115 # Glacial Trail
+      - 116 # Drifter Cavern
+      - 113 # Crystalline Passage
+      - 114 # Frozen River
+      - 112 # Arreat Plateau
+      - 126 # Pit of Acheron
+      - 118 # The Ancients' Way
+      - 119 # Icy Cellar
+      - 121 # Nihlathak's Temple (Will do Nihlathak run)
+      - 128 # The Worldstone Keep Level 1 (Will do Baal run)
 
 companion:
   enabled: false

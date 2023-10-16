@@ -3,6 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"go.uber.org/zap"
@@ -95,7 +96,7 @@ func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
 
 		if clearArea {
 			a.logger.Debug("Clearing TZ area", zap.Any("area", dstArea))
-			actions = append(actions, a.builder.ClearArea(true, data.MonsterEliteFilter()))
+			actions = append(actions, a.builder.ClearArea(true, customTZEnemyFilter(config.Config.Game.TerrorZone.SkipOnImmunities...)))
 		} else {
 			a.logger.Debug("TZ area skipped", zap.Any("area", dstArea))
 		}
@@ -160,4 +161,23 @@ func (a TerrorZone) tzAreaChain(firstTZ area.Area) [][]area.Area {
 	}
 
 	return [][]area.Area{}
+}
+
+func customTZEnemyFilter(resists ...stat.Resist) data.MonsterFilter {
+	return func(m data.Monsters) []data.Monster {
+		var filteredMonsters []data.Monster
+		for _, mo := range m.Enemies(data.MonsterEliteFilter()) {
+			isImmune := false
+			for _, resist := range resists {
+				if mo.IsImmune(resist) {
+					isImmune = true
+				}
+			}
+			if !isImmune {
+				filteredMonsters = append(filteredMonsters, mo)
+			}
+		}
+
+		return filteredMonsters
+	}
 }
