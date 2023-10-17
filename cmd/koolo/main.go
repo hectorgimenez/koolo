@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	hook "github.com/robotn/gohook"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/remote/web"
-	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -93,7 +93,7 @@ func main() {
 	}
 
 	g.Go(func() error {
-		return supervisor.Start(ctx, run.BuildRuns(logger, ab, char, gr, bm))
+		return supervisor.Start(ctx, run.NewFactory(logger, ab, char, gr, bm))
 	})
 
 	if config.Config.Controller.Webserver {

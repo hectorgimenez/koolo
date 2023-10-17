@@ -71,6 +71,19 @@ func (a TerrorZone) BuildActions() (actions []action.Action) {
 	return []action.Action{act}
 }
 
+func (a TerrorZone) AvailableTZs(d data.Data) []area.Area {
+	var availableTZs []area.Area
+	for _, tz := range d.TerrorZones {
+		for _, tzArea := range config.Config.Game.TerrorZone.Areas {
+			if tz == tzArea {
+				availableTZs = append(availableTZs, tz)
+			}
+		}
+	}
+
+	return availableTZs
+}
+
 func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
 	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		if d.PlayerUnit.Area != dstArea && d.PlayerUnit.Area.IsTown() {

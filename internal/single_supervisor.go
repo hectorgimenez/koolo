@@ -16,7 +16,7 @@ import (
 )
 
 type Supervisor interface {
-	Start(ctx context.Context, runs []run.Run) error
+	Start(ctx context.Context, factory *run.Factory) error
 	Stop()
 	TogglePause()
 }
@@ -37,7 +37,7 @@ func NewSinglePlayerSupervisor(logger *zap.Logger, bot *Bot, gr *reader.GameRead
 }
 
 // Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
-func (s *SinglePlayerSupervisor) Start(ctx context.Context, runs []run.Run) error {
+func (s *SinglePlayerSupervisor) Start(ctx context.Context, factory *run.Factory) error {
 	defer func() {
 		if r := recover(); r != nil {
 			s.logger.Fatal("Panic detected, Koolo will exit", zap.Any("panic", r))
@@ -62,6 +62,7 @@ func (s *SinglePlayerSupervisor) Start(ctx context.Context, runs []run.Run) erro
 				}
 			}
 
+			runs := factory.BuildRuns()
 			gameStart := time.Now()
 			if config.Config.Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })

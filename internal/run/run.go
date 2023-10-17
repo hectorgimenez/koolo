@@ -2,6 +2,7 @@ package run
 
 import (
 	"strings"
+	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -21,15 +22,53 @@ type baseRun struct {
 	logger  *zap.Logger
 }
 
-func BuildRuns(logger *zap.Logger, builder *action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) (runs []Run) {
-	baseRun := baseRun{
+type Factory struct {
+	logger  *zap.Logger
+	builder *action.Builder
+	char    action.Character
+	gr      *reader.GameReader
+	bm      health.BeltManager
+}
+
+func NewFactory(logger *zap.Logger, builder *action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) *Factory {
+	return &Factory{
+		logger:  logger,
 		builder: builder,
 		char:    char,
-		logger:  logger,
+		gr:      gr,
+		bm:      bm,
+	}
+}
+
+func (f *Factory) BuildRuns() (runs []Run) {
+	t := time.Now()
+	f.logger.Debug("Fetching map data...")
+	d := f.gr.GetData(true)
+	f.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(t).Milliseconds()))
+
+	baseRun := baseRun{
+		builder: f.builder,
+		char:    f.char,
+		logger:  f.logger,
 	}
 
 	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
 		return []Run{Companion{baseRun: baseRun}}
+	}
+
+	for _, run := range config.Config.Game.Runs {
+		// Prepend terror zone runs, we want to run it always first
+		if run == "terror_zone" {
+			tz := TerrorZone{baseRun: baseRun}
+
+			if len(tz.AvailableTZs(d)) > 0 {
+				runs = append(runs, tz)
+				// If we are skipping other runs, we can return here
+				if config.Config.Game.TerrorZone.SkipOtherRuns {
+					return runs
+				}
+			}
+		}
 	}
 
 	for _, run := range config.Config.Game.Runs {
@@ -48,7 +87,7 @@ func BuildRuns(logger *zap.Logger, builder *action.Builder, char action.Characte
 		case "diablo":
 			runs = append(runs, Diablo{
 				baseRun: baseRun,
-				bm:      bm,
+				bm:      f.bm,
 			})
 		case "eldritch":
 			runs = append(runs, Eldritch{
@@ -78,11 +117,9 @@ func BuildRuns(logger *zap.Logger, builder *action.Builder, char action.Characte
 		case "tal_rasha_tombs":
 			runs = append(runs, TalRashaTombs{baseRun})
 		case "leveling":
-			runs = append(runs, Leveling{baseRun, gr, bm})
+			runs = append(runs, Leveling{baseRun, f.gr, f.bm})
 		case "cows":
 			runs = append(runs, Cows{baseRun})
-		case "terror_zone":
-			runs = append(runs, TerrorZone{baseRun: baseRun})
 		}
 	}
 
