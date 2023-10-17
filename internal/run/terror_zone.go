@@ -179,7 +179,12 @@ func (a TerrorZone) tzAreaChain(firstTZ area.Area) [][]area.Area {
 func customTZEnemyFilter(resists ...stat.Resist) data.MonsterFilter {
 	return func(m data.Monsters) []data.Monster {
 		var filteredMonsters []data.Monster
-		for _, mo := range m.Enemies(data.MonsterEliteFilter()) {
+		monsterFilter := data.MonsterAnyFilter()
+		if config.Config.Game.TerrorZone.FocusOnElitePacks {
+			monsterFilter = data.MonsterEliteFilter()
+		}
+
+		for _, mo := range m.Enemies(monsterFilter) {
 			isImmune := false
 			for _, resist := range resists {
 				if mo.IsImmune(resist) {

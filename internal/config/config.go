@@ -115,9 +115,10 @@ type StructConfig struct {
 			KillBaal bool `yaml:"killBaal"`
 		} `yaml:"baal"`
 		TerrorZone struct {
-			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
-			SkipOtherRuns    bool          `yaml:"skipOtherRuns"`
-			Areas            []area.Area   `yaml:"areas"`
+			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
+			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
+			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
+			Areas             []area.Area   `yaml:"areas"`
 		} `yaml:"terrorZone"`
 	} `yaml:"game"`
 	Companion struct {

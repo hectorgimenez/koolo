@@ -99,6 +99,7 @@ game:
   baal:
     killBaal: false
   terrorZone:
+    focusOnElitePacks: false # Will clear only Elite monsters
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
     skipOtherRuns: false # If current TZ is allowed, will skip other runs and only do TZ instead
     areas:
