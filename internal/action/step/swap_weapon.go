@@ -33,7 +33,7 @@ func SwapToCTA() *SwapWeaponStep {
 func (s *SwapWeaponStep) Status(d data.Data) Status {
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if (s.wantCTA && found) || (!s.wantCTA && !found) {
-		s.tryTransitionStatus(StatusCompleted)
+		return s.tryTransitionStatus(StatusCompleted)
 	}
 
 	return s.status
@@ -42,7 +42,9 @@ func (s *SwapWeaponStep) Status(d data.Data) Status {
 func (s *SwapWeaponStep) Run(d data.Data) error {
 	s.tryTransitionStatus(StatusInProgress)
 
-	s.lastRun = time.Now()
+	if time.Since(s.lastRun) < time.Second {
+		return nil
+	}
 
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if (s.wantCTA && found) || (!s.wantCTA && !found) {
@@ -51,8 +53,9 @@ func (s *SwapWeaponStep) Run(d data.Data) error {
 		return nil
 	}
 
-	s.lastRun = time.Now()
 	hid.PressKey(s.binding)
+
+	s.lastRun = time.Now()
 
 	return nil
 }

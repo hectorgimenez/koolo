@@ -108,6 +108,7 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 
 				return nil
 			}),
+			step.Wait(time.Millisecond*500),
 			step.SwapToMainWeapon(),
 		)
 	}
