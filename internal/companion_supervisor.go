@@ -45,7 +45,7 @@ func NewCompanionSupervisor(logger *zap.Logger, bot *Bot, gr *reader.GameReader,
 }
 
 // Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
-func (s *CompanionSupervisor) Start(ctx context.Context, runs []run.Run) error {
+func (s *CompanionSupervisor) Start(ctx context.Context, factory *run.Factory) error {
 	err := s.ensureProcessIsRunningAndPrepare()
 	if err != nil {
 		return fmt.Errorf("error preparing game: %w", err)
@@ -68,7 +68,7 @@ func (s *CompanionSupervisor) Start(ctx context.Context, runs []run.Run) error {
 
 				event.Events <- event.Text(fmt.Sprintf("New game created. GameName: " + gameName + "|||x"))
 
-				err = s.startBot(ctx, runs, firstRun)
+				err = s.startBot(ctx, factory.BuildRuns(), firstRun)
 				firstRun = false
 				if err != nil {
 					return err
@@ -84,6 +84,7 @@ func (s *CompanionSupervisor) Start(ctx context.Context, runs []run.Run) error {
 							continue
 						}
 
+						runs := factory.BuildRuns()
 						err = s.startBot(ctx, runs, firstRun)
 						firstRun = false
 						if err != nil {

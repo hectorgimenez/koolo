@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 
@@ -109,10 +110,16 @@ type StructConfig struct {
 		} `yaml:"tristram"`
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
-		}
+		} `yaml:"nihlathak"`
 		Baal struct {
 			KillBaal bool `yaml:"killBaal"`
-		}
+		} `yaml:"baal"`
+		TerrorZone struct {
+			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
+			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
+			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
+			Areas             []area.Area   `yaml:"areas"`
+		} `yaml:"terrorZone"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`
@@ -124,7 +131,7 @@ type StructConfig struct {
 	Gambling struct {
 		Enabled bool        `yaml:"enabled"`
 		Items   []item.Name `yaml:"items"`
-	}
+	} `yaml:"gambling"`
 	Runtime struct {
 		CastDuration time.Duration
 		Rules        []nip.Rule

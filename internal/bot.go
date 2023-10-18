@@ -42,13 +42,8 @@ func NewBot(
 
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	gameStartedAt := time.Now()
-
-	// TODO: Warmup cache, find a better way to do this shit
-	b.logger.Debug("Fetching map data...")
-	b.gr.GetData(true)
-	b.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(gameStartedAt).Milliseconds()))
-
 	loadingScreensDetected := 0
+
 	for k, r := range runs {
 		stat.StartRun(r.Name())
 		runStart := time.Now()
