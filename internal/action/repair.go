@@ -23,9 +23,15 @@ func (b *Builder) Repair() *Chain {
 				if repairNPC == npc.Hratli {
 					actions = append(actions, b.MoveToCoords(data.Position{X: 5224, Y: 5045}))
 				}
+				keys := make([]string, 0)
+				keys = append(keys, "home")
+				if repairNPC != npc.Halbu {
+					keys = append(keys, "down")
+				}
+				keys = append(keys, "enter")
 
 				return append(actions, b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).RepairNPC(),
-					step.KeySequence("home", "down", "enter"),
+					step.KeySequence(keys...),
 					step.SyncStep(func(_ data.Data) error {
 						helper.Sleep(100)
 						hid.MovePointer(390, 515)
