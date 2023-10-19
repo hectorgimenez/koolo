@@ -27,6 +27,12 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 			openShopStep = step.KeySequence("home", "enter")
 		}
 
+		if vendorNPC == npc.Drognan {
+			if b.sm.ShouldBuyKeys(d) {
+				vendorNPC = npc.Lysander
+			}
+		}
+
 		return []Action{b.InteractNPC(vendorNPC,
 			openShopStep,
 			step.Wait(time.Second),

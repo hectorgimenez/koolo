@@ -70,10 +70,12 @@ type StructConfig struct {
 
 		// Class Specific bindings
 		Sorceress struct {
-			Blizzard    string `yaml:"blizzard"`
-			StaticField string `yaml:"staticField"`
-			FrozenArmor string `yaml:"frozenArmor"`
-			FireBall    string `yaml:"fireBall"`
+			Blizzard     string `yaml:"blizzard"`
+			StaticField  string `yaml:"staticField"`
+			FrozenArmor  string `yaml:"frozenArmor"`
+			FireBall     string `yaml:"fireBall"`
+			Nova         string `yaml:"nova"`
+			EnergyShield string `yaml:"energyShield"`
 		} `yaml:"sorceress"`
 		Paladin struct {
 			Concentration string `yaml:"concentration"`

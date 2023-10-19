@@ -52,6 +52,8 @@ bindings:
     staticField: f3
     frozenArmor: f5
     fireBall: f2 # During leveling only
+    nova: f2
+    energyShield: f8
 
   paladin:
     concentration: f2 # Will be used for Might during leveling
@@ -73,7 +75,7 @@ inventory:
     rejuvenation: 1
 
 character:
-  class: sorceress # Allowed values: sorceress, hammerdin, paladin (leveling only)
+  class: sorceress # Allowed values: sorceress, lightning, hammerdin, paladin (leveling only)
   castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
 
