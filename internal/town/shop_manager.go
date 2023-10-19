@@ -76,7 +76,7 @@ func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
 		}
 	}
 
-	if sm.shouldBuyKeys(d) || forceRefill {
+	if sm.ShouldBuyKeys(d) || forceRefill {
 		if itm, found := d.Items.Find(item.Key, item.LocationVendor); found {
 			sm.logger.Debug("Vendor with keys detected, provisioning...")
 			sm.buyFullStack(itm)
@@ -116,7 +116,7 @@ func (sm ShopManager) ShouldBuyIDs(d data.Data) bool {
 	return qty.Value <= rand.Intn(7-3)+1 || !found
 }
 
-func (sm ShopManager) shouldBuyKeys(d data.Data) bool {
+func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
 	keys, found := d.Items.Find(item.Key, item.LocationInventory)
 	if !found {
 		return false
