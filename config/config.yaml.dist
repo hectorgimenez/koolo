@@ -93,6 +93,9 @@ game:
   # Specific runs settings
   pindleskin:
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
+  mephisto:
+    killCouncilMembers: true # Will kill the council members after killing Mephisto
+    openChests: true # Will open chests after killing Mephisto
   tristram:
     focusOnElitePacks: false # Will clear only Elite monsters
     clearPortal: true # Kills Rakanishu and makes easier selecting the portal

@@ -106,6 +106,10 @@ type StructConfig struct {
 		Pindleskin    struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
+		Mephisto struct {
+			KillCouncilMembers bool `yaml:"killCouncilMembers"`
+			OpenChests         bool `yaml:"openChests"`
+		} `yaml:"mephisto"`
 		Tristram struct {
 			ClearPortal       bool `yaml:"clearPortal"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
