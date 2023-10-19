@@ -15,7 +15,7 @@ jobs:
       - name: "Install MinGW"
         run: |
           wget -nv https://download.qt.io/development_releases/prebuilt/mingw_64/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
-          7z x -oC: x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
+          7z x -aoa	-oC: x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
           "C:\mingw64\bin" >> $env:GITHUB_PATH
       - name: "Checkout"
         uses: actions/checkout@v4
