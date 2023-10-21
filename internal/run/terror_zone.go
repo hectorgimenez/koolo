@@ -38,12 +38,8 @@ func (a TerrorZone) BuildActions() (actions []action.Action) {
 				return TalRashaTombs{baseRun: a.baseRun}.BuildActions()
 			case area.AncientTunnels:
 				return AncientTunnels{baseRun: a.baseRun}.BuildActions()
-			case area.ArcaneSanctuary:
-				return Summoner{baseRun: a.baseRun}.BuildActions()
 			case area.RockyWaste:
 				return StonyTomb{baseRun: a.baseRun}.BuildActions()
-			case area.ForgottenTower:
-				return Countess{baseRun: a.baseRun}.BuildActions()
 			case area.Travincal:
 				return Council{baseRun: a.baseRun}.BuildActions()
 			case area.DuranceOfHateLevel1:
@@ -133,6 +129,8 @@ func (a TerrorZone) tzAreaChain(firstTZ area.Area) [][]area.Area {
 		return [][]area.Area{{area.DarkWood, area.UndergroundPassageLevel1, area.UndergroundPassageLevel2}}
 	case area.BlackMarsh:
 		return [][]area.Area{{area.BlackMarsh, area.HoleLevel1, area.HoleLevel2}}
+	case area.ForgottenTower:
+		return [][]area.Area{{area.BlackMarsh, area.ForgottenTower, area.TowerCellarLevel1, area.TowerCellarLevel2, area.TowerCellarLevel3, area.TowerCellarLevel4, area.TowerCellarLevel5}}
 	case area.JailLevel1:
 		return [][]area.Area{{area.JailLevel1, area.JailLevel2, area.JailLevel3}}
 	case area.Cathedral:
@@ -146,6 +144,8 @@ func (a TerrorZone) tzAreaChain(firstTZ area.Area) [][]area.Area {
 		return [][]area.Area{{area.FarOasis}}
 	case area.LostCity:
 		return [][]area.Area{{area.LostCity, area.ValleyOfSnakes, area.ClawViperTempleLevel1, area.ClawViperTempleLevel2}}
+	case area.ArcaneSanctuary:
+		return [][]area.Area{{area.ArcaneSanctuary}}
 	// Act 3
 	case area.SpiderForest:
 		return [][]area.Area{{area.SpiderForest, area.SpiderCavern}}
