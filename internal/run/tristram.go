@@ -61,7 +61,11 @@ func (a Tristram) BuildActions() []action.Action {
 				return !obj.Selectable
 			})}
 		} else {
-			return []action.Action{a.builder.ClearArea(false, data.MonsterAnyFilter())}
+			filter := data.MonsterAnyFilter()
+			if config.Config.Game.Tristram.FocusOnElitePacks {
+				filter = data.MonsterEliteFilter()
+			}
+			return []action.Action{a.builder.ClearArea(false, filter)}
 		}
 	}))
 }
