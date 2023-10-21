@@ -1,17 +1,14 @@
 package reader
 
 import (
-	"strconv"
-	"syscall"
-
+	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/memory"
+	"github.com/hectorgimenez/d2go/pkg/utils"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/reader/map_client"
-	"golang.org/x/sys/windows"
+	"strconv"
 )
-
-var dllSeed = syscall.MustLoadDLL("rustdecrypt.dll")
 
 var CachedMapData map_client.MapData
 
@@ -60,18 +57,13 @@ func (gd *GameReader) getMapSeed(playerUnit uintptr) (uint, error) {
 	actMiscPtr := uintptr(gd.Process.ReadUInt(actPtr+0x78, memory.Uint64))
 
 	dwInitSeedHash1 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x840, memory.Uint32))
-	dwInitSeedHash2 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x844, memory.Uint32))
+	//dwInitSeedHash2 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x844, memory.Uint32))
 	dwEndSeedHash1 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x868, memory.Uint32))
 
-	p, err := dllSeed.FindProc("get_seed")
-	if err != nil {
-		return 0, err
+	mapSeed, found := utils.GetMapSeed(uint(dwInitSeedHash1), uint(dwEndSeedHash1))
+	if !found {
+		return 0, fmt.Errorf("error calculating map seed")
 	}
 
-	mapSeed, _, err := p.Call(dwInitSeedHash1, dwInitSeedHash2, dwEndSeedHash1)
-	if err != windows.ERROR_SUCCESS {
-		return 0, err
-	}
-
-	return uint(mapSeed), nil
+	return mapSeed, nil
 }

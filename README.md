@@ -16,7 +16,6 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 Koolo reads game memory and interacts with the game simulating clicks/keystrokes.
 It uses the following third party libraries:
 
-- https://github.com/joffreybesos/rustdecrypt
 - https://github.com/hectorgimenez/d2go
 - https://github.com/hectorgimenez/diablo2 (forked
   from [blacha's repo](https://github.com/blacha/diablo2/tree/master/packages/map))
