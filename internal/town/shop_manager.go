@@ -157,7 +157,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
 		hid.Click(hid.RightButton)
-		helper.Sleep(800)
+		helper.Sleep(900)
 		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
 }
