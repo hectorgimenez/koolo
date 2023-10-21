@@ -10,7 +10,6 @@ require (
 	github.com/hectorgimenez/d2go v0.0.0-20231021052602-77413a8aaaeb
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/robotn/gohook v0.41.0
-	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 	gocv.io/x/gocv v0.33.0
 	golang.org/x/sync v0.4.0
@@ -19,7 +18,6 @@ require (
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gen2brain/shm v0.0.0-20230802011745-f2460f5984f7 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -27,7 +25,6 @@ require (
 	github.com/kbinani/screenshot v0.0.0-20230812210009-b87d31814237 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
 	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/robotn/xgb v0.0.0-20190912153532-2cb92d044934 // indirect
 	github.com/robotn/xgbutil v0.0.0-20190912154524-c861d6f87770 // indirect
