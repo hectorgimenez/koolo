@@ -197,4 +197,5 @@ func switchTab(tab int) {
 	hid.MovePointer(x, y)
 	helper.Sleep(400)
 	hid.Click(hid.LeftButton)
+	helper.Sleep(500)
 }
