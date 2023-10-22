@@ -41,9 +41,9 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		a.builder.WayPoint(area.RiverOfFlame),
 		// Travel to diablo spawn location
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
+		a.builder.MoveToCoords(diabloSpawnPosition),
 	)
 
-	actions = append(actions, a.builder.MoveToCoords(diabloSpawnPosition))
 	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
 
 	// Move across all the seals, try to find the most clear spot around them, kill monsters and activate the seal.
@@ -98,6 +98,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			a.builder.ClearAreaAroundPlayer(15),
 			action.NewStepChain(func(d data.Data) []step.Step {
 				a.logger.Debug("Trying to activate seal...", zap.Int("seal", sealNumber+1))
+				lastInteractionAt := time.Now()
 				return []step.Step{
 					step.InteractObject(seal, func(d data.Data) bool {
 						if obj, found := d.Objects.FindOne(seal); found {
@@ -106,23 +107,53 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 							}
 							return !obj.Selectable
 						}
+						if time.Since(lastInteractionAt) > time.Second*3 {
+							lastInteractionAt = time.Now()
+							pather.RandomMovement()
+							time.Sleep(time.Second)
+						}
 						return false
 					}),
 				}
 			}),
 		)
 
-		if sealNumber == 2 {
-			actions = append(actions, a.builder.MoveToCoords(data.Position{
-				X: 7785,
-				Y: 5237,
-			}))
-		}
+		// Only if we are not in the first seal
+		if sealNumber != 0 {
+			if sealNumber == 2 {
+				// TODO: Refactor this thing...
+				// Now wait & try to kill the Elite packs (maybe are already dead, killed during previous action)
+				startTime := time.Time{}
+				found := false
+				actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
+					if startTime.IsZero() {
+						startTime = time.Now()
+					}
+					for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
+						if a.isSealElite(m) {
+							found = true
+							a.logger.Debug("Seal defender found!")
+							return nil
+						}
+					}
 
-		// We only want to look for seal defenders when activating those specific seals
-		if sealNumber == 1 || sealNumber == 2 || sealNumber == 4 {
-			// First clear close trash mobs, regardless if they are elite or not
-			actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
+					if time.Since(startTime) < time.Second*4 {
+						return []step.Step{step.Wait(time.Millisecond * 100)}
+					}
+
+					return nil
+				}, action.RepeatUntilNoSteps()))
+
+				if !found {
+					actions = append(actions, a.builder.MoveToCoords(data.Position{
+						X: 7785,
+						Y: 5237,
+					}))
+				}
+			} else {
+				// First clear close trash mobs, regardless if they are elite or not
+				actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
+			}
 
 			// Now wait & try to kill the Elite packs (maybe are already dead, killed during previous action)
 			startTime := time.Time{}
@@ -147,7 +178,8 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 					if a.isSealElite(m) {
-						return m.UnitID, true
+						_, _, found := pather.GetPath(d, m.Position)
+						return m.UnitID, found
 					}
 				}
 
@@ -228,17 +260,8 @@ func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.
 }
 
 func (a Diablo) isSealElite(monster data.Monster) bool {
-	switch monster.Type {
-	case data.MonsterTypeSuperUnique:
-		switch monster.Name {
-		case npc.OblivionKnight, npc.VenomLord, npc.StormCaster:
-			return true
-		}
-	case data.MonsterTypeMinion:
-		switch monster.Name {
-		case npc.DoomKnight, npc.VenomLord, npc.StormCaster:
-			return true
-		}
+	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
+		return true
 	}
 
 	return false
