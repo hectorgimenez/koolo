@@ -114,12 +114,12 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			}
 
 			return []Action{NewStepChain(func(d data.Data) []step.Step {
-				_, _, found := pather.GetPath(d, closestRoom.GetCenter())
+				_, distance, found := pather.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {
-					_, _, found = pather.GetClosestWalkablePath(d, closestRoom.GetCenter())
+					_, distance, found = pather.GetClosestWalkablePath(d, closestRoom.GetCenter())
 				}
-				if !found {
+				if !found || distance <= 5 {
 					b.logger.Debug("Next room is not walkable, skipping it.")
 					clearedRooms = append(clearedRooms, closestRoom)
 					return []step.Step{}

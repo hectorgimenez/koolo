@@ -7,7 +7,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/go-vgo/robotgo v1.0.0-rc2.1
-	github.com/hectorgimenez/d2go v0.0.0-20231021052602-77413a8aaaeb
+	github.com/hectorgimenez/d2go v0.0.0-20231023121116-cebb05a0dfbf
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/robotn/gohook v0.41.0
 	go.uber.org/zap v1.26.0
