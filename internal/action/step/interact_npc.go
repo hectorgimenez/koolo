@@ -72,7 +72,13 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 		}
 
 		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
-		hid.MovePointer(x, y)
+
+		// Act 4 Tyrael has a super weird hitbox
+		if i.NPC == npc.Tyrael2 {
+			hid.MovePointer(x, y-20)
+		} else {
+			hid.MovePointer(x, y)
+		}
 
 		return nil
 	}
