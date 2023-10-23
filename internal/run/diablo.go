@@ -121,38 +121,10 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		// Only if we are not in the first seal
 		if sealNumber != 0 {
 			if sealNumber == 2 {
-				// TODO: Refactor this thing...
-				// Now wait & try to kill the Elite packs (maybe are already dead, killed during previous action)
-				startTime := time.Time{}
-				found := false
-				actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
-					if startTime.IsZero() {
-						startTime = time.Now()
-					}
-					for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
-						if a.isSealElite(m) {
-							found = true
-							a.logger.Debug("Seal defender found!")
-							return nil
-						}
-					}
-
-					if time.Since(startTime) < time.Second*4 {
-						return []step.Step{step.Wait(time.Millisecond * 100)}
-					}
-
-					return nil
-				}, action.RepeatUntilNoSteps()))
-
-				if !found {
-					actions = append(actions, a.builder.MoveToCoords(data.Position{
-						X: 7785,
-						Y: 5237,
-					}))
-				}
-			} else {
-				// First clear close trash mobs, regardless if they are elite or not
-				actions = append(actions, a.builder.ClearAreaAroundPlayer(15))
+				actions = append(actions, a.builder.MoveToCoords(data.Position{
+					X: 7773,
+					Y: 5195,
+				}))
 			}
 
 			// Now wait & try to kill the Elite packs (maybe are already dead, killed during previous action)
