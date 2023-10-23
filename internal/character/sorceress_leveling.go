@@ -317,7 +317,7 @@ func (s SorceressLeveling) KillDiablo() action.Action {
 		}
 
 		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
-		if !found {
+		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
 				return nil
