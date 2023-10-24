@@ -138,7 +138,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		// Open chests if are inside this room
 		if openChests {
 			for _, o := range d.Objects {
-				if o.IsSuperChest() && o.Selectable && currentRoom.IsInside(o.Position) {
+				if o.IsChest() && o.Selectable && currentRoom.IsInside(o.Position) {
 					chest := o
 					return []Action{b.InteractObject(chest.Name, func(d data.Data) bool {
 						for _, obj := range d.Objects {
