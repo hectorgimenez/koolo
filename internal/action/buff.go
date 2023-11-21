@@ -41,9 +41,9 @@ func (b *Builder) Buff() *StepChainAction {
 				steps = append(steps,
 					step.SyncStep(func(_ data.Data) error {
 						hid.PressKey(kb)
-						helper.Sleep(200)
+						helper.Sleep(300)
 						hid.Click(hid.RightButton)
-						helper.Sleep(100)
+						helper.Sleep(300)
 
 						return nil
 					}),
