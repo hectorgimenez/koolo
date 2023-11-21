@@ -29,13 +29,21 @@ func (b *Builder) Gamble() *Chain {
 				openShopStep = step.KeySequence("home", "down", "enter")
 			}
 
-			return []Action{
+			// Fix for Anya position
+			if vendorNPC == npc.Drehya {
+				actions = append(actions, b.MoveToCoords(data.Position{
+					X: 5107,
+					Y: 5119,
+				}))
+			}
+
+			return append(actions,
 				b.InteractNPC(vendorNPC,
 					openShopStep,
 					step.Wait(time.Second),
 				),
 				b.gambleItems(),
-			}
+			)
 		}
 
 		return nil

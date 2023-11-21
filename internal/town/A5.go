@@ -9,7 +9,7 @@ type A5 struct {
 }
 
 func (a A5) GamblingNPC() npc.ID {
-	return npc.Natalya // Anya
+	return npc.Drehya // Anya
 }
 
 func (a A5) HealNPC() npc.ID {
