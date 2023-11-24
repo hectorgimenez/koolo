@@ -47,6 +47,7 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 				}
 				return nil
 			}),
+			step.Wait(time.Second),
 			step.KeySequence("esc"),
 		)}
 	})
@@ -77,7 +78,7 @@ func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain 
 
 				return nil
 			}),
-
+			step.Wait(time.Second),
 			step.KeySequence("esc"),
 		)}
 	})
