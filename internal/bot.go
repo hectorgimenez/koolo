@@ -40,7 +40,13 @@ func NewBot(
 	}
 }
 
-func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
+func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v", r)
+		}
+	}()
+
 	gameStartedAt := time.Now()
 	loadingScreensDetected := 0
 

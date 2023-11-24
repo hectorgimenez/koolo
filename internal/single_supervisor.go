@@ -38,12 +38,6 @@ func NewSinglePlayerSupervisor(logger *zap.Logger, bot *Bot, gr *reader.GameRead
 
 // Start will stay running during the application lifecycle, it will orchestrate all the required bot pieces
 func (s *SinglePlayerSupervisor) Start(ctx context.Context, factory *run.Factory) error {
-	defer func() {
-		if r := recover(); r != nil {
-			s.logger.Fatal("Panic detected, Koolo will exit", zap.Any("panic", r))
-		}
-	}()
-
 	err := s.ensureProcessIsRunningAndPrepare()
 	if err != nil {
 		return fmt.Errorf("error preparing game: %w", err)
