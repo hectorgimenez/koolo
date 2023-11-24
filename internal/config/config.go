@@ -36,11 +36,6 @@ type StructConfig struct {
 		ChatID  int64  `yaml:"chatId"`
 		Token   string `yaml:"token"`
 	}
-	Controller struct {
-		Webserver bool `yaml:"webserver"`
-		Port      int  `yaml:"port"`
-		Webview   bool `yaml:"webview"`
-	} `yaml:"controller"`
 	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
