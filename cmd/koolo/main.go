@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"golang.org/x/sync/errgroup"
 	"log"
 	"os"
 	"os/signal"
@@ -23,10 +24,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
-	"github.com/hectorgimenez/koolo/internal/remote/web"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -42,7 +41,6 @@ func main() {
 	defer logger.Sync()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	controller := web.New(config.Config.Controller.Port)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
@@ -51,9 +49,6 @@ func main() {
 		logger.Info("Shutting down...")
 		signal.Stop(ch)
 		cancel()
-		if config.Config.Controller.Webserver {
-			controller.Stop(ctx)
-		}
 	}()
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -95,12 +90,6 @@ func main() {
 	g.Go(func() error {
 		return supervisor.Start(ctx, run.NewFactory(logger, ab, char, gr, bm))
 	})
-
-	if config.Config.Controller.Webserver {
-		g.Go(func() error {
-			return controller.Run()
-		})
-	}
 
 	eventListener := event.NewListener(logger)
 
