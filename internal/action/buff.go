@@ -32,27 +32,32 @@ func (b *Builder) Buff() *StepChainAction {
 
 		steps = append(steps, b.buffCTA(d)...)
 
+		keys := []string{}
 		for buff, kb := range b.ch.BuffSkills() {
 			if _, found := d.PlayerUnit.Skills[buff]; !found {
 				return nil
 			}
 
 			if kb != "" {
-				steps = append(steps,
-					step.SyncStep(func(_ data.Data) error {
+				keys = append(keys, kb)
+			}
+		}
+
+		if len(keys) > 0 {
+			b.logger.Debug("Buffing...")
+
+			steps = append(steps,
+				step.SyncStep(func(_ data.Data) error {
+					for _, kb := range keys {
+						helper.Sleep(200)
 						hid.PressKey(kb)
 						helper.Sleep(300)
 						hid.Click(hid.RightButton)
 						helper.Sleep(300)
-
-						return nil
-					}),
-				)
-			}
-		}
-
-		if len(steps) > 0 {
-			b.logger.Debug("Buffing...")
+					}
+					return nil
+				}),
+			)
 			lastBuffedAt = time.Now()
 		}
 
