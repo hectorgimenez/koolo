@@ -15,8 +15,8 @@ import (
 
 const (
 	lightningSorceressMaxAttacksLoop = 10
-	lightningSorceressMinDistance    = 1
-	lightningSorceressMaxDistance    = 10
+	lightningSorceressMinDistance    = 2
+	lightningSorceressMaxDistance    = 8
 )
 
 type LightningSorceress struct {
@@ -47,40 +47,30 @@ func (s LightningSorceress) KillMonsterSequence(
 		if len(opts) == 0 {
 			opts = append(opts, step.Distance(lightningSorceressMinDistance, lightningSorceressMaxDistance))
 		}
-		//if useStaticField {
-		//	steps = append(steps,
-		//		step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(lightningSorceressMinDistance, maxDistance)),
-		//		step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 5, config.Config.Runtime.CastDuration, step.Distance(lightningSorceressMinDistance, 15)),
-		//	)
-		//}
+
 		if completedAttackLoops >= lightningSorceressMaxAttacksLoop {
 			return []step.Step{}
 		}
 
 		steps := make([]step.Step, 0)
-		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		if completedAttackLoops%2 == 0 {
-			for _, m := range d.Monsters.Enemies() {
-				if d := pather.DistanceFromMe(d, m.Position); d < 4 {
-					s.logger.Debug("Monster detected close to the player, casting Nova over it")
-					steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, m.UnitID, 5, opts...), step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, m.UnitID, 5, opts...))
-					break
-				}
+		for _, m := range d.Monsters.Enemies() {
+			if d := pather.DistanceFromMe(d, m.Position); d < 5 {
+				s.logger.Debug("Monster detected close to the player, casting Nova over it")
+				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, 0, 3, opts...))
+				break
 			}
 		}
 
 		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
 		if completedAttackLoops > 5 {
 			if completedAttackLoops == 6 {
-				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance")
+				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance.")
 			}
-			opts = []step.AttackOption{step.Distance(1, 5)}
+			opts = []step.AttackOption{step.Distance(0, 1)}
 		}
 
 		steps = append(steps,
-			step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, id, 3, opts...),
-			step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, id, 3, opts...),
-			// step.PrimaryAttack(id, 4, opts...),
+			step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, id, 5, opts...),
 		)
 		completedAttackLoops++
 		previousUnitID = int(id)

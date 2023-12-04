@@ -24,6 +24,7 @@ type AttackStep struct {
 	moveToStep            *MoveToStep
 	auraKeyBinding        string
 	forceApplyKeyBinding  bool
+	aoe                   bool
 }
 
 type AttackOption func(step *AttackStep)
@@ -49,6 +50,7 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *
 		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
+		aoe:                   target == 0,
 	}
 
 	for _, o := range opts {
@@ -57,14 +59,15 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *
 	return s
 }
 
-func SecondaryAttack(keyBinding string, id data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(keyBinding string, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         false,
 		basicStep:             newBasicStep(),
-		target:                id,
+		target:                target,
 		standStillBinding:     config.Config.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		keyBinding:            keyBinding,
+		aoe:                   target == 0,
 	}
 	for _, o := range opts {
 		o(s)
@@ -86,23 +89,26 @@ func (p *AttackStep) Status(_ data.Data) Status {
 
 func (p *AttackStep) Run(d data.Data) error {
 	monster, found := d.Monsters.FindByID(p.target)
-	if !found || monster.Stats[stat.Life] <= 0 {
-		// Monster is dead, let's skip the attack sequence
-		p.tryTransitionStatus(StatusCompleted)
-		return nil
-	}
 
-	// Move into the attack distance range before starting
-	if p.followEnemy {
-		if !p.ensureEnemyIsInRange(monster, d) {
-			return nil
-		}
-	} else {
-		// Since we are not following the enemy, and it's not in range, we can't attack it
-		_, distance, found := pather.GetPath(d, monster.Position)
-		if !found || distance > p.maxDistance {
+	if !p.aoe {
+		if !found || monster.Stats[stat.Life] <= 0 {
+			// Monster is dead, let's skip the attack sequence
 			p.tryTransitionStatus(StatusCompleted)
 			return nil
+		}
+
+		// Move into the attack distance range before starting
+		if p.followEnemy {
+			if !p.ensureEnemyIsInRange(monster, d) {
+				return nil
+			}
+		} else {
+			// Since we are not following the enemy, and it's not in range, we can't attack it
+			_, distance, found := pather.GetPath(d, monster.Position)
+			if !found || distance > p.maxDistance {
+				p.tryTransitionStatus(StatusCompleted)
+				return nil
+			}
 		}
 	}
 
@@ -121,8 +127,10 @@ func (p *AttackStep) Run(d data.Data) error {
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > config.Config.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
 		hid.KeyDown(p.standStillBinding)
-		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
-		hid.MovePointer(x, y)
+		if !p.aoe {
+			x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
+			hid.MovePointer(x, y)
+		}
 
 		if p.primaryAttack {
 			hid.Click(hid.LeftButton)
