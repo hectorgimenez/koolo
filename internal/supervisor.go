@@ -100,6 +100,7 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 		return errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
 	}
 	win.SetForegroundWindow(window)
+	hid.HWND = window
 
 	pos := win.WINDOWPLACEMENT{}
 	point := win.POINT{}
@@ -107,7 +108,7 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 	win.GetWindowPlacement(window, &pos)
 
 	hid.WindowLeftX = int(point.X + 1)
-	hid.WindowTopY = int(point.Y)
+	hid.WindowTopY = int(point.Y) + 10
 	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 9
 	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 9
 	helper.Sleep(1000)

@@ -38,13 +38,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			b.logger.Debug("Item found on the stash, picking it up", zap.String("Item", string(nwIt.Name)))
 			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 				screenPos := ui.GetScreenCoordsForItem(nwIt)
-				hid.MovePointer(screenPos.X, screenPos.Y)
-
-				hid.KeyDown("control")
-				helper.Sleep(300)
-				hid.Click(hid.LeftButton)
-				helper.Sleep(200)
-				hid.KeyUp("control")
+				hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 				helper.Sleep(300)
 
 				return nil
@@ -60,13 +54,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 					if nwIt.UnitID == updatedItem.UnitID {
 						b.logger.Debug("Moving Item to the Horadric Cube", zap.String("Item", string(nwIt.Name)))
 						screenPos := ui.GetScreenCoordsForItem(updatedItem)
-						hid.MovePointer(screenPos.X, screenPos.Y)
-
-						hid.KeyDown("control")
-						helper.Sleep(300)
-						hid.Click(hid.LeftButton)
-						helper.Sleep(200)
-						hid.KeyUp("control")
+						hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 						helper.Sleep(300)
 					}
 				}
@@ -91,18 +79,12 @@ func (b *Builder) CubeTransmute() *Chain {
 
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 			b.logger.Debug("Transmuting items in the Horadric Cube")
-			hid.MovePointer(ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 			helper.Sleep(150)
-			hid.Click(hid.LeftButton)
+			hid.Click(hid.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 			helper.Sleep(3000)
 
 			// Move the Item back to the inventory
-			hid.MovePointer(238, 262)
-			hid.KeyDown("control")
-			helper.Sleep(300)
-			hid.Click(hid.LeftButton)
-			helper.Sleep(200)
-			hid.KeyUp("control")
+			hid.ClickWithModifier(hid.LeftButton, 238, 262, hid.CtrlKey)
 			helper.Sleep(300)
 
 			return []step.Step{
@@ -129,9 +111,8 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 		return []step.Step{
 			step.SyncStepWithCheck(func(d data.Data) error {
 				screenPos := ui.GetScreenCoordsForItem(cube)
-				hid.MovePointer(screenPos.X, screenPos.Y)
 				helper.Sleep(300)
-				hid.Click(hid.RightButton)
+				hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
 				helper.Sleep(200)
 				return nil
 			}, func(d data.Data) step.Status {

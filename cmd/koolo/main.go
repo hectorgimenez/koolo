@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	asm "github.com/hectorgimenez/koolo/internal/memory"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"os"
@@ -27,6 +28,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
 )
+
+const EXECUTION_STATE_ES_DISPLAY_REQUIRED = 0x00000002
+const EXECUTION_STATE_ES_CONTINUOUS = 0x80000000
 
 func main() {
 	err := config.Load()
@@ -56,6 +60,14 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error finding D2R.exe process", zap.Error(err))
 	}
+	err = asm.ASMInjectorInit(uint32(process.GetPID()))
+	if err != nil {
+		logger.Fatal("Error initializing ASMInjector", zap.Error(err))
+	}
+	defer asm.ASMInjectorUnload()
+
+	// Prevent screen from turning off
+	syscall.MustLoadDLL("kernel32.dll").MustFindProc("SetThreadExecutionState").Call(EXECUTION_STATE_ES_DISPLAY_REQUIRED | EXECUTION_STATE_ES_CONTINUOUS)
 
 	gr := &reader.GameReader{
 		GameReader: memory.NewGameReader(process),
@@ -123,7 +135,7 @@ func main() {
 		return eventListener.Listen(ctx)
 	})
 
-	registerKeyboardHooks(supervisor)
+	//registerKeyboardHooks(supervisor)
 
 	err = g.Wait()
 	if err != nil {

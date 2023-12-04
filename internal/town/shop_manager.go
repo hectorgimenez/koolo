@@ -140,23 +140,17 @@ func (sm ShopManager) SellJunk(d data.Data) {
 
 func (sm ShopManager) SellItem(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
-	hid.MovePointer(screenPos.X, screenPos.Y)
-	helper.Sleep(100)
-	hid.KeyDown("control")
-	helper.Sleep(50)
-	hid.Click(hid.LeftButton)
-	helper.Sleep(150)
-	hid.KeyUp("control")
+	helper.Sleep(500)
+	hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 	helper.Sleep(500)
 	sm.logger.Debug(fmt.Sprintf("Item %s [%d] sold", i.Name, i.Quality))
 }
 
 func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	screenPos := ui.GetScreenCoordsForItem(i)
-	hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
-		hid.Click(hid.RightButton)
+		hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
 		helper.Sleep(900)
 		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
@@ -164,13 +158,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 
 func (sm ShopManager) buyFullStack(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
-	hid.MovePointer(screenPos.X, screenPos.Y)
-	helper.Sleep(250)
-	hid.KeyDown("shift")
-	helper.Sleep(100)
-	hid.Click(hid.RightButton)
-	helper.Sleep(300)
-	hid.KeyUp("shift")
+	hid.ClickWithModifier(hid.RightButton, screenPos.X, screenPos.Y, hid.ShiftKey)
 	helper.Sleep(500)
 }
 

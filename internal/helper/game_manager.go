@@ -23,8 +23,7 @@ func NewGameManager(gr *reader.GameReader, tf *ui.TemplateFinder) *GameManager {
 func (gm *GameManager) ExitGame() error {
 	// First try to exit game as fast as possible, without any check, useful when chickening
 	hid.PressKey("esc")
-	hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
 
 	for i := 0; i < 5; i++ {
 		if !gm.gr.InGame() {
@@ -37,8 +36,7 @@ func (gm *GameManager) ExitGame() error {
 	// Probably closing the socket is more reliable, but was not working properly for me on singleplayer.
 	for i := 0; i < 10; i++ {
 		if gm.gr.GetData(false).OpenMenus.QuitMenu {
-			hid.MovePointer(hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
-			hid.Click(hid.LeftButton)
+			hid.Click(hid.LeftButton, hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
 
 			for i := 0; i < 5; i++ {
 				if !gm.gr.InGame() {
@@ -60,7 +58,9 @@ func (gm *GameManager) NewGame() error {
 	}
 
 	for i := 0; i < 30; i++ {
-		if gm.tf.Find("ui_config_gear", Screenshot()).Found {
+		gm.gr.InGame()
+		if gm.gr.InCharacterSelectionScreen() {
+			Sleep(2000) // Wait for character selection screen to load
 			break
 		}
 		Sleep(500)
@@ -76,12 +76,9 @@ func (gm *GameManager) NewGame() error {
 
 	createX := difficultyPosition[config.Config.Game.Difficulty].X
 	createY := difficultyPosition[config.Config.Game.Difficulty].Y
-	hid.MovePointer(600, 650)
+	hid.Click(hid.LeftButton, 600, 650)
 	Sleep(250)
-	hid.Click(hid.LeftButton)
-	Sleep(250)
-	hid.MovePointer(createX, createY)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, createX, createY)
 
 	for i := 0; i < 30; i++ {
 		if gm.gr.InGame() {
@@ -95,18 +92,15 @@ func (gm *GameManager) NewGame() error {
 
 func (gm *GameManager) CreateOnlineGame(gameCounter int) (string, error) {
 	// Enter bnet lobby
-	hid.MovePointer(744, 650)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 744, 650)
 	Sleep(1200)
 
 	// Click "Create game" tab
-	hid.MovePointer(845, 54)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 845, 54)
 	Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
-	hid.MovePointer(925, 116)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 925, 116)
 	hid.PressKeyCombination("lctrl", "a")
 	gameName := config.Config.Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
 	for _, ch := range gameName {
@@ -114,8 +108,7 @@ func (gm *GameManager) CreateOnlineGame(gameCounter int) (string, error) {
 	}
 
 	// Same for password
-	hid.MovePointer(925, 161)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 925, 161)
 	Sleep(200)
 	hid.PressKeyCombination("lctrl", "a")
 	hid.PressKey("x")
@@ -133,18 +126,15 @@ func (gm *GameManager) CreateOnlineGame(gameCounter int) (string, error) {
 
 func (gm *GameManager) JoinOnlineGame(gameName, password string) error {
 	// Enter bnet lobby
-	hid.MovePointer(744, 650)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 744, 650)
 	Sleep(1200)
 
 	// Click "Join game" tab
-	hid.MovePointer(977, 54)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 977, 54)
 	Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
-	hid.MovePointer(836, 100)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 836, 100)
 	Sleep(200)
 	hid.PressKeyCombination("lctrl", "a")
 	Sleep(200)
@@ -153,8 +143,7 @@ func (gm *GameManager) JoinOnlineGame(gameName, password string) error {
 	}
 
 	// Same for password
-	hid.MovePointer(1020, 100)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, 1020, 100)
 	Sleep(200)
 	hid.PressKeyCombination("lctrl", "a")
 	Sleep(200)

@@ -177,17 +177,14 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 						}
 
 						pos := ui.GetScreenCoordsForItem(itm)
-						hid.MovePointer(pos.X, pos.Y)
 						helper.Sleep(500)
 
 						if x > 3 {
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							hid.MovePointer(ui.MercAvatarPositionX, ui.MercAvatarPositionY)
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 						} else {
-							hid.Click(hid.RightButton)
+							hid.Click(hid.RightButton, pos.X, pos.Y)
 						}
 						x++
 					}

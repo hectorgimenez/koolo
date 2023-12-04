@@ -59,8 +59,11 @@ func (i *InteractObjectStep) Run(d data.Data) error {
 
 	i.lastRun = time.Now()
 	if o, found := d.Objects.FindOne(i.objectName); found {
+		objectX := o.Position.X - 2
+		objectY := o.Position.Y - 2
+		mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 		if o.IsHovered {
-			hid.Click(hid.LeftButton)
+			hid.Click(hid.LeftButton, mX, mY)
 			i.waitingForInteraction = true
 			return nil
 		} else {
@@ -68,10 +71,6 @@ func (i *InteractObjectStep) Run(d data.Data) error {
 			if distance > 15 {
 				return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
 			}
-
-			objectX := o.Position.X - 2
-			objectY := o.Position.Y - 2
-			mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 
 			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
 			if i.mouseOverAttempts == 2 && i.objectName == object.TownPortal {

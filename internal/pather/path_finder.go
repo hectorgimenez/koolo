@@ -178,14 +178,14 @@ func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords .
 }
 
 func MoveThroughPath(p *Pather, distance int, teleport bool) {
-	if len(p.AstarPather) == 0 {
-		if teleport {
-			hid.Click(hid.RightButton)
-		} else {
-			hid.PressKey(config.Config.Bindings.ForceMove)
-		}
-		return
-	}
+	//if len(p.AstarPather) == 0 {
+	//	if teleport {
+	//		hid.Click(hid.RightButton)
+	//	} else {
+	//		hid.PressKey(config.Config.Bindings.ForceMove)
+	//	}
+	//	return
+	//}
 
 	moveTo := p.AstarPather[0].(*Tile)
 	if distance > 0 && len(p.AstarPather) > distance {
@@ -198,12 +198,11 @@ func MoveThroughPath(p *Pather, distance int, teleport bool) {
 		screenY = int(float32(hid.GameAreaSizeY) / 1.21)
 	}
 
-	hid.MovePointer(screenX, screenY)
 	if distance > 0 {
 		if teleport {
-			hid.Click(hid.RightButton)
+			hid.Click(hid.RightButton, screenX, screenY)
 		} else {
-			hid.PressKey(config.Config.Bindings.ForceMove)
+			hid.Click(hid.LeftButton, screenX, screenY)
 		}
 	}
 }
@@ -237,8 +236,7 @@ func RandomMovement() {
 	midGameY := hid.GameAreaSizeY / 2
 	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
-	hid.MovePointer(x, y)
-	hid.PressKey(config.Config.Bindings.ForceMove)
+	hid.Click(hid.LeftButton, x, y)
 }
 
 func relativePosition(d data.Data, p data.Position, cgOffset data.Position) (int, int) {

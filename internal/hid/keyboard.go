@@ -2,10 +2,13 @@ package hid
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 
-	"github.com/go-vgo/robotgo"
+	"github.com/lxn/win"
 )
+
+var HWND win.HWND
 
 const (
 	keyPressMinTime = 10 // ms
@@ -14,26 +17,64 @@ const (
 
 // PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly
 func PressKey(key string) {
-	robotgo.KeyDown(key)
+	asciiChar := getASCIICode(key)
+	win.PostMessage(HWND, win.WM_KEYDOWN, asciiChar, 0)
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	robotgo.KeyUp(key)
+	win.PostMessage(HWND, win.WM_KEYUP, asciiChar, 0)
 }
 
 func KeyDown(key string) {
-	robotgo.KeyDown(key)
+	win.PostMessage(HWND, win.WM_KEYDOWN, getASCIICode(key), 0)
 }
 
 func KeyUp(key string) {
-	robotgo.KeyUp(key)
+	win.PostMessage(HWND, win.WM_KEYUP, getASCIICode(key), 0)
 }
 
 func PressKeyCombination(keys ...string) {
 	for _, k := range keys {
-		robotgo.KeyDown(k)
+		win.PostMessage(HWND, win.WM_KEYDOWN, getASCIICode(k), 0)
 	}
 	time.Sleep(time.Millisecond * 200)
 	for _, k := range keys {
-		robotgo.KeyUp(k)
+		win.PostMessage(HWND, win.WM_KEYUP, getASCIICode(k), 0)
 	}
+}
+
+func getASCIICode(key string) uintptr {
+	if len(key) == 1 {
+		return uintptr(strings.ToUpper(key)[0])
+	}
+
+	return specialChars[strings.ToLower(key)]
+}
+
+var specialChars = map[string]uintptr{
+	"esc":   win.VK_ESCAPE,
+	"enter": win.VK_RETURN,
+	"f1":    win.VK_F1,
+	"f2":    win.VK_F2,
+	"f3":    win.VK_F3,
+	"f4":    win.VK_F4,
+	"f5":    win.VK_F5,
+	"f6":    win.VK_F6,
+	"f7":    win.VK_F7,
+	"f8":    win.VK_F8,
+	"f9":    win.VK_F9,
+	"f10":   win.VK_F10,
+	"f11":   win.VK_F11,
+	"f12":   win.VK_F12,
+	"lctrl": win.VK_LCONTROL,
+	"home":  win.VK_HOME,
+	"down":  win.VK_DOWN,
+	"up":    win.VK_UP,
+	"left":  win.VK_LEFT,
+	"right": win.VK_RIGHT,
+	"tab":   win.VK_TAB,
+	"space": win.VK_SPACE,
+	"alt":   win.VK_MENU,
+	"lalt":  win.VK_LMENU,
+	"ralt":  win.VK_RMENU,
+	"shift": win.VK_LSHIFT,
 }

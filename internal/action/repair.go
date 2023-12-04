@@ -34,8 +34,7 @@ func (b *Builder) Repair() *Chain {
 					step.KeySequence(keys...),
 					step.SyncStep(func(_ data.Data) error {
 						helper.Sleep(100)
-						hid.MovePointer(390, 515)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, 390, 515)
 						helper.Sleep(500)
 						return nil
 					}),

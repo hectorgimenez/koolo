@@ -43,7 +43,7 @@ func (s *OpenPortalStep) Run(_ data.Data) error {
 
 	hid.PressKey(config.Config.Bindings.TP)
 	helper.Sleep(250)
-	hid.Click(hid.RightButton)
+	hid.Click(hid.RightButton, 300, 300)
 	s.lastRun = time.Now()
 
 	return nil

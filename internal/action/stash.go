@@ -64,9 +64,8 @@ func (b *Builder) orderInventoryPotions(d data.Data) {
 				continue
 			}
 			screenPos := ui.GetScreenCoordsForItem(i)
-			hid.MovePointer(screenPos.X, screenPos.Y)
 			helper.Sleep(100)
-			hid.Click(hid.RightButton)
+			hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
 			helper.Sleep(200)
 		}
 	}
@@ -158,11 +157,7 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
 	helper.Sleep(150)
-	hid.KeyDown("control")
-	helper.Sleep(700)
-	hid.Click(hid.LeftButton)
-	helper.Sleep(700)
-	hid.KeyUp("control")
+	hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 	helper.Sleep(500)
 
 	d := b.gr.GetData(false)
@@ -180,9 +175,8 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 }
 
 func clickStashGoldBtn() {
-	hid.MovePointer(stashGoldBtnX, stashGoldBtnY)
 	helper.Sleep(170)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, stashGoldBtnX, stashGoldBtnY)
 	helper.Sleep(500)
 	hid.PressKey("enter")
 	helper.Sleep(700)
@@ -194,8 +188,6 @@ func switchTab(tab int) {
 	tabSize := 82
 	x = x + tabSize*tab - tabSize/2
 
-	hid.MovePointer(x, y)
-	helper.Sleep(400)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, x, y)
 	helper.Sleep(500)
 }

@@ -3,7 +3,6 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -21,9 +20,7 @@ func (b *Builder) RecoverCorpse() *StepChainAction {
 						d.Corpse.Position.X,
 						d.Corpse.Position.Y,
 					)
-					hid.MovePointer(x, y)
-					helper.Sleep(300)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, x, y)
 
 					return nil
 				}, func(d data.Data) step.Status {

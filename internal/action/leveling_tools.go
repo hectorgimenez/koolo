@@ -73,8 +73,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			return []step.Step{
 				step.SyncStep(func(_ data.Data) error {
 					helper.Sleep(100)
-					hid.MovePointer(statBtnPosition.X, statBtnPosition.Y)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, statBtnPosition.X, statBtnPosition.Y)
 					helper.Sleep(500)
 					return nil
 				}),
@@ -134,11 +133,9 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 					step.SyncStep(func(_ data.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
-						hid.MovePointer(uiSkillTabPosition[position.Tab].X, uiSkillTabPosition[position.Tab].Y)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, uiSkillTabPosition[position.Tab].X, uiSkillTabPosition[position.Tab].Y)
 						helper.Sleep(200)
-						hid.MovePointer(uiSkillColumnPosition[position.Column], uiSkillRowPosition[position.Row])
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, uiSkillColumnPosition[position.Column], uiSkillRowPosition[position.Row])
 						helper.Sleep(500)
 						return nil
 					}),
@@ -162,8 +159,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 		if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
 			return []step.Step{
 				step.SyncStep(func(_ data.Data) error {
-					hid.MovePointer(ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 					helper.Sleep(300)
 					hid.MovePointer(10, 10)
 					helper.Sleep(300)
@@ -191,8 +187,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 						if binding != "" {
 							continue
 						}
-						hid.MovePointer(ui.MainSkillButtonX, ui.MainSkillButtonY)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
 						helper.Sleep(300)
 						hid.MovePointer(10, 10)
 						helper.Sleep(300)
@@ -202,9 +197,8 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 						if !tm.Found {
 							continue
 						}
-						hid.MovePointer(tm.PositionX+10, tm.PositionY+10)
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, tm.PositionX+10, tm.PositionY+10)
 					}
 					return nil
 				}),
@@ -217,9 +211,8 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 
 func (b *Builder) GetCompletedQuests(act int) []bool {
 	hid.PressKey(config.Config.Bindings.OpenQuestLog)
-	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
 	helper.Sleep(200)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
 	helper.Sleep(3000)
 
 	quests := make([]bool, 6)
@@ -255,9 +248,9 @@ func (b *Builder) HireMerc() *Chain {
 
 						return []step.Step{
 							step.SyncStep(func(d data.Data) error {
-								hid.MovePointer(tm.PositionX-100, tm.PositionY)
-								hid.Click(hid.LeftButton)
-								hid.Click(hid.LeftButton)
+								hid.Click(hid.LeftButton, tm.PositionX-100, tm.PositionY)
+								helper.Sleep(500)
+								hid.Click(hid.LeftButton, tm.PositionX-100, tm.PositionY)
 
 								return nil
 							}),

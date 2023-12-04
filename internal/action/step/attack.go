@@ -127,15 +127,12 @@ func (p *AttackStep) Run(d data.Data) error {
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > config.Config.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
 		hid.KeyDown(p.standStillBinding)
-		if !p.aoe {
-			x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
-			hid.MovePointer(x, y)
-		}
+		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
 		if p.primaryAttack {
-			hid.Click(hid.LeftButton)
+			hid.Click(hid.LeftButton, x, y)
 		} else {
-			hid.Click(hid.RightButton)
+			hid.Click(hid.RightButton, x, y)
 		}
 		helper.Sleep(20)
 		hid.KeyUp(p.standStillBinding)

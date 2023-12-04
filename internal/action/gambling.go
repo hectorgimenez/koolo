@@ -112,8 +112,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				b.logger.Debug("Item not found in gambling window, refreshing...", zap.String("item", string(itmName)))
 
 				return []step.Step{step.SyncStep(func(d data.Data) error {
-					hid.MovePointer(ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
 					return nil
 				}),
 					step.Wait(time.Millisecond * 500),

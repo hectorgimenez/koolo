@@ -176,13 +176,8 @@ func (a Leveling) prepareStaff() action.Action {
 					},
 						step.SyncStep(func(d data.Data) error {
 							screenPos := ui.GetScreenCoordsForItem(horadricStaff)
-							hid.MovePointer(screenPos.X, screenPos.Y)
 
-							hid.KeyDown("control")
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
-							helper.Sleep(200)
-							hid.KeyUp("control")
+							hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 							helper.Sleep(300)
 							hid.PressKey("esc")
 							return nil
@@ -259,17 +254,12 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 					staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
 
 					screenPos := ui.GetScreenCoordsForItem(staff)
-					hid.MovePointer(screenPos.X, screenPos.Y)
 
+					hid.Click(hid.LeftButton, screenPos.X, screenPos.Y)
 					helper.Sleep(300)
-					hid.Click(hid.LeftButton)
-					hid.MovePointer(ui.AnvilCenterX, ui.AnvilCenterY)
-					helper.Sleep(300)
-					hid.Click(hid.LeftButton)
-					helper.Sleep(300)
-					hid.MovePointer(ui.AnvilBtnX, ui.AnvilBtnY)
+					hid.Click(hid.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
 					helper.Sleep(500)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
 					helper.Sleep(20000)
 
 					return nil
@@ -304,17 +294,14 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 						}
 
 						pos := ui.GetScreenCoordsForItem(itm)
-						hid.MovePointer(pos.X, pos.Y)
 						helper.Sleep(500)
 
 						if x > 3 {
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							hid.MovePointer(ui.MercAvatarPositionX, ui.MercAvatarPositionY)
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 						} else {
-							hid.Click(hid.RightButton)
+							hid.Click(hid.RightButton, pos.X, pos.Y)
 						}
 						x++
 					}

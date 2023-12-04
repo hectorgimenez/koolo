@@ -87,9 +87,8 @@ func (a Leveling) anya() []action.Action {
 				hid.PressKey(config.Config.Bindings.OpenInventory)
 				itm, _ := d.Items.Find("ScrollOfResistance")
 				screenPos := ui.GetScreenCoordsForItem(itm)
-				hid.MovePointer(screenPos.X, screenPos.Y)
 				helper.Sleep(200)
-				hid.Click(hid.RightButton)
+				hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
 				hid.PressKey("esc")
 
 				return nil
@@ -116,7 +115,7 @@ func (a Leveling) ancients() []action.Action {
 			if len(d.Monsters.Enemies()) > 0 {
 				return true
 			}
-			hid.Click(hid.LeftButton)
+			hid.Click(hid.LeftButton, 300, 300)
 			helper.Sleep(1000)
 			return false
 		}),

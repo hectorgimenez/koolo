@@ -189,12 +189,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 					helper.Sleep(1000)
 					hid.PressKey(config.Config.Bindings.OpenInventory)
 					screenPos := ui.GetScreenCoordsForItem(khalimsWill)
-					hid.MovePointer(screenPos.X, screenPos.Y)
-					hid.KeyDown("shift")
-					helper.Sleep(500)
-					hid.Click(hid.LeftButton)
-					helper.Sleep(500)
-					hid.KeyUp("shift")
+					hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.ShiftKey)
 					helper.Sleep(300)
 					hid.PressKey("esc")
 					return nil
