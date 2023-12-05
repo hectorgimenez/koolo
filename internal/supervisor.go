@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/memory"
 	"os"
+	"syscall"
 	"time"
 
-	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
@@ -95,12 +96,16 @@ func (s *baseSupervisor) updateGameStats() {
 }
 
 func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
-	window := robotgo.FindWindow("Diablo II: Resurrected")
+	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
+	if err != nil {
+		return err
+	}
+	window := win.FindWindow(nil, ptr)
 	if window == win.HWND_TOP {
 		return errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
 	}
 	win.SetForegroundWindow(window)
-	hid.HWND = window
+	memory.HWND = window
 
 	pos := win.WINDOWPLACEMENT{}
 	point := win.POINT{}

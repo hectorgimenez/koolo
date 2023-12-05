@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
+	"syscall"
 
-	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
@@ -26,10 +26,11 @@ func main() {
 
 	logger, _ := zap.NewDevelopment()
 
-	window := robotgo.FindWindow("Diablo II: Resurrected")
-	if window == win.HWND_TOP {
-		panic(err)
+	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
+	window := win.FindWindow(nil, ptr)
 	win.SetForegroundWindow(window)
 
 	pos := win.WINDOWPLACEMENT{}

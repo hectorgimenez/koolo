@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/lxn/win"
 	"github.com/winlabs/gowin32"
 	"golang.org/x/sys/windows"
 	"strings"
@@ -14,6 +15,7 @@ import (
 const fullAccess = windows.PROCESS_VM_OPERATION | windows.PROCESS_VM_WRITE | windows.PROCESS_VM_READ
 
 var handle windows.Handle
+var HWND win.HWND
 var getCursorPosAddr uintptr
 var getCursorPosOrigBytes [32]byte
 var trackMouseEventAddr uintptr

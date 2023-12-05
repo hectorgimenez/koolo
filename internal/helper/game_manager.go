@@ -3,7 +3,6 @@ package helper
 import (
 	"errors"
 	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"

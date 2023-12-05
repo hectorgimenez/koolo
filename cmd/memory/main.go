@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"syscall"
 	"time"
 
-	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -17,7 +17,11 @@ import (
 )
 
 func main() {
-	window := robotgo.FindWindow("Diablo II: Resurrected")
+	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
+	if err != nil {
+		panic(err)
+	}
+	window := win.FindWindow(nil, ptr)
 	if window == win.HWND_TOP {
 		panic("Diablo II: Resurrected window not found")
 	}
@@ -32,7 +36,7 @@ func main() {
 	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 10
 	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 10
 
-	err := config.Load()
+	err = config.Load()
 	config.Config.Debug.RenderMap = true
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err.Error())

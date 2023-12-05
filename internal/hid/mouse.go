@@ -1,7 +1,8 @@
 package hid
 
 import (
-	asm "github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 	"image/color"
 	"math/rand"
@@ -32,15 +33,15 @@ func MovePointer(x, y int) {
 	x = WindowLeftX + x
 	y = WindowTopY + y
 
-	// TODO: Calculate properly getting desktop scale
-	x = int(float32(x) * 1.5)
-	y = int(float32(y) * 1.5)
+	scale := ui.GameWindowScale()
+	x = int(float64(x) * scale)
+	y = int(float64(y) * scale)
 
-	asm.InjectCursorPos(x, y)
+	memory.InjectCursorPos(x, y)
 	lParam := calculateLparam(x, y)
-	win.SendMessage(HWND, win.WM_NCHITTEST, 0, lParam)             // Set mouse
-	win.SendMessage(HWND, win.WM_SETCURSOR, 0x000105A8, 0x2010001) // Set mouse
-	win.PostMessage(HWND, win.WM_MOUSEMOVE, 0, lParam)             // Set mouse
+	win.SendMessage(memory.HWND, win.WM_NCHITTEST, 0, lParam)
+	win.SendMessage(memory.HWND, win.WM_SETCURSOR, 0x000105A8, 0x2010001)
+	win.PostMessage(memory.HWND, win.WM_MOUSEMOVE, 0, lParam)
 	time.Sleep(time.Millisecond * 1)
 }
 
@@ -66,16 +67,16 @@ func Click(btn MouseButton, x, y int) {
 		buttonUp = win.WM_RBUTTONUP
 	}
 
-	win.SendMessage(HWND, buttonDown, 1, lParam)
+	win.SendMessage(memory.HWND, buttonDown, 1, lParam)
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	win.SendMessage(HWND, buttonUp, 1, lParam)
+	win.SendMessage(memory.HWND, buttonUp, 1, lParam)
 }
 
 func ClickWithModifier(btn MouseButton, x, y int, modifier ModifierKey) {
-	asm.OverrideGetKeyState(int(modifier))
+	memory.OverrideGetKeyState(int(modifier))
 	Click(btn, x, y)
-	asm.RestoreGetKeyState()
+	memory.RestoreGetKeyState()
 }
 
 func calculateLparam(x, y int) uintptr {

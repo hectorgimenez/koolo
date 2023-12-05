@@ -1,14 +1,13 @@
 package hid
 
 import (
+	"github.com/hectorgimenez/koolo/internal/memory"
 	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/lxn/win"
 )
-
-var HWND win.HWND
 
 const (
 	keyPressMinTime = 10 // ms
@@ -18,27 +17,27 @@ const (
 // PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly
 func PressKey(key string) {
 	asciiChar := getASCIICode(key)
-	win.PostMessage(HWND, win.WM_KEYDOWN, asciiChar, 0)
+	win.PostMessage(memory.HWND, win.WM_KEYDOWN, asciiChar, 0)
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	win.PostMessage(HWND, win.WM_KEYUP, asciiChar, 0)
+	win.PostMessage(memory.HWND, win.WM_KEYUP, asciiChar, 0)
 }
 
 func KeyDown(key string) {
-	win.PostMessage(HWND, win.WM_KEYDOWN, getASCIICode(key), 0)
+	win.PostMessage(memory.HWND, win.WM_KEYDOWN, getASCIICode(key), 0)
 }
 
 func KeyUp(key string) {
-	win.PostMessage(HWND, win.WM_KEYUP, getASCIICode(key), 0)
+	win.PostMessage(memory.HWND, win.WM_KEYUP, getASCIICode(key), 0)
 }
 
 func PressKeyCombination(keys ...string) {
 	for _, k := range keys {
-		win.PostMessage(HWND, win.WM_KEYDOWN, getASCIICode(k), 0)
+		win.PostMessage(memory.HWND, win.WM_KEYDOWN, getASCIICode(k), 0)
 	}
 	time.Sleep(time.Millisecond * 200)
 	for _, k := range keys {
-		win.PostMessage(HWND, win.WM_KEYUP, getASCIICode(k), 0)
+		win.PostMessage(memory.HWND, win.WM_KEYUP, getASCIICode(k), 0)
 	}
 }
 
