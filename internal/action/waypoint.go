@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"go.uber.org/zap"
-	"gocv.io/x/gocv"
 )
 
 const (
@@ -63,19 +62,25 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 
 func (b *Builder) useWP(a area.Area) *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
-		sc := helper.Screenshot()
-
 		nextAvailableWP := area.WPAddresses[a]
+		currentWP := a
 		traverseAreas := make([]area.Area, 0)
 		for {
-			//tm := b.tf.FindInArea("ui_discovered_wp", sc, wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+60, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
-			tm := b.tf.MatchColorInArea(sc, gocv.NewScalar(3, 230, 230, 0), gocv.NewScalar(140, 255, 255, 0), wpTabStartX, wpListStartY+(wpAreaBtnHeight*(nextAvailableWP.Row-1)), wpTabStartX+9, wpListStartY+(wpAreaBtnHeight*nextAvailableWP.Row))
-			if !tm.Found && nextAvailableWP.Row != 1 {
-				traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
-				nextAvailableWP = area.WPAddresses[nextAvailableWP.LinkedFrom[0]]
-				continue
+			found := false
+			for _, wp := range d.PlayerUnit.AvailableWaypoints {
+				if wp == currentWP {
+					found = true
+					break
+				}
 			}
-			break
+
+			if found || nextAvailableWP.Row == 1 {
+				break
+			}
+
+			traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
+			a = nextAvailableWP.LinkedFrom[0]
+			nextAvailableWP = area.WPAddresses[currentWP]
 		}
 
 		// First use the previous available waypoint that we have discovered
