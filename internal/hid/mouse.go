@@ -42,7 +42,6 @@ func MovePointer(x, y int) {
 	win.SendMessage(memory.HWND, win.WM_NCHITTEST, 0, lParam)
 	win.SendMessage(memory.HWND, win.WM_SETCURSOR, 0x000105A8, 0x2010001)
 	win.PostMessage(memory.HWND, win.WM_MOUSEMOVE, 0, lParam)
-	time.Sleep(time.Millisecond * 1)
 }
 
 type Changeable interface {
@@ -71,6 +70,7 @@ func Click(btn MouseButton, x, y int) {
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
 	win.SendMessage(memory.HWND, buttonUp, 1, lParam)
+	memory.RestoreGetCursorPosAddr()
 }
 
 func ClickWithModifier(btn MouseButton, x, y int, modifier ModifierKey) {

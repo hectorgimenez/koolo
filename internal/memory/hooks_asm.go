@@ -1,6 +1,5 @@
 package memory
 
-import "C"
 import (
 	"encoding/binary"
 	"errors"
@@ -56,7 +55,7 @@ func ASMInjectorInit(pid uint32) error {
 			}
 		}
 	}
-	if getCursorPosAddr == 0 {
+	if getCursorPosAddr == 0 || getKeyStateAddr == 0 {
 		return errors.New("could not find GetCursorPos address")
 	}
 
@@ -64,7 +63,7 @@ func ASMInjectorInit(pid uint32) error {
 }
 
 func ASMInjectorUnload() error {
-	err := windows.WriteProcessMemory(handle, getCursorPosAddr, &getCursorPosOrigBytes[0], uintptr(len(getCursorPosOrigBytes)), nil)
+	err := RestoreGetCursorPosAddr()
 	if err != nil {
 		return fmt.Errorf("error writing to memory: %w", err)
 	}
@@ -119,6 +118,10 @@ func RestoreGetKeyState() error {
 	return windows.WriteProcessMemory(handle, getKeyStateAddr, &getKeyStateOrigBytes[0], uintptr(len(getKeyStateOrigBytes)), nil)
 }
 
+func RestoreGetCursorPosAddr() error {
+	return windows.WriteProcessMemory(handle, getCursorPosAddr, &getCursorPosOrigBytes[0], uintptr(len(getCursorPosOrigBytes)), nil)
+}
+
 func hookTrackMouseEvent(baseAddr uintptr) error {
 	trackMouseEventAddr = baseAddr + 0x2EB10
 	err := windows.ReadProcessMemory(handle, trackMouseEventAddr, &trackMouseEventBytes[0], uintptr(len(trackMouseEventBytes)), nil)
@@ -130,7 +133,7 @@ func hookTrackMouseEvent(baseAddr uintptr) error {
 	// Modify TRACKMOUSEEVENT struct to disable mouse leave events, since we are injecting our events even if the mouse is not over the window
 	disableMouseLeaveRequest := []byte{0x81, 0x61, 0x04, 0xFD, 0xFF, 0xFF, 0xFF}
 
-	// We need to move back the pointer 7 bytes to get the correct number, since we are injecting 7 bytes in front of it
+	// We need to move back the pointer 7 bytes to get the correct position, since we are injecting 7 bytes in front of it
 	num := int32(binary.LittleEndian.Uint32(trackMouseEventBytes[2:6]))
 	num -= 7
 	numberBytes := make([]byte, 4)

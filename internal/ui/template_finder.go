@@ -92,52 +92,6 @@ func createMask(tpl gocv.Mat) gocv.Mat {
 	return mask
 }
 
-func (tf *TemplateFinder) MatchColorInArea(img image.Image, lowerColor, upperColor gocv.Scalar, x0, y0, x1, y1 int) TemplateMatch {
-	bigmat, err := gocv.ImageToMatRGB(img)
-	if err != nil {
-		return TemplateMatch{}
-	}
-
-	mat := gocv.NewMat()
-	gocv.Resize(bigmat, &mat, image.Point{X: 1280, Y: 720}, 0, 0, gocv.InterpolationLinear)
-	croppedMat := mat.Region(image.Rect(x0, y0, x1, y1))
-	mat = croppedMat.Clone()
-	gocv.CvtColor(mat, &mat, gocv.ColorBGRToHSV)
-
-	lower := gocv.NewMatFromScalar(lowerColor, gocv.MatTypeCV8UC3)
-	upper := gocv.NewMatFromScalar(upperColor, gocv.MatTypeCV8UC3)
-
-	//img2, _ := mat.ToImage()
-	//f, _ := os.Create("sc_hsv.png")
-	//png.Encode(f, img2)
-	//f.Close()
-	//lowerImg, _ := lower.ToImage()
-	//f, _ = os.Create("lower.png")
-	//png.Encode(f, lowerImg)
-	//f.Close()
-	//
-	//upperImg, _ := upper.ToImage()
-	//f, _ = os.Create("upper.png")
-	//png.Encode(f, upperImg)
-	//f.Close()
-
-	mask := gocv.NewMat()
-	gocv.InRange(mat, lower, upper, &mask)
-
-	coloredPixels := gocv.CountNonZero(mask)
-	percentageColored := (float64(coloredPixels) / float64(mask.Total())) * 100.0
-
-	tf.logger.Debug("Color matching operation", zap.Float64("score", percentageColored))
-	if percentageColored > 75 {
-		return TemplateMatch{
-			Score: float32(percentageColored),
-			Found: true,
-		}
-	}
-
-	return TemplateMatch{}
-}
-
 func (tf *TemplateFinder) FindInArea(tplName string, img image.Image, x0, y0, x1, y1 int) TemplateMatch {
 	t := time.Now()
 	threshold := float32(0.80)

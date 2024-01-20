@@ -8,12 +8,9 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -53,8 +50,6 @@ func main() {
 
 	start := time.Now()
 	gr.GetData(true)
-	logger, _ := zap.NewDevelopment()
-	tf, err := ui.NewTemplateFinder(logger, "assets")
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +57,6 @@ func main() {
 	for true {
 		d := gr.GetData(false)
 
-		tf.Find("59", helper.Screenshot())
 		//screenshot := helper.Screenshot()
 		//matScreen, _ := gocv.ImageToMatRGB(screenshot)
 		//
