@@ -19,10 +19,6 @@ type PaladinLeveling struct {
 	BaseCharacter
 }
 
-func (p PaladinLeveling) GetSkillTree() skill.Tree {
-	return skill.PaladinTree
-}
-
 func (p PaladinLeveling) BuffSkills() map[skill.Skill]string {
 	return map[skill.Skill]string{
 		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,

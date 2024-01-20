@@ -19,10 +19,6 @@ type SorceressLeveling struct {
 	BaseCharacter
 }
 
-func (s SorceressLeveling) GetSkillTree() skill.Tree {
-	return skill.SorceressTree
-}
-
 func (s SorceressLeveling) ShouldResetSkills(d data.Data) bool {
 	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.FireBall] > 10 {
 		return true

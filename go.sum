@@ -11,8 +11,8 @@ github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.1 h1:gmztn0JnHVt9JZquRuzLw3g4wouNVzKL15iLr/zn/QY=
 github.com/gorilla/websocket v1.5.1/go.mod h1:x3kM2JMyaluk02fnUJpQuwD2dCS5NDG2ZHL0uE0tcaY=
-github.com/hectorgimenez/d2go v0.0.0-20240119130048-f06c587c7a10 h1:D5P2UEd1bZtuDuduevQ/1dP6ZJsMiHZjAjdmEE3MXMQ=
-github.com/hectorgimenez/d2go v0.0.0-20240119130048-f06c587c7a10/go.mod h1:HANIsWVCTQeNdEC6whvHegpOlRckU2TPqXr+nEXvoc8=
+github.com/hectorgimenez/d2go v0.0.0-20240120071237-878013e1304a h1:r8xsSm89ul9KKHz8jE4ilqZkIbrDvTLTa1EVz5tOkPw=
+github.com/hectorgimenez/d2go v0.0.0-20240120071237-878013e1304a/go.mod h1:QXuKJYL7/gh0dnwHu/f8bqEWDAOy1QP51RV1I0mjUKM=
 github.com/hybridgroup/mjpeg v0.0.0-20140228234708-4680f319790e/go.mod h1:eagM805MRKrioHYuU7iKLUyFPVKqVV6um5DAvCkUtXs=
 github.com/jezek/xgb v1.1.0 h1:wnpxJzP1+rkbGclEkmwpVFQWpuE2PUGNUzP8SbfFobk=
 github.com/jezek/xgb v1.1.0/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=

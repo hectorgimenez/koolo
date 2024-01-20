@@ -26,10 +26,10 @@ var uiStatButtonPosition = map[stat.ID]data.Position{
 	stat.Energy:    {X: 240, Y: 430},
 }
 
-var uiSkillTabPosition = []data.Position{
-	{X: 910, Y: 140},
-	{X: 1010, Y: 140},
+var uiSkillPagePosition = [3]data.Position{
 	{X: 1100, Y: 140},
+	{X: 1010, Y: 140},
+	{X: 910, Y: 140},
 }
 
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
@@ -102,7 +102,6 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			return nil
 		}
 
-		skillTree := char.GetSkillTree()
 		assignedPoints := make(map[skill.Skill]int)
 		for _, sk := range char.SkillPoints(d) {
 			currentPoints, found := assignedPoints[sk]
@@ -114,7 +113,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 
 			characterPoints, found := d.PlayerUnit.Skills[sk]
 			if !found || characterPoints < assignedPoints[sk] {
-				position, skFound := skillTree[sk]
+				skillDesc, skFound := skill.Desc[sk]
 				if !skFound {
 					b.logger.Error("skill not found for character", zap.Any("skill", sk))
 					return nil
@@ -133,9 +132,9 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 					step.SyncStep(func(_ data.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton, uiSkillTabPosition[position.Tab].X, uiSkillTabPosition[position.Tab].Y)
+						hid.Click(hid.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
 						helper.Sleep(200)
-						hid.Click(hid.LeftButton, uiSkillColumnPosition[position.Column], uiSkillRowPosition[position.Row])
+						hid.Click(hid.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
 						helper.Sleep(500)
 						return nil
 					}),
