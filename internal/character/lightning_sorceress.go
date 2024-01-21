@@ -79,8 +79,8 @@ func (s LightningSorceress) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s LightningSorceress) BuffSkills() map[skill.Skill]string {
-	return map[skill.Skill]string{
+func (s LightningSorceress) BuffSkills() map[skill.ID]string {
+	return map[skill.ID]string{
 		skill.FrozenArmor:  config.Config.Bindings.Sorceress.FrozenArmor,
 		skill.EnergyShield: config.Config.Bindings.Sorceress.EnergyShield,
 	}

@@ -20,27 +20,27 @@ type SorceressLeveling struct {
 }
 
 func (s SorceressLeveling) ShouldResetSkills(d data.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.FireBall] > 10 {
+	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.FireBall].Level > 10 {
 		return true
 	}
 
 	return false
 }
 
-func (s SorceressLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
-	skillBindings := map[skill.Skill]string{
+func (s SorceressLeveling) GetKeyBindings(d data.Data) map[skill.ID]string {
+	skillBindings := map[skill.ID]string{
 		skill.FrozenArmor:      config.Config.Bindings.Sorceress.FrozenArmor,
 		skill.StaticField:      config.Config.Bindings.Sorceress.StaticField,
 		skill.Teleport:         config.Config.Bindings.Teleport,
 		skill.TomeOfTownPortal: config.Config.Bindings.TP,
 	}
 
-	if d.PlayerUnit.Skills[skill.Blizzard] > 0 {
+	if d.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
 		skillBindings[skill.Blizzard] = config.Config.Bindings.Sorceress.Blizzard
 		skillBindings[skill.GlacialSpike] = ""
-	} else if d.PlayerUnit.Skills[skill.FireBall] > 0 {
+	} else if d.PlayerUnit.Skills[skill.FireBall].Level > 0 {
 		skillBindings[skill.FireBall] = config.Config.Bindings.Sorceress.FireBall
-	} else if d.PlayerUnit.Skills[skill.FireBolt] > 0 {
+	} else if d.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
 		skillBindings[skill.FireBolt] = config.Config.Bindings.Sorceress.FireBall
 	}
 
@@ -69,9 +69,9 @@ func (s SorceressLeveling) StatPoints(d data.Data) map[stat.ID]int {
 	}
 }
 
-func (s SorceressLeveling) SkillPoints(d data.Data) []skill.Skill {
+func (s SorceressLeveling) SkillPoints(d data.Data) []skill.ID {
 	if d.PlayerUnit.Stats[stat.Level] < 25 {
-		return []skill.Skill{
+		return []skill.ID{
 			skill.FireBolt,
 			skill.FrozenArmor,
 			skill.FireBolt,
@@ -108,7 +108,7 @@ func (s SorceressLeveling) SkillPoints(d data.Data) []skill.Skill {
 		}
 	}
 
-	return []skill.Skill{
+	return []skill.ID{
 		skill.StaticField,
 		skill.StaticField,
 		skill.StaticField,
@@ -468,8 +468,8 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Ac
 	}, nil)
 }
 
-func (s SorceressLeveling) BuffSkills() map[skill.Skill]string {
-	return map[skill.Skill]string{
+func (s SorceressLeveling) BuffSkills() map[skill.ID]string {
+	return map[skill.ID]string{
 		skill.FrozenArmor: config.Config.Bindings.Sorceress.FrozenArmor,
 	}
 }

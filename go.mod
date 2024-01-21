@@ -6,7 +6,7 @@ require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
-	github.com/hectorgimenez/d2go v0.0.0-20240120071237-878013e1304a
+	github.com/hectorgimenez/d2go v0.0.0-20240120125149-78c239dcf6fe
 	github.com/kbinani/screenshot v0.0.0-20230812210009-b87d31814237
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/robotn/gohook v0.41.0

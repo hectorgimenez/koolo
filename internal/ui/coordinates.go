@@ -36,6 +36,10 @@ const (
 
 	GambleRefreshButtonX = 390
 	GambleRefreshButtonY = 515
+
+	SkillListFirstSkillX = 687
+	SkillListFirstSkillY = 590
+	SkillListSkillOffset = 45
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {

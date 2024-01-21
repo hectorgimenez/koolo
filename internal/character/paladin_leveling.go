@@ -19,8 +19,8 @@ type PaladinLeveling struct {
 	BaseCharacter
 }
 
-func (p PaladinLeveling) BuffSkills() map[skill.Skill]string {
-	return map[skill.Skill]string{
+func (p PaladinLeveling) BuffSkills() map[skill.ID]string {
+	return map[skill.ID]string{
 		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
 	}
 }
@@ -162,7 +162,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 
 		m, _ := d.Monsters.FindByID(id)
 		p.logger.Debug("ATTACKING MONSTER", zap.Any("monster", m.Name))
-		if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 {
+		if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 {
 			// Add a random movement, maybe hammer is not hitting the target
 			if previousUnitID == id {
 				steps = append(steps,
@@ -176,7 +176,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
 			)
 		} else {
-			if d.PlayerUnit.Skills[skill.Zeal] > 0 {
+			if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
 				numOfAttacks = 1
 			}
 
@@ -226,9 +226,9 @@ func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {
 	}
 }
 
-func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
+func (p PaladinLeveling) SkillPoints(d data.Data) []skill.ID {
 	if d.PlayerUnit.Stats[stat.Level] < 21 {
-		return []skill.Skill{
+		return []skill.ID{
 			skill.Might,
 			skill.Sacrifice,
 			skill.ResistFire,
@@ -255,7 +255,7 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
 	}
 
 	// Hammerdin
-	return []skill.Skill{
+	return []skill.ID{
 		skill.HolyBolt,
 		skill.BlessedHammer,
 		skill.Prayer,
@@ -346,19 +346,19 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.Skill {
 	}
 }
 
-func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
-	skillBindings := map[skill.Skill]string{
+func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.ID]string {
+	skillBindings := map[skill.ID]string{
 		skill.Vigor:      config.Config.Bindings.Paladin.Vigor,
 		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
 	}
 
-	if d.PlayerUnit.Skills[skill.BlessedHammer] > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
+	if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
 		skillBindings[skill.BlessedHammer] = ""
-	} else if d.PlayerUnit.Skills[skill.Zeal] > 0 {
+	} else if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
 		skillBindings[skill.Zeal] = ""
 	}
 
-	if d.PlayerUnit.Skills[skill.Concentration] > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
+	if d.PlayerUnit.Skills[skill.Concentration].Level > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
 		skillBindings[skill.Concentration] = config.Config.Bindings.Paladin.Concentration
 	} else {
 		if _, found := d.PlayerUnit.Skills[skill.HolyFire]; found {
@@ -372,7 +372,7 @@ func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.Skill]string {
 }
 
 func (p PaladinLeveling) ShouldResetSkills(d data.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Skills[skill.HolyFire] > 10 {
+	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
 		return true
 	}
 
