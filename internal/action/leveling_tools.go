@@ -312,32 +312,21 @@ func (b *Builder) HireMerc() *Chain {
 			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
 			if config.Config.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
 				b.logger.Info("Hiring merc...")
+				// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
 				actions = append(actions,
-					b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(), step.KeySequence("home", "down", "enter")),
-					NewStepChain(func(d data.Data) []step.Step {
-						sc := helper.Screenshot()
-						tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
-						if !tm.Found {
+					b.InteractNPC(
+						town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(),
+						step.KeySequence("home", "down", "enter"),
+						step.Wait(time.Second*2),
+						step.SyncStep(func(d data.Data) error {
+							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+							helper.Sleep(300)
+							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+
 							return nil
-						}
-
-						return []step.Step{
-							step.SyncStep(func(d data.Data) error {
-								hid.Click(hid.LeftButton, tm.PositionX-100, tm.PositionY)
-								helper.Sleep(500)
-								hid.Click(hid.LeftButton, tm.PositionX-100, tm.PositionY)
-
-								return nil
-							}),
-						}
-					}),
+						}),
+					),
 				)
-			}
-
-			// We will change the Defiance merc to the holy freeze, much better to avoid being hit.
-			if config.Config.Game.Difficulty == difficulty.Nightmare && d.MercHPPercent() > 0 && d.PlayerUnit.TotalGold() > 50000 && d.PlayerUnit.Area == area.KurastDocks && d.PlayerUnit.Skills[skill.Defiance].Level > 0 {
-				b.logger.Info("Changing Defiance merc by Holy Freeze...")
-				// Remove merc items
 			}
 		}
 

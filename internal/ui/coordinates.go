@@ -40,6 +40,9 @@ const (
 	SkillListFirstSkillX = 687
 	SkillListFirstSkillY = 590
 	SkillListSkillOffset = 45
+
+	FirstMercFromContractorListX = 175
+	FirstMercFromContractorListY = 142
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {
