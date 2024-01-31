@@ -2,17 +2,7 @@ package main
 
 import (
 	"context"
-	asm "github.com/hectorgimenez/koolo/internal/memory"
-	"golang.org/x/sync/errgroup"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/hectorgimenez/d2go/pkg/memory"
-	"github.com/hectorgimenez/koolo/internal/run"
-	hook "github.com/robotn/gohook"
-
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -21,11 +11,18 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	asm "github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 const EXECUTION_STATE_ES_DISPLAY_REQUIRED = 0x00000002
@@ -129,25 +126,8 @@ func main() {
 		return eventListener.Listen(ctx)
 	})
 
-	//registerKeyboardHooks(supervisor)
-
 	err = g.Wait()
 	if err != nil {
 		logger.Fatal("Error running Koolo", zap.Error(err))
 	}
-}
-
-func registerKeyboardHooks(s koolo.Supervisor) {
-	// TogglePause Hook
-	hook.Register(hook.KeyDown, []string{"."}, func(e hook.Event) {
-		s.Stop()
-	})
-
-	// TogglePause Hook
-	hook.Register(hook.KeyDown, []string{","}, func(e hook.Event) {
-		s.TogglePause()
-	})
-
-	evt := hook.Start()
-	<-hook.Process(evt)
 }
