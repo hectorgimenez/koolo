@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/action"
 )
 
@@ -14,11 +15,9 @@ func (a Leveling) act4() action.Action {
 			return nil
 		}
 
-		quests := a.builder.GetCompletedQuests(4)
-
 		running = true
 
-		if !quests[0] {
+		if !d.Quests[quest.Act4TheFallenAngel].Completed() {
 			return a.izual()
 		}
 

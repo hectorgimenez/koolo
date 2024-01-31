@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -34,14 +35,13 @@ func (a Leveling) act2() action.Action {
 			return a.findHoradricCube()
 		}
 
-		quests := a.builder.GetCompletedQuests(2)
-		if quests[4] {
+		if d.Quests[quest.Act2TheSummoner].Completed() {
 			// Try to get level 21 before moving to Duriel and Act3
 			if d.PlayerUnit.Stats[stat.Level] < 18 {
 				return TalRashaTombs{a.baseRun}.BuildActions()
 			}
 
-			return a.duriel(quests[1], d)
+			return a.duriel(d.Quests[quest.Act2TheHoradricStaff].Completed(), d)
 		}
 
 		_, horadricStaffFound := d.Items.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)

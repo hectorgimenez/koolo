@@ -7,16 +7,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
-	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 type GameManager struct {
 	gr *reader.GameReader
-	tf *ui.TemplateFinder
 }
 
-func NewGameManager(gr *reader.GameReader, tf *ui.TemplateFinder) *GameManager {
-	return &GameManager{gr: gr, tf: tf}
+func NewGameManager(gr *reader.GameReader) *GameManager {
+	return &GameManager{gr: gr}
 }
 
 func (gm *GameManager) ExitGame() error {

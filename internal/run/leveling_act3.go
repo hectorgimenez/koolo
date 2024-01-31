@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -22,15 +23,13 @@ func (a Leveling) act3() action.Action {
 			return nil
 		}
 
-		quests := a.builder.GetCompletedQuests(3)
-
 		running = true
 		_, willFound := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
 		if willFound {
 			return a.openMephistoStairs()
 		}
 
-		if quests[2] {
+		if d.Quests[quest.Act3KhalimsWill].Completed() {
 			actions := Mephisto{baseRun: a.baseRun}.BuildActions()
 			return append(actions, a.builder.ItemPickup(true, 25),
 				a.builder.InteractObject(object.HellGate, func(d data.Data) bool {

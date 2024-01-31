@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -21,8 +22,7 @@ func (a Leveling) act5() action.Action {
 			return nil
 		}
 
-		quests := a.builder.GetCompletedQuests(5)
-		if quests[4] {
+		if d.Quests[quest.Act5RiteOfPassage].Completed() {
 			a.logger.Info("Starting Baal run...")
 			actions := Baal{baseRun: a.baseRun}.BuildActions()
 			return append(actions, action.NewStepChain(func(d data.Data) []step.Step {

@@ -1,7 +1,6 @@
 package action
 
 import (
-	"fmt"
 	"slices"
 	"time"
 
@@ -282,27 +281,6 @@ func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillI
 		X: ui.SkillListFirstSkillX + ui.SkillListSkillOffset*column,
 		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
 	}, true
-}
-
-func (b *Builder) GetCompletedQuests(act int) []bool {
-	hid.PressKey(config.Config.Bindings.OpenQuestLog)
-	helper.Sleep(200)
-	hid.Click(hid.LeftButton, ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
-	helper.Sleep(3000)
-
-	quests := make([]bool, 6)
-	if act == 4 {
-		quests = make([]bool, 3)
-	}
-
-	sc := helper.Screenshot()
-	for i := 0; i < len(quests); i++ {
-		tm := b.tf.Find(fmt.Sprintf("quests_a%d_%d", act, i+1), sc)
-		quests[i] = tm.Found
-	}
-	hid.PressKey("esc")
-
-	return quests
 }
 
 func (b *Builder) HireMerc() *Chain {

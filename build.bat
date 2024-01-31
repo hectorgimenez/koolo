@@ -13,7 +13,6 @@ mkdir build\config > NUL || goto :error
 copy config\config.yaml.dist build\config\config.yaml  > NUL || goto :error
 xcopy /q /E /I /y config\pickit build\config\pickit  > NUL || goto :error
 xcopy /q /E /I /y config\pickit_leveling build\config\pickit_leveling  > NUL || goto :error
-xcopy /q /E /I /y assets build\assets  > NUL || goto :error
 xcopy /q /y koolo-map.exe build > NUL || goto :error
 xcopy /q /y README.md build > NUL || goto :error
 

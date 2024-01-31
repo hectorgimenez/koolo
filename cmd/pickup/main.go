@@ -13,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
 )
@@ -57,12 +56,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tf, err := ui.NewTemplateFinder(logger, "assets")
-	if err != nil {
-		panic(err)
-	}
 
-	b := action.NewBuilder(logger, sm, bm, gr, char, tf)
+	b := action.NewBuilder(logger, sm, bm, gr, char)
 	a := b.ItemPickup(true, -1)
 
 	gr.GetData(true)

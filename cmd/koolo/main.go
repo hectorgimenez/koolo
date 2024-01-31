@@ -11,7 +11,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	hook "github.com/robotn/gohook"
 
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
@@ -73,13 +72,8 @@ func main() {
 		GameReader: memory.NewGameReader(process),
 	}
 
-	tf, err := ui.NewTemplateFinder(logger, "assets")
-	if err != nil {
-		logger.Fatal("Error creating template finder", zap.Error(err))
-	}
-
 	bm := health.NewBeltManager(logger)
-	gm := helper.NewGameManager(gr, tf)
+	gm := helper.NewGameManager(gr)
 	hm := health.NewHealthManager(logger, bm, gm)
 	sm := town.NewShopManager(logger, bm)
 	char, err := character.BuildCharacter(logger)
@@ -87,7 +81,7 @@ func main() {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 
-	ab := action.NewBuilder(logger, sm, bm, gr, char, tf)
+	ab := action.NewBuilder(logger, sm, bm, gr, char)
 	bot := koolo.NewBot(logger, hm, ab, gr)
 
 	var supervisor koolo.Supervisor
