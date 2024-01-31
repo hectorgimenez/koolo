@@ -60,10 +60,6 @@ It uses the following third party libraries:
 Setting the development environment is pretty straightforward, but the following dependencies are **required** to build the project.
 
 ### Dependencies
-- [Download MingGW](https://sourceforge.net/projects/mingw-w64/files/) ```x86_64-posix-seh``` should be fine, extract it
-  and add it to the system PATH on Windows environment variables. For example if extracted in ```C:\mingw64``` add
-  ```C:\mingw64\bin``` to the PATH.[GoCV](https://github.com/hybridgroup/gocv#windows) requires MinGW to build.
-- [Download CMake](https://cmake.org/download/) select add it to the user path during the installation process.
 - [Download Go >= 1.21](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
@@ -72,7 +68,6 @@ Open the terminal and run the following commands in project root directory:
 ```shell
 git clone https://github.com/hectorgimenez/koolo.git
 cd koolo
-prepare_env.bat
 build.bat
 ```
 This will produce the "build" directory with the executable file and all the required assets.
