@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -18,9 +19,11 @@ import (
 )
 
 const (
-	maxGoldPerStashTab = 2500000
-	stashGoldBtnX      = 966
-	stashGoldBtnY      = 526
+	maxGoldPerStashTab   = 2500000
+	stashGoldBtnX        = 966
+	stashGoldBtnY        = 526
+	stashGoldBtnConfirmX = 547
+	stashGoldBtnConfirmY = 388
 )
 
 func (b *Builder) Stash(forceStash bool) *Chain {
@@ -90,6 +93,8 @@ func (b *Builder) stashGold(d data.Data) {
 	if !found || gold == 0 {
 		return
 	}
+
+	b.logger.Info("Stashing gold...", zap.Int("gold", gold))
 
 	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
 		switchTab(1)
@@ -177,8 +182,8 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 func clickStashGoldBtn() {
 	helper.Sleep(170)
 	hid.Click(hid.LeftButton, stashGoldBtnX, stashGoldBtnY)
-	helper.Sleep(500)
-	hid.PressKey("enter")
+	helper.Sleep(1000)
+	hid.Click(hid.LeftButton, stashGoldBtnConfirmX, stashGoldBtnConfirmY)
 	helper.Sleep(700)
 }
 

@@ -54,9 +54,9 @@ func Click(btn MouseButton, x, y int) {
 	x = WindowLeftX + x
 	y = WindowTopY + y
 
-	// TODO: Calculate properly getting desktop scale
-	x = int(float32(x) * 1.5)
-	y = int(float32(y) * 1.5)
+	scale := ui.GameWindowScale()
+	x = int(float64(x) * scale)
+	y = int(float64(y) * scale)
 
 	lParam := calculateLparam(x, y)
 	buttonDown := uint32(win.WM_LBUTTONDOWN)

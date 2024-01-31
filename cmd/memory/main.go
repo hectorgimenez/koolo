@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	memory2 "github.com/hectorgimenez/koolo/internal/memory"
 	"log"
 	"syscall"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
+
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
@@ -23,15 +25,17 @@ func main() {
 		panic("Diablo II: Resurrected window not found")
 	}
 	win.SetForegroundWindow(window)
+	memory2.HWND = window
 
-	// Exclude border offsets
-	// TODO: Improve this, maybe getting window content coordinates?
 	pos := win.WINDOWPLACEMENT{}
+	point := win.POINT{}
+	win.ClientToScreen(window, &point)
 	win.GetWindowPlacement(window, &pos)
-	hid.WindowLeftX = int(pos.RcNormalPosition.Left) + 8
-	hid.WindowTopY = int(pos.RcNormalPosition.Top) + 31
-	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 10
-	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 10
+
+	hid.WindowLeftX = int(point.X)
+	hid.WindowTopY = int(point.Y)
+	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 9
+	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 9
 
 	err = config.Load()
 	config.Config.Debug.RenderMap = true
