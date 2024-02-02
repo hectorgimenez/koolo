@@ -78,7 +78,6 @@ func ASMInjectorUnload() error {
 		return err
 	}
 
-	fmt.Println("Unloaded ASMInjector")
 	return windows.CloseHandle(handle)
 }
 
