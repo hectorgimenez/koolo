@@ -104,7 +104,6 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 	if window == win.HWND_TOP {
 		return errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
 	}
-	win.SetForegroundWindow(window)
 	memory.HWND = window
 
 	pos := win.WINDOWPLACEMENT{}

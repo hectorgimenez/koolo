@@ -33,9 +33,6 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Diablo II: LOD 1.13c (required by https://github.com/blacha/diablo2/tree/master/packages/map)
 
 ## Quick Start
-Koolo will be clicking, moving the mouse, pressing keys... Basically this makes the computer unusable while running the
-bot. It's recommended to run it on a [virtual machine](https://github.com/jamesstringerparsec/Easy-GPU-PV).
-
 - If you haven't done yet, install **Diablo II: LOD 1.13c**
 - [Download](https://github.com/hectorgimenez/koolo/releases) the latest Koolo release, or alternatively you can [build it from source](#development-environment)
 - Extract the zip file in a directory of your choice.
@@ -44,10 +41,9 @@ bot. It's recommended to run it on a [virtual machine](https://github.com/jamess
 - Open Diablo II: Resurrected and ensure the game resolution is set to windowed mode and 1280x720 or 1920x1080 in HiDPI mode.
 - Enter the game with your character.
 - Run `koolo.exe`.
-- It should start the configured runs. You can pause/resume execution with ```,``` or stop it with ```.``` keys
 
 ## How it works
-Koolo reads game memory and interacts with the game simulating clicks/keystrokes.
+Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window.
 It uses the following third party libraries:
 
 - https://github.com/hectorgimenez/d2go

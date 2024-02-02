@@ -6,8 +6,7 @@ require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
-	github.com/hectorgimenez/d2go v0.0.0-20240131144105-9f28d4c5849a
-	github.com/kbinani/screenshot v0.0.0-20230812210009-b87d31814237
+	github.com/hectorgimenez/d2go v0.0.0-20240202111944-db8fc7d6db77
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/winlabs/gowin32 v0.0.0-20221003142512-0d265587d3c9
 	go.uber.org/zap v1.26.0
@@ -17,9 +16,7 @@ require (
 )
 
 require (
-	github.com/gen2brain/shm v0.0.0-20230802011745-f2460f5984f7 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
-	github.com/jezek/xgb v1.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/net v0.18.0 // indirect

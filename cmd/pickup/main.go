@@ -30,7 +30,6 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 	window := win.FindWindow(nil, ptr)
-	win.SetForegroundWindow(window)
 
 	pos := win.WINDOWPLACEMENT{}
 	point := win.POINT{}

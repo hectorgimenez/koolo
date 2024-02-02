@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	memory2 "github.com/hectorgimenez/koolo/internal/memory"
 	"log"
 	"syscall"
@@ -24,7 +25,6 @@ func main() {
 	if window == win.HWND_TOP {
 		panic("Diablo II: Resurrected window not found")
 	}
-	win.SetForegroundWindow(window)
 	memory2.HWND = window
 
 	pos := win.WINDOWPLACEMENT{}
@@ -36,6 +36,8 @@ func main() {
 	hid.WindowTopY = int(point.Y)
 	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 9
 	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 9
+
+	helper.Screenshot()
 
 	err = config.Load()
 	config.Config.Debug.RenderMap = true
@@ -61,27 +63,6 @@ func main() {
 	for true {
 		d := gr.GetData(false)
 
-		//screenshot := helper.Screenshot()
-		//matScreen, _ := gocv.ImageToMatRGB(screenshot)
-		//
-		//skillMat := gocv.IMRead("assets/skills/blizzard.png", gocv.IMReadUnchanged)
-		//
-		//rgb := skillMat.Clone()
-		//gocv.CvtColor(skillMat, &rgb, gocv.ColorBGRAToBGR)
-		//
-		//res := gocv.NewMat()
-		//gocv.MatchTemplate(matScreen, rgb, &res, gocv.TmCcoeffNormed, gocv.NewMat())
-		//
-		//_, maxVal, _, maxPos := gocv.MinMaxLoc(res)
-
-		//rs := gcv.FindAllImg(img1, skill, 0.4)
-
-		//fmt.Println(res, maxVal, maxPos)
-		//f, _ := os.Create("data.bin")
-		//enc := gob.NewEncoder(f)
-		//err := enc.Encode(&d)
-		//fmt.Println(err)
-		//f.Close()
 		d.Roster.FindByName("Ayuso")
 		fmt.Println(d.PlayerUnit.HPPercent())
 		time.Sleep(time.Millisecond * 500)

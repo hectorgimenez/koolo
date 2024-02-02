@@ -146,6 +146,26 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 	}, RepeatUntilNoSteps())
 }
 
+func (b *Builder) UpdateQuestLog() *StepChainAction {
+	return NewStepChain(func(d data.Data) []step.Step {
+		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
+			return nil
+		}
+
+		return []step.Step{
+			step.SyncStep(func(_ data.Data) error {
+				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				return nil
+			}),
+			step.Wait(time.Second),
+			step.SyncStep(func(_ data.Data) error {
+				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				return nil
+			}),
+		}
+	})
+}
+
 func (b *Builder) EnsureSkillBindings() *StepChainAction {
 	return NewStepChain(func(d data.Data) []step.Step {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
@@ -171,7 +191,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 
 						skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
 						if !found {
-							return nil
+							continue
 						}
 
 						hid.MovePointer(skillPosition.X, skillPosition.Y)

@@ -24,10 +24,6 @@ const (
 	AnvilBtnX    = 272
 	AnvilBtnY    = 450
 
-	QuestFirstTabX    = 138
-	QuestFirstTabY    = 130
-	QuestTabXInterval = 68
-
 	MainSkillButtonX = 596
 	MainSkillButtonY = 693
 

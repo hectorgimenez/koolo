@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"time"
 )
 
 func (a Leveling) act5() action.Action {
@@ -81,6 +82,7 @@ func (a Leveling) anya() []action.Action {
 		a.builder.UsePortalInTown(),
 		a.builder.InteractObject(object.FrozenAnya, nil),
 		a.builder.ReturnTown(),
+		a.builder.Wait(time.Second * 8),
 		a.builder.InteractNPC(npc.Malah,
 			step.SyncStep(func(d data.Data) error {
 				hid.PressKey("esc")
@@ -124,6 +126,7 @@ func (a Leveling) ancients() []action.Action {
 			obj, _ := d.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
 			return !obj.Selectable
 		}),
+		a.builder.Wait(time.Second*5), // Wait until the door is open
 		a.builder.MoveToArea(area.TheWorldStoneKeepLevel1),
 		a.builder.MoveToArea(area.TheWorldStoneKeepLevel2),
 		a.builder.DiscoverWaypoint(),

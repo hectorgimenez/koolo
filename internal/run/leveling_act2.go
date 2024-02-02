@@ -246,7 +246,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	// If staff has not been used, then put it in the orifice and wait for the entrance to open
 	if !staffAlreadyUsed {
 		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(20),
+			a.builder.ClearAreaAroundPlayer(30),
 			a.builder.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
 				return d.OpenMenus.Anvil
 			},

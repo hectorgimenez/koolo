@@ -32,7 +32,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 		steps = append(steps, b.buffCTA(d)...)
 
-		keys := []string{}
+		keys := make([]string, 0)
 		for buff, kb := range b.ch.BuffSkills() {
 			if _, found := d.PlayerUnit.Skills[buff]; !found {
 				return nil

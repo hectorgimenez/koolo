@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	asm "github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
@@ -24,9 +25,6 @@ import (
 	"os/signal"
 	"syscall"
 )
-
-const EXECUTION_STATE_ES_DISPLAY_REQUIRED = 0x00000002
-const EXECUTION_STATE_ES_CONTINUOUS = 0x80000000
 
 func main() {
 	err := config.Load()
@@ -63,7 +61,7 @@ func main() {
 	defer asm.ASMInjectorUnload()
 
 	// Prevent screen from turning off
-	syscall.MustLoadDLL("kernel32.dll").MustFindProc("SetThreadExecutionState").Call(EXECUTION_STATE_ES_DISPLAY_REQUIRED | EXECUTION_STATE_ES_CONTINUOUS)
+	winproc.SetThreadExecutionState.Call(winproc.EXECUTION_STATE_ES_DISPLAY_REQUIRED | winproc.EXECUTION_STATE_ES_CONTINUOUS)
 
 	gr := &reader.GameReader{
 		GameReader: memory.NewGameReader(process),

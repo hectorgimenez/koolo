@@ -82,7 +82,6 @@ func identifyItem(idTome data.Item, i data.Item) {
 	helper.Sleep(1000)
 
 	screenPos = ui.GetScreenCoordsForItem(i)
-	helper.Sleep(1000)
 	hid.Click(hid.LeftButton, screenPos.X, screenPos.Y)
 	helper.Sleep(350)
 }
