@@ -60,8 +60,9 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 	i.lastRun = time.Now()
 	m, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
 	if found {
+		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 		if m.IsHovered {
-			hid.Click(hid.LeftButton)
+			hid.Click(hid.LeftButton, x, y)
 			i.waitingForInteraction = true
 			return nil
 		}
@@ -70,8 +71,6 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 		if distance > 15 {
 			return fmt.Errorf("NPC is too far away: %d. Current distance: %d", i.NPC, distance)
 		}
-
-		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 
 		// Act 4 Tyrael has a super weird hitbox
 		if i.NPC == npc.Tyrael2 {

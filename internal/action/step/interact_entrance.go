@@ -59,12 +59,12 @@ func (m *InteractEntranceStep) Run(d data.Data) error {
 			}
 
 			if l.IsEntrance {
+				lx, ly := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
 				if d.HoverData.UnitType == 5 || d.HoverData.UnitType == 2 && d.HoverData.IsHovered {
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, lx, ly)
 					m.waitingForInteraction = true
 				}
 
-				lx, ly := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
 				x, y := helper.Spiral(m.mouseOverAttempts)
 				hid.MovePointer(lx+x, ly+y)
 				m.mouseOverAttempts++

@@ -6,6 +6,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
+const NameLeveling = "Leveling"
+
 type Leveling struct {
 	baseRun
 	gr *reader.GameReader
@@ -13,7 +15,7 @@ type Leveling struct {
 }
 
 func (a Leveling) Name() string {
-	return "Leveling"
+	return NameLeveling
 }
 
 func (a Leveling) BuildActions() []action.Action {

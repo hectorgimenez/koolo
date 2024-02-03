@@ -1,8 +1,6 @@
 package run
 
 import (
-	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -73,10 +71,10 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 				bestCorner = i
 				bestCornerDistance = averageDistance
 			}
-			fmt.Printf("Corner %d. Average monster distance: %d\n", i, averageDistance)
+			a.logger.Debug("Corner", zap.Int("corner", i), zap.Int("monsters", len(d.Monsters.Enemies())), zap.Int("distance", averageDistance))
 		}
 
-		fmt.Printf("Moving to corner %d. Average monster distance: %d\n", bestCorner, bestCornerDistance)
+		a.logger.Debug("Moving to corner", zap.Int("corner", bestCorner), zap.Int("averageDistance", bestCornerDistance))
 		return []step.Step{step.MoveTo(corners[bestCorner])}
 	}))
 

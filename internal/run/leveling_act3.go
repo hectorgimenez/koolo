@@ -1,6 +1,8 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -17,21 +19,25 @@ import (
 
 func (a Leveling) act3() action.Action {
 	running := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d data.Data) (actions []action.Action) {
 		if running || d.PlayerUnit.Area != area.KurastDocks {
 			return nil
 		}
 
-		quests := a.builder.GetCompletedQuests(3)
+		// Try to find Hratli at pier, if he's there, talk to him, so he will move to the normal position later
+		hratli, found := d.Monsters.FindOne(npc.Hratli, data.MonsterTypeNone)
+		if found {
+			actions = append(actions, a.builder.InteractNPC(hratli.Name))
+		}
 
 		running = true
 		_, willFound := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
 		if willFound {
-			return a.openMephistoStairs()
+			return append(actions, a.openMephistoStairs()...)
 		}
 
-		if quests[2] {
-			actions := Mephisto{baseRun: a.baseRun}.BuildActions()
+		if d.Quests[quest.Act3KhalimsWill].Completed() {
+			actions = append(actions, Mephisto{baseRun: a.baseRun}.BuildActions()...)
 			return append(actions, a.builder.ItemPickup(true, 25),
 				a.builder.InteractObject(object.HellGate, func(d data.Data) bool {
 					return d.PlayerUnit.Area == area.ThePandemoniumFortress
@@ -40,12 +46,12 @@ func (a Leveling) act3() action.Action {
 		}
 
 		// Find KhalimsEye
-		_, found := d.Items.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
+		_, found = d.Items.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
 		if found {
 			a.logger.Info("KhalimsEye found, skipping quest")
 		} else {
 			a.logger.Info("KhalimsEye not found, starting quest")
-			return a.findKhalimsEye()
+			return append(actions, a.findKhalimsEye()...)
 		}
 
 		// Find KhalimsBrain
@@ -54,7 +60,7 @@ func (a Leveling) act3() action.Action {
 			a.logger.Info("KhalimsBrain found, skipping quest")
 		} else {
 			a.logger.Info("KhalimsBrain not found, starting quest")
-			return a.findKhalimsBrain()
+			return append(actions, a.findKhalimsBrain()...)
 		}
 
 		// Find KhalimsHeart
@@ -63,11 +69,11 @@ func (a Leveling) act3() action.Action {
 			a.logger.Info("KhalimsHeart found, skipping quest")
 		} else {
 			a.logger.Info("KhalimsHeart not found, starting quest")
-			return a.findKhalimsHeart()
+			return append(actions, a.findKhalimsHeart()...)
 		}
 
 		// Trav
-		return a.openMephistoStairs()
+		return append(actions, a.openMephistoStairs()...)
 	})
 }
 
@@ -189,12 +195,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 					helper.Sleep(1000)
 					hid.PressKey(config.Config.Bindings.OpenInventory)
 					screenPos := ui.GetScreenCoordsForItem(khalimsWill)
-					hid.MovePointer(screenPos.X, screenPos.Y)
-					hid.KeyDown("shift")
-					helper.Sleep(500)
-					hid.Click(hid.LeftButton)
-					helper.Sleep(500)
-					hid.KeyUp("shift")
+					hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.ShiftKey)
 					helper.Sleep(300)
 					hid.PressKey("esc")
 					return nil

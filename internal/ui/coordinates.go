@@ -3,6 +3,8 @@ package ui
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/koolo/internal/memory"
+	"github.com/lxn/win"
 )
 
 const (
@@ -22,10 +24,6 @@ const (
 	AnvilBtnX    = 272
 	AnvilBtnY    = 450
 
-	QuestFirstTabX    = 138
-	QuestFirstTabY    = 130
-	QuestTabXInterval = 68
-
 	MainSkillButtonX = 596
 	MainSkillButtonY = 693
 
@@ -34,6 +32,13 @@ const (
 
 	GambleRefreshButtonX = 390
 	GambleRefreshButtonY = 515
+
+	SkillListFirstSkillX = 687
+	SkillListFirstSkillY = 590
+	SkillListSkillOffset = 45
+
+	FirstMercFromContractorListX = 175
+	FirstMercFromContractorListY = 142
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {
@@ -49,4 +54,9 @@ func GetScreenCoordsForItem(itm data.Item) data.Position {
 	y := inventoryTopLeftY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
 
 	return data.Position{X: x, Y: y}
+}
+
+func GameWindowScale() float64 {
+	dpi := win.GetDpiForWindow(memory.HWND)
+	return float64(dpi) / 96.0
 }

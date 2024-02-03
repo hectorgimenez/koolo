@@ -1,7 +1,7 @@
 package action
 
 import (
-	"fmt"
+	"slices"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -26,10 +26,10 @@ var uiStatButtonPosition = map[stat.ID]data.Position{
 	stat.Energy:    {X: 240, Y: 430},
 }
 
-var uiSkillTabPosition = []data.Position{
-	{X: 910, Y: 140},
-	{X: 1010, Y: 140},
+var uiSkillPagePosition = [3]data.Position{
 	{X: 1100, Y: 140},
+	{X: 1010, Y: 140},
+	{X: 910, Y: 140},
 }
 
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
@@ -73,8 +73,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			return []step.Step{
 				step.SyncStep(func(_ data.Data) error {
 					helper.Sleep(100)
-					hid.MovePointer(statBtnPosition.X, statBtnPosition.Y)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, statBtnPosition.X, statBtnPosition.Y)
 					helper.Sleep(500)
 					return nil
 				}),
@@ -103,8 +102,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			return nil
 		}
 
-		skillTree := char.GetSkillTree()
-		assignedPoints := make(map[skill.Skill]int)
+		assignedPoints := make(map[skill.ID]int)
 		for _, sk := range char.SkillPoints(d) {
 			currentPoints, found := assignedPoints[sk]
 			if !found {
@@ -114,8 +112,8 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			assignedPoints[sk] = currentPoints + 1
 
 			characterPoints, found := d.PlayerUnit.Skills[sk]
-			if !found || characterPoints < assignedPoints[sk] {
-				position, skFound := skillTree[sk]
+			if !found || int(characterPoints.Level) < assignedPoints[sk] {
+				skillDesc, skFound := skill.Desc[sk]
 				if !skFound {
 					b.logger.Error("skill not found for character", zap.Any("skill", sk))
 					return nil
@@ -134,11 +132,9 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 					step.SyncStep(func(_ data.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
-						hid.MovePointer(uiSkillTabPosition[position.Tab].X, uiSkillTabPosition[position.Tab].Y)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
 						helper.Sleep(200)
-						hid.MovePointer(uiSkillColumnPosition[position.Column], uiSkillRowPosition[position.Row])
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
 						helper.Sleep(500)
 						return nil
 					}),
@@ -148,6 +144,26 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 
 		return nil
 	}, RepeatUntilNoSteps())
+}
+
+func (b *Builder) UpdateQuestLog() *StepChainAction {
+	return NewStepChain(func(d data.Data) []step.Step {
+		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
+			return nil
+		}
+
+		return []step.Step{
+			step.SyncStep(func(_ data.Data) error {
+				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				return nil
+			}),
+			step.Wait(time.Second),
+			step.SyncStep(func(_ data.Data) error {
+				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				return nil
+			}),
+		}
+	})
 }
 
 func (b *Builder) EnsureSkillBindings() *StepChainAction {
@@ -161,23 +177,24 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 
 		if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
 			return []step.Step{
-				step.SyncStep(func(_ data.Data) error {
-					hid.MovePointer(ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
-					hid.Click(hid.LeftButton)
+				// Right click skill bindings
+				step.SyncStep(func(d data.Data) error {
+					hid.Click(hid.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 					helper.Sleep(300)
 					hid.MovePointer(10, 10)
 					helper.Sleep(300)
 
-					sc := helper.Screenshot()
 					for sk, binding := range skillBindings {
 						if binding == "" {
 							continue
 						}
-						tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
-						if !tm.Found {
+
+						skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
+						if !found {
 							continue
 						}
-						hid.MovePointer(tm.PositionX+10, tm.PositionY+10)
+
+						hid.MovePointer(skillPosition.X, skillPosition.Y)
 						helper.Sleep(100)
 						hid.PressKey(binding)
 						helper.Sleep(300)
@@ -186,25 +203,24 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 					previousTotalSkillNumber = len(d.PlayerUnit.Skills)
 					return nil
 				}),
+
+				// Set main left click skill
 				step.SyncStep(func(_ data.Data) error {
 					for sk, binding := range skillBindings {
 						if binding != "" {
 							continue
 						}
-						hid.MovePointer(ui.MainSkillButtonX, ui.MainSkillButtonY)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
 						helper.Sleep(300)
 						hid.MovePointer(10, 10)
 						helper.Sleep(300)
 
-						sc := helper.Screenshot()
-						tm := b.tf.Find(fmt.Sprintf("skills_%d", sk), sc)
-						if !tm.Found {
-							continue
+						skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
+						if !found {
+							return nil
 						}
-						hid.MovePointer(tm.PositionX+10, tm.PositionY+10)
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton)
+						hid.Click(hid.LeftButton, skillPosition.X, skillPosition.Y)
 					}
 					return nil
 				}),
@@ -215,26 +231,76 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 	}, RepeatUntilNoSteps())
 }
 
-func (b *Builder) GetCompletedQuests(act int) []bool {
-	hid.PressKey(config.Config.Bindings.OpenQuestLog)
-	hid.MovePointer(ui.QuestFirstTabX+(act-1)*ui.QuestTabXInterval, ui.QuestFirstTabY)
-	helper.Sleep(200)
-	hid.Click(hid.LeftButton)
-	helper.Sleep(3000)
-
-	quests := make([]bool, 6)
-	if act == 4 {
-		quests = make([]bool, 3)
+func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillID skill.ID) (data.Position, bool) {
+	var scrolls = []skill.ID{
+		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
 	}
 
-	sc := helper.Screenshot()
-	for i := 0; i < len(quests); i++ {
-		tm := b.tf.Find(fmt.Sprintf("quests_a%d_%d", act, i+1), sc)
-		quests[i] = tm.Found
+	if _, found := d.PlayerUnit.Skills[skillID]; !found {
+		return data.Position{}, false
 	}
-	hid.PressKey("esc")
 
-	return quests
+	targetSkill := skill.Skills[skillID]
+	descs := make(map[skill.ID]skill.Skill)
+	row := 0
+	totalRows := make([]int, 0)
+	column := 0
+	skillsWithCharges := 0
+	for skID, points := range d.PlayerUnit.Skills {
+		sk := skill.Skills[skID]
+		// Skip skills that can not be bind
+		if sk.Desc().ListRow < 0 {
+			continue
+		}
+
+		// Skip skills that can not be bind to current mouse button
+		if (mainSkill == true && !sk.LeftSkill) || (mainSkill == false && !sk.RightSkill) {
+			continue
+		}
+
+		if points.Charges > 0 {
+			skillsWithCharges++
+			continue
+		}
+
+		if slices.Contains(scrolls, sk.ID) {
+			continue
+		}
+		descs[skID] = sk
+
+		if skID != targetSkill.ID && sk.Desc().ListRow == targetSkill.Desc().ListRow && targetSkill.ID < skID {
+			column++
+		}
+
+		totalRows = append(totalRows, sk.Desc().ListRow)
+		if row == targetSkill.Desc().ListRow {
+			continue
+		}
+
+		row++
+	}
+
+	slices.Sort(totalRows)
+	totalRows = slices.Compact(totalRows)
+
+	// Scrolls and charges are not in the same list
+	if slices.Contains(scrolls, skillID) {
+		column = skillsWithCharges
+		row = len(totalRows)
+		for _, skID := range scrolls {
+			if d.PlayerUnit.Skills[skID].Quantity > 0 {
+				if skID == skillID {
+					break
+				}
+				column++
+			}
+		}
+	}
+
+	return data.Position{
+		X: ui.SkillListFirstSkillX + ui.SkillListSkillOffset*column,
+		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
+	}, true
 }
 
 func (b *Builder) HireMerc() *Chain {
@@ -244,32 +310,21 @@ func (b *Builder) HireMerc() *Chain {
 			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
 			if config.Config.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
 				b.logger.Info("Hiring merc...")
+				// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
 				actions = append(actions,
-					b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(), step.KeySequence("home", "down", "enter")),
-					NewStepChain(func(d data.Data) []step.Step {
-						sc := helper.Screenshot()
-						tm := b.tf.Find(fmt.Sprintf("skills_merc_%d", skill.Defiance), sc)
-						if !tm.Found {
+					b.InteractNPC(
+						town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(),
+						step.KeySequence("home", "down", "enter"),
+						step.Wait(time.Second*2),
+						step.SyncStep(func(d data.Data) error {
+							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+							helper.Sleep(300)
+							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+
 							return nil
-						}
-
-						return []step.Step{
-							step.SyncStep(func(d data.Data) error {
-								hid.MovePointer(tm.PositionX-100, tm.PositionY)
-								hid.Click(hid.LeftButton)
-								hid.Click(hid.LeftButton)
-
-								return nil
-							}),
-						}
-					}),
+						}),
+					),
 				)
-			}
-
-			// We will change the Defiance merc to the holy freeze, much better to avoid being hit.
-			if config.Config.Game.Difficulty == difficulty.Nightmare && d.MercHPPercent() > 0 && d.PlayerUnit.TotalGold() > 50000 && d.PlayerUnit.Area == area.KurastDocks && d.PlayerUnit.Skills[skill.Defiance] > 0 {
-				b.logger.Info("Changing Defiance merc by Holy Freeze...")
-				// Remove merc items
 			}
 		}
 

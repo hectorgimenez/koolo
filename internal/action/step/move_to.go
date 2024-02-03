@@ -74,7 +74,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 		if d.PlayerUnit.RightSkill != skill.Teleport {
 			hid.PressKey(config.Config.Bindings.Teleport)
 		}
-	} else if d.PlayerUnit.Skills[skill.Vigor] > 0 && config.Config.Bindings.Paladin.Vigor != "" {
+	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && config.Config.Bindings.Paladin.Vigor != "" {
 		if d.PlayerUnit.RightSkill != skill.Vigor {
 			hid.PressKey(config.Config.Bindings.Paladin.Vigor)
 		}

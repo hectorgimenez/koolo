@@ -97,8 +97,12 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
 					return err
 				}
-				if err := b.maxGameLengthExceeded(gameStartedAt); err != nil {
-					return err
+
+				// Check if game length is exceeded, only if it's not a leveling run
+				if r.Name() != run.NameLeveling {
+					if err := b.maxGameLengthExceeded(gameStartedAt); err != nil {
+						return err
+					}
 				}
 
 				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration

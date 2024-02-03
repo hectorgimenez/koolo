@@ -3,10 +3,10 @@ package event
 import (
 	"context"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"os"
 	"time"
 
-	"github.com/go-vgo/robotgo"
 	"go.uber.org/zap"
 )
 
@@ -39,8 +39,8 @@ func (l *Listener) Listen(ctx context.Context) error {
 			}
 
 			if e.Image != nil {
-				fileName := fmt.Sprintf("screenshots/error-%s.png", time.Now().Format("2006-01-02 15_04_05"))
-				err := robotgo.SavePng(e.Image, fileName)
+				fileName := fmt.Sprintf("screenshots/error-%s.jpeg", time.Now().Format("2006-01-02 15_04_05"))
+				err := helper.SaveImageJPEG(e.Image, fileName)
 				if err != nil {
 					l.logger.Error("error saving screenshot", zap.Error(err))
 				}

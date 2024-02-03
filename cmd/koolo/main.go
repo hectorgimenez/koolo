@@ -2,17 +2,7 @@ package main
 
 import (
 	"context"
-	"golang.org/x/sync/errgroup"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/hectorgimenez/d2go/pkg/memory"
-	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/ui"
-	hook "github.com/robotn/gohook"
-
 	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -21,11 +11,19 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/helper/winproc"
+	asm "github.com/hectorgimenez/koolo/internal/memory"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -56,18 +54,21 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error finding D2R.exe process", zap.Error(err))
 	}
+	err = asm.ASMInjectorInit(uint32(process.GetPID()))
+	if err != nil {
+		logger.Fatal("Error initializing ASMInjector", zap.Error(err))
+	}
+	defer asm.ASMInjectorUnload()
+
+	// Prevent screen from turning off
+	winproc.SetThreadExecutionState.Call(winproc.EXECUTION_STATE_ES_DISPLAY_REQUIRED | winproc.EXECUTION_STATE_ES_CONTINUOUS)
 
 	gr := &reader.GameReader{
 		GameReader: memory.NewGameReader(process),
 	}
 
-	tf, err := ui.NewTemplateFinder(logger, "assets")
-	if err != nil {
-		logger.Fatal("Error creating template finder", zap.Error(err))
-	}
-
 	bm := health.NewBeltManager(logger)
-	gm := helper.NewGameManager(gr, tf)
+	gm := helper.NewGameManager(gr)
 	hm := health.NewHealthManager(logger, bm, gm)
 	sm := town.NewShopManager(logger, bm)
 	char, err := character.BuildCharacter(logger)
@@ -75,7 +76,7 @@ func main() {
 		logger.Fatal("Error creating character", zap.Error(err))
 	}
 
-	ab := action.NewBuilder(logger, sm, bm, gr, char, tf)
+	ab := action.NewBuilder(logger, sm, bm, gr, char)
 	bot := koolo.NewBot(logger, hm, ab, gr)
 
 	var supervisor koolo.Supervisor
@@ -123,25 +124,8 @@ func main() {
 		return eventListener.Listen(ctx)
 	})
 
-	registerKeyboardHooks(supervisor)
-
 	err = g.Wait()
 	if err != nil {
 		logger.Fatal("Error running Koolo", zap.Error(err))
 	}
-}
-
-func registerKeyboardHooks(s koolo.Supervisor) {
-	// TogglePause Hook
-	hook.Register(hook.KeyDown, []string{"."}, func(e hook.Event) {
-		s.Stop()
-	})
-
-	// TogglePause Hook
-	hook.Register(hook.KeyDown, []string{","}, func(e hook.Event) {
-		s.TogglePause()
-	})
-
-	evt := hook.Start()
-	<-hook.Process(evt)
 }

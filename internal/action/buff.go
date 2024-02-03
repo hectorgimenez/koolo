@@ -32,7 +32,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 		steps = append(steps, b.buffCTA(d)...)
 
-		keys := []string{}
+		keys := make([]string, 0)
 		for buff, kb := range b.ch.BuffSkills() {
 			if _, found := d.PlayerUnit.Skills[buff]; !found {
 				return nil
@@ -52,7 +52,7 @@ func (b *Builder) Buff() *StepChainAction {
 						helper.Sleep(200)
 						hid.PressKey(kb)
 						helper.Sleep(300)
-						hid.Click(hid.RightButton)
+						hid.Click(hid.RightButton, 300, 300)
 						helper.Sleep(300)
 					}
 					return nil
@@ -107,11 +107,11 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 			step.SyncStep(func(d data.Data) error {
 				hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
-				hid.Click(hid.RightButton)
+				hid.Click(hid.RightButton, 300, 300)
 				helper.Sleep(300)
 				hid.PressKey(config.Config.Bindings.CTABattleOrders)
 				helper.Sleep(100)
-				hid.Click(hid.RightButton)
+				hid.Click(hid.RightButton, 300, 300)
 				helper.Sleep(100)
 
 				return nil

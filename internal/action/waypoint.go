@@ -46,9 +46,7 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 				step.SyncStep(func(d data.Data) error {
 					actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
-					hid.MovePointer(actTabX, wpTabStartY)
-					helper.Sleep(200)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, actTabX, wpTabStartY)
 					helper.Sleep(200)
 
 					return nil
@@ -63,12 +61,11 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 func (b *Builder) useWP(a area.Area) *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		nextAvailableWP := area.WPAddresses[a]
-		currentWP := a
 		traverseAreas := make([]area.Area, 0)
 		for {
 			found := false
 			for _, wp := range d.PlayerUnit.AvailableWaypoints {
-				if wp == currentWP {
+				if wp == a {
 					found = true
 					break
 				}
@@ -80,7 +77,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 
 			traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
 			a = nextAvailableWP.LinkedFrom[0]
-			nextAvailableWP = area.WPAddresses[currentWP]
+			nextAvailableWP = area.WPAddresses[nextAvailableWP.LinkedFrom[0]]
 		}
 
 		// First use the previous available waypoint that we have discovered
@@ -88,9 +85,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 			return []step.Step{
 				step.SyncStep(func(d data.Data) error {
 					areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-					hid.MovePointer(wpListPositionX, areaBtnY)
-					helper.Sleep(200)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, wpListPositionX, areaBtnY)
 					helper.Sleep(1000)
 
 					return nil

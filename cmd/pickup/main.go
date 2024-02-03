@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
+	"syscall"
 
-	"github.com/go-vgo/robotgo"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
@@ -13,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 	"go.uber.org/zap"
 )
@@ -26,11 +25,11 @@ func main() {
 
 	logger, _ := zap.NewDevelopment()
 
-	window := robotgo.FindWindow("Diablo II: Resurrected")
-	if window == win.HWND_TOP {
-		panic(err)
+	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
-	win.SetForegroundWindow(window)
+	window := win.FindWindow(nil, ptr)
 
 	pos := win.WINDOWPLACEMENT{}
 	point := win.POINT{}
@@ -56,12 +55,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tf, err := ui.NewTemplateFinder(logger, "assets")
-	if err != nil {
-		panic(err)
-	}
 
-	b := action.NewBuilder(logger, sm, bm, gr, char, tf)
+	b := action.NewBuilder(logger, sm, bm, gr, char)
 	a := b.ItemPickup(true, -1)
 
 	gr.GetData(true)

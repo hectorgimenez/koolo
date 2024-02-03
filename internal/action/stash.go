@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -18,9 +19,11 @@ import (
 )
 
 const (
-	maxGoldPerStashTab = 2500000
-	stashGoldBtnX      = 966
-	stashGoldBtnY      = 526
+	maxGoldPerStashTab   = 2500000
+	stashGoldBtnX        = 966
+	stashGoldBtnY        = 526
+	stashGoldBtnConfirmX = 547
+	stashGoldBtnConfirmY = 388
 )
 
 func (b *Builder) Stash(forceStash bool) *Chain {
@@ -64,9 +67,8 @@ func (b *Builder) orderInventoryPotions(d data.Data) {
 				continue
 			}
 			screenPos := ui.GetScreenCoordsForItem(i)
-			hid.MovePointer(screenPos.X, screenPos.Y)
 			helper.Sleep(100)
-			hid.Click(hid.RightButton)
+			hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
 			helper.Sleep(200)
 		}
 	}
@@ -91,6 +93,8 @@ func (b *Builder) stashGold(d data.Data) {
 	if !found || gold == 0 {
 		return
 	}
+
+	b.logger.Info("Stashing gold...", zap.Int("gold", gold))
 
 	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
 		switchTab(1)
@@ -158,11 +162,7 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	helper.Sleep(170)
 	screenshot := helper.Screenshot()
 	helper.Sleep(150)
-	hid.KeyDown("control")
-	helper.Sleep(700)
-	hid.Click(hid.LeftButton)
-	helper.Sleep(700)
-	hid.KeyUp("control")
+	hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 	helper.Sleep(500)
 
 	d := b.gr.GetData(false)
@@ -180,11 +180,10 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 }
 
 func clickStashGoldBtn() {
-	hid.MovePointer(stashGoldBtnX, stashGoldBtnY)
 	helper.Sleep(170)
-	hid.Click(hid.LeftButton)
-	helper.Sleep(500)
-	hid.PressKey("enter")
+	hid.Click(hid.LeftButton, stashGoldBtnX, stashGoldBtnY)
+	helper.Sleep(1000)
+	hid.Click(hid.LeftButton, stashGoldBtnConfirmX, stashGoldBtnConfirmY)
 	helper.Sleep(700)
 }
 
@@ -194,8 +193,6 @@ func switchTab(tab int) {
 	tabSize := 82
 	x = x + tabSize*tab - tabSize/2
 
-	hid.MovePointer(x, y)
-	helper.Sleep(400)
-	hid.Click(hid.LeftButton)
+	hid.Click(hid.LeftButton, x, y)
 	helper.Sleep(500)
 }

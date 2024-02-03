@@ -88,8 +88,8 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s BlizzardSorceress) BuffSkills() map[skill.Skill]string {
-	return map[skill.Skill]string{
+func (s BlizzardSorceress) BuffSkills() map[skill.ID]string {
+	return map[skill.ID]string{
 		skill.FrozenArmor: config.Config.Bindings.Sorceress.FrozenArmor,
 	}
 }

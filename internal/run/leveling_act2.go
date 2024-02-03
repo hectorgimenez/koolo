@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -34,14 +35,13 @@ func (a Leveling) act2() action.Action {
 			return a.findHoradricCube()
 		}
 
-		quests := a.builder.GetCompletedQuests(2)
-		if quests[4] {
+		if d.Quests[quest.Act2TheSummoner].Completed() {
 			// Try to get level 21 before moving to Duriel and Act3
 			if d.PlayerUnit.Stats[stat.Level] < 18 {
 				return TalRashaTombs{a.baseRun}.BuildActions()
 			}
 
-			return a.duriel(quests[1], d)
+			return a.duriel(d.Quests[quest.Act2TheHoradricStaff].Completed(), d)
 		}
 
 		_, horadricStaffFound := d.Items.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
@@ -176,13 +176,8 @@ func (a Leveling) prepareStaff() action.Action {
 					},
 						step.SyncStep(func(d data.Data) error {
 							screenPos := ui.GetScreenCoordsForItem(horadricStaff)
-							hid.MovePointer(screenPos.X, screenPos.Y)
 
-							hid.KeyDown("control")
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
-							helper.Sleep(200)
-							hid.KeyUp("control")
+							hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 							helper.Sleep(300)
 							hid.PressKey("esc")
 							return nil
@@ -251,7 +246,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	// If staff has not been used, then put it in the orifice and wait for the entrance to open
 	if !staffAlreadyUsed {
 		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(20),
+			a.builder.ClearAreaAroundPlayer(30),
 			a.builder.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
 				return d.OpenMenus.Anvil
 			},
@@ -259,17 +254,12 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 					staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
 
 					screenPos := ui.GetScreenCoordsForItem(staff)
-					hid.MovePointer(screenPos.X, screenPos.Y)
 
+					hid.Click(hid.LeftButton, screenPos.X, screenPos.Y)
 					helper.Sleep(300)
-					hid.Click(hid.LeftButton)
-					hid.MovePointer(ui.AnvilCenterX, ui.AnvilCenterY)
-					helper.Sleep(300)
-					hid.Click(hid.LeftButton)
-					helper.Sleep(300)
-					hid.MovePointer(ui.AnvilBtnX, ui.AnvilBtnY)
+					hid.Click(hid.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
 					helper.Sleep(500)
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
 					helper.Sleep(20000)
 
 					return nil
@@ -304,17 +294,14 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 						}
 
 						pos := ui.GetScreenCoordsForItem(itm)
-						hid.MovePointer(pos.X, pos.Y)
 						helper.Sleep(500)
 
 						if x > 3 {
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							hid.MovePointer(ui.MercAvatarPositionX, ui.MercAvatarPositionY)
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 						} else {
-							hid.Click(hid.RightButton)
+							hid.Click(hid.RightButton, pos.X, pos.Y)
 						}
 						x++
 					}

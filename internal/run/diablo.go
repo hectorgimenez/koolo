@@ -1,7 +1,6 @@
 package run
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -220,13 +219,13 @@ func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.
 		}
 		// No monsters found here, don't need to keep checking
 		if monstersFound == 0 {
-			fmt.Printf("Moving to corner %d. Has no monsters.\n", i)
+			a.logger.Debug("Moving to corner", zap.Int("corner", i), zap.Int("monsters", monstersFound))
 			return corners[i]
 		}
-		fmt.Printf("Corner %d. Average monster distance: %d\n", i, averageDistance)
+		a.logger.Debug("Corner", zap.Int("corner", i), zap.Int("monsters", monstersFound), zap.Int("distance", averageDistance))
 	}
 
-	fmt.Printf("Moving to corner %d. Average monster distance: %d\n", bestCorner, bestCornerDistance)
+	a.logger.Debug("Moving to corner", zap.Int("corner", bestCorner), zap.Int("monsters", bestCornerDistance))
 
 	return corners[bestCorner]
 }

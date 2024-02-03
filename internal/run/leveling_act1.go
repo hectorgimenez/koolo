@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -24,10 +25,8 @@ func (a Leveling) act1() action.Action {
 			return nil
 		}
 
-		quests := a.builder.GetCompletedQuests(1)
-
 		running = true
-		if !quests[0] {
+		if !d.Quests[quest.Act1DenOfEvil].Completed() {
 			return a.denOfEvil()
 		}
 
@@ -35,7 +34,7 @@ func (a Leveling) act1() action.Action {
 			return a.countess()
 		}
 
-		if !a.isCainInTown(d) && !quests[2] {
+		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
 			return a.deckardCain(d)
 		}
 
@@ -177,17 +176,14 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 						}
 
 						pos := ui.GetScreenCoordsForItem(itm)
-						hid.MovePointer(pos.X, pos.Y)
 						helper.Sleep(500)
 
 						if x > 3 {
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							hid.MovePointer(ui.MercAvatarPositionX, ui.MercAvatarPositionY)
-							helper.Sleep(300)
-							hid.Click(hid.LeftButton)
+							hid.Click(hid.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 						} else {
-							hid.Click(hid.RightButton)
+							hid.Click(hid.RightButton, pos.X, pos.Y)
 						}
 						x++
 					}

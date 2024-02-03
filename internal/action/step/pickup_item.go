@@ -75,8 +75,12 @@ func (p *PickupItemStep) Run(d data.Data) error {
 	p.lastRun = time.Now()
 	for _, i := range d.Items.ByLocation(item.LocationGround) {
 		if i.UnitID == p.item.UnitID {
+			objectX := i.Position.X - 1
+			objectY := i.Position.Y - 1
+			mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
+
 			if i.IsHovered {
-				hid.Click(hid.LeftButton)
+				hid.Click(hid.LeftButton, mX, mY)
 				if p.waitingForInteraction.IsZero() {
 					p.waitingForInteraction = time.Now()
 				}
@@ -85,7 +89,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 				// on Andariel, so we open it
 				if p.isChestHovered(d) {
-					hid.Click(hid.LeftButton)
+					hid.Click(hid.LeftButton, mX, mY)
 				}
 
 				distance := pather.DistanceFromMe(d, i.Position)
@@ -94,9 +98,6 @@ func (p *PickupItemStep) Run(d data.Data) error {
 					return fmt.Errorf("item is too far away: %s", p.item.Name)
 				}
 
-				objectX := i.Position.X - 1
-				objectY := i.Position.Y - 1
-				mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 				x, y := helper.Spiral(p.mouseOverAttempts)
 				hid.MovePointer(mX+x, mY+y)
 				p.mouseOverAttempts++

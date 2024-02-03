@@ -76,8 +76,8 @@ func (s Hammerdin) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Hammerdin) BuffSkills() map[skill.Skill]string {
-	return map[skill.Skill]string{
+func (s Hammerdin) BuffSkills() map[skill.ID]string {
+	return map[skill.ID]string{
 		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
 	}
 }
