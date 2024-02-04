@@ -44,6 +44,10 @@ func MovePointer(x, y int) {
 	win.PostMessage(memory.HWND, win.WM_MOUSEMOVE, 0, lParam)
 }
 
+func RestoreCursorPosition() {
+	memory.RestoreGetCursorPosAddr()
+}
+
 type Changeable interface {
 	Set(x, y int, c color.Color)
 }

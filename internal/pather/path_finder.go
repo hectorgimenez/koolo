@@ -1,9 +1,6 @@
 package pather
 
 import (
-	"math"
-	"math/rand"
-
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -11,6 +8,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/reader"
+	"math"
+	"math/rand"
 )
 
 func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
@@ -199,11 +198,18 @@ func MoveThroughPath(p *Pather, distance int, teleport bool) {
 	}
 
 	if distance > 0 {
-		if teleport {
-			hid.Click(hid.RightButton, screenX, screenY)
-		} else {
-			hid.Click(hid.LeftButton, screenX, screenY)
-		}
+		moveCharacter(teleport, screenX, screenY)
+	}
+}
+
+func moveCharacter(teleport bool, x, y int) {
+	if teleport {
+		hid.Click(hid.RightButton, x, y)
+	} else {
+		hid.MovePointer(x, y)
+		hid.PressKey(config.Config.Bindings.ForceMove)
+		helper.Sleep(50)
+		hid.RestoreCursorPosition()
 	}
 }
 
