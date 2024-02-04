@@ -9,8 +9,8 @@ github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.1 h1:gmztn0JnHVt9JZquRuzLw3g4wouNVzKL15iLr/zn/QY=
 github.com/gorilla/websocket v1.5.1/go.mod h1:x3kM2JMyaluk02fnUJpQuwD2dCS5NDG2ZHL0uE0tcaY=
-github.com/hectorgimenez/d2go v0.0.0-20240202111944-db8fc7d6db77 h1:HZBioMz0Ez5oeNnXcOPJ2/o1UMqqhqEQZC1XLR7kMjk=
-github.com/hectorgimenez/d2go v0.0.0-20240202111944-db8fc7d6db77/go.mod h1:QXuKJYL7/gh0dnwHu/f8bqEWDAOy1QP51RV1I0mjUKM=
+github.com/hectorgimenez/d2go v0.0.0-20240204054823-23600ecb0a6f h1:AEyTnBYVnxiGQEkYUDUeufrL83+SzRaMj/GKLSPPfrE=
+github.com/hectorgimenez/d2go v0.0.0-20240204054823-23600ecb0a6f/go.mod h1:QXuKJYL7/gh0dnwHu/f8bqEWDAOy1QP51RV1I0mjUKM=
 github.com/lxn/win v0.0.0-20210218163916-a377121e959e h1:H+t6A/QJMbhCSEH5rAuRxh+CtW96g0Or0Fxa9IKr4uc=
 github.com/lxn/win v0.0.0-20210218163916-a377121e959e/go.mod h1:KxxjdtRkfNoYDCUP5ryK7XJJNTnpC8atvtmTheChOtk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
