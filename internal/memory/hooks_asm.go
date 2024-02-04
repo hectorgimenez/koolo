@@ -8,7 +8,7 @@ import (
 	"github.com/winlabs/gowin32"
 	"golang.org/x/sys/windows"
 	"strings"
-	"unsafe"
+	"syscall"
 )
 
 const fullAccess = windows.PROCESS_VM_OPERATION | windows.PROCESS_VM_WRITE | windows.PROCESS_VM_READ
@@ -34,21 +34,28 @@ func ASMInjectorInit(pid uint32) error {
 		return fmt.Errorf("error getting process modules: %w", err)
 	}
 
+	_, err = syscall.LoadLibrary("USER32.dll")
+	if err != nil {
+		return fmt.Errorf("error loading USER32.dll: %w", err)
+	}
+
 	for _, module := range modules {
 		// GetCursorPos
 		if strings.EqualFold(module.ModuleName, "USER32.dll") {
-			getCursorPosAddr = uintptr(unsafe.Pointer(module.ModuleBaseAddress)) + 0x2A440
+			getCursorPosAddr, err = syscall.GetProcAddress(module.ModuleHandle, "GetCursorPos")
+			getKeyStateAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "GetKeyState")
+			trackMouseEventAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "TrackMouseEvent")
+
 			err = windows.ReadProcessMemory(handle, getCursorPosAddr, &getCursorPosOrigBytes[0], uintptr(len(getCursorPosOrigBytes)), nil)
 			if err != nil {
 				return fmt.Errorf("error reading memory: %w", err)
 			}
 
-			err = hookTrackMouseEvent(uintptr(unsafe.Pointer(module.ModuleBaseAddress)))
+			err = hookTrackMouseEvent()
 			if err != nil {
 				return err
 			}
 
-			getKeyStateAddr = uintptr(unsafe.Pointer(module.ModuleBaseAddress)) + 0x24E50
 			err = windows.ReadProcessMemory(handle, getKeyStateAddr, &getKeyStateOrigBytes[0], uintptr(len(getKeyStateOrigBytes)), nil)
 			if err != nil {
 				return fmt.Errorf("error reading memory: %w", err)
@@ -121,8 +128,7 @@ func RestoreGetCursorPosAddr() error {
 	return windows.WriteProcessMemory(handle, getCursorPosAddr, &getCursorPosOrigBytes[0], uintptr(len(getCursorPosOrigBytes)), nil)
 }
 
-func hookTrackMouseEvent(baseAddr uintptr) error {
-	trackMouseEventAddr = baseAddr + 0x2EB10
+func hookTrackMouseEvent() error {
 	err := windows.ReadProcessMemory(handle, trackMouseEventAddr, &trackMouseEventBytes[0], uintptr(len(trackMouseEventBytes)), nil)
 	if err != nil {
 		return err
