@@ -58,7 +58,18 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error initializing ASMInjector", zap.Error(err))
 	}
-	defer asm.ASMInjectorUnload()
+	logger.Debug("Injecting KooloDll.dll")
+	err = asm.InjectDLLs()
+	if err != nil {
+		logger.Fatal("Error injecting KooloDll.dll", zap.Error(err))
+	}
+
+	defer func() {
+		logger.Debug("Unloading memory injector")
+		asm.ASMInjectorUnload()
+		logger.Debug("Unloading KooloDll.dll")
+		asm.UnloadDll(uint32(process.GetPID()))
+	}()
 
 	// Prevent screen from turning off
 	winproc.SetThreadExecutionState.Call(winproc.EXECUTION_STATE_ES_DISPLAY_REQUIRED | winproc.EXECUTION_STATE_ES_CONTINUOUS)

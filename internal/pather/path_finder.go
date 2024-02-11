@@ -209,7 +209,6 @@ func moveCharacter(teleport bool, x, y int) {
 		hid.MovePointer(x, y)
 		hid.PressKey(config.Config.Bindings.ForceMove)
 		helper.Sleep(50)
-		hid.RestoreCursorPosition()
 	}
 }
 
