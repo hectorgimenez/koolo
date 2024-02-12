@@ -1,6 +1,7 @@
 package action
 
 import (
+	"log/slog"
 	"slices"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	"go.uber.org/zap"
 )
 
 var uiStatButtonPosition = map[stat.ID]data.Position{
@@ -115,7 +115,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			if !found || int(characterPoints.Level) < assignedPoints[sk] {
 				skillDesc, skFound := skill.Desc[sk]
 				if !skFound {
-					b.logger.Error("skill not found for character", zap.Any("skill", sk))
+					b.logger.Error("skill not found for character", slog.Any("skill", sk))
 					return nil
 				}
 

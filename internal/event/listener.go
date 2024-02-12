@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"log/slog"
 	"os"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type Listener struct {
 	handlers []Handler
-	logger   *zap.Logger
+	logger   *slog.Logger
 }
 
 type Handler func(ctx context.Context, m Message) error
 
-func NewListener(logger *zap.Logger) Listener {
+func NewListener(logger *slog.Logger) Listener {
 	return Listener{
 		logger: logger,
 	}
@@ -32,9 +31,9 @@ func (l *Listener) Listen(ctx context.Context) error {
 		select {
 		case e := <-Events:
 			if _, err := os.Stat("screenshots"); os.IsNotExist(err) {
-				err = os.MkdirAll("screenshots", 0700)
+				err = os.MkdirAll("screenshots", os.ModePerm)
 				if err != nil {
-					l.logger.Error("error creating screenshots directory", zap.Error(err))
+					l.logger.Error("error creating screenshots directory", slog.Any("error", err))
 				}
 			}
 
@@ -42,13 +41,13 @@ func (l *Listener) Listen(ctx context.Context) error {
 				fileName := fmt.Sprintf("screenshots/error-%s.jpeg", time.Now().Format("2006-01-02 15_04_05"))
 				err := helper.SaveImageJPEG(e.Image, fileName)
 				if err != nil {
-					l.logger.Error("error saving screenshot", zap.Error(err))
+					l.logger.Error("error saving screenshot", slog.Any("error", err))
 				}
 			}
 
 			for _, h := range l.handlers {
 				if err := h(ctx, e); err != nil {
-					l.logger.Error("error running event handler", zap.Error(err))
+					l.logger.Error("error running event handler", slog.Any("error", err))
 				}
 			}
 		case <-ctx.Done():

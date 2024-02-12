@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 type Nihlathak struct {
@@ -71,10 +71,10 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 				bestCorner = i
 				bestCornerDistance = averageDistance
 			}
-			a.logger.Debug("Corner", zap.Int("corner", i), zap.Int("monsters", len(d.Monsters.Enemies())), zap.Int("distance", averageDistance))
+			a.logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", len(d.Monsters.Enemies())), slog.Int("distance", averageDistance))
 		}
 
-		a.logger.Debug("Moving to corner", zap.Int("corner", bestCorner), zap.Int("averageDistance", bestCornerDistance))
+		a.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("averageDistance", bestCornerDistance))
 		return []step.Step{step.MoveTo(corners[bestCorner])}
 	}))
 
@@ -86,7 +86,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 			for _, m := range d.Monsters.Enemies() {
 				if d := pather.DistanceFromPoint(nilaO.Position, m.Position); d < 15 {
-					a.logger.Debug("Clearing monsters around Nihlathak position", zap.Any("monster", m))
+					a.logger.Debug("Clearing monsters around Nihlathak position", slog.Any("monster", m))
 					return m.UnitID, true
 				}
 			}

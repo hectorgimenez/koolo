@@ -6,7 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 const (
@@ -96,7 +96,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		traverseAreas = append(traverseAreas, a)
 
 		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
-		b.logger.Info("Traversing areas to reach destination", zap.Any("areas", traverseAreas))
+		b.logger.Info("Traversing areas to reach destination", slog.Any("areas", traverseAreas))
 
 		for i, dst := range traverseAreas {
 			if !dst.IsTown() {

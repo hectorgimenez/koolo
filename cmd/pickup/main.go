@@ -1,6 +1,7 @@
 package main
 
 import (
+	log2 "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"log"
 	"syscall"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -23,8 +23,7 @@ func main() {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
 
-	logger, _ := zap.NewDevelopment()
-
+	logger, _ := log2.NewLogger(true, "pickup")
 	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
 	if err != nil {
 		log.Fatalf(err.Error())

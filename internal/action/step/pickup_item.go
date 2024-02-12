@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -9,7 +10,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"go.uber.org/zap"
 )
 
 const maxInteractions = 45
@@ -19,11 +19,11 @@ type PickupItemStep struct {
 	item                  data.Item
 	waitingForInteraction time.Time
 	mouseOverAttempts     int
-	logger                *zap.Logger
+	logger                *slog.Logger
 	startedAt             time.Time
 }
 
-func PickupItem(logger *zap.Logger, item data.Item) *PickupItemStep {
+func PickupItem(logger *slog.Logger, item data.Item) *PickupItemStep {
 	return &PickupItemStep{
 		basicStep: newBasicStep(),
 		item:      item,
@@ -94,7 +94,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 
 				distance := pather.DistanceFromMe(d, i.Position)
 				if distance > 7 {
-					p.logger.Info("item is too far away", zap.String("item", string(p.item.Name)))
+					p.logger.Info("item is too far away", slog.String("item", string(p.item.Name)))
 					return fmt.Errorf("item is too far away: %s", p.item.Name)
 				}
 

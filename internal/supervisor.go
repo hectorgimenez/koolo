@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/memory"
+	"log/slog"
 	"os"
 	"syscall"
 	"time"
@@ -15,11 +16,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
-	"go.uber.org/zap"
 )
 
 type baseSupervisor struct {
-	logger *zap.Logger
+	logger *slog.Logger
 	bot    *Bot
 	gr     *reader.GameReader
 	gm     *helper.GameManager
@@ -36,9 +36,9 @@ func (s *baseSupervisor) Stop() {
 
 func (s *baseSupervisor) updateGameStats() {
 	if _, err := os.Stat("stats"); os.IsNotExist(err) {
-		err = os.MkdirAll("stats", 0700)
+		err = os.MkdirAll("stats", os.ModePerm)
 		if err != nil {
-			s.logger.Error("Error creating stats directory", zap.Error(err))
+			s.logger.Error("Error creating stats directory", slog.Any("error", err))
 			return
 		}
 	}
@@ -46,7 +46,7 @@ func (s *baseSupervisor) updateGameStats() {
 	fileName := fmt.Sprintf("stats/stats_%s.txt", stat.Status.ApplicationStartedAt.Format("2006-02-01-15_04_05"))
 	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		s.logger.Error("Error writing game stats", zap.Error(err))
+		s.logger.Error("Error writing game stats", slog.Any("error", err))
 		return
 	}
 	w := bufio.NewWriter(f)
@@ -87,7 +87,7 @@ func (s *baseSupervisor) updateGameStats() {
 		)
 		_, err = w.WriteString(statsRun + "\n")
 		if err != nil {
-			s.logger.Error("Error writing stats file", zap.Error(err))
+			s.logger.Error("Error writing stats file", slog.Any("error", err))
 		}
 	}
 

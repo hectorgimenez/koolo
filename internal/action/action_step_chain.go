@@ -3,11 +3,11 @@ package action
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"go.uber.org/zap"
 )
 
 type StepChainAction struct {
@@ -29,7 +29,7 @@ func NewStepChain(builder func(d data.Data) []step.Step, opts ...Option) *StepCh
 	return a
 }
 
-func (a *StepChainAction) NextStep(logger *zap.Logger, d data.Data) error {
+func (a *StepChainAction) NextStep(logger *slog.Logger, d data.Data) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}
@@ -44,7 +44,7 @@ func (a *StepChainAction) NextStep(logger *zap.Logger, d data.Data) error {
 			lastRun := s.LastRun()
 			err := s.Run(d)
 			if s.LastRun().After(lastRun) {
-				//logger.Debug("Executed step", zap.String("step_name", reflect.TypeOf(s).Elem().Name()))
+				//logger.Debug("Executed step", slog.String("step_name", reflect.TypeOf(s).Elem().Name()))
 			}
 			if err != nil {
 				a.retries++

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -14,12 +15,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"go.uber.org/zap"
 )
 
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
 type Bot struct {
-	logger *zap.Logger
+	logger *slog.Logger
 	hm     health.Manager
 	ab     *action.Builder
 	gr     *reader.GameReader
@@ -27,7 +27,7 @@ type Bot struct {
 }
 
 func NewBot(
-	logger *zap.Logger,
+	logger *slog.Logger,
 	hm health.Manager,
 	ab *action.Builder,
 	gr *reader.GameReader,
@@ -123,12 +123,12 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						continue
 					}
 					if errors.Is(err, action.ErrWillBeRetried) {
-						b.logger.Warn("error occurred, will be retried", zap.Error(err))
+						b.logger.Warn("error occurred, will be retried", slog.Any("error", err))
 						break
 					}
 					if errors.Is(err, action.ErrCanBeSkipped) {
 						event.Events <- event.WithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
-						b.logger.Warn("error occurred on action that can be skipped, game will continue", zap.Error(err))
+						b.logger.Warn("error occurred on action that can be skipped, game will continue", slog.Any("error", err))
 						act.Skip()
 						break
 					}

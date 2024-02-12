@@ -1,6 +1,7 @@
 package action
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -13,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	"go.uber.org/zap"
 )
 
 func (b *Builder) Gamble() *Chain {
@@ -63,7 +63,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				})}
 			}
 
-			b.logger.Info("Finished gambling", zap.Int("currentGold", d.PlayerUnit.TotalGold()))
+			b.logger.Info("Finished gambling", slog.Int("currentGold", d.PlayerUnit.TotalGold()))
 
 			return nil
 		}
@@ -74,7 +74,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				if itm.UnitID == itemBought.UnitID {
 					itemBought = itm
 					itemBought.Location = item.LocationInventory
-					b.logger.Debug("Gambled for item", zap.Any("item", itemBought))
+					b.logger.Debug("Gambled for item", slog.Any("item", itemBought))
 					break
 				}
 			}
@@ -109,7 +109,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 
 			itm, found := d.Items.Find(itmName, item.LocationVendor)
 			if !found {
-				b.logger.Debug("Item not found in gambling window, refreshing...", zap.String("item", string(itmName)))
+				b.logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
 
 				return []step.Step{step.SyncStep(func(d data.Data) error {
 					hid.Click(hid.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)

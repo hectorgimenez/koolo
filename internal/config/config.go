@@ -23,10 +23,10 @@ type StructConfig struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`
-	LogFilePath   string `yaml:"logFilePath"`
-	MaxGameLength int    `yaml:"maxGameLength"`
-	D2LoDPath     string `yaml:"D2LoDPath"`
-	Discord       struct {
+	LogSaveDirectory string `yaml:"logSaveDirectory"`
+	MaxGameLength    int    `yaml:"maxGameLength"`
+	D2LoDPath        string `yaml:"D2LoDPath"`
+	Discord          struct {
 		Enabled   bool   `yaml:"enabled"`
 		ChannelID string `yaml:"channelId"`
 		Token     string `yaml:"token"`

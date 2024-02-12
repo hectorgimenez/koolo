@@ -1,6 +1,7 @@
 package action
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -8,7 +9,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"go.uber.org/zap"
 )
 
 func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
@@ -17,7 +17,7 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 			return nil
 		}
 
-		b.logger.Info("Visiting vendor...", zap.Bool("forceRefill", forceRefill))
+		b.logger.Info("Visiting vendor...", slog.Bool("forceRefill", forceRefill))
 
 		openShopStep := step.KeySequence("home", "down", "enter")
 		vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).RefillNPC()
@@ -72,7 +72,7 @@ func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain 
 					if found {
 						b.sm.BuyItem(itm, i.Quantity)
 					} else {
-						b.logger.Warn("Item not found in vendor", zap.String("Item", string(i.Item)))
+						b.logger.Warn("Item not found in vendor", slog.String("Item", string(i.Item)))
 					}
 				}
 

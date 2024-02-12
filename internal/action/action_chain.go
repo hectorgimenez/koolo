@@ -2,9 +2,9 @@ package action
 
 import (
 	"errors"
+	"log/slog"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"go.uber.org/zap"
 )
 
 type Chain struct {
@@ -25,7 +25,7 @@ func NewChain(builder func(d data.Data) []Action, opts ...Option) *Chain {
 	return a
 }
 
-func (a *Chain) NextStep(logger *zap.Logger, d data.Data) error {
+func (a *Chain) NextStep(logger *slog.Logger, d data.Data) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}

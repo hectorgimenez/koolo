@@ -2,8 +2,6 @@ package action
 
 import (
 	"fmt"
-	"go.uber.org/zap"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -16,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"log/slog"
 )
 
 const (
@@ -94,7 +93,7 @@ func (b *Builder) stashGold(d data.Data) {
 		return
 	}
 
-	b.logger.Info("Stashing gold...", zap.Int("gold", gold))
+	b.logger.Info("Stashing gold...", slog.Int("gold", gold))
 
 	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
 		switchTab(1)

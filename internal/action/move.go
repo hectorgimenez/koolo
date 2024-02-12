@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -13,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/reader"
-	"go.uber.org/zap"
 )
 
 func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
@@ -37,7 +37,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
-			b.logger.Debug("Already in area", zap.Any("area", dst))
+			b.logger.Debug("Already in area", slog.Any("area", dst))
 			return data.Position{}, false
 		}
 
@@ -78,7 +78,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 			}
 		}
 
-		b.logger.Debug("Destination area not found", zap.Any("area", dst))
+		b.logger.Debug("Destination area not found", slog.Any("area", dst))
 
 		return data.Position{}, false
 	}

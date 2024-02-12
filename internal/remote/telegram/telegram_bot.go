@@ -3,22 +3,22 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
-	"go.uber.org/zap"
 )
 
 type Bot struct {
 	bot        *tgbotapi.BotAPI
 	chatID     int64
-	logger     *zap.Logger
+	logger     *slog.Logger
 	sueprvisor koolo.Supervisor
 }
 
-func NewBot(token string, chatID int64, logger *zap.Logger, supervisor koolo.Supervisor) (*Bot, error) {
+func NewBot(token string, chatID int64, logger *slog.Logger, supervisor koolo.Supervisor) (*Bot, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (b *Bot) Start(_ context.Context) error {
 			switch strings.ToLower(update.Message.Text) {
 			case "stats":
 				if err := b.publishStats(); err != nil {
-					b.logger.Error("error sending telegram message", zap.Error(err))
+					b.logger.Error("error sending telegram message", slog.Any("error", err))
 				}
 			case "start":
 				// TODO: Implement

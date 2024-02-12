@@ -2,6 +2,7 @@ package town
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -12,15 +13,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	"go.uber.org/zap"
 )
 
 type ShopManager struct {
-	logger *zap.Logger
+	logger *slog.Logger
 	bm     health.BeltManager
 }
 
-func NewShopManager(logger *zap.Logger, bm health.BeltManager) ShopManager {
+func NewShopManager(logger *slog.Logger, bm health.BeltManager) ShopManager {
 	return ShopManager{
 		logger: logger,
 		bm:     bm,

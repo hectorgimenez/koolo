@@ -1,6 +1,7 @@
 package character
 
 import (
+	"log/slog"
 	"sort"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"go.uber.org/zap"
 )
 
 type PaladinLeveling struct {
@@ -161,7 +161,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 		numOfAttacks := 5
 
 		m, _ := d.Monsters.FindByID(id)
-		p.logger.Debug("ATTACKING MONSTER", zap.Any("monster", m.Name))
+		p.logger.Debug("ATTACKING MONSTER", slog.Any("monster", m.Name))
 		if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 {
 			// Add a random movement, maybe hammer is not hitting the target
 			if previousUnitID == id {

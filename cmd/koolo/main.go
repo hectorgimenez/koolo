@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/hectorgimenez/d2go/pkg/memory"
-	zapLogger "github.com/hectorgimenez/koolo/cmd/koolo/log"
+	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
@@ -18,9 +18,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,11 +32,11 @@ func main() {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
 
-	logger, err := zapLogger.NewLogger(config.Config.Debug.Log, config.Config.LogFilePath)
+	logger, err := sloggger.NewLogger(config.Config.Debug.Log, config.Config.LogSaveDirectory)
 	if err != nil {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}
-	defer logger.Sync()
+	defer sloggger.FlushLog()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -52,18 +52,19 @@ func main() {
 
 	process, err := memory.NewProcess()
 	if err != nil {
-		logger.Fatal("Error finding D2R.exe process", zap.Error(err))
+		logger.Error("Error finding D2R.exe process", slog.Any("error", err))
+		return
 	}
 	err = asm.InjectorInit(uint32(process.GetPID()))
 	if err != nil {
-		logger.Fatal("Error preparing memory injection", zap.Error(err))
+		logger.Error("Error preparing memory injection", slog.Any("error", err))
 	}
 
 	defer func() {
 		logger.Debug("Restoring game memory...")
 		err = asm.InjectorUnload()
 		if err != nil {
-			logger.Error("Error restoring game memory, if client didn't crash yet, consider restarting it", zap.Error(err))
+			logger.Error("Error restoring game memory, if client didn't crash yet, consider restarting it", slog.Any("error", err))
 		}
 	}()
 
@@ -80,7 +81,8 @@ func main() {
 	sm := town.NewShopManager(logger, bm)
 	char, err := character.BuildCharacter(logger)
 	if err != nil {
-		logger.Fatal("Error creating character", zap.Error(err))
+		logger.Error("Error creating character", slog.Any("error", err))
+		return
 	}
 
 	ab := action.NewBuilder(logger, sm, bm, gr, char)
@@ -105,7 +107,8 @@ func main() {
 	if config.Config.Discord.Enabled {
 		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID, supervisor, companion)
 		if err != nil {
-			logger.Fatal("Discord could not been initialized", zap.Error(err))
+			logger.Error("Discord could not been initialized", slog.Any("error", err))
+			return
 		}
 		eventListener.Register(discordBot.Handle)
 
@@ -118,7 +121,8 @@ func main() {
 	if config.Config.Telegram.Enabled {
 		telegramBot, err := telegram.NewBot(config.Config.Telegram.Token, config.Config.Telegram.ChatID, logger, supervisor)
 		if err != nil {
-			logger.Fatal("Telegram could not been initialized", zap.Error(err))
+			logger.Error("Telegram could not been initialized", slog.Any("error", err))
+			return
 		}
 		eventListener.Register(telegramBot.Handle)
 
@@ -133,6 +137,7 @@ func main() {
 
 	err = g.Wait()
 	if err != nil {
-		logger.Fatal("Error running Koolo", zap.Error(err))
+		logger.Error("Error running Koolo", slog.Any("error", err))
+		return
 	}
 }

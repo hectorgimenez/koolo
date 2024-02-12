@@ -2,7 +2,7 @@ debug:
   log: true # Prints extra log information
   renderMap: false # Render current map data into 'cg.png' file
 
-logFilePath: log.txt
+logSaveDirectory: logs
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 D2LoDPath: 'E:\games\Diablo II'
 

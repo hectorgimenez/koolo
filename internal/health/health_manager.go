@@ -3,6 +3,7 @@ package health
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -10,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"go.uber.org/zap"
 )
 
 var ErrDied = errors.New("you died :(")
@@ -26,7 +26,7 @@ const (
 
 // Manager responsibility is to keep our character and mercenary alive, monitoring life and giving potions when needed
 type Manager struct {
-	logger        *zap.Logger
+	logger        *slog.Logger
 	beltManager   BeltManager
 	gameManager   *helper.GameManager
 	lastRejuv     time.Time
@@ -36,7 +36,7 @@ type Manager struct {
 	lastMercHeal  time.Time
 }
 
-func NewHealthManager(logger *zap.Logger, beltManager BeltManager, gm *helper.GameManager) Manager {
+func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *helper.GameManager) Manager {
 	return Manager{
 		logger:      logger,
 		beltManager: beltManager,

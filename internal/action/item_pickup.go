@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -11,7 +12,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"go.uber.org/zap"
 )
 
 func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
@@ -27,7 +27,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 		if len(itemsToPickup) > 0 {
 			for _, m := range d.Monsters.Enemies() {
 				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
-					b.logger.Debug("Aborting item pickup, monster nearby", zap.Any("monster", m))
+					b.logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
 					itemBeingPickedUp = -1
 					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
@@ -66,7 +66,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 		// Add small delay, drop is not instant
 		if waitForDrop && time.Since(firstCallTime) < time.Second {
 			msToWait := time.Second - time.Since(firstCallTime)
-			b.logger.Debug("No items detected, waiting a bit and will try again", zap.Int("waitMs", int(msToWait.Milliseconds())))
+			b.logger.Debug("No items detected, waiting a bit and will try again", slog.Int("waitMs", int(msToWait.Milliseconds())))
 
 			return []Action{b.Wait(msToWait)}
 		}

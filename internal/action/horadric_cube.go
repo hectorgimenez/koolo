@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
@@ -26,7 +26,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			}))
 		}
 
-		b.logger.Info("Adding items to the Horadric Cube", zap.Any("items", items))
+		b.logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
 
 		// If items are on the Stash, pickup them to the inventory (only personal stash is supported for now)
 		for _, itm := range items {
@@ -35,7 +35,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 				continue
 			}
 
-			b.logger.Debug("Item found on the stash, picking it up", zap.String("Item", string(nwIt.Name)))
+			b.logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
 			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 				screenPos := ui.GetScreenCoordsForItem(nwIt)
 				hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
@@ -52,7 +52,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 				for _, updatedItem := range d.Items.AllItems {
 					if nwIt.UnitID == updatedItem.UnitID {
-						b.logger.Debug("Moving Item to the Horadric Cube", zap.String("Item", string(nwIt.Name)))
+						b.logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
 						screenPos := ui.GetScreenCoordsForItem(updatedItem)
 						hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
 						helper.Sleep(300)

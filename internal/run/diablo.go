@@ -1,6 +1,7 @@
 package run
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -12,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"go.uber.org/zap"
 )
 
 var diabloSpawnPosition = data.Position{
@@ -53,7 +53,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 			_, isLevelingChar := a.char.(action.LevelingCharacter)
 			if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (config.Config.Character.UseMerc && d.MercHPPercent() <= 0)) {
-				a.logger.Debug("Let's go back town to buy more pots", zap.Int("seal", sealNumber+1))
+				a.logger.Debug("Let's go back town to buy more pots", slog.Int("seal", sealNumber+1))
 				return a.builder.InRunReturnTownRoutine()
 			}
 
@@ -61,18 +61,18 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		}))
 
 		actions = append(actions, a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
-			a.logger.Debug("Moving to next seal", zap.Int("seal", sealNumber+1))
+			a.logger.Debug("Moving to next seal", slog.Int("seal", sealNumber+1))
 			if obj, found := d.Objects.FindOne(seal); found {
 				if d := pather.DistanceFromMe(d, obj.Position); d < 7 {
-					a.logger.Debug("We are close enough to the seal", zap.Int("seal", sealNumber+1))
+					a.logger.Debug("We are close enough to the seal", slog.Int("seal", sealNumber+1))
 					return data.Position{}, false
 				}
 
-				a.logger.Debug("Seal found, start teleporting", zap.Int("seal", sealNumber+1))
+				a.logger.Debug("Seal found, start teleporting", slog.Int("seal", sealNumber+1))
 
 				return obj.Position, true
 			}
-			a.logger.Debug("Seal NOT found", zap.Int("seal", sealNumber+1))
+			a.logger.Debug("Seal NOT found", slog.Int("seal", sealNumber+1))
 
 			return data.Position{}, false
 		}, step.StopAtDistance(7)))
@@ -96,13 +96,13 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions,
 			a.builder.ClearAreaAroundPlayer(15),
 			action.NewStepChain(func(d data.Data) []step.Step {
-				a.logger.Debug("Trying to activate seal...", zap.Int("seal", sealNumber+1))
+				a.logger.Debug("Trying to activate seal...", slog.Int("seal", sealNumber+1))
 				lastInteractionAt := time.Now()
 				return []step.Step{
 					step.InteractObject(seal, func(d data.Data) bool {
 						if obj, found := d.Objects.FindOne(seal); found {
 							if !obj.Selectable {
-								a.logger.Debug("Seal activated, waiting for elite group to spawn", zap.Int("seal", sealNumber+1))
+								a.logger.Debug("Seal activated, waiting for elite group to spawn", slog.Int("seal", sealNumber+1))
 							}
 							return !obj.Selectable
 						}
@@ -219,13 +219,13 @@ func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.
 		}
 		// No monsters found here, don't need to keep checking
 		if monstersFound == 0 {
-			a.logger.Debug("Moving to corner", zap.Int("corner", i), zap.Int("monsters", monstersFound))
+			a.logger.Debug("Moving to corner", slog.Int("corner", i), slog.Int("monsters", monstersFound))
 			return corners[i]
 		}
-		a.logger.Debug("Corner", zap.Int("corner", i), zap.Int("monsters", monstersFound), zap.Int("distance", averageDistance))
+		a.logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", monstersFound), slog.Int("distance", averageDistance))
 	}
 
-	a.logger.Debug("Moving to corner", zap.Int("corner", bestCorner), zap.Int("monsters", bestCornerDistance))
+	a.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("monsters", bestCornerDistance))
 
 	return corners[bestCorner]
 }

@@ -1,6 +1,7 @@
 package run
 
 import (
+	"log/slog"
 	"strings"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/reader"
-	"go.uber.org/zap"
 )
 
 type Run interface {
@@ -19,18 +19,18 @@ type Run interface {
 type baseRun struct {
 	builder *action.Builder
 	char    action.Character
-	logger  *zap.Logger
+	logger  *slog.Logger
 }
 
 type Factory struct {
-	logger  *zap.Logger
+	logger  *slog.Logger
 	builder *action.Builder
 	char    action.Character
 	gr      *reader.GameReader
 	bm      health.BeltManager
 }
 
-func NewFactory(logger *zap.Logger, builder *action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) *Factory {
+func NewFactory(logger *slog.Logger, builder *action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) *Factory {
 	return &Factory{
 		logger:  logger,
 		builder: builder,
@@ -44,7 +44,7 @@ func (f *Factory) BuildRuns() (runs []Run) {
 	t := time.Now()
 	f.logger.Debug("Fetching map data...")
 	d := f.gr.GetData(true)
-	f.logger.Debug("Fetch completed", zap.Int64("ms", time.Since(t).Milliseconds()))
+	f.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
 
 	baseRun := baseRun{
 		builder: f.builder,

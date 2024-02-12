@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"go.uber.org/zap"
 )
 
 type Supervisor interface {
@@ -25,7 +25,7 @@ type SinglePlayerSupervisor struct {
 	baseSupervisor
 }
 
-func NewSinglePlayerSupervisor(logger *zap.Logger, bot *Bot, gr *reader.GameReader, gm *helper.GameManager) *SinglePlayerSupervisor {
+func NewSinglePlayerSupervisor(logger *slog.Logger, bot *Bot, gr *reader.GameReader, gm *helper.GameManager) *SinglePlayerSupervisor {
 	return &SinglePlayerSupervisor{
 		baseSupervisor: baseSupervisor{
 			logger: logger,

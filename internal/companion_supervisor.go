@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -11,7 +12,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"go.uber.org/zap"
 )
 
 type Companion interface {
@@ -32,7 +32,7 @@ func (s *CompanionSupervisor) JoinGame(gameName, password string) {
 	s.companionCh <- CompanionGameData{GameName: gameName, Password: password}
 }
 
-func NewCompanionSupervisor(logger *zap.Logger, bot *Bot, gr *reader.GameReader, gm *helper.GameManager) *CompanionSupervisor {
+func NewCompanionSupervisor(logger *slog.Logger, bot *Bot, gr *reader.GameReader, gm *helper.GameManager) *CompanionSupervisor {
 	return &CompanionSupervisor{
 		baseSupervisor: baseSupervisor{
 			logger: logger,

@@ -2,16 +2,16 @@ package character
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"go.uber.org/zap"
 )
 
-func BuildCharacter(logger *zap.Logger) (action.Character, error) {
+func BuildCharacter(logger *slog.Logger) (action.Character, error) {
 	bc := BaseCharacter{
 		logger: logger,
 	}
@@ -40,7 +40,7 @@ func BuildCharacter(logger *zap.Logger) (action.Character, error) {
 }
 
 type BaseCharacter struct {
-	logger *zap.Logger
+	logger *slog.Logger
 }
 
 func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
@@ -50,7 +50,7 @@ func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmun
 	}
 	for _, i := range skipOnImmunities {
 		if monster.IsImmune(i) {
-			bc.logger.Info("Monster is immune! skipping", zap.String("immuneTo", string(i)))
+			bc.logger.Info("Monster is immune! skipping", slog.String("immuneTo", string(i)))
 			return false
 		}
 	}

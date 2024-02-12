@@ -3,7 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 func (b *Builder) ClearAreaAroundPlayer(distance int) Action {
@@ -16,7 +16,7 @@ func (b *Builder) ClearAreaAroundPlayer(distance int) Action {
 		for _, m := range d.Monsters.Enemies() {
 			d := pather.DistanceFromPoint(originalPosition, m.Position)
 			if d <= distance {
-				b.logger.Debug("Clearing area...", zap.Int("monsterID", int(m.Name)))
+				b.logger.Debug("Clearing area...", slog.Int("monsterID", int(m.Name)))
 				return m.UnitID, true
 			}
 		}

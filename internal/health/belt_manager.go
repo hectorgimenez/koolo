@@ -2,20 +2,20 @@ package health
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/hid"
-	"go.uber.org/zap"
 )
 
 type BeltManager struct {
-	logger *zap.Logger
+	logger *slog.Logger
 }
 
-func NewBeltManager(logger *zap.Logger) BeltManager {
+func NewBeltManager(logger *slog.Logger) BeltManager {
 	return BeltManager{
 		logger: logger,
 	}

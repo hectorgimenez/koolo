@@ -2,6 +2,6 @@
 /build
 /stats
 /screenshots
-/log.txt
+/logs
 /config/*.yaml
 /config/*.yml
