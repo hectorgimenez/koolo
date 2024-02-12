@@ -1,6 +1,6 @@
 module github.com/hectorgimenez/koolo
 
-go 1.21
+go 1.22
 
 require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
@@ -11,13 +11,13 @@ require (
 	github.com/winlabs/gowin32 v0.0.0-20221003142512-0d265587d3c9
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.6.0
-	golang.org/x/sys v0.16.0
+	golang.org/x/sys v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 )

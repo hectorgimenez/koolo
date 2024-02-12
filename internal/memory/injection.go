@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -17,10 +18,12 @@ var handle windows.Handle
 var HWND win.HWND
 var getCursorPosAddr uintptr
 var getCursorPosOrigBytes [32]byte
+var trackMouseEventAddr uintptr
+var trackMouseEventBytes [32]byte
 var getKeyStateAddr uintptr
 var getKeyStateOrigBytes [18]byte
 
-func ASMInjectorInit(pid uint32) error {
+func InjectorInit(pid uint32) error {
 	pHandle, err := windows.OpenProcess(fullAccess, false, pid)
 	if err != nil {
 		return fmt.Errorf("error opening process: %w", err)
@@ -42,10 +45,16 @@ func ASMInjectorInit(pid uint32) error {
 		if strings.EqualFold(module.ModuleName, "USER32.dll") {
 			getCursorPosAddr, err = syscall.GetProcAddress(module.ModuleHandle, "GetCursorPos")
 			getKeyStateAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "GetKeyState")
+			trackMouseEventAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "TrackMouseEvent")
 
 			err = windows.ReadProcessMemory(handle, getCursorPosAddr, &getCursorPosOrigBytes[0], uintptr(len(getCursorPosOrigBytes)), nil)
 			if err != nil {
 				return fmt.Errorf("error reading memory: %w", err)
+			}
+
+			err = stopTrackingMouseLeaveEvents()
+			if err != nil {
+				return err
 			}
 
 			err = windows.ReadProcessMemory(handle, getKeyStateAddr, &getKeyStateOrigBytes[0], uintptr(len(getKeyStateOrigBytes)), nil)
@@ -61,7 +70,7 @@ func ASMInjectorInit(pid uint32) error {
 	return nil
 }
 
-func ASMInjectorUnload() error {
+func InjectorUnload() error {
 	err := RestoreGetCursorPosAddr()
 	if err != nil {
 		return fmt.Errorf("error writing to memory: %w", err)
@@ -72,7 +81,7 @@ func ASMInjectorUnload() error {
 		return err
 	}
 
-	return nil
+	return windows.CloseHandle(handle)
 }
 
 func InjectCursorPos(x, y int) error {
@@ -113,4 +122,32 @@ func RestoreGetKeyState() error {
 
 func RestoreGetCursorPosAddr() error {
 	return windows.WriteProcessMemory(handle, getCursorPosAddr, &getCursorPosOrigBytes[0], uintptr(len(getCursorPosOrigBytes)), nil)
+}
+
+// This is needed in order to let the game keep processing mouse events even if the mouse is not over the window
+func stopTrackingMouseLeaveEvents() error {
+	err := windows.ReadProcessMemory(handle, trackMouseEventAddr, &trackMouseEventBytes[0], uintptr(len(trackMouseEventBytes)), nil)
+	if err != nil {
+		return err
+	}
+
+	// and dword ptr [rcx+4], 0xFFFFFFFD
+	// Modify TRACKMOUSEEVENT struct to disable mouse leave events, since we are injecting our events even if the mouse is not over the window
+	disableMouseLeaveRequest := []byte{0x81, 0x61, 0x04, 0xFD, 0xFF, 0xFF, 0xFF}
+
+	// Already hooked
+	if bytes.Contains(trackMouseEventBytes[:], disableMouseLeaveRequest) {
+		return nil
+	}
+
+	// We need to move back the pointer 7 bytes to get the correct position, since we are injecting 7 bytes in front of it
+	num := int32(binary.LittleEndian.Uint32(trackMouseEventBytes[2:6]))
+	num -= 7
+	numberBytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(numberBytes, uint32(num))
+	injectBytes := append(trackMouseEventBytes[0:2], numberBytes...)
+
+	hook := append(disableMouseLeaveRequest, injectBytes...)
+
+	return windows.WriteProcessMemory(handle, trackMouseEventAddr, &hook[0], uintptr(len(hook)), nil)
 }

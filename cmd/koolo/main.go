@@ -54,21 +54,17 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error finding D2R.exe process", zap.Error(err))
 	}
-	err = asm.ASMInjectorInit(uint32(process.GetPID()))
+	err = asm.InjectorInit(uint32(process.GetPID()))
 	if err != nil {
-		logger.Fatal("Error initializing ASMInjector", zap.Error(err))
-	}
-	logger.Debug("Injecting KooloDll.dll")
-	err = asm.InjectDLLs()
-	if err != nil {
-		logger.Fatal("Error injecting KooloDll.dll", zap.Error(err))
+		logger.Fatal("Error preparing memory injection", zap.Error(err))
 	}
 
 	defer func() {
-		logger.Debug("Unloading memory injector")
-		asm.ASMInjectorUnload()
-		logger.Debug("Unloading KooloDll.dll")
-		asm.UnloadDll(uint32(process.GetPID()))
+		logger.Debug("Restoring game memory...")
+		err = asm.InjectorUnload()
+		if err != nil {
+			logger.Error("Error restoring game memory, if client didn't crash yet, consider restarting it", zap.Error(err))
+		}
 	}()
 
 	// Prevent screen from turning off

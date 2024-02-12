@@ -39,9 +39,9 @@ func MovePointer(x, y int) {
 
 	memory.InjectCursorPos(x, y)
 	lParam := calculateLparam(x, y)
-	win.SendMessage(memory.HWND, win.WM_NCHITTEST+1000, 0, lParam)
-	win.SendMessage(memory.HWND, win.WM_SETCURSOR+1000, 0x000105A8, 0x2010001)
-	win.PostMessage(memory.HWND, win.WM_MOUSEMOVE+1000, 0, lParam)
+	win.SendMessage(memory.HWND, win.WM_NCHITTEST, 0, lParam)
+	win.SendMessage(memory.HWND, win.WM_SETCURSOR, 0x000105A8, 0x2010001)
+	win.PostMessage(memory.HWND, win.WM_MOUSEMOVE, 0, lParam)
 }
 
 type Changeable interface {
@@ -59,11 +59,11 @@ func Click(btn MouseButton, x, y int) {
 	y = int(float64(y) * scale)
 
 	lParam := calculateLparam(x, y)
-	buttonDown := uint32(win.WM_LBUTTONDOWN + 1000)
-	buttonUp := uint32(win.WM_LBUTTONUP + 1000)
+	buttonDown := uint32(win.WM_LBUTTONDOWN)
+	buttonUp := uint32(win.WM_LBUTTONUP)
 	if btn == RightButton {
-		buttonDown = win.WM_RBUTTONDOWN + 1000
-		buttonUp = win.WM_RBUTTONUP + 1000
+		buttonDown = win.WM_RBUTTONDOWN
+		buttonUp = win.WM_RBUTTONUP
 	}
 
 	win.SendMessage(memory.HWND, buttonDown, 1, lParam)
