@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/lxn/win"
-	"github.com/winlabs/gowin32"
 	"golang.org/x/sys/windows"
 	"strings"
 	"syscall"
@@ -30,19 +30,16 @@ func InjectorInit(pid uint32) error {
 	}
 	handle = pHandle
 
-	modules, err := gowin32.GetProcessModules(pid)
+	modules, err := memory.GetProcessModules(pid)
 	if err != nil {
 		return fmt.Errorf("error getting process modules: %w", err)
 	}
 
-	_, err = syscall.LoadLibrary("USER32.dll")
-	if err != nil {
-		return fmt.Errorf("error loading USER32.dll: %w", err)
-	}
+	syscall.MustLoadDLL("USER32.dll")
 
 	for _, module := range modules {
 		// GetCursorPos
-		if strings.EqualFold(module.ModuleName, "USER32.dll") {
+		if strings.Contains(strings.ToLower(module.ModuleName), "user32.dll") {
 			getCursorPosAddr, err = syscall.GetProcAddress(module.ModuleHandle, "GetCursorPos")
 			getKeyStateAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "GetKeyState")
 			trackMouseEventAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "TrackMouseEvent")
