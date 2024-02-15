@@ -187,7 +187,7 @@ companion:
   leader: true
   leaderName: ''
   remote: discord # Only discord supported, telegram doesn't allow interacting between bots
-  gameNameTemplate:
+  gameNameTemplate: game- # Template for the game name, for example "game-" will lead to "game-1", "game-2", etc.
 
 # Gambling settings. If enabled, bot will start gambling when all the gold stash tabs are full.
 # While gold > 500k it will iterate over the items list trying to buy one of each item type.

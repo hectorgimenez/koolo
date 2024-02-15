@@ -37,7 +37,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
-			b.logger.Debug("Already in area", slog.Any("area", dst))
+			b.logger.Debug("Reached area", slog.Any("area", dst))
 			return data.Position{}, false
 		}
 

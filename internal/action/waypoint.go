@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/hid"
 	"log/slog"
+	"slices"
 )
 
 const (
@@ -60,31 +61,25 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 
 func (b *Builder) useWP(a area.Area) *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
-		nextAvailableWP := area.WPAddresses[a]
+		finalDestination := a
 		traverseAreas := make([]area.Area, 0)
-		for {
-			found := false
-			for _, wp := range d.PlayerUnit.AvailableWaypoints {
-				if wp == a {
-					found = true
+		currentWP := area.WPAddresses[a]
+		if !slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
+			for {
+				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
 					break
 				}
+				traverseAreas = append(traverseAreas, currentWP.LinkedFrom...)
+				currentWP = area.WPAddresses[currentWP.LinkedFrom[0]]
+				a = currentWP.LinkedFrom[0]
 			}
-
-			if found || nextAvailableWP.Row == 1 {
-				break
-			}
-
-			traverseAreas = append(nextAvailableWP.LinkedFrom, traverseAreas...)
-			a = nextAvailableWP.LinkedFrom[0]
-			nextAvailableWP = area.WPAddresses[nextAvailableWP.LinkedFrom[0]]
 		}
 
 		// First use the previous available waypoint that we have discovered
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d data.Data) error {
-					areaBtnY := wpListStartY + (nextAvailableWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
+					areaBtnY := wpListStartY + (currentWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
 					hid.Click(hid.LeftButton, wpListPositionX, areaBtnY)
 					helper.Sleep(1000)
 
@@ -93,7 +88,12 @@ func (b *Builder) useWP(a area.Area) *Chain {
 			}
 		}))
 
-		traverseAreas = append(traverseAreas, a)
+		// We have the WP discovered, just use it
+		if len(traverseAreas) == 0 {
+			return actions
+		}
+
+		traverseAreas = append(traverseAreas, finalDestination)
 
 		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
 		b.logger.Info("Traversing areas to reach destination", slog.Any("areas", traverseAreas))
