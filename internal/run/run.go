@@ -53,7 +53,6 @@ func (f *Factory) BuildRuns() (runs []Run) {
 	}
 
 	if config.Config.Follower.Enabled {
-		f.logger.Info("Returning Follower run")
 		return []Run{Follower{baseRun: baseRun}}
 	}
 
