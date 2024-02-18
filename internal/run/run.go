@@ -61,8 +61,6 @@ func (f *Factory) BuildRuns() (runs []Run) {
 		return []Run{Companion{baseRun: baseRun}}
 	}
 
-	f.logger.Info("Returning the rest after follower and companion")
-
 	for _, run := range config.Config.Game.Runs {
 		// Prepend terror zone runs, we want to run it always first
 		if run == "terror_zone" {
