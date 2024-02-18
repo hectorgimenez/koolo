@@ -90,7 +90,10 @@ func main() {
 
 	var supervisor koolo.Supervisor
 	var companion koolo.Companion
-	if config.Config.Companion.Enabled {
+	if config.Config.Follower.Enabled {
+		supervisor = koolo.NewFollowerPlayerSupervisor(logger, bot, gr, gm)
+		companion = supervisor.(koolo.Companion)
+	} else if config.Config.Companion.Enabled {
 		supervisor = koolo.NewCompanionSupervisor(logger, bot, gr, gm)
 		companion = supervisor.(koolo.Companion)
 	} else {

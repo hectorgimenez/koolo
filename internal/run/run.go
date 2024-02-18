@@ -52,9 +52,16 @@ func (f *Factory) BuildRuns() (runs []Run) {
 		logger:  f.logger,
 	}
 
+	if config.Config.Follower.Enabled {
+		f.logger.Info("Returning Follower run")
+		return []Run{Follower{baseRun: baseRun}}
+	}
+
 	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
 		return []Run{Companion{baseRun: baseRun}}
 	}
+
+	f.logger.Info("Returning the rest after follower and companion")
 
 	for _, run := range config.Config.Game.Runs {
 		// Prepend terror zone runs, we want to run it always first

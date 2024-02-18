@@ -137,6 +137,10 @@ type StructConfig struct {
 		CastDuration time.Duration
 		Rules        []nip.Rule
 	}
+	Follower struct {
+		Enabled    bool   `yaml:"enabled"`
+		LeaderName string `yaml:"leaderName"`
+	} `yaml:"follower"`
 }
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file

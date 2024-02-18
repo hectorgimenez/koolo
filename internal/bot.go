@@ -98,8 +98,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					return err
 				}
 
-				// Check if game length is exceeded, only if it's not a leveling run
-				if r.Name() != run.NameLeveling {
+				// Check if game length is exceeded, only if it's not a leveling or follower run
+				if r.Name() != run.NameLeveling && r.Name() != run.NameFollower {
 					if err := b.maxGameLengthExceeded(gameStartedAt); err != nil {
 						return err
 					}

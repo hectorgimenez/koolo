@@ -12,6 +12,10 @@ import (
 
 func (b *Builder) Heal() *Chain {
 	return NewChain(func(d data.Data) []Action {
+		if !town.IsTown(d.PlayerUnit.Area) {
+			return nil
+		}
+
 		shouldHeal := false
 		if d.PlayerUnit.HPPercent() < 80 {
 			b.logger.Info(fmt.Sprintf("Current life is %d%%, healing on NPC", d.PlayerUnit.HPPercent()))
