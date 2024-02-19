@@ -46,11 +46,17 @@ func (f Follower) BuildActions() []action.Action {
 				}
 			}
 
+			if d.PlayerUnit.Area.Act() != leaderRosterMember.Area.Act() {
+				return []action.Action{
+					f.builder.Wait(300),
+				}
+			}
+
 			// Is leader too far away?
 			if pather.DistanceFromMe(d, leaderRosterMember.Position) > MaxCoordinateDiff {
 				// If we have an entrance, use it
 				entrance := getClosestEntrances(d)
-				if entrance != nil && time.Since(lastEntranceEntered) > EntranceMaxSecondsDelay {
+				if entrance != nil && leaderRosterMember.Area == entrance.Area && time.Since(lastEntranceEntered) > EntranceMaxSecondsDelay {
 					lastEntranceEntered = time.Now()
 
 					return []action.Action{
@@ -58,9 +64,27 @@ func (f Follower) BuildActions() []action.Action {
 					}
 				}
 
+				// If we have portal open, use it
+				portal := getClosestPortal(d)
+				if portal != nil {
+					savedArea := d.PlayerUnit.Area
+
+					return []action.Action{
+						action.NewStepChain(func(d data.Data) []step.Step {
+							return []step.Step{
+								step.MoveTo(portal.Position),
+								step.InteractObject(portal.Name, func(d data.Data) bool {
+									return savedArea != d.PlayerUnit.Area
+								}),
+							}
+						}),
+						f.builder.Wait(time.Second),
+					}
+				}
+
 				// Is leader in the same act and in a waypoint location? Let's use waypoint to that location
 				_, wpAreaFound := area.WPAddresses[leaderRosterMember.Area]
-				if d.PlayerUnit.Area.Act() == leaderRosterMember.Area.Act() && d.PlayerUnit.Area.IsTown() && wpAreaFound {
+				if d.PlayerUnit.Area.IsTown() && wpAreaFound {
 					return []action.Action{
 						f.builder.WayPoint(leaderRosterMember.Area),
 						f.builder.Wait(time.Second * 1),
@@ -87,6 +111,16 @@ func getClosestEntrances(d data.Data) *data.Level {
 		distFromMe := pather.DistanceFromMe(d, l.Position)
 		if distFromMe <= EntranceMaxDiff {
 			return &l
+		}
+	}
+
+	return nil
+}
+
+func getClosestPortal(d data.Data) *data.Object {
+	for _, o := range d.Objects {
+		if o.IsPortal() && pather.DistanceFromMe(d, o.Position) <= 25 {
+			return &o
 		}
 	}
 
