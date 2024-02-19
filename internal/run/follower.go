@@ -6,7 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"math"
+	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 const NameFollower = "Follower"
@@ -39,7 +39,8 @@ func (f Follower) BuildActions() []action.Action {
 				return []step.Step{step.Wait(100)}
 			}
 
-			if isLeaderTooFarWay(leaderRosterMember.Position, d.PlayerUnit.Position) {
+			// Is leader too far way? If yes, do not do anything
+			if pather.DistanceFromMe(d, leaderRosterMember.Position) > MaxCoordinateDiff {
 				return []step.Step{step.Wait(100)}
 			}
 
@@ -47,11 +48,4 @@ func (f Follower) BuildActions() []action.Action {
 
 		}, action.RepeatUntilNoSteps()),
 	}
-}
-
-func isLeaderTooFarWay(leaderPosition data.Position, playerPosition data.Position) bool {
-	xCoordDiff := math.Abs(float64(playerPosition.X - leaderPosition.X))
-	yCoordDiff := math.Abs(float64(playerPosition.Y - leaderPosition.Y))
-
-	return xCoordDiff > MaxCoordinateDiff || yCoordDiff > MaxCoordinateDiff
 }
