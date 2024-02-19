@@ -22,7 +22,7 @@ func (gm *GameManager) ExitGame() error {
 	hid.PressKey("esc")
 	hid.Click(hid.LeftButton, hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		if !gm.gr.InGame() {
 			return nil
 		}
@@ -31,11 +31,11 @@ func (gm *GameManager) ExitGame() error {
 
 	// If we are still in game, probably character is dead, so let's do it nicely.
 	// Probably closing the socket is more reliable, but was not working properly for me on singleplayer.
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		if gm.gr.GetData(false).OpenMenus.QuitMenu {
 			hid.Click(hid.LeftButton, hid.GameAreaSizeX/2, int(float64(hid.GameAreaSizeY)/2.2))
 
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				if !gm.gr.InGame() {
 					return nil
 				}
@@ -54,7 +54,7 @@ func (gm *GameManager) NewGame() error {
 		return errors.New("character still in a game")
 	}
 
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		gm.gr.InGame()
 		if gm.gr.InCharacterSelectionScreen() {
 			Sleep(2000) // Wait for character selection screen to load
@@ -77,7 +77,7 @@ func (gm *GameManager) NewGame() error {
 	Sleep(250)
 	hid.Click(hid.LeftButton, createX, createY)
 
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if gm.gr.InGame() {
 			return nil
 		}
@@ -85,6 +85,12 @@ func (gm *GameManager) NewGame() error {
 	}
 
 	return errors.New("error creating game! Timeout")
+}
+
+func (gm *GameManager) clearGameNameOrPasswordField() {
+	for range 16 {
+		hid.PressKey("backspace")
+	}
 }
 
 func (gm *GameManager) CreateOnlineGame(gameCounter int) (string, error) {
@@ -97,21 +103,26 @@ func (gm *GameManager) CreateOnlineGame(gameCounter int) (string, error) {
 	Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
-	hid.Click(hid.LeftButton, 925, 116)
-	hid.PressKeyCombination("lctrl", "a")
+	hid.Click(hid.LeftButton, 1000, 116)
+	gm.clearGameNameOrPasswordField()
 	gameName := config.Config.Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
 	for _, ch := range gameName {
 		hid.PressKey(fmt.Sprintf("%c", ch))
 	}
 
 	// Same for password
-	hid.Click(hid.LeftButton, 925, 161)
+	hid.Click(hid.LeftButton, 1000, 161)
 	Sleep(200)
-	hid.PressKeyCombination("lctrl", "a")
-	hid.PressKey("x")
+	gamePassword := config.Config.Companion.GamePassword
+	if gamePassword != "" {
+		gm.clearGameNameOrPasswordField()
+		for _, ch := range gamePassword {
+			hid.PressKey(fmt.Sprintf("%c", ch))
+		}
+	}
 	hid.PressKey("enter")
 
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if gm.gr.InGame() {
 			return gameName, nil
 		}
@@ -131,25 +142,25 @@ func (gm *GameManager) JoinOnlineGame(gameName, password string) error {
 	Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
-	hid.Click(hid.LeftButton, 836, 100)
+	hid.Click(hid.LeftButton, 950, 100)
 	Sleep(200)
-	hid.PressKeyCombination("lctrl", "a")
+	gm.clearGameNameOrPasswordField()
 	Sleep(200)
 	for _, ch := range gameName {
 		hid.PressKey(fmt.Sprintf("%c", ch))
 	}
 
 	// Same for password
-	hid.Click(hid.LeftButton, 1020, 100)
+	hid.Click(hid.LeftButton, 1130, 100)
 	Sleep(200)
-	hid.PressKeyCombination("lctrl", "a")
+	gm.clearGameNameOrPasswordField()
 	Sleep(200)
 	for _, ch := range password {
 		hid.PressKey(fmt.Sprintf("%c", ch))
 	}
 	hid.PressKey("enter")
 
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if gm.gr.InGame() {
 			return nil
 		}

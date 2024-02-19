@@ -27,7 +27,7 @@ func (p *Pather) Intersects(d data.Data, position data.Position, padding int) bo
 		pT := path.(*Tile)
 		xMatch := false
 		yMatch := false
-		for i := 0; i < padding; i++ {
+		for i := range padding {
 			if pT.X == position.X+i || pT.X == position.X-i {
 				xMatch = true
 			}

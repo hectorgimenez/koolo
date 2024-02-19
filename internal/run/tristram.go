@@ -85,7 +85,7 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 		}
 
 		// We don't know which order the stones are, so we activate all of them one by one in sequential order, 5 times
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			for _, cainStone := range []object.Name{
 				object.CairnStoneAlpha,
 				object.CairnStoneBeta,

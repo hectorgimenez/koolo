@@ -66,7 +66,7 @@ func (s *CompanionSupervisor) Start(ctx context.Context, factory *run.Factory) e
 					continue
 				}
 
-				event.Events <- event.Text(fmt.Sprintf("New game created. GameName: " + gameName + "|||x"))
+				event.Events <- event.Text(fmt.Sprintf("New game created. GameName: " + gameName + "|||" + config.Config.Companion.GamePassword))
 
 				err = s.startBot(ctx, factory.BuildRuns(), firstRun)
 				firstRun = false

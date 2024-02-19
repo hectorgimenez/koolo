@@ -128,6 +128,7 @@ type StructConfig struct {
 		LeaderName       string `yaml:"leaderName"`
 		Remote           string `yaml:"remote"`
 		GameNameTemplate string `yaml:"gameNameTemplate"`
+		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`
 	Gambling struct {
 		Enabled bool        `yaml:"enabled"`

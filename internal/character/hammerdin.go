@@ -171,7 +171,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 		})
 
 		for _, m := range councilMembers {
-			for i := 0; i < hammerdinMaxAttacksLoop; i++ {
+			for range hammerdinMaxAttacksLoop {
 				steps = append(steps,
 					step.PrimaryAttack(
 						m.UnitID,
@@ -198,7 +198,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		}
 
 		helper.Sleep(100)
-		for i := 0; i < hammerdinMaxAttacksLoop; i++ {
+		for range hammerdinMaxAttacksLoop {
 			steps = append(steps,
 				step.PrimaryAttack(
 					m.UnitID,
