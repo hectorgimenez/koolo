@@ -39,11 +39,7 @@ func (f Follower) BuildActions() []action.Action {
 				return []step.Step{step.Wait(100)}
 			}
 
-			xCoordDiff := math.Abs(float64(d.PlayerUnit.Position.X - leaderRosterMember.Position.X))
-			yCoordDiff := math.Abs(float64(d.PlayerUnit.Position.Y - leaderRosterMember.Position.Y))
-
-			// Is leader too far way? If yes, do not do anything
-			if xCoordDiff > MaxCoordinateDiff || yCoordDiff > MaxCoordinateDiff {
+			if isLeaderTooFarWay(leaderRosterMember.Position, d.PlayerUnit.Position) {
 				return []step.Step{step.Wait(100)}
 			}
 
@@ -51,4 +47,11 @@ func (f Follower) BuildActions() []action.Action {
 
 		}, action.RepeatUntilNoSteps()),
 	}
+}
+
+func isLeaderTooFarWay(leaderPosition data.Position, playerPosition data.Position) bool {
+	xCoordDiff := math.Abs(float64(playerPosition.X - leaderPosition.X))
+	yCoordDiff := math.Abs(float64(playerPosition.Y - leaderPosition.Y))
+
+	return xCoordDiff > MaxCoordinateDiff || yCoordDiff > MaxCoordinateDiff
 }
