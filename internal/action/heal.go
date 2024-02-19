@@ -12,7 +12,7 @@ import (
 
 func (b *Builder) Heal() *Chain {
 	return NewChain(func(d data.Data) []Action {
-		if !town.IsTown(d.PlayerUnit.Area) {
+		if !d.PlayerUnit.Area.IsTown() {
 			return nil
 		}
 
