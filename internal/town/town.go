@@ -13,6 +13,7 @@ type Town interface {
 	MercContractorNPC() npc.ID
 	GamblingNPC() npc.ID
 	TPWaitingArea(d data.Data) data.Position
+	TownArea() area.Area
 }
 
 func GetTownByArea(a area.Area) Town {
