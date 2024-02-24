@@ -2,6 +2,7 @@ package town
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 )
 
@@ -33,4 +34,8 @@ func (a A2) TPWaitingArea(_ data.Data) data.Position {
 		X: 5161,
 		Y: 5059,
 	}
+}
+
+func (a A2) TownArea() area.Area {
+	return area.LutGholein
 }

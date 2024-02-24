@@ -2,6 +2,7 @@ package town
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 )
 
@@ -32,4 +33,8 @@ func (a A1) TPWaitingArea(d data.Data) data.Position {
 	cain, _ := d.NPCs.FindOne(npc.Kashya)
 
 	return cain.Positions[0]
+}
+
+func (a A1) TownArea() area.Area {
+	return area.RogueEncampment
 }
