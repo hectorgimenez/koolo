@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
@@ -28,7 +27,7 @@ func (b *Builder) Heal() *Chain {
 				town.GetTownByArea(d.PlayerUnit.Area).HealNPC(),
 				step.SyncStep(func(d data.Data) error {
 					helper.Sleep(300)
-					hid.PressKey("esc")
+					b.hid.PressKey("esc")
 					helper.Sleep(100)
 					return nil
 				}),

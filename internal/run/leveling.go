@@ -3,14 +3,12 @@ package run
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
 const NameLeveling = "Leveling"
 
 type Leveling struct {
 	baseRun
-	gr *reader.GameReader
 	bm health.BeltManager
 }
 

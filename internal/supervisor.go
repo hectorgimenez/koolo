@@ -1,132 +1,98 @@
 package koolo
 
 import (
-	"bufio"
-	"errors"
+	"context"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/memory"
-	"log/slog"
-	"os"
-	"syscall"
-	"time"
-
-	"github.com/hectorgimenez/koolo/internal/event/stat"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/reader"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/lxn/win"
+	"log/slog"
 )
 
+type Supervisor interface {
+	Start() error
+	Name() string
+	Stop()
+	TogglePause()
+	Stats() Stats
+}
+
 type baseSupervisor struct {
-	logger *slog.Logger
-	bot    *Bot
-	gr     *reader.GameReader
-	gm     *helper.GameManager
+	logger       *slog.Logger
+	bot          *Bot
+	gr           *game.MemoryReader
+	gm           *game.Manager
+	gi           *game.MemoryInjector
+	runFactory   *run.Factory
+	name         string
+	eventChan    chan<- event.Event
+	statsHandler *StatsHandler
+	listener     *event.Listener
+	cancelFn     context.CancelFunc
+}
+
+func newBaseSupervisor(
+	logger *slog.Logger,
+	bot *Bot,
+	gr *game.MemoryReader,
+	gm *game.Manager,
+	gi *game.MemoryInjector,
+	runFactory *run.Factory,
+	name string,
+	eventChan chan<- event.Event,
+	statsHandler *StatsHandler,
+	listener *event.Listener,
+) (*baseSupervisor, error) {
+	return &baseSupervisor{
+		logger:       logger,
+		bot:          bot,
+		gr:           gr,
+		gm:           gm,
+		gi:           gi,
+		runFactory:   runFactory,
+		name:         name,
+		eventChan:    eventChan,
+		statsHandler: statsHandler,
+		listener:     listener,
+	}, nil
+}
+
+func (s *baseSupervisor) Name() string {
+	return s.name
+}
+
+func (s *baseSupervisor) Stats() Stats {
+	return s.statsHandler.Stats()
 }
 
 func (s *baseSupervisor) TogglePause() {
 	s.bot.TogglePause()
+	if s.bot.paused {
+		s.gi.RestoreMemory()
+	} else {
+		s.gi.Load()
+	}
 }
 
 func (s *baseSupervisor) Stop() {
-	s.logger.Info("Shutting down NOW")
-	os.Exit(0)
+	s.logger.Info("Stopping...", slog.String("configuration", s.name))
+	if s.cancelFn != nil {
+		s.cancelFn()
+	}
+
+	s.gi.Unload()
+	s.logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 
-func (s *baseSupervisor) updateGameStats() {
-	if _, err := os.Stat("stats"); os.IsNotExist(err) {
-		err = os.MkdirAll("stats", os.ModePerm)
-		if err != nil {
-			s.logger.Error("Error creating stats directory", slog.Any("error", err))
-			return
-		}
-	}
+func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) error {
+	// Prevent screen from turning off
+	winproc.SetThreadExecutionState.Call(winproc.EXECUTION_STATE_ES_DISPLAY_REQUIRED | winproc.EXECUTION_STATE_ES_CONTINUOUS)
 
-	fileName := fmt.Sprintf("stats/stats_%s.txt", stat.Status.ApplicationStartedAt.Format("2006-02-01-15_04_05"))
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		s.logger.Error("Error writing game stats", slog.Any("error", err))
-		return
-	}
-	w := bufio.NewWriter(f)
+	// TODO: refactor this
+	go s.listener.Listen(ctx)
 
-	for runName, rs := range stat.Status.RunStats {
-		var items = ""
-		for _, item := range rs.ItemsFound {
-			items += fmt.Sprintf("%s [%d]\n", item.Name, item.Quality)
-		}
-		avgRunTime := rs.TotalRunsTime.Seconds() / float64(rs.Errors+rs.Kills+rs.Deaths+rs.Chickens+rs.MerChicken)
-		statsRun := fmt.Sprintf("Stats for: %s\n"+
-			"    Run time: %0.2fs (Total) %0.2fs (Average)\n"+
-			"    Kills: %d\n"+
-			"    Deaths: %d\n"+
-			"    Chickens: %d\n"+
-			"    Merc Chickens: %d\n"+
-			"    Errors: %d\n"+
-			"    Used HP Potions: %d\n"+
-			"    Used MP Potions: %d\n"+
-			"    Used Rejuv Potions: %d\n"+
-			"    Used Merc HP Potions: %d\n"+
-			"    Used Merc Rejuv Potions: %d\n"+
-			"    Items: \n"+
-			"    %s",
-			runName,
-			rs.TotalRunsTime.Seconds(), avgRunTime,
-			rs.Kills,
-			rs.Deaths,
-			rs.Chickens,
-			rs.MerChicken,
-			rs.Errors,
-			rs.HealingPotionsUsed,
-			rs.ManaPotionsUsed,
-			rs.RejuvPotionsUsed,
-			rs.MercHealingPotionsUsed,
-			rs.MercRejuvPotionsUsed,
-			items,
-		)
-		_, err = w.WriteString(statsRun + "\n")
-		if err != nil {
-			s.logger.Error("Error writing stats file", slog.Any("error", err))
-		}
-	}
-
-	w.Flush()
-	f.Close()
-}
-
-func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
-	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
-	if err != nil {
-		return err
-	}
-	window := win.FindWindow(nil, ptr)
-	if window == win.HWND_TOP {
-		return errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
-	}
-	memory.HWND = window
-
-	pos := win.WINDOWPLACEMENT{}
-	point := win.POINT{}
-	win.ClientToScreen(window, &point)
-	win.GetWindowPlacement(window, &pos)
-
-	hid.WindowLeftX = int(point.X)
-	hid.WindowTopY = int(point.Y)
-	hid.GameAreaSizeX = int(pos.RcNormalPosition.Right) - hid.WindowLeftX - 9
-	hid.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - hid.WindowTopY - 9
-	helper.Sleep(1000)
-
-	s.logger.Info(fmt.Sprintf(
-		"Diablo II: Resurrected window detected, offsetX: %d offsetY: %d. Game Area Size X: %d Y: %d",
-		hid.WindowLeftX,
-		hid.WindowTopY,
-		hid.GameAreaSizeX,
-		hid.GameAreaSizeY,
-	))
-
-	stat.Status.ApplicationStartedAt = time.Now()
-	return nil
+	return s.gi.Load()
 }
 
 func (s *baseSupervisor) logGameStart(runs []run.Run) {
@@ -134,6 +100,5 @@ func (s *baseSupervisor) logGameStart(runs []run.Run) {
 	for _, r := range runs {
 		runNames += r.Name() + ", "
 	}
-	stat.Status.TotalGames++
-	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", stat.Status.TotalGames, runNames[:len(runNames)-2]))
+	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
 }

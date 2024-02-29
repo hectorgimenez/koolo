@@ -1,13 +1,14 @@
 package step
 
 import (
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -75,7 +76,7 @@ func SecondaryAttack(keyBinding string, target data.UnitID, numOfAttacks int, op
 	return s
 }
 
-func (p *AttackStep) Status(_ data.Data) Status {
+func (p *AttackStep) Status(_ data.Data, _ container.Container) Status {
 	if p.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -87,7 +88,7 @@ func (p *AttackStep) Status(_ data.Data) Status {
 	return p.status
 }
 
-func (p *AttackStep) Run(d data.Data) error {
+func (p *AttackStep) Run(d data.Data, container container.Container) error {
 	monster, found := d.Monsters.FindByID(p.target)
 
 	if !p.aoe {
@@ -99,12 +100,12 @@ func (p *AttackStep) Run(d data.Data) error {
 
 		// Move into the attack distance range before starting
 		if p.followEnemy {
-			if !p.ensureEnemyIsInRange(monster, d) {
+			if !p.ensureEnemyIsInRange(container, monster, d) {
 				return nil
 			}
 		} else {
 			// Since we are not following the enemy, and it's not in range, we can't attack it
-			_, distance, found := pather.GetPath(d, monster.Position)
+			_, distance, found := container.PathFinder.GetPath(d, monster.Position)
 			if !found || distance > p.maxDistance {
 				p.tryTransitionStatus(StatusCompleted)
 				return nil
@@ -114,28 +115,28 @@ func (p *AttackStep) Run(d data.Data) error {
 
 	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
 		if p.keyBinding != "" {
-			hid.PressKey(p.keyBinding)
+			container.HID.PressKey(p.keyBinding)
 			helper.Sleep(100)
 		}
 
 		if p.auraKeyBinding != "" {
-			hid.PressKey(p.auraKeyBinding)
+			container.HID.PressKey(p.auraKeyBinding)
 		}
 		p.forceApplyKeyBinding = false
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > config.Config.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
-		hid.KeyDown(p.standStillBinding)
-		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
+		container.HID.KeyDown(p.standStillBinding)
+		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
 		if p.primaryAttack {
-			hid.Click(hid.LeftButton, x, y)
+			container.HID.Click(game.LeftButton, x, y)
 		} else {
-			hid.Click(hid.RightButton, x, y)
+			container.HID.Click(game.RightButton, x, y)
 		}
 		helper.Sleep(20)
-		hid.KeyUp(p.standStillBinding)
+		container.HID.KeyUp(p.standStillBinding)
 		p.lastRun = time.Now()
 		p.numOfAttacksRemaining--
 	}
@@ -143,12 +144,12 @@ func (p *AttackStep) Run(d data.Data) error {
 	return nil
 }
 
-func (p *AttackStep) ensureEnemyIsInRange(monster data.Monster, d data.Data) bool {
+func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster data.Monster, d data.Data) bool {
 	if !p.followEnemy {
 		return true
 	}
 
-	path, distance, found := pather.GetPath(d, monster.Position)
+	path, distance, found := container.PathFinder.GetPath(d, monster.Position)
 
 	// We can not reach the enemy, let's skip the attack sequence
 	if !found {
@@ -178,8 +179,8 @@ func (p *AttackStep) ensureEnemyIsInRange(monster data.Monster, d data.Data) boo
 			}
 		}
 
-		if p.moveToStep.Status(d) != StatusCompleted {
-			p.moveToStep.Run(d)
+		if p.moveToStep.Status(d, container) != StatusCompleted {
+			p.moveToStep.Run(d, container)
 			p.forceApplyKeyBinding = true
 			return false
 		}

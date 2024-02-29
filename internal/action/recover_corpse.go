@@ -3,8 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func (b *Builder) RecoverCorpse() *StepChainAction {
@@ -14,13 +13,13 @@ func (b *Builder) RecoverCorpse() *StepChainAction {
 			b.logger.Info("Corpse found, let's recover our stuff...")
 			steps = append(steps,
 				step.SyncStepWithCheck(func(d data.Data) error {
-					x, y := pather.GameCoordsToScreenCords(
+					x, y := b.pf.GameCoordsToScreenCords(
 						d.PlayerUnit.Position.X,
 						d.PlayerUnit.Position.Y,
 						d.Corpse.Position.X,
 						d.Corpse.Position.Y,
 					)
-					hid.Click(hid.LeftButton, x, y)
+					b.hid.Click(game.LeftButton, x, y)
 
 					return nil
 				}, func(d data.Data) step.Status {

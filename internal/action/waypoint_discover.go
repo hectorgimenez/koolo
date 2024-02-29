@@ -4,7 +4,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"log/slog"
 )
 
@@ -20,7 +19,7 @@ func (b *Builder) DiscoverWaypoint() *Chain {
 					step.SyncStep(func(d data.Data) error {
 						b.logger.Info("Waypoint discovered", slog.Any("area", d.PlayerUnit.Area))
 						helper.Sleep(500)
-						hid.PressKey("esc")
+						b.hid.PressKey("esc")
 						return nil
 					}),
 				)}

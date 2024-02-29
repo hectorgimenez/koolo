@@ -10,9 +10,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	stat2 "github.com/hectorgimenez/koolo/internal/event/stat"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"log/slog"
 )
@@ -51,7 +51,7 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 					b.stashGold(d)
 					b.orderInventoryPotions(d)
 					b.stashInventory(d, forceStash)
-					hid.PressKey("esc")
+					b.hid.PressKey("esc")
 					return nil
 				}),
 			),
@@ -67,7 +67,7 @@ func (b *Builder) orderInventoryPotions(d data.Data) {
 			}
 			screenPos := ui.GetScreenCoordsForItem(i)
 			helper.Sleep(100)
-			hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
+			b.hid.Click(game.RightButton, screenPos.X, screenPos.Y)
 			helper.Sleep(200)
 		}
 	}
@@ -96,8 +96,8 @@ func (b *Builder) stashGold(d data.Data) {
 	b.logger.Info("Stashing gold...", slog.Int("gold", gold))
 
 	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
-		switchTab(1)
-		clickStashGoldBtn()
+		b.switchTab(1)
+		b.clickStashGoldBtn()
 		helper.Sleep(500)
 	}
 
@@ -108,15 +108,15 @@ func (b *Builder) stashGold(d data.Data) {
 			return
 		}
 
-		switchTab(i)
-		clickStashGoldBtn()
+		b.switchTab(i)
+		b.clickStashGoldBtn()
 	}
 	b.logger.Info("All stash tabs are full of gold :D")
 }
 
 func (b *Builder) stashInventory(d data.Data, forceStash bool) {
 	currentTab := 1
-	switchTab(currentTab)
+	b.switchTab(currentTab)
 
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if !b.shouldStashIt(i, forceStash) {
@@ -132,7 +132,7 @@ func (b *Builder) stashInventory(d data.Data, forceStash bool) {
 			}
 			b.logger.Debug(fmt.Sprintf("Tab %d is full, switching to next one", currentTab))
 			currentTab++
-			switchTab(currentTab)
+			b.switchTab(currentTab)
 		}
 	}
 }
@@ -157,11 +157,11 @@ func (b *Builder) shouldStashIt(i data.Item, forceStash bool) bool {
 
 func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	screenPos := ui.GetScreenCoordsForItem(i)
-	hid.MovePointer(screenPos.X, screenPos.Y)
+	b.hid.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(170)
-	screenshot := helper.Screenshot()
+	screenshot := b.gr.Screenshot()
 	helper.Sleep(150)
-	hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+	b.hid.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	helper.Sleep(500)
 
 	d := b.gr.GetData(false)
@@ -173,25 +173,25 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 
 	// Don't log items that we already have in inventory during first run
 	if !forceStash {
-		stat2.ItemStashed(i, screenshot)
+		b.eventChan <- event.ItemStashed(event.WithScreenshot(fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i)
 	}
 	return true
 }
 
-func clickStashGoldBtn() {
+func (b *Builder) clickStashGoldBtn() {
 	helper.Sleep(170)
-	hid.Click(hid.LeftButton, stashGoldBtnX, stashGoldBtnY)
+	b.hid.Click(game.LeftButton, stashGoldBtnX, stashGoldBtnY)
 	helper.Sleep(1000)
-	hid.Click(hid.LeftButton, stashGoldBtnConfirmX, stashGoldBtnConfirmY)
+	b.hid.Click(game.LeftButton, stashGoldBtnConfirmX, stashGoldBtnConfirmY)
 	helper.Sleep(700)
 }
 
-func switchTab(tab int) {
+func (b *Builder) switchTab(tab int) {
 	x := 107
 	y := 128
 	tabSize := 82
 	x = x + tabSize*tab - tabSize/2
 
-	hid.Click(hid.LeftButton, x, y)
+	b.hid.Click(game.LeftButton, x, y)
 	helper.Sleep(500)
 }

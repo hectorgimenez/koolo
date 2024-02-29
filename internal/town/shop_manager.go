@@ -2,6 +2,8 @@ package town
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"math/rand"
 
@@ -11,19 +13,20 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 type ShopManager struct {
-	logger *slog.Logger
-	bm     health.BeltManager
+	logger    *slog.Logger
+	bm        health.BeltManager
+	container container.Container
 }
 
-func NewShopManager(logger *slog.Logger, bm health.BeltManager) ShopManager {
+func NewShopManager(logger *slog.Logger, bm health.BeltManager, container container.Container) ShopManager {
 	return ShopManager{
-		logger: logger,
-		bm:     bm,
+		logger:    logger,
+		bm:        bm,
+		container: container,
 	}
 }
 
@@ -141,7 +144,7 @@ func (sm ShopManager) SellJunk(d data.Data) {
 func (sm ShopManager) SellItem(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	helper.Sleep(500)
-	hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	helper.Sleep(500)
 	sm.logger.Debug(fmt.Sprintf("Item %s [%d] sold", i.Name, i.Quality))
 }
@@ -150,7 +153,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
-		hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
+		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 		helper.Sleep(900)
 		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
@@ -158,7 +161,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 
 func (sm ShopManager) buyFullStack(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
-	hid.ClickWithModifier(hid.RightButton, screenPos.X, screenPos.Y, hid.ShiftKey)
+	sm.container.HID.ClickWithModifier(game.RightButton, screenPos.X, screenPos.Y, game.ShiftKey)
 	helper.Sleep(500)
 }
 

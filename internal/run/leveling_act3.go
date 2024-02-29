@@ -3,6 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -13,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -191,13 +191,13 @@ func (a Leveling) openMephistoStairs() []action.Action {
 						return nil
 					}
 
-					hid.PressKey(config.Config.Bindings.SwapWeapon)
+					a.HID.PressKey(config.Config.Bindings.SwapWeapon)
 					helper.Sleep(1000)
-					hid.PressKey(config.Config.Bindings.OpenInventory)
+					a.HID.PressKey(config.Config.Bindings.OpenInventory)
 					screenPos := ui.GetScreenCoordsForItem(khalimsWill)
-					hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.ShiftKey)
+					a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
 					helper.Sleep(300)
-					hid.PressKey("esc")
+					a.HID.PressKey("esc")
 					return nil
 				}),
 			}
@@ -210,7 +210,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 			},
 			step.SyncStep(func(d data.Data) error {
 				helper.Sleep(1000)
-				hid.PressKey(config.Config.Bindings.SwapWeapon)
+				a.HID.PressKey(config.Config.Bindings.SwapWeapon)
 				return nil
 			})),
 		a.builder.Wait(time.Second*12),

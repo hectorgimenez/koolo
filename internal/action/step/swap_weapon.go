@@ -1,12 +1,12 @@
 package step
 
 import (
+	"github.com/hectorgimenez/koolo/internal/container"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 type SwapWeaponStep struct {
@@ -30,7 +30,7 @@ func SwapToCTA() *SwapWeaponStep {
 	}
 }
 
-func (s *SwapWeaponStep) Status(d data.Data) Status {
+func (s *SwapWeaponStep) Status(d data.Data, _ container.Container) Status {
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if (s.wantCTA && found) || (!s.wantCTA && !found) {
 		return s.tryTransitionStatus(StatusCompleted)
@@ -39,7 +39,7 @@ func (s *SwapWeaponStep) Status(d data.Data) Status {
 	return s.status
 }
 
-func (s *SwapWeaponStep) Run(d data.Data) error {
+func (s *SwapWeaponStep) Run(d data.Data, container container.Container) error {
 	s.tryTransitionStatus(StatusInProgress)
 
 	if time.Since(s.lastRun) < time.Second {
@@ -53,7 +53,7 @@ func (s *SwapWeaponStep) Run(d data.Data) error {
 		return nil
 	}
 
-	hid.PressKey(s.binding)
+	container.HID.PressKey(s.binding)
 
 	s.lastRun = time.Now()
 

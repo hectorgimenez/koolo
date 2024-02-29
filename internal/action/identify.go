@@ -2,14 +2,13 @@ package action
 
 import (
 	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -38,7 +37,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{
 				step.SyncStepWithCheck(func(d data.Data) error {
-					hid.PressKey(config.Config.Bindings.OpenInventory)
+					b.hid.PressKey(config.Config.Bindings.OpenInventory)
 					return nil
 				}, func(d data.Data) step.Status {
 					if d.OpenMenus.Inventory {
@@ -49,10 +48,10 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 				step.SyncStep(func(d data.Data) error {
 
 					for _, i := range items {
-						identifyItem(idTome, i)
+						b.identifyItem(idTome, i)
 					}
 
-					hid.PressKey("esc")
+					b.hid.PressKey("esc")
 
 					return nil
 				}),
@@ -75,13 +74,13 @@ func (b *Builder) itemsToIdentify(d data.Data) (items []data.Item) {
 	return
 }
 
-func identifyItem(idTome data.Item, i data.Item) {
+func (b *Builder) identifyItem(idTome data.Item, i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(idTome)
 	helper.Sleep(500)
-	hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
+	b.hid.Click(game.RightButton, screenPos.X, screenPos.Y)
 	helper.Sleep(1000)
 
 	screenPos = ui.GetScreenCoordsForItem(i)
-	hid.Click(hid.LeftButton, screenPos.X, screenPos.Y)
+	b.hid.Click(game.LeftButton, screenPos.X, screenPos.Y)
 	helper.Sleep(350)
 }

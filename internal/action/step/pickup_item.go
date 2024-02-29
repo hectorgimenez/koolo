@@ -2,13 +2,14 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -31,7 +32,7 @@ func PickupItem(logger *slog.Logger, item data.Item) *PickupItemStep {
 	}
 }
 
-func (p *PickupItemStep) Status(d data.Data) Status {
+func (p *PickupItemStep) Status(d data.Data, _ container.Container) Status {
 	if p.status == StatusCompleted {
 		return p.status
 	}
@@ -47,7 +48,7 @@ func (p *PickupItemStep) Status(d data.Data) Status {
 	return p.tryTransitionStatus(StatusCompleted)
 }
 
-func (p *PickupItemStep) Run(d data.Data) error {
+func (p *PickupItemStep) Run(d data.Data, container container.Container) error {
 	for _, m := range d.Monsters.Enemies() {
 		if dist := pather.DistanceFromMe(d, m.Position); dist < 7 && p.mouseOverAttempts > 1 {
 			return fmt.Errorf("monster %d [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Name, p.item.Quality.ToString())
@@ -77,10 +78,10 @@ func (p *PickupItemStep) Run(d data.Data) error {
 		if i.UnitID == p.item.UnitID {
 			objectX := i.Position.X - 1
 			objectY := i.Position.Y - 1
-			mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
+			mX, mY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 
 			if i.IsHovered {
-				hid.Click(hid.LeftButton, mX, mY)
+				container.HID.Click(game.LeftButton, mX, mY)
 				if p.waitingForInteraction.IsZero() {
 					p.waitingForInteraction = time.Now()
 				}
@@ -89,7 +90,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 				// on Andariel, so we open it
 				if p.isChestHovered(d) {
-					hid.Click(hid.LeftButton, mX, mY)
+					container.HID.Click(game.LeftButton, mX, mY)
 				}
 
 				distance := pather.DistanceFromMe(d, i.Position)
@@ -99,7 +100,7 @@ func (p *PickupItemStep) Run(d data.Data) error {
 				}
 
 				x, y := helper.Spiral(p.mouseOverAttempts)
-				hid.MovePointer(mX+x, mY+y)
+				container.HID.MovePointer(mX+x, mY+y)
 				p.mouseOverAttempts++
 
 				return nil

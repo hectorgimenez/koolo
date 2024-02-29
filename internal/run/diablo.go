@@ -108,7 +108,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 						}
 						if time.Since(lastInteractionAt) > time.Second*3 {
 							lastInteractionAt = time.Now()
-							pather.RandomMovement()
+							a.PathFinder.RandomMovement()
 							time.Sleep(time.Second)
 						}
 						return false
@@ -149,7 +149,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 					if a.isSealElite(m) {
-						_, _, found := pather.GetPath(d, m.Position)
+						_, _, found := a.PathFinder.GetPath(d, m.Position)
 						return m.UnitID, found
 					}
 				}

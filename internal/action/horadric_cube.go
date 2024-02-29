@@ -5,8 +5,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"log/slog"
 )
@@ -38,7 +38,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			b.logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
 			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 				screenPos := ui.GetScreenCoordsForItem(nwIt)
-				hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+				b.hid.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 				helper.Sleep(300)
 
 				return nil
@@ -54,7 +54,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 					if nwIt.UnitID == updatedItem.UnitID {
 						b.logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
 						screenPos := ui.GetScreenCoordsForItem(updatedItem)
-						hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+						b.hid.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 						helper.Sleep(300)
 					}
 				}
@@ -80,16 +80,16 @@ func (b *Builder) CubeTransmute() *Chain {
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 			b.logger.Debug("Transmuting items in the Horadric Cube")
 			helper.Sleep(150)
-			hid.Click(hid.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
+			b.hid.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 			helper.Sleep(3000)
 
 			// Move the Item back to the inventory
-			hid.ClickWithModifier(hid.LeftButton, 238, 262, hid.CtrlKey)
+			b.hid.ClickWithModifier(game.LeftButton, 238, 262, game.CtrlKey)
 			helper.Sleep(300)
 
 			return []step.Step{
 				step.SyncStepWithCheck(func(d data.Data) error {
-					hid.PressKey("esc")
+					b.hid.PressKey("esc")
 					helper.Sleep(300)
 					return nil
 				}, func(d data.Data) step.Status {
@@ -112,7 +112,7 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 			step.SyncStepWithCheck(func(d data.Data) error {
 				screenPos := ui.GetScreenCoordsForItem(cube)
 				helper.Sleep(300)
-				hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
+				b.hid.Click(game.RightButton, screenPos.X, screenPos.Y)
 				helper.Sleep(200)
 				return nil
 			}, func(d data.Data) step.Status {

@@ -2,14 +2,13 @@ package action
 
 import (
 	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
@@ -34,7 +33,7 @@ func (b *Builder) Repair() *Chain {
 					step.KeySequence(keys...),
 					step.SyncStep(func(_ data.Data) error {
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton, 390, 515)
+						b.hid.Click(game.LeftButton, 390, 515)
 						helper.Sleep(500)
 						return nil
 					}),

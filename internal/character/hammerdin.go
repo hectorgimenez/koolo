@@ -55,7 +55,7 @@ func (s Hammerdin) KillMonsterSequence(
 				step.SyncStep(func(d data.Data) error {
 					monster, f := d.Monsters.FindByID(id)
 					if f && monster.Stats[stat.Life] > 0 {
-						pather.RandomMovement()
+						s.container.PathFinder.RandomMovement()
 					}
 					return nil
 				}),

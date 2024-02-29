@@ -11,8 +11,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"time"
 )
@@ -85,13 +85,13 @@ func (a Leveling) anya() []action.Action {
 		a.builder.Wait(time.Second * 8),
 		a.builder.InteractNPC(npc.Malah,
 			step.SyncStep(func(d data.Data) error {
-				hid.PressKey("esc")
-				hid.PressKey(config.Config.Bindings.OpenInventory)
+				a.HID.PressKey("esc")
+				a.HID.PressKey(config.Config.Bindings.OpenInventory)
 				itm, _ := d.Items.Find("ScrollOfResistance")
 				screenPos := ui.GetScreenCoordsForItem(itm)
 				helper.Sleep(200)
-				hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
-				hid.PressKey("esc")
+				a.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+				a.HID.PressKey("esc")
 
 				return nil
 			}),
@@ -117,7 +117,7 @@ func (a Leveling) ancients() []action.Action {
 			if len(d.Monsters.Enemies()) > 0 {
 				return true
 			}
-			hid.Click(hid.LeftButton, 300, 300)
+			a.HID.Click(game.LeftButton, 300, 300)
 			helper.Sleep(1000)
 			return false
 		}),

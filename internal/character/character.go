@@ -2,6 +2,7 @@ package character
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"strings"
 
@@ -11,9 +12,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 )
 
-func BuildCharacter(logger *slog.Logger) (action.Character, error) {
+func BuildCharacter(logger *slog.Logger, container container.Container) (action.Character, error) {
 	bc := BaseCharacter{
-		logger: logger,
+		logger:    logger,
+		container: container,
 	}
 
 	if config.Config.Game.Runs[0] == "leveling" {
@@ -40,7 +42,8 @@ func BuildCharacter(logger *slog.Logger) (action.Character, error) {
 }
 
 type BaseCharacter struct {
-	logger *slog.Logger
+	logger    *slog.Logger
+	container container.Container
 }
 
 func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {

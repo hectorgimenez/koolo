@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <!--    <meta http-equiv="refresh" content="5">-->
+    <link rel="stylesheet" href="../assets/css/pico.min.css">
+    <title>Hello world!</title>
+</head>
+<body>
+<main class="container">
+    <table>
+        <thead>
+        <tr>
+            <th scope="col">Character</th>
+            <th scope="col">Status</th>
+            <th scope="col">Runs</th>
+            <th scope="col">Chickens</th>
+            <th scope="col">Deaths</th>
+            <th scope="col">Control</th>
+        </tr>
+        </thead>
+        {{ range $key, $value := .Status }}
+        <tr>
+            <th scope="row">{{$key}}</th>
+            <td>{{.SupervisorStatus}}</td>
+            <td>{{.TotalGames}}</td>
+            <td>{{.TotalChickens}}</td>
+            <td>{{.TotalDeaths}}</td>
+            <td>
+                {{ if eq .SupervisorStatus "Paused" }}
+                <a href="/togglePause" style="text-decoration: none;">
+                    <button class="button">Resume</button>
+                </a>
+                {{ else if or (eq .SupervisorStatus "In game") (eq .SupervisorStatus "Starting") }}
+                <a href="/togglePause" style="text-decoration: none;">
+                    <button class="button">Pause</button>
+                </a>
+                {{ else }}
+                <a href="/start" style="text-decoration: none;">
+                    <button class="button">Start</button>
+                </a>
+                {{ end }}
+                <a href="/stop" style="text-decoration: none;">
+                    <button class="button">Stop</button>
+                </a>
+            </td>
+        </tr>
+        {{ end }}
+    </table>
+</main>
+</body>
+</html>

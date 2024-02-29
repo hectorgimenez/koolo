@@ -1,6 +1,7 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
@@ -58,7 +58,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 		if lastStep {
 			if d.OpenMenus.Inventory {
 				return []step.Step{step.SyncStep(func(d data.Data) error {
-					hid.PressKey("esc")
+					b.hid.PressKey("esc")
 					return nil
 				})}
 			}
@@ -112,7 +112,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				b.logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
 
 				return []step.Step{step.SyncStep(func(d data.Data) error {
-					hid.Click(hid.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
+					b.hid.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
 					return nil
 				}),
 					step.Wait(time.Millisecond * 500),

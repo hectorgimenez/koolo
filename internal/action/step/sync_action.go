@@ -1,6 +1,9 @@
 package step
 
-import "github.com/hectorgimenez/d2go/pkg/data"
+import (
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/container"
+)
 
 type SyncActionStep struct {
 	basicStep
@@ -23,7 +26,7 @@ func SyncStepWithCheck(action func(data.Data) error, statusChecker func(data.Dat
 	}
 }
 
-func (s *SyncActionStep) Status(d data.Data) Status {
+func (s *SyncActionStep) Status(d data.Data, container container.Container) Status {
 	if s.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -35,7 +38,7 @@ func (s *SyncActionStep) Status(d data.Data) Status {
 	return s.status
 }
 
-func (s *SyncActionStep) Run(d data.Data) error {
+func (s *SyncActionStep) Run(d data.Data, container container.Container) error {
 	if s.statusChecker == nil {
 		s.tryTransitionStatus(StatusCompleted)
 	}

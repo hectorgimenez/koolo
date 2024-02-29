@@ -71,7 +71,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				}
 			}
 
-			path, _, mPathFound := pather.GetPath(d, targetMonster.Position)
+			path, _, mPathFound := b.pf.GetPath(d, targetMonster.Position)
 			if mPathFound {
 				doorIsBlocking := false
 				if !helper.CanTeleport(d) {
@@ -115,10 +115,10 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			}
 
 			return []Action{NewStepChain(func(d data.Data) []step.Step {
-				_, distance, found := pather.GetPath(d, closestRoom.GetCenter())
+				_, distance, found := b.pf.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {
-					_, distance, found = pather.GetClosestWalkablePath(d, closestRoom.GetCenter())
+					_, distance, found = b.pf.GetClosestWalkablePath(d, closestRoom.GetCenter())
 				}
 				if !found || distance <= 5 {
 					b.logger.Debug("Next room is not walkable, skipping it.")

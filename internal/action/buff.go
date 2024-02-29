@@ -1,6 +1,7 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -11,7 +12,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 var lastBuffedAt = time.Time{}
@@ -50,9 +50,9 @@ func (b *Builder) Buff() *StepChainAction {
 				step.SyncStep(func(_ data.Data) error {
 					for _, kb := range keys {
 						helper.Sleep(200)
-						hid.PressKey(kb)
+						b.hid.PressKey(kb)
 						helper.Sleep(300)
-						hid.Click(hid.RightButton, 300, 300)
+						b.hid.Click(game.RightButton, 300, 300)
 						helper.Sleep(300)
 					}
 					return nil
@@ -105,13 +105,13 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 
 		steps = append(steps,
 			step.SyncStep(func(d data.Data) error {
-				hid.PressKey(config.Config.Bindings.CTABattleCommand)
+				b.hid.PressKey(config.Config.Bindings.CTABattleCommand)
 				helper.Sleep(100)
-				hid.Click(hid.RightButton, 300, 300)
+				b.hid.Click(game.RightButton, 300, 300)
 				helper.Sleep(300)
-				hid.PressKey(config.Config.Bindings.CTABattleOrders)
+				b.hid.PressKey(config.Config.Bindings.CTABattleOrders)
 				helper.Sleep(100)
-				hid.Click(hid.RightButton, 300, 300)
+				b.hid.Click(game.RightButton, 300, 300)
 				helper.Sleep(100)
 
 				return nil

@@ -5,14 +5,22 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/reader"
 	"math"
 	"math/rand"
 )
 
-func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+type PathFinder struct {
+	gr  *game.MemoryReader
+	hid *game.HID
+}
+
+func NewPathFinder(gr *game.MemoryReader, hid *game.HID) PathFinder {
+	return PathFinder{gr: gr, hid: hid}
+}
+
+func (pf PathFinder) GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	outsideCurrentLevel := outsideBoundary(d, to)
 	collisionGrid := d.CollisionGrid
 
@@ -22,7 +30,7 @@ func GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *
 	}
 
 	if outsideCurrentLevel {
-		lvl, lvlFound := reader.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
+		lvl, lvlFound := game.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
 		if !lvlFound {
 			panic("Error occurred calculating path, destination point outside current level and matching level not found")
 		}
@@ -150,7 +158,7 @@ func ensureValueInCG(val, cgSize int) int {
 	return val
 }
 
-func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf PathFinder) GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	maxRange := 20
 	step := 4
 	dst := 1
@@ -162,7 +170,7 @@ func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords .
 					cgY := dest.Y - d.AreaOrigin.Y + j
 					cgX := dest.X - d.AreaOrigin.X + i
 					if cgX > 0 && cgY > 0 && len(d.CollisionGrid) > cgY && len(d.CollisionGrid[cgY]) > cgX && d.CollisionGrid[cgY][cgX] {
-						return GetPath(d, data.Position{
+						return pf.GetPath(d, data.Position{
 							X: dest.X + i,
 							Y: dest.Y + j,
 						}, blacklistedCoords...)
@@ -176,7 +184,7 @@ func GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords .
 	return nil, 0, false
 }
 
-func MoveThroughPath(p *Pather, distance int, teleport bool) {
+func (pf PathFinder) MoveThroughPath(p *Pather, distance int, teleport bool) {
 	//if len(p.AstarPather) == 0 {
 	//	if teleport {
 	//		hid.Click(hid.RightButton)
@@ -191,57 +199,46 @@ func MoveThroughPath(p *Pather, distance int, teleport bool) {
 		moveTo = p.AstarPather[len(p.AstarPather)-distance].(*Tile)
 	}
 
-	screenX, screenY := GameCoordsToScreenCords(p.AstarPather[len(p.AstarPather)-1].(*Tile).X, p.AstarPather[len(p.AstarPather)-1].(*Tile).Y, moveTo.X, moveTo.Y)
+	screenX, screenY := pf.GameCoordsToScreenCords(p.AstarPather[len(p.AstarPather)-1].(*Tile).X, p.AstarPather[len(p.AstarPather)-1].(*Tile).Y, moveTo.X, moveTo.Y)
 	// Prevent mouse overlap the HUD
-	if screenY > int(float32(hid.GameAreaSizeY)/1.21) {
-		screenY = int(float32(hid.GameAreaSizeY) / 1.21)
+	if screenY > int(float32(pf.gr.GameAreaSizeY)/1.21) {
+		screenY = int(float32(pf.gr.GameAreaSizeY) / 1.21)
 	}
 
 	if distance > 0 {
-		moveCharacter(teleport, screenX, screenY)
+		pf.moveCharacter(teleport, screenX, screenY)
 	}
 }
 
-func moveCharacter(teleport bool, x, y int) {
+func (pf PathFinder) moveCharacter(teleport bool, x, y int) {
 	if teleport {
-		hid.Click(hid.RightButton, x, y)
+		pf.hid.Click(game.RightButton, x, y)
 	} else {
-		hid.MovePointer(x, y)
-		hid.PressKey(config.Config.Bindings.ForceMove)
+		pf.hid.MovePointer(x, y)
+		pf.hid.PressKey(config.Config.Bindings.ForceMove)
 		helper.Sleep(50)
 	}
 }
 
-func GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (int, int) {
+func (pf PathFinder) GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (int, int) {
 	// Calculate diff between current player position and destination
 	diffX := destinationX - playerX
 	diffY := destinationY - playerY
 
 	// Transform cartesian movement (world) to isometric (screen)e
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	screenX := int((float32(diffX-diffY) * 19.8) + float32(hid.GameAreaSizeX/2))
-	screenY := int((float32(diffX+diffY) * 9.9) + float32(hid.GameAreaSizeY/2))
+	screenX := int((float32(diffX-diffY) * 19.8) + float32(pf.gr.GameAreaSizeX/2))
+	screenY := int((float32(diffX+diffY) * 9.9) + float32(pf.gr.GameAreaSizeY/2))
 
 	return screenX, screenY
 }
 
-func DistanceFromMe(d data.Data, p data.Position) int {
-	return DistanceFromPoint(d.PlayerUnit.Position, p)
-}
-
-func DistanceFromPoint(from data.Position, to data.Position) int {
-	first := math.Pow(float64(to.X-from.X), 2)
-	second := math.Pow(float64(to.Y-from.Y), 2)
-
-	return int(math.Sqrt(first + second))
-}
-
-func RandomMovement() {
-	midGameX := hid.GameAreaSizeX / 2
-	midGameY := hid.GameAreaSizeY / 2
+func (pf PathFinder) RandomMovement() {
+	midGameX := pf.gr.GameAreaSizeX / 2
+	midGameY := pf.gr.GameAreaSizeY / 2
 	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
-	hid.Click(hid.LeftButton, x, y)
+	pf.hid.Click(game.LeftButton, x, y)
 }
 
 func relativePosition(d data.Data, p data.Position, cgOffset data.Position) (int, int) {

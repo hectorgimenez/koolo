@@ -3,8 +3,6 @@ package ui
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/memory"
-	"github.com/lxn/win"
 )
 
 const (
@@ -54,9 +52,4 @@ func GetScreenCoordsForItem(itm data.Item) data.Position {
 	y := inventoryTopLeftY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
 
 	return data.Position{X: x, Y: y}
-}
-
-func GameWindowScale() float64 {
-	dpi := win.GetDpiForWindow(memory.HWND)
-	return float64(dpi) / 96.0
 }

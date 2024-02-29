@@ -1,6 +1,7 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"slices"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
@@ -45,7 +45,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			if d.OpenMenus.Character {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
-						hid.PressKey("esc")
+						b.hid.PressKey("esc")
 						return nil
 					}),
 				}
@@ -63,7 +63,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			if !d.OpenMenus.Character {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
-						hid.PressKey(config.Config.Bindings.OpenCharacterScreen)
+						b.hid.PressKey(config.Config.Bindings.OpenCharacterScreen)
 						return nil
 					}),
 				}
@@ -73,7 +73,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			return []step.Step{
 				step.SyncStep(func(_ data.Data) error {
 					helper.Sleep(100)
-					hid.Click(hid.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+					b.hid.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
 					helper.Sleep(500)
 					return nil
 				}),
@@ -93,7 +93,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			if d.OpenMenus.SkillTree {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
-						hid.PressKey("esc")
+						b.hid.PressKey("esc")
 						return nil
 					}),
 				}
@@ -122,7 +122,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 				if !d.OpenMenus.SkillTree {
 					return []step.Step{
 						step.SyncStep(func(_ data.Data) error {
-							hid.PressKey(config.Config.Bindings.OpenSkillTree)
+							b.hid.PressKey(config.Config.Bindings.OpenSkillTree)
 							return nil
 						}),
 					}
@@ -132,9 +132,9 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 					step.SyncStep(func(_ data.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+						b.hid.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
 						helper.Sleep(200)
-						hid.Click(hid.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+						b.hid.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
 						helper.Sleep(500)
 						return nil
 					}),
@@ -154,12 +154,12 @@ func (b *Builder) UpdateQuestLog() *StepChainAction {
 
 		return []step.Step{
 			step.SyncStep(func(_ data.Data) error {
-				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				b.hid.PressKey(config.Config.Bindings.OpenQuestLog)
 				return nil
 			}),
 			step.Wait(time.Second),
 			step.SyncStep(func(_ data.Data) error {
-				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				b.hid.PressKey(config.Config.Bindings.OpenQuestLog)
 				return nil
 			}),
 		}
@@ -179,9 +179,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 			return []step.Step{
 				// Right click skill bindings
 				step.SyncStep(func(d data.Data) error {
-					hid.Click(hid.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+					b.hid.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 					helper.Sleep(300)
-					hid.MovePointer(10, 10)
+					b.hid.MovePointer(10, 10)
 					helper.Sleep(300)
 
 					for sk, binding := range skillBindings {
@@ -194,9 +194,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 							continue
 						}
 
-						hid.MovePointer(skillPosition.X, skillPosition.Y)
+						b.hid.MovePointer(skillPosition.X, skillPosition.Y)
 						helper.Sleep(100)
-						hid.PressKey(binding)
+						b.hid.PressKey(binding)
 						helper.Sleep(300)
 					}
 
@@ -210,9 +210,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 						if binding != "" {
 							continue
 						}
-						hid.Click(hid.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
+						b.hid.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
 						helper.Sleep(300)
-						hid.MovePointer(10, 10)
+						b.hid.MovePointer(10, 10)
 						helper.Sleep(300)
 
 						skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
@@ -220,7 +220,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 							return nil
 						}
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton, skillPosition.X, skillPosition.Y)
+						b.hid.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
 					}
 					return nil
 				}),
@@ -317,9 +317,9 @@ func (b *Builder) HireMerc() *Chain {
 						step.KeySequence("home", "down", "enter"),
 						step.Wait(time.Second*2),
 						step.SyncStep(func(d data.Data) error {
-							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+							b.hid.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
 							helper.Sleep(300)
-							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+							b.hid.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
 
 							return nil
 						}),

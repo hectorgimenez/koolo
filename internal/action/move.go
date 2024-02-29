@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
 func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
@@ -51,7 +51,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 			if a.Area == dst {
 				// To correctly detect the two possible exits from Lut Gholein
 				if dst == area.RockyWaste && d.PlayerUnit.Area == area.LutGholein {
-					if _, _, found := pather.GetPath(d, data.Position{X: 5004, Y: 5065}); found {
+					if _, _, found := b.pf.GetPath(d, data.Position{X: 5004, Y: 5065}); found {
 						return data.Position{X: 4989, Y: 5063}, true
 					} else {
 						return data.Position{X: 5096, Y: 4997}, true
@@ -63,12 +63,12 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 					return a.Position, true
 				}
 
-				lvl, _ := reader.CachedMapData.GetLevelData(a.Area)
-				_, _, objects, _ := reader.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
+				lvl, _ := game.CachedMapData.GetLevelData(a.Area)
+				_, _, objects, _ := game.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
 
 				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 				for _, obj := range objects {
-					_, _, found := pather.GetPath(d, obj.Position)
+					_, _, found := b.pf.GetPath(d, obj.Position)
 					if found {
 						return obj.Position, true
 					}
@@ -213,7 +213,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 				b.logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
 			}
 
-			path, _, mPathFound := pather.GetPath(d, closestMonster.Position)
+			path, _, mPathFound := b.pf.GetPath(d, closestMonster.Position)
 			if mPathFound {
 				doorIsBlocking := false
 				for _, o := range d.Objects {

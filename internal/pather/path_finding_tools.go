@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"math"
 	"os"
 
 	"github.com/beefsack/go-astar"
@@ -179,4 +180,15 @@ func IsNarrowMap(a area.Area) bool {
 	}
 
 	return false
+}
+
+func DistanceFromMe(d data.Data, p data.Position) int {
+	return DistanceFromPoint(d.PlayerUnit.Position, p)
+}
+
+func DistanceFromPoint(from data.Position, to data.Position) int {
+	first := math.Pow(float64(to.X-from.X), 2)
+	second := math.Pow(float64(to.Y-from.Y), 2)
+
+	return int(math.Sqrt(first + second))
 }

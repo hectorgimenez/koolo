@@ -1,12 +1,13 @@
 package step
 
 import (
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 type OpenPortalStep struct {
@@ -17,7 +18,7 @@ func OpenPortal() *OpenPortalStep {
 	return &OpenPortalStep{basicStep: newBasicStep()}
 }
 
-func (s *OpenPortalStep) Status(d data.Data) Status {
+func (s *OpenPortalStep) Status(d data.Data, _ container.Container) Status {
 	if s.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -35,15 +36,15 @@ func (s *OpenPortalStep) Status(d data.Data) Status {
 	return StatusInProgress
 }
 
-func (s *OpenPortalStep) Run(_ data.Data) error {
+func (s *OpenPortalStep) Run(_ data.Data, container container.Container) error {
 	// Give some time to portal to popup before retrying...
 	if time.Since(s.LastRun()) < time.Second*2 {
 		return nil
 	}
 
-	hid.PressKey(config.Config.Bindings.TP)
+	container.HID.PressKey(config.Config.Bindings.TP)
 	helper.Sleep(250)
-	hid.Click(hid.RightButton, 300, 300)
+	container.HID.Click(game.RightButton, 300, 300)
 	s.lastRun = time.Now()
 
 	return nil

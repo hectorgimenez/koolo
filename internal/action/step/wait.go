@@ -1,6 +1,7 @@
 package step
 
 import (
+	"github.com/hectorgimenez/koolo/internal/container"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -19,7 +20,7 @@ func Wait(duration time.Duration) *WaitStep {
 	}
 }
 
-func (o *WaitStep) Status(_ data.Data) Status {
+func (o *WaitStep) Status(_ data.Data, _ container.Container) Status {
 	if o.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -27,7 +28,7 @@ func (o *WaitStep) Status(_ data.Data) Status {
 	return o.status
 }
 
-func (o *WaitStep) Run(_ data.Data) error {
+func (o *WaitStep) Run(_ data.Data, _ container.Container) error {
 	if o.firstRun.IsZero() {
 		o.firstRun = time.Now()
 		o.tryTransitionStatus(StatusInProgress)

@@ -3,12 +3,13 @@ package step
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -26,7 +27,7 @@ func InteractEntrance(area area.Area) *InteractEntranceStep {
 	}
 }
 
-func (m *InteractEntranceStep) Status(d data.Data) Status {
+func (m *InteractEntranceStep) Status(d data.Data, _ container.Container) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -39,7 +40,7 @@ func (m *InteractEntranceStep) Status(d data.Data) Status {
 	return m.status
 }
 
-func (m *InteractEntranceStep) Run(d data.Data) error {
+func (m *InteractEntranceStep) Run(d data.Data, container container.Container) error {
 	m.tryTransitionStatus(StatusInProgress)
 
 	if m.mouseOverAttempts > maxInteractions {
@@ -59,14 +60,14 @@ func (m *InteractEntranceStep) Run(d data.Data) error {
 			}
 
 			if l.IsEntrance {
-				lx, ly := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
+				lx, ly := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
 				if d.HoverData.UnitType == 5 || d.HoverData.UnitType == 2 && d.HoverData.IsHovered {
-					hid.Click(hid.LeftButton, lx, ly)
+					container.HID.Click(game.LeftButton, lx, ly)
 					m.waitingForInteraction = true
 				}
 
 				x, y := helper.Spiral(m.mouseOverAttempts)
-				hid.MovePointer(lx+x, ly+y)
+				container.HID.MovePointer(lx+x, ly+y)
 				m.mouseOverAttempts++
 				return nil
 			}

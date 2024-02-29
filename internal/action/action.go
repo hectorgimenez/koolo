@@ -2,9 +2,8 @@ package action
 
 import (
 	"errors"
-	"log/slog"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/container"
 )
 
 const maxRetries = 5
@@ -16,7 +15,7 @@ var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
 var ErrLogAndContinue = errors.New("error occurred, but marking action as completed")
 
 type Action interface {
-	NextStep(logger *slog.Logger, d data.Data) error
+	NextStep(d data.Data, container container.Container) error
 	Skip()
 }
 

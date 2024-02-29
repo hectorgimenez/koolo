@@ -2,12 +2,13 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -27,7 +28,7 @@ func InteractObject(name object.Name, isCompleted func(data.Data) bool) *Interac
 	}
 }
 
-func (i *InteractObjectStep) Status(d data.Data) Status {
+func (i *InteractObjectStep) Status(d data.Data, _ container.Container) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -45,7 +46,7 @@ func (i *InteractObjectStep) Status(d data.Data) Status {
 	return i.status
 }
 
-func (i *InteractObjectStep) Run(d data.Data) error {
+func (i *InteractObjectStep) Run(d data.Data, container container.Container) error {
 	i.tryTransitionStatus(StatusInProgress)
 
 	if i.mouseOverAttempts > maxInteractions {
@@ -61,9 +62,9 @@ func (i *InteractObjectStep) Run(d data.Data) error {
 	if o, found := d.Objects.FindOne(i.objectName); found {
 		objectX := o.Position.X - 2
 		objectY := o.Position.Y - 2
-		mX, mY := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
+		mX, mY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 		if o.IsHovered {
-			hid.Click(hid.LeftButton, mX, mY)
+			container.HID.Click(game.LeftButton, mX, mY)
 			i.waitingForInteraction = true
 			return nil
 		} else {
@@ -74,11 +75,11 @@ func (i *InteractObjectStep) Run(d data.Data) error {
 
 			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
 			if i.mouseOverAttempts == 2 && i.objectName == object.TownPortal {
-				mX, mY = pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX-4, objectY-4)
+				mX, mY = container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX-4, objectY-4)
 			}
 
 			x, y := helper.Spiral(i.mouseOverAttempts)
-			hid.MovePointer(mX+x, mY+y)
+			container.HID.MovePointer(mX+x, mY+y)
 			i.mouseOverAttempts++
 
 			return nil

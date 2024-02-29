@@ -1,19 +1,9 @@
-package hid
+package game
 
 import (
-	"github.com/hectorgimenez/koolo/internal/memory"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-	"image/color"
 	"math/rand"
 	"time"
-)
-
-var (
-	WindowLeftX   = 0
-	WindowTopY    = 0
-	GameAreaSizeX = 0
-	GameAreaSizeY = 0
 )
 
 const (
@@ -29,32 +19,28 @@ type ModifierKey uint
 
 // MovePointer moves the mouse to the requested position, x and y should be the final position based on
 // pixels shown in the screen. Top-left corner is 0,0
-func MovePointer(x, y int) {
-	x = WindowLeftX + x
-	y = WindowTopY + y
+func (hid *HID) MovePointer(x, y int) {
+	x = hid.gr.WindowLeftX + x
+	y = hid.gr.WindowTopY + y
 
-	scale := ui.GameWindowScale()
+	scale := hid.gr.WindowScale()
 	x = int(float64(x) * scale)
 	y = int(float64(y) * scale)
 
-	memory.InjectCursorPos(x, y)
+	hid.gi.CursorPos(x, y)
 	lParam := calculateLparam(x, y)
-	win.SendMessage(memory.HWND, win.WM_NCHITTEST, 0, lParam)
-	win.SendMessage(memory.HWND, win.WM_SETCURSOR, 0x000105A8, 0x2010001)
-	win.PostMessage(memory.HWND, win.WM_MOUSEMOVE, 0, lParam)
-}
-
-type Changeable interface {
-	Set(x, y int, c color.Color)
+	win.SendMessage(hid.gr.HWND, win.WM_NCHITTEST, 0, lParam)
+	win.SendMessage(hid.gr.HWND, win.WM_SETCURSOR, 0x000105A8, 0x2010001)
+	win.PostMessage(hid.gr.HWND, win.WM_MOUSEMOVE, 0, lParam)
 }
 
 // Click just does a single mouse click at current pointer position
-func Click(btn MouseButton, x, y int) {
-	MovePointer(x, y)
-	x = WindowLeftX + x
-	y = WindowTopY + y
+func (hid *HID) Click(btn MouseButton, x, y int) {
+	hid.MovePointer(x, y)
+	x = hid.gr.WindowLeftX + x
+	y = hid.gr.WindowTopY + y
 
-	scale := ui.GameWindowScale()
+	scale := hid.gr.WindowScale()
 	x = int(float64(x) * scale)
 	y = int(float64(y) * scale)
 
@@ -66,16 +52,16 @@ func Click(btn MouseButton, x, y int) {
 		buttonUp = win.WM_RBUTTONUP
 	}
 
-	win.SendMessage(memory.HWND, buttonDown, 1, lParam)
+	win.SendMessage(hid.gr.HWND, buttonDown, 1, lParam)
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	win.SendMessage(memory.HWND, buttonUp, 1, lParam)
+	win.SendMessage(hid.gr.HWND, buttonUp, 1, lParam)
 }
 
-func ClickWithModifier(btn MouseButton, x, y int, modifier ModifierKey) {
-	memory.OverrideGetKeyState(int(modifier))
-	Click(btn, x, y)
-	memory.RestoreGetKeyState()
+func (hid *HID) ClickWithModifier(btn MouseButton, x, y int, modifier ModifierKey) {
+	hid.gi.OverrideGetKeyState(int(modifier))
+	hid.Click(btn, x, y)
+	hid.gi.RestoreGetKeyState()
 }
 
 func calculateLparam(x, y int) uintptr {

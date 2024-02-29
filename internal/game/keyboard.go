@@ -1,7 +1,6 @@
-package hid
+package game
 
 import (
-	"github.com/hectorgimenez/koolo/internal/memory"
 	"math/rand"
 	"strings"
 	"time"
@@ -15,23 +14,23 @@ const (
 )
 
 // PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly
-func PressKey(key string) {
-	asciiChar := getASCIICode(key)
-	win.PostMessage(memory.HWND, win.WM_KEYDOWN, asciiChar, 0)
+func (hid *HID) PressKey(key string) {
+	asciiChar := hid.getASCIICode(key)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, asciiChar, 0)
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	win.PostMessage(memory.HWND, win.WM_KEYUP, asciiChar, 0)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, asciiChar, 0)
 }
 
-func KeyDown(key string) {
-	win.PostMessage(memory.HWND, win.WM_KEYDOWN, getASCIICode(key), 0)
+func (hid *HID) KeyDown(key string) {
+	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, hid.getASCIICode(key), 0)
 }
 
-func KeyUp(key string) {
-	win.PostMessage(memory.HWND, win.WM_KEYUP, getASCIICode(key), 0)
+func (hid *HID) KeyUp(key string) {
+	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, hid.getASCIICode(key), 0)
 }
 
-func getASCIICode(key string) uintptr {
+func (hid *HID) getASCIICode(key string) uintptr {
 	if len(key) == 1 {
 		return uintptr(strings.ToUpper(key)[0])
 	}

@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"strings"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/reader"
 )
 
 type Run interface {
@@ -20,36 +20,38 @@ type baseRun struct {
 	builder *action.Builder
 	char    action.Character
 	logger  *slog.Logger
+	container.Container
 }
 
 type Factory struct {
-	logger  *slog.Logger
-	builder *action.Builder
-	char    action.Character
-	gr      *reader.GameReader
-	bm      health.BeltManager
+	logger    *slog.Logger
+	builder   *action.Builder
+	char      action.Character
+	container container.Container
+	bm        health.BeltManager
 }
 
-func NewFactory(logger *slog.Logger, builder *action.Builder, char action.Character, gr *reader.GameReader, bm health.BeltManager) *Factory {
+func NewFactory(logger *slog.Logger, builder *action.Builder, char action.Character, bm health.BeltManager, container container.Container) *Factory {
 	return &Factory{
-		logger:  logger,
-		builder: builder,
-		char:    char,
-		gr:      gr,
-		bm:      bm,
+		logger:    logger,
+		builder:   builder,
+		char:      char,
+		bm:        bm,
+		container: container,
 	}
 }
 
 func (f *Factory) BuildRuns() (runs []Run) {
 	t := time.Now()
 	f.logger.Debug("Fetching map data...")
-	d := f.gr.GetData(true)
+	d := f.container.Reader.GetData(true)
 	f.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
 
 	baseRun := baseRun{
-		builder: f.builder,
-		char:    f.char,
-		logger:  f.logger,
+		builder:   f.builder,
+		char:      f.char,
+		logger:    f.logger,
+		Container: f.container,
 	}
 
 	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
@@ -117,7 +119,7 @@ func (f *Factory) BuildRuns() (runs []Run) {
 		case "tal_rasha_tombs":
 			runs = append(runs, TalRashaTombs{baseRun})
 		case "leveling":
-			runs = append(runs, Leveling{baseRun, f.gr, f.bm})
+			runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
 		case "cows":
 			runs = append(runs, Cows{baseRun})
 		}

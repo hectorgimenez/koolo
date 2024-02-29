@@ -5,6 +5,7 @@
 
 Koolo is a small bot for Diablo II: Resurrected. Koolo project was built for informational and educational purposes
 only, it's not intended for online usage. Feel free to contribute opening pull requests with new features or bugfixes.
+Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window.
 
 ## Disclaimer
 Can I get banned for using Koolo? The answer is a crystal clear yes, you can get banned although at this point I'm
@@ -30,11 +31,11 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 
 ## Requirements
 - Diablo II: Resurrected
-- Diablo II: LOD 1.13c (required by https://github.com/blacha/diablo2/tree/master/packages/map)
+- **Diablo II: LOD 1.13c** (IMPORTANT: It will **NOT** work without it, this step is not optional)
 
 ## Quick Start
 - If you haven't done yet, install **Diablo II: LOD 1.13c**
-- [Download](https://github.com/hectorgimenez/koolo/releases) the latest Koolo release, or alternatively you can [build it from source](#development-environment)
+- [Download](https://github.com/hectorgimenez/koolo/releases) the latest Koolo release (recommended for most users), or alternatively you can [build it from source](#development-environment)
 - Extract the zip file in a directory of your choice.
 - Open `config/config.yaml` with your favorite text editor and ensure `D2LoDPath` config is pointing to your **Diablo II: LOD 1.13c** installation directory.
 - Configure custom bot settings under `config/config.yaml` and `config/pickit/*.nip` files for pickit rules.
@@ -42,21 +43,13 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Enter the game with your character.
 - Run `koolo.exe`.
 
-## How it works
-Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window.
-It uses the following third party libraries:
-
-- https://github.com/hectorgimenez/d2go
-- https://github.com/hectorgimenez/diablo2 (forked
-  from [blacha's repo](https://github.com/blacha/diablo2/tree/master/packages/map))
-
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).
 
 Setting the development environment is pretty straightforward, but the following dependencies are **required** to build the project.
 
 ### Dependencies
-- [Download Go >= 1.21](https://go.dev/dl/)
+- [Download Go >= 1.22](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
 ### Building from source
