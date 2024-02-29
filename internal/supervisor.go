@@ -69,8 +69,10 @@ func (s *baseSupervisor) Stats() Stats {
 func (s *baseSupervisor) TogglePause() {
 	s.bot.TogglePause()
 	if s.bot.paused {
+		s.statsHandler.SetStatus(Paused)
 		s.gi.RestoreMemory()
 	} else {
+		s.statsHandler.SetStatus(InGame)
 		s.gi.Load()
 	}
 }

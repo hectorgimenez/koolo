@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"log"
 	"log/slog"
+	"os"
 )
 
 func main() {
@@ -53,6 +54,7 @@ func main() {
 		w.Run()
 
 		cancel()
+		os.Exit(0)
 		return nil
 	})
 

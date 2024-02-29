@@ -73,6 +73,10 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 	return nil
 }
 
+func (h *StatsHandler) SetStatus(status SupervisorStatus) {
+	h.stats.SupervisorStatus = status
+}
+
 func (h *StatsHandler) updateGameStatsFile() {
 	if _, err := os.Stat("stats"); os.IsNotExist(err) {
 		err = os.MkdirAll("stats", os.ModePerm)

@@ -45,19 +45,19 @@ func (s *HttpServer) getRoot(w http.ResponseWriter, _ *http.Request) {
 	s.index(w)
 }
 
-func (s *HttpServer) startSupervisor(w http.ResponseWriter, _ *http.Request) {
+func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 	s.manager.Start()
-	s.index(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (s *HttpServer) stopSupervisor(w http.ResponseWriter, _ *http.Request) {
+func (s *HttpServer) stopSupervisor(w http.ResponseWriter, r *http.Request) {
 	s.manager.Stop()
-	s.index(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (s *HttpServer) togglePause(w http.ResponseWriter, _ *http.Request) {
+func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 	s.manager.TogglePause()
-	s.index(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
