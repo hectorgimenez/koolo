@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -63,10 +62,11 @@ func (s Hammerdin) KillMonsterSequence(
 		}
 		steps = append(steps,
 			step.PrimaryAttack(
+				s.container.CharacterCfg,
 				id,
 				8,
 				step.Distance(2, 8),
-				step.EnsureAura(config.Config.Bindings.Paladin.Concentration),
+				step.EnsureAura(s.container.CharacterCfg.Bindings.Paladin.Concentration),
 			),
 		)
 		completedAttackLoops++
@@ -78,7 +78,7 @@ func (s Hammerdin) KillMonsterSequence(
 
 func (s Hammerdin) BuffSkills() map[skill.ID]string {
 	return map[skill.ID]string{
-		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
+		skill.HolyShield: s.container.CharacterCfg.Bindings.Paladin.HolyShield,
 	}
 }
 
@@ -174,10 +174,11 @@ func (s Hammerdin) KillCouncil() action.Action {
 			for range hammerdinMaxAttacksLoop {
 				steps = append(steps,
 					step.PrimaryAttack(
+						s.container.CharacterCfg,
 						m.UnitID,
 						8,
 						step.Distance(2, 8),
-						step.EnsureAura(config.Config.Bindings.Paladin.Concentration),
+						step.EnsureAura(s.container.CharacterCfg.Bindings.Paladin.Concentration),
 					),
 				)
 			}
@@ -201,10 +202,11 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		for range hammerdinMaxAttacksLoop {
 			steps = append(steps,
 				step.PrimaryAttack(
+					s.container.CharacterCfg,
 					m.UnitID,
 					8,
 					step.Distance(2, 8),
-					step.EnsureAura(config.Config.Bindings.Paladin.Concentration),
+					step.EnsureAura(s.container.CharacterCfg.Bindings.Paladin.Concentration),
 				),
 			)
 		}

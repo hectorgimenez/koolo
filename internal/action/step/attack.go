@@ -14,6 +14,7 @@ import (
 
 type AttackStep struct {
 	basicStep
+	cfg                   *config.CharacterCfg
 	target                data.UnitID
 	standStillBinding     string
 	numOfAttacksRemaining int
@@ -44,14 +45,15 @@ func EnsureAura(keyBinding string) AttackOption {
 	}
 }
 
-func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func PrimaryAttack(cfg *config.CharacterCfg, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         true,
 		basicStep:             newBasicStep(),
 		target:                target,
-		standStillBinding:     config.Config.Bindings.StandStill,
+		standStillBinding:     cfg.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		aoe:                   target == 0,
+		cfg:                   cfg,
 	}
 
 	for _, o := range opts {
@@ -60,15 +62,16 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *
 	return s
 }
 
-func SecondaryAttack(keyBinding string, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(cfg *config.CharacterCfg, keyBinding string, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         false,
 		basicStep:             newBasicStep(),
 		target:                target,
-		standStillBinding:     config.Config.Bindings.StandStill,
+		standStillBinding:     cfg.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		keyBinding:            keyBinding,
 		aoe:                   target == 0,
+		cfg:                   cfg,
 	}
 	for _, o := range opts {
 		o(s)
@@ -81,7 +84,7 @@ func (p *AttackStep) Status(_ data.Data, _ container.Container) Status {
 		return StatusCompleted
 	}
 
-	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > config.Config.Runtime.CastDuration {
+	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > p.cfg.Runtime.CastDuration {
 		return p.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -126,7 +129,7 @@ func (p *AttackStep) Run(d data.Data, container container.Container) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > config.Config.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
+	if time.Since(p.lastRun) > p.cfg.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
 		container.HID.KeyDown(p.standStillBinding)
 		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
@@ -167,7 +170,7 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 					}
 
 					pos := path.AstarPather[moveTo].(*pather.Tile)
-					p.moveToStep = MoveTo(data.Position{
+					p.moveToStep = MoveTo(p.cfg, data.Position{
 						X: pos.X + d.AreaOrigin.X,
 						Y: pos.Y + d.AreaOrigin.Y,
 					})
@@ -175,7 +178,7 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 			}
 
 			if p.moveToStep == nil {
-				p.moveToStep = MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
+				p.moveToStep = MoveTo(p.cfg, data.Position{X: monster.Position.X, Y: monster.Position.Y})
 			}
 		}
 

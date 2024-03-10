@@ -5,7 +5,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"log/slog"
 )
 
@@ -70,7 +69,7 @@ func (a TerrorZone) BuildActions() (actions []action.Action) {
 func (a TerrorZone) AvailableTZs(d data.Data) []area.Area {
 	var availableTZs []area.Area
 	for _, tz := range d.TerrorZones {
-		for _, tzArea := range config.Config.Game.TerrorZone.Areas {
+		for _, tzArea := range a.CharacterCfg.Game.TerrorZone.Areas {
 			if tz == tzArea {
 				availableTZs = append(availableTZs, tz)
 			}
@@ -95,7 +94,7 @@ func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
 		for _, terrorizedArea := range d.TerrorZones {
 			if terrorizedArea == dstArea {
 				// Skip areas that are not selected in the configuration
-				for _, tz := range config.Config.Game.TerrorZone.Areas {
+				for _, tz := range a.CharacterCfg.Game.TerrorZone.Areas {
 					if tz == dstArea {
 						clearArea = true
 					}
@@ -105,7 +104,7 @@ func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
 
 		if clearArea {
 			a.logger.Debug("Clearing TZ area", slog.Any("area", dstArea))
-			actions = append(actions, a.builder.ClearArea(true, customTZEnemyFilter(config.Config.Game.TerrorZone.SkipOnImmunities...)))
+			actions = append(actions, a.builder.ClearArea(true, a.customTZEnemyFilter(a.CharacterCfg.Game.TerrorZone.SkipOnImmunities...)))
 		} else {
 			a.logger.Debug("TZ area skipped", slog.Any("area", dstArea))
 		}
@@ -176,11 +175,11 @@ func (a TerrorZone) tzAreaChain(firstTZ area.Area) [][]area.Area {
 	return [][]area.Area{}
 }
 
-func customTZEnemyFilter(resists ...stat.Resist) data.MonsterFilter {
+func (a TerrorZone) customTZEnemyFilter(resists ...stat.Resist) data.MonsterFilter {
 	return func(m data.Monsters) []data.Monster {
 		var filteredMonsters []data.Monster
 		monsterFilter := data.MonsterAnyFilter()
-		if config.Config.Game.TerrorZone.FocusOnElitePacks {
+		if a.CharacterCfg.Game.TerrorZone.FocusOnElitePacks {
 			monsterFilter = data.MonsterEliteFilter()
 		}
 

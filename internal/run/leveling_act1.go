@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
@@ -168,7 +167,7 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 		action.NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d data.Data) error {
-					a.HID.PressKey(config.Config.Bindings.OpenInventory)
+					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
 					x := 0
 					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 						if itm.Name != "AntidotePotion" {

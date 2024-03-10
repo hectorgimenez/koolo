@@ -19,15 +19,17 @@ type MoveToStep struct {
 	nearestWalkable bool
 	timeout         time.Duration
 	startedAt       time.Time
+	cfg             *config.CharacterCfg
 }
 
 type MoveToStepOption func(step *MoveToStep)
 
-func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
+func MoveTo(cfg *config.CharacterCfg, destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
 		pathingStep: newPathingStep(),
 		destination: destination,
 		timeout:     time.Second * 30,
+		cfg:         cfg,
 	}
 
 	for _, o := range opts {
@@ -72,11 +74,11 @@ func (m *MoveToStep) Run(d data.Data, container container.Container) error {
 	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 	if helper.CanTeleport(d) {
 		if d.PlayerUnit.RightSkill != skill.Teleport {
-			container.HID.PressKey(config.Config.Bindings.Teleport)
+			container.HID.PressKey(m.cfg.Bindings.Teleport)
 		}
-	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && config.Config.Bindings.Paladin.Vigor != "" {
+	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && m.cfg.Bindings.Paladin.Vigor != "" {
 		if d.PlayerUnit.RightSkill != skill.Vigor {
-			container.HID.PressKey(config.Config.Bindings.Paladin.Vigor)
+			container.HID.PressKey(m.cfg.Bindings.Paladin.Vigor)
 		}
 	}
 
@@ -97,7 +99,7 @@ func (m *MoveToStep) Run(d data.Data, container container.Container) error {
 		return nil
 	}
 
-	if helper.CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if helper.CanTeleport(d) && time.Since(m.lastRun) < m.cfg.Runtime.CastDuration {
 		return nil
 	}
 

@@ -6,16 +6,19 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type OpenPortalStep struct {
 	basicStep
+	tpKB string
 }
 
-func OpenPortal() *OpenPortalStep {
-	return &OpenPortalStep{basicStep: newBasicStep()}
+func OpenPortal(tpKB string) *OpenPortalStep {
+	return &OpenPortalStep{
+		basicStep: newBasicStep(),
+		tpKB:      tpKB,
+	}
 }
 
 func (s *OpenPortalStep) Status(d data.Data, _ container.Container) Status {
@@ -42,7 +45,7 @@ func (s *OpenPortalStep) Run(_ data.Data, container container.Container) error {
 		return nil
 	}
 
-	container.HID.PressKey(config.Config.Bindings.TP)
+	container.HID.PressKey(s.tpKB)
 	helper.Sleep(250)
 	container.HID.Click(game.RightButton, 300, 300)
 	s.lastRun = time.Now()

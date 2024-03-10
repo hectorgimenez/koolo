@@ -47,7 +47,7 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 				step.SyncStep(func(d data.Data) error {
 					actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
-					b.hid.Click(hid2.LeftButton, actTabX, wpTabStartY)
+					b.HID.Click(hid2.LeftButton, actTabX, wpTabStartY)
 					helper.Sleep(200)
 
 					return nil
@@ -80,7 +80,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 			return []step.Step{
 				step.SyncStep(func(d data.Data) error {
 					areaBtnY := wpListStartY + (currentWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-					b.hid.Click(hid2.LeftButton, wpListPositionX, areaBtnY)
+					b.HID.Click(hid2.LeftButton, wpListPositionX, areaBtnY)
 					helper.Sleep(1000)
 
 					return nil
@@ -96,7 +96,7 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		traverseAreas = append(traverseAreas, finalDestination)
 
 		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
-		b.logger.Info("Traversing areas to reach destination", slog.Any("areas", traverseAreas))
+		b.Logger.Info("Traversing areas to reach destination", slog.Any("areas", traverseAreas))
 
 		for i, dst := range traverseAreas {
 			if !dst.IsTown() {

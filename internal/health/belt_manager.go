@@ -15,13 +15,15 @@ type BeltManager struct {
 	logger    *slog.Logger
 	hid       *game.HID
 	eventChan chan<- event.Event
+	cfg       *config.CharacterCfg
 }
 
-func NewBeltManager(logger *slog.Logger, hid *game.HID, eventChan chan<- event.Event) BeltManager {
+func NewBeltManager(logger *slog.Logger, hid *game.HID, eventChan chan<- event.Event, cfg *config.CharacterCfg) BeltManager {
 	return BeltManager{
 		logger:    logger,
 		hid:       hid,
 		eventChan: eventChan,
+		cfg:       cfg,
 	}
 }
 
@@ -48,9 +50,9 @@ func (bm BeltManager) DrinkPotion(d data.Data, potionType data.PotionType, merc 
 
 // ShouldBuyPotions will return true if more than 25% of belt is empty (ignoring rejuv)
 func (bm BeltManager) ShouldBuyPotions(d data.Data) bool {
-	targetHealingAmount := config.Config.Inventory.BeltColumns.Healing * d.Items.Belt.Rows()
-	targetManaAmount := config.Config.Inventory.BeltColumns.Mana * d.Items.Belt.Rows()
-	targetRejuvAmount := config.Config.Inventory.BeltColumns.Rejuvenation * d.Items.Belt.Rows()
+	targetHealingAmount := bm.cfg.Inventory.BeltColumns.Healing * d.Items.Belt.Rows()
+	targetManaAmount := bm.cfg.Inventory.BeltColumns.Mana * d.Items.Belt.Rows()
+	targetRejuvAmount := bm.cfg.Inventory.BeltColumns.Rejuvenation * d.Items.Belt.Rows()
 
 	currentHealing, currentMana, currentRejuv := bm.getCurrentPotions(d)
 
@@ -98,21 +100,21 @@ func (bm BeltManager) GetMissingCount(d data.Data, potionType data.PotionType) i
 
 	switch potionType {
 	case data.HealingPotion:
-		targetAmount := config.Config.Inventory.BeltColumns.Healing * d.Items.Belt.Rows()
+		targetAmount := bm.cfg.Inventory.BeltColumns.Healing * d.Items.Belt.Rows()
 		missingPots := targetAmount - currentHealing
 		if missingPots < 0 {
 			return 0
 		}
 		return missingPots
 	case data.ManaPotion:
-		targetAmount := config.Config.Inventory.BeltColumns.Mana * d.Items.Belt.Rows()
+		targetAmount := bm.cfg.Inventory.BeltColumns.Mana * d.Items.Belt.Rows()
 		missingPots := targetAmount - currentMana
 		if missingPots < 0 {
 			return 0
 		}
 		return missingPots
 	case data.RejuvenationPotion:
-		targetAmount := config.Config.Inventory.BeltColumns.Rejuvenation * d.Items.Belt.Rows()
+		targetAmount := bm.cfg.Inventory.BeltColumns.Rejuvenation * d.Items.Belt.Rows()
 		missingPots := targetAmount - currentRejuv
 		if missingPots < 0 {
 			return 0
@@ -126,13 +128,13 @@ func (bm BeltManager) GetMissingCount(d data.Data, potionType data.PotionType) i
 func (bm BeltManager) getBindingBasedOnColumn(position data.Position) string {
 	switch position.X {
 	case 0:
-		return config.Config.Bindings.Potion1
+		return bm.cfg.Bindings.Potion1
 	case 1:
-		return config.Config.Bindings.Potion2
+		return bm.cfg.Bindings.Potion2
 	case 2:
-		return config.Config.Bindings.Potion3
+		return bm.cfg.Bindings.Potion3
 	case 3:
-		return config.Config.Bindings.Potion4
+		return bm.cfg.Bindings.Potion4
 	}
 
 	return ""

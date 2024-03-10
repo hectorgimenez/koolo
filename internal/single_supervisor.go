@@ -56,7 +56,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 				runs := s.runFactory.BuildRuns()
 				gameStart := time.Now()
-				if config.Config.Game.RandomizeRuns {
+				if config.Characters[s.name].Game.RandomizeRuns {
 					rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 				}
 				s.logGameStart(runs)

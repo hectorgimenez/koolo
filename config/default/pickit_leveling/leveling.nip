@@ -48,3 +48,19 @@
 [type] == armor # [sockets] == 3 // Treachery
 [type] == armor # [sockets] == 2 // Stealth
 [type] == helm # [sockets] == 2 // Lore
+
+// Paladin Shields
+[name] == rondache && [flag] != ethereal // Spirit
+[name] == akarantarge && [flag] != ethereal // Spirit
+[name] == aerinshield && [flag] != ethereal // Spirit
+[name] == akaranrondache && [flag] != ethereal // Spirit
+[name] == heraldicshield && [flag] != ethereal // Spirit
+
+
+[type] == gloves && [quality] >= rare
+[type] == boots && [quality] >= rare
+[type] == amulet && [quality] >= rare
+[type] == ring && [quality] >= rare
+[type] == orb && [quality] >= rare
+[type] == helm && [quality] >= rare
+[type] == polearm && [quality] >= rare

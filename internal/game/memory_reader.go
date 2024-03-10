@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/memory"
@@ -10,52 +9,48 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game/map_client"
 	"github.com/lxn/win"
 	"strconv"
-	"syscall"
 )
 
 var CachedMapData map_client.MapData
 
 type MemoryReader struct {
 	*memory.GameReader
-	cachedMapSeed uint
-	HWND          win.HWND
-	WindowLeftX   int
-	WindowTopY    int
-	GameAreaSizeX int
-	GameAreaSizeY int
+	cachedMapSeed  uint
+	HWND           win.HWND
+	WindowLeftX    int
+	WindowTopY     int
+	GameAreaSizeX  int
+	GameAreaSizeY  int
+	supervisorName string
 }
 
-func NewGameReader() (*MemoryReader, error) {
-	process, err := memory.NewProcess()
-	if err != nil {
-		return nil, fmt.Errorf("error finding D2R.exe process: %w", err)
-	}
-
-	ptr, err := syscall.UTF16PtrFromString("Diablo II: Resurrected")
+func NewGameReader(supervisorName string, pid uint32, window win.HWND) (*MemoryReader, error) {
+	process, err := memory.NewProcessForPID(pid)
 	if err != nil {
 		return nil, err
 	}
-	window := win.FindWindow(nil, ptr)
-	if window == win.HWND_TOP {
-		return nil, errors.New("diablo II: Resurrected window can not be found! Ensure game is open")
-	}
-
-	pos := win.WINDOWPLACEMENT{}
-	point := win.POINT{}
-	win.ClientToScreen(window, &point)
-	win.GetWindowPlacement(window, &pos)
 
 	gr := &MemoryReader{
-		GameReader: memory.NewGameReader(process),
-		HWND:       window,
+		GameReader:     memory.NewGameReader(process),
+		HWND:           window,
+		supervisorName: supervisorName,
 	}
 
-	gr.WindowLeftX = int(point.X)
-	gr.WindowTopY = int(point.Y)
-	gr.GameAreaSizeX = int(pos.RcNormalPosition.Right) - gr.WindowLeftX - 9
-	gr.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - gr.WindowTopY - 9
+	gr.updateWindowPositionData()
 
 	return gr, nil
+}
+
+func (gd *MemoryReader) updateWindowPositionData() {
+	pos := win.WINDOWPLACEMENT{}
+	point := win.POINT{}
+	win.ClientToScreen(gd.HWND, &point)
+	win.GetWindowPlacement(gd.HWND, &pos)
+
+	gd.WindowLeftX = int(point.X)
+	gd.WindowTopY = int(point.Y)
+	gd.GameAreaSizeX = int(pos.RcNormalPosition.Right) - gd.WindowLeftX - 9
+	gd.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - gd.WindowTopY - 9
 }
 
 func (gd *MemoryReader) GetData(isNewGame bool) data.Data {
@@ -64,7 +59,7 @@ func (gd *MemoryReader) GetData(isNewGame bool) data.Data {
 	if isNewGame {
 		playerUnitPtr, _ := gd.GetPlayerUnitPtr(d.Roster)
 		gd.cachedMapSeed, _ = gd.getMapSeed(playerUnitPtr)
-		CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Config.Game.Difficulty)
+		CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
 	}
 
 	origin := CachedMapData.Origin(d.PlayerUnit.Area)

@@ -17,7 +17,7 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 			return nil
 		}
 
-		b.logger.Info("Visiting vendor...", slog.Bool("forceRefill", forceRefill))
+		b.Logger.Info("Visiting vendor...", slog.Bool("forceRefill", forceRefill))
 
 		openShopStep := step.KeySequence("home", "down", "enter")
 		vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).RefillNPC()
@@ -72,7 +72,7 @@ func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain 
 					if found {
 						b.sm.BuyItem(itm, i.Quantity)
 					} else {
-						b.logger.Warn("Item not found in vendor", slog.String("Item", string(i.Item)))
+						b.Logger.Warn("Item not found in vendor", slog.String("Item", string(i.Item)))
 					}
 				}
 
@@ -92,7 +92,7 @@ type VendorItemRequest struct {
 
 func (b *Builder) shouldVisitVendor(d data.Data) bool {
 	// Check if we should sell junk
-	if len(town.ItemsToBeSold(d)) > 0 {
+	if len(town.ItemsToBeSold(b.CharacterCfg.Inventory.InventoryLock, d)) > 0 {
 		return true
 	}
 

@@ -62,7 +62,7 @@ func (s *CompanionSupervisor) Start() error {
 			case <-ctx.Done():
 				return
 			default:
-				if config.Config.Companion.Leader {
+				if config.Characters[s.name].Companion.Leader {
 					gameName, err := s.gm.CreateOnlineGame(gameCounter)
 					gameCounter++ // Sometimes game is created but error during join, so game name will be in use
 					if err != nil {
@@ -70,7 +70,7 @@ func (s *CompanionSupervisor) Start() error {
 						continue
 					}
 
-					s.eventChan <- event.GameCreated(event.Text("New game created: %s"), gameName, config.Config.Companion.GamePassword)
+					s.eventChan <- event.GameCreated(event.Text("New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword)
 
 					err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
 					if err != nil {

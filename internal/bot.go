@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -18,12 +18,13 @@ import (
 
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
 type Bot struct {
-	logger    *slog.Logger
-	hm        health.Manager
-	ab        *action.Builder
-	container container.Container
-	eventChan chan<- event.Event
-	paused    bool
+	logger         *slog.Logger
+	hm             health.Manager
+	ab             *action.Builder
+	container      container.Container
+	eventChan      chan<- event.Event
+	paused         bool
+	supervisorName string
 }
 
 func NewBot(
@@ -31,14 +32,16 @@ func NewBot(
 	hm health.Manager,
 	ab *action.Builder,
 	container container.Container,
+	supervisorName string,
 	eventChan chan<- event.Event,
 ) *Bot {
 	return &Bot{
-		logger:    logger,
-		hm:        hm,
-		ab:        ab,
-		container: container,
-		eventChan: eventChan,
+		logger:         logger,
+		hm:             hm,
+		ab:             ab,
+		container:      container,
+		supervisorName: supervisorName,
+		eventChan:      eventChan,
 	}
 }
 
@@ -151,7 +154,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 }
 
 func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
-	if time.Since(startedAt).Seconds() > float64(config.Config.MaxGameLength) {
+	if time.Since(startedAt).Seconds() > float64(config.Characters[b.supervisorName].MaxGameLength) {
 		return fmt.Errorf(
 			"max game length reached, try to exit game: %0.2f",
 			time.Since(startedAt).Seconds(),
@@ -162,7 +165,7 @@ func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
 }
 
 func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
-	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+	if config.Characters[b.supervisorName].Companion.Enabled && !config.Characters[b.supervisorName].Companion.Leader {
 		return []action.Action{}
 	}
 
@@ -173,7 +176,7 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 
 	// Don't return town on last run
 	if currentRun != len(runs)-1 {
-		if config.Config.Game.ClearTPArea {
+		if config.Characters[b.supervisorName].Game.ClearTPArea {
 			actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
 			actions = append(actions, b.ab.ItemPickup(false, -1))
 		}

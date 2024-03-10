@@ -9,10 +9,12 @@ go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w 
 
 echo Copying assets...
 mkdir build\config > NUL || goto :error
-copy config\config.yaml.dist build\config\config.yaml  > NUL || goto :error
-xcopy /q /E /I /y config\pickit build\config\pickit  > NUL || goto :error
-xcopy /q /E /I /y config\pickit_leveling build\config\pickit_leveling  > NUL || goto :error
-xcopy /q /y koolo-map.exe build > NUL || goto :error
+copy config\koolo.yaml.dist build\config\koolo.yaml  > NUL || goto :error
+mkdir build\config\default > NUL || goto :error
+copy config\default\config.yaml.dist build\config\default\config.yaml  > NUL || goto :error
+xcopy /q /E /I /y config\default\pickit build\config\default\pickit  > NUL || goto :error
+xcopy /q /E /I /y config\default\pickit_leveling build\config\default\pickit_leveling  > NUL || goto :error
+xcopy /q /E /I /y tools build\tools > NUL || goto :error
 xcopy /q /y README.md build > NUL || goto :error
 
 echo Done! Artifacts are in build directory.

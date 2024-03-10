@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
@@ -16,28 +15,28 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		items := b.itemsToIdentify(d)
 
-		b.logger.Debug("Checking for items to identify...")
+		b.Logger.Debug("Checking for items to identify...")
 		if len(items) == 0 || skipIdentify {
-			b.logger.Debug("No items to identify...")
+			b.Logger.Debug("No items to identify...")
 			return
 		}
 
 		idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
 		if !found {
-			b.logger.Warn("ID Tome not found, not identifying items")
+			b.Logger.Warn("ID Tome not found, not identifying items")
 			return
 		}
 
 		if st, statFound := idTome.Stats[stat.Quantity]; !statFound || st.Value < len(items) {
-			b.logger.Info("Not enough ID scrolls, refilling...")
+			b.Logger.Info("Not enough ID scrolls, refilling...")
 			actions = append(actions, b.VendorRefill(true, false))
 		}
 
-		b.logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
+		b.Logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{
 				step.SyncStepWithCheck(func(d data.Data) error {
-					b.hid.PressKey(config.Config.Bindings.OpenInventory)
+					b.HID.PressKey(b.CharacterCfg.Bindings.OpenInventory)
 					return nil
 				}, func(d data.Data) step.Status {
 					if d.OpenMenus.Inventory {
@@ -51,7 +50,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 						b.identifyItem(idTome, i)
 					}
 
-					b.hid.PressKey("esc")
+					b.HID.PressKey("esc")
 
 					return nil
 				}),
@@ -77,10 +76,10 @@ func (b *Builder) itemsToIdentify(d data.Data) (items []data.Item) {
 func (b *Builder) identifyItem(idTome data.Item, i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(idTome)
 	helper.Sleep(500)
-	b.hid.Click(game.RightButton, screenPos.X, screenPos.Y)
+	b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	helper.Sleep(1000)
 
 	screenPos = ui.GetScreenCoordsForItem(i)
-	b.hid.Click(game.LeftButton, screenPos.X, screenPos.Y)
+	b.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
 	helper.Sleep(350)
 }

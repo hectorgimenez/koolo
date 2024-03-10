@@ -20,6 +20,7 @@ type ModifierKey uint
 // MovePointer moves the mouse to the requested position, x and y should be the final position based on
 // pixels shown in the screen. Top-left corner is 0,0
 func (hid *HID) MovePointer(x, y int) {
+	hid.gr.updateWindowPositionData()
 	x = hid.gr.WindowLeftX + x
 	y = hid.gr.WindowTopY + y
 

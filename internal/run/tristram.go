@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
@@ -35,7 +34,7 @@ func (a Tristram) BuildActions() []action.Action {
 	}
 
 	// Clear monsters around the portal
-	if config.Config.Game.Tristram.ClearPortal {
+	if a.CharacterCfg.Game.Tristram.ClearPortal {
 		actions = append(actions, a.builder.ClearAreaAroundPlayer(10))
 	}
 
@@ -46,9 +45,9 @@ func (a Tristram) BuildActions() []action.Action {
 		return d.PlayerUnit.Area == area.Tristram
 	}, step.Wait(time.Second)))
 
-	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
+	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
 		actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
-			return []step.Step{step.OpenPortal()}
+			return []step.Step{step.OpenPortal(a.CharacterCfg.Bindings.TP)}
 		}))
 	}
 
@@ -62,7 +61,7 @@ func (a Tristram) BuildActions() []action.Action {
 			})}
 		} else {
 			filter := data.MonsterAnyFilter()
-			if config.Config.Game.Tristram.FocusOnElitePacks {
+			if a.CharacterCfg.Game.Tristram.FocusOnElitePacks {
 				filter = data.MonsterEliteFilter()
 			}
 			return []action.Action{a.builder.ClearArea(false, filter)}

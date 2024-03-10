@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 )
 
@@ -54,11 +53,11 @@ func (f *Factory) BuildRuns() (runs []Run) {
 		Container: f.container,
 	}
 
-	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+	if f.container.CharacterCfg.Companion.Enabled && !f.container.CharacterCfg.Companion.Leader {
 		return []Run{Companion{baseRun: baseRun}}
 	}
 
-	for _, run := range config.Config.Game.Runs {
+	for _, run := range f.container.CharacterCfg.Game.Runs {
 		// Prepend terror zone runs, we want to run it always first
 		if run == "terror_zone" {
 			tz := TerrorZone{baseRun: baseRun}
@@ -66,14 +65,14 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			if len(tz.AvailableTZs(d)) > 0 {
 				runs = append(runs, tz)
 				// If we are skipping other runs, we can return here
-				if config.Config.Game.TerrorZone.SkipOtherRuns {
+				if f.container.CharacterCfg.Game.TerrorZone.SkipOtherRuns {
 					return runs
 				}
 			}
 		}
 	}
 
-	for _, run := range config.Config.Game.Runs {
+	for _, run := range f.container.CharacterCfg.Game.Runs {
 		run = strings.ToLower(run)
 		switch run {
 		case "countess":
@@ -97,7 +96,7 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			})
 		case "pindleskin":
 			runs = append(runs, Pindleskin{
-				SkipOnImmunities: config.Config.Game.Pindleskin.SkipOnImmunities,
+				SkipOnImmunities: f.container.CharacterCfg.Game.Pindleskin.SkipOnImmunities,
 				baseRun:          baseRun,
 			})
 		case "nihlathak":

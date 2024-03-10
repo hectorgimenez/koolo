@@ -1,21 +1,7 @@
-debug:
-  log: true # Prints extra log information
-  renderMap: false # Render current map data into 'cg.png' file
-
-logSaveDirectory: logs
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
-D2LoDPath: 'E:\games\Diablo II'
-
-# In order to use to Discord Bot, you need the Application Token. https://discord.com/developers/docs/intro
-discord:
-  enabled: false
-  channelId: ''
-  token: ''
-
-telegram:
-  enabled: false
-  chatId: 0
-  token: ''
+userName: '' # Battle.net username (required for multiclient only)
+password: '' # Battle.net pwd (required for multiclient only)
+realm: 'eu.actual.battle.net' (required for multiclient only)
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75

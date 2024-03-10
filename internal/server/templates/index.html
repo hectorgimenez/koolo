@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="light dark"/>
     <meta http-equiv="refresh" content="5">
     <link rel="stylesheet" href="../assets/css/pico.min.css">
-    <title>Hello world!</title>
+    <title>Koolo Dashboard</title>
 </head>
 <body>
 <main class="container">
@@ -30,19 +30,19 @@
             <td>{{.TotalDeaths}}</td>
             <td>
                 {{ if eq .SupervisorStatus "Paused" }}
-                <a href="/togglePause" style="text-decoration: none;">
+                <a href="/togglePause?characterName={{$key}}" style="text-decoration: none;">
                     <button class="button">Resume</button>
                 </a>
                 {{ else if or (eq .SupervisorStatus "In game") (eq .SupervisorStatus "Starting") }}
-                <a href="/togglePause" style="text-decoration: none;">
+                <a href="/togglePause?characterName={{$key}}" style="text-decoration: none;">
                     <button class="button">Pause</button>
                 </a>
                 {{ else }}
-                <a href="/start" style="text-decoration: none;">
+                <a href="/start?characterName={{$key}}" style="text-decoration: none;">
                     <button class="button">Start</button>
                 </a>
                 {{ end }}
-                <a href="/stop" style="text-decoration: none;">
+                <a href="/stop?characterName={{$key}}" style="text-decoration: none;">
                     <button class="button">Stop</button>
                 </a>
             </td>

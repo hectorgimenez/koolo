@@ -11,15 +11,14 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 func (b *Builder) Gamble() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
-		if config.Config.Gambling.Enabled && d.PlayerUnit.Stats[stat.StashGold] >= 2500000 {
-			b.logger.Info("Time to gamble! Visiting vendor...")
+		if b.CharacterCfg.Gambling.Enabled && d.PlayerUnit.Stats[stat.StashGold] >= 2500000 {
+			b.Logger.Info("Time to gamble! Visiting vendor...")
 
 			openShopStep := step.KeySequence("home", "down", "down", "enter")
 			vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).GamblingNPC()
@@ -58,12 +57,12 @@ func (b *Builder) gambleItems() *StepChainAction {
 		if lastStep {
 			if d.OpenMenus.Inventory {
 				return []step.Step{step.SyncStep(func(d data.Data) error {
-					b.hid.PressKey("esc")
+					b.HID.PressKey("esc")
 					return nil
 				})}
 			}
 
-			b.logger.Info("Finished gambling", slog.Int("currentGold", d.PlayerUnit.TotalGold()))
+			b.Logger.Info("Finished gambling", slog.Int("currentGold", d.PlayerUnit.TotalGold()))
 
 			return nil
 		}
@@ -74,12 +73,12 @@ func (b *Builder) gambleItems() *StepChainAction {
 				if itm.UnitID == itemBought.UnitID {
 					itemBought = itm
 					itemBought.Location = item.LocationInventory
-					b.logger.Debug("Gambled for item", slog.Any("item", itemBought))
+					b.Logger.Debug("Gambled for item", slog.Any("item", itemBought))
 					break
 				}
 			}
 
-			if itemfilter.Evaluate(itemBought, config.Config.Runtime.Rules) {
+			if itemfilter.Evaluate(itemBought, b.CharacterCfg.Runtime.Rules) {
 				lastStep = true
 				return []step.Step{step.Wait(time.Millisecond * 200)}
 			} else {
@@ -97,9 +96,9 @@ func (b *Builder) gambleItems() *StepChainAction {
 			return []step.Step{step.Wait(time.Millisecond * 200)}
 		}
 
-		for idx, itmName := range config.Config.Gambling.Items {
+		for idx, itmName := range b.CharacterCfg.Gambling.Items {
 			// Let's try to get one of each every time
-			if currentIdx == len(config.Config.Gambling.Items) {
+			if currentIdx == len(b.CharacterCfg.Gambling.Items) {
 				currentIdx = 0
 			}
 
@@ -109,10 +108,10 @@ func (b *Builder) gambleItems() *StepChainAction {
 
 			itm, found := d.Items.Find(itmName, item.LocationVendor)
 			if !found {
-				b.logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
+				b.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
 
 				return []step.Step{step.SyncStep(func(d data.Data) error {
-					b.hid.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
+					b.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
 					return nil
 				}),
 					step.Wait(time.Millisecond * 500),

@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
 
-	logger, err := sloggger.NewLogger(config.Config.Debug.Log, config.Config.LogSaveDirectory)
+	logger, err := sloggger.NewLogger(config.Koolo.Debug.Log, config.Koolo.LogSaveDirectory)
 	if err != nil {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}
@@ -60,8 +60,8 @@ func main() {
 
 	additionalHandlers := make([]event.Handler, 0)
 	// Discord Bot initialization
-	if config.Config.Discord.Enabled {
-		discordBot, err := discord.NewBot(config.Config.Discord.Token, config.Config.Discord.ChannelID)
+	if config.Koolo.Discord.Enabled {
+		discordBot, err := discord.NewBot(config.Koolo.Discord.Token, config.Koolo.Discord.ChannelID)
 		if err != nil {
 			logger.Error("Discord could not been initialized", slog.Any("error", err))
 			return
@@ -74,8 +74,8 @@ func main() {
 	}
 
 	// Telegram Bot initialization
-	if config.Config.Telegram.Enabled {
-		telegramBot, err := telegram.NewBot(config.Config.Telegram.Token, config.Config.Telegram.ChatID, logger)
+	if config.Koolo.Telegram.Enabled {
+		telegramBot, err := telegram.NewBot(config.Koolo.Telegram.Token, config.Koolo.Telegram.ChatID, logger)
 		if err != nil {
 			logger.Error("Telegram could not been initialized", slog.Any("error", err))
 			return
@@ -87,7 +87,12 @@ func main() {
 		})
 	}
 
-	manager := koolo.NewSupervisorManager(logger, additionalHandlers)
+	availableSupervisors := make([]string, 0)
+	for characterName, _ := range config.Characters {
+		availableSupervisors = append(availableSupervisors, characterName)
+	}
+
+	manager := koolo.NewSupervisorManager(logger, availableSupervisors, additionalHandlers)
 
 	g.Go(func() error {
 		srv := server.New(logger, manager)

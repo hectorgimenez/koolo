@@ -32,6 +32,11 @@ func InjectorInit(pid uint32) (*MemoryInjector, error) {
 	}
 	i.handle = pHandle
 
+	err = KillMultiClientHandleForPID(pid)
+	if err != nil {
+		return nil, fmt.Errorf("error killing handle: %w", err)
+	}
+
 	return i, nil
 }
 

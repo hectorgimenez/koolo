@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -39,7 +38,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	)
 
 	// Let's move to a safe area and open the portal in companion mode
-	if config.Config.Companion.Enabled && config.Config.Companion.Leader {
+	if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
 		actions = append(actions,
 			s.builder.MoveToCoords(data.Position{
 				X: 15116,
@@ -81,7 +80,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.builder.ItemPickup(false, 30))
 
 	_, isLevelingChar := s.char.(action.LevelingCharacter)
-	if config.Config.Game.Baal.KillBaal || isLevelingChar {
+	if s.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		actions = append(actions,
 			s.builder.Wait(time.Second*10),
 			s.builder.Buff(),

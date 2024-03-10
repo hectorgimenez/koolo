@@ -6,15 +6,21 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/lxn/win"
+	"golang.org/x/sys/windows"
+	"os/exec"
+	"syscall"
+	"unsafe"
 )
 
 type Manager struct {
-	gr  *MemoryReader
-	hid *HID
+	gr             *MemoryReader
+	hid            *HID
+	supervisorName string
 }
 
-func NewGameManager(gr *MemoryReader, hid *HID) *Manager {
-	return &Manager{gr: gr, hid: hid}
+func NewGameManager(gr *MemoryReader, hid *HID, sueprvisorName string) *Manager {
+	return &Manager{gr: gr, hid: hid, supervisorName: sueprvisorName}
 }
 
 func (gm *Manager) ExitGame() error {
@@ -71,8 +77,8 @@ func (gm *Manager) NewGame() error {
 		difficulty.Hell:      {X: 640, Y: 403},
 	}
 
-	createX := difficultyPosition[config.Config.Game.Difficulty].X
-	createY := difficultyPosition[config.Config.Game.Difficulty].Y
+	createX := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty].X
+	createY := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty].Y
 	gm.hid.Click(LeftButton, 600, 650)
 	helper.Sleep(250)
 	gm.hid.Click(LeftButton, createX, createY)
@@ -105,7 +111,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 1000, 116)
 	gm.clearGameNameOrPasswordField()
-	gameName := config.Config.Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
+	gameName := config.Characters[gm.supervisorName].Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
 	for _, ch := range gameName {
 		gm.hid.PressKey(fmt.Sprintf("%c", ch))
 	}
@@ -113,7 +119,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	// Same for password
 	gm.hid.Click(LeftButton, 1000, 161)
 	helper.Sleep(200)
-	gamePassword := config.Config.Companion.GamePassword
+	gamePassword := config.Characters[gm.supervisorName].Companion.GamePassword
 	if gamePassword != "" {
 		gm.clearGameNameOrPasswordField()
 		for _, ch := range gamePassword {
@@ -172,4 +178,31 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 
 func (gm *Manager) InGame() bool {
 	return gm.gr.InGame()
+}
+
+func StartGame(username string, password string, realm string) (uint32, win.HWND, error) {
+	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", "-username", username, "-password", password, "-address", realm)
+	err := cmd.Start()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var foundHwnd windows.HWND
+	cb := syscall.NewCallback(func(hwnd windows.HWND, lParam uintptr) uintptr {
+		var pid uint32
+		windows.GetWindowThreadProcessId(hwnd, &pid)
+		if pid == uint32(cmd.Process.Pid) {
+			foundHwnd = hwnd
+			return 0
+		}
+		return 1
+	})
+	for {
+		windows.EnumWindows(cb, unsafe.Pointer(&cmd.Process.Pid))
+		if foundHwnd != 0 {
+			break
+		}
+	}
+
+	return uint32(cmd.Process.Pid), win.HWND(foundHwnd), nil
 }

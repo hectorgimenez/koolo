@@ -14,10 +14,11 @@ import (
 type PathFinder struct {
 	gr  *game.MemoryReader
 	hid *game.HID
+	cfg *config.CharacterCfg
 }
 
-func NewPathFinder(gr *game.MemoryReader, hid *game.HID) PathFinder {
-	return PathFinder{gr: gr, hid: hid}
+func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCfg) PathFinder {
+	return PathFinder{gr: gr, hid: hid, cfg: cfg}
 }
 
 func (pf PathFinder) GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
@@ -136,7 +137,7 @@ func (pf PathFinder) GetPath(d data.Data, to data.Position, blacklistedCoords ..
 	distance = int(distFloat)
 
 	// Debug only, this will render a png file with map and origin/destination points
-	if config.Config.Debug.RenderMap {
+	if config.Koolo.Debug.RenderMap {
 		w.renderPathImg(d, p, collisionGridOffset)
 	}
 
@@ -215,7 +216,7 @@ func (pf PathFinder) moveCharacter(teleport bool, x, y int) {
 		pf.hid.Click(game.RightButton, x, y)
 	} else {
 		pf.hid.MovePointer(x, y)
-		pf.hid.PressKey(config.Config.Bindings.ForceMove)
+		pf.hid.PressKey(pf.cfg.Bindings.ForceMove)
 		helper.Sleep(50)
 	}
 }
@@ -225,7 +226,7 @@ func (pf PathFinder) GameCoordsToScreenCords(playerX, playerY, destinationX, des
 	diffX := destinationX - playerX
 	diffY := destinationY - playerY
 
-	// Transform cartesian movement (world) to isometric (screen)e
+	// Transform cartesian movement (world) to isometric (screen)
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
 	screenX := int((float32(diffX-diffY) * 19.8) + float32(pf.gr.GameAreaSizeX/2))
 	screenY := int((float32(diffX+diffY) * 9.9) + float32(pf.gr.GameAreaSizeY/2))

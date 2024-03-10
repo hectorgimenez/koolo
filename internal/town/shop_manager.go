@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
@@ -45,7 +44,7 @@ func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
 
 	pot, found = sm.findFirstMatch(d, "supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
 	// In Normal greater potions are expensive as we are low level, let's keep with cheap ones
-	if config.Config.Game.Difficulty == "normal" {
+	if sm.container.CharacterCfg.Game.Difficulty == "normal" {
 		pot, found = sm.findFirstMatch(d, "manapotion", "lightmanapotion", "minormanapotion")
 	}
 	if found && missingManaPots > 0 {
@@ -134,8 +133,8 @@ func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
 }
 
 func (sm ShopManager) SellJunk(d data.Data) {
-	for _, i := range ItemsToBeSold(d) {
-		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+	for _, i := range ItemsToBeSold(sm.container.CharacterCfg.Inventory.InventoryLock, d) {
+		if sm.container.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			sm.SellItem(i)
 		}
 	}
@@ -165,13 +164,13 @@ func (sm ShopManager) buyFullStack(i data.Item) {
 	helper.Sleep(500)
 }
 
-func ItemsToBeSold(d data.Data) (items []data.Item) {
+func ItemsToBeSold(lockPattern [][]int, d data.Data) (items []data.Item) {
 	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 		if itm.IsFromQuest() {
 			continue
 		}
 
-		if config.Config.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
+		if lockPattern[itm.Position.Y][itm.Position.X] == 1 {
 			items = append(items, itm)
 		}
 	}

@@ -15,24 +15,28 @@ import (
 	"log/slog"
 )
 
-var supervisorName = "koolo" // TODO: get from config
-
 type SupervisorManager struct {
-	logger        *slog.Logger
-	supervisors   map[string]Supervisor
-	eventHandlers []event.Handler
+	logger               *slog.Logger
+	supervisors          map[string]Supervisor
+	availableSupervisors []string
+	eventHandlers        []event.Handler
 }
 
-func NewSupervisorManager(logger *slog.Logger, additionalEventHandlers []event.Handler) *SupervisorManager {
+func NewSupervisorManager(logger *slog.Logger, availableSupervisors []string, additionalEventHandlers []event.Handler) *SupervisorManager {
 	return &SupervisorManager{
-		logger:        logger,
-		supervisors:   make(map[string]Supervisor),
-		eventHandlers: additionalEventHandlers,
+		logger:               logger,
+		supervisors:          make(map[string]Supervisor),
+		availableSupervisors: availableSupervisors,
+		eventHandlers:        additionalEventHandlers,
 	}
 }
 
-func (mng *SupervisorManager) Start() error {
-	supervisor, err := mng.buildSupervisor(mng.logger)
+func (mng *SupervisorManager) AvailableSupervisors() []string {
+	return mng.availableSupervisors
+}
+
+func (mng *SupervisorManager) Start(characterName string) error {
+	supervisor, err := mng.buildSupervisor(characterName, mng.logger)
 	if err != nil {
 		return err
 	}
@@ -41,31 +45,49 @@ func (mng *SupervisorManager) Start() error {
 	return supervisor.Start()
 }
 
-func (mng *SupervisorManager) Stop() {
-	s, found := mng.supervisors[supervisorName]
+func (mng *SupervisorManager) Stop(characterName string) {
+	s, found := mng.supervisors[characterName]
 	if found {
 		s.Stop()
-		delete(mng.supervisors, supervisorName)
+		delete(mng.supervisors, characterName)
 	}
 }
 
-func (mng *SupervisorManager) TogglePause() {
-	s, found := mng.supervisors[supervisorName]
+func (mng *SupervisorManager) TogglePause(characterName string) {
+	s, found := mng.supervisors[characterName]
 	if found {
 		s.TogglePause()
 	}
 }
 
-func (mng *SupervisorManager) Status() map[string]Stats {
-	status := make(map[string]Stats)
+func (mng *SupervisorManager) Status(characterName string) Stats {
 	for name, supervisor := range mng.supervisors {
-		status[name] = supervisor.Stats()
+		if name == characterName {
+			return supervisor.Stats()
+		}
 	}
-	return status
+
+	return Stats{}
 }
 
-func (mng *SupervisorManager) buildSupervisor(logger *slog.Logger) (Supervisor, error) {
-	gr, err := game.NewGameReader()
+func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger) (Supervisor, error) {
+	cfg, found := config.Characters[supervisorName]
+	if !found {
+		return nil, fmt.Errorf("character %s not found", supervisorName)
+	}
+
+	pid := uint32(0)
+	var err error
+	if cfg.Username != "" && cfg.Password != "" {
+		// TODO: Support if the game is already running
+	}
+
+	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("error starting game: %w", err)
+	}
+
+	gr, err := game.NewGameReader(supervisorName, pid, hwnd)
 	if err != nil {
 		return nil, fmt.Errorf("error creating game reader: %w", err)
 	}
@@ -82,16 +104,19 @@ func (mng *SupervisorManager) buildSupervisor(logger *slog.Logger) (Supervisor, 
 	}
 
 	hidM := game.NewHID(gr, gi)
-	bm := health.NewBeltManager(logger, hidM, eventChannel)
-	gm := game.NewGameManager(gr, hidM)
-	hm := health.NewHealthManager(logger, bm, gm)
-	pf := pather.NewPathFinder(gr, hidM)
+	bm := health.NewBeltManager(logger, hidM, eventChannel, cfg)
+	gm := game.NewGameManager(gr, hidM, supervisorName)
+	hm := health.NewHealthManager(logger, bm, gm, cfg)
+	pf := pather.NewPathFinder(gr, hidM, cfg)
 	c := container.Container{
-		Reader:     gr,
-		HID:        hidM,
-		Injector:   gi,
-		Manager:    gm,
-		PathFinder: pf,
+		Logger:       logger,
+		Reader:       gr,
+		HID:          hidM,
+		Injector:     gi,
+		Manager:      gm,
+		PathFinder:   pf,
+		CharacterCfg: cfg,
+		EventChan:    eventChannel,
 	}
 	sm := town.NewShopManager(logger, bm, c)
 
@@ -100,14 +125,14 @@ func (mng *SupervisorManager) buildSupervisor(logger *slog.Logger) (Supervisor, 
 		return nil, fmt.Errorf("error creating character: %w", err)
 	}
 
-	ab := action.NewBuilder(logger, sm, bm, gr, char, hidM, pf, eventChannel)
-	bot := NewBot(logger, hm, ab, c, eventChannel)
+	ab := action.NewBuilder(c, sm, bm, char)
+	bot := NewBot(logger, hm, ab, c, supervisorName, eventChannel)
 	runFactory := run.NewFactory(logger, ab, char, bm, c)
 
 	statsHandler := NewStatsHandler(supervisorName, logger)
 	eventListener.Register(statsHandler.Handle)
 
-	if config.Config.Companion.Enabled {
+	if config.Characters[supervisorName].Companion.Enabled {
 		return NewCompanionSupervisor(supervisorName, logger, bot, gr, gm, gi, runFactory, eventChannel, statsHandler, eventListener)
 	}
 

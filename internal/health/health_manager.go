@@ -27,6 +27,7 @@ type Manager struct {
 	logger        *slog.Logger
 	beltManager   BeltManager
 	gameManager   *game.Manager
+	cfg           *config.CharacterCfg
 	lastRejuv     time.Time
 	lastRejuvMerc time.Time
 	lastHeal      time.Time
@@ -34,16 +35,17 @@ type Manager struct {
 	lastMercHeal  time.Time
 }
 
-func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *game.Manager) Manager {
+func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *game.Manager, cfg *config.CharacterCfg) Manager {
 	return Manager{
 		logger:      logger,
 		beltManager: beltManager,
 		gameManager: gm,
+		cfg:         cfg,
 	}
 }
 
 func (hm *Manager) HandleHealthAndMana(d data.Data) error {
-	hpConfig := config.Config.Health
+	hpConfig := hm.cfg.Health
 	// Safe area, skipping
 	if d.PlayerUnit.Area.IsTown() {
 		return nil

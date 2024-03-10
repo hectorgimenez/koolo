@@ -5,7 +5,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 var mephistoSafePosition = data.Position{
@@ -29,13 +28,13 @@ func (m Mephisto) BuildActions() []action.Action {
 		m.char.KillMephisto(),                        // Kill Mephisto
 	}
 
-	if config.Config.Game.Mephisto.KillCouncilMembers || config.Config.Game.Mephisto.OpenChests {
+	if m.CharacterCfg.Game.Mephisto.KillCouncilMembers || m.CharacterCfg.Game.Mephisto.OpenChests {
 		actions = append(actions,
 			m.builder.ItemPickup(true, 40),
-			m.builder.ClearArea(config.Config.Game.Mephisto.OpenChests, func(monsters data.Monsters) []data.Monster {
+			m.builder.ClearArea(m.CharacterCfg.Game.Mephisto.OpenChests, func(monsters data.Monsters) []data.Monster {
 				councilMembers := make([]data.Monster, 0)
 				// Let's skip all the monsters in case we don't want to kill them but open chests
-				if !config.Config.Game.Mephisto.KillCouncilMembers {
+				if !m.CharacterCfg.Game.Mephisto.KillCouncilMembers {
 					return councilMembers
 				}
 

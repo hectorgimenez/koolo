@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
@@ -20,7 +19,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary {
 		return NewChain(func(d data.Data) []Action {
-			b.logger.Debug("Arcane Sanctuary detected, finding the Portal")
+			b.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
 			portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
 			return []Action{
 				b.MoveToCoords(portal.Position),
@@ -37,13 +36,13 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 
 	toFun := func(d data.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
-			b.logger.Debug("Reached area", slog.Any("area", dst))
+			b.Logger.Debug("Reached area", slog.Any("area", dst))
 			return data.Position{}, false
 		}
 
 		switch dst {
 		case area.MonasteryGate:
-			b.logger.Debug("Monastery Gate detected, moving to static coords")
+			b.Logger.Debug("Monastery Gate detected, moving to static coords")
 			return data.Position{X: 15139, Y: 5056}, true
 		}
 
@@ -51,7 +50,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 			if a.Area == dst {
 				// To correctly detect the two possible exits from Lut Gholein
 				if dst == area.RockyWaste && d.PlayerUnit.Area == area.LutGholein {
-					if _, _, found := b.pf.GetPath(d, data.Position{X: 5004, Y: 5065}); found {
+					if _, _, found := b.PathFinder.GetPath(d, data.Position{X: 5004, Y: 5065}); found {
 						return data.Position{X: 4989, Y: 5063}, true
 					} else {
 						return data.Position{X: 5096, Y: 4997}, true
@@ -68,7 +67,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 
 				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 				for _, obj := range objects {
-					_, _, found := b.pf.GetPath(d, obj.Position)
+					_, _, found := b.PathFinder.GetPath(d, obj.Position)
 					if found {
 						return obj.Position, true
 					}
@@ -78,7 +77,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 			}
 		}
 
-		b.logger.Debug("Destination area not found", slog.Any("area", dst))
+		b.Logger.Debug("Destination area not found", slog.Any("area", dst))
 
 		return data.Position{}, false
 	}
@@ -128,7 +127,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && config.Config.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && config.Config.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			if ((!healingPotsFound && b.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && b.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return []Action{NewChain(func(d data.Data) []Action {
 					return b.InRunReturnTownRoutine()
 				})}
@@ -139,7 +138,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
 			if !isLevelingChar {
 				return []Action{NewStepChain(func(d data.Data) []step.Step {
-					return []step.Step{step.MoveTo(to, opts...)}
+					return []step.Step{step.MoveTo(b.CharacterCfg, to, opts...)}
 				})}
 			}
 			// But if we are leveling and have enough money (to buy mana pots), let's teleport. We add the timeout
@@ -147,7 +146,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			if d.PlayerUnit.TotalGold() > 30000 {
 				return []Action{NewStepChain(func(d data.Data) []step.Step {
 					newOpts := append(opts, step.WithTimeout(5*time.Second))
-					return []step.Step{step.MoveTo(to, newOpts...)}
+					return []step.Step{step.MoveTo(b.CharacterCfg, to, newOpts...)}
 				})}
 			}
 		}
@@ -157,7 +156,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 				if o.Selectable {
 					return []Action{NewStepChain(func(d data.Data) []step.Step {
-						b.logger.Info("Door detected and teleport is not available, trying to open it...")
+						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
 						return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
 							for _, obj := range d.Objects {
@@ -208,17 +207,17 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 
 		if len(targetedNormalEnemies) > 5 || len(targetedElites) > 0 || (stuck && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) || (pather.IsNarrowMap(d.PlayerUnit.Area) && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) {
 			if stuck {
-				b.logger.Info("Character stuck and monsters detected, trying to kill monsters around")
+				b.Logger.Info("Character stuck and monsters detected, trying to kill monsters around")
 			} else {
-				b.logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
+				b.Logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
 			}
 
-			path, _, mPathFound := b.pf.GetPath(d, closestMonster.Position)
+			path, _, mPathFound := b.PathFinder.GetPath(d, closestMonster.Position)
 			if mPathFound {
 				doorIsBlocking := false
 				for _, o := range d.Objects {
 					if o.IsDoor() && o.Selectable && path.Intersects(d, o.Position, 4) {
-						b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
+						b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
 						doorIsBlocking = true
 					}
 				}
@@ -243,6 +242,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 			previousIterationPosition = d.PlayerUnit.Position
 			if currentStep == nil {
 				currentStep = step.MoveTo(
+					b.CharacterCfg,
 					to,
 					newOpts...,
 				)

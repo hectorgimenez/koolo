@@ -6,7 +6,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
-	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type SwapWeaponStep struct {
@@ -15,17 +14,17 @@ type SwapWeaponStep struct {
 	wantCTA bool
 }
 
-func SwapToMainWeapon() *SwapWeaponStep {
+func SwapToMainWeapon(swapWeaponKB string) *SwapWeaponStep {
 	return &SwapWeaponStep{
 		basicStep: newBasicStep(),
-		binding:   config.Config.Bindings.SwapWeapon,
+		binding:   swapWeaponKB,
 	}
 }
 
-func SwapToCTA() *SwapWeaponStep {
+func SwapToCTA(swapWeaponKB string) *SwapWeaponStep {
 	return &SwapWeaponStep{
 		basicStep: newBasicStep(),
-		binding:   config.Config.Bindings.SwapWeapon,
+		binding:   swapWeaponKB,
 		wantCTA:   true,
 	}
 }
