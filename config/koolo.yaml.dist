@@ -1,3 +1,4 @@
+firstRun: true # If set to true next time the bot starts it will show the setup wizard
 debug:
   log: true # Prints extra log information
   renderMap: false # Render current map data into 'cg.png' file

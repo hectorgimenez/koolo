@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -10,7 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/server"
-	"github.com/jchv/go-webview2"
+	"github.com/inkeliz/gowebview"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"log/slog"
@@ -34,23 +33,23 @@ func main() {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		w := webview2.NewWithOptions(webview2.WebViewOptions{
-			Debug:     false,
-			AutoFocus: true,
-			WindowOptions: webview2.WindowOptions{
-				Title:  "Koolo",
-				Width:  1280,
-				Height: 720,
-				IconId: 1, // icon resource id
-				Center: true,
+		w, err := gowebview.New(&gowebview.Config{URL: "http://localhost:8087", WindowConfig: &gowebview.WindowConfig{
+			Title: "Koolo",
+			Size: &gowebview.Point{
+				X: 1280,
+				Y: 720,
 			},
-		})
-		if w == nil {
-			return errors.New("failed to load webview")
+		}})
+		if err != nil {
+			panic(err)
 		}
+
+		w.SetSize(&gowebview.Point{
+			X: 1280,
+			Y: 720,
+		}, gowebview.HintFixed)
+
 		defer w.Destroy()
-		w.SetSize(1280, 720, webview2.HintFixed)
-		w.Navigate("http://localhost:8087")
 		w.Run()
 
 		cancel()
@@ -87,12 +86,7 @@ func main() {
 		})
 	}
 
-	availableSupervisors := make([]string, 0)
-	for characterName, _ := range config.Characters {
-		availableSupervisors = append(availableSupervisors, characterName)
-	}
-
-	manager := koolo.NewSupervisorManager(logger, availableSupervisors, additionalHandlers)
+	manager := koolo.NewSupervisorManager(logger, additionalHandlers)
 
 	g.Go(func() error {
 		srv := server.New(logger, manager)

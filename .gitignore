@@ -3,5 +3,4 @@
 /stats
 /screenshots
 /logs
-/config/*/*.yaml
 /config/*.yaml

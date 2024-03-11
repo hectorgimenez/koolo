@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	cp "github.com/otiai10/copy"
 	"os"
 	"time"
 
@@ -20,7 +21,8 @@ var (
 )
 
 type KooloCfg struct {
-	Debug struct {
+	FirstRun bool `yaml:"firstRun"`
+	Debug    struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`
@@ -179,7 +181,7 @@ func Load() error {
 
 		d := yaml.NewDecoder(r)
 		if err = d.Decode(&charCfg); err != nil {
-			return fmt.Errorf("error reading %s character config config: %w", entry.Name(), err)
+			return fmt.Errorf("error reading %s character config: %w", entry.Name(), err)
 		}
 
 		rules, err := nip.ReadDir("config/" + entry.Name() + "/pickit/")
@@ -203,4 +205,29 @@ func Load() error {
 	}
 
 	return nil
+}
+
+func CreateFromTemplate(name string) error {
+	err := cp.Copy("config/template", "config/"+name)
+	if err != nil {
+		return fmt.Errorf("error copying template: %w", err)
+	}
+
+	return Load()
+}
+
+func SaveKooloConfig(config KooloCfg) error {
+	text, err := yaml.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("error parsing koolo config: %w", err)
+	}
+
+	// TODO: Validate the config before saving it
+
+	err = os.WriteFile("config/koolo.yaml", text, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing koolo config: %w", err)
+	}
+
+	return Load()
 }

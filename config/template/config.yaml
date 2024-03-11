@@ -1,7 +1,7 @@
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
-userName: '' # Battle.net username (required for multiclient only)
+username: '' # Battle.net username (required for multiclient only)
 password: '' # Battle.net pwd (required for multiclient only)
-realm: 'eu.actual.battle.net' (required for multiclient only)
+realm: 'eu.actual.battle.net' # (required for multiclient only)
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75
@@ -74,7 +74,7 @@ game:
   #                 tristram, lower_kurast, stony_tomb, pit, arachnid_lair, tal_rasha_tombs, baal, diablo, cows, terror_zone
   # leveling: there is a "leveling" run, in combination with "sorceress or paladin" class will be able to start leveling character from level 1 (don't expect too much)
   # terror_zone: will detect current TZ and clear it
-  runs: [stony_tomb, pit, arachnid_lair]
+  runs: [ stony_tomb, pit, arachnid_lair ]
 
   # Specific runs settings
   pindleskin:

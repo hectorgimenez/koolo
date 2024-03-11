@@ -16,26 +16,37 @@ import (
 )
 
 type SupervisorManager struct {
-	logger               *slog.Logger
-	supervisors          map[string]Supervisor
-	availableSupervisors []string
-	eventHandlers        []event.Handler
+	logger        *slog.Logger
+	supervisors   map[string]Supervisor
+	eventHandlers []event.Handler
 }
 
-func NewSupervisorManager(logger *slog.Logger, availableSupervisors []string, additionalEventHandlers []event.Handler) *SupervisorManager {
+func NewSupervisorManager(logger *slog.Logger, additionalEventHandlers []event.Handler) *SupervisorManager {
 	return &SupervisorManager{
-		logger:               logger,
-		supervisors:          make(map[string]Supervisor),
-		availableSupervisors: availableSupervisors,
-		eventHandlers:        additionalEventHandlers,
+		logger:        logger,
+		supervisors:   make(map[string]Supervisor),
+		eventHandlers: additionalEventHandlers,
 	}
 }
 
 func (mng *SupervisorManager) AvailableSupervisors() []string {
-	return mng.availableSupervisors
+	availableSupervisors := make([]string, 0)
+	for name, _ := range config.Characters {
+		if name != "template" {
+			availableSupervisors = append(availableSupervisors, name)
+		}
+	}
+
+	return availableSupervisors
 }
 
 func (mng *SupervisorManager) Start(characterName string) error {
+	// Reload config to get the latest local changes before starting the supervisor
+	err := config.Load()
+	if err != nil {
+		return fmt.Errorf("error loading config: %w", err)
+	}
+
 	supervisor, err := mng.buildSupervisor(characterName, mng.logger)
 	if err != nil {
 		return err
