@@ -6,11 +6,18 @@ import (
 )
 
 type IndexData struct {
-	Status map[string]koolo.Stats
+	ErrorMessage string
+	Status       map[string]koolo.Stats
 }
 
 type CharacterSettings struct {
-	IsNew      bool
-	Supervisor string
+	ErrorMessage string
+	IsNew        bool
+	Supervisor   string
 	*config.CharacterCfg
+}
+
+type ConfigData struct {
+	ErrorMessage string
+	*config.KooloCfg
 }

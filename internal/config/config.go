@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -8,6 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	cp "github.com/otiai10/copy"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/nip"
@@ -216,13 +218,24 @@ func CreateFromTemplate(name string) error {
 	return Load()
 }
 
-func SaveKooloConfig(config KooloCfg) error {
+func ValidateAndSaveConfig(config KooloCfg) error {
+	// Trim executable from the path, just in case
+	config.D2LoDPath = strings.ReplaceAll(strings.ToLower(config.D2LoDPath), "game.exe", "")
+	config.D2RPath = strings.ReplaceAll(strings.ToLower(config.D2RPath), "d2r.exe", "")
+
+	// Validate paths
+	if _, err := os.Stat(config.D2LoDPath + "/d2data.mpq"); os.IsNotExist(err) {
+		return errors.New("D2LoDPath is not valid")
+	}
+
+	if _, err := os.Stat(config.D2RPath + "/d2r.exe"); os.IsNotExist(err) {
+		return errors.New("D2RPath is not valid")
+	}
+
 	text, err := yaml.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("error parsing koolo config: %w", err)
 	}
-
-	// TODO: Validate the config before saving it
 
 	err = os.WriteFile("config/koolo.yaml", text, 0644)
 	if err != nil {

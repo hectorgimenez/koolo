@@ -22,6 +22,9 @@ var (
 	assets embed.FS
 	//go:embed all:templates
 	templates embed.FS
+
+	configTpl = template.Must(template.ParseFS(templates, "templates/config.html"))
+	indexTpl  = template.Must(template.ParseFS(templates, "templates/index.html"))
 )
 
 func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
@@ -76,8 +79,6 @@ func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
-	tmpl := template.Must(template.ParseFS(templates, "templates/index.html"))
-
 	status := make(map[string]koolo.Stats)
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
 		status[supervisorName] = koolo.Stats{
@@ -87,28 +88,32 @@ func (s *HttpServer) index(w http.ResponseWriter) {
 		status[supervisorName] = s.manager.Status(supervisorName)
 	}
 
-	tmpl.Execute(w, IndexData{Status: status})
+	indexTpl.Execute(w, IndexData{Status: status})
 }
 
 func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
-	var err error
 	if r.Method == "POST" {
-		err = r.ParseForm()
+		err := r.ParseForm()
+		if err != nil {
+			configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: "Error parsing form"})
+			return
+		}
 
 		newConfig := *config.Koolo
 		newConfig.D2RPath = r.Form.Get("d2rpath")
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
 		newConfig.FirstRun = false
 
-		err = config.SaveKooloConfig(newConfig)
+		err = config.ValidateAndSaveConfig(newConfig)
 		if err == nil {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
+		configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: err.Error()})
+		return
 	}
 
-	tmpl := template.Must(template.ParseFS(templates, "templates/config.html"))
-	tmpl.Execute(w, config.Koolo)
+	configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: ""})
 }
 
 func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +155,7 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFS(templates, "templates/character_settings.html"))
 	tmpl.Execute(w, CharacterSettings{
+		ErrorMessage: "",
 		IsNew:        supervisor == "",
 		Supervisor:   supervisor,
 		CharacterCfg: cfg,

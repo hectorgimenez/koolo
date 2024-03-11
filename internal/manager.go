@@ -87,12 +87,6 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		return nil, fmt.Errorf("character %s not found", supervisorName)
 	}
 
-	pid := uint32(0)
-	var err error
-	if cfg.Username != "" && cfg.Password != "" {
-		// TODO: Support if the game is already running
-	}
-
 	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.Realm)
 	if err != nil {
 		return nil, fmt.Errorf("error starting game: %w", err)

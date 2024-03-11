@@ -181,8 +181,18 @@ func (gm *Manager) InGame() bool {
 }
 
 func StartGame(username string, password string, realm string) (uint32, win.HWND, error) {
+	// First check for other instances of the game and kill the handles, otherwise we will not be able to start the game
+	err := KillCheckForClientHandles()
+	if err != nil {
+		return 0, 0, err
+	}
+
 	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", "-username", username, "-password", password, "-address", realm)
-	err := cmd.Start()
+	// In case multiclient info is not set, start the game without any parameters
+	if username == "" || password == "" || realm == "" {
+		cmd = exec.Command(config.Koolo.D2RPath + "\\D2R.exe")
+	}
+	err = cmd.Start()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -202,6 +212,12 @@ func StartGame(username string, password string, realm string) (uint32, win.HWND
 		if foundHwnd != 0 {
 			break
 		}
+	}
+
+	// Close the handle for the new process, it will allow the user to open another instance of the game
+	err = KillCheckForClientHandles()
+	if err != nil {
+		return 0, 0, err
 	}
 
 	return uint32(cmd.Process.Pid), win.HWND(foundHwnd), nil
