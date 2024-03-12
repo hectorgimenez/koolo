@@ -138,8 +138,8 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	eventListener.Register(statsHandler.Handle)
 
 	if config.Characters[supervisorName].Companion.Enabled {
-		return NewCompanionSupervisor(supervisorName, logger, bot, gr, gm, gi, runFactory, eventChannel, statsHandler, eventListener)
+		return NewCompanionSupervisor(supervisorName, bot, runFactory, statsHandler, eventListener, c)
 	}
 
-	return NewSinglePlayerSupervisor(supervisorName, logger, bot, gr, gm, gi, runFactory, eventChannel, statsHandler, eventListener)
+	return NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, eventListener, c)
 }

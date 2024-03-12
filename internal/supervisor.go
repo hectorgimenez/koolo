@@ -3,11 +3,13 @@ package koolo
 import (
 	"context"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"log/slog"
+	"time"
 )
 
 type Supervisor interface {
@@ -19,42 +21,30 @@ type Supervisor interface {
 }
 
 type baseSupervisor struct {
-	logger       *slog.Logger
 	bot          *Bot
-	gr           *game.MemoryReader
-	gm           *game.Manager
-	gi           *game.MemoryInjector
 	runFactory   *run.Factory
 	name         string
-	eventChan    chan<- event.Event
 	statsHandler *StatsHandler
 	listener     *event.Listener
 	cancelFn     context.CancelFunc
+	c            container.Container
 }
 
 func newBaseSupervisor(
-	logger *slog.Logger,
 	bot *Bot,
-	gr *game.MemoryReader,
-	gm *game.Manager,
-	gi *game.MemoryInjector,
 	runFactory *run.Factory,
 	name string,
-	eventChan chan<- event.Event,
 	statsHandler *StatsHandler,
 	listener *event.Listener,
+	c container.Container,
 ) (*baseSupervisor, error) {
 	return &baseSupervisor{
-		logger:       logger,
 		bot:          bot,
-		gr:           gr,
-		gm:           gm,
-		gi:           gi,
 		runFactory:   runFactory,
 		name:         name,
-		eventChan:    eventChan,
 		statsHandler: statsHandler,
 		listener:     listener,
+		c:            c,
 	}, nil
 }
 
@@ -70,21 +60,21 @@ func (s *baseSupervisor) TogglePause() {
 	s.bot.TogglePause()
 	if s.bot.paused {
 		s.statsHandler.SetStatus(Paused)
-		s.gi.RestoreMemory()
+		s.c.Injector.RestoreMemory()
 	} else {
 		s.statsHandler.SetStatus(InGame)
-		s.gi.Load()
+		s.c.Injector.Load()
 	}
 }
 
 func (s *baseSupervisor) Stop() {
-	s.logger.Info("Stopping...", slog.String("configuration", s.name))
+	s.c.Logger.Info("Stopping...", slog.String("configuration", s.name))
 	if s.cancelFn != nil {
 		s.cancelFn()
 	}
 
-	s.gi.Unload()
-	s.logger.Info("Finished stopping", slog.String("configuration", s.name))
+	s.c.Injector.Unload()
+	s.c.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 
 func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) error {
@@ -94,7 +84,20 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) e
 	// TODO: refactor this
 	go s.listener.Listen(ctx)
 
-	return s.gi.Load()
+	err := s.c.Injector.Load()
+	if err != nil {
+		return err
+	}
+
+	s.c.Logger.Info("Waiting for character selection screen...")
+	for range 25 {
+		s.c.HID.Click(game.LeftButton, 100, 100)
+		time.Sleep(time.Second)
+	}
+
+	s.c.Logger.Info("Trying to start game...")
+
+	return nil
 }
 
 func (s *baseSupervisor) logGameStart(runs []run.Run) {
@@ -102,5 +105,5 @@ func (s *baseSupervisor) logGameStart(runs []run.Run) {
 	for _, r := range runs {
 		runNames += r.Name() + ", "
 	}
-	s.logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
+	s.c.Logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
 }

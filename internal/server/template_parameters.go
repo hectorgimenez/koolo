@@ -12,7 +12,6 @@ type IndexData struct {
 
 type CharacterSettings struct {
 	ErrorMessage string
-	IsNew        bool
 	Supervisor   string
 	*config.CharacterCfg
 }

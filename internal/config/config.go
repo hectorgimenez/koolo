@@ -210,6 +210,14 @@ func Load() error {
 }
 
 func CreateFromTemplate(name string) error {
+	if name == "" {
+		return errors.New("name cannot be empty")
+	}
+
+	if _, err := os.Stat("config/" + name); !os.IsExist(err) {
+		return errors.New("configuration with that name already exists")
+	}
+
 	err := cp.Copy("config/template", "config/"+name)
 	if err != nil {
 		return fmt.Errorf("error copying template: %w", err)

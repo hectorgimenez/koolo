@@ -1,6 +1,7 @@
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 
 # Multiclient settings, this is only required if you want to run multiple clients at the same time with different accounts
+# you can leave it empty for single player.
 username: '' # Battle.net username (required for multiclient only)
 password: '' # Battle.net pwd (required for multiclient only)
 realm: 'eu.actual.battle.net' # (required for multiclient only)

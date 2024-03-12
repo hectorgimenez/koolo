@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"log/slog"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -32,8 +31,8 @@ func (s *CompanionSupervisor) JoinGame(gameName, password string) {
 	s.companionCh <- CompanionGameData{GameName: gameName, Password: password}
 }
 
-func NewCompanionSupervisor(name string, logger *slog.Logger, bot *Bot, gr *game.MemoryReader, gm *game.Manager, gi *game.MemoryInjector, runFactory *run.Factory, eventChan chan<- event.Event, statsHandler *StatsHandler, listener *event.Listener) (*CompanionSupervisor, error) {
-	bs, err := newBaseSupervisor(logger, bot, gr, gm, gi, runFactory, name, eventChan, statsHandler, listener)
+func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, listener *event.Listener, c container.Container) (*CompanionSupervisor, error) {
+	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, listener, c)
 	if err != nil {
 		return nil, err
 	}
@@ -63,14 +62,14 @@ func (s *CompanionSupervisor) Start() error {
 				return
 			default:
 				if config.Characters[s.name].Companion.Leader {
-					gameName, err := s.gm.CreateOnlineGame(gameCounter)
+					gameName, err := s.c.Manager.CreateOnlineGame(gameCounter)
 					gameCounter++ // Sometimes game is created but error during join, so game name will be in use
 					if err != nil {
-						s.logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+						s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 						continue
 					}
 
-					s.eventChan <- event.GameCreated(event.Text("New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword)
+					s.c.EventChan <- event.GameCreated(event.Text("New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword)
 
 					err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
 					if err != nil {
@@ -79,12 +78,12 @@ func (s *CompanionSupervisor) Start() error {
 					firstRun = false
 				} else {
 					for {
-						s.logger.Debug("Waiting for new game to be created...")
+						s.c.Logger.Debug("Waiting for new game to be created...")
 						select {
 						case gd := <-s.companionCh:
-							err := s.gm.JoinOnlineGame(gd.GameName, gd.Password)
+							err := s.c.Manager.JoinOnlineGame(gd.GameName, gd.Password)
 							if err != nil {
-								s.logger.Error(err.Error())
+								s.c.Logger.Error(err.Error())
 								continue
 							}
 
@@ -113,10 +112,10 @@ func (s *CompanionSupervisor) startBot(ctx context.Context, runs []run.Run, firs
 			return nil
 		}
 		errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
-		s.eventChan <- event.GameFinished(event.WithScreenshot(errorMsg, s.gr.Screenshot()), event.FinishedError)
-		s.logger.Warn(errorMsg)
+		s.c.EventChan <- event.GameFinished(event.WithScreenshot(errorMsg, s.c.Reader.Screenshot()), event.FinishedError)
+		s.c.Logger.Warn(errorMsg)
 	}
-	if exitErr := s.gm.ExitGame(); exitErr != nil {
+	if exitErr := s.c.Manager.ExitGame(); exitErr != nil {
 		return fmt.Errorf("error exiting game: %s", exitErr)
 	}
 	firstRun = false

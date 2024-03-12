@@ -23,8 +23,9 @@ var (
 	//go:embed all:templates
 	templates embed.FS
 
-	configTpl = template.Must(template.ParseFS(templates, "templates/config.html"))
-	indexTpl  = template.Must(template.ParseFS(templates, "templates/index.html"))
+	configTpl       = template.Must(template.ParseFS(templates, "templates/config.html"))
+	indexTpl        = template.Must(template.ParseFS(templates, "templates/index.html"))
+	charSettingsTpl = template.Must(template.ParseFS(templates, "templates/character_settings.html"))
 )
 
 func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
@@ -37,7 +38,8 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
 func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/", s.getRoot)
 	http.HandleFunc("/config", s.config)
-	http.HandleFunc("/add", s.add)
+	http.HandleFunc("/addCharacter", s.add)
+	http.HandleFunc("/editCharacter", s.edit)
 	http.HandleFunc("/start", s.startSupervisor)
 	http.HandleFunc("/stop", s.stopSupervisor)
 	http.HandleFunc("/togglePause", s.togglePause)
@@ -125,22 +127,14 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		}
 
 		supervisorName := r.Form.Get("name")
-		isNew := r.Form.Get("isNew") == "true"
-		if supervisorName == "" {
-			// TODO: Handle error
-			return
-		}
+		err = config.CreateFromTemplate(supervisorName)
+		if err != nil {
+			charSettingsTpl.Execute(w, CharacterSettings{
+				ErrorMessage: err.Error(),
+				Supervisor:   supervisorName,
+			})
 
-		if _, found := config.Characters[supervisorName]; found && isNew {
-			// TODO: Handle error
 			return
-		}
-
-		if isNew {
-			err = config.CreateFromTemplate(supervisorName)
-			if err != nil {
-				// TODO: Handle error
-			}
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -153,11 +147,12 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		cfg = config.Characters[supervisor]
 	}
 
-	tmpl := template.Must(template.ParseFS(templates, "templates/character_settings.html"))
-	tmpl.Execute(w, CharacterSettings{
-		ErrorMessage: "",
-		IsNew:        supervisor == "",
+	charSettingsTpl.Execute(w, CharacterSettings{
 		Supervisor:   supervisor,
 		CharacterCfg: cfg,
 	})
+}
+
+func (s *HttpServer) edit(w http.ResponseWriter, r *http.Request) {
+
 }
