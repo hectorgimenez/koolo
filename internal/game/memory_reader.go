@@ -11,8 +11,6 @@ import (
 	"strconv"
 )
 
-var CachedMapData map_client.MapData
-
 type MemoryReader struct {
 	*memory.GameReader
 	cachedMapSeed  uint
@@ -22,6 +20,7 @@ type MemoryReader struct {
 	GameAreaSizeX  int
 	GameAreaSizeY  int
 	supervisorName string
+	CachedMapData  map_client.MapData
 }
 
 func NewGameReader(supervisorName string, pid uint32, window win.HWND) (*MemoryReader, error) {
@@ -59,11 +58,11 @@ func (gd *MemoryReader) GetData(isNewGame bool) data.Data {
 	if isNewGame {
 		playerUnitPtr, _ := gd.GetPlayerUnitPtr(d.Roster)
 		gd.cachedMapSeed, _ = gd.getMapSeed(playerUnitPtr)
-		CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
+		gd.CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
 	}
 
-	origin := CachedMapData.Origin(d.PlayerUnit.Area)
-	npcs, exits, objects, rooms := CachedMapData.NPCsExitsAndObjects(origin, d.PlayerUnit.Area)
+	origin := gd.CachedMapData.Origin(d.PlayerUnit.Area)
+	npcs, exits, objects, rooms := gd.CachedMapData.NPCsExitsAndObjects(origin, d.PlayerUnit.Area)
 	// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
 	memObjects := gd.Objects(d.PlayerUnit.Position, d.HoverData)
 	for _, clientObject := range objects {
@@ -83,7 +82,7 @@ func (gd *MemoryReader) GetData(isNewGame bool) data.Data {
 	d.AdjacentLevels = exits
 	d.Rooms = rooms
 	d.Objects = memObjects
-	d.CollisionGrid = CachedMapData.CollisionGrid(d.PlayerUnit.Area)
+	d.CollisionGrid = gd.CachedMapData.CollisionGrid(d.PlayerUnit.Area)
 
 	return d
 }

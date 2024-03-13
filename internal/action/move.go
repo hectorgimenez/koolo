@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
@@ -62,8 +61,8 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 					return a.Position, true
 				}
 
-				lvl, _ := game.CachedMapData.GetLevelData(a.Area)
-				_, _, objects, _ := game.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
+				lvl, _ := b.Reader.CachedMapData.GetLevelData(a.Area)
+				_, _, objects, _ := b.Reader.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
 
 				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 				for _, obj := range objects {

@@ -211,7 +211,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 
 	var realTomb area.Area
 	for _, tomb := range talRashaTombs {
-		_, _, objects, _ := game.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
+		_, _, objects, _ := a.Reader.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
 		for _, obj := range objects {
 			if obj.Name == object.HoradricOrifice {
 				realTomb = tomb

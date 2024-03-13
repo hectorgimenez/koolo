@@ -31,7 +31,7 @@ func (pf PathFinder) GetPath(d data.Data, to data.Position, blacklistedCoords ..
 	}
 
 	if outsideCurrentLevel {
-		lvl, lvlFound := game.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
+		lvl, lvlFound := pf.gr.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
 		if !lvlFound {
 			panic("Error occurred calculating path, destination point outside current level and matching level not found")
 		}

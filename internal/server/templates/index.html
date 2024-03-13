@@ -32,6 +32,7 @@
             <th scope="col">Runs</th>
             <th scope="col">Chickens</th>
             <th scope="col">Deaths</th>
+            <th scope="col">Errors</th>
             <th scope="col">Control</th>
         </tr>
         </thead>
@@ -41,6 +42,7 @@
             <td>{{.SupervisorStatus}}</td>
             <td>{{.TotalGames}}</td>
             <td>{{.TotalChickens}}</td>
+            <td>{{.TotalErrors}}</td>
             <td>{{.TotalDeaths}}</td>
             <td>
                 {{ if eq .SupervisorStatus "Paused" }}
