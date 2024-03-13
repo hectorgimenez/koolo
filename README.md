@@ -5,7 +5,7 @@
 
 Koolo is a small bot for Diablo II: Resurrected. Koolo project was built for informational and educational purposes
 only, it's not intended for online usage. Feel free to contribute opening pull requests with new features or bugfixes.
-Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window.
+Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window. As good as it can.
 
 ## Disclaimer
 Can I get banned for using Koolo? The answer is a crystal clear yes, you can get banned although at this point I'm
@@ -34,14 +34,14 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - **Diablo II: LOD 1.13c** (IMPORTANT: It will **NOT** work without it, this step is not optional)
 
 ## Quick Start
+- Open Diablo II: Resurrected and ensure the game resolution is set to windowed mode and 1280x720 or 1920x1080 in HiDPI mode. You can close the game after this step.
 - If you haven't done yet, install **Diablo II: LOD 1.13c**
 - [Download](https://github.com/hectorgimenez/koolo/releases) the latest Koolo release (recommended for most users), or alternatively you can [build it from source](#development-environment)
 - Extract the zip file in a directory of your choice.
-- Open `config/config.yaml` with your favorite text editor and ensure `D2LoDPath` config is pointing to your **Diablo II: LOD 1.13c** installation directory.
-- Configure custom bot settings under `config/config.yaml` and `config/pickit/*.nip` files for pickit rules.
-- Open Diablo II: Resurrected and ensure the game resolution is set to windowed mode and 1280x720 or 1920x1080 in HiDPI mode.
-- Enter the game with your character.
 - Run `koolo.exe`.
+- Follow the setup wizard, it will guide you through the process of setting up the bot, you will need to setup some directories and character configuration.
+- If you want to back up/restore your configuration, and for manual setup, you can find the configuration files in the `config` directory.
+
 
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).
