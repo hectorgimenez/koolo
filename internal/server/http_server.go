@@ -123,7 +123,11 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		err = r.ParseForm()
 		if err != nil {
+			charSettingsTpl.Execute(w, CharacterSettings{
+				ErrorMessage: err.Error(),
+			})
 
+			return
 		}
 
 		supervisorName := r.Form.Get("name")

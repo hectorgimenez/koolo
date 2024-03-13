@@ -214,7 +214,7 @@ func CreateFromTemplate(name string) error {
 		return errors.New("name cannot be empty")
 	}
 
-	if _, err := os.Stat("config/" + name); !os.IsExist(err) {
+	if _, err := os.Stat("config/" + name); !os.IsNotExist(err) {
 		return errors.New("configuration with that name already exists")
 	}
 
