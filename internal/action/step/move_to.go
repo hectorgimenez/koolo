@@ -2,13 +2,13 @@ package step
 
 import (
 	"errors"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -19,15 +19,17 @@ type MoveToStep struct {
 	nearestWalkable bool
 	timeout         time.Duration
 	startedAt       time.Time
+	cfg             *config.CharacterCfg
 }
 
 type MoveToStepOption func(step *MoveToStep)
 
-func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
+func MoveTo(cfg *config.CharacterCfg, destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
 		pathingStep: newPathingStep(),
 		destination: destination,
 		timeout:     time.Second * 30,
+		cfg:         cfg,
 	}
 
 	for _, o := range opts {
@@ -55,7 +57,7 @@ func WithTimeout(timeout time.Duration) MoveToStepOption {
 	}
 }
 
-func (m *MoveToStep) Status(d data.Data) Status {
+func (m *MoveToStep) Status(d data.Data, _ container.Container) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -68,15 +70,15 @@ func (m *MoveToStep) Status(d data.Data) Status {
 	return m.status
 }
 
-func (m *MoveToStep) Run(d data.Data) error {
+func (m *MoveToStep) Run(d data.Data, container container.Container) error {
 	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 	if helper.CanTeleport(d) {
 		if d.PlayerUnit.RightSkill != skill.Teleport {
-			hid.PressKey(config.Config.Bindings.Teleport)
+			container.HID.PressKey(m.cfg.Bindings.Teleport)
 		}
-	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && config.Config.Bindings.Paladin.Vigor != "" {
+	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && m.cfg.Bindings.Paladin.Vigor != "" {
 		if d.PlayerUnit.RightSkill != skill.Vigor {
-			hid.PressKey(config.Config.Bindings.Paladin.Vigor)
+			container.HID.PressKey(m.cfg.Bindings.Paladin.Vigor)
 		}
 	}
 
@@ -97,7 +99,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 		return nil
 	}
 
-	if helper.CanTeleport(d) && time.Since(m.lastRun) < config.Config.Runtime.CastDuration {
+	if helper.CanTeleport(d) && time.Since(m.lastRun) < m.cfg.Runtime.CastDuration {
 		return nil
 	}
 
@@ -106,7 +108,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 	if m.path == nil || !m.cachePath(d) || stuck {
 		if stuck {
 			if len(m.path.AstarPather) == 0 {
-				pather.RandomMovement()
+				container.PathFinder.RandomMovement()
 				m.lastRun = time.Now()
 
 				return nil
@@ -116,11 +118,11 @@ func (m *MoveToStep) Run(d data.Data) error {
 			}
 		}
 
-		path, _, found := pather.GetPath(d, m.destination, m.blacklistedPositions...)
+		path, _, found := container.PathFinder.GetPath(d, m.destination, m.blacklistedPositions...)
 		if !found {
 			// Try to find the nearest walkable place
 			if m.nearestWalkable {
-				path, _, found = pather.GetClosestWalkablePath(d, m.destination, m.blacklistedPositions...)
+				path, _, found = container.PathFinder.GetClosestWalkablePath(d, m.destination, m.blacklistedPositions...)
 				if !found {
 					return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 				}
@@ -137,7 +139,7 @@ func (m *MoveToStep) Run(d data.Data) error {
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	pather.MoveThroughPath(m.path, calculateMaxDistance(d, walkDuration), helper.CanTeleport(d))
+	container.PathFinder.MoveThroughPath(m.path, calculateMaxDistance(d, walkDuration), helper.CanTeleport(d))
 
 	return nil
 }

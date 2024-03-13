@@ -1,6 +1,7 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -9,9 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 var lastBuffedAt = time.Time{}
@@ -44,15 +43,15 @@ func (b *Builder) Buff() *StepChainAction {
 		}
 
 		if len(keys) > 0 {
-			b.logger.Debug("Buffing...")
+			b.Logger.Debug("Buffing...")
 
 			steps = append(steps,
 				step.SyncStep(func(_ data.Data) error {
 					for _, kb := range keys {
 						helper.Sleep(200)
-						hid.PressKey(kb)
+						b.HID.PressKey(kb)
 						helper.Sleep(300)
-						hid.Click(hid.RightButton, 300, 300)
+						b.HID.Click(game.RightButton, 300, 300)
 						helper.Sleep(300)
 					}
 					return nil
@@ -96,28 +95,28 @@ func (b *Builder) IsRebuffRequired(d data.Data) bool {
 
 func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 	if b.isCTAEnabled(d) {
-		b.logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
+		b.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
 		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 		if _, found := d.PlayerUnit.Skills[skill.BattleCommand]; !found {
-			steps = append(steps, step.SwapToCTA())
+			steps = append(steps, step.SwapToCTA(b.CharacterCfg.Bindings.SwapWeapon))
 		}
 
 		steps = append(steps,
 			step.SyncStep(func(d data.Data) error {
-				hid.PressKey(config.Config.Bindings.CTABattleCommand)
+				b.HID.PressKey(b.CharacterCfg.Bindings.CTABattleCommand)
 				helper.Sleep(100)
-				hid.Click(hid.RightButton, 300, 300)
+				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(300)
-				hid.PressKey(config.Config.Bindings.CTABattleOrders)
+				b.HID.PressKey(b.CharacterCfg.Bindings.CTABattleOrders)
 				helper.Sleep(100)
-				hid.Click(hid.RightButton, 300, 300)
+				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(100)
 
 				return nil
 			}),
 			step.Wait(time.Millisecond*500),
-			step.SwapToMainWeapon(),
+			step.SwapToMainWeapon(b.CharacterCfg.Bindings.SwapWeapon),
 		)
 	}
 
@@ -125,7 +124,7 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 }
 
 func (b *Builder) isCTAEnabled(d data.Data) bool {
-	if config.Config.Bindings.CTABattleCommand == "" || config.Config.Bindings.CTABattleOrders == "" {
+	if b.CharacterCfg.Bindings.CTABattleCommand == "" || b.CharacterCfg.Bindings.CTABattleOrders == "" {
 		return false
 	}
 

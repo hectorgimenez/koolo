@@ -1,28 +1,23 @@
-package helper
+package game
 
 import (
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
-	"github.com/hectorgimenez/koolo/internal/hid"
-	"github.com/hectorgimenez/koolo/internal/memory"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"image"
-	"image/jpeg"
-	"os"
 	"unsafe"
 )
 
-func Screenshot() image.Image {
-	sizeX := int(float64(hid.GameAreaSizeX) * ui.GameWindowScale())
-	sizeY := int(float64(hid.GameAreaSizeY) * ui.GameWindowScale())
+func (gd *MemoryReader) Screenshot() image.Image {
+	sizeX := int(float64(gd.GameAreaSizeX) * gd.WindowScale())
+	sizeY := int(float64(gd.GameAreaSizeY) * gd.WindowScale())
 
 	// Create a device context compatible with the window
-	hdcWindow, _, _ := winproc.GetWindowDC.Call(uintptr(memory.HWND))
+	hdcWindow, _, _ := winproc.GetWindowDC.Call(uintptr(gd.HWND))
 	hdcMem, _, _ := winproc.CreateCompatibleDC.Call(hdcWindow)
 	hbmMem, _, _ := winproc.CreateCompatibleBitmap.Call(hdcWindow, uintptr(sizeX), uintptr(sizeY))
 	_, _, _ = winproc.SelectObject.Call(hdcMem, hbmMem)
 
 	// Use PrintWindow to copy the window into the bitmap
-	winproc.PrintWindow.Call(uintptr(memory.HWND), hdcMem, 3) // use 3 to get window content only
+	winproc.PrintWindow.Call(uintptr(gd.HWND), hdcMem, 3) // use 3 to get window content only
 
 	// map the bitmap structure
 	bmpInfo := struct {
@@ -76,14 +71,4 @@ func Screenshot() image.Image {
 	_, _, _ = winproc.DeleteDC.Call(hdcMem)
 
 	return img
-}
-
-func SaveImageJPEG(img image.Image, path string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	return jpeg.Encode(f, img, &jpeg.Options{Quality: 80})
 }

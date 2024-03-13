@@ -1,31 +1,36 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	cp "github.com/otiai10/copy"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 
-	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	Config *StructConfig
+	Koolo      *KooloCfg
+	Characters map[string]*CharacterCfg
 )
 
-type StructConfig struct {
-	Debug struct {
+type KooloCfg struct {
+	FirstRun bool `yaml:"firstRun"`
+	Debug    struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`
 	LogSaveDirectory string `yaml:"logSaveDirectory"`
-	MaxGameLength    int    `yaml:"maxGameLength"`
 	D2LoDPath        string `yaml:"D2LoDPath"`
+	D2RPath          string `yaml:"D2RPath"`
 	Discord          struct {
 		Enabled   bool   `yaml:"enabled"`
 		ChannelID string `yaml:"channelId"`
@@ -36,7 +41,14 @@ type StructConfig struct {
 		ChatID  int64  `yaml:"chatId"`
 		Token   string `yaml:"token"`
 	}
-	Health struct {
+}
+
+type CharacterCfg struct {
+	MaxGameLength int    `yaml:"maxGameLength"`
+	Username      string `yaml:"username"`
+	Password      string `yaml:"password"`
+	Realm         string `yaml:"realm"`
+	Health        struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
@@ -142,33 +154,101 @@ type StructConfig struct {
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
 func Load() error {
-	r, err := os.Open("config/config.yaml")
+	Characters = make(map[string]*CharacterCfg)
+	r, err := os.Open("config/koolo.yaml")
 	if err != nil {
-		return fmt.Errorf("error loading config.yaml: %w", err)
+		return fmt.Errorf("error loading koolo.yaml: %w", err)
 	}
 
 	d := yaml.NewDecoder(r)
-	if err = d.Decode(&Config); err != nil {
+	if err = d.Decode(&Koolo); err != nil {
 		return fmt.Errorf("error reading config: %w", err)
 	}
 
-	rules, err := nip.ReadDir("config/pickit/")
+	entries, err := os.ReadDir("config")
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading config: %w", err)
 	}
 
-	if Config.Game.Runs[0] == "leveling" {
-		levelingRules, err := nip.ReadDir("config/pickit_leveling/")
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		charCfg := CharacterCfg{}
+		r, err = os.Open("config/" + entry.Name() + "/config.yaml")
+		if err != nil {
+			return fmt.Errorf("error loading config.yaml: %w", err)
+		}
+
+		d := yaml.NewDecoder(r)
+		if err = d.Decode(&charCfg); err != nil {
+			return fmt.Errorf("error reading %s character config: %w", entry.Name(), err)
+		}
+
+		rules, err := nip.ReadDir("config/" + entry.Name() + "/pickit/")
 		if err != nil {
 			return err
 		}
-		rules = append(rules, levelingRules...)
+
+		if charCfg.Game.Runs[0] == "leveling" {
+			levelingRules, err := nip.ReadDir("config/" + entry.Name() + "/pickit_leveling/")
+			if err != nil {
+				return err
+			}
+			rules = append(rules, levelingRules...)
+		}
+
+		charCfg.Runtime.Rules = rules
+
+		secs := float32(charCfg.Character.CastingFrames)*0.04 + 0.01
+		charCfg.Runtime.CastDuration = time.Duration(secs*1000) * time.Millisecond
+		Characters[entry.Name()] = &charCfg
 	}
 
-	Config.Runtime.Rules = rules
-
-	secs := float32(Config.Character.CastingFrames)*0.04 + 0.01
-	Config.Runtime.CastDuration = time.Duration(secs*1000) * time.Millisecond
-
 	return nil
+}
+
+func CreateFromTemplate(name string) error {
+	if name == "" {
+		return errors.New("name cannot be empty")
+	}
+
+	if _, err := os.Stat("config/" + name); !os.IsExist(err) {
+		return errors.New("configuration with that name already exists")
+	}
+
+	err := cp.Copy("config/template", "config/"+name)
+	if err != nil {
+		return fmt.Errorf("error copying template: %w", err)
+	}
+
+	return Load()
+}
+
+func ValidateAndSaveConfig(config KooloCfg) error {
+	// Trim executable from the path, just in case
+	config.D2LoDPath = strings.ReplaceAll(strings.ToLower(config.D2LoDPath), "game.exe", "")
+	config.D2RPath = strings.ReplaceAll(strings.ToLower(config.D2RPath), "d2r.exe", "")
+
+	// Validate paths
+	if _, err := os.Stat(config.D2LoDPath + "/d2data.mpq"); os.IsNotExist(err) {
+		return errors.New("D2LoDPath is not valid")
+	}
+
+	if _, err := os.Stat(config.D2RPath + "/d2r.exe"); os.IsNotExist(err) {
+		return errors.New("D2RPath is not valid")
+	}
+
+	text, err := yaml.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("error parsing koolo config: %w", err)
+	}
+
+	err = os.WriteFile("config/koolo.yaml", text, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing koolo config: %w", err)
+	}
+
+	return Load()
 }

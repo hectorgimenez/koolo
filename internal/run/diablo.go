@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -52,7 +51,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 			_, isLevelingChar := a.char.(action.LevelingCharacter)
-			if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (config.Config.Character.UseMerc && d.MercHPPercent() <= 0)) {
+			if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (a.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0)) {
 				a.logger.Debug("Let's go back town to buy more pots", slog.Int("seal", sealNumber+1))
 				return a.builder.InRunReturnTownRoutine()
 			}
@@ -108,7 +107,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 						}
 						if time.Since(lastInteractionAt) > time.Second*3 {
 							lastInteractionAt = time.Now()
-							pather.RandomMovement()
+							a.PathFinder.RandomMovement()
 							time.Sleep(time.Second)
 						}
 						return false
@@ -149,7 +148,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 					if a.isSealElite(m) {
-						_, _, found := pather.GetPath(d, m.Position)
+						_, _, found := a.PathFinder.GetPath(d, m.Position)
 						return m.UnitID, found
 					}
 				}
@@ -164,7 +163,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	// Go back to town to buy potions if needed
 	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
 		_, isLevelingChar := a.char.(action.LevelingCharacter)
-		if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (config.Config.Character.UseMerc && d.MercHPPercent() <= 0)) {
+		if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (a.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0)) {
 			return a.builder.InRunReturnTownRoutine()
 		}
 

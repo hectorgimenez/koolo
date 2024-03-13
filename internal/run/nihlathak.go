@@ -6,7 +6,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"log/slog"
 )
@@ -32,7 +31,7 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		for _, o := range d.Objects {
 			if o.Name == object.NihlathakWildernessStartPositionName {
 				nilaO = o
-				return []step.Step{step.MoveTo(o.Position, step.StopAtDistance(40))}
+				return []step.Step{step.MoveTo(a.CharacterCfg, o.Position, step.StopAtDistance(40))}
 			}
 		}
 
@@ -75,14 +74,14 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 		}
 
 		a.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("averageDistance", bestCornerDistance))
-		return []step.Step{step.MoveTo(corners[bestCorner])}
+		return []step.Step{step.MoveTo(a.CharacterCfg, corners[bestCorner])}
 	}))
 
 	// Kill Nihlathak
 	actions = append(actions, a.char.KillNihlathak())
 
 	// Clear monsters around the area, sometimes it makes difficult to pickup items if there are many monsters around the area
-	if config.Config.Game.Nihlathak.ClearArea {
+	if a.CharacterCfg.Game.Nihlathak.ClearArea {
 		actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 			for _, m := range d.Monsters.Enemies() {
 				if d := pather.DistanceFromPoint(nilaO.Position, m.Position); d < 15 {

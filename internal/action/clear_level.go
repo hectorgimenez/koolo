@@ -1,7 +1,6 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/config"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -30,7 +29,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		if isLevelingChar {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && config.Config.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && config.Config.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			if ((!healingPotsFound && b.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && b.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return b.InRunReturnTownRoutine()
 			}
 		}
@@ -40,7 +39,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			for _, o := range d.Objects {
 				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 					if o.Selectable {
-						b.logger.Info("Door detected and teleport is not available, trying to open it...")
+						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
 						return []Action{b.InteractObject(o.Name, func(d data.Data) bool {
 							for _, obj := range d.Objects {
 								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
@@ -71,13 +70,13 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				}
 			}
 
-			path, _, mPathFound := pather.GetPath(d, targetMonster.Position)
+			path, _, mPathFound := b.PathFinder.GetPath(d, targetMonster.Position)
 			if mPathFound {
 				doorIsBlocking := false
 				if !helper.CanTeleport(d) {
 					for _, o := range d.Objects {
 						if o.IsDoor() && o.Selectable && path.Intersects(d, o.Position, 4) {
-							b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
+							b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
 							doorIsBlocking = true
 						}
 					}
@@ -88,7 +87,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 						return targetMonster.UnitID, true
 					}, nil)}
 				} else {
-					b.logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
+					b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
 				}
 			}
 		}
@@ -96,7 +95,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		if alreadyCleared(currentRoom, clearedRooms) {
 			// Finished, all rooms are clear
 			if len(clearedRooms) == len(d.Rooms) {
-				b.logger.Debug("All the rooms for this level have been cleared, finishing run.")
+				b.Logger.Debug("All the rooms for this level have been cleared, finishing run.")
 				return nil
 			}
 
@@ -115,18 +114,19 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			}
 
 			return []Action{NewStepChain(func(d data.Data) []step.Step {
-				_, distance, found := pather.GetPath(d, closestRoom.GetCenter())
+				_, distance, found := b.PathFinder.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {
-					_, distance, found = pather.GetClosestWalkablePath(d, closestRoom.GetCenter())
+					_, distance, found = b.PathFinder.GetClosestWalkablePath(d, closestRoom.GetCenter())
 				}
 				if !found || distance <= 5 {
-					b.logger.Debug("Next room is not walkable, skipping it.")
+					b.Logger.Debug("Next room is not walkable, skipping it.")
 					clearedRooms = append(clearedRooms, closestRoom)
 					return []step.Step{}
 				}
 
 				return []step.Step{step.MoveTo(
+					b.CharacterCfg,
 					closestRoom.GetCenter(),
 					step.ClosestWalkable(),
 					step.WithTimeout(time.Second),

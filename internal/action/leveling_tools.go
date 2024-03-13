@@ -1,6 +1,7 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"slices"
 	"time"
@@ -12,9 +13,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
@@ -45,7 +44,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			if d.OpenMenus.Character {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
-						hid.PressKey("esc")
+						b.HID.PressKey("esc")
 						return nil
 					}),
 				}
@@ -63,7 +62,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			if !d.OpenMenus.Character {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
-						hid.PressKey(config.Config.Bindings.OpenCharacterScreen)
+						b.HID.PressKey(b.CharacterCfg.Bindings.OpenCharacterScreen)
 						return nil
 					}),
 				}
@@ -73,7 +72,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			return []step.Step{
 				step.SyncStep(func(_ data.Data) error {
 					helper.Sleep(100)
-					hid.Click(hid.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+					b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
 					helper.Sleep(500)
 					return nil
 				}),
@@ -93,7 +92,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			if d.OpenMenus.SkillTree {
 				return []step.Step{
 					step.SyncStep(func(_ data.Data) error {
-						hid.PressKey("esc")
+						b.HID.PressKey("esc")
 						return nil
 					}),
 				}
@@ -115,14 +114,14 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			if !found || int(characterPoints.Level) < assignedPoints[sk] {
 				skillDesc, skFound := skill.Desc[sk]
 				if !skFound {
-					b.logger.Error("skill not found for character", slog.Any("skill", sk))
+					b.Logger.Error("skill not found for character", slog.Any("skill", sk))
 					return nil
 				}
 
 				if !d.OpenMenus.SkillTree {
 					return []step.Step{
 						step.SyncStep(func(_ data.Data) error {
-							hid.PressKey(config.Config.Bindings.OpenSkillTree)
+							b.HID.PressKey(b.CharacterCfg.Bindings.OpenSkillTree)
 							return nil
 						}),
 					}
@@ -132,9 +131,9 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 					step.SyncStep(func(_ data.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+						b.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
 						helper.Sleep(200)
-						hid.Click(hid.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+						b.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
 						helper.Sleep(500)
 						return nil
 					}),
@@ -154,12 +153,12 @@ func (b *Builder) UpdateQuestLog() *StepChainAction {
 
 		return []step.Step{
 			step.SyncStep(func(_ data.Data) error {
-				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				b.HID.PressKey(b.CharacterCfg.Bindings.OpenQuestLog)
 				return nil
 			}),
 			step.Wait(time.Second),
 			step.SyncStep(func(_ data.Data) error {
-				hid.PressKey(config.Config.Bindings.OpenQuestLog)
+				b.HID.PressKey(b.CharacterCfg.Bindings.OpenQuestLog)
 				return nil
 			}),
 		}
@@ -173,15 +172,15 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 		}
 		char, _ := b.ch.(LevelingCharacter)
 		skillBindings := char.GetKeyBindings(d)
-		skillBindings[skill.TomeOfTownPortal] = config.Config.Bindings.TP
+		skillBindings[skill.TomeOfTownPortal] = b.CharacterCfg.Bindings.TP
 
 		if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
 			return []step.Step{
 				// Right click skill bindings
 				step.SyncStep(func(d data.Data) error {
-					hid.Click(hid.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+					b.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 					helper.Sleep(300)
-					hid.MovePointer(10, 10)
+					b.HID.MovePointer(10, 10)
 					helper.Sleep(300)
 
 					for sk, binding := range skillBindings {
@@ -194,9 +193,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 							continue
 						}
 
-						hid.MovePointer(skillPosition.X, skillPosition.Y)
+						b.HID.MovePointer(skillPosition.X, skillPosition.Y)
 						helper.Sleep(100)
-						hid.PressKey(binding)
+						b.HID.PressKey(binding)
 						helper.Sleep(300)
 					}
 
@@ -210,9 +209,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 						if binding != "" {
 							continue
 						}
-						hid.Click(hid.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
+						b.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
 						helper.Sleep(300)
-						hid.MovePointer(10, 10)
+						b.HID.MovePointer(10, 10)
 						helper.Sleep(300)
 
 						skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
@@ -220,7 +219,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 							return nil
 						}
 						helper.Sleep(100)
-						hid.Click(hid.LeftButton, skillPosition.X, skillPosition.Y)
+						b.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
 					}
 					return nil
 				}),
@@ -306,10 +305,10 @@ func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillI
 func (b *Builder) HireMerc() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar && config.Config.Character.UseMerc {
+		if isLevelingChar && b.CharacterCfg.Character.UseMerc {
 			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
-			if config.Config.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
-				b.logger.Info("Hiring merc...")
+			if b.CharacterCfg.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
+				b.Logger.Info("Hiring merc...")
 				// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
 				actions = append(actions,
 					b.InteractNPC(
@@ -317,9 +316,9 @@ func (b *Builder) HireMerc() *Chain {
 						step.KeySequence("home", "down", "enter"),
 						step.Wait(time.Second*2),
 						step.SyncStep(func(d data.Data) error {
-							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
 							helper.Sleep(300)
-							hid.Click(hid.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
 
 							return nil
 						}),

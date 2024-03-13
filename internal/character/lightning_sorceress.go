@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -56,7 +55,7 @@ func (s LightningSorceress) KillMonsterSequence(
 		for _, m := range d.Monsters.Enemies() {
 			if d := pather.DistanceFromMe(d, m.Position); d < 5 {
 				s.logger.Debug("Monster detected close to the player, casting Nova over it")
-				steps = append(steps, step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, 0, 3, opts...))
+				steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.Nova, 0, 3, opts...))
 				break
 			}
 		}
@@ -70,7 +69,7 @@ func (s LightningSorceress) KillMonsterSequence(
 		}
 
 		steps = append(steps,
-			step.SecondaryAttack(config.Config.Bindings.Sorceress.Nova, id, 5, opts...),
+			step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.Nova, id, 5, opts...),
 		)
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -81,8 +80,8 @@ func (s LightningSorceress) KillMonsterSequence(
 
 func (s LightningSorceress) BuffSkills() map[skill.ID]string {
 	return map[skill.ID]string{
-		skill.FrozenArmor:  config.Config.Bindings.Sorceress.FrozenArmor,
-		skill.EnergyShield: config.Config.Bindings.Sorceress.EnergyShield,
+		skill.FrozenArmor:  s.container.CharacterCfg.Bindings.Sorceress.FrozenArmor,
+		skill.EnergyShield: s.container.CharacterCfg.Bindings.Sorceress.EnergyShield,
 	}
 }
 
@@ -147,7 +146,7 @@ func (s LightningSorceress) KillDiablo() action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d data.Data) []step.Step {
 				return []step.Step{
-					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, diablo.UnitID, 5, step.Distance(3, 8)),
+					step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.StaticField, diablo.UnitID, 5, step.Distance(3, 8)),
 				}
 			}),
 			s.killMonster(npc.Diablo, data.MonsterTypeNone),
@@ -161,7 +160,7 @@ func (s LightningSorceress) KillIzual() action.Action {
 			action.NewStepChain(func(d data.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, m.UnitID, 7, step.Distance(5, 8)),
+					step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, 7, step.Distance(5, 8)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably
@@ -182,7 +181,7 @@ func (s LightningSorceress) KillBaal() action.Action {
 			action.NewStepChain(func(d data.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, m.UnitID, 5, step.Distance(5, 8)),
+					step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, 5, step.Distance(5, 8)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably

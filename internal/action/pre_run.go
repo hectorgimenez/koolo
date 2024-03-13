@@ -1,9 +1,7 @@
 package action
 
-import "github.com/hectorgimenez/koolo/internal/config"
-
 func (b *Builder) PreRun(firstRun bool) []Action {
-	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+	if b.CharacterCfg.Companion.Enabled && !b.CharacterCfg.Companion.Leader {
 		return []Action{
 			b.RecoverCorpse(),
 			b.Heal(),

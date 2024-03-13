@@ -5,14 +5,13 @@ echo Cleaning up previous artifacts...
 if exist build rmdir /s /q build > NUL || goto :error
 
 echo Building Koolo binary...
-go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w" -o build/koolo.exe ./cmd/koolo/main.go > NUL || goto :error
+go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w -H windowsgui" -o build/koolo.exe ./cmd/koolo > NUL || goto :error
 
 echo Copying assets...
 mkdir build\config > NUL || goto :error
-copy config\config.yaml.dist build\config\config.yaml  > NUL || goto :error
-xcopy /q /E /I /y config\pickit build\config\pickit  > NUL || goto :error
-xcopy /q /E /I /y config\pickit_leveling build\config\pickit_leveling  > NUL || goto :error
-xcopy /q /y koolo-map.exe build > NUL || goto :error
+copy config\koolo.yaml.dist build\config\koolo.yaml  > NUL || goto :error
+xcopy /q /E /I /y config\template build\config\template  > NUL || goto :error
+xcopy /q /E /I /y tools build\tools > NUL || goto :error
 xcopy /q /y README.md build > NUL || goto :error
 
 echo Done! Artifacts are in build directory.

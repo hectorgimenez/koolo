@@ -5,8 +5,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"log/slog"
 )
@@ -15,7 +15,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
-			b.logger.Info("No Horadric Cube found in inventory")
+			b.Logger.Info("No Horadric Cube found in inventory")
 			return nil
 		}
 
@@ -26,7 +26,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			}))
 		}
 
-		b.logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
+		b.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
 
 		// If items are on the Stash, pickup them to the inventory (only personal stash is supported for now)
 		for _, itm := range items {
@@ -35,10 +35,10 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 				continue
 			}
 
-			b.logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
+			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
 			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 				screenPos := ui.GetScreenCoordsForItem(nwIt)
-				hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+				b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 				helper.Sleep(300)
 
 				return nil
@@ -52,9 +52,9 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
 				for _, updatedItem := range d.Items.AllItems {
 					if nwIt.UnitID == updatedItem.UnitID {
-						b.logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
+						b.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
 						screenPos := ui.GetScreenCoordsForItem(updatedItem)
-						hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+						b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 						helper.Sleep(300)
 					}
 				}
@@ -71,25 +71,25 @@ func (b *Builder) CubeTransmute() *Chain {
 	return NewChain(func(d data.Data) (actions []Action) {
 		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
-			b.logger.Info("No Horadric Cube found in inventory")
+			b.Logger.Info("No Horadric Cube found in inventory")
 			return nil
 		}
 
 		actions = append(actions, b.ensureCubeIsOpen(cube))
 
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
-			b.logger.Debug("Transmuting items in the Horadric Cube")
+			b.Logger.Debug("Transmuting items in the Horadric Cube")
 			helper.Sleep(150)
-			hid.Click(hid.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
+			b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 			helper.Sleep(3000)
 
 			// Move the Item back to the inventory
-			hid.ClickWithModifier(hid.LeftButton, 238, 262, hid.CtrlKey)
+			b.HID.ClickWithModifier(game.LeftButton, 238, 262, game.CtrlKey)
 			helper.Sleep(300)
 
 			return []step.Step{
 				step.SyncStepWithCheck(func(d data.Data) error {
-					hid.PressKey("esc")
+					b.HID.PressKey("esc")
 					helper.Sleep(300)
 					return nil
 				}, func(d data.Data) step.Status {
@@ -107,17 +107,17 @@ func (b *Builder) CubeTransmute() *Chain {
 
 func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 	return NewStepChain(func(d data.Data) []step.Step {
-		b.logger.Debug("Opening Horadric Cube...")
+		b.Logger.Debug("Opening Horadric Cube...")
 		return []step.Step{
 			step.SyncStepWithCheck(func(d data.Data) error {
 				screenPos := ui.GetScreenCoordsForItem(cube)
 				helper.Sleep(300)
-				hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
+				b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 				helper.Sleep(200)
 				return nil
 			}, func(d data.Data) step.Status {
 				if d.OpenMenus.Cube {
-					b.logger.Debug("Horadric Cube window detected")
+					b.Logger.Debug("Horadric Cube window detected")
 					return step.StatusCompleted
 				}
 				return step.StatusInProgress

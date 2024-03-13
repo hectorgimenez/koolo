@@ -3,7 +3,7 @@ package action
 import (
 	"errors"
 	"fmt"
-	"log/slog"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"reflect"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -29,7 +29,7 @@ func NewStepChain(builder func(d data.Data) []step.Step, opts ...Option) *StepCh
 	return a
 }
 
-func (a *StepChainAction) NextStep(logger *slog.Logger, d data.Data) error {
+func (a *StepChainAction) NextStep(d data.Data, container container.Container) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}
@@ -40,9 +40,9 @@ func (a *StepChainAction) NextStep(logger *slog.Logger, d data.Data) error {
 	}
 
 	for _, s := range a.Steps {
-		if s.Status(d) != step.StatusCompleted {
+		if s.Status(d, container) != step.StatusCompleted {
 			lastRun := s.LastRun()
-			err := s.Run(d)
+			err := s.Run(d, container)
 			if s.LastRun().After(lastRun) {
 				//logger.Debug("Executed step", slog.String("step_name", reflect.TypeOf(s).Elem().Name()))
 			}

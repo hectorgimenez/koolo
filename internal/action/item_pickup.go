@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -27,7 +26,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 		if len(itemsToPickup) > 0 {
 			for _, m := range d.Monsters.Enemies() {
 				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
-					b.logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
+					b.Logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
 					itemBeingPickedUp = -1
 					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 						return m.UnitID, true
@@ -39,14 +38,14 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 
 			// Error picking up Item, go back to town, sell junk, stash and try again.
 			if itemBeingPickedUp == i.UnitID {
-				b.logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
+				b.Logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
 				return []Action{NewChain(func(d data.Data) []Action {
 					itemBeingPickedUp = -1
 					return b.InRunReturnTownRoutine()
 				})}
 			}
 
-			b.logger.Debug(fmt.Sprintf(
+			b.Logger.Debug(fmt.Sprintf(
 				"Item Detected: %s [%d] at X:%d Y:%d",
 				i.Name,
 				i.Quality,
@@ -58,7 +57,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 			return []Action{
 				b.MoveToCoords(i.Position),
 				NewStepChain(func(d data.Data) []step.Step {
-					return []step.Step{step.PickupItem(b.logger, i)}
+					return []step.Step{step.PickupItem(b.Logger, i)}
 				}, IgnoreErrors()),
 			}
 		}
@@ -66,7 +65,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 		// Add small delay, drop is not instant
 		if waitForDrop && time.Since(firstCallTime) < time.Second {
 			msToWait := time.Second - time.Since(firstCallTime)
-			b.logger.Debug("No items detected, waiting a bit and will try again", slog.Int("waitMs", int(msToWait.Milliseconds())))
+			b.Logger.Debug("No items detected, waiting a bit and will try again", slog.Int("waitMs", int(msToWait.Milliseconds())))
 
 			return []Action{b.Wait(msToWait)}
 		}
@@ -132,7 +131,7 @@ func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 	// Skip picking up gold if we can not carry more
 	if d.PlayerUnit.Stats[stat.Gold] >= d.PlayerUnit.MaxGold() {
-		b.logger.Debug("Skipping gold pickup, inventory full")
+		b.Logger.Debug("Skipping gold pickup, inventory full")
 		return false
 	}
 
@@ -155,5 +154,5 @@ func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 		return true
 	}
 
-	return itemfilter.Evaluate(i, config.Config.Runtime.Rules)
+	return itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
 }

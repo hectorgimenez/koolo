@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <link rel="stylesheet" href="../assets/css/pico.min.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <title>Koolo Settings</title>
+</head>
+<body>
+<main class="container">
+    {{ if ne .ErrorMessage "" }}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="error-message">
+                    {{ .ErrorMessage }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+    <div class="notification">
+        <h2>Settings</h2>
+        <form method="post">
+            <fieldset>
+                <label>
+                    Diablo II Resurrected Path
+                    <input
+                            name="d2rpath"
+                            placeholder="C:\Program Files (x86)\Diablo II Resurrected"
+                            value="{{.D2RPath}}"
+                    />
+                </label>
+                <label>
+                    Diablo II: LoD 1.13c Path (MUST BE 1.13c, otherwise it won't work)
+                    <input
+                            name="d2lodpath"
+                            placeholder="E:\games\Diablo II"
+                            value="{{.D2LoDPath}}"
+                    />
+                </label>
+            </fieldset>
+            <input
+                    type="submit"
+                    value="Continue"
+            />
+        </form>
+    </div>
+</main>
+</body>
+</html>

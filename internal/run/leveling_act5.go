@@ -10,9 +10,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"time"
 )
@@ -28,14 +27,14 @@ func (a Leveling) act5() action.Action {
 			actions := Baal{baseRun: a.baseRun}.BuildActions()
 			return append(actions, action.NewStepChain(func(d data.Data) []step.Step {
 				if d.PlayerUnit.Area == area.TheWorldstoneChamber && len(d.Monsters.Enemies()) == 0 {
-					switch config.Config.Game.Difficulty {
+					switch a.CharacterCfg.Game.Difficulty {
 					case difficulty.Normal:
 						if d.PlayerUnit.Stats[stat.Level] >= 46 {
-							config.Config.Game.Difficulty = difficulty.Nightmare
+							a.CharacterCfg.Game.Difficulty = difficulty.Nightmare
 						}
 					case difficulty.Nightmare:
 						if d.PlayerUnit.Stats[stat.Level] >= 65 {
-							config.Config.Game.Difficulty = difficulty.Hell
+							a.CharacterCfg.Game.Difficulty = difficulty.Hell
 						}
 					}
 				}
@@ -85,13 +84,13 @@ func (a Leveling) anya() []action.Action {
 		a.builder.Wait(time.Second * 8),
 		a.builder.InteractNPC(npc.Malah,
 			step.SyncStep(func(d data.Data) error {
-				hid.PressKey("esc")
-				hid.PressKey(config.Config.Bindings.OpenInventory)
+				a.HID.PressKey("esc")
+				a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
 				itm, _ := d.Items.Find("ScrollOfResistance")
 				screenPos := ui.GetScreenCoordsForItem(itm)
 				helper.Sleep(200)
-				hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
-				hid.PressKey("esc")
+				a.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+				a.HID.PressKey("esc")
 
 				return nil
 			}),
@@ -117,7 +116,7 @@ func (a Leveling) ancients() []action.Action {
 			if len(d.Monsters.Enemies()) > 0 {
 				return true
 			}
-			hid.Click(hid.LeftButton, 300, 300)
+			a.HID.Click(game.LeftButton, 300, 300)
 			helper.Sleep(1000)
 			return false
 		}),

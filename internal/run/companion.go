@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"time"
@@ -26,9 +25,9 @@ func (s Companion) Name() string {
 func (s Companion) BuildActions() []action.Action {
 	return []action.Action{
 		action.NewChain(func(d data.Data) []action.Action {
-			leaderRosterMember, leaderFound := d.Roster.FindByName(config.Config.Companion.LeaderName)
+			leaderRosterMember, leaderFound := d.Roster.FindByName(s.CharacterCfg.Companion.LeaderName)
 			if !leaderFound {
-				s.logger.Warn(fmt.Sprintf("Leader not found: %s", config.Config.Companion.LeaderName))
+				s.logger.Warn(fmt.Sprintf("Leader not found: %s", s.CharacterCfg.Companion.LeaderName))
 				return []action.Action{}
 			}
 
@@ -121,7 +120,7 @@ func (s Companion) BuildActions() []action.Action {
 
 			return []action.Action{
 				action.NewStepChain(func(d data.Data) []step.Step {
-					return []step.Step{step.MoveTo(leaderRosterMember.Position, step.WithTimeout(time.Millisecond*500))}
+					return []step.Step{step.MoveTo(s.CharacterCfg, leaderRosterMember.Position, step.WithTimeout(time.Millisecond*500))}
 				}),
 			}
 		}, action.RepeatUntilNoSteps()),

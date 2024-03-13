@@ -2,28 +2,30 @@ package town
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"math/rand"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 type ShopManager struct {
-	logger *slog.Logger
-	bm     health.BeltManager
+	logger    *slog.Logger
+	bm        health.BeltManager
+	container container.Container
 }
 
-func NewShopManager(logger *slog.Logger, bm health.BeltManager) ShopManager {
+func NewShopManager(logger *slog.Logger, bm health.BeltManager, container container.Container) ShopManager {
 	return ShopManager{
-		logger: logger,
-		bm:     bm,
+		logger:    logger,
+		bm:        bm,
+		container: container,
 	}
 }
 
@@ -42,7 +44,7 @@ func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
 
 	pot, found = sm.findFirstMatch(d, "supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
 	// In Normal greater potions are expensive as we are low level, let's keep with cheap ones
-	if config.Config.Game.Difficulty == "normal" {
+	if sm.container.CharacterCfg.Game.Difficulty == "normal" {
 		pot, found = sm.findFirstMatch(d, "manapotion", "lightmanapotion", "minormanapotion")
 	}
 	if found && missingManaPots > 0 {
@@ -131,8 +133,8 @@ func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
 }
 
 func (sm ShopManager) SellJunk(d data.Data) {
-	for _, i := range ItemsToBeSold(d) {
-		if config.Config.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+	for _, i := range ItemsToBeSold(sm.container.CharacterCfg.Inventory.InventoryLock, d) {
+		if sm.container.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			sm.SellItem(i)
 		}
 	}
@@ -141,7 +143,7 @@ func (sm ShopManager) SellJunk(d data.Data) {
 func (sm ShopManager) SellItem(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	helper.Sleep(500)
-	hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	helper.Sleep(500)
 	sm.logger.Debug(fmt.Sprintf("Item %s [%d] sold", i.Name, i.Quality))
 }
@@ -150,7 +152,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
-		hid.Click(hid.RightButton, screenPos.X, screenPos.Y)
+		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 		helper.Sleep(900)
 		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
 	}
@@ -158,17 +160,17 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 
 func (sm ShopManager) buyFullStack(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
-	hid.ClickWithModifier(hid.RightButton, screenPos.X, screenPos.Y, hid.ShiftKey)
+	sm.container.HID.ClickWithModifier(game.RightButton, screenPos.X, screenPos.Y, game.ShiftKey)
 	helper.Sleep(500)
 }
 
-func ItemsToBeSold(d data.Data) (items []data.Item) {
+func ItemsToBeSold(lockPattern [][]int, d data.Data) (items []data.Item) {
 	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 		if itm.IsFromQuest() {
 			continue
 		}
 
-		if config.Config.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
+		if lockPattern[itm.Position.Y][itm.Position.X] == 1 {
 			items = append(items, itm)
 		}
 	}

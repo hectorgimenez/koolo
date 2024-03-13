@@ -3,14 +3,12 @@ package health
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/event/stat"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 var ErrDied = errors.New("you died :(")
@@ -28,7 +26,8 @@ const (
 type Manager struct {
 	logger        *slog.Logger
 	beltManager   BeltManager
-	gameManager   *helper.GameManager
+	gameManager   *game.Manager
+	cfg           *config.CharacterCfg
 	lastRejuv     time.Time
 	lastRejuvMerc time.Time
 	lastHeal      time.Time
@@ -36,24 +35,23 @@ type Manager struct {
 	lastMercHeal  time.Time
 }
 
-func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *helper.GameManager) Manager {
+func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *game.Manager, cfg *config.CharacterCfg) Manager {
 	return Manager{
 		logger:      logger,
 		beltManager: beltManager,
 		gameManager: gm,
+		cfg:         cfg,
 	}
 }
 
 func (hm *Manager) HandleHealthAndMana(d data.Data) error {
-	hpConfig := config.Config.Health
+	hpConfig := hm.cfg.Health
 	// Safe area, skipping
 	if d.PlayerUnit.Area.IsTown() {
 		return nil
 	}
 
 	if d.PlayerUnit.HPPercent() <= 0 {
-		stat.FinishCurrentRun(event.Death)
-
 		return ErrDied
 	}
 
@@ -67,7 +65,6 @@ func (hm *Manager) HandleHealthAndMana(d data.Data) error {
 
 	if !usedRejuv {
 		if d.PlayerUnit.HPPercent() <= hpConfig.ChickenAt {
-			stat.FinishCurrentRun(event.Chicken)
 			return fmt.Errorf("%w: Current Health: %d percent", ErrChicken, d.PlayerUnit.HPPercent())
 		}
 
@@ -94,7 +91,6 @@ func (hm *Manager) HandleHealthAndMana(d data.Data) error {
 
 		if !usedMercRejuv {
 			if d.MercHPPercent() <= hpConfig.MercChickenAt {
-				stat.FinishCurrentRun(event.MercChicken)
 				return fmt.Errorf("%w: Current Merc Health: %d percent", ErrMercChicken, d.MercHPPercent())
 			}
 

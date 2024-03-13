@@ -2,11 +2,12 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -32,7 +33,7 @@ func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool) *Int
 	}
 }
 
-func (i *InteractNPCStep) Status(d data.Data) Status {
+func (i *InteractNPCStep) Status(d data.Data, _ container.Container) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -49,7 +50,7 @@ func (i *InteractNPCStep) Status(d data.Data) Status {
 	return i.status
 }
 
-func (i *InteractNPCStep) Run(d data.Data) error {
+func (i *InteractNPCStep) Run(d data.Data, container container.Container) error {
 	i.tryTransitionStatus(StatusInProgress)
 
 	// Give some time before retrying the interaction
@@ -60,9 +61,9 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 	i.lastRun = time.Now()
 	m, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
 	if found {
-		x, y := pather.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
+		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 		if m.IsHovered {
-			hid.Click(hid.LeftButton, x, y)
+			container.HID.Click(game.LeftButton, x, y)
 			i.waitingForInteraction = true
 			return nil
 		}
@@ -74,9 +75,9 @@ func (i *InteractNPCStep) Run(d data.Data) error {
 
 		// Act 4 Tyrael has a super weird hitbox
 		if i.NPC == npc.Tyrael2 {
-			hid.MovePointer(x, y-20)
+			container.HID.MovePointer(x, y-20)
 		} else {
-			hid.MovePointer(x, y)
+			container.HID.MovePointer(x, y)
 		}
 
 		return nil

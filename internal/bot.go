@@ -4,39 +4,44 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/event/stat"
 	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/run"
 )
 
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
 type Bot struct {
-	logger *slog.Logger
-	hm     health.Manager
-	ab     *action.Builder
-	gr     *reader.GameReader
-	paused bool
+	logger         *slog.Logger
+	hm             health.Manager
+	ab             *action.Builder
+	container      container.Container
+	eventChan      chan<- event.Event
+	paused         bool
+	supervisorName string
 }
 
 func NewBot(
 	logger *slog.Logger,
 	hm health.Manager,
 	ab *action.Builder,
-	gr *reader.GameReader,
+	container container.Container,
+	supervisorName string,
+	eventChan chan<- event.Event,
 ) *Bot {
 	return &Bot{
-		logger: logger,
-		hm:     hm,
-		ab:     ab,
-		gr:     gr,
+		logger:         logger,
+		hm:             hm,
+		ab:             ab,
+		container:      container,
+		supervisorName: supervisorName,
+		eventChan:      eventChan,
 	}
 }
 
@@ -51,7 +56,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	loadingScreensDetected := 0
 
 	for k, r := range runs {
-		stat.StartRun(r.Name())
+		b.eventChan <- event.RunStarted(event.Text("Starting run"), r.Name())
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -78,7 +83,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					time.Sleep(time.Millisecond*10 - time.Since(loopTime))
 				}
 
-				d := b.gr.GetData(false)
+				d := b.container.Reader.GetData(false)
 
 				// Skip running stuff if loading screen is present
 				if d.OpenMenus.LoadingScreen {
@@ -106,18 +111,18 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				}
 
 				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration
-				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d) == step.StatusCompleted) {
+				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.container) == step.StatusCompleted) {
 					buffAct = b.ab.BuffIfRequired(d)
 					actions = append([]action.Action{buffAct}, actions...)
 				}
 
 				for k, act := range actions {
-					err := act.NextStep(b.logger, d)
+					err := act.NextStep(d, b.container)
 					loopTime = time.Now()
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-							stat.FinishCurrentRun(event.Kill)
+							b.eventChan <- event.RunFinished(event.Text("Finished run"), r.Name(), event.FinishedOK)
 							running = false
 						}
 						continue
@@ -127,7 +132,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						break
 					}
 					if errors.Is(err, action.ErrCanBeSkipped) {
-						event.Events <- event.WithScreenshot(fmt.Sprintf("error occurred on action that can be skipped, game will continue: %s", err.Error()))
+						b.eventChan <- event.RunFinished(event.WithScreenshot(err.Error(), b.container.Reader.Screenshot()), r.Name(), event.FinishedError)
 						b.logger.Warn("error occurred on action that can be skipped, game will continue", slog.Any("error", err))
 						act.Skip()
 						break
@@ -137,7 +142,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						break
 					}
 					if err != nil {
-						stat.FinishCurrentRun(event.Error)
 						return err
 					}
 					break
@@ -150,7 +154,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 }
 
 func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
-	if time.Since(startedAt).Seconds() > float64(config.Config.MaxGameLength) {
+	if time.Since(startedAt).Seconds() > float64(config.Characters[b.supervisorName].MaxGameLength) {
 		return fmt.Errorf(
 			"max game length reached, try to exit game: %0.2f",
 			time.Since(startedAt).Seconds(),
@@ -161,7 +165,7 @@ func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
 }
 
 func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
-	if config.Config.Companion.Enabled && !config.Config.Companion.Leader {
+	if config.Characters[b.supervisorName].Companion.Enabled && !config.Characters[b.supervisorName].Companion.Leader {
 		return []action.Action{}
 	}
 
@@ -172,7 +176,7 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 
 	// Don't return town on last run
 	if currentRun != len(runs)-1 {
-		if config.Config.Game.ClearTPArea {
+		if config.Characters[b.supervisorName].Game.ClearTPArea {
 			actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
 			actions = append(actions, b.ab.ItemPickup(false, -1))
 		}

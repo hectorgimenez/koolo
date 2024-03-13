@@ -16,7 +16,7 @@ func (b *Builder) ClearAreaAroundPlayer(distance int) Action {
 		for _, m := range d.Monsters.Enemies() {
 			d := pather.DistanceFromPoint(originalPosition, m.Position)
 			if d <= distance {
-				b.logger.Debug("Clearing area...", slog.Int("monsterID", int(m.Name)))
+				b.Logger.Debug("Clearing area...", slog.Int("monsterID", int(m.Name)))
 				return m.UnitID, true
 			}
 		}

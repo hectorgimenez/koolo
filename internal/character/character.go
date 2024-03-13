@@ -2,22 +2,23 @@ package character
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/config"
 )
 
-func BuildCharacter(logger *slog.Logger) (action.Character, error) {
+func BuildCharacter(logger *slog.Logger, container container.Container) (action.Character, error) {
 	bc := BaseCharacter{
-		logger: logger,
+		logger:    logger,
+		container: container,
 	}
 
-	if config.Config.Game.Runs[0] == "leveling" {
-		switch strings.ToLower(config.Config.Character.Class) {
+	if container.CharacterCfg.Game.Runs[0] == "leveling" {
+		switch strings.ToLower(container.CharacterCfg.Character.Class) {
 		case "sorceress":
 			return SorceressLeveling{BaseCharacter: bc}, nil
 		case "paladin":
@@ -27,7 +28,7 @@ func BuildCharacter(logger *slog.Logger) (action.Character, error) {
 		return nil, fmt.Errorf("leveling only available for sorceress and paladin")
 	}
 
-	switch strings.ToLower(config.Config.Character.Class) {
+	switch strings.ToLower(container.CharacterCfg.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
 	case "lightning":
@@ -36,11 +37,12 @@ func BuildCharacter(logger *slog.Logger) (action.Character, error) {
 		return Hammerdin{BaseCharacter: bc}, nil
 	}
 
-	return nil, fmt.Errorf("class %s not implemented", config.Config.Character.Class)
+	return nil, fmt.Errorf("class %s not implemented", container.CharacterCfg.Character.Class)
 }
 
 type BaseCharacter struct {
-	logger *slog.Logger
+	logger    *slog.Logger
+	container container.Container
 }
 
 func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {

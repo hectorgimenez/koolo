@@ -2,9 +2,8 @@ package action
 
 import (
 	"errors"
-	"log/slog"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/container"
 )
 
 type Chain struct {
@@ -25,7 +24,7 @@ func NewChain(builder func(d data.Data) []Action, opts ...Option) *Chain {
 	return a
 }
 
-func (a *Chain) NextStep(logger *slog.Logger, d data.Data) error {
+func (a *Chain) NextStep(d data.Data, container container.Container) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}
@@ -40,7 +39,7 @@ func (a *Chain) NextStep(logger *slog.Logger, d data.Data) error {
 
 	var err error
 	for _, action := range a.actions {
-		err = action.NextStep(logger, d)
+		err = action.NextStep(d, container)
 		if errors.Is(err, ErrNoMoreSteps) || errors.Is(err, ErrLogAndContinue) {
 			continue
 		}

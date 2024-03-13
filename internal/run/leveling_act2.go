@@ -10,11 +10,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/hid"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/hectorgimenez/koolo/internal/reader"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -177,9 +175,9 @@ func (a Leveling) prepareStaff() action.Action {
 						step.SyncStep(func(d data.Data) error {
 							screenPos := ui.GetScreenCoordsForItem(horadricStaff)
 
-							hid.ClickWithModifier(hid.LeftButton, screenPos.X, screenPos.Y, hid.CtrlKey)
+							a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 							helper.Sleep(300)
-							hid.PressKey("esc")
+							a.HID.PressKey("esc")
 							return nil
 						}),
 					),
@@ -213,7 +211,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 
 	var realTomb area.Area
 	for _, tomb := range talRashaTombs {
-		_, _, objects, _ := reader.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
+		_, _, objects, _ := a.Reader.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
 		for _, obj := range objects {
 			if obj.Name == object.HoradricOrifice {
 				realTomb = tomb
@@ -255,11 +253,11 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 
 					screenPos := ui.GetScreenCoordsForItem(staff)
 
-					hid.Click(hid.LeftButton, screenPos.X, screenPos.Y)
+					a.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
 					helper.Sleep(300)
-					hid.Click(hid.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
+					a.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
 					helper.Sleep(500)
-					hid.Click(hid.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
+					a.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
 					helper.Sleep(20000)
 
 					return nil
@@ -286,7 +284,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 		action.NewStepChain(func(d data.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d data.Data) error {
-					hid.PressKey(config.Config.Bindings.OpenInventory)
+					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
 					x := 0
 					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 						if itm.Name != "ThawingPotion" {
@@ -297,16 +295,16 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 						helper.Sleep(500)
 
 						if x > 3 {
-							hid.Click(hid.LeftButton, pos.X, pos.Y)
+							a.HID.Click(game.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							hid.Click(hid.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+							a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 						} else {
-							hid.Click(hid.RightButton, pos.X, pos.Y)
+							a.HID.Click(game.RightButton, pos.X, pos.Y)
 						}
 						x++
 					}
 
-					hid.PressKey("esc")
+					a.HID.PressKey("esc")
 					return nil
 				}),
 			}

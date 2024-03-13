@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <link rel="stylesheet" href="../assets/css/pico.min.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <title>Koolo Settings</title>
+</head>
+<body>
+<main class="container">
+    {{ if ne .ErrorMessage "" }}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="error-message">
+                    {{ .ErrorMessage }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+    <div class="notification">
+        <h2>Settings</h2>
+        <form method="post" autocomplete="off">
+            <fieldset>
+                <label>
+                    Name
+                    <input name="name" placeholder="SuperSorc" value="{{ .Supervisor }}"/>
+                </label>
+            </fieldset>
+            <p style="color: red; font-weight: bold;">This will create a new directory under Koolo "config" directory with the character name. You MUST edit the config.yaml and pickit files manually BEFORE starting the bot. Currently editing character settings via UI is not supported.</p>
+            <a href="/"><input type="button" value="Back"/></a>
+            <input type="submit" value="Continue"/>
+        </form>
+    </div>
+</main>
+</body>
+</html>

@@ -11,7 +11,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -21,7 +20,7 @@ type PaladinLeveling struct {
 
 func (p PaladinLeveling) BuffSkills() map[skill.ID]string {
 	return map[skill.ID]string{
-		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
+		skill.HolyShield: p.container.CharacterCfg.Bindings.Paladin.HolyShield,
 	}
 }
 
@@ -167,13 +166,13 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 			if previousUnitID == id {
 				steps = append(steps,
 					step.SyncStep(func(_ data.Data) error {
-						pather.RandomMovement()
+						p.container.PathFinder.RandomMovement()
 						return nil
 					}),
 				)
 			}
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(p.container.CharacterCfg, id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(p.container.CharacterCfg.Bindings.Paladin.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
@@ -181,7 +180,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 			}
 
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(config.Config.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(p.container.CharacterCfg, id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(p.container.CharacterCfg.Bindings.Paladin.Concentration)),
 			)
 		}
 
@@ -348,8 +347,8 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.ID {
 
 func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.ID]string {
 	skillBindings := map[skill.ID]string{
-		skill.Vigor:      config.Config.Bindings.Paladin.Vigor,
-		skill.HolyShield: config.Config.Bindings.Paladin.HolyShield,
+		skill.Vigor:      p.container.CharacterCfg.Bindings.Paladin.Vigor,
+		skill.HolyShield: p.container.CharacterCfg.Bindings.Paladin.HolyShield,
 	}
 
 	if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
@@ -359,12 +358,12 @@ func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.ID]string {
 	}
 
 	if d.PlayerUnit.Skills[skill.Concentration].Level > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
-		skillBindings[skill.Concentration] = config.Config.Bindings.Paladin.Concentration
+		skillBindings[skill.Concentration] = p.container.CharacterCfg.Bindings.Paladin.Concentration
 	} else {
 		if _, found := d.PlayerUnit.Skills[skill.HolyFire]; found {
-			skillBindings[skill.HolyFire] = config.Config.Bindings.Paladin.Concentration
+			skillBindings[skill.HolyFire] = p.container.CharacterCfg.Bindings.Paladin.Concentration
 		} else if _, found := d.PlayerUnit.Skills[skill.Might]; found {
-			skillBindings[skill.Might] = config.Config.Bindings.Paladin.Concentration
+			skillBindings[skill.Might] = p.container.CharacterCfg.Bindings.Paladin.Concentration
 		}
 	}
 

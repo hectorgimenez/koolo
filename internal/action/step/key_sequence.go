@@ -1,10 +1,10 @@
 package step
 
 import (
+	"github.com/hectorgimenez/koolo/internal/container"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/hid"
 )
 
 type KeySequenceStep struct {
@@ -19,7 +19,7 @@ func KeySequence(keysToPress ...string) *KeySequenceStep {
 	}
 }
 
-func (o *KeySequenceStep) Status(_ data.Data) Status {
+func (o *KeySequenceStep) Status(_ data.Data, container container.Container) Status {
 	if o.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -32,14 +32,14 @@ func (o *KeySequenceStep) Status(_ data.Data) Status {
 	return o.status
 }
 
-func (o *KeySequenceStep) Run(_ data.Data) error {
+func (o *KeySequenceStep) Run(_ data.Data, container container.Container) error {
 	if time.Since(o.lastRun) < time.Millisecond*200 {
 		return nil
 	}
 
 	var k string
 	k, o.keysToPress = o.keysToPress[0], o.keysToPress[1:]
-	hid.PressKey(k)
+	container.HID.PressKey(k)
 
 	o.lastRun = time.Now()
 	return nil
