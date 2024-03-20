@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"log/slog"
 	"slices"
-	"sort"
 )
 
 const (
@@ -67,10 +66,12 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		currentWP := area.WPAddresses[a]
 		if !slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
 			for {
+				traverseAreas = append(currentWP.LinkedFrom, traverseAreas...)
+
 				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
 					break
 				}
-				traverseAreas = append(traverseAreas, currentWP.LinkedFrom...)
+
 				currentWP = area.WPAddresses[currentWP.LinkedFrom[0]]
 				a = currentWP.LinkedFrom[0]
 			}
@@ -101,22 +102,19 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		// Next keep traversing all the areas from the previous available waypoint until we reach the destination, trying to discover WPs during the way
 		b.Logger.Info("Traversing areas to reach destination", slog.Any("areas", traverseAreas))
 
-		// Areas are numbered in increasing order. Sort all traverseAreas by its number
-		sort.Slice(traverseAreas, func(i, j int) bool {
-			return traverseAreas[i] < traverseAreas[j]
-		})
-
-		for _, dst := range traverseAreas {
+		for i, dst := range traverseAreas {
 			if !dst.IsTown() {
 				actions = append(actions,
 					b.Buff(),
 				)
 			}
 
-			actions = append(actions,
-				b.MoveToArea(dst),
-				b.DiscoverWaypoint(),
-			)
+			if i > 0 {
+				actions = append(actions,
+					b.MoveToArea(dst),
+					b.DiscoverWaypoint(),
+				)
+			}
 		}
 
 		return actions
