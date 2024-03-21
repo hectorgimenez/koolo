@@ -42,6 +42,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 	firstRun := true
 	go func() {
+		s.waitUntilCharacterSelectionScreen()
 		for {
 			select {
 			case <-ctx.Done():

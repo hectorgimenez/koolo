@@ -56,6 +56,7 @@ func (s *CompanionSupervisor) Start() error {
 	gameCounter := 0
 	firstRun := true
 	go func() {
+		s.waitUntilCharacterSelectionScreen()
 		for {
 			select {
 			case <-ctx.Done():

@@ -41,6 +41,45 @@
                             value="{{.D2LoDPath}}"
                     />
                 </label>
+
+                <h4>Discord integration</h4>
+                <label>
+                    Enabled
+                    <input
+                            type="checkbox"
+                            name="discord_enabled"
+                            value="true"
+                    />
+                </label>
+                <input
+                        name="discord_token"
+                        placeholder="Token"
+                        value="{{.Discord.Token}}"
+                />
+                <input
+                        name="discord_channel_id"
+                        placeholder="Channel ID"
+                        value="{{ .Discord.ChannelID }}"
+                />
+                <h4>Telegram integration</h4>
+                <label>
+                    Enabled
+                    <input
+                            type="checkbox"
+                            name="telegram_enabled"
+                            value="true"
+                    />
+                </label>
+                <input
+                        name="telegram_token"
+                        placeholder="Token"
+                        value="{{.Telegram.Token}}"
+                />
+                <input
+                        name="telegram_chat_id"
+                        placeholder="Chat ID"
+                        value="{{ .Telegram.ChatID }}"
+                />
             </fieldset>
             <input
                     type="submit"

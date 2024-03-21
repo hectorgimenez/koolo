@@ -58,9 +58,11 @@
                     <button class="button">Start</button>
                 </a>
                 {{ end }}
+                {{ if ne .SupervisorStatus "" }}
                 <a href="/stop?characterName={{$key}}" style="text-decoration: none;">
                     <button class="button">Stop</button>
                 </a>
+                {{ end }}
             </td>
         </tr>
         {{ end }}

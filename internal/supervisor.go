@@ -84,20 +84,7 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) e
 	// TODO: refactor this
 	go s.listener.Listen(ctx)
 
-	err := s.c.Injector.Load()
-	if err != nil {
-		return err
-	}
-
-	s.c.Logger.Info("Waiting for character selection screen...")
-	for range 25 {
-		s.c.HID.Click(game.LeftButton, 100, 100)
-		time.Sleep(time.Second)
-	}
-
-	s.c.Logger.Info("Trying to start game...")
-
-	return nil
+	return s.c.Injector.Load()
 }
 
 func (s *baseSupervisor) logGameStart(runs []run.Run) {
@@ -106,4 +93,14 @@ func (s *baseSupervisor) logGameStart(runs []run.Run) {
 		runNames += r.Name() + ", "
 	}
 	s.c.Logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
+}
+
+func (s *baseSupervisor) waitUntilCharacterSelectionScreen() {
+	s.c.Logger.Info("Waiting for character selection screen...")
+	for range 25 {
+		s.c.HID.Click(game.LeftButton, 100, 100)
+		time.Sleep(time.Second)
+	}
+
+	s.c.Logger.Info("Creating new game...")
 }

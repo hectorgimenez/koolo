@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"strconv"
 )
 
 type HttpServer struct {
@@ -94,7 +95,7 @@ func (s *HttpServer) index(w http.ResponseWriter) {
 }
 
 func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
+	if r.Method == http.MethodPost {
 		err := r.ParseForm()
 		if err != nil {
 			configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: "Error parsing form"})
@@ -102,16 +103,30 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		}
 
 		newConfig := *config.Koolo
+		newConfig.FirstRun = false // Disable the welcome assistant
 		newConfig.D2RPath = r.Form.Get("d2rpath")
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
-		newConfig.FirstRun = false
-
-		err = config.ValidateAndSaveConfig(newConfig)
-		if err == nil {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+		// Discord
+		newConfig.Discord.Enabled = r.Form.Get("discord_enabled") == "true"
+		newConfig.Discord.Token = r.Form.Get("discord_token")
+		newConfig.Discord.ChannelID = r.Form.Get("discord_channel_id")
+		// Telegram
+		newConfig.Telegram.Enabled = r.Form.Get("telegram_enabled") == "true"
+		newConfig.Telegram.Token = r.Form.Get("telegram_token")
+		telegramChatId, err := strconv.ParseInt(r.Form.Get("telegram_chat_id"), 10, 64)
+		if err != nil {
+			configTpl.Execute(w, ConfigData{KooloCfg: &newConfig, ErrorMessage: "Invalid Telegram Chat ID"})
 			return
 		}
-		configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: err.Error()})
+		newConfig.Telegram.ChatID = telegramChatId
+
+		err = config.ValidateAndSaveConfig(newConfig)
+		if err != nil {
+			configTpl.Execute(w, ConfigData{KooloCfg: &newConfig, ErrorMessage: err.Error()})
+			return
+		}
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
@@ -120,7 +135,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 
 func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 	var err error
-	if r.Method == "POST" {
+	if r.Method == http.MethodPost {
 		err = r.ParseForm()
 		if err != nil {
 			charSettingsTpl.Execute(w, CharacterSettings{
