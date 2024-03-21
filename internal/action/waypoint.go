@@ -66,14 +66,18 @@ func (b *Builder) useWP(a area.Area) *Chain {
 		currentWP := area.WPAddresses[a]
 		if !slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
 			for {
+				traverseAreas = append(currentWP.LinkedFrom, traverseAreas...)
+
 				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
 					break
 				}
-				traverseAreas = append(traverseAreas, currentWP.LinkedFrom...)
+
 				currentWP = area.WPAddresses[currentWP.LinkedFrom[0]]
 				a = currentWP.LinkedFrom[0]
 			}
 		}
+
+		currentWP = area.WPAddresses[a]
 
 		// First use the previous available waypoint that we have discovered
 		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
