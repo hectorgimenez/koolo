@@ -45,11 +45,9 @@ func (a Tristram) BuildActions() []action.Action {
 		return d.PlayerUnit.Area == area.Tristram
 	}, step.Wait(time.Second)))
 
-	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
-		actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
-			return []step.Step{step.OpenPortal(a.CharacterCfg.Bindings.TP)}
-		}))
-	}
+	actions = append(actions,
+		a.builder.OpenTPIfLeader(),
+	)
 
 	// Clear Tristram or rescue Cain
 	return append(actions, action.NewChain(func(d data.Data) []action.Action {

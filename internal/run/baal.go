@@ -1,7 +1,6 @@
 package run
 
 import (
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -45,9 +44,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 				X: 15116,
 				Y: 5071,
 			}),
-			action.NewStepChain(func(_ data.Data) []step.Step {
-				return []step.Step{step.OpenPortal(s.CharacterCfg.Bindings.TP)}
-			}),
+			s.builder.OpenTPIfLeader(),
 		)
 	}
 
