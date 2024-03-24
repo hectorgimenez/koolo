@@ -97,7 +97,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		return nil, fmt.Errorf("error creating game reader: %w", err)
 	}
 
-	gi, err := game.InjectorInit(gr.GetPID())
+	gi, err := game.InjectorInit(logger, gr.GetPID())
 	if err != nil {
 		return nil, fmt.Errorf("error creating game injector: %w", err)
 	}

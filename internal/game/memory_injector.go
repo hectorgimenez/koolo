@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"golang.org/x/sys/windows"
+	"log/slog"
 	"strings"
 	"syscall"
 )
@@ -22,10 +23,11 @@ type MemoryInjector struct {
 	trackMouseEventBytes  [32]byte
 	getKeyStateAddr       uintptr
 	getKeyStateOrigBytes  [18]byte
+	logger                *slog.Logger
 }
 
-func InjectorInit(pid uint32) (*MemoryInjector, error) {
-	i := &MemoryInjector{pid: pid}
+func InjectorInit(logger *slog.Logger, pid uint32) (*MemoryInjector, error) {
+	i := &MemoryInjector{pid: pid, logger: logger}
 	pHandle, err := windows.OpenProcess(fullAccess, false, pid)
 	if err != nil {
 		return nil, fmt.Errorf("error opening process: %w", err)
@@ -75,7 +77,7 @@ func (i *MemoryInjector) Load() error {
 
 func (i *MemoryInjector) Unload() error {
 	if err := i.RestoreMemory(); err != nil {
-		return err
+		i.logger.Error("error restoring memory", err)
 	}
 
 	return windows.CloseHandle(i.handle)
@@ -84,7 +86,7 @@ func (i *MemoryInjector) Unload() error {
 func (i *MemoryInjector) RestoreMemory() error {
 	err := i.RestoreGetCursorPosAddr()
 	if err != nil {
-		return fmt.Errorf("error writing to memory: %w", err)
+		i.logger.Error("error restoring memory", err)
 	}
 
 	return i.RestoreGetKeyState()
