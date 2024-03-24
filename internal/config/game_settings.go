@@ -17,8 +17,7 @@ func AdjustGameSettings() error {
 		return err
 	}
 
-	scale := GetCurrentDisplayScale()
-	settingsJson["Screen Resolution (Windowed)"] = fmt.Sprintf("%dx%d", int(1280*scale), int(720*scale))
+	settingsJson["Screen Resolution (Windowed)"] = "1280x720"
 	settingsJson["Window Mode"] = 0
 
 	settingsContent, err := json.MarshalIndent(settingsJson, "", " ")
@@ -40,11 +39,8 @@ func AreGameSettingsAdjusted() (bool, error) {
 		return false, nil
 	}
 
-	scale := GetCurrentDisplayScale()
-	targetRes := fmt.Sprintf("%dx%d", int(1280*scale), int(720*scale))
-
 	resolution, ok := settingsJson["Screen Resolution (Windowed)"]
-	if !ok || !strings.Contains(resolution.(string), targetRes) {
+	if !ok || !strings.Contains(resolution.(string), "1280x720") {
 		return false, nil
 	}
 

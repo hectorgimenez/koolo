@@ -34,7 +34,7 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - **Diablo II: LOD 1.13c** (IMPORTANT: It will **NOT** work without it, this step is not optional)
 
 ## Quick Start
-- Open Diablo II: Resurrected and ensure the game resolution is set to windowed mode and 1280x720 or 1920x1080 in HiDPI mode. You can close the game after this step.
+- Open Diablo II: Resurrected and ensure the game resolution is set to windowed mode and 1280x720. You can close the game after this step.
 - If you haven't done yet, install **Diablo II: LOD 1.13c**
 - [Download](https://github.com/hectorgimenez/koolo/releases) the latest Koolo release (recommended for most users), or alternatively you can [build it from source](#development-environment)
 - Extract the zip file in a directory of your choice.

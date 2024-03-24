@@ -7,13 +7,10 @@ import (
 )
 
 func (gd *MemoryReader) Screenshot() image.Image {
-	sizeX := int(float64(gd.GameAreaSizeX) * gd.WindowScale())
-	sizeY := int(float64(gd.GameAreaSizeY) * gd.WindowScale())
-
 	// Create a device context compatible with the window
 	hdcWindow, _, _ := winproc.GetWindowDC.Call(uintptr(gd.HWND))
 	hdcMem, _, _ := winproc.CreateCompatibleDC.Call(hdcWindow)
-	hbmMem, _, _ := winproc.CreateCompatibleBitmap.Call(hdcWindow, uintptr(sizeX), uintptr(sizeY))
+	hbmMem, _, _ := winproc.CreateCompatibleBitmap.Call(hdcWindow, uintptr(gd.GameAreaSizeX), uintptr(gd.GameAreaSizeY))
 	_, _, _ = winproc.SelectObject.Call(hdcMem, hbmMem)
 
 	// Use PrintWindow to copy the window into the bitmap
@@ -33,28 +30,28 @@ func (gd *MemoryReader) Screenshot() image.Image {
 		BiClrImportant    uint32
 	}{
 		BiSize:        40, // The size of the BITMAPINFOHEADER structure
-		BiWidth:       int32(sizeX),
-		BiHeight:      -int32(sizeY), // negative to indicate top-down bitmap
+		BiWidth:       int32(gd.GameAreaSizeX),
+		BiHeight:      -int32(gd.GameAreaSizeY), // negative to indicate top-down bitmap
 		BiPlanes:      1,
 		BiBitCount:    32, // 32 bits-per-pixel
 		BiCompression: 0,  // BI_RGB, no compression
 		BiSizeImage:   0,  // 0 for BI_RGB
 	}
 
-	bufSize := sizeX * sizeY * 4
+	bufSize := gd.GameAreaSizeX * gd.GameAreaSizeY * 4
 	buf := make([]byte, bufSize)
 	winproc.GetDIBits.Call(
 		hdcMem,
 		hbmMem,
 		0,
-		uintptr(sizeY),
+		uintptr(gd.GameAreaSizeY),
 		uintptr(unsafe.Pointer(&buf[0])),
 		uintptr(unsafe.Pointer(&bmpInfo)),
 		0, // DIB_RGB_COLORS
 	)
 
 	// Convert raw bytes to *image.RGBA
-	img := image.NewRGBA(image.Rect(0, 0, sizeX, sizeY))
+	img := image.NewRGBA(image.Rect(0, 0, gd.GameAreaSizeX, gd.GameAreaSizeY))
 	copy(img.Pix, buf)
 
 	// Windows is using BRG instead of RGB, let's swap red and blue layers

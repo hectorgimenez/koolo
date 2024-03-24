@@ -24,10 +24,6 @@ func (hid *HID) MovePointer(x, y int) {
 	x = hid.gr.WindowLeftX + x
 	y = hid.gr.WindowTopY + y
 
-	scale := hid.gr.WindowScale()
-	x = int(float64(x) * scale)
-	y = int(float64(y) * scale)
-
 	hid.gi.CursorPos(x, y)
 	lParam := calculateLparam(x, y)
 	win.SendMessage(hid.gr.HWND, win.WM_NCHITTEST, 0, lParam)
@@ -40,10 +36,6 @@ func (hid *HID) Click(btn MouseButton, x, y int) {
 	hid.MovePointer(x, y)
 	x = hid.gr.WindowLeftX + x
 	y = hid.gr.WindowTopY + y
-
-	scale := hid.gr.WindowScale()
-	x = int(float64(x) * scale)
-	y = int(float64(y) * scale)
 
 	lParam := calculateLparam(x, y)
 	buttonDown := uint32(win.WM_LBUTTONDOWN)

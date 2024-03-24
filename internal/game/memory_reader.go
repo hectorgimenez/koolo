@@ -102,8 +102,3 @@ func (gd *MemoryReader) getMapSeed(playerUnit uintptr) (uint, error) {
 
 	return mapSeed, nil
 }
-
-func (gd *MemoryReader) WindowScale() float64 {
-	dpi := win.GetDpiForWindow(gd.HWND)
-	return float64(dpi) / 96.0
-}
