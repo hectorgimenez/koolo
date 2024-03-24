@@ -24,10 +24,11 @@ func NewLogger(debug bool, logDir string) (*slog.Logger, error) {
 	}
 
 	fileName := "koolo-log-" + time.Now().Format("2006-01-02-15-04-05") + ".txt"
-	logFileHandler, err := os.Create(logDir + "/" + fileName)
+	lfh, err := os.Create(logDir + "/" + fileName)
 	if err != nil {
 		return nil, err
 	}
+	logFileHandler = lfh
 
 	level := slog.LevelDebug
 	if !debug {
@@ -38,7 +39,7 @@ func NewLogger(debug bool, logDir string) (*slog.Logger, error) {
 		Level: level,
 	}
 
-	handler := slog.NewTextHandler(io.MultiWriter(os.Stdout, logFileHandler), opts)
+	handler := slog.NewTextHandler(io.MultiWriter(logFileHandler, os.Stdout), opts)
 
 	return slog.New(handler), nil
 }
