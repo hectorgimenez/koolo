@@ -4,7 +4,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
 type ArachnidLair struct {
@@ -21,11 +20,9 @@ func (a ArachnidLair) BuildActions() []action.Action {
 		a.builder.MoveToArea(area.SpiderCave), // Travel to ArachnidLair
 	}
 
-	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
-		actions = append(actions, action.NewStepChain(func(_ data.Data) []step.Step {
-			return []step.Step{step.OpenPortal(a.CharacterCfg.Bindings.TP)}
-		}))
-	}
+	actions = append(actions,
+		a.builder.OpenTPIfLeader(),
+	)
 
 	// Clear ArachnidLair
 	return append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))

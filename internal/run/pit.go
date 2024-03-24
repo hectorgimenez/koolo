@@ -4,7 +4,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
 type Pit struct {
@@ -25,11 +24,9 @@ func (a Pit) BuildActions() (actions []action.Action) {
 	a.logger.Info("Travel to pit level 1")
 	actions = append(actions, a.builder.MoveToArea(area.PitLevel1))
 
-	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
-		actions = append(actions, action.NewStepChain(func(_ data.Data) []step.Step {
-			return []step.Step{step.OpenPortal(a.CharacterCfg.Bindings.TP)}
-		}))
-	}
+	actions = append(actions,
+		a.builder.OpenTPIfLeader(),
+	)
 
 	return append(actions,
 		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 1

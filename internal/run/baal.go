@@ -44,6 +44,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 				X: 15116,
 				Y: 5071,
 			}),
+			s.builder.OpenTPIfLeader(),
 		)
 	}
 
