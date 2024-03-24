@@ -20,3 +20,7 @@ type ConfigData struct {
 	ErrorMessage string
 	*config.KooloCfg
 }
+
+type AutoSettings struct {
+	ErrorMessage string
+}

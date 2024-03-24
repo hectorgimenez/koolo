@@ -6,6 +6,7 @@ import (
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/server"
@@ -29,15 +30,17 @@ func main() {
 	defer sloggger.FlushLog()
 
 	ctx, cancel := context.WithCancel(context.Background())
-
 	g, ctx := errgroup.WithContext(ctx)
 
+	winproc.SetProcessDpiAware.Call() // Set DPI awareness to be able to read the correct scale and show the window correctly
+
 	g.Go(func() error {
+		displayScale := config.GetCurrentDisplayScale()
 		w, err := gowebview.New(&gowebview.Config{URL: "http://localhost:8087", WindowConfig: &gowebview.WindowConfig{
 			Title: "Koolo",
 			Size: &gowebview.Point{
-				X: 1280,
-				Y: 720,
+				X: int64(1280 * displayScale),
+				Y: int64(720 * displayScale),
 			},
 		}})
 		if err != nil {
@@ -45,8 +48,8 @@ func main() {
 		}
 
 		w.SetSize(&gowebview.Point{
-			X: 1280,
-			Y: 720,
+			X: int64(1280 * displayScale),
+			Y: int64(720 * displayScale),
 		}, gowebview.HintFixed)
 
 		defer w.Destroy()

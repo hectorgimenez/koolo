@@ -23,8 +23,9 @@ var (
 )
 
 type KooloCfg struct {
-	FirstRun bool `yaml:"firstRun"`
-	Debug    struct {
+	FirstRun          bool `yaml:"firstRun"`
+	CheckGameSettings bool `yaml:"checkGameSettings"`
+	Debug             struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`
