@@ -9,6 +9,7 @@ import (
 )
 
 type Container struct {
+	Supervisor   string
 	Logger       *slog.Logger
 	Reader       *game.MemoryReader
 	HID          *game.HID

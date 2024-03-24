@@ -114,6 +114,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	hm := health.NewHealthManager(logger, bm, gm, cfg)
 	pf := pather.NewPathFinder(gr, hidM, cfg)
 	c := container.Container{
+		Supervisor:   supervisorName,
 		Logger:       logger,
 		Reader:       gr,
 		HID:          hidM,

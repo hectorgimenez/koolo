@@ -13,7 +13,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
-var lastBuffedAt = time.Time{}
+var lastBuffedAt = map[string]time.Time{}
 
 func (b *Builder) BuffIfRequired(d data.Data) *StepChainAction {
 	if !b.IsRebuffRequired(d) {
@@ -23,9 +23,16 @@ func (b *Builder) BuffIfRequired(d data.Data) *StepChainAction {
 	return b.Buff()
 }
 
+func getLastBuffedAt(supervisor string) time.Time {
+	if t, found := lastBuffedAt[supervisor]; found {
+		return t
+	}
+	return time.Time{}
+}
+
 func (b *Builder) Buff() *StepChainAction {
 	return NewStepChain(func(d data.Data) (steps []step.Step) {
-		if d.PlayerUnit.Area.IsTown() || time.Since(lastBuffedAt) < time.Second*30 {
+		if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
 			return nil
 		}
 
@@ -57,7 +64,7 @@ func (b *Builder) Buff() *StepChainAction {
 					return nil
 				}),
 			)
-			lastBuffedAt = time.Now()
+			lastBuffedAt[b.Supervisor] = time.Now()
 		}
 
 		return steps
@@ -66,7 +73,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 func (b *Builder) IsRebuffRequired(d data.Data) bool {
 	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
-	if d.PlayerUnit.Area.IsTown() || time.Since(lastBuffedAt) < time.Second*30 {
+	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
 		return false
 	}
 
