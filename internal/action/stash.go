@@ -172,7 +172,7 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 
 	// Don't log items that we already have in inventory during first run
 	if !forceStash {
-		b.EventChan <- event.ItemStashed(event.WithScreenshot(fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i)
+		event.Send(event.ItemStashed(event.WithScreenshot(b.Supervisor, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i))
 	}
 	return true
 }

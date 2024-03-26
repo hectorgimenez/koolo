@@ -20,11 +20,12 @@ import (
 var (
 	Koolo      *KooloCfg
 	Characters map[string]*CharacterCfg
+	Version    = "dev"
 )
 
 type KooloCfg struct {
 	FirstRun          bool `yaml:"firstRun"`
-	CheckGameSettings bool `yaml:"checkGameSettings"`
+	UseCustomSettings bool `yaml:"useCustomSettings"`
 	Debug             struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
@@ -49,6 +50,7 @@ type CharacterCfg struct {
 	Username      string `yaml:"username"`
 	Password      string `yaml:"password"`
 	Realm         string `yaml:"realm"`
+	CharacterName string `yaml:"characterName"`
 	Health        struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
@@ -143,7 +145,6 @@ type CharacterCfg struct {
 		Enabled          bool   `yaml:"enabled"`
 		Leader           bool   `yaml:"leader"`
 		LeaderName       string `yaml:"leaderName"`
-		Remote           string `yaml:"remote"`
 		GameNameTemplate string `yaml:"gameNameTemplate"`
 		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`

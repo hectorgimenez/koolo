@@ -9,13 +9,13 @@ import (
 )
 
 type Container struct {
-	Supervisor   string
-	Logger       *slog.Logger
-	Reader       *game.MemoryReader
-	HID          *game.HID
-	Injector     *game.MemoryInjector
-	Manager      *game.Manager
-	PathFinder   pather.PathFinder
-	CharacterCfg *config.CharacterCfg
-	EventChan    chan<- event.Event
+	Supervisor    string
+	Logger        *slog.Logger
+	Reader        *game.MemoryReader
+	HID           *game.HID
+	Injector      *game.MemoryInjector
+	Manager       *game.Manager
+	PathFinder    pather.PathFinder
+	CharacterCfg  *config.CharacterCfg
+	EventListener *event.Listener
 }

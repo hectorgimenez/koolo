@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -15,7 +16,9 @@ import (
 )
 
 func GetMapData(seed string, difficulty difficulty.Difficulty) MapData {
-	stdout, err := exec.Command("./tools/koolo-map.exe", config.Koolo.D2LoDPath, "-s", seed, "-d", getDifficultyAsNum(difficulty)).Output()
+	cmd := exec.Command("./tools/koolo-map.exe", config.Koolo.D2LoDPath, "-s", seed, "-d", getDifficultyAsNum(difficulty))
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	stdout, err := cmd.Output()
 	if err != nil {
 		panic(fmt.Sprintf(
 			"Error detected fetching Map Data from Diablo II: LoD 1.13c game, please make sure you have the classic expansion game installed AND config.yaml D2LoDPath is pointing to the correct game path. Error: %s",

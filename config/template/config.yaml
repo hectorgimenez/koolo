@@ -1,10 +1,10 @@
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 
-# Multiclient settings, this is only required if you want to run multiple clients at the same time with different accounts
-# you can leave it empty for single player.
-username: '' # Battle.net username (required for multiclient only)
-password: '' # Battle.net pwd (required for multiclient only)
-realm: 'eu.actual.battle.net' # (required for multiclient only)
+# Required to avoid the 30 days not logged issue, since the game requires internet connection even to play offline
+username: '' # Battle.net username
+password: '' # Battle.net pwd
+realm: 'eu.actual.battle.net' # Battle.net realm (kr.actual.battle.net, us.actual.battle.net, eu.actual.battle.net)
+characterName: '' # If left empty, koolo will use first listed character, if name is wrong, it will fail to create the game
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75
@@ -178,7 +178,6 @@ companion:
   enabled: false
   leader: true
   leaderName: ''
-  remote: discord # Only discord supported, telegram doesn't allow interacting between bots
   gameNameTemplate: game- # Template for the game name, for example "game-" will lead to "game-1", "game-2", etc.
   gamePassword: xxx
 

@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -39,6 +40,11 @@ func NewStatsHandler(name string, logger *slog.Logger) *StatsHandler {
 }
 
 func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
+	// Only handle events from the supervisor
+	if !strings.EqualFold(e.Supervisor(), h.name) {
+		return nil
+	}
+
 	switch evt := e.(type) {
 	case event.GameCreatedEvent:
 		h.stats.Games = append(h.stats.Games, GameStats{

@@ -111,10 +111,8 @@ func (s Companion) BuildActions() []action.Action {
 
 			// Leader too close
 			if pather.DistanceFromMe(d, leaderRosterMember.Position) < 4 {
-				// TODO: Implement attack sequence while we're very close to the leader?
-				// For now just do nothing
 				return []action.Action{
-					s.builder.Wait(100),
+					s.builder.ClearAreaAroundPlayer(4),
 				}
 			}
 

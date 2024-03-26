@@ -5,7 +5,8 @@ echo Cleaning up previous artifacts...
 if exist build rmdir /s /q build > NUL || goto :error
 
 echo Building Koolo binary...
-go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w -H windowsgui" -o build/koolo.exe ./cmd/koolo > NUL || goto :error
+if "%1"=="" (set VERSION=dev) else (set VERSION=%1)
+go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w -H windowsgui -X 'github.com/hectorgimenez/koolo/internal/config.Version=%VERSION%'" -o build/koolo.exe ./cmd/koolo > NUL || goto :error
 
 echo Copying assets...
 mkdir build\config > NUL || goto :error

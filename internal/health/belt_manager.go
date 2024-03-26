@@ -12,18 +12,18 @@ import (
 )
 
 type BeltManager struct {
-	logger    *slog.Logger
-	hid       *game.HID
-	eventChan chan<- event.Event
-	cfg       *config.CharacterCfg
+	logger         *slog.Logger
+	hid            *game.HID
+	cfg            *config.CharacterCfg
+	supervisorName string
 }
 
-func NewBeltManager(logger *slog.Logger, hid *game.HID, eventChan chan<- event.Event, cfg *config.CharacterCfg) BeltManager {
+func NewBeltManager(logger *slog.Logger, hid *game.HID, cfg *config.CharacterCfg, supervisorName string) BeltManager {
 	return BeltManager{
-		logger:    logger,
-		hid:       hid,
-		eventChan: eventChan,
-		cfg:       cfg,
+		logger:         logger,
+		hid:            hid,
+		cfg:            cfg,
+		supervisorName: supervisorName,
 	}
 }
 
@@ -36,12 +36,12 @@ func (bm BeltManager) DrinkPotion(d data.Data, potionType data.PotionType, merc 
 			bm.hid.PressKey(binding)
 			bm.hid.KeyUp("shift")
 			bm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.X+1, d.MercHPPercent()))
-			bm.eventChan <- event.UsedPotion(event.Text(""), potionType, true)
+			event.Send(event.UsedPotion(event.Text(bm.supervisorName, ""), potionType, true))
 			return true
 		}
 		bm.hid.PressKey(binding)
 		bm.logger.Debug(fmt.Sprintf("Using %s potion [Column: %d]. HP: %d MP: %d", potionType, p.X+1, d.PlayerUnit.HPPercent(), d.PlayerUnit.MPPercent()))
-		bm.eventChan <- event.UsedPotion(event.Text(""), potionType, false)
+		event.Send(event.UsedPotion(event.Text(bm.supervisorName, ""), potionType, false))
 		return true
 	}
 

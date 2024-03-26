@@ -41,11 +41,25 @@
                             value="{{.D2LoDPath}}"
                     />
                 </label>
+                <label>
+                    Use custom game settings
+                    <input
+                            {{ if .UseCustomSettings }}
+                            checked="checked"
+                            {{ end }}
+                            type="checkbox"
+                            name="use_custom_settings"
+                            value="true"
+                    />
+                </label>
 
                 <h4>Discord integration</h4>
                 <label>
                     Enabled (Restart required)
                     <input
+                            {{ if .Discord.Enabled }}
+                            checked="checked"
+                            {{ end }}
                             type="checkbox"
                             name="discord_enabled"
                             value="true"
@@ -65,6 +79,9 @@
                 <label>
                     Enabled (Restart required)
                     <input
+                            {{ if .Telegram.Enabled }}
+                            checked="checked"
+                            {{ end }}
                             type="checkbox"
                             name="telegram_enabled"
                             value="true"

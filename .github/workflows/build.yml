@@ -18,7 +18,7 @@ jobs:
       - name: "Building Koolo artifacts"
         env:
           GOPATH: C:\go
-        run: .\build.bat
+        run: .\build.bat "${{  github.ref_name }}"
       - name: "Packing the release"
         run: 7z a -tzip koolo_${{ github.ref_name }}.zip .\build\*
       - name: Release

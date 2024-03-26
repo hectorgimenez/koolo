@@ -1,5 +1,5 @@
 firstRun: true # If set to true next time the bot starts it will show the setup wizard
-checkGameSettings: true # If set to true bot will check if the game settings are correct (resolution, windowed mode, etc.)
+useCustomSettings: true # If set to true, koolo will use config/Settings.json file to load game settings instead of default one.
 debug:
   log: true # Prints extra log information
   renderMap: false # Render current map data into 'cg.png' file

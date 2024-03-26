@@ -20,12 +20,14 @@ type Event interface {
 	Message() string
 	Image() image.Image
 	OccurredAt() time.Time
+	Supervisor() string
 }
 
 type BaseEvent struct {
 	message    string
 	image      image.Image
 	occurredAt time.Time
+	supervisor string
 }
 
 func (b BaseEvent) Message() string {
@@ -40,18 +42,24 @@ func (b BaseEvent) OccurredAt() time.Time {
 	return b.occurredAt
 }
 
-func WithScreenshot(message string, img image.Image) BaseEvent {
+func (b BaseEvent) Supervisor() string {
+	return b.supervisor
+}
+
+func WithScreenshot(supervisor string, message string, img image.Image) BaseEvent {
 	return BaseEvent{
 		message:    message,
 		image:      img,
 		occurredAt: time.Now(),
+		supervisor: supervisor,
 	}
 }
 
-func Text(message string) BaseEvent {
+func Text(supervisor string, message string) BaseEvent {
 	return BaseEvent{
 		message:    message,
 		occurredAt: time.Now(),
+		supervisor: supervisor,
 	}
 }
 

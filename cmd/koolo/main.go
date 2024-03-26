@@ -60,7 +60,8 @@ func main() {
 		return nil
 	})
 
-	additionalHandlers := make([]event.Handler, 0)
+	eventListener := event.NewListener(logger)
+
 	// Discord Bot initialization
 	if config.Koolo.Discord.Enabled {
 		discordBot, err := discord.NewBot(config.Koolo.Discord.Token, config.Koolo.Discord.ChannelID)
@@ -69,7 +70,7 @@ func main() {
 			return
 		}
 
-		additionalHandlers = append(additionalHandlers, discordBot.Handle)
+		eventListener.Register(discordBot.Handle)
 		g.Go(func() error {
 			return discordBot.Start(ctx)
 		})
@@ -83,17 +84,21 @@ func main() {
 			return
 		}
 
-		additionalHandlers = append(additionalHandlers, telegramBot.Handle)
+		eventListener.Register(telegramBot.Handle)
 		g.Go(func() error {
 			return telegramBot.Start(ctx)
 		})
 	}
 
-	manager := koolo.NewSupervisorManager(logger, additionalHandlers)
+	manager := koolo.NewSupervisorManager(logger, eventListener)
 
 	g.Go(func() error {
 		srv := server.New(logger, manager)
 		return srv.Listen(8087)
+	})
+
+	g.Go(func() error {
+		return eventListener.Listen(ctx)
 	})
 
 	err = g.Wait()

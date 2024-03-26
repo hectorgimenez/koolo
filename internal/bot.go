@@ -22,7 +22,6 @@ type Bot struct {
 	hm             health.Manager
 	ab             *action.Builder
 	container      container.Container
-	eventChan      chan<- event.Event
 	paused         bool
 	supervisorName string
 }
@@ -33,7 +32,6 @@ func NewBot(
 	ab *action.Builder,
 	container container.Container,
 	supervisorName string,
-	eventChan chan<- event.Event,
 ) *Bot {
 	return &Bot{
 		logger:         logger,
@@ -41,7 +39,6 @@ func NewBot(
 		ab:             ab,
 		container:      container,
 		supervisorName: supervisorName,
-		eventChan:      eventChan,
 	}
 }
 
@@ -56,7 +53,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	loadingScreensDetected := 0
 
 	for k, r := range runs {
-		b.eventChan <- event.RunStarted(event.Text("Starting run"), r.Name())
+		event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -122,7 +119,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-							b.eventChan <- event.RunFinished(event.Text("Finished run"), r.Name(), event.FinishedOK)
+							event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
 							running = false
 						}
 						continue
@@ -132,7 +129,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						break
 					}
 					if errors.Is(err, action.ErrCanBeSkipped) {
-						b.eventChan <- event.RunFinished(event.WithScreenshot(err.Error(), b.container.Reader.Screenshot()), r.Name(), event.FinishedError)
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, err.Error(), b.container.Reader.Screenshot()), r.Name(), event.FinishedError))
 						b.logger.Warn("error occurred on action that can be skipped, game will continue", slog.Any("error", err))
 						act.Skip()
 						break

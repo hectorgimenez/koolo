@@ -39,13 +39,6 @@ func (b *Bot) Start(ctx context.Context) error {
 }
 
 func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if strings.Contains(m.Content, "New game created.") {
-		gameData := strings.SplitAfter(m.Content, "GameName: ")
-		gameData = strings.Split(gameData[1], "|||")
-
-		//b.companion.JoinGame(gameData[0], gameData[1])
-	}
-
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
