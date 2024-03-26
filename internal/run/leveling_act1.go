@@ -120,13 +120,26 @@ func (a Leveling) deckardCain(d data.Data) (actions []action.Action) {
 		// Heal and refill pots
 		actions = append(actions,
 			a.builder.ReturnTown(),
-			a.builder.EnsureStatPoints(),
-			a.builder.EnsureSkillPoints(),
 			a.builder.RecoverCorpse(),
 			a.builder.IdentifyAll(false),
 			a.builder.Stash(false),
 			a.builder.VendorRefill(false, true),
-			a.builder.EnsureSkillBindings(),
+		)
+
+		if a.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+			actions = append(actions,
+				a.builder.EnsureStatPoints(),
+				a.builder.EnsureSkillPoints(),
+			)
+		}
+
+		if a.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+			actions = append(actions,
+				a.builder.EnsureSkillBindings(),
+			)
+		}
+
+		actions = append(actions,
 			a.builder.Heal(),
 			a.builder.ReviveMerc(),
 			a.builder.HireMerc(),

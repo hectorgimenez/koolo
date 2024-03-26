@@ -134,6 +134,10 @@ type CharacterCfg struct {
 			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
 			Areas             []area.Area   `yaml:"areas"`
 		} `yaml:"terrorZone"`
+		Leveling struct {
+			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
+			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
+		} `yaml:"leveling"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`

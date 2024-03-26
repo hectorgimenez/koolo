@@ -8,41 +8,71 @@ func (b *Builder) PreRun(firstRun bool) []Action {
 		}
 	}
 
-	return []Action{
-		b.UpdateQuestLog(),
-		b.ResetStats(),
-		b.EnsureStatPoints(),
-		b.EnsureSkillPoints(),
+	actions := []Action{
 		b.RecoverCorpse(),
+		b.UpdateQuestLog(),
 		b.IdentifyAll(firstRun),
 		b.Stash(firstRun),
 		b.VendorRefill(false, true),
 		b.Gamble(),
 		b.Stash(false),
-		b.EnsureSkillBindings(),
+	}
+
+	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+		actions = append(actions,
+			b.ResetStats(),
+			b.EnsureStatPoints(),
+			b.EnsureSkillPoints(),
+		)
+	}
+
+	if b.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+		actions = append(actions,
+			b.EnsureSkillBindings(),
+		)
+	}
+
+	actions = append(actions,
 		b.Heal(),
 		b.ReviveMerc(),
 		b.HireMerc(),
 		b.Repair(),
-	}
+	)
+
+	return actions
 }
 
 func (b *Builder) InRunReturnTownRoutine() []Action {
-	return []Action{
+	actions := []Action{
 		b.ReturnTown(),
-		b.EnsureStatPoints(),
-		b.EnsureSkillPoints(),
 		b.RecoverCorpse(),
 		b.IdentifyAll(false),
 		b.Stash(false),
 		b.VendorRefill(false, true),
 		b.Gamble(),
 		b.Stash(false),
-		b.EnsureSkillBindings(),
+	}
+
+	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+		actions = append(actions,
+			b.EnsureStatPoints(),
+			b.EnsureSkillPoints(),
+		)
+	}
+
+	if b.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+		actions = append(actions,
+			b.EnsureSkillBindings(),
+		)
+	}
+
+	actions = append(actions,
 		b.Heal(),
 		b.ReviveMerc(),
 		b.HireMerc(),
 		b.Repair(),
 		b.UsePortalInTown(),
-	}
+	)
+
+	return actions
 }
