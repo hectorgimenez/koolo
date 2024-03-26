@@ -11,6 +11,7 @@ go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w 
 echo Copying assets...
 mkdir build\config > NUL || goto :error
 copy config\koolo.yaml.dist build\config\koolo.yaml  > NUL || goto :error
+copy config\Settings.json build\config\Settings.json  > NUL || goto :error
 xcopy /q /E /I /y config\template build\config\template  > NUL || goto :error
 xcopy /q /E /I /y tools build\tools > NUL || goto :error
 xcopy /q /y README.md build > NUL || goto :error
