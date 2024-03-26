@@ -91,6 +91,8 @@ game:
   nihlathak:
     clearArea: true
   baal:
+    dollQuit: false
+    soulQuit: false
     killBaal: false
   terrorZone:
     focusOnElitePacks: false # Will clear only Elite monsters

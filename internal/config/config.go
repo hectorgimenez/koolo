@@ -126,6 +126,8 @@ type CharacterCfg struct {
 			ClearArea bool `yaml:"clearArea"`
 		} `yaml:"nihlathak"`
 		Baal struct {
+			DollQuit bool `yaml:"dollQuit"`
+			SoulQuit bool `yaml:"soulQuit"`
 			KillBaal bool `yaml:"killBaal"`
 		} `yaml:"baal"`
 		TerrorZone struct {
