@@ -2,6 +2,7 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
@@ -93,6 +94,11 @@ func (p *AttackStep) Status(_ data.Data, _ container.Container) Status {
 
 func (p *AttackStep) Run(d data.Data, container container.Container) error {
 	monster, found := d.Monsters.FindByID(p.target)
+
+	// This event notifies the companions that the leader is attacking a specific monster
+	if container.CharacterCfg.Companion.Enabled && container.CharacterCfg.Companion.Leader && found {
+		event.Send(event.CompanionLeaderAttack(event.Text(container.Supervisor, ""), monster.UnitID))
+	}
 
 	if !p.aoe {
 		if !found || monster.Stats[stat.Life] <= 0 {

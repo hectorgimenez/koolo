@@ -178,6 +178,7 @@ companion:
   enabled: false
   leader: true
   leaderName: ''
+  attack: true # If set to true, character will try to attack the same target as the leader
   gameNameTemplate: game- # Template for the game name, for example "game-" will lead to "game-1", "game-2", etc.
   gamePassword: xxx
 

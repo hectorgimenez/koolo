@@ -1,18 +1,19 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"time"
 )
-
-var lastEntranceEntered = time.Now()
 
 type Companion struct {
 	baseRun
@@ -23,6 +24,17 @@ func (s Companion) Name() string {
 }
 
 func (s Companion) BuildActions() []action.Action {
+	var lastEntranceEntered = time.Now()
+	var leaderUnitIDTarget data.UnitID
+	// TODO: Deregister this listener or will leak
+	s.EventListener.Register(func(ctx context.Context, e event.Event) error {
+		if evt, ok := e.(event.CompanionLeaderAttackEvent); ok && config.Characters[evt.Supervisor()].CharacterName == s.CharacterCfg.Companion.LeaderName {
+			leaderUnitIDTarget = evt.TargetUnitID
+		}
+
+		return nil
+	})
+
 	return []action.Action{
 		action.NewChain(func(d data.Data) []action.Action {
 			leaderRosterMember, leaderFound := d.Roster.FindByName(s.CharacterCfg.Companion.LeaderName)
@@ -109,10 +121,23 @@ func (s Companion) BuildActions() []action.Action {
 				}
 			}
 
-			// Leader too close
-			if pather.DistanceFromMe(d, leaderRosterMember.Position) < 4 {
-				return []action.Action{
-					s.builder.ClearAreaAroundPlayer(4),
+			// If distance leader is at acceptable distance and is attacking, support him
+			distanceFromMe := pather.DistanceFromMe(d, leaderRosterMember.Position)
+			if distanceFromMe < 30 {
+				_, found := d.Monsters.FindByID(leaderUnitIDTarget)
+				if s.CharacterCfg.Companion.Attack && found {
+					return []action.Action{
+						s.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+							return leaderUnitIDTarget, true
+						}, nil),
+					}
+				}
+
+				// If there is no monster to attack, and we are close enough to the leader just wait
+				if distanceFromMe < 4 {
+					return []action.Action{
+						s.builder.Wait(100),
+					}
 				}
 			}
 

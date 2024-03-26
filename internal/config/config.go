@@ -145,6 +145,7 @@ type CharacterCfg struct {
 		Enabled          bool   `yaml:"enabled"`
 		Leader           bool   `yaml:"leader"`
 		LeaderName       string `yaml:"leaderName"`
+		Attack           bool   `yaml:"attack"`
 		GameNameTemplate string `yaml:"gameNameTemplate"`
 		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`

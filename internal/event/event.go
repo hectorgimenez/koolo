@@ -140,3 +140,15 @@ func RunStarted(be BaseEvent, runName string) RunStartedEvent {
 		RunName:   runName,
 	}
 }
+
+type CompanionLeaderAttackEvent struct {
+	BaseEvent
+	TargetUnitID data.UnitID
+}
+
+func CompanionLeaderAttack(be BaseEvent, targetUnitID data.UnitID) CompanionLeaderAttackEvent {
+	return CompanionLeaderAttackEvent{
+		BaseEvent:    be,
+		TargetUnitID: targetUnitID,
+	}
+}
