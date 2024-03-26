@@ -73,7 +73,10 @@ func (b *Builder) useWP(a area.Area) *Chain {
 				}
 
 				currentWP = area.WPAddresses[currentWP.LinkedFrom[0]]
-				a = currentWP.LinkedFrom[0]
+
+				if currentWP.LinkedFrom != nil {
+					a = currentWP.LinkedFrom[0]
+				}
 			}
 		}
 
