@@ -91,6 +91,8 @@ game:
   nihlathak:
     clearArea: true
   baal:
+    dollQuit: false
+    soulQuit: false
     killBaal: false
   leveling:
     ensurePointsAllocation: true # Bot will allocate skill and stat points by itself or perform stat/skill reset. Set to false if you do NOT want it
