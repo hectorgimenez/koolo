@@ -56,6 +56,12 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 	return supervisor.Start()
 }
 
+func (mng *SupervisorManager) StopAll() {
+	for _, s := range mng.supervisors {
+		s.Stop()
+	}
+}
+
 func (mng *SupervisorManager) Stop(supervisor string) {
 	s, found := mng.supervisors[supervisor]
 	if found {

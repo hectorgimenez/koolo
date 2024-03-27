@@ -54,13 +54,6 @@ func (s *baseSupervisor) Stats() Stats {
 
 func (s *baseSupervisor) TogglePause() {
 	s.bot.TogglePause()
-	if s.bot.paused {
-		s.statsHandler.SetStatus(Paused)
-		s.c.Injector.RestoreMemory()
-	} else {
-		s.statsHandler.SetStatus(InGame)
-		s.c.Injector.Load()
-	}
 }
 
 func (s *baseSupervisor) Stop() {

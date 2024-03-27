@@ -1,5 +1,7 @@
-![Koolo](images/you_died.png)
-<h1 align="center">Koolo</h1>
+<p align="center">
+  <img src="assets/koolo.webp" alt="Koolo" width="150">
+</p>
+<h3 align="center">Koolo</h3>
 
 ---
 

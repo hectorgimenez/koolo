@@ -152,3 +152,15 @@ func CompanionLeaderAttack(be BaseEvent, targetUnitID data.UnitID) CompanionLead
 		TargetUnitID: targetUnitID,
 	}
 }
+
+type GamePausedEvent struct {
+	BaseEvent
+	Paused bool
+}
+
+func GamePaused(be BaseEvent, paused bool) GamePausedEvent {
+	return GamePausedEvent{
+		BaseEvent: be,
+		Paused:    paused,
+	}
+}

@@ -34,6 +34,9 @@ func main() {
 
 	winproc.SetProcessDpiAware.Call() // Set DPI awareness to be able to read the correct scale and show the window correctly
 
+	eventListener := event.NewListener(logger)
+	manager := koolo.NewSupervisorManager(logger, eventListener)
+
 	g.Go(func() error {
 		displayScale := config.GetCurrentDisplayScale()
 		w, err := gowebview.New(&gowebview.Config{URL: "http://localhost:8087", WindowConfig: &gowebview.WindowConfig{
@@ -56,11 +59,10 @@ func main() {
 		w.Run()
 
 		cancel()
+		manager.StopAll()
 		os.Exit(0)
 		return nil
 	})
-
-	eventListener := event.NewListener(logger)
 
 	// Discord Bot initialization
 	if config.Koolo.Discord.Enabled {
@@ -89,8 +91,6 @@ func main() {
 			return telegramBot.Start(ctx)
 		})
 	}
-
-	manager := koolo.NewSupervisorManager(logger, eventListener)
 
 	g.Go(func() error {
 		srv := server.New(logger, manager)

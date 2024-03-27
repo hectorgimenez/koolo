@@ -21,7 +21,7 @@ type Bot struct {
 	logger         *slog.Logger
 	hm             health.Manager
 	ab             *action.Builder
-	container      container.Container
+	c              container.Container
 	paused         bool
 	supervisorName string
 }
@@ -37,7 +37,7 @@ func NewBot(
 		logger:         logger,
 		hm:             hm,
 		ab:             ab,
-		container:      container,
+		c:              container,
 		supervisorName: supervisorName,
 	}
 }
@@ -80,7 +80,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					time.Sleep(time.Millisecond*10 - time.Since(loopTime))
 				}
 
-				d := b.container.Reader.GetData(false)
+				d := b.c.Reader.GetData(false)
 
 				// Skip running stuff if loading screen is present
 				if d.OpenMenus.LoadingScreen {
@@ -108,13 +108,13 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				}
 
 				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration
-				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.container) == step.StatusCompleted) {
+				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.c) == step.StatusCompleted) {
 					buffAct = b.ab.BuffIfRequired(d)
 					actions = append([]action.Action{buffAct}, actions...)
 				}
 
 				for k, act := range actions {
-					err := act.NextStep(d, b.container)
+					err := act.NextStep(d, b.c)
 					loopTime = time.Now()
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
@@ -129,7 +129,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						break
 					}
 					if errors.Is(err, action.ErrCanBeSkipped) {
-						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, err.Error(), b.container.Reader.Screenshot()), r.Name(), event.FinishedError))
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, err.Error(), b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
 						b.logger.Warn("error occurred on action that can be skipped, game will continue", slog.Any("error", err))
 						act.Skip()
 						break
@@ -186,9 +186,13 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 func (b *Bot) TogglePause() {
 	if b.paused {
 		b.logger.Info("Resuming...")
+		b.c.Injector.Load()
+		event.Send(event.GamePaused(event.Text(b.supervisorName, "Game resumed"), false))
 		b.paused = false
 	} else {
 		b.logger.Info("Pausing...")
+		b.c.Injector.RestoreMemory()
+		event.Send(event.GamePaused(event.Text(b.supervisorName, "Game paused"), true))
 		b.paused = true
 	}
 }
