@@ -32,7 +32,7 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Auto gambling
 
 ## Requirements
-- Diablo II: Resurrected
+- Diablo II: Resurrected (1280x720 required, windowed mode, ensure accessibility large fonts disabled)
 - **Diablo II: LOD 1.13c** (IMPORTANT: It will **NOT** work without it, this step is not optional)
 
 ## Quick Start
