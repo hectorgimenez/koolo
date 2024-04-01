@@ -78,7 +78,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				}
 			}
 
-			if itemfilter.Evaluate(itemBought, b.CharacterCfg.Runtime.Rules) {
+			if _, found := itemfilter.Evaluate(itemBought, b.CharacterCfg.Runtime.Rules); found {
 				lastStep = true
 				return []step.Step{step.Wait(time.Millisecond * 200)}
 			} else {
