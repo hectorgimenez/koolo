@@ -51,7 +51,7 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 				step.SyncStep(func(d data.Data) error {
 					b.stashGold(d)
 					b.orderInventoryPotions(d)
-					b.stashInventory(d, false) // TODO: REMOVE
+					b.stashInventory(d, forceStash)
 					b.HID.PressKey("esc")
 					return nil
 				}),
