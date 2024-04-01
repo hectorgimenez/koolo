@@ -171,6 +171,10 @@ func (b *Builder) shouldStashIt(i data.Item, forceStash bool, stashItems []data.
 		return found
 	}
 
+	if matchedRule.Properties == nil {
+		return found
+	}
+
 	exceedQuantity := b.doesExceedQuantity(i, matchedRule, stashItems)
 
 	return !exceedQuantity
