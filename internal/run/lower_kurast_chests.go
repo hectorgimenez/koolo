@@ -11,6 +11,7 @@ import (
 
 var bonfireName = object.Name(160)
 var chestsIds = []object.Name{object.Name(183), object.Name(181)}
+var minChestDistanceFromBonfire = 25
 var maxChestDistanceFromBonfire = 45
 
 type LowerKurastChest struct {
@@ -68,7 +69,7 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 
 									return false
 								}),
-								a.builder.Wait(1000),
+								a.builder.Wait(200),
 								a.builder.ItemPickup(false, 15),
 							)
 						}
@@ -91,5 +92,5 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 func isChestWithinBonfireRange(chest data.Object, bonfirePosition data.Position) bool {
 	distance := pather.DistanceFromPoint(chest.Position, bonfirePosition)
 
-	return distance <= maxChestDistanceFromBonfire
+	return distance >= minChestDistanceFromBonfire && distance <= maxChestDistanceFromBonfire
 }
