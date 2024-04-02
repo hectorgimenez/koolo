@@ -154,5 +154,7 @@ func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 		return true
 	}
 
-	return itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
+	_, found := itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
+
+	return found
 }
