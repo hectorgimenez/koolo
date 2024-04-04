@@ -93,6 +93,11 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			a.generateClearActions(starToSeis),
 			a.generateClearActions(starToInf),
 		)
+	} else {
+		actions = append(actions,
+			// Travel to diablo spawn location
+			a.builder.MoveToCoords(diabloSpawnPosition),
+		)
 	}
 
 	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
@@ -301,7 +306,7 @@ func (a Diablo) generateClearActions(positions []data.Position) []action.Action 
 		actions = append(actions,
 			a.builder.MoveToCoords(pos),
 			a.builder.ClearAreaAroundPlayer(35),
-			//a.builder.ItemPickup(false, 30)
+			a.builder.ItemPickup(false, 35),
 		)
 	}
 
