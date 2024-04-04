@@ -1,5 +1,6 @@
 firstRun: true # If set to true next time the bot starts it will show the setup wizard
 useCustomSettings: true # If set to true, koolo will use config/Settings.json file to load game settings instead of default one.
+gameWindowArrangement: true # If set to true, game windows will be automatically repositioned to avoid overlapping
 debug:
   log: true # Prints extra log information
   renderMap: false # Render current map data into 'cg.png' file

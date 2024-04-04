@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/lxn/win"
 	"log/slog"
 	"time"
 )
@@ -17,6 +18,7 @@ type Supervisor interface {
 	Stop()
 	TogglePause()
 	Stats() Stats
+	SetWindowPosition(x, y int)
 }
 
 type baseSupervisor struct {
@@ -113,4 +115,9 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	}
 
 	return nil
+}
+
+func (s *baseSupervisor) SetWindowPosition(x, y int) {
+	uFlags := win.SWP_NOZORDER | win.SWP_NOSIZE | win.SWP_NOACTIVATE
+	win.SetWindowPos(s.c.Reader.HWND, 0, int32(x), int32(y), 0, 0, uint32(uFlags))
 }

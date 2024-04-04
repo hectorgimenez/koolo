@@ -12,7 +12,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/lxn/win"
 	"log/slog"
+	"time"
 )
 
 type SupervisorManager struct {
@@ -52,6 +54,15 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		return err
 	}
 	mng.supervisors[supervisorName] = supervisor
+
+	if config.Koolo.GameWindowArrangement {
+		go func() {
+			// When the game starts, its doing some weird stuff like repositioning and resizing window automatically
+			// we need to wait until this is done in order to reposition, or it will be overridden
+			time.Sleep(time.Second * 5)
+			mng.rearrangeWindows()
+		}()
+	}
 
 	return supervisor.Start()
 }
@@ -143,4 +154,21 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	}
 
 	return NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, c)
+}
+
+func (mng *SupervisorManager) rearrangeWindows() {
+	width := win.GetSystemMetrics(0)
+
+	maxColumns := width / (1280 + 30)
+
+	var column, row int32
+	for _, sp := range mng.supervisors {
+		if column == maxColumns {
+			column = 0
+			row++
+		}
+
+		sp.SetWindowPosition(int(column*(1280+30)), int(row*(720+50)))
+		column++
+	}
 }

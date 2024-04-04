@@ -24,16 +24,17 @@ var (
 )
 
 type KooloCfg struct {
-	FirstRun          bool `yaml:"firstRun"`
-	UseCustomSettings bool `yaml:"useCustomSettings"`
-	Debug             struct {
+	Debug struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`
-	LogSaveDirectory string `yaml:"logSaveDirectory"`
-	D2LoDPath        string `yaml:"D2LoDPath"`
-	D2RPath          string `yaml:"D2RPath"`
-	Discord          struct {
+	FirstRun              bool   `yaml:"firstRun"`
+	UseCustomSettings     bool   `yaml:"useCustomSettings"`
+	GameWindowArrangement bool   `yaml:"gameWindowArrangement"`
+	LogSaveDirectory      string `yaml:"logSaveDirectory"`
+	D2LoDPath             string `yaml:"D2LoDPath"`
+	D2RPath               string `yaml:"D2RPath"`
+	Discord               struct {
 		Enabled   bool   `yaml:"enabled"`
 		ChannelID string `yaml:"channelId"`
 		Token     string `yaml:"token"`

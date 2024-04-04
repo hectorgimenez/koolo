@@ -52,6 +52,17 @@
                             value="true"
                     />
                 </label>
+                <label>
+                    Auto reposition game windows
+                    <input
+                            {{ if .GameWindowArrangement }}
+                            checked="checked"
+                            {{ end }}
+                            type="checkbox"
+                            name="game_window_arrangement"
+                            value="true"
+                    />
+                </label>
 
                 <h4>Discord integration</h4>
                 <label>

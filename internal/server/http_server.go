@@ -108,8 +108,9 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig := *config.Koolo
 		newConfig.FirstRun = false // Disable the welcome assistant
 		newConfig.D2RPath = r.Form.Get("d2rpath")
-		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
+		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
+		newConfig.GameWindowArrangement = r.Form.Get("game_window_arrangement") == "true"
 		// Discord
 		newConfig.Discord.Enabled = r.Form.Get("discord_enabled") == "true"
 		newConfig.Discord.Token = r.Form.Get("discord_token")
