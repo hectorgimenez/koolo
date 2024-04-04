@@ -2,6 +2,7 @@ package run
 
 import (
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -20,8 +21,53 @@ var diabloSpawnPosition = data.Position{
 }
 
 var chaosSanctuaryEntrancePosition = data.Position{
-	X: 7796,
-	Y: 5561,
+	X: 7790,
+	Y: 5544,
+}
+
+var entranceToStar = []data.Position{
+	{X: 7790, Y: 5544},
+	{X: 7794, Y: 5517},
+	{X: 7791, Y: 5491},
+	{X: 7768, Y: 5459},
+	{X: 7775, Y: 5424},
+	{X: 7817, Y: 5458},
+	{X: 7777, Y: 5408},
+	{X: 7769, Y: 5379},
+	{X: 7777, Y: 5357},
+	{X: 7809, Y: 5359},
+	{X: 7805, Y: 5330},
+	{X: 7780, Y: 5317},
+}
+
+var starToViz = []data.Position{
+	{X: 7760, Y: 5295},
+	{X: 7737, Y: 5300},
+	{X: 7720, Y: 5313},
+	{X: 7695, Y: 5315},
+	{X: 7672, Y: 5315},
+	{X: 7655, Y: 5305},
+}
+
+var starToSeis = []data.Position{
+	{X: 7781, Y: 5259},
+	{X: 7805, Y: 5258},
+	{X: 7802, Y: 5237},
+	{X: 7776, Y: 5228},
+	{X: 7775, Y: 5205},
+	{X: 7804, Y: 5193},
+	{X: 7814, Y: 5169},
+	{X: 7788, Y: 5153},
+}
+
+var starToInf = []data.Position{
+	{X: 7809, Y: 5268},
+	{X: 7834, Y: 5306},
+	{X: 7852, Y: 5280},
+	{X: 7852, Y: 5310},
+	{X: 7869, Y: 5294},
+	{X: 7895, Y: 5295},
+	{X: 7919, Y: 5290},
 }
 
 type Diablo struct {
@@ -37,10 +83,17 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	actions = append(actions,
 		// Moving to starting point (RiverOfFlame)
 		a.builder.WayPoint(area.RiverOfFlame),
-		// Travel to diablo spawn location
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
-		a.builder.MoveToCoords(diabloSpawnPosition),
 	)
+
+	if a.Container.CharacterCfg.Game.Diablo.ClearArea {
+		actions = slices.Concat(actions,
+			a.generateClearActions(entranceToStar),
+			a.generateClearActions(starToViz),
+			a.generateClearActions(starToSeis),
+			a.generateClearActions(starToInf),
+		)
+	}
 
 	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
 
@@ -160,21 +213,25 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.builder.ItemPickup(false, 40))
 	}
 
-	// Go back to town to buy potions if needed
-	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
-		_, isLevelingChar := a.char.(action.LevelingCharacter)
-		if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (a.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0)) {
-			return a.builder.InRunReturnTownRoutine()
-		}
+	_, isLevelingChar := a.char.(action.LevelingCharacter)
 
-		return nil
-	}))
+	// For leveling we always want to kill Diablo
+	if isLevelingChar || a.Container.CharacterCfg.Game.Diablo.KillDiablo {
+		// Go back to town to buy potions if needed
+		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+			if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (a.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0)) {
+				return a.builder.InRunReturnTownRoutine()
+			}
 
-	actions = append(actions,
-		a.builder.Buff(),
-		a.builder.MoveToCoords(diabloSpawnPosition),
-		a.char.KillDiablo(),
-	)
+			return nil
+		}))
+
+		actions = append(actions,
+			a.builder.Buff(),
+			a.builder.MoveToCoords(diabloSpawnPosition),
+			a.char.KillDiablo(),
+		)
+	}
 
 	return
 }
@@ -235,4 +292,22 @@ func (a Diablo) isSealElite(monster data.Monster) bool {
 	}
 
 	return false
+}
+
+func (a Diablo) generateClearActions(positions []data.Position) []action.Action {
+	var actions []action.Action
+
+	for _, pos := range positions {
+		actions = append(actions,
+			a.builder.MoveToCoords(pos),
+			a.builder.ClearAreaAroundPlayer(35),
+			//a.builder.ItemPickup(false, 30)
+		)
+	}
+
+	actions = append(actions,
+		a.builder.MoveToCoords(diabloSpawnPosition),
+	)
+
+	return actions
 }

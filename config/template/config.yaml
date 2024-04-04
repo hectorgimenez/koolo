@@ -90,6 +90,9 @@ game:
     clearPortal: true # Kills Rakanishu and makes easier selecting the portal
   nihlathak:
     clearArea: true
+  diablo:
+    killDiablo: true # Should bot kill Diablo after seals
+    clearArea: true # Should bot clear regular monsters
   baal:
     killBaal: false
   leveling:
