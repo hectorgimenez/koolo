@@ -113,6 +113,8 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, Tristram{baseRun})
 		case "lower_kurast":
 			runs = append(runs, LowerKurast{baseRun})
+		case "lower_kurast_chest":
+			runs = append(runs, LowerKurastChest{baseRun})
 		case "baal":
 			runs = append(runs, Baal{baseRun})
 		case "tal_rasha_tombs":
