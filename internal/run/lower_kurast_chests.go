@@ -9,8 +9,9 @@ import (
 	"slices"
 )
 
-var bonfireName = object.Name(160)
-var chestsIds = []object.Name{object.Name(183), object.Name(181)}
+var bonfireName = object.SmallFire
+var chestsIds = []object.Name{object.JungleMediumChestLeft, object.JungleChest,
+	object.WeaponRackRight, object.WeaponRackLeft}
 var minChestDistanceFromBonfire = 25
 var maxChestDistanceFromBonfire = 45
 
