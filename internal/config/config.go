@@ -131,6 +131,9 @@ type CharacterCfg struct {
 		Baal struct {
 			KillBaal bool `yaml:"killBaal"`
 		} `yaml:"baal"`
+		Eldritch struct {
+			KillShenk bool `yaml:"killShenk"`
+		} `yaml:"eldritch"`
 		TerrorZone struct {
 			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`

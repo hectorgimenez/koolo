@@ -16,7 +16,7 @@ func (a Eldritch) Name() string {
 }
 
 func (a Eldritch) BuildActions() (actions []action.Action) {
-	return []action.Action{
+	actions = append(actions,
 		a.builder.WayPoint(area.FrigidHighlands), // Moving to starting point (Frigid Highlands)
 		a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 			if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
@@ -25,5 +25,22 @@ func (a Eldritch) BuildActions() (actions []action.Action) {
 
 			return 0, false
 		}, nil),
+		a.builder.ItemPickup(false, 35),
+	)
+
+	if a.CharacterCfg.Game.Eldritch.KillShenk {
+		actions = append(actions,
+			a.builder.MoveToCoords(data.Position{X: 3876, Y: 5130}),
+			a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+				if m, found := d.Monsters.FindOne(npc.OverSeer, data.MonsterTypeSuperUnique); found {
+					return m.UnitID, true
+				}
+
+				return 0, false
+			}, nil),
+			a.builder.ItemPickup(false, 35),
+		)
 	}
+
+	return
 }

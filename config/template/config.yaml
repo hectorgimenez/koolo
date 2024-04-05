@@ -92,6 +92,8 @@ game:
     clearArea: true
   baal:
     killBaal: false
+  eldritch:
+    killShenk: true
   leveling:
     ensurePointsAllocation: true # Bot will allocate skill and stat points by itself or perform stat/skill reset. Set to false if you do NOT want it
     ensureKeyBinding: true       # Bot will set key bindings by itself. Set to false if you want to do it manually
