@@ -42,32 +42,27 @@ var entranceToStar = []data.Position{
 
 var starToViz = []data.Position{
 	{X: 7760, Y: 5295},
-	{X: 7737, Y: 5300},
-	{X: 7720, Y: 5313},
-	{X: 7695, Y: 5315},
-	{X: 7672, Y: 5315},
-	{X: 7655, Y: 5305},
+	{X: 7744, Y: 5295},
+	{X: 7710, Y: 5290},
+	{X: 7675, Y: 5290},
+	{X: 7665, Y: 5315},
+	{X: 7665, Y: 5275},
 }
 
 var starToSeis = []data.Position{
-	{X: 7781, Y: 5259},
-	{X: 7805, Y: 5258},
-	{X: 7802, Y: 5237},
-	{X: 7776, Y: 5228},
-	{X: 7775, Y: 5205},
-	{X: 7804, Y: 5193},
-	{X: 7814, Y: 5169},
-	{X: 7788, Y: 5153},
+	{X: 7790, Y: 5255},
+	{X: 7790, Y: 5230},
+	{X: 7770, Y: 5205},
+	{X: 7813, Y: 5190},
+	{X: 7813, Y: 5158},
+	{X: 7790, Y: 5155},
 }
 
 var starToInf = []data.Position{
-	{X: 7809, Y: 5268},
-	{X: 7834, Y: 5306},
-	{X: 7852, Y: 5280},
-	{X: 7852, Y: 5310},
-	{X: 7869, Y: 5294},
-	{X: 7895, Y: 5295},
-	{X: 7919, Y: 5290},
+	{X: 7825, Y: 5290},
+	{X: 7845, Y: 5290},
+	{X: 7870, Y: 5277},
+	{X: 7933, Y: 5316},
 }
 
 type Diablo struct {
@@ -301,18 +296,38 @@ func (a Diablo) isSealElite(monster data.Monster) bool {
 
 func (a Diablo) generateClearActions(positions []data.Position) []action.Action {
 	var actions []action.Action
+	var maxPosDiff = 20
 
 	for _, pos := range positions {
 		actions = append(actions,
-			a.builder.MoveToCoords(pos),
+			action.NewChain(func(d data.Data) []action.Action {
+				multiplier := 1
+
+				if pather.IsWalkable(pos, d.AreaOrigin, d.CollisionGrid) {
+					return []action.Action{a.builder.MoveToCoords(pos)}
+				}
+
+				for _ = range 2 {
+					for i := 1; i < maxPosDiff; i++ {
+						// Adjusting both X and Y gave fewer errors in testing
+						newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
+
+						if pather.IsWalkable(newPos, d.AreaOrigin, d.CollisionGrid) {
+							return []action.Action{a.builder.MoveToCoords(newPos)}
+						}
+
+					}
+					// Switch from + to -
+					multiplier *= -1
+				}
+
+				// Let it fail then
+				return []action.Action{a.builder.MoveToCoords(pos)}
+			}),
 			a.builder.ClearAreaAroundPlayer(35),
 			a.builder.ItemPickup(false, 35),
 		)
 	}
-
-	actions = append(actions,
-		a.builder.MoveToCoords(diabloSpawnPosition),
-	)
 
 	return actions
 }
