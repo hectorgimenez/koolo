@@ -7,7 +7,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -185,7 +184,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 					startTime = time.Now()
 				}
 				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
-					if a.isSealElite(m) {
+					if a.builder.IsMonsterSealElite(m) {
 						a.logger.Debug("Seal defender found!")
 						return nil
 					}
@@ -200,7 +199,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 			actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
-					if a.isSealElite(m) {
+					if a.builder.IsMonsterSealElite(m) {
 						_, _, found := a.PathFinder.GetPath(d, m.Position)
 						return m.UnitID, found
 					}
@@ -286,14 +285,6 @@ func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.
 	return corners[bestCorner]
 }
 
-func (a Diablo) isSealElite(monster data.Monster) bool {
-	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
-		return true
-	}
-
-	return false
-}
-
 func (a Diablo) generateClearActions(positions []data.Position) []action.Action {
 	var actions []action.Action
 	var maxPosDiff = 20
@@ -325,7 +316,7 @@ func (a Diablo) generateClearActions(positions []data.Position) []action.Action 
 				return []action.Action{a.builder.MoveToCoords(pos)}
 			}),
 			a.builder.ClearAreaAroundPlayer(35),
-			a.builder.ItemPickup(false, 35),
+			a.builder.ItemPickup(true, 35),
 		)
 	}
 
