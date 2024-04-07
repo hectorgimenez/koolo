@@ -35,7 +35,7 @@ func (a Tristram) BuildActions() []action.Action {
 
 	// Clear monsters around the portal
 	if a.CharacterCfg.Game.Tristram.ClearPortal {
-		actions = append(actions, a.builder.ClearAreaAroundPlayer(10))
+		actions = append(actions, a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()))
 	}
 
 	actions = append(actions, a.openPortalIfNotOpened())

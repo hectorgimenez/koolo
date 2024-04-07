@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
@@ -167,14 +168,14 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 	}
 
 	actions := []action.Action{
-		b.ab.ClearAreaAroundPlayer(5),
+		b.ab.ClearAreaAroundPlayer(5, data.MonsterAnyFilter()),
 		b.ab.ItemPickup(true, -1),
 	}
 
 	// Don't return town on last run
 	if currentRun != len(runs)-1 {
 		if config.Characters[b.supervisorName].Game.ClearTPArea {
-			actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
+			actions = append(actions, b.ab.ClearAreaAroundPlayer(5, data.MonsterAnyFilter()))
 			actions = append(actions, b.ab.ItemPickup(false, -1))
 		}
 		actions = append(actions, b.ab.ReturnTown())

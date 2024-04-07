@@ -90,7 +90,7 @@ func (a Leveling) findHoradricCube() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.HoradricCubeChest, func(d data.Data) bool {
 			chest, _ := d.Objects.FindOne(object.HoradricCubeChest)
 			return !chest.Selectable
@@ -111,7 +111,7 @@ func (a Leveling) findStaff() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.StaffOfKingsChest, func(d data.Data) bool {
 			chest, _ := d.Objects.FindOne(object.StaffOfKingsChest)
 			return !chest.Selectable
@@ -244,7 +244,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	// If staff has not been used, then put it in the orifice and wait for the entrance to open
 	if !staffAlreadyUsed {
 		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(30),
+			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
 			a.builder.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
 				return d.OpenMenus.Anvil
 			},

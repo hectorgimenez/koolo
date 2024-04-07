@@ -88,7 +88,7 @@ func (a Leveling) findKhalimsEye() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.KhalimChest3, func(d data.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest3)
 			return !chest.Selectable
@@ -136,7 +136,7 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 			}
 			return data.Position{}, false
 		}),
-		a.builder.ClearAreaAroundPlayer(10),
+		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.Act3SewerStairsToLevel3, func(d data.Data) bool {
 			o, _ := d.Objects.FindOne(object.Act3SewerStairsToLevel3)
 
@@ -153,7 +153,7 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.KhalimChest1, func(d data.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest1)
 			return !chest.Selectable

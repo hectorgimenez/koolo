@@ -81,11 +81,16 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	)
 
 	if a.Container.CharacterCfg.Game.Diablo.ClearArea {
+		monsterFilter := data.MonsterAnyFilter()
+		if a.Container.CharacterCfg.Game.Diablo.OnlyElites {
+			monsterFilter = data.MonsterEliteFilter()
+		}
+
 		actions = slices.Concat(actions,
-			a.generateClearActions(entranceToStar),
-			a.generateClearActions(starToViz),
-			a.generateClearActions(starToSeis),
-			a.generateClearActions(starToInf),
+			a.generateClearActions(entranceToStar, monsterFilter),
+			a.generateClearActions(starToViz, monsterFilter),
+			a.generateClearActions(starToSeis, monsterFilter),
+			a.generateClearActions(starToInf, monsterFilter),
 		)
 	} else {
 		actions = append(actions,
@@ -145,7 +150,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 		// Activate the seal
 		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(15),
+			a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 			action.NewStepChain(func(d data.Data) []step.Step {
 				a.logger.Debug("Trying to activate seal...", slog.Int("seal", sealNumber+1))
 				lastInteractionAt := time.Now()
@@ -285,7 +290,7 @@ func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.
 	return corners[bestCorner]
 }
 
-func (a Diablo) generateClearActions(positions []data.Position) []action.Action {
+func (a Diablo) generateClearActions(positions []data.Position, filter data.MonsterFilter) []action.Action {
 	var actions []action.Action
 	var maxPosDiff = 20
 
@@ -315,8 +320,8 @@ func (a Diablo) generateClearActions(positions []data.Position) []action.Action 
 				// Let it fail then
 				return []action.Action{a.builder.MoveToCoords(pos)}
 			}),
-			a.builder.ClearAreaAroundPlayer(35),
-			a.builder.ItemPickup(true, 35),
+			a.builder.ClearAreaAroundPlayer(35, filter),
+			a.builder.ItemPickup(false, 35),
 		)
 	}
 

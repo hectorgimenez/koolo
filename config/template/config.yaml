@@ -93,6 +93,7 @@ game:
   diablo:
     killDiablo: true # Should bot kill Diablo after seals
     clearArea: true # Should bot clear regular monsters
+    onlyElites: true # Should bot target only elites
   baal:
     killBaal: false
   leveling:

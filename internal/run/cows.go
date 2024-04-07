@@ -58,7 +58,7 @@ func (a Cows) getWirtsLeg() action.Action {
 
 				return nil
 			}),
-			a.builder.ClearAreaAroundPlayer(10),
+			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
 			a.builder.ItemPickup(false, 15),
 			a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
 				return d.PlayerUnit.Area == area.Tristram

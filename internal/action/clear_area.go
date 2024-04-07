@@ -6,14 +6,14 @@ import (
 	"log/slog"
 )
 
-func (b *Builder) ClearAreaAroundPlayer(distance int) Action {
+func (b *Builder) ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) Action {
 	originalPosition := data.Position{}
 	return b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
 		if originalPosition.X == 0 && originalPosition.Y == 0 {
 			originalPosition = d.PlayerUnit.Position
 		}
 
-		for _, m := range d.Monsters.Enemies() {
+		for _, m := range d.Monsters.Enemies(filter) {
 			monsterDist := pather.DistanceFromPoint(originalPosition, m.Position)
 			shouldEngage := b.IsMonsterSealElite(m) || pather.IsWalkable(m.Position, d.AreaOrigin, d.CollisionGrid)
 
