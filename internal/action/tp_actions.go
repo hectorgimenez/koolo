@@ -25,21 +25,33 @@ func (b *Builder) ReturnTown() *StepChainAction {
 
 func (b *Builder) UsePortalInTown() *Chain {
 	return NewChain(func(d data.Data) []Action {
+		return []Action{b.UsePortalFrom(d.PlayerUnit.Name)}
+	})
+}
+
+func (b *Builder) UsePortalFrom(owner string) *Chain {
+	return NewChain(func(d data.Data) []Action {
 		if !d.PlayerUnit.Area.IsTown() {
 			return nil
 		}
 
-		tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
-		return []Action{
-			b.MoveToCoords(tpArea),
-			b.InteractObject(object.TownPortal, func(d data.Data) bool {
-				if !d.PlayerUnit.Area.IsTown() {
-					helper.Sleep(500)
-					return true
-				}
+		for _, obj := range d.Objects {
+			if obj.IsPortal() && obj.Owner == owner {
+				tpArea := town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)
+				return []Action{
+					b.MoveToCoords(tpArea),
+					b.InteractObjectByID(obj.ID, func(d data.Data) bool {
+						if !d.PlayerUnit.Area.IsTown() {
+							helper.Sleep(500)
+							return true
+						}
 
-				return false
-			}),
+						return false
+					}),
+				}
+			}
 		}
+
+		return []Action{}
 	})
 }

@@ -43,6 +43,28 @@ func NewBot(
 }
 
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error) {
+	companionTPRequestedAt := time.Time{}
+	companionTPRequested := false
+	companionLeftGame := false
+	if b.c.CharacterCfg.Companion.Enabled && b.c.CharacterCfg.Companion.Leader {
+		b.c.EventListener.Register(func(ctx context.Context, e event.Event) error {
+			switch evt := e.(type) {
+			case event.CompanionRequestedTPEvent:
+				if time.Since(companionTPRequestedAt) > time.Second*5 {
+					companionTPRequestedAt = time.Now()
+					companionTPRequested = true
+				}
+			case event.GameFinishedEvent:
+				cmp := config.Characters[evt.Supervisor()].Companion
+				if cmp.Enabled && !cmp.Leader {
+					companionLeftGame = true
+				}
+			}
+
+			return nil
+		})
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v", r)
@@ -111,6 +133,20 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.c) == step.StatusCompleted) {
 					buffAct = b.ab.BuffIfRequired(d)
 					actions = append([]action.Action{buffAct}, actions...)
+				}
+
+				if companionTPRequested {
+					companionTPRequested = false
+					actions = append([]action.Action{b.ab.OpenTPIfLeader()}, actions...)
+				}
+				if companionLeftGame {
+					event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Companion left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
+					return errors.New("companion left game")
+				}
+				_, leaderFound := d.Roster.FindByName(b.c.CharacterCfg.Companion.LeaderName)
+				if !leaderFound {
+					event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Leader left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
+					return errors.New("leader left game")
 				}
 
 				for k, act := range actions {

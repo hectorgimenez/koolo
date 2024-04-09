@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/event"
 )
 
 func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
@@ -15,7 +16,10 @@ func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 				return b.getNPCPosition(npc, d)
 			}, step.StopAtDistance(7)),
 			NewStepChain(func(d data.Data) []step.Step {
-				steps := []step.Step{step.InteractNPC(npc)}
+				steps := []step.Step{step.InteractNPC(npc), step.SyncStep(func(d data.Data) error {
+					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
+					return nil
+				})}
 				steps = append(steps, additionalSteps...)
 
 				return steps
@@ -31,7 +35,10 @@ func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Dat
 				return b.getNPCPosition(npc, d)
 			}, step.StopAtDistance(7)),
 			NewStepChain(func(d data.Data) []step.Step {
-				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn)}
+				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn), step.SyncStep(func(d data.Data) error {
+					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
+					return nil
+				})}
 				steps = append(steps, additionalSteps...)
 
 				return steps
@@ -43,9 +50,6 @@ func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Dat
 func (b *Builder) InteractObject(name object.Name, isCompletedFn func(data.Data) bool, additionalSteps ...step.Step) *Chain {
 	return NewChain(func(d data.Data) []Action {
 		o, _ := d.Objects.FindOne(name)
-		//if !found {
-		//	return fmt.Errorf("NPC not found")
-		//}
 
 		pos := o.Position
 		if d.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
@@ -55,12 +59,41 @@ func (b *Builder) InteractObject(name object.Name, isCompletedFn func(data.Data)
 		return []Action{
 			b.MoveToCoords(pos, step.StopAtDistance(7)),
 			NewStepChain(func(d data.Data) []step.Step {
-				steps := []step.Step{step.InteractObject(o.Name, isCompletedFn)}
-				steps = append(steps, additionalSteps...)
+				steps := []step.Step{step.InteractObject(o.Name, isCompletedFn), step.SyncStep(func(d data.Data) error {
+					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
+					return nil
+				})}
 
-				return steps
+				return append(steps, additionalSteps...)
 			}),
 		}
+	})
+}
+
+func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(data.Data) bool, additionalSteps ...step.Step) *Chain {
+	return NewChain(func(d data.Data) []Action {
+		for _, o := range d.Objects {
+			if o.ID == id {
+				pos := o.Position
+				if d.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
+					pos = data.Position{X: 7800, Y: 5919}
+				}
+
+				return []Action{
+					b.MoveToCoords(pos, step.StopAtDistance(7)),
+					NewStepChain(func(d data.Data) []step.Step {
+						steps := []step.Step{step.InteractObjectByID(id, isCompletedFn), step.SyncStep(func(d data.Data) error {
+							event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(o.Name), event.InteractionTypeObject))
+							return nil
+						})}
+
+						return append(steps, additionalSteps...)
+					}),
+				}
+			}
+		}
+
+		return nil
 	})
 }
 

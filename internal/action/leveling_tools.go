@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"log/slog"
 	"slices"
 	"time"
@@ -33,8 +34,6 @@ var uiSkillPagePosition = [3]data.Position{
 
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
 var uiSkillColumnPosition = [3]int{920, 1010, 1095}
-
-var previousTotalSkillNumber = 0
 
 func (b *Builder) EnsureStatPoints() *StepChainAction {
 	return NewStepChain(func(d data.Data) []step.Step {
@@ -166,6 +165,8 @@ func (b *Builder) UpdateQuestLog() *StepChainAction {
 }
 
 func (b *Builder) EnsureSkillBindings() *StepChainAction {
+	var previousTotalSkillNumber = 0
+
 	return NewStepChain(func(d data.Data) []step.Step {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
 			return nil
@@ -194,9 +195,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 						}
 
 						b.HID.MovePointer(skillPosition.X, skillPosition.Y)
-						helper.Sleep(100)
+						helper.Sleep(400)
 						b.HID.PressKey(binding)
-						helper.Sleep(300)
+						helper.Sleep(700)
 					}
 
 					previousTotalSkillNumber = len(d.PlayerUnit.Skills)
@@ -282,6 +283,15 @@ func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillI
 	slices.Sort(totalRows)
 	totalRows = slices.Compact(totalRows)
 
+	// If we don't have any skill of a specific tree, the entire row gets one line down
+	previousRow := 0
+	for _, currentRow := range totalRows {
+		if currentRow != 0 && currentRow != previousRow+1 {
+			row--
+		}
+		previousRow = currentRow
+	}
+
 	// Scrolls and charges are not in the same list
 	if slices.Contains(scrolls, skillID) {
 		column = skillsWithCharges
@@ -353,4 +363,26 @@ func (b *Builder) ResetStats() *Chain {
 
 		return
 	})
+}
+
+func (b *Builder) WaitForAllMembersWhenLeveling() *Chain {
+	return NewChain(func(d data.Data) []Action {
+		_, isLeveling := b.ch.(LevelingCharacter)
+		if b.CharacterCfg.Companion.Enabled && b.CharacterCfg.Companion.Leader && !d.PlayerUnit.Area.IsTown() && isLeveling {
+			allMembersAreaCloseToMe := true
+			for _, member := range d.Roster {
+				if member.Name != d.PlayerUnit.Name && pather.DistanceFromMe(d, member.Position) > 20 {
+					allMembersAreaCloseToMe = false
+				}
+			}
+
+			if allMembersAreaCloseToMe {
+				return nil
+			}
+
+			return []Action{b.ClearAreaAroundPlayer(5)}
+		}
+
+		return nil
+	}, RepeatUntilNoSteps())
 }

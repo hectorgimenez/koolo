@@ -68,14 +68,14 @@ func (b *Builder) useWP(a area.Area) *Chain {
 			for {
 				traverseAreas = append(currentWP.LinkedFrom, traverseAreas...)
 
-				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
-					break
+				if currentWP.LinkedFrom != nil {
+					a = currentWP.LinkedFrom[0]
 				}
 
 				currentWP = area.WPAddresses[currentWP.LinkedFrom[0]]
 
-				if currentWP.LinkedFrom != nil {
-					a = currentWP.LinkedFrom[0]
+				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
+					break
 				}
 			}
 		}

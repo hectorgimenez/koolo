@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"log/slog"
 	"time"
 
@@ -87,6 +88,10 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 			NewStepChain(func(d data.Data) []step.Step {
 				return []step.Step{
 					step.InteractEntrance(dst),
+					step.SyncStep(func(d data.Data) error {
+						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(dst), event.InteractionTypeEntrance))
+						return nil
+					}),
 				}
 			}),
 		}
@@ -236,7 +241,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 		}
 
 		// Continue moving
-		return []Action{NewStepChain(func(d data.Data) []step.Step {
+		return []Action{b.WaitForAllMembersWhenLeveling(), NewStepChain(func(d data.Data) []step.Step {
 			newOpts := append(opts, step.ClosestWalkable(), step.WithTimeout(time.Millisecond*1000))
 			previousIterationPosition = d.PlayerUnit.Position
 			if currentStep == nil {

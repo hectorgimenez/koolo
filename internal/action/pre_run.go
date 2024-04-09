@@ -1,13 +1,6 @@
 package action
 
 func (b *Builder) PreRun(firstRun bool) []Action {
-	if b.CharacterCfg.Companion.Enabled && !b.CharacterCfg.Companion.Leader {
-		return []Action{
-			b.RecoverCorpse(),
-			b.Heal(),
-		}
-	}
-
 	actions := []Action{
 		b.RecoverCorpse(),
 		b.UpdateQuestLog(),
