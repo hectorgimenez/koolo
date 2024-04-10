@@ -4,20 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"reflect"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
 
 type StepChainAction struct {
 	basicAction
 	Steps           []step.Step
-	builder         func(d data.Data) []step.Step
+	builder         func(d game.Data) []step.Step
 	builderExecuted bool
 }
 
-func NewStepChain(builder func(d data.Data) []step.Step, opts ...Option) *StepChainAction {
+func NewStepChain(builder func(d game.Data) []step.Step, opts ...Option) *StepChainAction {
 	a := &StepChainAction{
 		builder: builder,
 	}
@@ -29,7 +29,7 @@ func NewStepChain(builder func(d data.Data) []step.Step, opts ...Option) *StepCh
 	return a
 }
 
-func (a *StepChainAction) NextStep(d data.Data, container container.Container) error {
+func (a *StepChainAction) NextStep(d game.Data, container container.Container) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}

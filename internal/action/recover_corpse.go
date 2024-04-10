@@ -1,18 +1,17 @@
 package action
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func (b *Builder) RecoverCorpse() *StepChainAction {
-	return NewStepChain(func(d data.Data) (steps []step.Step) {
+	return NewStepChain(func(d game.Data) (steps []step.Step) {
 		b.Logger.Debug("Checking for character corpse...")
 		if d.Corpse.Found {
 			b.Logger.Info("Corpse found, let's recover our stuff...")
 			steps = append(steps,
-				step.SyncStepWithCheck(func(d data.Data) error {
+				step.SyncStepWithCheck(func(d game.Data) error {
 					x, y := b.PathFinder.GameCoordsToScreenCords(
 						d.PlayerUnit.Position.X,
 						d.PlayerUnit.Position.Y,
@@ -22,7 +21,7 @@ func (b *Builder) RecoverCorpse() *StepChainAction {
 					b.HID.Click(game.LeftButton, x, y)
 
 					return nil
-				}, func(d data.Data) step.Status {
+				}, func(d game.Data) step.Status {
 					if d.Corpse.Found {
 						return step.StatusInProgress
 					}

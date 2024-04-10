@@ -18,7 +18,7 @@ import (
 
 func (a Leveling) act3() action.Action {
 	running := false
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		if running || d.PlayerUnit.Area != area.KurastDocks {
 			return nil
 		}
@@ -38,7 +38,7 @@ func (a Leveling) act3() action.Action {
 		if d.Quests[quest.Act3KhalimsWill].Completed() {
 			actions = append(actions, Mephisto{baseRun: a.baseRun}.BuildActions()...)
 			return append(actions, a.builder.ItemPickup(true, 25),
-				a.builder.InteractObject(object.HellGate, func(d data.Data) bool {
+				a.builder.InteractObject(object.HellGate, func(d game.Data) bool {
 					return d.PlayerUnit.Area == area.ThePandemoniumFortress
 				}),
 			)
@@ -82,14 +82,14 @@ func (a Leveling) findKhalimsEye() []action.Action {
 		a.builder.Buff(),
 		a.builder.MoveToArea(area.SpiderCavern),
 		a.builder.Buff(),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Info("Khalm Chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.KhalimChest3)
 
 			return chest.Position, found
 		}),
 		a.builder.ClearAreaAroundPlayer(15),
-		a.builder.InteractObject(object.KhalimChest3, func(d data.Data) bool {
+		a.builder.InteractObject(object.KhalimChest3, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest3)
 			return !chest.Selectable
 		}),
@@ -107,14 +107,14 @@ func (a Leveling) findKhalimsBrain() []action.Action {
 		a.builder.Buff(),
 		a.builder.MoveToArea(area.FlayerDungeonLevel3),
 		a.builder.Buff(),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Info("Khalm Chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.KhalimChest2)
 
 			return chest.Position, found
 		}),
 		//a.builder.ClearAreaAroundPlayer(15),
-		a.builder.InteractObject(object.KhalimChest2, func(d data.Data) bool {
+		a.builder.InteractObject(object.KhalimChest2, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest2)
 			return !chest.Selectable
 		}),
@@ -128,7 +128,7 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 		a.builder.Buff(),
 		a.builder.MoveToArea(area.SewersLevel1Act3),
 		a.builder.Buff(),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			for _, l := range d.AdjacentLevels {
 				if l.Area == area.SewersLevel2Act3 {
 					return l.Position, true
@@ -137,24 +137,24 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 			return data.Position{}, false
 		}),
 		a.builder.ClearAreaAroundPlayer(10),
-		a.builder.InteractObject(object.Act3SewerStairsToLevel3, func(d data.Data) bool {
+		a.builder.InteractObject(object.Act3SewerStairsToLevel3, func(d game.Data) bool {
 			o, _ := d.Objects.FindOne(object.Act3SewerStairsToLevel3)
 
 			return !o.Selectable
 		}),
 		a.builder.Wait(time.Second * 3),
-		a.builder.InteractObject(object.Act3SewerStairs, func(d data.Data) bool {
+		a.builder.InteractObject(object.Act3SewerStairs, func(d game.Data) bool {
 			return d.PlayerUnit.Area == area.SewersLevel2Act3
 		}),
 		a.builder.Buff(),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Info("Khalm Chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.KhalimChest1)
 
 			return chest.Position, found
 		}),
 		a.builder.ClearAreaAroundPlayer(15),
-		a.builder.InteractObject(object.KhalimChest1, func(d data.Data) bool {
+		a.builder.InteractObject(object.KhalimChest1, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest1)
 			return !chest.Selectable
 		}),
@@ -168,7 +168,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 	return append(actions,
 		a.builder.ItemPickup(true, 40),
 		a.builder.ReturnTown(),
-		action.NewChain(func(d data.Data) []action.Action {
+		action.NewChain(func(d game.Data) []action.Action {
 			eye, _ := d.Items.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
 			brain, _ := d.Items.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
 			heart, _ := d.Items.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
@@ -181,10 +181,10 @@ func (a Leveling) openMephistoStairs() []action.Action {
 		}),
 
 		a.builder.UsePortalInTown(),
-		action.NewStepChain(func(d data.Data) []step.Step {
+		action.NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				// Let's asume we don't have secondary weapon, so we swap to it and equip Khalim's Will
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					khalimsWill, found := d.Items.Find("KhalimsWill")
 					if !found {
 						return nil
@@ -202,18 +202,18 @@ func (a Leveling) openMephistoStairs() []action.Action {
 			}
 		}),
 		a.builder.InteractObject(object.CompellingOrb,
-			func(d data.Data) bool {
+			func(d game.Data) bool {
 				o, _ := d.Objects.FindOne(object.CompellingOrb)
 
 				return !o.Selectable
 			},
-			step.SyncStep(func(d data.Data) error {
+			step.SyncStep(func(d game.Data) error {
 				helper.Sleep(1000)
 				a.HID.PressKey(a.CharacterCfg.Bindings.SwapWeapon)
 				return nil
 			})),
 		a.builder.Wait(time.Second*12),
-		a.builder.InteractObject(object.StairSR, func(d data.Data) bool {
+		a.builder.InteractObject(object.StairSR, func(d game.Data) bool {
 			return d.PlayerUnit.Area == area.DuranceOfHateLevel1
 		}),
 		a.builder.MoveToArea(area.DuranceOfHateLevel2),

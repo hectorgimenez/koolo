@@ -21,7 +21,7 @@ func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCf
 	return PathFinder{gr: gr, hid: hid, cfg: cfg}
 }
 
-func (pf PathFinder) GetPath(d data.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	outsideCurrentLevel := outsideBoundary(d, to)
 	collisionGrid := d.CollisionGrid
 
@@ -111,7 +111,7 @@ func (pf PathFinder) GetPath(d data.Data, to data.Position, blacklistedCoords ..
 	// Add some padding to the origin/destination, sometimes when the origin or destination are close to a non-walkable
 	// area, pather is not able to calculate the path, so we add some padding around origin/dest to avoid this
 	// If character can not teleport if apply this hacky thing it will try to kill monsters across walls
-	if helper.CanTeleport(d) {
+	if d.CanTeleport() {
 		for i := -3; i < 4; i++ {
 			for k := -3; k < 4; k++ {
 				if i == 0 && k == 0 {
@@ -159,7 +159,7 @@ func ensureValueInCG(val, cgSize int) int {
 	return val
 }
 
-func (pf PathFinder) GetClosestWalkablePath(d data.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	maxRange := 20
 	step := 4
 	dst := 1
@@ -242,7 +242,7 @@ func (pf PathFinder) RandomMovement() {
 	pf.hid.Click(game.LeftButton, x, y)
 }
 
-func relativePosition(d data.Data, p data.Position, cgOffset data.Position) (int, int) {
+func relativePosition(d game.Data, p data.Position, cgOffset data.Position) (int, int) {
 	x, y := p.X-d.AreaOrigin.X, p.Y-d.AreaOrigin.Y
 
 	if cgOffset.X < 0 {
@@ -256,7 +256,7 @@ func relativePosition(d data.Data, p data.Position, cgOffset data.Position) (int
 	return x, y
 }
 
-func outsideBoundary(d data.Data, p data.Position) bool {
+func outsideBoundary(d game.Data, p data.Position) bool {
 	relativeToX := p.X - d.AreaOrigin.X
 	relativeToY := p.Y - d.AreaOrigin.Y
 

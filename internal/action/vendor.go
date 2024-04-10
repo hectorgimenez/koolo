@@ -1,10 +1,10 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -12,7 +12,7 @@ import (
 )
 
 func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		if !forceRefill && !b.shouldVisitVendor(d) {
 			return nil
 		}
@@ -36,12 +36,12 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 		return []Action{b.InteractNPC(vendorNPC,
 			openShopStep,
 			step.Wait(time.Second),
-			step.SyncStep(func(d data.Data) error {
+			step.SyncStep(func(d game.Data) error {
 				b.switchTab(4)
 				b.sm.BuyConsumables(d, forceRefill)
 				return nil
 			}),
-			step.SyncStep(func(d data.Data) error {
+			step.SyncStep(func(d game.Data) error {
 				if sellJunk {
 					b.sm.SellJunk(d)
 				}
@@ -54,7 +54,7 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 }
 
 func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain {
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		openShopStep := step.KeySequence("home", "down", "enter")
 
 		// Jamella trade button is the first one
@@ -65,7 +65,7 @@ func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain 
 		return []Action{b.InteractNPC(vendor,
 			openShopStep,
 			step.Wait(time.Second),
-			step.SyncStep(func(d data.Data) error {
+			step.SyncStep(func(d game.Data) error {
 				for _, i := range items {
 					b.switchTab(i.Tab)
 					itm, found := d.Items.Find(i.Item, item.LocationVendor)
@@ -90,9 +90,9 @@ type VendorItemRequest struct {
 	Tab      int // At this point I have no idea how to detect the Tab the Item is in the vendor (1-4)
 }
 
-func (b *Builder) shouldVisitVendor(d data.Data) bool {
+func (b *Builder) shouldVisitVendor(d game.Data) bool {
 	// Check if we should sell junk
-	if len(town.ItemsToBeSold(b.CharacterCfg.Inventory.InventoryLock, d)) > 0 {
+	if len(town.ItemsToBeSold(d.CharacterCfg.Inventory.InventoryLock, d)) > 0 {
 		return true
 	}
 

@@ -19,7 +19,7 @@ const scrollOfInifuss = "ScrollOfInifuss"
 
 func (a Leveling) act1() action.Action {
 	running := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if running || d.PlayerUnit.Area != area.RogueEncampment {
 			return nil
 		}
@@ -53,13 +53,13 @@ func (a Leveling) denOfEvil() []action.Action {
 }
 
 //func (a Leveling) bloodRaven() action.Action {
-//	return action.NewChain(func(d data.Data) []action.Action {
+//	return action.NewChain(func(d game.Data) []action.Action {
 //		a.logger.Info("Starting Blood Raven quest")
 //		return []action.Action{
 //			a.builder.WayPoint(area.ColdPlains),
 //			a.builder.MoveToArea(area.BurialGrounds),
 //			a.char.Buff(),
-//			action.NewStepChain(func(d data.Data) []step.Step {
+//			action.NewStepChain(func(d game.Data) []step.Step {
 //				for _, l := range d.AdjacentLevels {
 //					if l.Area == area.Mausoleum {
 //						return []step.Step{step.MoveTo(l.Position, step.StopAtDistance(50))}
@@ -68,7 +68,7 @@ func (a Leveling) denOfEvil() []action.Action {
 //
 //				return []step.Step{}
 //			}),
-//			a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+//			a.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 //				for _, m := range d.Monsters.Enemies() {
 //					if pather.DistanceFromMe(d, m.Position) < 3 {
 //						return m.UnitID, true
@@ -90,13 +90,13 @@ func (a Leveling) countess() []action.Action {
 	return Countess{baseRun: a.baseRun}.BuildActions()
 }
 
-func (a Leveling) deckardCain(d data.Data) (actions []action.Action) {
+func (a Leveling) deckardCain(d game.Data) (actions []action.Action) {
 	a.logger.Info("Rescuing Cain")
 	if _, found := d.Items.Find("KeyToTheCairnStones"); !found {
 		actions = []action.Action{
 			a.builder.WayPoint(area.DarkWood),
 			a.builder.Buff(),
-			a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, o := range d.Objects {
 					if o.Name == object.InifussTree {
 						return o.Position, true
@@ -105,7 +105,7 @@ func (a Leveling) deckardCain(d data.Data) (actions []action.Action) {
 
 				return data.Position{}, false
 			}),
-			a.builder.InteractObject(object.InifussTree, func(d data.Data) bool {
+			a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
 				_, found := d.Items.Find(scrollOfInifuss)
 				return found
 			}),
@@ -153,7 +153,7 @@ func (a Leveling) deckardCain(d data.Data) (actions []action.Action) {
 	return actions
 }
 
-func (a Leveling) andariel(d data.Data) []action.Action {
+func (a Leveling) andariel(d game.Data) []action.Action {
 	a.logger.Info("Starting Andariel run")
 	actions := []action.Action{
 		a.builder.WayPoint(area.CatacombsLevel2),
@@ -177,9 +177,9 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 			Quantity: potsToBuy,
 			Tab:      4,
 		}),
-		action.NewStepChain(func(d data.Data) []step.Step {
+		action.NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
 					x := 0
 					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
@@ -211,7 +211,7 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 
 	actions = append(actions,
 		a.builder.UsePortalInTown(),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			return andarielStartingPosition, true
 		}),
 		a.char.KillAndariel(),
@@ -222,7 +222,7 @@ func (a Leveling) andariel(d data.Data) []action.Action {
 	return actions
 }
 
-func (a Leveling) isCainInTown(d data.Data) bool {
+func (a Leveling) isCainInTown(d game.Data) bool {
 	_, found := d.Monsters.FindOne(npc.DeckardCain5, data.MonsterTypeNone)
 
 	return found

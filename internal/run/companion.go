@@ -12,6 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"strings"
@@ -48,7 +49,7 @@ func (s Companion) BuildActions() []action.Action {
 	})
 
 	return []action.Action{
-		action.NewChain(func(d data.Data) []action.Action {
+		action.NewChain(func(d game.Data) []action.Action {
 			leaderRosterMember, _ := d.Roster.FindByName(s.CharacterCfg.Companion.LeaderName)
 
 			// Leader is NOT in the same act, so we will try to change to the corresponding act
@@ -96,7 +97,7 @@ func (s Companion) BuildActions() []action.Action {
 					o, found := d.Objects.FindOne(oName)
 					if found && ((o.IsWaypoint() && !d.PlayerUnit.Area.IsTown()) || o.IsRedPortal()) {
 						return []action.Action{
-							s.builder.InteractObject(oName, func(dat data.Data) bool {
+							s.builder.InteractObject(oName, func(dat game.Data) bool {
 								if o.IsWaypoint() {
 									return dat.OpenMenus.Waypoint
 								}
@@ -182,15 +183,15 @@ func (s Companion) BuildActions() []action.Action {
 			}
 
 			return []action.Action{
-				action.NewStepChain(func(d data.Data) []step.Step {
-					return []step.Step{step.MoveTo(s.CharacterCfg, leaderRosterMember.Position, step.WithTimeout(time.Millisecond*500))}
+				action.NewStepChain(func(d game.Data) []step.Step {
+					return []step.Step{step.MoveTo(leaderRosterMember.Position, step.WithTimeout(time.Millisecond*500))}
 				}),
 			}
 		}, action.RepeatUntilNoSteps()),
 	}
 }
 
-func getClosestPortal(d data.Data, leaderName string) (*data.Object, bool) {
+func getClosestPortal(d game.Data, leaderName string) (*data.Object, bool) {
 	for _, o := range d.Objects {
 		if o.IsPortal() && pather.DistanceFromMe(d, o.Position) <= 40 && strings.EqualFold(o.Owner, leaderName) {
 			return &o, true
@@ -200,7 +201,7 @@ func getClosestPortal(d data.Data, leaderName string) (*data.Object, bool) {
 	return nil, false
 }
 
-func hasEnoughPortals(d data.Data) bool {
+func hasEnoughPortals(d game.Data) bool {
 	portalTome, pFound := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if pFound {
 		return portalTome.Stats[stat.Quantity].Value > 0
@@ -221,7 +222,7 @@ func (s Companion) killMonsterInCompanionMode(m data.Monster) action.Action {
 		return s.char.KillDiablo()
 	}
 
-	return s.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+	return s.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		return m.UnitID, true
 	}, nil)
 }

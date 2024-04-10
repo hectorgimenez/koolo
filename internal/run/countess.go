@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Countess struct {
@@ -29,7 +30,7 @@ func (c Countess) BuildActions() (actions []action.Action) {
 	)
 
 	// Try to move around Countess area
-	actions = append(actions, c.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+	actions = append(actions, c.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 		for _, o := range d.Objects {
 			if o.Name == object.GoodChest {
 				return o.Position, true

@@ -8,16 +8,13 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 type AttackStep struct {
 	basicStep
-	cfg                   *config.CharacterCfg
 	target                data.UnitID
-	standStillBinding     string
 	numOfAttacksRemaining int
 	primaryAttack         bool
 	keyBinding            string
@@ -46,15 +43,13 @@ func EnsureAura(keyBinding string) AttackOption {
 	}
 }
 
-func PrimaryAttack(cfg *config.CharacterCfg, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         true,
 		basicStep:             newBasicStep(),
 		target:                target,
-		standStillBinding:     cfg.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		aoe:                   target == 0,
-		cfg:                   cfg,
 	}
 
 	for _, o := range opts {
@@ -63,16 +58,14 @@ func PrimaryAttack(cfg *config.CharacterCfg, target data.UnitID, numOfAttacks in
 	return s
 }
 
-func SecondaryAttack(cfg *config.CharacterCfg, keyBinding string, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(keyBinding string, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         false,
 		basicStep:             newBasicStep(),
 		target:                target,
-		standStillBinding:     cfg.Bindings.StandStill,
 		numOfAttacksRemaining: numOfAttacks,
 		keyBinding:            keyBinding,
 		aoe:                   target == 0,
-		cfg:                   cfg,
 	}
 	for _, o := range opts {
 		o(s)
@@ -80,23 +73,23 @@ func SecondaryAttack(cfg *config.CharacterCfg, keyBinding string, target data.Un
 	return s
 }
 
-func (p *AttackStep) Status(_ data.Data, _ container.Container) Status {
+func (p *AttackStep) Status(d game.Data, _ container.Container) Status {
 	if p.status == StatusCompleted {
 		return StatusCompleted
 	}
 
-	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > p.cfg.Runtime.CastDuration {
+	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > d.CharacterCfg.Runtime.CastDuration {
 		return p.tryTransitionStatus(StatusCompleted)
 	}
 
 	return p.status
 }
 
-func (p *AttackStep) Run(d data.Data, container container.Container) error {
+func (p *AttackStep) Run(d game.Data, container container.Container) error {
 	monster, found := d.Monsters.FindByID(p.target)
 
 	// This event notifies the companions that the leader is attacking a specific monster
-	if container.CharacterCfg.Companion.Enabled && container.CharacterCfg.Companion.Leader && found {
+	if d.CharacterCfg.Companion.Enabled && d.CharacterCfg.Companion.Leader && found {
 		event.Send(event.CompanionLeaderAttack(event.Text(container.Supervisor, ""), monster.UnitID))
 	}
 
@@ -135,8 +128,8 @@ func (p *AttackStep) Run(d data.Data, container container.Container) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > p.cfg.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
-		container.HID.KeyDown(p.standStillBinding)
+	if time.Since(p.lastRun) > d.CharacterCfg.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
+		container.HID.KeyDown(d.CharacterCfg.Bindings.StandStill)
 		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
 		if p.primaryAttack {
@@ -145,7 +138,7 @@ func (p *AttackStep) Run(d data.Data, container container.Container) error {
 			container.HID.Click(game.RightButton, x, y)
 		}
 		helper.Sleep(20)
-		container.HID.KeyUp(p.standStillBinding)
+		container.HID.KeyUp(d.CharacterCfg.Bindings.StandStill)
 		p.lastRun = time.Now()
 		p.numOfAttacksRemaining--
 	}
@@ -153,7 +146,7 @@ func (p *AttackStep) Run(d data.Data, container container.Container) error {
 	return nil
 }
 
-func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster data.Monster, d data.Data) bool {
+func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster data.Monster, d game.Data) bool {
 	if !p.followEnemy {
 		return true
 	}
@@ -176,7 +169,7 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 					}
 
 					pos := path.AstarPather[moveTo].(*pather.Tile)
-					p.moveToStep = MoveTo(p.cfg, data.Position{
+					p.moveToStep = MoveTo(data.Position{
 						X: pos.X + d.AreaOrigin.X,
 						Y: pos.Y + d.AreaOrigin.Y,
 					})
@@ -184,7 +177,7 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 			}
 
 			if p.moveToStep == nil {
-				p.moveToStep = MoveTo(p.cfg, data.Position{X: monster.Position.X, Y: monster.Position.Y})
+				p.moveToStep = MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
 			}
 		}
 

@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 )
 
@@ -18,7 +19,7 @@ func (a TerrorZone) Name() string {
 }
 
 func (a TerrorZone) BuildActions() (actions []action.Action) {
-	act := action.NewChain(func(d data.Data) (actions []action.Action) {
+	act := action.NewChain(func(d game.Data) (actions []action.Action) {
 		if len(d.TerrorZones) == 0 {
 			a.logger.Info("No TerrorZones detected, skipping TerrorZone run")
 			return
@@ -66,7 +67,7 @@ func (a TerrorZone) BuildActions() (actions []action.Action) {
 	return []action.Action{act}
 }
 
-func (a TerrorZone) AvailableTZs(d data.Data) []area.Area {
+func (a TerrorZone) AvailableTZs(d game.Data) []area.Area {
 	var availableTZs []area.Area
 	for _, tz := range d.TerrorZones {
 		for _, tzArea := range a.CharacterCfg.Game.TerrorZone.Areas {
@@ -80,7 +81,7 @@ func (a TerrorZone) AvailableTZs(d data.Data) []area.Area {
 }
 
 func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		if d.PlayerUnit.Area != dstArea && d.PlayerUnit.Area.IsTown() {
 			actions = append(actions, a.builder.WayPoint(dstArea))
 		}

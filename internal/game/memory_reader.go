@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/d2go/pkg/utils"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -12,6 +11,7 @@ import (
 )
 
 type MemoryReader struct {
+	cfg *config.CharacterCfg
 	*memory.GameReader
 	cachedMapSeed  uint
 	HWND           win.HWND
@@ -23,7 +23,7 @@ type MemoryReader struct {
 	CachedMapData  map_client.MapData
 }
 
-func NewGameReader(supervisorName string, pid uint32, window win.HWND) (*MemoryReader, error) {
+func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, window win.HWND) (*MemoryReader, error) {
 	process, err := memory.NewProcessForPID(pid)
 	if err != nil {
 		return nil, err
@@ -33,6 +33,7 @@ func NewGameReader(supervisorName string, pid uint32, window win.HWND) (*MemoryR
 		GameReader:     memory.NewGameReader(process),
 		HWND:           window,
 		supervisorName: supervisorName,
+		cfg:            cfg,
 	}
 
 	gr.updateWindowPositionData()
@@ -52,7 +53,7 @@ func (gd *MemoryReader) updateWindowPositionData() {
 	gd.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - gd.WindowTopY - 9
 }
 
-func (gd *MemoryReader) GetData(isNewGame bool) data.Data {
+func (gd *MemoryReader) GetData(isNewGame bool) Data {
 	d := gd.GameReader.GetData()
 
 	if isNewGame {
@@ -84,7 +85,7 @@ func (gd *MemoryReader) GetData(isNewGame bool) data.Data {
 	d.Objects = memObjects
 	d.CollisionGrid = gd.CachedMapData.CollisionGrid(d.PlayerUnit.Area)
 
-	return d
+	return Data{Data: d, CharacterCfg: *gd.cfg}
 }
 
 func (gd *MemoryReader) getMapSeed(playerUnit uintptr) (uint, error) {

@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Council struct {
@@ -17,7 +18,7 @@ func (s Council) Name() string {
 func (s Council) BuildActions() []action.Action {
 	return []action.Action{
 		s.builder.WayPoint(area.Travincal), // Moving to starting point (Travincal)
-		s.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		s.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			for _, al := range d.AdjacentLevels {
 				if al.Area == area.DuranceOfHateLevel1 {
 					return data.Position{

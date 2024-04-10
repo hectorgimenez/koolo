@@ -3,6 +3,7 @@ package character
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"strings"
 
@@ -47,7 +48,7 @@ type BaseCharacter struct {
 	container container.Container
 }
 
-func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
+func (bc BaseCharacter) preBattleChecks(d game.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
 	monster, found := d.Monsters.FindByID(id)
 	if !found {
 		return false

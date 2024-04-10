@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Eldritch struct {
@@ -18,7 +19,7 @@ func (a Eldritch) Name() string {
 func (a Eldritch) BuildActions() (actions []action.Action) {
 	actions = append(actions,
 		a.builder.WayPoint(area.FrigidHighlands), // Moving to starting point (Frigid Highlands)
-		a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+		a.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 			if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
 				return m.UnitID, true
 			}
@@ -31,7 +32,7 @@ func (a Eldritch) BuildActions() (actions []action.Action) {
 	if a.CharacterCfg.Game.Eldritch.KillShenk {
 		actions = append(actions,
 			a.builder.MoveToCoords(data.Position{X: 3876, Y: 5130}),
-			a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			a.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 				if m, found := d.Monsters.FindOne(npc.OverSeer, data.MonsterTypeSuperUnique); found {
 					return m.UnitID, true
 				}

@@ -32,7 +32,7 @@ func PickupItem(logger *slog.Logger, item data.Item) *PickupItemStep {
 	}
 }
 
-func (p *PickupItemStep) Status(d data.Data, _ container.Container) Status {
+func (p *PickupItemStep) Status(d game.Data, _ container.Container) Status {
 	if p.status == StatusCompleted {
 		return p.status
 	}
@@ -48,7 +48,7 @@ func (p *PickupItemStep) Status(d data.Data, _ container.Container) Status {
 	return p.tryTransitionStatus(StatusCompleted)
 }
 
-func (p *PickupItemStep) Run(d data.Data, container container.Container) error {
+func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 	for _, m := range d.Monsters.Enemies() {
 		if dist := pather.DistanceFromMe(d, m.Position); dist < 7 && p.mouseOverAttempts > 1 {
 			return fmt.Errorf("monster %d [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Name, p.item.Quality.ToString())
@@ -111,7 +111,7 @@ func (p *PickupItemStep) Run(d data.Data, container container.Container) error {
 	return fmt.Errorf("item %s not found", p.item.Name)
 }
 
-func (p *PickupItemStep) isChestHovered(d data.Data) bool {
+func (p *PickupItemStep) isChestHovered(d game.Data) bool {
 	for _, o := range d.Objects {
 		if o.IsChest() && o.IsHovered {
 			return true

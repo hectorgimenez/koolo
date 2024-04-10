@@ -17,11 +17,11 @@ type InteractObjectStep struct {
 	objectName            object.Name
 	objectID              data.UnitID
 	waitingForInteraction bool
-	isCompleted           func(data.Data) bool
+	isCompleted           func(game.Data) bool
 	mouseOverAttempts     int
 }
 
-func InteractObject(name object.Name, isCompleted func(data.Data) bool) *InteractObjectStep {
+func InteractObject(name object.Name, isCompleted func(game.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
 		basicStep:   newBasicStep(),
 		objectName:  name,
@@ -29,7 +29,7 @@ func InteractObject(name object.Name, isCompleted func(data.Data) bool) *Interac
 	}
 }
 
-func InteractObjectByID(ID data.UnitID, isCompleted func(data.Data) bool) *InteractObjectStep {
+func InteractObjectByID(ID data.UnitID, isCompleted func(game.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
 		basicStep:   newBasicStep(),
 		objectID:    ID,
@@ -37,7 +37,7 @@ func InteractObjectByID(ID data.UnitID, isCompleted func(data.Data) bool) *Inter
 	}
 }
 
-func (i *InteractObjectStep) Status(d data.Data, _ container.Container) Status {
+func (i *InteractObjectStep) Status(d game.Data, _ container.Container) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -55,7 +55,7 @@ func (i *InteractObjectStep) Status(d data.Data, _ container.Container) Status {
 	return i.status
 }
 
-func (i *InteractObjectStep) Run(d data.Data, container container.Container) error {
+func (i *InteractObjectStep) Run(d game.Data, container container.Container) error {
 	i.tryTransitionStatus(StatusInProgress)
 
 	if i.mouseOverAttempts > maxInteractions {

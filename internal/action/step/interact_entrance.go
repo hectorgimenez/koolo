@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -27,7 +26,7 @@ func InteractEntrance(area area.Area) *InteractEntranceStep {
 	}
 }
 
-func (m *InteractEntranceStep) Status(d data.Data, _ container.Container) Status {
+func (m *InteractEntranceStep) Status(d game.Data, _ container.Container) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -40,7 +39,7 @@ func (m *InteractEntranceStep) Status(d data.Data, _ container.Container) Status
 	return m.status
 }
 
-func (m *InteractEntranceStep) Run(d data.Data, container container.Container) error {
+func (m *InteractEntranceStep) Run(d game.Data, container container.Container) error {
 	m.tryTransitionStatus(StatusInProgress)
 
 	if m.mouseOverAttempts > maxInteractions {
