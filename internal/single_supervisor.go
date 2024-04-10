@@ -85,7 +85,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 					default:
 						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedError))
-						s.c.Logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()))
+						s.c.Logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()), slog.String("supervisor", s.name))
 					}
 				}
 				if exitErr := s.c.Manager.ExitGame(); exitErr != nil {

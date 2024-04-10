@@ -15,6 +15,7 @@ import (
 type InteractObjectStep struct {
 	basicStep
 	objectName            object.Name
+	objectID              data.UnitID
 	waitingForInteraction bool
 	isCompleted           func(data.Data) bool
 	mouseOverAttempts     int
@@ -24,6 +25,14 @@ func InteractObject(name object.Name, isCompleted func(data.Data) bool) *Interac
 	return &InteractObjectStep{
 		basicStep:   newBasicStep(),
 		objectName:  name,
+		isCompleted: isCompleted,
+	}
+}
+
+func InteractObjectByID(ID data.UnitID, isCompleted func(data.Data) bool) *InteractObjectStep {
+	return &InteractObjectStep{
+		basicStep:   newBasicStep(),
+		objectID:    ID,
 		isCompleted: isCompleted,
 	}
 }
@@ -59,7 +68,31 @@ func (i *InteractObjectStep) Run(d data.Data, container container.Container) err
 	}
 
 	i.lastRun = time.Now()
-	if o, found := d.Objects.FindOne(i.objectName); found {
+	var o data.Object
+	var found bool
+
+	if i.objectID != 0 {
+		for _, obj := range d.Objects {
+			if obj.ID == i.objectID {
+				o = obj
+				found = true
+				break
+			}
+		}
+	} else {
+		o, found = d.Objects.FindOne(i.objectName)
+		// Let's try to use our own portal instead of any random portal we find
+		if i.objectName == object.TownPortal {
+			for _, obj := range d.Objects {
+				if obj.Owner == d.PlayerUnit.Name {
+					o = obj
+					found = true
+				}
+			}
+		}
+	}
+
+	if found {
 		objectX := o.Position.X - 2
 		objectY := o.Position.Y - 2
 		mX, mY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
