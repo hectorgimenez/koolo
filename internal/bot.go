@@ -135,18 +135,21 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					actions = append([]action.Action{buffAct}, actions...)
 				}
 
-				if companionTPRequested {
-					companionTPRequested = false
-					actions = append([]action.Action{b.ab.OpenTPIfLeader()}, actions...)
-				}
-				if companionLeftGame {
-					event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Companion left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
-					return errors.New("companion left game")
-				}
-				_, leaderFound := d.Roster.FindByName(b.c.CharacterCfg.Companion.LeaderName)
-				if !leaderFound {
-					event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Leader left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
-					return errors.New("leader left game")
+				// Some hacky stuff for companion mode, ideally should be encapsulated everything together in a different place
+				if b.c.CharacterCfg.Companion.Enabled {
+					if companionTPRequested {
+						companionTPRequested = false
+						actions = append([]action.Action{b.ab.OpenTPIfLeader()}, actions...)
+					}
+					if companionLeftGame {
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Companion left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
+						return errors.New("companion left game")
+					}
+					_, leaderFound := d.Roster.FindByName(b.c.CharacterCfg.Companion.LeaderName)
+					if !leaderFound {
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Leader left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
+						return errors.New("leader left game")
+					}
 				}
 
 				for k, act := range actions {

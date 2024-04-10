@@ -195,9 +195,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 						}
 
 						b.HID.MovePointer(skillPosition.X, skillPosition.Y)
-						helper.Sleep(400)
+						helper.Sleep(100)
 						b.HID.PressKey(binding)
-						helper.Sleep(700)
+						helper.Sleep(300)
 					}
 
 					previousTotalSkillNumber = len(d.PlayerUnit.Skills)
