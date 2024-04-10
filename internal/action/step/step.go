@@ -2,9 +2,8 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
-
-	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
 const (
@@ -15,8 +14,8 @@ const (
 
 type Status string
 type Step interface {
-	Status(data.Data, container.Container) Status
-	Run(data.Data, container.Container) error
+	Status(game.Data, container.Container) Status
+	Run(game.Data, container.Container) error
 	Reset()
 	LastRun() time.Time
 }

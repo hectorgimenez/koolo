@@ -6,11 +6,12 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func (a Leveling) act4() action.Action {
 	running := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if running || d.PlayerUnit.Area != area.ThePandemoniumFortress {
 			return nil
 		}
@@ -31,7 +32,7 @@ func (a Leveling) izual() []action.Action {
 		a.builder.Buff(),
 		a.builder.MoveToArea(area.PlainsOfDespair),
 		a.builder.Buff(),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			izual, found := d.NPCs.FindOne(npc.Izual)
 			if !found {
 				return data.Position{}, false

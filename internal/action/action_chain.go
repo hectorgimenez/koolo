@@ -2,17 +2,17 @@ package action
 
 import (
 	"errors"
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Chain struct {
 	basicAction
-	builder func(d data.Data) []Action
+	builder func(d game.Data) []Action
 	actions []Action
 }
 
-func NewChain(builder func(d data.Data) []Action, opts ...Option) *Chain {
+func NewChain(builder func(d game.Data) []Action, opts ...Option) *Chain {
 	a := &Chain{
 		builder: builder,
 	}
@@ -24,7 +24,7 @@ func NewChain(builder func(d data.Data) []Action, opts ...Option) *Chain {
 	return a
 }
 
-func (a *Chain) NextStep(d data.Data, container container.Container) error {
+func (a *Chain) NextStep(d game.Data, container container.Container) error {
 	if a.markSkipped {
 		return ErrNoMoreSteps
 	}

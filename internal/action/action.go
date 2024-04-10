@@ -2,8 +2,8 @@ package action
 
 import (
 	"errors"
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const maxRetries = 5
@@ -15,7 +15,7 @@ var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
 var ErrLogAndContinue = errors.New("error occurred, but marking action as completed")
 
 type Action interface {
-	NextStep(d data.Data, container container.Container) error
+	NextStep(d game.Data, container container.Container) error
 	Skip()
 }
 

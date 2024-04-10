@@ -1,6 +1,7 @@
 package character
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"sort"
 	"time"
 
@@ -24,7 +25,7 @@ func (p PaladinLeveling) BuffSkills() map[skill.ID]string {
 }
 
 func (p PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return p.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+	return p.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false
@@ -63,7 +64,7 @@ func (p PaladinLeveling) KillNihlathak() action.Action {
 }
 
 func (p PaladinLeveling) KillCouncil() action.Action {
-	return p.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+	return p.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
@@ -91,7 +92,7 @@ func (p PaladinLeveling) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if startTime.IsZero() {
 			startTime = time.Now()
 		}
@@ -109,7 +110,7 @@ func (p PaladinLeveling) KillDiablo() action.Action {
 			}
 
 			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{step.Wait(time.Millisecond * 100)}
 			})}
 		}
@@ -133,11 +134,11 @@ func (p PaladinLeveling) KillBaal() action.Action {
 	return p.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
+func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
 	var previousUnitID data.UnitID = 0
 
-	return action.NewStepChain(func(d data.Data) []step.Step {
+	return action.NewStepChain(func(d game.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
@@ -162,14 +163,14 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 			// Add a random movement, maybe hammer is not hitting the target
 			if previousUnitID == id {
 				steps = append(steps,
-					step.SyncStep(func(_ data.Data) error {
+					step.SyncStep(func(_ game.Data) error {
 						p.container.PathFinder.RandomMovement()
 						return nil
 					}),
 				)
 			}
 			steps = append(steps,
-				step.PrimaryAttack(p.container.CharacterCfg, id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(p.container.CharacterCfg.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(p.container.CharacterCfg.Bindings.Paladin.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
@@ -177,7 +178,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 			}
 
 			steps = append(steps,
-				step.PrimaryAttack(p.container.CharacterCfg, id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(p.container.CharacterCfg.Bindings.Paladin.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(p.container.CharacterCfg.Bindings.Paladin.Concentration)),
 			)
 		}
 
@@ -187,7 +188,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d data.Data) (
 	}, action.RepeatUntilNoSteps())
 }
 
-func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {
+func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
 	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Stats[stat.Level] < 30 {
 		return map[stat.ID]int{
 			stat.Strength: 35,
@@ -222,7 +223,7 @@ func (p PaladinLeveling) StatPoints(d data.Data) map[stat.ID]int {
 	}
 }
 
-func (p PaladinLeveling) SkillPoints(d data.Data) []skill.ID {
+func (p PaladinLeveling) SkillPoints(d game.Data) []skill.ID {
 	if d.PlayerUnit.Stats[stat.Level] < 21 {
 		return []skill.ID{
 			skill.Might,
@@ -342,7 +343,7 @@ func (p PaladinLeveling) SkillPoints(d data.Data) []skill.ID {
 	}
 }
 
-func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.ID]string {
+func (p PaladinLeveling) GetKeyBindings(d game.Data) map[skill.ID]string {
 	skillBindings := map[skill.ID]string{
 		skill.Vigor:      p.container.CharacterCfg.Bindings.Paladin.Vigor,
 		skill.HolyShield: p.container.CharacterCfg.Bindings.Paladin.HolyShield,
@@ -367,7 +368,7 @@ func (p PaladinLeveling) GetKeyBindings(d data.Data) map[skill.ID]string {
 	return skillBindings
 }
 
-func (p PaladinLeveling) ShouldResetSkills(d data.Data) bool {
+func (p PaladinLeveling) ShouldResetSkills(d game.Data) bool {
 	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
 		return true
 	}
@@ -376,7 +377,7 @@ func (p PaladinLeveling) ShouldResetSkills(d data.Data) bool {
 }
 
 func (p PaladinLeveling) KillAncients() action.Action {
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 			actions = append(actions,
 				p.killMonster(m.Name, data.MonsterTypeSuperUnique),

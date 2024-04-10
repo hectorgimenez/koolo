@@ -44,7 +44,7 @@ func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *game.Man
 	}
 }
 
-func (hm *Manager) HandleHealthAndMana(d data.Data) error {
+func (hm *Manager) HandleHealthAndMana(d game.Data) error {
 	hpConfig := hm.cfg.Health
 	// Safe area, skipping
 	if d.PlayerUnit.Area.IsTown() {

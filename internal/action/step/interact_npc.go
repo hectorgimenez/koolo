@@ -15,7 +15,7 @@ type InteractNPCStep struct {
 	basicStep
 	NPC                   npc.ID
 	waitingForInteraction bool
-	isCompletedFn         func(d data.Data) bool
+	isCompletedFn         func(d game.Data) bool
 }
 
 func InteractNPC(npc npc.ID) *InteractNPCStep {
@@ -25,7 +25,7 @@ func InteractNPC(npc npc.ID) *InteractNPCStep {
 	}
 }
 
-func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool) *InteractNPCStep {
+func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Data) bool) *InteractNPCStep {
 	return &InteractNPCStep{
 		basicStep:     newBasicStep(),
 		NPC:           npc,
@@ -33,7 +33,7 @@ func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d data.Data) bool) *Int
 	}
 }
 
-func (i *InteractNPCStep) Status(d data.Data, _ container.Container) Status {
+func (i *InteractNPCStep) Status(d game.Data, _ container.Container) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -50,7 +50,7 @@ func (i *InteractNPCStep) Status(d data.Data, _ container.Container) Status {
 	return i.status
 }
 
-func (i *InteractNPCStep) Run(d data.Data, container container.Container) error {
+func (i *InteractNPCStep) Run(d game.Data, container container.Container) error {
 	i.tryTransitionStatus(StatusInProgress)
 
 	// Give some time before retrying the interaction

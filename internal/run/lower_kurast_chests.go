@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"slices"
 )
@@ -26,7 +27,7 @@ func (a LowerKurastChest) Name() string {
 func (a LowerKurastChest) BuildActions() []action.Action {
 	actions := []action.Action{
 		a.builder.WayPoint(area.LowerKurast),
-		action.NewChain(func(d data.Data) []action.Action {
+		action.NewChain(func(d game.Data) []action.Action {
 			// We can have one or two bonfires
 			var bonFirePositions []data.Position
 
@@ -40,10 +41,10 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 
 			for _, bonfirePos := range bonFirePositions {
 				bonfireActions = append(bonfireActions,
-					a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+					a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 						return bonfirePos, true
 					}),
-					action.NewChain(func(d data.Data) []action.Action {
+					action.NewChain(func(d game.Data) []action.Action {
 						var chests []data.Object
 
 						for _, o := range d.Objects {
@@ -56,10 +57,10 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 
 						for _, chest := range chests {
 							subActions = append(subActions,
-								a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+								a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 									return chest.Position, true
 								}),
-								a.builder.InteractObject(chest.Name, func(d data.Data) bool {
+								a.builder.InteractObject(chest.Name, func(d game.Data) bool {
 									for _, obj := range d.Objects {
 										isSameObj := obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y
 

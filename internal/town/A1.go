@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type A1 struct {
@@ -29,7 +30,7 @@ func (a A1) RepairNPC() npc.ID {
 	return npc.Charsi
 }
 
-func (a A1) TPWaitingArea(d data.Data) data.Position {
+func (a A1) TPWaitingArea(d game.Data) data.Position {
 	cain, _ := d.NPCs.FindOne(npc.Kashya)
 
 	return cain.Positions[0]

@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"slices"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ func (a Cows) BuildActions() []action.Action {
 
 	return append(actions,
 		a.preparePortal(),
-		a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+		a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
 			return d.PlayerUnit.Area == area.MooMooFarm
 		}),
 		a.builder.Buff(),
@@ -41,7 +42,7 @@ func (a Cows) BuildActions() []action.Action {
 }
 
 func (a Cows) getWirtsLeg() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if _, found := d.Items.Find("WirtsLeg", item.LocationStash, item.LocationInventory); found {
 			a.logger.Info("WirtsLeg found, skip finding it")
 			return nil
@@ -49,7 +50,7 @@ func (a Cows) getWirtsLeg() action.Action {
 
 		return []action.Action{
 			a.builder.WayPoint(area.StonyField), // Moving to starting point (Stony Field)
-			action.NewChain(func(d data.Data) []action.Action {
+			action.NewChain(func(d game.Data) []action.Action {
 				for _, o := range d.Objects {
 					if o.Name == object.CairnStoneAlpha {
 						return []action.Action{a.builder.MoveToCoords(o.Position)}
@@ -60,10 +61,10 @@ func (a Cows) getWirtsLeg() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(10),
 			a.builder.ItemPickup(false, 15),
-			a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+			a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
 				return d.PlayerUnit.Area == area.Tristram
 			}, step.Wait(time.Second)),
-			a.builder.InteractObject(object.WirtCorpse, func(d data.Data) bool {
+			a.builder.InteractObject(object.WirtCorpse, func(d game.Data) bool {
 				_, found := d.Items.Find("WirtsLeg")
 
 				return found
@@ -75,7 +76,7 @@ func (a Cows) getWirtsLeg() action.Action {
 }
 
 func (a Cows) preparePortal() action.Action {
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		if d.PlayerUnit.Area != area.RogueEncampment {
 			actions = append(actions, a.builder.WayPoint(area.RogueEncampment))
 		}
@@ -100,7 +101,7 @@ func (a Cows) preparePortal() action.Action {
 				Quantity: 1,
 				Tab:      4,
 			}),
-			action.NewChain(func(d data.Data) []action.Action {
+			action.NewChain(func(d game.Data) []action.Action {
 				// Ensure we are using the new WP tome and not the one that we are using for TPs
 				var newWPTome data.Item
 				for _, itm := range d.Items.ByLocation(item.LocationInventory) {

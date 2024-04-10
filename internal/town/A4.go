@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type A4 struct {
@@ -29,7 +30,7 @@ func (a A4) RepairNPC() npc.ID {
 	return npc.Halbu
 }
 
-func (a A4) TPWaitingArea(_ data.Data) data.Position {
+func (a A4) TPWaitingArea(_ game.Data) data.Position {
 	return data.Position{
 		X: 5047,
 		Y: 5033,

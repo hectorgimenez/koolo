@@ -17,7 +17,7 @@ import (
 )
 
 func (a Leveling) act5() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if d.PlayerUnit.Area != area.Harrogath {
 			return nil
 		}
@@ -25,7 +25,7 @@ func (a Leveling) act5() action.Action {
 		if d.Quests[quest.Act5RiteOfPassage].Completed() {
 			a.logger.Info("Starting Baal run...")
 			actions := Baal{baseRun: a.baseRun}.BuildActions()
-			return append(actions, action.NewStepChain(func(d data.Data) []step.Step {
+			return append(actions, action.NewStepChain(func(d game.Data) []step.Step {
 				if d.PlayerUnit.Area == area.TheWorldstoneChamber && len(d.Monsters.Enemies()) == 0 {
 					switch a.CharacterCfg.Game.Difficulty {
 					case difficulty.Normal:
@@ -44,7 +44,7 @@ func (a Leveling) act5() action.Action {
 
 		wp, _ := d.Objects.FindOne(object.ExpansionWaypoint)
 		actions := []action.Action{a.builder.MoveToCoords(wp.Position)}
-		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+		actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
 			if _, found := d.Monsters.FindOne(npc.Drehya, data.MonsterTypeNone); !found {
 				return a.anya()
 			}
@@ -61,11 +61,11 @@ func (a Leveling) anya() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.CrystallinePassage),
 		a.builder.MoveToArea(area.FrozenRiver),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			anya, found := d.NPCs.FindOne(793)
 			return anya.Positions[0], found
 		}),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			anya, found := d.Objects.FindOne(object.FrozenAnya)
 			return anya.Position, found
 		}),
@@ -83,7 +83,7 @@ func (a Leveling) anya() []action.Action {
 		a.builder.ReturnTown(),
 		a.builder.Wait(time.Second * 8),
 		a.builder.InteractNPC(npc.Malah,
-			step.SyncStep(func(d data.Data) error {
+			step.SyncStep(func(d game.Data) error {
 				a.HID.PressKey("esc")
 				a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
 				itm, _ := d.Items.Find("ScrollOfResistance")
@@ -112,7 +112,7 @@ func (a Leveling) ancients() []action.Action {
 	return append(actions,
 		a.builder.UsePortalInTown(),
 		a.builder.Buff(),
-		a.builder.InteractObject(object.AncientsAltar, func(d data.Data) bool {
+		a.builder.InteractObject(object.AncientsAltar, func(d game.Data) bool {
 			if len(d.Monsters.Enemies()) > 0 {
 				return true
 			}
@@ -121,7 +121,7 @@ func (a Leveling) ancients() []action.Action {
 			return false
 		}),
 		char.KillAncients(),
-		a.builder.InteractObject(object.ArreatSummitDoorToWorldstone, func(d data.Data) bool {
+		a.builder.InteractObject(object.ArreatSummitDoorToWorldstone, func(d game.Data) bool {
 			obj, _ := d.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
 			return !obj.Selectable
 		}),

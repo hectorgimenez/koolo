@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -22,7 +23,7 @@ func (a Tristram) Name() string {
 func (a Tristram) BuildActions() []action.Action {
 	actions := []action.Action{
 		a.builder.WayPoint(area.StonyField), // Moving to starting point (Stony Field)
-		action.NewChain(func(d data.Data) []action.Action {
+		action.NewChain(func(d game.Data) []action.Action {
 			for _, o := range d.Objects {
 				if o.Name == object.CairnStoneAlpha {
 					return []action.Action{a.builder.MoveToCoords(o.Position)}
@@ -41,7 +42,7 @@ func (a Tristram) BuildActions() []action.Action {
 	actions = append(actions, a.openPortalIfNotOpened())
 
 	// Enter Tristram portal
-	actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+	actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
 		return d.PlayerUnit.Area == area.Tristram
 	}, step.Wait(time.Second)))
 
@@ -50,9 +51,9 @@ func (a Tristram) BuildActions() []action.Action {
 	)
 
 	// Clear Tristram or rescue Cain
-	return append(actions, action.NewChain(func(d data.Data) []action.Action {
+	return append(actions, action.NewChain(func(d game.Data) []action.Action {
 		if o, found := d.Objects.FindOne(object.CainGibbet); found && o.Selectable {
-			return []action.Action{a.builder.InteractObject(object.CainGibbet, func(d data.Data) bool {
+			return []action.Action{a.builder.InteractObject(object.CainGibbet, func(d game.Data) bool {
 				obj, _ := d.Objects.FindOne(object.CainGibbet)
 
 				return !obj.Selectable
@@ -70,7 +71,7 @@ func (a Tristram) BuildActions() []action.Action {
 func (a Tristram) openPortalIfNotOpened() action.Action {
 	logged := false
 
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		_, found := d.Objects.FindOne(object.PermanentTownPortal)
 		if found {
 			return nil
@@ -97,12 +98,12 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 		}
 
 		// Wait until portal is open
-		actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
+		actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
-				step.SyncStepWithCheck(func(d data.Data) error {
+				step.SyncStepWithCheck(func(d game.Data) error {
 					helper.Sleep(1000)
 					return nil
-				}, func(d data.Data) step.Status {
+				}, func(d game.Data) step.Status {
 					_, found := d.Objects.FindOne(object.PermanentTownPortal)
 					if !found {
 						return step.StatusInProgress

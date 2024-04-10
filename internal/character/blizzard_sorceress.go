@@ -1,6 +1,7 @@
 package character
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -23,14 +24,14 @@ type BlizzardSorceress struct {
 }
 
 func (s BlizzardSorceress) KillMonsterSequence(
-	monsterSelector func(d data.Data) (data.UnitID, bool),
+	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
 ) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.NewStepChain(func(d data.Data) []step.Step {
+	return action.NewStepChain(func(d game.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
@@ -62,7 +63,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			for _, m := range d.Monsters.Enemies() {
 				if d := pather.DistanceFromMe(d, m.Position); d < 4 {
 					s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
-					steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.Blizzard, m.UnitID, 1, opts...))
+					steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.Blizzard, m.UnitID, 1, opts...))
 					break
 				}
 			}
@@ -77,8 +78,8 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		}
 
 		steps = append(steps,
-			step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.Blizzard, id, 1, opts...),
-			step.PrimaryAttack(s.container.CharacterCfg, id, 4, opts...),
+			step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.Blizzard, id, 1, opts...),
+			step.PrimaryAttack(id, 4, opts...),
 		)
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -125,7 +126,7 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if startTime.IsZero() {
 			startTime = time.Now()
 		}
@@ -143,7 +144,7 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 			}
 
 			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{step.Wait(time.Millisecond * 100)}
 			})}
 		}
@@ -152,9 +153,9 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 		s.logger.Info("Diablo detected, attacking")
 
 		return []action.Action{
-			action.NewStepChain(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.StaticField, diablo.UnitID, 5, step.Distance(3, 8)),
+					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, diablo.UnitID, 5, step.Distance(3, 8)),
 				}
 			}),
 			s.killMonster(npc.Diablo, data.MonsterTypeNone),
@@ -163,12 +164,12 @@ func (s BlizzardSorceress) KillDiablo() action.Action {
 }
 
 func (s BlizzardSorceress) KillIzual() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
-			action.NewStepChain(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d game.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, 7, step.Distance(5, 8)),
+					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, 7, step.Distance(5, 8)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably
@@ -184,12 +185,12 @@ func (s BlizzardSorceress) KillIzual() action.Action {
 }
 
 func (s BlizzardSorceress) KillBaal() action.Action {
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
-			action.NewStepChain(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d game.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg, s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, 5, step.Distance(5, 8)),
+					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, 5, step.Distance(5, 8)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably
@@ -202,7 +203,7 @@ func (s BlizzardSorceress) KillBaal() action.Action {
 }
 
 func (s BlizzardSorceress) KillCouncil() action.Action {
-	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
 		var coldImmunes []data.Monster
@@ -227,7 +228,7 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 }
 
 func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) action.Action {
-	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
 		}
@@ -237,7 +238,7 @@ func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.Monster
 }
 
 func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return s.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false

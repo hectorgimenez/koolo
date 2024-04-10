@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
@@ -11,21 +12,20 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary {
-		return NewChain(func(d data.Data) []Action {
+		return NewChain(func(d game.Data) []Action {
 			b.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
 			portal, _ := d.Objects.FindOne(object.ArcaneSanctuaryPortal)
 			return []Action{
 				b.MoveToCoords(portal.Position),
-				NewStepChain(func(d data.Data) []step.Step {
+				NewStepChain(func(d game.Data) []step.Step {
 					return []step.Step{
-						step.InteractObject(object.ArcaneSanctuaryPortal, func(d data.Data) bool {
+						step.InteractObject(object.ArcaneSanctuaryPortal, func(d game.Data) bool {
 							return d.PlayerUnit.Area == area.ArcaneSanctuary
 						}),
 					}
@@ -34,7 +34,7 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 		})
 	}
 
-	toFun := func(d data.Data) (data.Position, bool) {
+	toFun := func(d game.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.Logger.Debug("Reached area", slog.Any("area", dst))
 			return data.Position{}, false
@@ -82,13 +82,13 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 		return data.Position{}, false
 	}
 
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		return []Action{
 			b.MoveTo(toFun, opts...),
-			NewStepChain(func(d data.Data) []step.Step {
+			NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
 					step.InteractEntrance(dst),
-					step.SyncStep(func(d data.Data) error {
+					step.SyncStep(func(d game.Data) error {
 						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(dst), event.InteractionTypeEntrance))
 						return nil
 					}),
@@ -99,19 +99,19 @@ func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chai
 }
 
 func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Chain {
-	return b.MoveTo(func(d data.Data) (data.Position, bool) {
+	return b.MoveTo(func(d game.Data) (data.Position, bool) {
 		return to, true
 	}, opts...)
 }
 
-func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
+func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
 	previousIterationTo := data.Position{}
 	var currentStep step.Step
 
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		to, found := toFunc(d)
 		if !found {
 			return nil
@@ -131,26 +131,26 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && b.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && b.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
-				return []Action{NewChain(func(d data.Data) []Action {
+			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+				return []Action{NewChain(func(d game.Data) []Action {
 					return b.InRunReturnTownRoutine()
 				})}
 			}
 		}
 
-		if helper.CanTeleport(d) {
+		if d.CanTeleport() {
 			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
 			if !isLevelingChar {
-				return []Action{NewStepChain(func(d data.Data) []step.Step {
-					return []step.Step{step.MoveTo(b.CharacterCfg, to, opts...)}
+				return []Action{NewStepChain(func(d game.Data) []step.Step {
+					return []step.Step{step.MoveTo(to, opts...)}
 				})}
 			}
 			// But if we are leveling and have enough money (to buy mana pots), let's teleport. We add the timeout
 			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
 			if d.PlayerUnit.TotalGold() > 30000 {
-				return []Action{NewStepChain(func(d data.Data) []step.Step {
+				return []Action{NewStepChain(func(d game.Data) []step.Step {
 					newOpts := append(opts, step.WithTimeout(5*time.Second))
-					return []step.Step{step.MoveTo(b.CharacterCfg, to, newOpts...)}
+					return []step.Step{step.MoveTo(to, newOpts...)}
 				})}
 			}
 		}
@@ -159,10 +159,10 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 		for _, o := range d.Objects {
 			if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 				if o.Selectable {
-					return []Action{NewStepChain(func(d data.Data) []step.Step {
+					return []Action{NewStepChain(func(d game.Data) []step.Step {
 						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObject(o.Name, func(d data.Data) bool {
+						return []step.Step{step.InteractObject(o.Name, func(d game.Data) bool {
 							for _, obj := range d.Objects {
 								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
 									return true
@@ -228,7 +228,7 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 
 				if !doorIsBlocking {
 					pickupBeforeMoving = true
-					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+					return []Action{b.ch.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 						return closestMonster.UnitID, true
 					}, nil)}
 				}
@@ -241,12 +241,11 @@ func (b *Builder) MoveTo(toFunc func(d data.Data) (data.Position, bool), opts ..
 		}
 
 		// Continue moving
-		return []Action{b.WaitForAllMembersWhenLeveling(), NewStepChain(func(d data.Data) []step.Step {
+		return []Action{b.WaitForAllMembersWhenLeveling(), NewStepChain(func(d game.Data) []step.Step {
 			newOpts := append(opts, step.ClosestWalkable(), step.WithTimeout(time.Millisecond*1000))
 			previousIterationPosition = d.PlayerUnit.Position
 			if currentStep == nil {
 				currentStep = step.MoveTo(
-					b.CharacterCfg,
 					to,
 					newOpts...,
 				)

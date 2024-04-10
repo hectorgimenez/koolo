@@ -1,19 +1,19 @@
 package action
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
 func (b *Builder) ReviveMerc() *Chain {
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if b.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0 {
-			if isLevelingChar && d.PlayerUnit.Area == area.RogueEncampment && b.CharacterCfg.Game.Difficulty == difficulty.Normal {
+		if d.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0 {
+			if isLevelingChar && d.PlayerUnit.Area == area.RogueEncampment && d.CharacterCfg.Game.Difficulty == difficulty.Normal {
 				// Ignoring because merc is not hired yet
 				return nil
 			}

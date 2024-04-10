@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Town interface {
@@ -12,7 +13,7 @@ type Town interface {
 	RepairNPC() npc.ID
 	MercContractorNPC() npc.ID
 	GamblingNPC() npc.ID
-	TPWaitingArea(d data.Data) data.Position
+	TPWaitingArea(d game.Data) data.Position
 	TownArea() area.Area
 }
 

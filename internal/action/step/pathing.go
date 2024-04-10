@@ -3,6 +3,7 @@ package step
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -23,7 +24,7 @@ func newPathingStep() pathingStep {
 	}
 }
 
-func (s *pathingStep) cachePath(d data.Data) bool {
+func (s *pathingStep) cachePath(d game.Data) bool {
 	nearestKey := 0
 	nearestDistance := 99999999
 
@@ -60,7 +61,7 @@ func (s *pathingStep) cachePath(d data.Data) bool {
 	return false
 }
 
-func (s *pathingStep) isPlayerStuck(d data.Data) bool {
+func (s *pathingStep) isPlayerStuck(d game.Data) bool {
 	if s.lastRun.IsZero() {
 		return false
 	}

@@ -1,6 +1,7 @@
 package character
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"sort"
 	"time"
 
@@ -23,14 +24,14 @@ type Hammerdin struct {
 }
 
 func (s Hammerdin) KillMonsterSequence(
-	monsterSelector func(d data.Data) (data.UnitID, bool),
+	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
 ) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.NewStepChain(func(d data.Data) []step.Step {
+	return action.NewStepChain(func(d game.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
@@ -51,7 +52,7 @@ func (s Hammerdin) KillMonsterSequence(
 		// Add a random movement, maybe hammer is not hitting the target
 		if previousUnitID == int(id) {
 			steps = append(steps,
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					monster, f := d.Monsters.FindByID(id)
 					if f && monster.Stats[stat.Life] > 0 {
 						s.container.PathFinder.RandomMovement()
@@ -62,7 +63,6 @@ func (s Hammerdin) KillMonsterSequence(
 		}
 		steps = append(steps,
 			step.PrimaryAttack(
-				s.container.CharacterCfg,
 				id,
 				8,
 				step.Distance(2, 8),
@@ -114,7 +114,7 @@ func (s Hammerdin) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if startTime.IsZero() {
 			startTime = time.Now()
 		}
@@ -132,7 +132,7 @@ func (s Hammerdin) KillDiablo() action.Action {
 			}
 
 			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d data.Data) []step.Step {
+			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{step.Wait(time.Millisecond * 100)}
 			})}
 		}
@@ -153,7 +153,7 @@ func (s Hammerdin) KillIzual() action.Action {
 }
 
 func (s Hammerdin) KillCouncil() action.Action {
-	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
@@ -174,7 +174,6 @@ func (s Hammerdin) KillCouncil() action.Action {
 			for range hammerdinMaxAttacksLoop {
 				steps = append(steps,
 					step.PrimaryAttack(
-						s.container.CharacterCfg,
 						m.UnitID,
 						8,
 						step.Distance(2, 8),
@@ -192,7 +191,7 @@ func (s Hammerdin) KillBaal() action.Action {
 }
 
 func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return action.NewStepChain(func(d data.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return nil
@@ -202,7 +201,6 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		for range hammerdinMaxAttacksLoop {
 			steps = append(steps,
 				step.PrimaryAttack(
-					s.container.CharacterCfg,
 					m.UnitID,
 					8,
 					step.Distance(2, 8),
