@@ -107,6 +107,7 @@ type CharacterCfg struct {
 		Class         string `yaml:"class"`
 		CastingFrames int    `yaml:"castingFrames"`
 		UseMerc       bool   `yaml:"useMerc"`
+		Hardcore       bool   `yaml:"hardcore"`
 	} `yaml:"character"`
 	Game struct {
 		ClearTPArea   bool                  `yaml:"clearTPArea"`
