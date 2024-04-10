@@ -22,6 +22,12 @@ func (hid *HID) PressKey(key string) {
 	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, keyCode, hid.calculatelParam(keyCode, false))
 }
 
+func (hid *HID) PressKeyWithModifier(key string, modifier ModifierKey) {
+	hid.gi.OverrideGetKeyState(int(modifier))
+	hid.PressKey(key)
+	hid.gi.RestoreGetKeyState()
+}
+
 func (hid *HID) KeyDown(key string) {
 	keyCode := hid.getASCIICode(key)
 	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, keyCode, hid.calculatelParam(keyCode, true))

@@ -32,9 +32,7 @@ func (bm BeltManager) DrinkPotion(d data.Data, potionType data.PotionType, merc 
 	if found {
 		binding := bm.getBindingBasedOnColumn(p)
 		if merc {
-			bm.hid.KeyDown("shift")
-			bm.hid.PressKey(binding)
-			bm.hid.KeyUp("shift")
+			bm.hid.PressKeyWithModifier(binding, game.ShiftKey)
 			bm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.X+1, d.MercHPPercent()))
 			event.Send(event.UsedPotion(event.Text(bm.supervisorName, ""), potionType, true))
 			return true
