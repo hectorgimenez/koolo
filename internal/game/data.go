@@ -1,12 +1,18 @@
-package helper
+package game
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
-func CanTeleport(d data.Data) bool {
+type Data struct {
+	data.Data
+	CharacterCfg config.CharacterCfg
+}
+
+func (d Data) CanTeleport() bool {
 	_, found := d.PlayerUnit.Skills[skill.Teleport]
 
 	// Duriel's Lair is bugged and teleport doesn't work here
@@ -14,7 +20,5 @@ func CanTeleport(d data.Data) bool {
 		return false
 	}
 
-	// TODO: Recheck for binding
-	//return found && config.Config.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
-	return found && !d.PlayerUnit.Area.IsTown()
+	return found && d.CharacterCfg.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
 }

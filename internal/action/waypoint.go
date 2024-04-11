@@ -1,10 +1,9 @@
 package action
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	hid2 "github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"log/slog"
 	"slices"
@@ -20,7 +19,7 @@ const (
 )
 
 func (b *Builder) WayPoint(a area.Area) *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		// We don't need to move, we are already at destination area
 		if d.PlayerUnit.Area == a {
 			return nil
@@ -33,7 +32,7 @@ func (b *Builder) WayPoint(a area.Area) *Chain {
 	})
 }
 
-func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
+func (b *Builder) openWPAndSelectTab(a area.Area, d game.Data) Action {
 	wpCoords, found := area.WPAddresses[a]
 	if !found {
 		panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
@@ -41,13 +40,13 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 
 	for _, o := range d.Objects {
 		if o.IsWaypoint() {
-			return b.InteractObject(o.Name, func(d data.Data) bool {
+			return b.InteractObject(o.Name, func(d game.Data) bool {
 				return d.OpenMenus.Waypoint
 			},
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
-					b.HID.Click(hid2.LeftButton, actTabX, wpTabStartY)
+					b.HID.Click(game.LeftButton, actTabX, wpTabStartY)
 					helper.Sleep(200)
 
 					return nil
@@ -60,7 +59,7 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d data.Data) Action {
 }
 
 func (b *Builder) useWP(a area.Area) *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		finalDestination := a
 		traverseAreas := make([]area.Area, 0)
 		currentWP := area.WPAddresses[a]
@@ -68,23 +67,26 @@ func (b *Builder) useWP(a area.Area) *Chain {
 			for {
 				traverseAreas = append(currentWP.LinkedFrom, traverseAreas...)
 
-				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
-					break
+				if currentWP.LinkedFrom != nil {
+					a = currentWP.LinkedFrom[0]
 				}
 
 				currentWP = area.WPAddresses[currentWP.LinkedFrom[0]]
-				a = currentWP.LinkedFrom[0]
+
+				if slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
+					break
+				}
 			}
 		}
 
 		currentWP = area.WPAddresses[a]
 
 		// First use the previous available waypoint that we have discovered
-		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					areaBtnY := wpListStartY + (currentWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-					b.HID.Click(hid2.LeftButton, wpListPositionX, areaBtnY)
+					b.HID.Click(game.LeftButton, wpListPositionX, areaBtnY)
 					helper.Sleep(1000)
 
 					return nil

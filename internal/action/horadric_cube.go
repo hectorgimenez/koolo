@@ -12,7 +12,7 @@ import (
 )
 
 func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
 			b.Logger.Info("No Horadric Cube found in inventory")
@@ -21,7 +21,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 
 		// Ensure stash is open
 		if !d.OpenMenus.Stash {
-			actions = append(actions, b.InteractObject(object.Bank, func(d data.Data) bool {
+			actions = append(actions, b.InteractObject(object.Bank, func(d game.Data) bool {
 				return d.OpenMenus.Stash
 			}))
 		}
@@ -36,7 +36,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			}
 
 			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
-			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+			actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 				screenPos := ui.GetScreenCoordsForItem(nwIt)
 				b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 				helper.Sleep(300)
@@ -49,7 +49,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 
 		for _, itm := range items {
 			nwIt := itm
-			actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+			actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 				for _, updatedItem := range d.Items.AllItems {
 					if nwIt.UnitID == updatedItem.UnitID {
 						b.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
@@ -68,7 +68,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 }
 
 func (b *Builder) CubeTransmute() *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
 			b.Logger.Info("No Horadric Cube found in inventory")
@@ -77,7 +77,7 @@ func (b *Builder) CubeTransmute() *Chain {
 
 		actions = append(actions, b.ensureCubeIsOpen(cube))
 
-		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			b.Logger.Debug("Transmuting items in the Horadric Cube")
 			helper.Sleep(150)
 			b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
@@ -88,11 +88,11 @@ func (b *Builder) CubeTransmute() *Chain {
 			helper.Sleep(300)
 
 			return []step.Step{
-				step.SyncStepWithCheck(func(d data.Data) error {
+				step.SyncStepWithCheck(func(d game.Data) error {
 					b.HID.PressKey("esc")
 					helper.Sleep(300)
 					return nil
-				}, func(d data.Data) step.Status {
+				}, func(d game.Data) step.Status {
 					if d.OpenMenus.Inventory {
 						return step.StatusInProgress
 					}
@@ -106,16 +106,16 @@ func (b *Builder) CubeTransmute() *Chain {
 }
 
 func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
-	return NewStepChain(func(d data.Data) []step.Step {
+	return NewStepChain(func(d game.Data) []step.Step {
 		b.Logger.Debug("Opening Horadric Cube...")
 		return []step.Step{
-			step.SyncStepWithCheck(func(d data.Data) error {
+			step.SyncStepWithCheck(func(d game.Data) error {
 				screenPos := ui.GetScreenCoordsForItem(cube)
 				helper.Sleep(300)
 				b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 				helper.Sleep(200)
 				return nil
-			}, func(d data.Data) step.Status {
+			}, func(d game.Data) step.Status {
 				if d.OpenMenus.Cube {
 					b.Logger.Debug("Horadric Cube window detected")
 					return step.StatusCompleted

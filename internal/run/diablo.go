@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
@@ -49,7 +50,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		seal := s
 		sealNumber := i
 
-		actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+		actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
 			_, isLevelingChar := a.char.(action.LevelingCharacter)
 			if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (a.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0)) {
 				a.logger.Debug("Let's go back town to buy more pots", slog.Int("seal", sealNumber+1))
@@ -59,7 +60,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			return nil
 		}))
 
-		actions = append(actions, a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		actions = append(actions, a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Debug("Moving to next seal", slog.Int("seal", sealNumber+1))
 			if obj, found := d.Objects.FindOne(seal); found {
 				if d := pather.DistanceFromMe(d, obj.Position); d < 7 {
@@ -77,7 +78,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		}, step.StopAtDistance(7)))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
-		//actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
+		//actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
 		//	if obj, found := d.Objects.FindOne(seal); found {
 		//		pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
 		//		return []step.Step{step.MoveTo(pos)}
@@ -94,11 +95,11 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		// Activate the seal
 		actions = append(actions,
 			a.builder.ClearAreaAroundPlayer(15),
-			action.NewStepChain(func(d data.Data) []step.Step {
+			action.NewStepChain(func(d game.Data) []step.Step {
 				a.logger.Debug("Trying to activate seal...", slog.Int("seal", sealNumber+1))
 				lastInteractionAt := time.Now()
 				return []step.Step{
-					step.InteractObject(seal, func(d data.Data) bool {
+					step.InteractObject(seal, func(d game.Data) bool {
 						if obj, found := d.Objects.FindOne(seal); found {
 							if !obj.Selectable {
 								a.logger.Debug("Seal activated, waiting for elite group to spawn", slog.Int("seal", sealNumber+1))
@@ -127,7 +128,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 			// Now wait & try to kill the Elite packs (maybe are already dead, killed during previous action)
 			startTime := time.Time{}
-			actions = append(actions, action.NewStepChain(func(d data.Data) []step.Step {
+			actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
 				if startTime.IsZero() {
 					startTime = time.Now()
 				}
@@ -145,7 +146,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 				return nil
 			}, action.RepeatUntilNoSteps()))
 
-			actions = append(actions, a.char.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+			actions = append(actions, a.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 				for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 					if a.isSealElite(m) {
 						_, _, found := a.PathFinder.GetPath(d, m.Position)
@@ -161,7 +162,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	}
 
 	// Go back to town to buy potions if needed
-	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+	actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
 		_, isLevelingChar := a.char.(action.LevelingCharacter)
 		if isLevelingChar && (a.bm.ShouldBuyPotions(d) || (a.CharacterCfg.Character.UseMerc && d.MercHPPercent() <= 0)) {
 			return a.builder.InRunReturnTownRoutine()
@@ -179,7 +180,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	return
 }
 
-func (a Diablo) getLessConcurredCornerAroundSeal(d data.Data, sealPosition data.Position) data.Position {
+func (a Diablo) getLessConcurredCornerAroundSeal(d game.Data, sealPosition data.Position) data.Position {
 	corners := [4]data.Position{
 		{
 			X: sealPosition.X + 7,

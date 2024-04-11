@@ -1,70 +1,24 @@
 package config
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/lxn/win"
+	cp "github.com/otiai10/copy"
 	"os"
-	"strings"
 )
 
 var userProfile = os.Getenv("USERPROFILE")
 var settingsFilePath = userProfile + "\\Saved Games\\Diablo II Resurrected\\Settings.json"
 
-func AdjustGameSettings() error {
-	settingsJson, err := readGameSettings()
-	if err != nil {
-		return err
+func ReplaceGameSettings() error {
+	if _, err := os.Stat(settingsFilePath + ".bkp"); os.IsNotExist(err) {
+		err = os.Rename(settingsFilePath, settingsFilePath+".bkp")
+		// File does not exist, no need to back up
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
 	}
 
-	settingsJson["Screen Resolution (Windowed)"] = "1280x720"
-	settingsJson["Window Mode"] = 0
-
-	settingsContent, err := json.MarshalIndent(settingsJson, "", " ")
-	if err != nil {
-		return fmt.Errorf("error marshalling settings file: %w", err)
-	}
-
-	return os.WriteFile(settingsFilePath, settingsContent, 0666)
-}
-
-func AreGameSettingsAdjusted() (bool, error) {
-	settingsJson, err := readGameSettings()
-	if err != nil {
-		return false, err
-	}
-
-	windowMode, ok := settingsJson["Window Mode"]
-	if !ok || int(windowMode.(float64)) != 0 {
-		return false, nil
-	}
-
-	resolution, ok := settingsJson["Screen Resolution (Windowed)"]
-	if !ok || !strings.Contains(resolution.(string), "1280x720") {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func readGameSettings() (map[string]interface{}, error) {
-	_, err := os.Stat(settingsFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("settings file not found: %w", err)
-	}
-
-	settingsContent, err := os.ReadFile(settingsFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("error reading settings file: %w", err)
-	}
-
-	var settingsJson map[string]interface{}
-	err = json.Unmarshal(settingsContent, &settingsJson)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling settings file: %w", err)
-	}
-
-	return settingsJson, nil
+	return cp.Copy("config/Settings.json", settingsFilePath)
 }
 
 func GetCurrentDisplayScale() float64 {

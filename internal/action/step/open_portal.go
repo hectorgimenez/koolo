@@ -5,7 +5,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
@@ -21,7 +20,7 @@ func OpenPortal(tpKB string) *OpenPortalStep {
 	}
 }
 
-func (s *OpenPortalStep) Status(d data.Data, _ container.Container) Status {
+func (s *OpenPortalStep) Status(d game.Data, _ container.Container) Status {
 	if s.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -39,7 +38,7 @@ func (s *OpenPortalStep) Status(d data.Data, _ container.Container) Status {
 	return StatusInProgress
 }
 
-func (s *OpenPortalStep) Run(_ data.Data, container container.Container) error {
+func (s *OpenPortalStep) Run(_ game.Data, container container.Container) error {
 	// Give some time to portal to popup before retrying...
 	if time.Since(s.LastRun()) < time.Second*2 {
 		return nil

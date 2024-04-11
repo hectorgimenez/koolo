@@ -1,13 +1,13 @@
 package action
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -15,7 +15,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 	var clearedRooms []data.Room
 	openedDoors := make(map[object.Name]data.Position)
 
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		var currentRoom data.Room
 		for _, r := range d.Rooms {
 			if r.IsInside(d.PlayerUnit.Position) {
@@ -29,18 +29,18 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		if isLevelingChar {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && b.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && b.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return b.InRunReturnTownRoutine()
 			}
 		}
 
 		// Check if there is a door blocking our path
-		if !helper.CanTeleport(d) {
+		if !d.CanTeleport() {
 			for _, o := range d.Objects {
 				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
 					if o.Selectable {
 						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
-						return []Action{b.InteractObject(o.Name, func(d data.Data) bool {
+						return []Action{b.InteractObject(o.Name, func(d game.Data) bool {
 							for _, obj := range d.Objects {
 								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
 									openedDoors[o.Name] = o.Position
@@ -73,7 +73,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			path, _, mPathFound := b.PathFinder.GetPath(d, targetMonster.Position)
 			if mPathFound {
 				doorIsBlocking := false
-				if !helper.CanTeleport(d) {
+				if !d.CanTeleport() {
 					for _, o := range d.Objects {
 						if o.IsDoor() && o.Selectable && path.Intersects(d, o.Position, 4) {
 							b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
@@ -83,7 +83,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				}
 
 				if !doorIsBlocking {
-					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+					return []Action{b.ch.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 						return targetMonster.UnitID, true
 					}, nil)}
 				} else {
@@ -113,7 +113,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				}
 			}
 
-			return []Action{NewStepChain(func(d data.Data) []step.Step {
+			return []Action{NewStepChain(func(d game.Data) []step.Step {
 				_, distance, found := b.PathFinder.GetPath(d, closestRoom.GetCenter())
 				// We don't need to be very precise, usually chests are not close to the map border tiles
 				if !found && d.PlayerUnit.Area != area.LowerKurast {
@@ -126,7 +126,6 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				}
 
 				return []step.Step{step.MoveTo(
-					b.CharacterCfg,
 					closestRoom.GetCenter(),
 					step.ClosestWalkable(),
 					step.WithTimeout(time.Second),
@@ -141,7 +140,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			for _, o := range d.Objects {
 				if o.IsChest() && o.Selectable && currentRoom.IsInside(o.Position) {
 					chest := o
-					return []Action{b.InteractObject(chest.Name, func(d data.Data) bool {
+					return []Action{b.InteractObject(chest.Name, func(d game.Data) bool {
 						for _, obj := range d.Objects {
 							if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
 								return false

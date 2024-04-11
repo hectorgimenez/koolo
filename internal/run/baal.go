@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -65,7 +66,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	actions = append(actions, s.builder.MoveToCoords(baalThronePosition))
 
 	lastWave := false
-	actions = append(actions, action.NewChain(func(d data.Data) []action.Action {
+	actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
 		if !lastWave {
 			if _, found := d.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
 				lastWave = true
@@ -98,7 +99,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		actions = append(actions,
 			s.builder.Wait(time.Second*10),
 			s.builder.Buff(),
-			s.builder.InteractObject(object.BaalsPortal, func(d data.Data) bool {
+			s.builder.InteractObject(object.BaalsPortal, func(d game.Data) bool {
 				return d.PlayerUnit.Area == area.TheWorldstoneChamber
 			}),
 			s.char.KillBaal(),

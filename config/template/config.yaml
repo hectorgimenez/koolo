@@ -1,10 +1,10 @@
 maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arrived that point
 
-# Multiclient settings, this is only required if you want to run multiple clients at the same time with different accounts
-# you can leave it empty for single player.
-username: '' # Battle.net username (required for multiclient only)
-password: '' # Battle.net pwd (required for multiclient only)
-realm: 'eu.actual.battle.net' # (required for multiclient only)
+# Required to avoid the 30 days not logged issue, since the game requires internet connection even to play offline
+username: '' # Battle.net username
+password: '' # Battle.net pwd
+realm: 'eu.actual.battle.net' # Battle.net realm (kr.actual.battle.net, us.actual.battle.net, eu.actual.battle.net)
+characterName: '' # If left empty, koolo will use first listed character, if name is wrong, it will fail to create the game
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75
@@ -74,7 +74,7 @@ game:
   randomizeRuns: true # Will randomize the order of the runs each game
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
   # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak,
-  #                 tristram, lower_kurast, stony_tomb, pit, arachnid_lair, tal_rasha_tombs, baal, diablo, cows, terror_zone
+  #                 tristram, lower_kurast, lower_kurast_chest, stony_tomb, pit, arachnid_lair, tal_rasha_tombs, baal, diablo, cows, terror_zone
   # leveling: there is a "leveling" run, in combination with "sorceress or paladin" class will be able to start leveling character from level 1 (don't expect too much)
   # terror_zone: will detect current TZ and clear it
   runs: [ stony_tomb, pit, arachnid_lair ]
@@ -94,6 +94,11 @@ game:
     dollQuit: false
     soulQuit: false
     killBaal: false
+  eldritch:
+    killShenk: true
+  leveling:
+    ensurePointsAllocation: true # Bot will allocate skill and stat points by itself or perform stat/skill reset. Set to false if you do NOT want it
+    ensureKeyBinding: true       # Bot will set key bindings by itself. Set to false if you want to do it manually
   terrorZone:
     focusOnElitePacks: false # Will clear only Elite monsters
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
@@ -177,7 +182,7 @@ companion:
   enabled: false
   leader: true
   leaderName: ''
-  remote: discord # Only discord supported, telegram doesn't allow interacting between bots
+  attack: true # If set to true, character will try to attack the same target as the leader
   gameNameTemplate: game- # Template for the game name, for example "game-" will lead to "game-1", "game-2", etc.
   gamePassword: xxx
 

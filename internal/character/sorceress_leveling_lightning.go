@@ -15,19 +15,19 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-type SorceressLeveling struct {
+type SorceressLevelingLightning struct {
 	BaseCharacter
 }
 
-func (s SorceressLeveling) ShouldResetSkills(d game.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.FireBall].Level > 10 {
+func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
+	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.Nova].Level > 10 {
 		return true
 	}
 
 	return false
 }
 
-func (s SorceressLeveling) GetKeyBindings(d game.Data) map[skill.ID]string {
+func (s SorceressLevelingLightning) GetKeyBindings(d game.Data) map[skill.ID]string {
 	skillBindings := map[skill.ID]string{
 		skill.FrozenArmor:      s.container.CharacterCfg.Bindings.Sorceress.FrozenArmor,
 		skill.StaticField:      s.container.CharacterCfg.Bindings.Sorceress.StaticField,
@@ -38,8 +38,10 @@ func (s SorceressLeveling) GetKeyBindings(d game.Data) map[skill.ID]string {
 	if d.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
 		skillBindings[skill.Blizzard] = s.container.CharacterCfg.Bindings.Sorceress.Blizzard
 		skillBindings[skill.GlacialSpike] = ""
-	} else if d.PlayerUnit.Skills[skill.FireBall].Level > 0 {
-		skillBindings[skill.FireBall] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
+	} else if d.PlayerUnit.Skills[skill.Nova].Level > 1 {
+		skillBindings[skill.Nova] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
+	} else if d.PlayerUnit.Skills[skill.ChargedBolt].Level > 0 {
+		skillBindings[skill.ChargedBolt] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
 	} else if d.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
 		skillBindings[skill.FireBolt] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
 	}
@@ -47,7 +49,7 @@ func (s SorceressLeveling) GetKeyBindings(d game.Data) map[skill.ID]string {
 	return skillBindings
 }
 
-func (s SorceressLeveling) StatPoints(d game.Data) map[stat.ID]int {
+func (s SorceressLevelingLightning) StatPoints(d game.Data) map[stat.ID]int {
 	if d.PlayerUnit.Stats[stat.Level] < 9 {
 		return map[stat.ID]int{
 			stat.Vitality: 9999,
@@ -69,42 +71,41 @@ func (s SorceressLeveling) StatPoints(d game.Data) map[stat.ID]int {
 	}
 }
 
-func (s SorceressLeveling) SkillPoints(d game.Data) []skill.ID {
+func (s SorceressLevelingLightning) SkillPoints(d game.Data) []skill.ID {
 	if d.PlayerUnit.Stats[stat.Level] < 25 {
 		return []skill.ID{
-			skill.FireBolt,
+			skill.ChargedBolt,
+			skill.ChargedBolt,
+			skill.ChargedBolt,
 			skill.FrozenArmor,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.Warmth,
+			skill.ChargedBolt,
 			skill.StaticField,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
+			skill.StaticField,
+			skill.StaticField,
+			skill.StaticField,
 			skill.Telekinesis,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
+			skill.Warmth,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
 			skill.Teleport,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireBall,
-			skill.FireMastery,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
+			skill.Nova,
 		}
 	}
 
@@ -173,7 +174,7 @@ func (s SorceressLeveling) SkillPoints(d game.Data) []skill.ID {
 	}
 }
 
-func (s SorceressLeveling) EnsureStatPoints() action.Action {
+func (s SorceressLevelingLightning) EnsureStatPoints() action.Action {
 	return action.NewStepChain(func(d game.Data) []step.Step {
 		_, found := d.PlayerUnit.Stats[stat.StatPoints]
 		if !found {
@@ -184,7 +185,7 @@ func (s SorceressLeveling) EnsureStatPoints() action.Action {
 	})
 }
 
-func (s SorceressLeveling) EnsureSkillPoints() action.Action {
+func (s SorceressLevelingLightning) EnsureSkillPoints() action.Action {
 	return action.NewStepChain(func(d game.Data) []step.Step {
 		_, found := d.PlayerUnit.Stats[stat.SkillPoints]
 		if !found {
@@ -195,17 +196,16 @@ func (s SorceressLeveling) EnsureSkillPoints() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillCountess() action.Action {
+func (s SorceressLevelingLightning) KillCountess() action.Action {
 	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (s SorceressLeveling) KillAndariel() action.Action {
+func (s SorceressLevelingLightning) KillAndariel() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d game.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Andariel, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.Blizzard, m.UnitID, 1, step.Distance(25, 30)),
 					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5)),
 				}
 			}),
@@ -214,11 +214,11 @@ func (s SorceressLeveling) KillAndariel() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillSummoner() action.Action {
+func (s SorceressLevelingLightning) KillSummoner() action.Action {
 	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (s SorceressLeveling) KillDuriel() action.Action {
+func (s SorceressLevelingLightning) KillDuriel() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d game.Data) []step.Step {
@@ -232,7 +232,7 @@ func (s SorceressLeveling) KillDuriel() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillMephisto() action.Action {
+func (s SorceressLevelingLightning) KillMephisto() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		// Let's try to moat trick if Teleport is available
 		//if step.CanTeleport(d) {
@@ -265,15 +265,15 @@ func (s SorceressLeveling) KillMephisto() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillPindle(skipOnImmunities []stat.Resist) action.Action {
+func (s SorceressLevelingLightning) KillPindle(skipOnImmunities []stat.Resist) action.Action {
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (s SorceressLeveling) KillNihlathak() action.Action {
+func (s SorceressLevelingLightning) KillNihlathak() action.Action {
 	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (s SorceressLeveling) KillCouncil() action.Action {
+func (s SorceressLevelingLightning) KillCouncil() action.Action {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
@@ -298,7 +298,7 @@ func (s SorceressLeveling) KillCouncil() action.Action {
 	}, nil)
 }
 
-func (s SorceressLeveling) KillDiablo() action.Action {
+func (s SorceressLevelingLightning) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
@@ -339,7 +339,7 @@ func (s SorceressLeveling) KillDiablo() action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s SorceressLeveling) KillIzual() action.Action {
+func (s SorceressLevelingLightning) KillIzual() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d game.Data) []step.Step {
@@ -360,7 +360,7 @@ func (s SorceressLeveling) KillIzual() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillBaal() action.Action {
+func (s SorceressLevelingLightning) KillBaal() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d game.Data) []step.Step {
@@ -378,7 +378,7 @@ func (s SorceressLeveling) KillBaal() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillAncients() action.Action {
+func (s SorceressLevelingLightning) KillAncients() action.Action {
 	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
 			actions = append(actions,
@@ -399,7 +399,7 @@ func (s SorceressLeveling) KillAncients() action.Action {
 	})
 }
 
-func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
+func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
@@ -446,7 +446,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d game.Data)
 					step.PrimaryAttack(id, 3, step.Distance(25, 30)),
 				)
 			} else {
-				steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.FireBall, id, 4, step.Distance(1, 25)))
+				steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.FireBall, id, 4, step.Distance(1, 5)))
 			}
 		}
 
@@ -457,7 +457,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d game.Data)
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+func (s SorceressLevelingLightning) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
@@ -468,13 +468,13 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Ac
 	}, nil)
 }
 
-func (s SorceressLeveling) BuffSkills() map[skill.ID]string {
+func (s SorceressLevelingLightning) BuffSkills() map[skill.ID]string {
 	return map[skill.ID]string{
 		skill.FrozenArmor: s.container.CharacterCfg.Bindings.Sorceress.FrozenArmor,
 	}
 }
 
-func (s SorceressLeveling) staticFieldCasts() int {
+func (s SorceressLevelingLightning) staticFieldCasts() int {
 	switch s.container.CharacterCfg.Game.Difficulty {
 	case difficulty.Normal:
 		return 8

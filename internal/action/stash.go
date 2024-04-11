@@ -8,12 +8,14 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/itemfilter"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"log/slog"
+	"slices"
 )
 
 const (
@@ -25,7 +27,7 @@ const (
 )
 
 func (b *Builder) Stash(forceStash bool) *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		b.Logger.Debug("Checking for items to stash...")
 		if !b.isStashingRequired(d, forceStash) {
 			b.Logger.Debug("No items to stash...")
@@ -43,10 +45,10 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 
 		return append(actions,
 			b.InteractObject(object.Bank,
-				func(d data.Data) bool {
+				func(d game.Data) bool {
 					return d.OpenMenus.Stash
 				},
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					b.stashGold(d)
 					b.orderInventoryPotions(d)
 					b.stashInventory(d, forceStash)
@@ -58,10 +60,10 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 	})
 }
 
-func (b *Builder) orderInventoryPotions(d data.Data) {
+func (b *Builder) orderInventoryPotions(d game.Data) {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
-			if b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+			if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
 			}
 			screenPos := ui.GetScreenCoordsForItem(i)
@@ -72,9 +74,9 @@ func (b *Builder) orderInventoryPotions(d data.Data) {
 	}
 }
 
-func (b *Builder) isStashingRequired(d data.Data, forceStash bool) bool {
+func (b *Builder) isStashingRequired(d game.Data, forceStash bool) bool {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if b.shouldStashIt(i, forceStash) {
+		if b.shouldStashIt(i, forceStash, []data.Item{}) {
 			return true
 		}
 	}
@@ -86,7 +88,7 @@ func (b *Builder) isStashingRequired(d data.Data, forceStash bool) bool {
 	return false
 }
 
-func (b *Builder) stashGold(d data.Data) {
+func (b *Builder) stashGold(d game.Data) {
 	gold, found := d.PlayerUnit.Stats[stat.Gold]
 	if !found || gold == 0 {
 		return
@@ -113,12 +115,20 @@ func (b *Builder) stashGold(d data.Data) {
 	b.Logger.Info("All stash tabs are full of gold :D")
 }
 
-func (b *Builder) stashInventory(d data.Data, forceStash bool) {
+func (b *Builder) stashInventory(d game.Data, forceStash bool) {
 	currentTab := 1
 	b.switchTab(currentTab)
 
+	itemsInStashTabs := slices.Concat(
+		d.Items.ByLocation(item.LocationStash),
+		d.Items.ByLocation(item.LocationVendor),       // When stash is open, this returns all items in the three shared stash tabs
+		d.Items.ByLocation(item.LocationSharedStash1), // Broken, always returns nil
+		d.Items.ByLocation(item.LocationSharedStash2), // Broken, always returns nil
+		d.Items.ByLocation(item.LocationSharedStash3), // Broken, always returns nil
+	)
+
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if !b.shouldStashIt(i, forceStash) {
+		if !b.shouldStashIt(i, forceStash, itemsInStashTabs) {
 			continue
 		}
 		for currentTab < 5 {
@@ -136,7 +146,7 @@ func (b *Builder) stashInventory(d data.Data, forceStash bool) {
 	}
 }
 
-func (b *Builder) shouldStashIt(i data.Item, forceStash bool) bool {
+func (b *Builder) shouldStashIt(i data.Item, forceStash bool, stashItems []data.Item) bool {
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
 		return false
@@ -151,7 +161,65 @@ func (b *Builder) shouldStashIt(i data.Item, forceStash bool) bool {
 		return false
 	}
 
-	return forceStash || itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
+	if forceStash {
+		return true
+	}
+
+	matchedRule, found := itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
+
+	if len(stashItems) == 0 {
+		return found
+	}
+
+	if matchedRule.Properties == nil {
+		return found
+	}
+
+	exceedQuantity := b.doesExceedQuantity(i, matchedRule, stashItems)
+
+	return !exceedQuantity
+}
+
+func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []data.Item) bool {
+	if len(rule.MaxQuantity) == 0 {
+		return false
+	}
+
+	// For now, use this only for gems, runes, tokens, ubers. Add more items after testing
+	allowedTypeGroups := []string{"runes", "ubers", "tokens", "chippedgems", "flawedgems", "gems", "flawlessgems", "perfectgems"}
+	if !slices.Contains(allowedTypeGroups, i.Type()) {
+		b.Logger.Debug(fmt.Sprintf("Skipping max quantity check for %s item", i.Name))
+		return false
+	}
+
+	maxQuantity := 0
+
+	for _, maxQuantityGroup := range rule.MaxQuantity {
+		for _, maxQComparable := range maxQuantityGroup.Comparable {
+			if maxQComparable.Keyword == "maxquantity" && maxQComparable.ValueInt > 0 {
+				maxQuantity = maxQComparable.ValueInt
+				break
+			}
+		}
+	}
+
+	if maxQuantity == 0 {
+		b.Logger.Debug(fmt.Sprintf("Max quantity for %s item is 0, skipping further logic", i.Name))
+		return false
+	}
+
+	matchedItemsInStash := 0
+
+	for _, stashItem := range stashItems {
+		_, found := itemfilter.Evaluate(stashItem, []nip.Rule{rule})
+		if found {
+			matchedItemsInStash += 1
+		}
+	}
+
+	b.Logger.Debug(fmt.Sprintf("For item %s found %d max quantity from pickit rule, number of items in the stash tabs %d", i.Name, maxQuantity, matchedItemsInStash))
+
+	return matchedItemsInStash >= maxQuantity
 }
 
 func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
@@ -172,7 +240,7 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 
 	// Don't log items that we already have in inventory during first run
 	if !forceStash {
-		b.EventChan <- event.ItemStashed(event.WithScreenshot(fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i)
+		event.Send(event.ItemStashed(event.WithScreenshot(b.Supervisor, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i))
 	}
 	return true
 }

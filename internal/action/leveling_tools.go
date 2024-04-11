@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"log/slog"
 	"slices"
 	"time"
@@ -34,16 +35,14 @@ var uiSkillPagePosition = [3]data.Position{
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
 var uiSkillColumnPosition = [3]int{920, 1010, 1095}
 
-var previousTotalSkillNumber = 0
-
 func (b *Builder) EnsureStatPoints() *StepChainAction {
-	return NewStepChain(func(d data.Data) []step.Step {
+	return NewStepChain(func(d game.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
 		_, unusedStatPoints := d.PlayerUnit.Stats[stat.StatPoints]
 		if !isLevelingChar || !unusedStatPoints {
 			if d.OpenMenus.Character {
 				return []step.Step{
-					step.SyncStep(func(_ data.Data) error {
+					step.SyncStep(func(_ game.Data) error {
 						b.HID.PressKey("esc")
 						return nil
 					}),
@@ -61,8 +60,8 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 
 			if !d.OpenMenus.Character {
 				return []step.Step{
-					step.SyncStep(func(_ data.Data) error {
-						b.HID.PressKey(b.CharacterCfg.Bindings.OpenCharacterScreen)
+					step.SyncStep(func(_ game.Data) error {
+						b.HID.PressKey(d.CharacterCfg.Bindings.OpenCharacterScreen)
 						return nil
 					}),
 				}
@@ -70,7 +69,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 
 			statBtnPosition := uiStatButtonPosition[st]
 			return []step.Step{
-				step.SyncStep(func(_ data.Data) error {
+				step.SyncStep(func(_ game.Data) error {
 					helper.Sleep(100)
 					b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
 					helper.Sleep(500)
@@ -85,13 +84,13 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 
 func (b *Builder) EnsureSkillPoints() *StepChainAction {
 	assignAttempts := 0
-	return NewStepChain(func(d data.Data) []step.Step {
+	return NewStepChain(func(d game.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
 		availablePoints, unusedSkillPoints := d.PlayerUnit.Stats[stat.SkillPoints]
 		if !isLevelingChar || !unusedSkillPoints || assignAttempts >= availablePoints {
 			if d.OpenMenus.SkillTree {
 				return []step.Step{
-					step.SyncStep(func(_ data.Data) error {
+					step.SyncStep(func(_ game.Data) error {
 						b.HID.PressKey("esc")
 						return nil
 					}),
@@ -120,15 +119,15 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 
 				if !d.OpenMenus.SkillTree {
 					return []step.Step{
-						step.SyncStep(func(_ data.Data) error {
-							b.HID.PressKey(b.CharacterCfg.Bindings.OpenSkillTree)
+						step.SyncStep(func(_ game.Data) error {
+							b.HID.PressKey(d.CharacterCfg.Bindings.OpenSkillTree)
 							return nil
 						}),
 					}
 				}
 
 				return []step.Step{
-					step.SyncStep(func(_ data.Data) error {
+					step.SyncStep(func(_ game.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
 						b.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
@@ -146,19 +145,19 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 }
 
 func (b *Builder) UpdateQuestLog() *StepChainAction {
-	return NewStepChain(func(d data.Data) []step.Step {
+	return NewStepChain(func(d game.Data) []step.Step {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
 			return nil
 		}
 
 		return []step.Step{
-			step.SyncStep(func(_ data.Data) error {
-				b.HID.PressKey(b.CharacterCfg.Bindings.OpenQuestLog)
+			step.SyncStep(func(_ game.Data) error {
+				b.HID.PressKey(d.CharacterCfg.Bindings.OpenQuestLog)
 				return nil
 			}),
 			step.Wait(time.Second),
-			step.SyncStep(func(_ data.Data) error {
-				b.HID.PressKey(b.CharacterCfg.Bindings.OpenQuestLog)
+			step.SyncStep(func(_ game.Data) error {
+				b.HID.PressKey(d.CharacterCfg.Bindings.OpenQuestLog)
 				return nil
 			}),
 		}
@@ -166,18 +165,20 @@ func (b *Builder) UpdateQuestLog() *StepChainAction {
 }
 
 func (b *Builder) EnsureSkillBindings() *StepChainAction {
-	return NewStepChain(func(d data.Data) []step.Step {
+	var previousTotalSkillNumber = 0
+
+	return NewStepChain(func(d game.Data) []step.Step {
 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
 			return nil
 		}
 		char, _ := b.ch.(LevelingCharacter)
 		skillBindings := char.GetKeyBindings(d)
-		skillBindings[skill.TomeOfTownPortal] = b.CharacterCfg.Bindings.TP
+		skillBindings[skill.TomeOfTownPortal] = d.CharacterCfg.Bindings.TP
 
 		if len(skillBindings) > 0 && len(d.PlayerUnit.Skills) != previousTotalSkillNumber {
 			return []step.Step{
 				// Right click skill bindings
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					b.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 					helper.Sleep(300)
 					b.HID.MovePointer(10, 10)
@@ -204,7 +205,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 				}),
 
 				// Set main left click skill
-				step.SyncStep(func(_ data.Data) error {
+				step.SyncStep(func(_ game.Data) error {
 					for sk, binding := range skillBindings {
 						if binding != "" {
 							continue
@@ -230,7 +231,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 	}, RepeatUntilNoSteps())
 }
 
-func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillID skill.ID) (data.Position, bool) {
+func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillID skill.ID) (data.Position, bool) {
 	var scrolls = []skill.ID{
 		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
 	}
@@ -282,6 +283,15 @@ func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillI
 	slices.Sort(totalRows)
 	totalRows = slices.Compact(totalRows)
 
+	// If we don't have any skill of a specific tree, the entire row gets one line down
+	previousRow := 0
+	for _, currentRow := range totalRows {
+		if currentRow != 0 && currentRow != previousRow+1 {
+			row--
+		}
+		previousRow = currentRow
+	}
+
 	// Scrolls and charges are not in the same list
 	if slices.Contains(scrolls, skillID) {
 		column = skillsWithCharges
@@ -303,11 +313,11 @@ func (b *Builder) calculateSkillPositionInUI(d data.Data, mainSkill bool, skillI
 }
 
 func (b *Builder) HireMerc() *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar && b.CharacterCfg.Character.UseMerc {
+		if isLevelingChar && d.CharacterCfg.Character.UseMerc {
 			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
-			if b.CharacterCfg.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
+			if d.CharacterCfg.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
 				b.Logger.Info("Hiring merc...")
 				// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
 				actions = append(actions,
@@ -315,7 +325,7 @@ func (b *Builder) HireMerc() *Chain {
 						town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(),
 						step.KeySequence("home", "down", "enter"),
 						step.Wait(time.Second*2),
-						step.SyncStep(func(d data.Data) error {
+						step.SyncStep(func(d game.Data) error {
 							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
 							helper.Sleep(300)
 							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
@@ -332,7 +342,7 @@ func (b *Builder) HireMerc() *Chain {
 }
 
 func (b *Builder) ResetStats() *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		ch, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar && ch.ShouldResetSkills(d) {
 			currentArea := d.PlayerUnit.Area
@@ -353,4 +363,26 @@ func (b *Builder) ResetStats() *Chain {
 
 		return
 	})
+}
+
+func (b *Builder) WaitForAllMembersWhenLeveling() *Chain {
+	return NewChain(func(d game.Data) []Action {
+		_, isLeveling := b.ch.(LevelingCharacter)
+		if d.CharacterCfg.Companion.Enabled && d.CharacterCfg.Companion.Leader && !d.PlayerUnit.Area.IsTown() && isLeveling {
+			allMembersAreaCloseToMe := true
+			for _, member := range d.Roster {
+				if member.Name != d.PlayerUnit.Name && pather.DistanceFromMe(d, member.Position) > 20 {
+					allMembersAreaCloseToMe = false
+				}
+			}
+
+			if allMembersAreaCloseToMe {
+				return nil
+			}
+
+			return []Action{b.ClearAreaAroundPlayer(5)}
+		}
+
+		return nil
+	}, RepeatUntilNoSteps())
 }

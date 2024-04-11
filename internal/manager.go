@@ -12,20 +12,22 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/lxn/win"
 	"log/slog"
+	"time"
 )
 
 type SupervisorManager struct {
 	logger        *slog.Logger
 	supervisors   map[string]Supervisor
-	eventHandlers []event.Handler
+	eventListener *event.Listener
 }
 
-func NewSupervisorManager(logger *slog.Logger, additionalEventHandlers []event.Handler) *SupervisorManager {
+func NewSupervisorManager(logger *slog.Logger, eventListener *event.Listener) *SupervisorManager {
 	return &SupervisorManager{
 		logger:        logger,
 		supervisors:   make(map[string]Supervisor),
-		eventHandlers: additionalEventHandlers,
+		eventListener: eventListener,
 	}
 }
 
@@ -40,32 +42,47 @@ func (mng *SupervisorManager) AvailableSupervisors() []string {
 	return availableSupervisors
 }
 
-func (mng *SupervisorManager) Start(characterName string) error {
+func (mng *SupervisorManager) Start(supervisorName string) error {
 	// Reload config to get the latest local changes before starting the supervisor
 	err := config.Load()
 	if err != nil {
 		return fmt.Errorf("error loading config: %w", err)
 	}
 
-	supervisor, err := mng.buildSupervisor(characterName, mng.logger)
+	supervisor, err := mng.buildSupervisor(supervisorName, mng.logger)
 	if err != nil {
 		return err
 	}
-	mng.supervisors[supervisor.Name()] = supervisor
+	mng.supervisors[supervisorName] = supervisor
+
+	if config.Koolo.GameWindowArrangement {
+		go func() {
+			// When the game starts, its doing some weird stuff like repositioning and resizing window automatically
+			// we need to wait until this is done in order to reposition, or it will be overridden
+			time.Sleep(time.Second * 5)
+			mng.rearrangeWindows()
+		}()
+	}
 
 	return supervisor.Start()
 }
 
-func (mng *SupervisorManager) Stop(characterName string) {
-	s, found := mng.supervisors[characterName]
-	if found {
+func (mng *SupervisorManager) StopAll() {
+	for _, s := range mng.supervisors {
 		s.Stop()
-		delete(mng.supervisors, characterName)
 	}
 }
 
-func (mng *SupervisorManager) TogglePause(characterName string) {
-	s, found := mng.supervisors[characterName]
+func (mng *SupervisorManager) Stop(supervisor string) {
+	s, found := mng.supervisors[supervisor]
+	if found {
+		s.Stop()
+		delete(mng.supervisors, supervisor)
+	}
+}
+
+func (mng *SupervisorManager) TogglePause(supervisor string) {
+	s, found := mng.supervisors[supervisor]
 	if found {
 		s.TogglePause()
 	}
@@ -87,12 +104,12 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		return nil, fmt.Errorf("character %s not found", supervisorName)
 	}
 
-	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.Realm)
+	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.Realm, config.Koolo.UseCustomSettings)
 	if err != nil {
 		return nil, fmt.Errorf("error starting game: %w", err)
 	}
 
-	gr, err := game.NewGameReader(supervisorName, pid, hwnd)
+	gr, err := game.NewGameReader(cfg, supervisorName, pid, hwnd)
 	if err != nil {
 		return nil, fmt.Errorf("error creating game reader: %w", err)
 	}
@@ -102,27 +119,21 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		return nil, fmt.Errorf("error creating game injector: %w", err)
 	}
 
-	eventChannel := make(chan event.Event)
-	eventListener := event.NewListener(logger, supervisorName, eventChannel)
-	for _, handler := range mng.eventHandlers {
-		eventListener.Register(handler)
-	}
-
 	hidM := game.NewHID(gr, gi)
-	bm := health.NewBeltManager(logger, hidM, eventChannel, cfg)
+	bm := health.NewBeltManager(logger, hidM, cfg, supervisorName)
 	gm := game.NewGameManager(gr, hidM, supervisorName)
 	hm := health.NewHealthManager(logger, bm, gm, cfg)
 	pf := pather.NewPathFinder(gr, hidM, cfg)
 	c := container.Container{
-		Supervisor:   supervisorName,
-		Logger:       logger,
-		Reader:       gr,
-		HID:          hidM,
-		Injector:     gi,
-		Manager:      gm,
-		PathFinder:   pf,
-		CharacterCfg: cfg,
-		EventChan:    eventChannel,
+		Supervisor:    supervisorName,
+		Logger:        logger,
+		Reader:        gr,
+		HID:           hidM,
+		Injector:      gi,
+		Manager:       gm,
+		PathFinder:    pf,
+		CharacterCfg:  cfg,
+		EventListener: mng.eventListener,
 	}
 	sm := town.NewShopManager(logger, bm, c)
 
@@ -132,15 +143,32 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	}
 
 	ab := action.NewBuilder(c, sm, bm, char)
-	bot := NewBot(logger, hm, ab, c, supervisorName, eventChannel)
+	bot := NewBot(logger, hm, ab, c, supervisorName)
 	runFactory := run.NewFactory(logger, ab, char, bm, c)
 
 	statsHandler := NewStatsHandler(supervisorName, logger)
-	eventListener.Register(statsHandler.Handle)
+	mng.eventListener.Register(statsHandler.Handle)
 
 	if config.Characters[supervisorName].Companion.Enabled {
-		return NewCompanionSupervisor(supervisorName, bot, runFactory, statsHandler, eventListener, c)
+		return NewCompanionSupervisor(supervisorName, bot, runFactory, statsHandler, c)
 	}
 
-	return NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, eventListener, c)
+	return NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, c)
+}
+
+func (mng *SupervisorManager) rearrangeWindows() {
+	width := win.GetSystemMetrics(0)
+
+	maxColumns := width / (1280 + 30)
+
+	var column, row int32
+	for _, sp := range mng.supervisors {
+		if column == maxColumns {
+			column = 0
+			row++
+		}
+
+		sp.SetWindowPosition(int(column*(1280+30)), int(row*(720+50)))
+		column++
+	}
 }

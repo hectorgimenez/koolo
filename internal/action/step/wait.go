@@ -2,9 +2,8 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
-
-	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
 type WaitStep struct {
@@ -20,7 +19,7 @@ func Wait(duration time.Duration) *WaitStep {
 	}
 }
 
-func (o *WaitStep) Status(_ data.Data, _ container.Container) Status {
+func (o *WaitStep) Status(_ game.Data, _ container.Container) Status {
 	if o.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -28,7 +27,7 @@ func (o *WaitStep) Status(_ data.Data, _ container.Container) Status {
 	return o.status
 }
 
-func (o *WaitStep) Run(_ data.Data, _ container.Container) error {
+func (o *WaitStep) Run(_ game.Data, _ container.Container) error {
 	if o.firstRun.IsZero() {
 		o.firstRun = time.Now()
 		o.tryTransitionStatus(StatusInProgress)

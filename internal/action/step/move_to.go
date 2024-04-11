@@ -3,11 +3,11 @@ package step
 import (
 	"errors"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -19,17 +19,15 @@ type MoveToStep struct {
 	nearestWalkable bool
 	timeout         time.Duration
 	startedAt       time.Time
-	cfg             *config.CharacterCfg
 }
 
 type MoveToStepOption func(step *MoveToStep)
 
-func MoveTo(cfg *config.CharacterCfg, destination data.Position, opts ...MoveToStepOption) *MoveToStep {
+func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
 		pathingStep: newPathingStep(),
 		destination: destination,
 		timeout:     time.Second * 30,
-		cfg:         cfg,
 	}
 
 	for _, o := range opts {
@@ -57,7 +55,7 @@ func WithTimeout(timeout time.Duration) MoveToStepOption {
 	}
 }
 
-func (m *MoveToStep) Status(d data.Data, _ container.Container) Status {
+func (m *MoveToStep) Status(d game.Data, _ container.Container) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -70,15 +68,15 @@ func (m *MoveToStep) Status(d data.Data, _ container.Container) Status {
 	return m.status
 }
 
-func (m *MoveToStep) Run(d data.Data, container container.Container) error {
+func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
-	if helper.CanTeleport(d) {
+	if d.CanTeleport() {
 		if d.PlayerUnit.RightSkill != skill.Teleport {
-			container.HID.PressKey(m.cfg.Bindings.Teleport)
+			container.HID.PressKey(d.CharacterCfg.Bindings.Teleport)
 		}
-	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && m.cfg.Bindings.Paladin.Vigor != "" {
+	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && d.CharacterCfg.Bindings.Paladin.Vigor != "" {
 		if d.PlayerUnit.RightSkill != skill.Vigor {
-			container.HID.PressKey(m.cfg.Bindings.Paladin.Vigor)
+			container.HID.PressKey(d.CharacterCfg.Bindings.Paladin.Vigor)
 		}
 	}
 
@@ -95,11 +93,11 @@ func (m *MoveToStep) Run(d data.Data, container container.Container) error {
 
 	// Add some delay between clicks to let the character move to destination
 	walkDuration := helper.RandomDurationMs(600, 1200)
-	if !helper.CanTeleport(d) && time.Since(m.lastRun) < walkDuration {
+	if !d.CanTeleport() && time.Since(m.lastRun) < walkDuration {
 		return nil
 	}
 
-	if helper.CanTeleport(d) && time.Since(m.lastRun) < m.cfg.Runtime.CastDuration {
+	if d.CanTeleport() && time.Since(m.lastRun) < d.CharacterCfg.Runtime.CastDuration {
 		return nil
 	}
 
@@ -139,7 +137,7 @@ func (m *MoveToStep) Run(d data.Data, container container.Container) error {
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	container.PathFinder.MoveThroughPath(m.path, calculateMaxDistance(d, walkDuration), helper.CanTeleport(d))
+	container.PathFinder.MoveThroughPath(m.path, calculateMaxDistance(d, walkDuration), d.CanTeleport())
 
 	return nil
 }
@@ -150,9 +148,9 @@ func (m *MoveToStep) Reset() {
 	m.startedAt = time.Time{}
 }
 
-func calculateMaxDistance(d data.Data, duration time.Duration) int {
+func calculateMaxDistance(d game.Data, duration time.Duration) int {
 	// We don't care too much if teleport is available, we can ignore corners, 90 degrees turns, etc
-	if helper.CanTeleport(d) {
+	if d.CanTeleport() {
 		return 25
 	}
 

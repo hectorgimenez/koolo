@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/lxn/win"
 	"log/slog"
 	"time"
 )
@@ -18,6 +18,7 @@ type Supervisor interface {
 	Stop()
 	TogglePause()
 	Stats() Stats
+	SetWindowPosition(x, y int)
 }
 
 type baseSupervisor struct {
@@ -25,7 +26,6 @@ type baseSupervisor struct {
 	runFactory   *run.Factory
 	name         string
 	statsHandler *StatsHandler
-	listener     *event.Listener
 	cancelFn     context.CancelFunc
 	c            container.Container
 }
@@ -35,7 +35,6 @@ func newBaseSupervisor(
 	runFactory *run.Factory,
 	name string,
 	statsHandler *StatsHandler,
-	listener *event.Listener,
 	c container.Container,
 ) (*baseSupervisor, error) {
 	return &baseSupervisor{
@@ -43,7 +42,6 @@ func newBaseSupervisor(
 		runFactory:   runFactory,
 		name:         name,
 		statsHandler: statsHandler,
-		listener:     listener,
 		c:            c,
 	}, nil
 }
@@ -58,13 +56,6 @@ func (s *baseSupervisor) Stats() Stats {
 
 func (s *baseSupervisor) TogglePause() {
 	s.bot.TogglePause()
-	if s.bot.paused {
-		s.statsHandler.SetStatus(Paused)
-		s.c.Injector.RestoreMemory()
-	} else {
-		s.statsHandler.SetStatus(InGame)
-		s.c.Injector.Load()
-	}
 }
 
 func (s *baseSupervisor) Stop() {
@@ -81,9 +72,6 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) e
 	// Prevent screen from turning off
 	winproc.SetThreadExecutionState.Call(winproc.EXECUTION_STATE_ES_DISPLAY_REQUIRED | winproc.EXECUTION_STATE_ES_CONTINUOUS)
 
-	// TODO: refactor this
-	go s.listener.Listen(ctx)
-
 	return s.c.Injector.Load()
 }
 
@@ -95,12 +83,41 @@ func (s *baseSupervisor) logGameStart(runs []run.Run) {
 	s.c.Logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
 }
 
-func (s *baseSupervisor) waitUntilCharacterSelectionScreen() {
+func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	s.c.Logger.Info("Waiting for character selection screen...")
-	for range 25 {
+
+	for s.c.Reader.GameReader.GetSelectedCharacterName() == "" {
 		s.c.HID.Click(game.LeftButton, 100, 100)
 		time.Sleep(time.Second)
 	}
 
-	s.c.Logger.Info("Creating new game...")
+	time.Sleep(time.Second) // Add an extra second to allow UI to properly render on slow computers
+
+	s.c.Logger.Info("Character selection screen found")
+
+	if s.c.CharacterCfg.CharacterName != "" {
+		s.c.Logger.Info("Selecting character...")
+		previousSelection := ""
+		for {
+			characterName := s.c.Reader.GameReader.GetSelectedCharacterName()
+			if previousSelection == characterName {
+				return fmt.Errorf("character %s not found", s.c.CharacterCfg.CharacterName)
+			}
+			if characterName == s.c.CharacterCfg.CharacterName {
+				s.c.Logger.Info("Character found")
+				return nil
+			}
+
+			s.c.HID.PressKey("down")
+			time.Sleep(time.Millisecond * 500)
+			previousSelection = characterName
+		}
+	}
+
+	return nil
+}
+
+func (s *baseSupervisor) SetWindowPosition(x, y int) {
+	uFlags := win.SWP_NOZORDER | win.SWP_NOSIZE | win.SWP_NOACTIVATE
+	win.SetWindowPos(s.c.Reader.HWND, 0, int32(x), int32(y), 0, 0, uint32(uFlags))
 }

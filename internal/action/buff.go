@@ -4,7 +4,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -15,7 +14,7 @@ import (
 
 var lastBuffedAt = map[string]time.Time{}
 
-func (b *Builder) BuffIfRequired(d data.Data) *StepChainAction {
+func (b *Builder) BuffIfRequired(d game.Data) *StepChainAction {
 	if !b.IsRebuffRequired(d) {
 		return nil
 	}
@@ -31,7 +30,7 @@ func getLastBuffedAt(supervisor string) time.Time {
 }
 
 func (b *Builder) Buff() *StepChainAction {
-	return NewStepChain(func(d data.Data) (steps []step.Step) {
+	return NewStepChain(func(d game.Data) (steps []step.Step) {
 		if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
 			return nil
 		}
@@ -53,7 +52,7 @@ func (b *Builder) Buff() *StepChainAction {
 			b.Logger.Debug("Buffing...")
 
 			steps = append(steps,
-				step.SyncStep(func(_ data.Data) error {
+				step.SyncStep(func(_ game.Data) error {
 					for _, kb := range keys {
 						helper.Sleep(200)
 						b.HID.PressKey(kb)
@@ -71,7 +70,7 @@ func (b *Builder) Buff() *StepChainAction {
 	})
 }
 
-func (b *Builder) IsRebuffRequired(d data.Data) bool {
+func (b *Builder) IsRebuffRequired(d game.Data) bool {
 	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
 	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
 		return false
@@ -100,22 +99,22 @@ func (b *Builder) IsRebuffRequired(d data.Data) bool {
 	return false
 }
 
-func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
+func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 	if b.isCTAEnabled(d) {
 		b.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
 		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 		if _, found := d.PlayerUnit.Skills[skill.BattleCommand]; !found {
-			steps = append(steps, step.SwapToCTA(b.CharacterCfg.Bindings.SwapWeapon))
+			steps = append(steps, step.SwapToCTA(d.CharacterCfg.Bindings.SwapWeapon))
 		}
 
 		steps = append(steps,
-			step.SyncStep(func(d data.Data) error {
-				b.HID.PressKey(b.CharacterCfg.Bindings.CTABattleCommand)
+			step.SyncStep(func(d game.Data) error {
+				b.HID.PressKey(d.CharacterCfg.Bindings.CTABattleCommand)
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(300)
-				b.HID.PressKey(b.CharacterCfg.Bindings.CTABattleOrders)
+				b.HID.PressKey(d.CharacterCfg.Bindings.CTABattleOrders)
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(100)
@@ -123,15 +122,15 @@ func (b *Builder) buffCTA(d data.Data) (steps []step.Step) {
 				return nil
 			}),
 			step.Wait(time.Millisecond*500),
-			step.SwapToMainWeapon(b.CharacterCfg.Bindings.SwapWeapon),
+			step.SwapToMainWeapon(d.CharacterCfg.Bindings.SwapWeapon),
 		)
 	}
 
 	return
 }
 
-func (b *Builder) isCTAEnabled(d data.Data) bool {
-	if b.CharacterCfg.Bindings.CTABattleCommand == "" || b.CharacterCfg.Bindings.CTABattleOrders == "" {
+func (b *Builder) isCTAEnabled(d game.Data) bool {
+	if d.CharacterCfg.Bindings.CTABattleCommand == "" || d.CharacterCfg.Bindings.CTABattleOrders == "" {
 		return false
 	}
 

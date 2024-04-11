@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -39,6 +40,11 @@ func NewStatsHandler(name string, logger *slog.Logger) *StatsHandler {
 }
 
 func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
+	// Only handle events from the supervisor
+	if !strings.EqualFold(e.Supervisor(), h.name) {
+		return nil
+	}
+
 	switch evt := e.(type) {
 	case event.GameCreatedEvent:
 		h.stats.Games = append(h.stats.Games, GameStats{
@@ -61,6 +67,12 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 			Name:      evt.RunName,
 			StartedAt: evt.OccurredAt(),
 		})
+	case event.GamePausedEvent:
+		if evt.Paused {
+			h.stats.SupervisorStatus = Paused
+		} else {
+			h.stats.SupervisorStatus = InGame
+		}
 	case event.RunFinishedEvent:
 		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].FinishedAt = evt.OccurredAt()
 		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Reason = evt.Reason
@@ -71,10 +83,6 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 	}
 
 	return nil
-}
-
-func (h *StatsHandler) SetStatus(status SupervisorStatus) {
-	h.stats.SupervisorStatus = status
 }
 
 func (h *StatsHandler) updateGameStatsFile() {

@@ -7,6 +7,7 @@ import (
 
 type IndexData struct {
 	ErrorMessage string
+	Version      string
 	Status       map[string]koolo.Stats
 }
 

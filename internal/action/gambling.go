@@ -16,8 +16,8 @@ import (
 )
 
 func (b *Builder) Gamble() *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
-		if b.CharacterCfg.Gambling.Enabled && d.PlayerUnit.Stats[stat.StashGold] >= 2500000 {
+	return NewChain(func(d game.Data) (actions []Action) {
+		if d.CharacterCfg.Gambling.Enabled && d.PlayerUnit.Stats[stat.StashGold] >= 2500000 {
 			b.Logger.Info("Time to gamble! Visiting vendor...")
 
 			openShopStep := step.KeySequence("home", "down", "down", "enter")
@@ -53,10 +53,10 @@ func (b *Builder) gambleItems() *StepChainAction {
 	var itemBought data.Item
 	currentIdx := 0
 	lastStep := false
-	return NewStepChain(func(d data.Data) []step.Step {
+	return NewStepChain(func(d game.Data) []step.Step {
 		if lastStep {
 			if d.OpenMenus.Inventory {
-				return []step.Step{step.SyncStep(func(d data.Data) error {
+				return []step.Step{step.SyncStep(func(d game.Data) error {
 					b.HID.PressKey("esc")
 					return nil
 				})}
@@ -78,12 +78,12 @@ func (b *Builder) gambleItems() *StepChainAction {
 				}
 			}
 
-			if itemfilter.Evaluate(itemBought, b.CharacterCfg.Runtime.Rules) {
+			if _, found := itemfilter.Evaluate(itemBought, d.CharacterCfg.Runtime.Rules); found {
 				lastStep = true
 				return []step.Step{step.Wait(time.Millisecond * 200)}
 			} else {
 				// Filter not pass, selling the item
-				return []step.Step{step.SyncStep(func(d data.Data) error {
+				return []step.Step{step.SyncStep(func(d game.Data) error {
 					b.sm.SellItem(itemBought)
 					itemBought = data.Item{}
 					return nil
@@ -96,9 +96,9 @@ func (b *Builder) gambleItems() *StepChainAction {
 			return []step.Step{step.Wait(time.Millisecond * 200)}
 		}
 
-		for idx, itmName := range b.CharacterCfg.Gambling.Items {
+		for idx, itmName := range d.CharacterCfg.Gambling.Items {
 			// Let's try to get one of each every time
-			if currentIdx == len(b.CharacterCfg.Gambling.Items) {
+			if currentIdx == len(d.CharacterCfg.Gambling.Items) {
 				currentIdx = 0
 			}
 
@@ -110,7 +110,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 			if !found {
 				b.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
 
-				return []step.Step{step.SyncStep(func(d data.Data) error {
+				return []step.Step{step.SyncStep(func(d game.Data) error {
 					b.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
 					return nil
 				}),
@@ -118,7 +118,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				}
 			}
 
-			return []step.Step{step.SyncStep(func(d data.Data) error {
+			return []step.Step{step.SyncStep(func(d game.Data) error {
 				b.sm.BuyItem(itm, 1)
 				itemBought = itm
 				currentIdx++

@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Summoner struct {
@@ -18,7 +19,7 @@ func (s Summoner) Name() string {
 func (s Summoner) BuildActions() (actions []action.Action) {
 	return []action.Action{
 		s.builder.WayPoint(area.ArcaneSanctuary), // Moving to starting point (Arcane Sanctuary)
-		s.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		s.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			m, found := d.NPCs.FindOne(npc.Summoner)
 
 			return m.Positions[0], found

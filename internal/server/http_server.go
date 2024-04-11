@@ -27,7 +27,6 @@ var (
 	configTpl       = template.Must(template.ParseFS(templates, "templates/config.html"))
 	indexTpl        = template.Must(template.ParseFS(templates, "templates/index.html"))
 	charSettingsTpl = template.Must(template.ParseFS(templates, "templates/character_settings.html"))
-	autoSettingsTpl = template.Must(template.ParseFS(templates, "templates/auto_settings.html"))
 )
 
 func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
@@ -40,7 +39,6 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
 func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/", s.getRoot)
 	http.HandleFunc("/config", s.config)
-	http.HandleFunc("/autoSettings", s.autoSettings)
 	http.HandleFunc("/addCharacter", s.add)
 	http.HandleFunc("/editCharacter", s.edit)
 	http.HandleFunc("/start", s.startSupervisor)
@@ -63,18 +61,6 @@ func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {
 	if config.Koolo.FirstRun {
 		http.Redirect(w, r, "/config", http.StatusSeeOther)
 		return
-	}
-
-	if config.Koolo.CheckGameSettings {
-		isConfigured, err := config.AreGameSettingsAdjusted()
-		if err != nil {
-			s.logger.Error("Error checking game settings", err)
-		}
-
-		if !isConfigured {
-			http.Redirect(w, r, "/autoSettings", http.StatusSeeOther)
-			return
-		}
 	}
 
 	s.index(w)
@@ -105,7 +91,10 @@ func (s *HttpServer) index(w http.ResponseWriter) {
 		status[supervisorName] = s.manager.Status(supervisorName)
 	}
 
-	indexTpl.Execute(w, IndexData{Status: status})
+	indexTpl.Execute(w, IndexData{
+		Version: config.Version,
+		Status:  status,
+	})
 }
 
 func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
@@ -120,6 +109,8 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.FirstRun = false // Disable the welcome assistant
 		newConfig.D2RPath = r.Form.Get("d2rpath")
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
+		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
+		newConfig.GameWindowArrangement = r.Form.Get("game_window_arrangement") == "true"
 		// Discord
 		newConfig.Discord.Enabled = r.Form.Get("discord_enabled") == "true"
 		newConfig.Discord.Token = r.Form.Get("discord_token")
@@ -188,28 +179,4 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 
 func (s *HttpServer) edit(w http.ResponseWriter, r *http.Request) {
 
-}
-
-func (s *HttpServer) autoSettings(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		err := r.ParseForm()
-		autoSettings := r.Form.Get("auto_settings") == "true"
-		if !autoSettings {
-			config.Koolo.CheckGameSettings = false
-			config.ValidateAndSaveConfig(*config.Koolo)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		err = config.AdjustGameSettings()
-		if err != nil {
-			autoSettingsTpl.Execute(w, AutoSettings{ErrorMessage: err.Error()})
-			return
-		}
-
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	autoSettingsTpl.Execute(w, AutoSettings{ErrorMessage: ""})
 }

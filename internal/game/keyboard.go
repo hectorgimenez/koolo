@@ -1,33 +1,41 @@
 package game
 
 import (
+	"github.com/inkeliz/w32"
+	"github.com/lxn/win"
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/lxn/win"
 )
 
 const (
-	keyPressMinTime = 10 // ms
-	keyPressMaxTime = 40 // ms
+	keyPressMinTime = 40 // ms
+	keyPressMaxTime = 90 // ms
 )
 
 // PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly
 func (hid *HID) PressKey(key string) {
-	asciiChar := hid.getASCIICode(key)
-	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, asciiChar, 0)
+	keyCode := hid.getASCIICode(key)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, keyCode, hid.calculatelParam(keyCode, true))
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, asciiChar, 0)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, keyCode, hid.calculatelParam(keyCode, false))
+}
+
+func (hid *HID) PressKeyWithModifier(key string, modifier ModifierKey) {
+	hid.gi.OverrideGetKeyState(int(modifier))
+	hid.PressKey(key)
+	hid.gi.RestoreGetKeyState()
 }
 
 func (hid *HID) KeyDown(key string) {
-	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, hid.getASCIICode(key), 0)
+	keyCode := hid.getASCIICode(key)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, keyCode, hid.calculatelParam(keyCode, true))
 }
 
 func (hid *HID) KeyUp(key string) {
-	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, hid.getASCIICode(key), 0)
+	keyCode := hid.getASCIICode(key)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, keyCode, hid.calculatelParam(keyCode, false))
 }
 
 func (hid *HID) getASCIICode(key string) uintptr {
@@ -66,4 +74,23 @@ var specialChars = map[string]uintptr{
 	"ralt":      win.VK_RMENU,
 	"shift":     win.VK_LSHIFT,
 	"backspace": win.VK_BACK,
+	"lwin":      win.VK_LWIN,
+	"rwin":      win.VK_RWIN,
+	"end":       win.VK_END,
+	"-":         win.VK_OEM_MINUS,
+}
+
+func (hid *HID) calculatelParam(keyCode uintptr, down bool) uintptr {
+	scanCode := int(w32.MapVirtualKey(uint(keyCode), w32.MAPVK_VK_TO_VSC))
+	repeatCount := 1
+	extendedKeyFlag := 0
+	contextCode := 0
+	previousKeyState := 0
+	transitionState := 0
+	if !down {
+		transitionState = 1
+	}
+
+	lParam := uintptr((repeatCount & 0xFFFF) | (scanCode << 16) | (extendedKeyFlag << 24) | (contextCode << 29) | (previousKeyState << 30) | (transitionState << 31))
+	return lParam
 }

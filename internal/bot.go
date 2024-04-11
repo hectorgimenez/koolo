@@ -21,8 +21,7 @@ type Bot struct {
 	logger         *slog.Logger
 	hm             health.Manager
 	ab             *action.Builder
-	container      container.Container
-	eventChan      chan<- event.Event
+	c              container.Container
 	paused         bool
 	supervisorName string
 }
@@ -33,19 +32,39 @@ func NewBot(
 	ab *action.Builder,
 	container container.Container,
 	supervisorName string,
-	eventChan chan<- event.Event,
 ) *Bot {
 	return &Bot{
 		logger:         logger,
 		hm:             hm,
 		ab:             ab,
-		container:      container,
+		c:              container,
 		supervisorName: supervisorName,
-		eventChan:      eventChan,
 	}
 }
 
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error) {
+	companionTPRequestedAt := time.Time{}
+	companionTPRequested := false
+	companionLeftGame := false
+	if b.c.CharacterCfg.Companion.Enabled && b.c.CharacterCfg.Companion.Leader {
+		b.c.EventListener.Register(func(ctx context.Context, e event.Event) error {
+			switch evt := e.(type) {
+			case event.CompanionRequestedTPEvent:
+				if time.Since(companionTPRequestedAt) > time.Second*5 {
+					companionTPRequestedAt = time.Now()
+					companionTPRequested = true
+				}
+			case event.GameFinishedEvent:
+				cmp := config.Characters[evt.Supervisor()].Companion
+				if cmp.Enabled && !cmp.Leader {
+					companionLeftGame = true
+				}
+			}
+
+			return nil
+		})
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v", r)
@@ -56,7 +75,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	loadingScreensDetected := 0
 
 	for k, r := range runs {
-		b.eventChan <- event.RunStarted(event.Text("Starting run"), r.Name())
+		event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -83,7 +102,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					time.Sleep(time.Millisecond*10 - time.Since(loopTime))
 				}
 
-				d := b.container.Reader.GetData(false)
+				d := b.c.Reader.GetData(false)
 
 				// Skip running stuff if loading screen is present
 				if d.OpenMenus.LoadingScreen {
@@ -111,18 +130,35 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				}
 
 				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration
-				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.container) == step.StatusCompleted) {
+				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.c) == step.StatusCompleted) {
 					buffAct = b.ab.BuffIfRequired(d)
 					actions = append([]action.Action{buffAct}, actions...)
 				}
 
+				// Some hacky stuff for companion mode, ideally should be encapsulated everything together in a different place
+				if d.CharacterCfg.Companion.Enabled {
+					if companionTPRequested {
+						companionTPRequested = false
+						actions = append([]action.Action{b.ab.OpenTPIfLeader()}, actions...)
+					}
+					if companionLeftGame {
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Companion left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
+						return errors.New("companion left game")
+					}
+					_, leaderFound := d.Roster.FindByName(d.CharacterCfg.Companion.LeaderName)
+					if !leaderFound {
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, "Leader left game", b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
+						return errors.New("leader left game")
+					}
+				}
+
 				for k, act := range actions {
-					err := act.NextStep(d, b.container)
+					err := act.NextStep(d, b.c)
 					loopTime = time.Now()
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-							b.eventChan <- event.RunFinished(event.Text("Finished run"), r.Name(), event.FinishedOK)
+							event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
 							running = false
 						}
 						continue
@@ -132,7 +168,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						break
 					}
 					if errors.Is(err, action.ErrCanBeSkipped) {
-						b.eventChan <- event.RunFinished(event.WithScreenshot(err.Error(), b.container.Reader.Screenshot()), r.Name(), event.FinishedError)
+						event.Send(event.RunFinished(event.WithScreenshot(b.supervisorName, err.Error(), b.c.Reader.Screenshot()), r.Name(), event.FinishedError))
 						b.logger.Warn("error occurred on action that can be skipped, game will continue", slog.Any("error", err))
 						act.Skip()
 						break
@@ -189,9 +225,13 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 func (b *Bot) TogglePause() {
 	if b.paused {
 		b.logger.Info("Resuming...")
+		b.c.Injector.Load()
+		event.Send(event.GamePaused(event.Text(b.supervisorName, "Game resumed"), false))
 		b.paused = false
 	} else {
 		b.logger.Info("Pausing...")
+		b.c.Injector.RestoreMemory()
+		event.Send(event.GamePaused(event.Text(b.supervisorName, "Game paused"), true))
 		b.paused = true
 	}
 }

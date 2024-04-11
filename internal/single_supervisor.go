@@ -19,8 +19,8 @@ type SinglePlayerSupervisor struct {
 	*baseSupervisor
 }
 
-func NewSinglePlayerSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, listener *event.Listener, c container.Container) (*SinglePlayerSupervisor, error) {
-	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, listener, c)
+func NewSinglePlayerSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container) (*SinglePlayerSupervisor, error) {
+	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, c)
 	if err != nil {
 		return nil, err
 	}
@@ -42,12 +42,18 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 	firstRun := true
 	go func() {
-		s.waitUntilCharacterSelectionScreen()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			default:
+				if firstRun {
+					err = s.waitUntilCharacterSelectionScreen()
+					if err != nil {
+						s.c.Logger.Error(fmt.Sprintf("Error waiting for character selection screen: %s", err.Error()))
+						return
+					}
+				}
 				if !s.c.Manager.InGame() {
 					if err = s.c.Manager.NewGame(); err != nil {
 						s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
@@ -69,22 +75,22 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 					switch {
 					case errors.Is(err, health.ErrChicken):
-						s.c.EventChan <- event.GameFinished(event.WithScreenshot(err.Error(), s.c.Reader.Screenshot()), event.FinishedChicken)
+						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedChicken))
 						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 					case errors.Is(err, health.ErrMercChicken):
-						s.c.EventChan <- event.GameFinished(event.WithScreenshot(err.Error(), s.c.Reader.Screenshot()), event.FinishedMercChicken)
+						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedMercChicken))
 						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 					case errors.Is(err, health.ErrDied):
-						s.c.EventChan <- event.GameFinished(event.WithScreenshot(err.Error(), s.c.Reader.Screenshot()), event.FinishedDied)
+						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedDied))
 						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 					default:
-						s.c.EventChan <- event.GameFinished(event.WithScreenshot(err.Error(), s.c.Reader.Screenshot()), event.FinishedError)
-						s.c.Logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()))
+						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedError))
+						s.c.Logger.Warn(fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()), slog.String("supervisor", s.name))
 					}
 				}
 				if exitErr := s.c.Manager.ExitGame(); exitErr != nil {
 					errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
-					s.c.EventChan <- event.GameFinished(event.WithScreenshot(errMsg, s.c.Reader.Screenshot()), event.FinishedError)
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.c.Reader.Screenshot()), event.FinishedError))
 					s.c.Logger.Warn(errMsg)
 					return
 				}

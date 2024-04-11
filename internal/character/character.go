@@ -3,6 +3,7 @@ package character
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"strings"
 
@@ -19,6 +20,8 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 
 	if container.CharacterCfg.Game.Runs[0] == "leveling" {
 		switch strings.ToLower(container.CharacterCfg.Character.Class) {
+		case "sorceress_leveling_lightning":
+			return SorceressLevelingLightning{BaseCharacter: bc}, nil
 		case "sorceress":
 			return SorceressLeveling{BaseCharacter: bc}, nil
 		case "paladin":
@@ -45,7 +48,7 @@ type BaseCharacter struct {
 	container container.Container
 }
 
-func (bc BaseCharacter) preBattleChecks(d data.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
+func (bc BaseCharacter) preBattleChecks(d game.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
 	monster, found := d.Monsters.FindByID(id)
 	if !found {
 		return false

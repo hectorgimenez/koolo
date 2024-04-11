@@ -12,20 +12,27 @@ const (
 	FinishedChicken     FinishReason = "chicken"
 	FinishedMercChicken FinishReason = "merc chicken"
 	FinishedError       FinishReason = "error"
+
+	InteractionTypeEntrance InteractionType = "entrance"
+	InteractionTypeNPC      InteractionType = "npc"
+	InteractionTypeObject   InteractionType = "object"
 )
 
 type FinishReason string
+type InteractionType string
 
 type Event interface {
 	Message() string
 	Image() image.Image
 	OccurredAt() time.Time
+	Supervisor() string
 }
 
 type BaseEvent struct {
 	message    string
 	image      image.Image
 	occurredAt time.Time
+	supervisor string
 }
 
 func (b BaseEvent) Message() string {
@@ -40,18 +47,24 @@ func (b BaseEvent) OccurredAt() time.Time {
 	return b.occurredAt
 }
 
-func WithScreenshot(message string, img image.Image) BaseEvent {
+func (b BaseEvent) Supervisor() string {
+	return b.supervisor
+}
+
+func WithScreenshot(supervisor string, message string, img image.Image) BaseEvent {
 	return BaseEvent{
 		message:    message,
 		image:      img,
 		occurredAt: time.Now(),
+		supervisor: supervisor,
 	}
 }
 
-func Text(message string) BaseEvent {
+func Text(supervisor string, message string) BaseEvent {
 	return BaseEvent{
 		message:    message,
 		occurredAt: time.Now(),
+		supervisor: supervisor,
 	}
 }
 
@@ -130,5 +143,51 @@ func RunStarted(be BaseEvent, runName string) RunStartedEvent {
 	return RunStartedEvent{
 		BaseEvent: be,
 		RunName:   runName,
+	}
+}
+
+type CompanionLeaderAttackEvent struct {
+	BaseEvent
+	TargetUnitID data.UnitID
+}
+
+func CompanionLeaderAttack(be BaseEvent, targetUnitID data.UnitID) CompanionLeaderAttackEvent {
+	return CompanionLeaderAttackEvent{
+		BaseEvent:    be,
+		TargetUnitID: targetUnitID,
+	}
+}
+
+type CompanionRequestedTPEvent struct {
+	BaseEvent
+}
+
+func CompanionRequestedTP(be BaseEvent) CompanionRequestedTPEvent {
+	return CompanionRequestedTPEvent{BaseEvent: be}
+}
+
+type InteractedToEvent struct {
+	BaseEvent
+	ID              int
+	InteractionType InteractionType
+}
+
+func InteractedTo(be BaseEvent, id int, it InteractionType) InteractedToEvent {
+	return InteractedToEvent{
+		BaseEvent:       be,
+		ID:              id,
+		InteractionType: it,
+	}
+}
+
+type GamePausedEvent struct {
+	BaseEvent
+	Paused bool
+}
+
+func GamePaused(be BaseEvent, paused bool) GamePausedEvent {
+	return GamePausedEvent{
+		BaseEvent: be,
+		Paused:    paused,
 	}
 }

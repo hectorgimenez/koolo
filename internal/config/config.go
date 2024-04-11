@@ -20,19 +20,21 @@ import (
 var (
 	Koolo      *KooloCfg
 	Characters map[string]*CharacterCfg
+	Version    = "dev"
 )
 
 type KooloCfg struct {
-	FirstRun          bool `yaml:"firstRun"`
-	CheckGameSettings bool `yaml:"checkGameSettings"`
-	Debug             struct {
+	Debug struct {
 		Log       bool `yaml:"log"`
 		RenderMap bool `yaml:"renderMap"`
 	} `yaml:"debug"`
-	LogSaveDirectory string `yaml:"logSaveDirectory"`
-	D2LoDPath        string `yaml:"D2LoDPath"`
-	D2RPath          string `yaml:"D2RPath"`
-	Discord          struct {
+	FirstRun              bool   `yaml:"firstRun"`
+	UseCustomSettings     bool   `yaml:"useCustomSettings"`
+	GameWindowArrangement bool   `yaml:"gameWindowArrangement"`
+	LogSaveDirectory      string `yaml:"logSaveDirectory"`
+	D2LoDPath             string `yaml:"D2LoDPath"`
+	D2RPath               string `yaml:"D2RPath"`
+	Discord               struct {
 		Enabled   bool   `yaml:"enabled"`
 		ChannelID string `yaml:"channelId"`
 		Token     string `yaml:"token"`
@@ -49,6 +51,7 @@ type CharacterCfg struct {
 	Username      string `yaml:"username"`
 	Password      string `yaml:"password"`
 	Realm         string `yaml:"realm"`
+	CharacterName string `yaml:"characterName"`
 	Health        struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
@@ -130,18 +133,25 @@ type CharacterCfg struct {
 			SoulQuit bool `yaml:"soulQuit"`
 			KillBaal bool `yaml:"killBaal"`
 		} `yaml:"baal"`
+		Eldritch struct {
+			KillShenk bool `yaml:"killShenk"`
+		} `yaml:"eldritch"`
 		TerrorZone struct {
 			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
 			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
 			Areas             []area.Area   `yaml:"areas"`
 		} `yaml:"terrorZone"`
+		Leveling struct {
+			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
+			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
+		} `yaml:"leveling"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`
 		Leader           bool   `yaml:"leader"`
 		LeaderName       string `yaml:"leaderName"`
-		Remote           string `yaml:"remote"`
+		Attack           bool   `yaml:"attack"`
 		GameNameTemplate string `yaml:"gameNameTemplate"`
 		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`

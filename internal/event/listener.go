@@ -5,24 +5,26 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"log/slog"
+	"math"
+	"math/rand"
 	"os"
 	"time"
 )
 
+var events = make(chan Event)
+
 type Listener struct {
-	handlers      []Handler
-	logger        *slog.Logger
-	characterName string
-	events        <-chan Event
+	handlers         []Handler
+	deliveryHandlers map[int]Handler
+	logger           *slog.Logger
 }
 
 type Handler func(ctx context.Context, e Event) error
 
-func NewListener(logger *slog.Logger, characterName string, channel chan Event) *Listener {
+func NewListener(logger *slog.Logger) *Listener {
 	return &Listener{
-		events:        channel,
-		characterName: characterName,
-		logger:        logger,
+		logger:           logger,
+		deliveryHandlers: make(map[int]Handler),
 	}
 }
 
@@ -33,7 +35,7 @@ func (l *Listener) Register(h Handler) {
 func (l *Listener) Listen(ctx context.Context) error {
 	for {
 		select {
-		case e := <-l.events:
+		case e := <-events:
 			if _, err := os.Stat("screenshots"); os.IsNotExist(err) {
 				err = os.MkdirAll("screenshots", os.ModePerm)
 				if err != nil {
@@ -42,7 +44,7 @@ func (l *Listener) Listen(ctx context.Context) error {
 			}
 
 			if e.Image() != nil {
-				fileName := fmt.Sprintf("screenshots/error-%s-%s.jpeg", l.characterName, time.Now().Format("2006-01-02 15_04_05"))
+				fileName := fmt.Sprintf("screenshots/error-%s.jpeg", time.Now().Format("2006-01-02 15_04_05"))
 				err := helper.SaveImageJPEG(e.Image(), fileName)
 				if err != nil {
 					l.logger.Error("error saving screenshot", slog.Any("error", err))
@@ -54,8 +56,40 @@ func (l *Listener) Listen(ctx context.Context) error {
 					l.logger.Error("error running event handler", slog.Any("error", err))
 				}
 			}
+			for _, h := range l.deliveryHandlers {
+				if err := h(ctx, e); err != nil {
+					l.logger.Error("error running event delivery handler", slog.Any("error", err))
+				}
+			}
+
 		case <-ctx.Done():
 			return nil
 		}
 	}
+}
+
+func (l *Listener) WaitForEvent(ctx context.Context) Event {
+	evtChan := make(chan Event)
+	idx := rand.Intn(math.MaxInt64)
+	l.deliveryHandlers[idx] = func(ctx context.Context, e Event) error {
+		evtChan <- e
+		return nil
+	}
+	// Clean up the handler when we're done
+	defer func() {
+		delete(l.deliveryHandlers, idx)
+	}()
+
+	for {
+		select {
+		case e := <-evtChan:
+			return e
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func Send(e Event) {
+	events <- e
 }

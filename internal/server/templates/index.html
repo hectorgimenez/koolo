@@ -11,14 +11,20 @@
 </head>
 <body>
 <main class="container-fluid">
-    <div class="container-fluid">
-        <a href="/config" style="text-decoration: none;">
-            <button class="button">Settings</button>
-        </a>
-        <a href="/addCharacter" style="text-decoration: none;">
-            <button class="button">Add Character</button>
-        </a>
+    <div class="grid">
+        <div>
+            <a href="/config" style="text-decoration: none;">
+                <button class="button">Settings</button>
+            </a>
+            <a href="/addCharacter" style="text-decoration: none;">
+                <button class="button">Add Character</button>
+            </a>
+        </div>
+        <div style="text-align: right">
+            Version: {{ .Version }}
+        </div>
     </div>
+
     {{ if not .Status }}
     <div class="notification">
         <p>No characters found, start adding a new character.</p>

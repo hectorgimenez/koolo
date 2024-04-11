@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -13,33 +14,18 @@ import (
 	"github.com/hectorgimenez/koolo/internal/run"
 )
 
-type Companion interface {
-	JoinGame(gameName, password string)
-}
-
-type CompanionGameData struct {
-	GameName string
-	Password string
-}
-
 type CompanionSupervisor struct {
 	*baseSupervisor
-	companionCh chan CompanionGameData
 }
 
-func (s *CompanionSupervisor) JoinGame(gameName, password string) {
-	s.companionCh <- CompanionGameData{GameName: gameName, Password: password}
-}
-
-func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, listener *event.Listener, c container.Container) (*CompanionSupervisor, error) {
-	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, listener, c)
+func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container) (*CompanionSupervisor, error) {
+	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, c)
 	if err != nil {
 		return nil, err
 	}
 
 	return &CompanionSupervisor{
 		baseSupervisor: bs,
-		companionCh:    make(chan CompanionGameData),
 	}, nil
 }
 
@@ -56,13 +42,19 @@ func (s *CompanionSupervisor) Start() error {
 	gameCounter := 0
 	firstRun := true
 	go func() {
-		s.waitUntilCharacterSelectionScreen()
+		err = s.waitUntilCharacterSelectionScreen()
+		if err != nil {
+			s.c.Logger.Error(fmt.Sprintf("Error waiting for character selection screen: %s", err.Error()))
+			return
+		}
+
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			default:
-				if config.Characters[s.name].Companion.Leader {
+				if s.c.CharacterCfg.Companion.Leader {
+					time.Sleep(time.Second * 5)
 					gameName, err := s.c.Manager.CreateOnlineGame(gameCounter)
 					gameCounter++ // Sometimes game is created but error during join, so game name will be in use
 					if err != nil {
@@ -70,7 +62,7 @@ func (s *CompanionSupervisor) Start() error {
 						continue
 					}
 
-					s.c.EventChan <- event.GameCreated(event.Text("New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword)
+					event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
 
 					err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
 					if err != nil {
@@ -78,22 +70,20 @@ func (s *CompanionSupervisor) Start() error {
 					}
 					firstRun = false
 				} else {
-					for {
-						s.c.Logger.Debug("Waiting for new game to be created...")
-						select {
-						case gd := <-s.companionCh:
-							err := s.c.Manager.JoinOnlineGame(gd.GameName, gd.Password)
-							if err != nil {
-								s.c.Logger.Error(err.Error())
-								continue
-							}
+					s.c.Logger.Debug("Waiting for new game to be created...")
+					evt := s.c.EventListener.WaitForEvent(ctx)
+					if gcEvent, ok := evt.(event.GameCreatedEvent); ok {
+						err = s.c.Manager.JoinOnlineGame(gcEvent.Name, gcEvent.Password)
+						if err != nil {
+							s.c.Logger.Error(err.Error())
+							continue
+						}
 
-							runs := s.runFactory.BuildRuns()
-							err = s.startBot(ctx, runs, firstRun)
-							firstRun = false
-							if err != nil {
-								return
-							}
+						runs := s.runFactory.BuildRuns()
+						err = s.startBot(ctx, runs, firstRun)
+						firstRun = false
+						if err != nil {
+							return
 						}
 					}
 				}
@@ -113,8 +103,8 @@ func (s *CompanionSupervisor) startBot(ctx context.Context, runs []run.Run, firs
 			return nil
 		}
 		errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
-		s.c.EventChan <- event.GameFinished(event.WithScreenshot(errorMsg, s.c.Reader.Screenshot()), event.FinishedError)
-		s.c.Logger.Warn(errorMsg)
+		event.Send(event.GameFinished(event.WithScreenshot(s.name, errorMsg, s.c.Reader.Screenshot()), event.FinishedError))
+		s.c.Logger.Warn(errorMsg, slog.String("supervisor", s.name))
 	}
 	if exitErr := s.c.Manager.ExitGame(); exitErr != nil {
 		return fmt.Errorf("error exiting game: %s", exitErr)
