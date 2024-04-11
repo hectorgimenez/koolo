@@ -53,7 +53,7 @@ func (s Companion) BuildActions() []action.Action {
 			leaderRosterMember, _ := d.Roster.FindByName(s.CharacterCfg.Companion.LeaderName)
 
 			// Leader is NOT in the same act, so we will try to change to the corresponding act
-			if leaderRosterMember.Area.Act() != d.PlayerUnit.Area.Act() {
+			if leaderRosterMember.Area != area.None && leaderRosterMember.Area.Act() != d.PlayerUnit.Area.Act() {
 				// Follower is NOT in town
 				if !d.PlayerUnit.Area.IsTown() {
 
