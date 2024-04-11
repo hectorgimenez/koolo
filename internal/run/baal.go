@@ -34,7 +34,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		s.builder.MoveToArea(area.ThroneOfDestruction),
 		s.builder.MoveToCoords(baalThronePosition),
 		// Kill monsters inside Baal throne
-		action.NewChain(func(d data.Data) []action.Action {
+		action.NewChain(func(d game.Data) []action.Action {
 			if s.CharacterCfg.Game.Baal.DollQuit || s.CharacterCfg.Game.Baal.SoulQuit {
 				for _, enemy := range d.Monsters.Enemies() {
 					if s.CharacterCfg.Game.Baal.DollQuit && enemy.Name == npc.UndeadSoulKiller2 {
