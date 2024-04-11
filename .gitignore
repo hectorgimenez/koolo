@@ -3,4 +3,8 @@
 /stats
 /screenshots
 /logs
-/config/*.yaml
+
+/config/*
+!/config/template
+!/config/koolo.yaml.dist
+!/config/Settings.json
