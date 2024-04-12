@@ -173,12 +173,29 @@ func (s Companion) BuildActions() []action.Action {
 					return []action.Action{s.killMonsterInCompanionMode(monster)}
 				}
 
-				// If there is no monster to attack, and we are close enough to the leader just wait
+				// If there is no monster to attack, and we are close enough to the leader
 				if distanceFromMe < 4 {
+					// If we're not leveling AND we have at least some monsters nearby, let's kill them
+					_, isLevelingChar := s.char.(action.LevelingCharacter)
+					if !isLevelingChar {
+						for _, m := range d.Monsters.Enemies() {
+							if d := pather.DistanceFromMe(d, m.Position); d <= 25 {
+								return []action.Action{s.killMonsterInCompanionMode(m)}
+							}
+						}
+					}
+
 					return []action.Action{
 						s.builder.ItemPickup(false, 8),
 						s.builder.Wait(100),
 					}
+				}
+			}
+
+			// If follower is in town, let's NOT follow the leader
+			if d.PlayerUnit.Area.IsTown() {
+				return []action.Action{
+					s.builder.MoveToCoords(town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)),
 				}
 			}
 
