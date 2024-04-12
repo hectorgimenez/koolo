@@ -13,7 +13,6 @@ var ErrNoRecover = errors.New("unrecoverable error occurred, game can not contin
 var ErrCanBeSkipped = errors.New("error occurred, but this action is not critical and game can continue")
 var ErrNoMoreSteps = errors.New("action finished, no more steps remaining")
 var ErrLogAndContinue = errors.New("error occurred, but marking action as completed")
-var ErrChickenOnMonster = errors.New("chicken on monster event occurred")
 
 type Action interface {
 	NextStep(d game.Data, container container.Container) error
