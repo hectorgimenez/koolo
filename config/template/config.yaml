@@ -69,6 +69,7 @@ character:
   useMerc: true
 
 game:
+  minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
   clearTPArea: true # Will clear the TP area before clicking it
   difficulty: hell # Allowed values: normal, nightmare, hell
   randomizeRuns: true # Will randomize the order of the runs each game
