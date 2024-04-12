@@ -34,6 +34,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		s.builder.MoveToArea(area.ThroneOfDestruction),
 		s.builder.MoveToCoords(baalThronePosition),
 		// Kill monsters inside Baal throne
+		s.checkForSoulsOrDolls(),
 		s.builder.ClearAreaAroundPlayer(50),
 		s.builder.Buff(),
 	)
@@ -95,4 +96,25 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	}
 
 	return
+}
+
+func (s Baal) checkForSoulsOrDolls() *action.Chain {
+	return action.NewChain(func(d game.Data) []action.Action {
+		var npcIds []npc.ID
+
+		if s.CharacterCfg.Game.Baal.DollQuit {
+			npcIds = append(npcIds, npc.UndeadSoulKiller2)
+		}
+		if s.CharacterCfg.Game.Baal.SoulQuit {
+			npcIds = append(npcIds, npc.UndeadSoulKiller2)
+		}
+
+		if len(npcIds) != 0 {
+			return []action.Action{
+				s.builder.ChickenOnMonsters(npcIds),
+			}
+		}
+
+		return []action.Action{}
+	})
 }

@@ -31,6 +31,11 @@ func (a *Chain) NextStep(d game.Data, container container.Container) error {
 
 	if a.actions == nil {
 		a.actions = a.builder(d)
+
+		if a.abortOtherActionsIfNil && a.actions == nil {
+			return ErrNoMoreSteps
+		}
+
 		if a.actions == nil || len(a.actions) == 0 {
 			a.Skip()
 			return ErrNoMoreSteps

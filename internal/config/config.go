@@ -130,6 +130,8 @@ type CharacterCfg struct {
 		} `yaml:"nihlathak"`
 		Baal struct {
 			KillBaal bool `yaml:"killBaal"`
+			DollQuit bool `yaml:"dollQuit"`
+			SoulQuit bool `yaml:"soulQuit"`
 		} `yaml:"baal"`
 		Eldritch struct {
 			KillShenk bool `yaml:"killShenk"`

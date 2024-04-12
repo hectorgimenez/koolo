@@ -92,6 +92,8 @@ game:
     clearArea: true
   baal:
     killBaal: false
+    dollQuit: false
+    soulQuit: false
   eldritch:
     killShenk: true
   leveling:
