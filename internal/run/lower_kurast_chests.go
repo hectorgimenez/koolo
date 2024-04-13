@@ -1,13 +1,15 @@
 package run
 
 import (
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"slices"
 )
 
 var bonfireName = object.SmallFire
@@ -55,24 +57,32 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 						var subActions []action.Action
 
 						for _, chest := range chests {
-							subActions = append(subActions,
-								a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-									return chest.Position, true
-								}),
-								a.builder.InteractObject(chest.Name, func(d game.Data) bool {
-									for _, obj := range d.Objects {
-										isSameObj := obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y
 
-										if isSameObj && !obj.Selectable {
-											return true
+							_, keyFound := d.Items.Find("Key", item.LocationInventory)
+
+							if chest.InteractType == object.InteractTypeLocked && !keyFound {
+								//Skip the chest if its locked and we don't have keys in our inventory
+							} else {
+								subActions = append(subActions,
+									a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+										return chest.Position, true
+									}),
+
+									a.builder.InteractObject(chest.Name, func(d game.Data) bool {
+										for _, obj := range d.Objects {
+											isSameObj := obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y
+
+											if isSameObj && !obj.Selectable {
+												return true
+											}
 										}
-									}
 
-									return false
-								}),
-								a.builder.Wait(200),
-								a.builder.ItemPickup(false, 15),
-							)
+										return false
+									}),
+									a.builder.Wait(200),
+									a.builder.ItemPickup(false, 15),
+								)
+							}
 						}
 
 						return subActions
