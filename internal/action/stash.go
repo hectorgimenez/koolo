@@ -117,9 +117,9 @@ func (b *Builder) stashGold(d data.Data) {
 
 func (b *Builder) stashInventory(d data.Data, forceStash bool) {
 	currentTab := 1
-  if b.CharacterCfg.Character.StashToShared {
-    currentTab = 2
-  }
+	if b.CharacterCfg.Character.StashToShared {
+		currentTab = 2
+	}
 	b.switchTab(currentTab)
 
 	itemsInStashTabs := slices.Concat(
