@@ -1,8 +1,9 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -16,7 +17,7 @@ import (
 const (
 	lightningSorceressMaxAttacksLoop = 10
 	lightningSorceressMinDistance    = 8
-	lightningSorceressMaxDistance    = 15
+	lightningSorceressMaxDistance    = 10
 )
 
 type LightningSorceress struct {

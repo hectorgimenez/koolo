@@ -2,6 +2,9 @@ package koolo
 
 import (
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -13,8 +16,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
-	"log/slog"
-	"time"
 )
 
 type SupervisorManager struct {
