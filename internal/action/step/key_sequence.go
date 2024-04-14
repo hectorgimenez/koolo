@@ -2,9 +2,8 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
-
-	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
 type KeySequenceStep struct {
@@ -19,7 +18,7 @@ func KeySequence(keysToPress ...string) *KeySequenceStep {
 	}
 }
 
-func (o *KeySequenceStep) Status(_ data.Data, container container.Container) Status {
+func (o *KeySequenceStep) Status(_ game.Data, container container.Container) Status {
 	if o.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -32,7 +31,7 @@ func (o *KeySequenceStep) Status(_ data.Data, container container.Container) Sta
 	return o.status
 }
 
-func (o *KeySequenceStep) Run(_ data.Data, container container.Container) error {
+func (o *KeySequenceStep) Run(_ game.Data, container container.Container) error {
 	if time.Since(o.lastRun) < time.Millisecond*200 {
 		return nil
 	}

@@ -2,6 +2,7 @@ package pather
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"image"
 	"image/color"
 	"image/draw"
@@ -12,7 +13,6 @@ import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 // World is a two dimensional map of Tiles.
@@ -67,7 +67,7 @@ func (w World) To() *Tile {
 }
 
 // parseWorld parses a textual representation of a world into a world map.
-func parseWorld(collisionGrid [][]bool, d data.Data) World {
+func parseWorld(collisionGrid [][]bool, d game.Data) World {
 	gridSizeX := len(collisionGrid[0])
 	gridSizeY := len(collisionGrid)
 
@@ -81,7 +81,7 @@ func parseWorld(collisionGrid [][]bool, d data.Data) World {
 			kind := KindBlocker
 
 			// Hacky solution to avoid Arcane Sanctuary A* errors
-			if d.PlayerUnit.Area == area.ArcaneSanctuary && helper.CanTeleport(d) {
+			if d.PlayerUnit.Area == area.ArcaneSanctuary && d.CanTeleport() {
 				kind = KindSoftBlocker
 			}
 
@@ -103,7 +103,7 @@ func parseWorld(collisionGrid [][]bool, d data.Data) World {
 }
 
 // RenderPathImg renders a path on top of a world.
-func (w World) renderPathImg(d data.Data, path []astar.Pather, cgOffset data.Position) {
+func (w World) renderPathImg(d game.Data, path []astar.Pather, cgOffset data.Position) {
 	width := len(w)
 	if width == 0 {
 		return
@@ -182,7 +182,7 @@ func IsNarrowMap(a area.Area) bool {
 	return false
 }
 
-func DistanceFromMe(d data.Data, p data.Position) int {
+func DistanceFromMe(d game.Data, p data.Position) int {
 	return DistanceFromPoint(d.PlayerUnit.Position, p)
 }
 

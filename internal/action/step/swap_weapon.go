@@ -2,9 +2,9 @@ package step
 
 import (
 	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 )
 
@@ -29,7 +29,7 @@ func SwapToCTA(swapWeaponKB string) *SwapWeaponStep {
 	}
 }
 
-func (s *SwapWeaponStep) Status(d data.Data, _ container.Container) Status {
+func (s *SwapWeaponStep) Status(d game.Data, _ container.Container) Status {
 	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
 	if (s.wantCTA && found) || (!s.wantCTA && !found) {
 		return s.tryTransitionStatus(StatusCompleted)
@@ -38,7 +38,7 @@ func (s *SwapWeaponStep) Status(d data.Data, _ container.Container) Status {
 	return s.status
 }
 
-func (s *SwapWeaponStep) Run(d data.Data, container container.Container) error {
+func (s *SwapWeaponStep) Run(d game.Data, container container.Container) error {
 	s.tryTransitionStatus(StatusInProgress)
 
 	if time.Since(s.lastRun) < time.Second {

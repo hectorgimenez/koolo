@@ -4,12 +4,13 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func (b *Builder) OpenTPIfLeader() *StepChainAction {
 	isLeader := b.CharacterCfg.Companion.Enabled && b.CharacterCfg.Companion.Leader
 
-	return NewStepChain(func(d data.Data) []step.Step {
+	return NewStepChain(func(d game.Data) []step.Step {
 		if isLeader {
 			return []step.Step{step.OpenPortal(b.CharacterCfg.Bindings.TP)}
 		}

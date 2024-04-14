@@ -110,11 +110,12 @@ type CharacterCfg struct {
 		UseMerc       bool   `yaml:"useMerc"`
 	} `yaml:"character"`
 	Game struct {
-		ClearTPArea   bool                  `yaml:"clearTPArea"`
-		Difficulty    difficulty.Difficulty `yaml:"difficulty"`
-		RandomizeRuns bool                  `yaml:"randomizeRuns"`
-		Runs          []string              `yaml:"runs"`
-		Pindleskin    struct {
+		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
+		ClearTPArea            bool                  `yaml:"clearTPArea"`
+		Difficulty             difficulty.Difficulty `yaml:"difficulty"`
+		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
+		Runs                   []string              `yaml:"runs"`
+		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
 		Mephisto struct {
@@ -136,6 +137,9 @@ type CharacterCfg struct {
 		Baal struct {
 			KillBaal bool `yaml:"killBaal"`
 		} `yaml:"baal"`
+		Eldritch struct {
+			KillShenk bool `yaml:"killShenk"`
+		} `yaml:"eldritch"`
 		TerrorZone struct {
 			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`

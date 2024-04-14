@@ -27,7 +27,7 @@ const (
 )
 
 func (b *Builder) Stash(forceStash bool) *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		b.Logger.Debug("Checking for items to stash...")
 		if !b.isStashingRequired(d, forceStash) {
 			b.Logger.Debug("No items to stash...")
@@ -45,10 +45,10 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 
 		return append(actions,
 			b.InteractObject(object.Bank,
-				func(d data.Data) bool {
+				func(d game.Data) bool {
 					return d.OpenMenus.Stash
 				},
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					b.stashGold(d)
 					b.orderInventoryPotions(d)
 					b.stashInventory(d, forceStash)
@@ -60,10 +60,10 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 	})
 }
 
-func (b *Builder) orderInventoryPotions(d data.Data) {
+func (b *Builder) orderInventoryPotions(d game.Data) {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
-			if b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+			if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
 			}
 			screenPos := ui.GetScreenCoordsForItem(i)
@@ -74,7 +74,7 @@ func (b *Builder) orderInventoryPotions(d data.Data) {
 	}
 }
 
-func (b *Builder) isStashingRequired(d data.Data, forceStash bool) bool {
+func (b *Builder) isStashingRequired(d game.Data, forceStash bool) bool {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if b.shouldStashIt(i, forceStash, []data.Item{}) {
 			return true
@@ -88,7 +88,7 @@ func (b *Builder) isStashingRequired(d data.Data, forceStash bool) bool {
 	return false
 }
 
-func (b *Builder) stashGold(d data.Data) {
+func (b *Builder) stashGold(d game.Data) {
 	gold, found := d.PlayerUnit.Stats[stat.Gold]
 	if !found || gold == 0 {
 		return
@@ -115,7 +115,7 @@ func (b *Builder) stashGold(d data.Data) {
 	b.Logger.Info("All stash tabs are full of gold :D")
 }
 
-func (b *Builder) stashInventory(d data.Data, forceStash bool) {
+func (b *Builder) stashInventory(d game.Data, forceStash bool) {
 	currentTab := 1
 	b.switchTab(currentTab)
 

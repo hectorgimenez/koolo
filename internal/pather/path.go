@@ -3,6 +3,7 @@ package pather
 import (
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Pather struct {
@@ -17,7 +18,7 @@ func (p *Pather) Distance() int {
 }
 
 // Intersects checks if the given position intersects with the path, padding parameter is used to increase the area
-func (p *Pather) Intersects(d data.Data, position data.Position, padding int) bool {
+func (p *Pather) Intersects(d game.Data, position data.Position, padding int) bool {
 	position = data.Position{
 		X: position.X - d.AreaOrigin.X,
 		Y: position.Y - d.AreaOrigin.Y,

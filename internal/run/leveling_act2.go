@@ -18,7 +18,7 @@ import (
 
 func (a Leveling) act2() action.Action {
 	running := false
-	return action.NewChain(func(d data.Data) []action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
 		if running || d.PlayerUnit.Area != area.LutGholein {
 			return nil
 		}
@@ -69,7 +69,7 @@ func (a Leveling) act2() action.Action {
 }
 
 //func (a Leveling) radament() action.Action {
-//	return action.NewChain(func(d data.Data) (actions []action.Action) {
+//	return action.NewChain(func(d game.Data) (actions []action.Action) {
 //		actions = append(actions,
 //			a.builder.WayPoint(area.SewersLevel2Act2),
 //			a.builder.MoveToArea(area.SewersLevel3Act2),
@@ -84,14 +84,14 @@ func (a Leveling) findHoradricCube() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.HallsOfTheDeadLevel2),
 		a.builder.MoveToArea(area.HallsOfTheDeadLevel3),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Info("Horadric Cube chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.HoradricCubeChest)
 
 			return chest.Position, found
 		}),
 		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.HoradricCubeChest, func(d data.Data) bool {
+		a.builder.InteractObject(object.HoradricCubeChest, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.HoradricCubeChest)
 			return !chest.Selectable
 		}),
@@ -105,14 +105,14 @@ func (a Leveling) findStaff() []action.Action {
 		a.builder.MoveToArea(area.MaggotLairLevel1),
 		a.builder.MoveToArea(area.MaggotLairLevel2),
 		a.builder.MoveToArea(area.MaggotLairLevel3),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Info("Staff Of Kings chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.StaffOfKingsChest)
 
 			return chest.Position, found
 		}),
 		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.StaffOfKingsChest, func(d data.Data) bool {
+		a.builder.InteractObject(object.StaffOfKingsChest, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.StaffOfKingsChest)
 			return !chest.Selectable
 		}),
@@ -126,13 +126,13 @@ func (a Leveling) findAmulet() []action.Action {
 		a.builder.MoveToArea(area.ValleyOfSnakes),
 		a.builder.MoveToArea(area.ClawViperTempleLevel1),
 		a.builder.MoveToArea(area.ClawViperTempleLevel2),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Info("Altar found, moving closer")
 			chest, found := d.Objects.FindOne(object.TaintedSunAltar)
 
 			return chest.Position, found
 		}),
-		a.builder.InteractObject(object.TaintedSunAltar, func(d data.Data) bool {
+		a.builder.InteractObject(object.TaintedSunAltar, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.TaintedSunAltar)
 			return !chest.Selectable
 		}),
@@ -145,11 +145,11 @@ func (a Leveling) summoner() []action.Action {
 
 	// Try to use the portal and discover the waypoint
 	actions = append(actions,
-		a.builder.InteractObject(object.YetAnotherTome, func(d data.Data) bool {
+		a.builder.InteractObject(object.YetAnotherTome, func(d game.Data) bool {
 			_, found := d.Objects.FindOne(object.PermanentTownPortal)
 			return found
 		}),
-		a.builder.InteractObject(object.PermanentTownPortal, func(d data.Data) bool {
+		a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
 			return d.PlayerUnit.Area == area.CanyonOfTheMagi
 		}),
 		a.builder.DiscoverWaypoint(),
@@ -161,7 +161,7 @@ func (a Leveling) summoner() []action.Action {
 }
 
 func (a Leveling) prepareStaff() action.Action {
-	return action.NewChain(func(d data.Data) (actions []action.Action) {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		horadricStaff, found := d.Items.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if found {
 			a.logger.Info("Horadric Staff found!")
@@ -169,10 +169,10 @@ func (a Leveling) prepareStaff() action.Action {
 				a.logger.Info("It's in the stash, let's pickup it (not done yet)")
 
 				return []action.Action{
-					a.builder.InteractObject(object.Bank, func(d data.Data) bool {
+					a.builder.InteractObject(object.Bank, func(d game.Data) bool {
 						return d.OpenMenus.Stash
 					},
-						step.SyncStep(func(d data.Data) error {
+						step.SyncStep(func(d game.Data) error {
 							screenPos := ui.GetScreenCoordsForItem(horadricStaff)
 
 							a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
@@ -206,7 +206,7 @@ func (a Leveling) prepareStaff() action.Action {
 	})
 }
 
-func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.Action) {
+func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.Action) {
 	a.logger.Info("Starting Duriel....")
 
 	var realTomb area.Area
@@ -234,7 +234,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 		a.builder.WayPoint(area.CanyonOfTheMagi),
 		a.builder.Buff(),
 		a.builder.MoveToArea(realTomb),
-		a.builder.MoveTo(func(d data.Data) (data.Position, bool) {
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			orifice, _ := d.Objects.FindOne(object.HoradricOrifice)
 
 			return orifice.Position, true
@@ -245,10 +245,10 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	if !staffAlreadyUsed {
 		actions = append(actions,
 			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
-			a.builder.InteractObject(object.HoradricOrifice, func(d data.Data) bool {
+			a.builder.InteractObject(object.HoradricOrifice, func(d game.Data) bool {
 				return d.OpenMenus.Anvil
 			},
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
 
 					screenPos := ui.GetScreenCoordsForItem(staff)
@@ -281,9 +281,9 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 			Quantity: potsToBuy,
 			Tab:      4,
 		}),
-		action.NewStepChain(func(d data.Data) []step.Step {
+		action.NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
 					x := 0
 					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
@@ -314,10 +314,10 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 	)
 
 	return append(actions,
-		action.NewChain(func(d data.Data) []action.Action {
+		action.NewChain(func(d game.Data) []action.Action {
 			_, found := d.Objects.FindOne(object.DurielsLairPortal)
 			if found {
-				return []action.Action{a.builder.InteractObject(object.DurielsLairPortal, func(d data.Data) bool {
+				return []action.Action{a.builder.InteractObject(object.DurielsLairPortal, func(d game.Data) bool {
 					return d.PlayerUnit.Area == area.DurielsLair
 				})}
 			}
@@ -329,7 +329,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d data.Data) (actions []action.A
 			X: 22577,
 			Y: 15613,
 		}),
-		a.builder.InteractNPCWithCheck(npc.Tyrael, func(d data.Data) bool {
+		a.builder.InteractNPCWithCheck(npc.Tyrael, func(d game.Data) bool {
 			obj, found := d.Objects.FindOne(object.TownPortal)
 			if found && pather.DistanceFromMe(d, obj.Position) < 10 {
 				return true

@@ -12,9 +12,14 @@ const (
 	FinishedChicken     FinishReason = "chicken"
 	FinishedMercChicken FinishReason = "merc chicken"
 	FinishedError       FinishReason = "error"
+
+	InteractionTypeEntrance InteractionType = "entrance"
+	InteractionTypeNPC      InteractionType = "npc"
+	InteractionTypeObject   InteractionType = "object"
 )
 
 type FinishReason string
+type InteractionType string
 
 type Event interface {
 	Message() string
@@ -150,6 +155,28 @@ func CompanionLeaderAttack(be BaseEvent, targetUnitID data.UnitID) CompanionLead
 	return CompanionLeaderAttackEvent{
 		BaseEvent:    be,
 		TargetUnitID: targetUnitID,
+	}
+}
+
+type CompanionRequestedTPEvent struct {
+	BaseEvent
+}
+
+func CompanionRequestedTP(be BaseEvent) CompanionRequestedTPEvent {
+	return CompanionRequestedTPEvent{BaseEvent: be}
+}
+
+type InteractedToEvent struct {
+	BaseEvent
+	ID              int
+	InteractionType InteractionType
+}
+
+func InteractedTo(be BaseEvent, id int, it InteractionType) InteractedToEvent {
+	return InteractedToEvent{
+		BaseEvent:       be,
+		ID:              id,
+		InteractionType: it,
 	}
 }
 

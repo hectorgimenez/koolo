@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sys/windows"
 	"os/exec"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -218,6 +219,9 @@ func StartGame(username string, password string, realm string, useCustomSettings
 	for {
 		windows.EnumWindows(cb, unsafe.Pointer(&cmd.Process.Pid))
 		if foundHwnd != 0 {
+			// Small delay and read again, to be sure we are capturing the right hwnd
+			time.Sleep(time.Second)
+			windows.EnumWindows(cb, unsafe.Pointer(&cmd.Process.Pid))
 			break
 		}
 	}

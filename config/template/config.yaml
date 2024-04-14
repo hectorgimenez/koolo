@@ -69,6 +69,7 @@ character:
   useMerc: true
 
 game:
+  minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
   clearTPArea: true # Will clear the TP area before clicking it
   difficulty: hell # Allowed values: normal, nightmare, hell
   randomizeRuns: true # Will randomize the order of the runs each game
@@ -96,6 +97,8 @@ game:
     onlyElites: true # Should bot target only elites
   baal:
     killBaal: false
+  eldritch:
+    killShenk: true
   leveling:
     ensurePointsAllocation: true # Bot will allocate skill and stat points by itself or perform stat/skill reset. Set to false if you do NOT want it
     ensureKeyBinding: true       # Bot will set key bindings by itself. Set to false if you want to do it manually

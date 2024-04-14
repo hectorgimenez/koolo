@@ -29,7 +29,7 @@ func NewShopManager(logger *slog.Logger, bm health.BeltManager, container contai
 	}
 }
 
-func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
+func (sm ShopManager) BuyConsumables(d game.Data, forceRefill bool) {
 	missingHealingPots := sm.bm.GetMissingCount(d, data.HealingPotion)
 	missingManaPots := sm.bm.GetMissingCount(d, data.ManaPotion)
 
@@ -44,7 +44,7 @@ func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
 
 	pot, found = sm.findFirstMatch(d, "supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
 	// In Normal greater potions are expensive as we are low level, let's keep with cheap ones
-	if sm.container.CharacterCfg.Game.Difficulty == "normal" {
+	if d.CharacterCfg.Game.Difficulty == "normal" {
 		pot, found = sm.findFirstMatch(d, "manapotion", "lightmanapotion", "minormanapotion")
 	}
 	if found && missingManaPots > 0 {
@@ -86,7 +86,7 @@ func (sm ShopManager) BuyConsumables(d data.Data, forceRefill bool) {
 	}
 }
 
-func (sm ShopManager) findFirstMatch(d data.Data, itemNames ...string) (data.Item, bool) {
+func (sm ShopManager) findFirstMatch(d game.Data, itemNames ...string) (data.Item, bool) {
 	for _, name := range itemNames {
 		if itm, found := d.Items.Find(item.Name(name), item.LocationVendor); found {
 			return itm, true
@@ -96,7 +96,7 @@ func (sm ShopManager) findFirstMatch(d data.Data, itemNames ...string) (data.Ite
 	return data.Item{}, false
 }
 
-func (sm ShopManager) ShouldBuyTPs(d data.Data) bool {
+func (sm ShopManager) ShouldBuyTPs(d game.Data) bool {
 	portalTome, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if !found {
 		return true
@@ -107,7 +107,7 @@ func (sm ShopManager) ShouldBuyTPs(d data.Data) bool {
 	return qty.Value <= rand.Intn(5-1)+1 || !found
 }
 
-func (sm ShopManager) ShouldBuyIDs(d data.Data) bool {
+func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
 	idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
 		return true
@@ -118,7 +118,7 @@ func (sm ShopManager) ShouldBuyIDs(d data.Data) bool {
 	return qty.Value <= rand.Intn(7-3)+1 || !found
 }
 
-func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
+func (sm ShopManager) ShouldBuyKeys(d game.Data) bool {
 	keys, found := d.Items.Find(item.Key, item.LocationInventory)
 	if !found {
 		return false
@@ -132,9 +132,9 @@ func (sm ShopManager) ShouldBuyKeys(d data.Data) bool {
 	return true
 }
 
-func (sm ShopManager) SellJunk(d data.Data) {
-	for _, i := range ItemsToBeSold(sm.container.CharacterCfg.Inventory.InventoryLock, d) {
-		if sm.container.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+func (sm ShopManager) SellJunk(d game.Data) {
+	for _, i := range ItemsToBeSold(d.CharacterCfg.Inventory.InventoryLock, d) {
+		if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			sm.SellItem(i)
 		}
 	}
@@ -164,7 +164,7 @@ func (sm ShopManager) buyFullStack(i data.Item) {
 	helper.Sleep(500)
 }
 
-func ItemsToBeSold(lockPattern [][]int, d data.Data) (items []data.Item) {
+func ItemsToBeSold(lockPattern [][]int, d game.Data) (items []data.Item) {
 	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 		if itm.IsFromQuest() {
 			continue

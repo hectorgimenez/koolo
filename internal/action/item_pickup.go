@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
 
@@ -17,7 +18,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 	firstCallTime := time.Time{}
 	var itemBeingPickedUp data.UnitID
 
-	return NewChain(func(d data.Data) []Action {
+	return NewChain(func(d game.Data) []Action {
 		if firstCallTime.IsZero() {
 			firstCallTime = time.Now()
 		}
@@ -28,7 +29,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
 					b.Logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
 					itemBeingPickedUp = -1
-					return []Action{b.ch.KillMonsterSequence(func(d data.Data) (data.UnitID, bool) {
+					return []Action{b.ch.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 						return m.UnitID, true
 					}, nil)}
 				}
@@ -39,7 +40,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 			// Error picking up Item, go back to town, sell junk, stash and try again.
 			if itemBeingPickedUp == i.UnitID {
 				b.Logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
-				return []Action{NewChain(func(d data.Data) []Action {
+				return []Action{NewChain(func(d game.Data) []Action {
 					itemBeingPickedUp = -1
 					return b.InRunReturnTownRoutine()
 				})}
@@ -56,7 +57,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 			itemBeingPickedUp = i.UnitID
 			return []Action{
 				b.MoveToCoords(i.Position),
-				NewStepChain(func(d data.Data) []step.Step {
+				NewStepChain(func(d game.Data) []step.Step {
 					return []step.Step{step.PickupItem(b.Logger, i)}
 				}, IgnoreErrors()),
 			}
@@ -74,7 +75,7 @@ func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
 	}, RepeatUntilNoSteps())
 }
 
-func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
+func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 	missingHealingPotions := b.bm.GetMissingCount(d, data.HealingPotion)
 	missingManaPotions := b.bm.GetMissingCount(d, data.ManaPotion)
 	missingRejuvenationPotions := b.bm.GetMissingCount(d, data.RejuvenationPotion)
@@ -128,7 +129,7 @@ func (b *Builder) getItemsToPickup(d data.Data, maxDistance int) []data.Item {
 	return itemsToPickup
 }
 
-func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
+func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 	// Skip picking up gold if we can not carry more
 	if d.PlayerUnit.Stats[stat.Gold] >= d.PlayerUnit.MaxGold() {
 		b.Logger.Debug("Skipping gold pickup, inventory full")
@@ -149,12 +150,13 @@ func (b *Builder) shouldBePickedUp(d data.Data, i data.Item) bool {
 		return true
 	}
 
+	minGoldPickupThreshold := b.Container.CharacterCfg.Game.MinGoldPickupThreshold
 	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
-	if d.PlayerUnit.TotalGold() < 500000 && i.Quality >= item.QualityMagic {
+	if d.PlayerUnit.TotalGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
 	}
 
-	_, found := itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
+	_, found := itemfilter.Evaluate(i, d.CharacterCfg.Runtime.Rules)
 
 	return found
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
-	return NewChain(func(d data.Data) (actions []Action) {
+	return NewChain(func(d game.Data) (actions []Action) {
 		items := b.itemsToIdentify(d)
 
 		b.Logger.Debug("Checking for items to identify...")
@@ -33,18 +33,18 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 		}
 
 		b.Logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
-		actions = append(actions, NewStepChain(func(d data.Data) []step.Step {
+		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
-				step.SyncStepWithCheck(func(d data.Data) error {
-					b.HID.PressKey(b.CharacterCfg.Bindings.OpenInventory)
+				step.SyncStepWithCheck(func(d game.Data) error {
+					b.HID.PressKey(d.CharacterCfg.Bindings.OpenInventory)
 					return nil
-				}, func(d data.Data) step.Status {
+				}, func(d game.Data) step.Status {
 					if d.OpenMenus.Inventory {
 						return step.StatusCompleted
 					}
 					return step.StatusInProgress
 				}),
-				step.SyncStep(func(d data.Data) error {
+				step.SyncStep(func(d game.Data) error {
 
 					for _, i := range items {
 						b.identifyItem(idTome, i)
@@ -61,7 +61,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 	}, Resettable(), CanBeSkipped())
 }
 
-func (b *Builder) itemsToIdentify(d data.Data) (items []data.Item) {
+func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
 			continue

@@ -15,12 +15,13 @@ import (
 type InteractObjectStep struct {
 	basicStep
 	objectName            object.Name
+	objectID              data.UnitID
 	waitingForInteraction bool
-	isCompleted           func(data.Data) bool
+	isCompleted           func(game.Data) bool
 	mouseOverAttempts     int
 }
 
-func InteractObject(name object.Name, isCompleted func(data.Data) bool) *InteractObjectStep {
+func InteractObject(name object.Name, isCompleted func(game.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
 		basicStep:   newBasicStep(),
 		objectName:  name,
@@ -28,7 +29,15 @@ func InteractObject(name object.Name, isCompleted func(data.Data) bool) *Interac
 	}
 }
 
-func (i *InteractObjectStep) Status(d data.Data, _ container.Container) Status {
+func InteractObjectByID(ID data.UnitID, isCompleted func(game.Data) bool) *InteractObjectStep {
+	return &InteractObjectStep{
+		basicStep:   newBasicStep(),
+		objectID:    ID,
+		isCompleted: isCompleted,
+	}
+}
+
+func (i *InteractObjectStep) Status(d game.Data, _ container.Container) Status {
 	if i.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -46,7 +55,7 @@ func (i *InteractObjectStep) Status(d data.Data, _ container.Container) Status {
 	return i.status
 }
 
-func (i *InteractObjectStep) Run(d data.Data, container container.Container) error {
+func (i *InteractObjectStep) Run(d game.Data, container container.Container) error {
 	i.tryTransitionStatus(StatusInProgress)
 
 	if i.mouseOverAttempts > maxInteractions {
@@ -59,7 +68,31 @@ func (i *InteractObjectStep) Run(d data.Data, container container.Container) err
 	}
 
 	i.lastRun = time.Now()
-	if o, found := d.Objects.FindOne(i.objectName); found {
+	var o data.Object
+	var found bool
+
+	if i.objectID != 0 {
+		for _, obj := range d.Objects {
+			if obj.ID == i.objectID {
+				o = obj
+				found = true
+				break
+			}
+		}
+	} else {
+		o, found = d.Objects.FindOne(i.objectName)
+		// Let's try to use our own portal instead of any random portal we find
+		if i.objectName == object.TownPortal {
+			for _, obj := range d.Objects {
+				if obj.Owner == d.PlayerUnit.Name {
+					o = obj
+					found = true
+				}
+			}
+		}
+	}
+
+	if found {
 		objectX := o.Position.X - 2
 		objectY := o.Position.Y - 2
 		mX, mY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)

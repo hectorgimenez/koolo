@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/container"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -53,6 +54,7 @@ func (s *CompanionSupervisor) Start() error {
 				return
 			default:
 				if s.c.CharacterCfg.Companion.Leader {
+					time.Sleep(time.Second * 5)
 					gameName, err := s.c.Manager.CreateOnlineGame(gameCounter)
 					gameCounter++ // Sometimes game is created but error during join, so game name will be in use
 					if err != nil {
@@ -102,7 +104,7 @@ func (s *CompanionSupervisor) startBot(ctx context.Context, runs []run.Run, firs
 		}
 		errorMsg := fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds())
 		event.Send(event.GameFinished(event.WithScreenshot(s.name, errorMsg, s.c.Reader.Screenshot()), event.FinishedError))
-		s.c.Logger.Warn(errorMsg)
+		s.c.Logger.Warn(errorMsg, slog.String("supervisor", s.name))
 	}
 	if exitErr := s.c.Manager.ExitGame(); exitErr != nil {
 		return fmt.Errorf("error exiting game: %s", exitErr)
