@@ -26,8 +26,6 @@ var chaosSanctuaryEntrancePosition = data.Position{
 }
 
 var entranceToStar = []data.Position{
-	{X: 7790, Y: 5544},
-	{X: 7794, Y: 5517},
 	{X: 7791, Y: 5491},
 	{X: 7768, Y: 5459},
 	{X: 7775, Y: 5424},
