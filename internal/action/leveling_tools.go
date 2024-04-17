@@ -380,7 +380,7 @@ func (b *Builder) WaitForAllMembersWhenLeveling() *Chain {
 				return nil
 			}
 
-			return []Action{b.ClearAreaAroundPlayer(5)}
+			return []Action{b.ClearAreaAroundPlayer(5, data.MonsterAnyFilter())}
 		}
 
 		return nil

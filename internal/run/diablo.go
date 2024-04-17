@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"slices"
@@ -319,10 +320,31 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				// Let it fail then
 				return []action.Action{a.builder.MoveToCoords(pos)}
 			}),
-			a.builder.ClearAreaAroundPlayer(35, filter),
+			// Skip storm casters for now completely while clearing non-seals
+			a.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
+				var monsters []data.Monster
+
+				monsters = filter(m)
+				monsters = skipStormCasterFilter(monsters)
+
+				return monsters
+			}),
 			a.builder.ItemPickup(false, 35),
 		)
 	}
 
 	return actions
+}
+
+func skipStormCasterFilter(monsters data.Monsters) []data.Monster {
+	var stormCasterIds = []npc.ID{npc.StormCaster, npc.StormCaster2}
+	var filteredMonsters []data.Monster
+
+	for _, m := range monsters {
+		if !slices.Contains(stormCasterIds, m.Name) {
+			filteredMonsters = append(filteredMonsters, m)
+		}
+	}
+
+	return filteredMonsters
 }
