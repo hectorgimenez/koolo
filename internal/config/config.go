@@ -121,6 +121,7 @@ type CharacterCfg struct {
 		Pit struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
 			OpenChests            bool `yaml:"openChests"`
+			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
 		} `yaml:"pit"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`

@@ -87,6 +87,7 @@ game:
     # default - Outer Cloister -> Monastery Gates -> Tamoe Highland
     moveThroughBlackMarsh: false # Use Black Marsh -> Tamoe Highland route
     openChests: true
+    focusOnElitePacks: false
   mephisto:
     killCouncilMembers: true # Will kill the council members after killing Mephisto
     openChests: true # Will open chests after killing Mephisto

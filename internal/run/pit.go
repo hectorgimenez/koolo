@@ -16,6 +16,12 @@ func (a Pit) Name() string {
 
 func (a Pit) BuildActions() (actions []action.Action) {
 	openChests := a.CharacterCfg.Game.Pit.OpenChests
+	onlyElites := a.CharacterCfg.Game.Pit.FocusOnElitePacks
+	filter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		filter = data.MonsterEliteFilter()
+	}
 
 	actions = append(actions,
 		a.builder.WayPoint(area.OuterCloister),
@@ -38,8 +44,8 @@ func (a Pit) BuildActions() (actions []action.Action) {
 	)
 
 	return append(actions,
-		a.builder.ClearArea(openChests, data.MonsterAnyFilter()), // Clear pit level 1
-		a.builder.MoveToArea(area.PitLevel2),                     // Travel to pit level 2
-		a.builder.ClearArea(openChests, data.MonsterAnyFilter()), // Clear pit level 2
+		a.builder.ClearArea(openChests, filter),            // Clear pit level 1
+		a.builder.MoveToArea(area.PitLevel2),               // Travel to pit level 2
+		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 2
 	)
 }
