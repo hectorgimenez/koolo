@@ -118,6 +118,11 @@ type CharacterCfg struct {
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
+		Pit struct {
+			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
+			OpenChests            bool `yaml:"openChests"`
+			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
+		} `yaml:"pit"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`

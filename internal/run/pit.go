@@ -15,12 +15,27 @@ func (a Pit) Name() string {
 }
 
 func (a Pit) BuildActions() (actions []action.Action) {
+	openChests := a.CharacterCfg.Game.Pit.OpenChests
+	onlyElites := a.CharacterCfg.Game.Pit.FocusOnElitePacks
+	filter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		filter = data.MonsterEliteFilter()
+	}
+
 	actions = append(actions,
-		a.builder.WayPoint(area.BlackMarsh),      // Moving to starting point (OuterCloister)
-		a.builder.MoveToArea(area.TamoeHighland), // Move to TamoeHighland
+		a.builder.WayPoint(area.OuterCloister),
+		a.builder.MoveToArea(area.MonasteryGate),
+		a.builder.MoveToArea(area.TamoeHighland),
 	)
 
-	// Travel to pit level 1
+	if a.CharacterCfg.Game.Pit.MoveThroughBlackMarsh {
+		actions = []action.Action{
+			a.builder.WayPoint(area.BlackMarsh),
+			a.builder.MoveToArea(area.TamoeHighland),
+		}
+	}
+
 	a.logger.Info("Travel to pit level 1")
 	actions = append(actions, a.builder.MoveToArea(area.PitLevel1))
 
@@ -29,7 +44,7 @@ func (a Pit) BuildActions() (actions []action.Action) {
 	)
 
 	return append(actions,
-		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 1
+		a.builder.ClearArea(openChests, filter),            // Clear pit level 1
 		a.builder.MoveToArea(area.PitLevel2),               // Travel to pit level 2
 		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 2
 	)
