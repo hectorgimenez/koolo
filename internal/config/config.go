@@ -95,6 +95,11 @@ type CharacterCfg struct {
 			Redemption    string `yaml:"redemption"`
 			Cleansing     string `yaml:"cleansing"`
 		} `yaml:"paladin"`
+		Foh struct {
+			Conviction string `yaml:"conviction"`
+			HolyShield string `yaml:"holyShield"`
+			Vigor      string `yaml:"vigor"`
+		} `yaml:"foh"`
 	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`

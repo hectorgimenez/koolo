@@ -38,6 +38,8 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 		return LightningSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":
 		return Hammerdin{BaseCharacter: bc}, nil
+	case "foh":
+		return Foh{BaseCharacter: bc}, nil
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", container.CharacterCfg.Character.Class)
