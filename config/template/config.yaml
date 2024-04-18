@@ -51,6 +51,11 @@ bindings:
     redemption: f8
     cleansing: f4
 
+  foh:
+    conviction: f2
+    holyShield: f5
+    vigor: f1
+
 inventory:
   inventoryLock:
     - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ] # 0: Item locked and won't be moved.
@@ -64,7 +69,7 @@ inventory:
     rejuvenation: 1
 
 character:
-  class: sorceress # Allowed values: sorceress, lightning, hammerdin, paladin (leveling only)
+  class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
   castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
 
