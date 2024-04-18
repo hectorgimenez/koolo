@@ -192,3 +192,10 @@ func DistanceFromPoint(from data.Position, to data.Position) int {
 
 	return int(math.Sqrt(first + second))
 }
+
+func IsWalkable(pos data.Position, areaOriginPos data.Position, collisionGrid [][]bool) bool {
+	indexX := pos.X - areaOriginPos.X
+	indexY := pos.Y - areaOriginPos.Y
+
+	return collisionGrid[indexY][indexX]
+}

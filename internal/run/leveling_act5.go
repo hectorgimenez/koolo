@@ -69,7 +69,7 @@ func (a Leveling) anya() []action.Action {
 			anya, found := d.Objects.FindOne(object.FrozenAnya)
 			return anya.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.FrozenAnya, nil),
 		a.builder.ReturnTown(),
 		a.builder.IdentifyAll(false),
