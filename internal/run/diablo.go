@@ -148,9 +148,17 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		//	a.builder.ItemPickup(false, 40),
 		//)
 
-		// Activate the seal
+		// Activate the seal, buff only before opening the first seal
 		actions = append(actions,
 			a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
+			action.NewChain(func(d game.Data) []action.Action {
+				if i == 0 {
+					return []action.Action{
+						a.builder.Buff(),
+					}
+				}
+				return []action.Action{}
+			}),
 			action.NewStepChain(func(d game.Data) []step.Step {
 				a.logger.Debug("Trying to activate seal...", slog.Int("seal", sealNumber+1))
 				lastInteractionAt := time.Now()
