@@ -60,7 +60,7 @@ func (b *Builder) InteractChest(name object.Name, isCompletedFn func(game.Data) 
 				b.MoveToCoords(pos, step.StopAtDistance(7)),
 				NewStepChain(func(d game.Data) []step.Step {
 					steps := []step.Step{step.InteractChest(o.Name, func(d game.Data) bool { return true }), step.SyncStep(func(d game.Data) error {
-						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
+						event.Send(event.InteractedTo(event.Text(b.Supervisor, "Skipping locked chest as there are no keys in our Inventory"), int(name), event.InteractionTypeObject))
 						return nil
 					})}
 
@@ -73,7 +73,7 @@ func (b *Builder) InteractChest(name object.Name, isCompletedFn func(game.Data) 
 				b.MoveToCoords(pos, step.StopAtDistance(7)),
 				NewStepChain(func(d game.Data) []step.Step {
 					steps := []step.Step{step.InteractChest(o.Name, isCompletedFn), step.SyncStep(func(d game.Data) error {
-						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
+						event.Send(event.InteractedTo(event.Text(b.Supervisor, "Interacting with chest"), int(name), event.InteractionTypeObject))
 						return nil
 					})}
 
