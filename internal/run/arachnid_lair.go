@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type ArachnidLair struct {
@@ -11,7 +12,7 @@ type ArachnidLair struct {
 }
 
 func (a ArachnidLair) Name() string {
-	return "ArachnidLair"
+	return string(config.ArachnidLairRun)
 }
 
 func (a ArachnidLair) BuildActions() []action.Action {

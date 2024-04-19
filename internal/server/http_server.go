@@ -171,9 +171,15 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		cfg = config.Characters[supervisor]
 	}
 
+	availableRuns := make([]string, 0, len(config.AvailableRuns))
+	for run := range config.AvailableRuns {
+		availableRuns = append(availableRuns, string(run))
+	}
+
 	charSettingsTpl.Execute(w, CharacterSettings{
-		Supervisor:   supervisor,
-		CharacterCfg: cfg,
+		Supervisor:    supervisor,
+		Config:        cfg,
+		AvailableRuns: availableRuns,
 	})
 }
 

@@ -131,7 +131,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return []Action{NewChain(func(d game.Data) []Action {
 					return b.InRunReturnTownRoutine()
 				})}

@@ -12,9 +12,10 @@ type IndexData struct {
 }
 
 type CharacterSettings struct {
-	ErrorMessage string
-	Supervisor   string
-	*config.CharacterCfg
+	ErrorMessage  string
+	Supervisor    string
+	Config        *config.CharacterCfg
+	AvailableRuns []string
 }
 
 type ConfigData struct {

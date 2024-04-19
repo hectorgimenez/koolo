@@ -25,7 +25,7 @@ type Companion struct {
 }
 
 func (s Companion) Name() string {
-	return "Companion"
+	return "companion"
 }
 
 func (s Companion) BuildActions() []action.Action {

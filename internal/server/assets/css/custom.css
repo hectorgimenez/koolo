@@ -6,3 +6,23 @@
     border-radius: 5px;
     margin-bottom: 20px;
 }
+
+.inline-label {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.inline-label span {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.inline-label input {
+    flex-grow: 1;
+}
+
+.compact-form input:not([type="checkbox"]), .compact-form select, .compact-form textarea {
+    height: 45px;
+    margin-bottom: 0;
+}
