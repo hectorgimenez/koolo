@@ -17,19 +17,6 @@ health: # Healing configuration, all values in %
   mercChickenAt: 10
 
 bindings:
-  openInventory: i
-  openCharacterScreen: c
-  openSkillTree: t
-  openQuestLog: q
-  potion1: 1
-  potion2: 2
-  potion3: 3
-  potion4: 4
-
-  # Skills
-  forceMove: e
-  standStill: shift
-  swapWeapon: w
   teleport: f1
   tp: f4
   CTABattleCommand: f6

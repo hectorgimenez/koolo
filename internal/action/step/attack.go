@@ -117,19 +117,19 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 
 	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
 		if p.keyBinding != "" {
-			container.HID.PressKey(p.keyBinding)
+			container.HID.PressKey(container.HID.GetASCIICode(p.keyBinding))
 			helper.Sleep(100)
 		}
 
 		if p.auraKeyBinding != "" {
-			container.HID.PressKey(p.auraKeyBinding)
+			container.HID.PressKey(container.HID.GetASCIICode(p.auraKeyBinding))
 		}
 		p.forceApplyKeyBinding = false
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > d.CharacterCfg.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
-		container.HID.KeyDown(d.CharacterCfg.Bindings.StandStill)
+		container.HID.KeyDown(d.KeyBindings.StandStill)
 		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
 		if p.primaryAttack {
@@ -138,7 +138,7 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 			container.HID.Click(game.RightButton, x, y)
 		}
 		helper.Sleep(20)
-		container.HID.KeyUp(d.CharacterCfg.Bindings.StandStill)
+		container.HID.KeyUp(d.KeyBindings.StandStill)
 		p.lastRun = time.Now()
 		p.numOfAttacksRemaining--
 	}

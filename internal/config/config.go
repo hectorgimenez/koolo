@@ -63,21 +63,10 @@ type CharacterCfg struct {
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
 	Bindings struct {
-		OpenInventory       string `yaml:"openInventory"`
-		OpenCharacterScreen string `yaml:"openCharacterScreen"`
-		OpenSkillTree       string `yaml:"openSkillTree"`
-		OpenQuestLog        string `yaml:"openQuestLog"`
-		Potion1             string `yaml:"potion1"`
-		Potion2             string `yaml:"potion2"`
-		Potion3             string `yaml:"potion3"`
-		Potion4             string `yaml:"potion4"`
-		ForceMove           string `yaml:"forceMove"`
-		StandStill          string `yaml:"standStill"`
-		SwapWeapon          string `yaml:"swapWeapon"`
-		Teleport            string `yaml:"teleport"`
-		TP                  string `yaml:"tp"`
-		CTABattleCommand    string `yaml:"CTABattleCommand"`
-		CTABattleOrders     string `yaml:"CTABattleOrders"`
+		Teleport         string `yaml:"teleport"`
+		TP               string `yaml:"tp"`
+		CTABattleCommand string `yaml:"CTABattleCommand"`
+		CTABattleOrders  string `yaml:"CTABattleOrders"`
 
 		// Class Specific bindings
 		Sorceress struct {

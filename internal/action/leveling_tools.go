@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/lxn/win"
 	"log/slog"
 	"slices"
 	"time"
@@ -43,7 +44,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			if d.OpenMenus.Character {
 				return []step.Step{
 					step.SyncStep(func(_ game.Data) error {
-						b.HID.PressKey("esc")
+						b.HID.PressKey(win.VK_ESCAPE)
 						return nil
 					}),
 				}
@@ -61,7 +62,7 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 			if !d.OpenMenus.Character {
 				return []step.Step{
 					step.SyncStep(func(_ game.Data) error {
-						b.HID.PressKey(d.CharacterCfg.Bindings.OpenCharacterScreen)
+						b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
 						return nil
 					}),
 				}
@@ -91,7 +92,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 			if d.OpenMenus.SkillTree {
 				return []step.Step{
 					step.SyncStep(func(_ game.Data) error {
-						b.HID.PressKey("esc")
+						b.HID.PressKey(win.VK_ESCAPE)
 						return nil
 					}),
 				}
@@ -120,7 +121,7 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 				if !d.OpenMenus.SkillTree {
 					return []step.Step{
 						step.SyncStep(func(_ game.Data) error {
-							b.HID.PressKey(d.CharacterCfg.Bindings.OpenSkillTree)
+							b.HID.PressKeyBinding(d.KeyBindings.SkillTree)
 							return nil
 						}),
 					}
@@ -152,12 +153,12 @@ func (b *Builder) UpdateQuestLog() *StepChainAction {
 
 		return []step.Step{
 			step.SyncStep(func(_ game.Data) error {
-				b.HID.PressKey(d.CharacterCfg.Bindings.OpenQuestLog)
+				b.HID.PressKeyBinding(d.KeyBindings.QuestLog)
 				return nil
 			}),
 			step.Wait(time.Second),
 			step.SyncStep(func(_ game.Data) error {
-				b.HID.PressKey(d.CharacterCfg.Bindings.OpenQuestLog)
+				b.HID.PressKeyBinding(d.KeyBindings.QuestLog)
 				return nil
 			}),
 		}
@@ -196,7 +197,7 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 
 						b.HID.MovePointer(skillPosition.X, skillPosition.Y)
 						helper.Sleep(100)
-						b.HID.PressKey(binding)
+						b.HID.PressKey(b.HID.GetASCIICode(binding))
 						helper.Sleep(300)
 					}
 
@@ -323,7 +324,7 @@ func (b *Builder) HireMerc() *Chain {
 				actions = append(actions,
 					b.InteractNPC(
 						town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(),
-						step.KeySequence("home", "down", "enter"),
+						step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN),
 						step.Wait(time.Second*2),
 						step.SyncStep(func(d game.Data) error {
 							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
@@ -351,9 +352,9 @@ func (b *Builder) ResetStats() *Chain {
 			}
 			actions = append(actions,
 				b.InteractNPC(npc.Akara,
-					step.KeySequence("home", "down", "down", "enter"),
+					step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_DOWN, win.VK_RETURN),
 					step.Wait(time.Second),
-					step.KeySequence("home", "enter"),
+					step.KeySequence(win.VK_HOME, win.VK_RETURN),
 				),
 			)
 			if d.PlayerUnit.Area != area.RogueEncampment {

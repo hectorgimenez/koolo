@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/lxn/win"
 	"log/slog"
 	"time"
 
@@ -20,12 +21,12 @@ func (b *Builder) Gamble() *Chain {
 		if d.CharacterCfg.Gambling.Enabled && d.PlayerUnit.Stats[stat.StashGold] >= 2500000 {
 			b.Logger.Info("Time to gamble! Visiting vendor...")
 
-			openShopStep := step.KeySequence("home", "down", "down", "enter")
+			openShopStep := step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_DOWN, win.VK_RETURN)
 			vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).GamblingNPC()
 
 			// Jamella gamble button is the second one
 			if vendorNPC == npc.Jamella {
-				openShopStep = step.KeySequence("home", "down", "enter")
+				openShopStep = step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 			}
 
 			// Fix for Anya position
@@ -57,7 +58,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 		if lastStep {
 			if d.OpenMenus.Inventory {
 				return []step.Step{step.SyncStep(func(d game.Data) error {
-					b.HID.PressKey("esc")
+					b.HID.PressKey(win.VK_ESCAPE)
 					return nil
 				})}
 			}

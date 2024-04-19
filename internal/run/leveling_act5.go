@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 	"time"
 )
 
@@ -84,13 +85,13 @@ func (a Leveling) anya() []action.Action {
 		a.builder.Wait(time.Second * 8),
 		a.builder.InteractNPC(npc.Malah,
 			step.SyncStep(func(d game.Data) error {
-				a.HID.PressKey("esc")
-				a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
+				a.HID.PressKey(win.VK_ESCAPE)
+				a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 				itm, _ := d.Items.Find("ScrollOfResistance")
 				screenPos := ui.GetScreenCoordsForItem(itm)
 				helper.Sleep(200)
 				a.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-				a.HID.PressKey("esc")
+				a.HID.PressKey(win.VK_ESCAPE)
 
 				return nil
 			}),

@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -27,7 +28,7 @@ func (b *Builder) Heal() *Chain {
 				town.GetTownByArea(d.PlayerUnit.Area).HealNPC(),
 				step.SyncStep(func(d game.Data) error {
 					helper.Sleep(300)
-					b.HID.PressKey("esc")
+					b.HID.PressKey(win.VK_ESCAPE)
 					helper.Sleep(100)
 					return nil
 				}),

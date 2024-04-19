@@ -26,7 +26,7 @@ func NewGameManager(gr *MemoryReader, hid *HID, sueprvisorName string) *Manager 
 
 func (gm *Manager) ExitGame() error {
 	// First try to exit game as fast as possible, without any check, useful when chickening
-	gm.hid.PressKey("esc")
+	gm.hid.PressKey(win.VK_ESCAPE)
 	gm.hid.Click(LeftButton, gm.gr.GameAreaSizeX/2, int(float64(gm.gr.GameAreaSizeY)/2.2))
 
 	for range 5 {
@@ -49,7 +49,7 @@ func (gm *Manager) ExitGame() error {
 				helper.Sleep(1000)
 			}
 		}
-		gm.hid.PressKey("esc")
+		gm.hid.PressKey(win.VK_ESCAPE)
 		helper.Sleep(1000)
 	}
 
@@ -96,7 +96,7 @@ func (gm *Manager) NewGame() error {
 
 func (gm *Manager) clearGameNameOrPasswordField() {
 	for range 16 {
-		gm.hid.PressKey("backspace")
+		gm.hid.PressKey(win.VK_BACK)
 	}
 }
 
@@ -114,7 +114,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	gm.clearGameNameOrPasswordField()
 	gameName := config.Characters[gm.supervisorName].Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
 	for _, ch := range gameName {
-		gm.hid.PressKey(fmt.Sprintf("%c", ch))
+		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
 
 	// Same for password
@@ -124,10 +124,10 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	if gamePassword != "" {
 		gm.clearGameNameOrPasswordField()
 		for _, ch := range gamePassword {
-			gm.hid.PressKey(fmt.Sprintf("%c", ch))
+			gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 		}
 	}
-	gm.hid.PressKey("enter")
+	gm.hid.PressKey(win.VK_RETURN)
 
 	for range 30 {
 		if gm.gr.InGame() {
@@ -154,7 +154,7 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	gm.clearGameNameOrPasswordField()
 	helper.Sleep(200)
 	for _, ch := range gameName {
-		gm.hid.PressKey(fmt.Sprintf("%c", ch))
+		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
 
 	// Same for password
@@ -163,9 +163,9 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	gm.clearGameNameOrPasswordField()
 	helper.Sleep(200)
 	for _, ch := range password {
-		gm.hid.PressKey(fmt.Sprintf("%c", ch))
+		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
-	gm.hid.PressKey("enter")
+	gm.hid.PressKey(win.VK_RETURN)
 
 	for range 30 {
 		if gm.gr.InGame() {

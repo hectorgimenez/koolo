@@ -30,14 +30,14 @@ func NewBeltManager(logger *slog.Logger, hid *game.HID, cfg *config.CharacterCfg
 func (bm BeltManager) DrinkPotion(d game.Data, potionType data.PotionType, merc bool) bool {
 	p, found := d.Items.Belt.GetFirstPotion(potionType)
 	if found {
-		binding := bm.getBindingBasedOnColumn(p)
+		binding := d.KeyBindings.UseBelt[p.X]
 		if merc {
-			bm.hid.PressKeyWithModifier(binding, game.ShiftKey)
+			bm.hid.PressKeyWithModifier(binding.Key1[0], game.ShiftKey)
 			bm.logger.Debug(fmt.Sprintf("Using %s potion on Mercenary [Column: %d]. HP: %d", potionType, p.X+1, d.MercHPPercent()))
 			event.Send(event.UsedPotion(event.Text(bm.supervisorName, ""), potionType, true))
 			return true
 		}
-		bm.hid.PressKey(binding)
+		bm.hid.PressKeyBinding(binding)
 		bm.logger.Debug(fmt.Sprintf("Using %s potion [Column: %d]. HP: %d MP: %d", potionType, p.X+1, d.PlayerUnit.HPPercent(), d.PlayerUnit.MPPercent()))
 		event.Send(event.UsedPotion(event.Text(bm.supervisorName, ""), potionType, false))
 		return true
@@ -121,19 +121,4 @@ func (bm BeltManager) GetMissingCount(d game.Data, potionType data.PotionType) i
 	}
 
 	return 0
-}
-
-func (bm BeltManager) getBindingBasedOnColumn(position data.Position) string {
-	switch position.X {
-	case 0:
-		return bm.cfg.Bindings.Potion1
-	case 1:
-		return bm.cfg.Bindings.Potion2
-	case 2:
-		return bm.cfg.Bindings.Potion3
-	case 3:
-		return bm.cfg.Bindings.Potion4
-	}
-
-	return ""
 }

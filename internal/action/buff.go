@@ -55,7 +55,7 @@ func (b *Builder) Buff() *StepChainAction {
 				step.SyncStep(func(_ game.Data) error {
 					for _, kb := range keys {
 						helper.Sleep(200)
-						b.HID.PressKey(kb)
+						b.HID.PressKey(b.HID.GetASCIICode(kb))
 						helper.Sleep(300)
 						b.HID.Click(game.RightButton, 300, 300)
 						helper.Sleep(300)
@@ -105,16 +105,16 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 
 		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 		if _, found := d.PlayerUnit.Skills[skill.BattleCommand]; !found {
-			steps = append(steps, step.SwapToCTA(d.CharacterCfg.Bindings.SwapWeapon))
+			steps = append(steps, step.SwapToCTA())
 		}
 
 		steps = append(steps,
 			step.SyncStep(func(d game.Data) error {
-				b.HID.PressKey(d.CharacterCfg.Bindings.CTABattleCommand)
+				b.HID.PressKey(b.HID.GetASCIICode(d.CharacterCfg.Bindings.CTABattleCommand))
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(300)
-				b.HID.PressKey(d.CharacterCfg.Bindings.CTABattleOrders)
+				b.HID.PressKey(b.HID.GetASCIICode(d.CharacterCfg.Bindings.CTABattleOrders))
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(100)
@@ -122,7 +122,7 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 				return nil
 			}),
 			step.Wait(time.Millisecond*500),
-			step.SwapToMainWeapon(d.CharacterCfg.Bindings.SwapWeapon),
+			step.SwapToMainWeapon(),
 		)
 	}
 

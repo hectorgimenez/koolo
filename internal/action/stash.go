@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 	"log/slog"
 	"slices"
 )
@@ -52,7 +53,7 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 					b.stashGold(d)
 					b.orderInventoryPotions(d)
 					b.stashInventory(d, forceStash)
-					b.HID.PressKey("esc")
+					b.HID.PressKey(win.VK_ESCAPE)
 					return nil
 				}),
 			),

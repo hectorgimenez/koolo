@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/lxn/win"
 	"log/slog"
 	"time"
 
@@ -19,12 +20,12 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 
 		b.Logger.Info("Visiting vendor...", slog.Bool("forceRefill", forceRefill))
 
-		openShopStep := step.KeySequence("home", "down", "enter")
+		openShopStep := step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 		vendorNPC := town.GetTownByArea(d.PlayerUnit.Area).RefillNPC()
 
 		// Jamella trade button is the first one
 		if vendorNPC == npc.Jamella {
-			openShopStep = step.KeySequence("home", "enter")
+			openShopStep = step.KeySequence(win.VK_HOME, win.VK_RETURN)
 		}
 
 		if vendorNPC == npc.Drognan {
@@ -48,18 +49,18 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 				return nil
 			}),
 			step.Wait(time.Second),
-			step.KeySequence("esc"),
+			step.KeySequence(win.VK_ESCAPE),
 		)}
 	})
 }
 
 func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain {
 	return NewChain(func(d game.Data) []Action {
-		openShopStep := step.KeySequence("home", "down", "enter")
+		openShopStep := step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 
 		// Jamella trade button is the first one
 		if vendor == npc.Jamella {
-			openShopStep = step.KeySequence("home", "enter")
+			openShopStep = step.KeySequence(win.VK_HOME, win.VK_RETURN)
 		}
 
 		return []Action{b.InteractNPC(vendor,
@@ -79,7 +80,7 @@ func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain 
 				return nil
 			}),
 			step.Wait(time.Second),
-			step.KeySequence("esc"),
+			step.KeySequence(win.VK_ESCAPE),
 		)}
 	})
 }

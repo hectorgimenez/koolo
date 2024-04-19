@@ -10,21 +10,18 @@ import (
 
 type SwapWeaponStep struct {
 	basicStep
-	binding string
 	wantCTA bool
 }
 
-func SwapToMainWeapon(swapWeaponKB string) *SwapWeaponStep {
+func SwapToMainWeapon() *SwapWeaponStep {
 	return &SwapWeaponStep{
 		basicStep: newBasicStep(),
-		binding:   swapWeaponKB,
 	}
 }
 
-func SwapToCTA(swapWeaponKB string) *SwapWeaponStep {
+func SwapToCTA() *SwapWeaponStep {
 	return &SwapWeaponStep{
 		basicStep: newBasicStep(),
-		binding:   swapWeaponKB,
 		wantCTA:   true,
 	}
 }
@@ -52,7 +49,7 @@ func (s *SwapWeaponStep) Run(d game.Data, container container.Container) error {
 		return nil
 	}
 
-	container.HID.PressKey(s.binding)
+	container.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 
 	s.lastRun = time.Now()
 

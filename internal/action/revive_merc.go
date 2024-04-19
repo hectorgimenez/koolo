@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/lxn/win"
 )
 
 func (b *Builder) ReviveMerc() *Chain {
@@ -22,9 +23,9 @@ func (b *Builder) ReviveMerc() *Chain {
 
 			mercNPC := town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC()
 
-			keySequence := []string{"home", "down", "enter", "esc"}
+			keySequence := []byte{win.VK_HOME, win.VK_DOWN, win.VK_RETURN, win.VK_ESCAPE}
 			if mercNPC == npc.Tyrael2 {
-				keySequence = []string{"end", "up", "enter", "esc"}
+				keySequence = []byte{win.VK_END, win.VK_UP, win.VK_RETURN, win.VK_ESCAPE}
 			}
 
 			return []Action{

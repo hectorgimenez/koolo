@@ -15,6 +15,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/lxn/win"
 	"strings"
 	"time"
 )
@@ -113,7 +114,7 @@ func (s Companion) BuildActions() []action.Action {
 					case npc.Warriv, npc.Meshif:
 						return []action.Action{
 							s.builder.ReturnTown(),
-							s.builder.InteractNPC(npcID, step.KeySequence("home", "down", "enter")),
+							s.builder.InteractNPC(npcID, step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)),
 						}
 					}
 				}

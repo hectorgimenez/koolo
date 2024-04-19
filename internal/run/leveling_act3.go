@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/lxn/win"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -190,13 +191,13 @@ func (a Leveling) openMephistoStairs() []action.Action {
 						return nil
 					}
 
-					a.HID.PressKey(a.CharacterCfg.Bindings.SwapWeapon)
+					a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 					helper.Sleep(1000)
-					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
+					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					screenPos := ui.GetScreenCoordsForItem(khalimsWill)
 					a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
 					helper.Sleep(300)
-					a.HID.PressKey("esc")
+					a.HID.PressKey(win.VK_ESCAPE)
 					return nil
 				}),
 			}
@@ -209,7 +210,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 			},
 			step.SyncStep(func(d game.Data) error {
 				helper.Sleep(1000)
-				a.HID.PressKey(a.CharacterCfg.Bindings.SwapWeapon)
+				a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 				return nil
 			})),
 		a.builder.Wait(time.Second*12),

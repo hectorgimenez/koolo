@@ -44,7 +44,7 @@ func (s *OpenPortalStep) Run(_ game.Data, container container.Container) error {
 		return nil
 	}
 
-	container.HID.PressKey(s.tpKB)
+	container.HID.PressKey(container.HID.GetASCIICode(s.tpKB))
 	helper.Sleep(250)
 	container.HID.Click(game.RightButton, 300, 300)
 	s.lastRun = time.Now()
