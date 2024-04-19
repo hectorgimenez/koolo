@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -44,6 +45,41 @@ func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Dat
 
 				return steps
 			}),
+		}
+	})
+}
+
+func (b *Builder) InteractChest(name object.Name, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *Chain {
+	return NewChain(func(d game.Data) []Action {
+		o, _ := d.Objects.FindOne(name)
+		pos := o.Position
+		_, keyFound := d.Items.Find("Key", item.LocationInventory)
+
+		if o.InteractType == object.InteractTypeLocked && !keyFound {
+			return []Action{
+				b.MoveToCoords(pos, step.StopAtDistance(7)),
+				NewStepChain(func(d game.Data) []step.Step {
+					steps := []step.Step{step.InteractChest(o.Name, func(d game.Data) bool { return true }), step.SyncStep(func(d game.Data) error {
+						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
+						return nil
+					})}
+
+					return append(steps, additionalSteps...)
+				}),
+			}
+		} else {
+
+			return []Action{
+				b.MoveToCoords(pos, step.StopAtDistance(7)),
+				NewStepChain(func(d game.Data) []step.Step {
+					steps := []step.Step{step.InteractChest(o.Name, isCompletedFn), step.SyncStep(func(d game.Data) error {
+						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
+						return nil
+					})}
+
+					return append(steps, additionalSteps...)
+				}),
+			}
 		}
 	})
 }

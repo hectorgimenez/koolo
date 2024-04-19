@@ -2,9 +2,10 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -22,6 +23,14 @@ type InteractObjectStep struct {
 }
 
 func InteractObject(name object.Name, isCompleted func(game.Data) bool) *InteractObjectStep {
+	return &InteractObjectStep{
+		basicStep:   newBasicStep(),
+		objectName:  name,
+		isCompleted: isCompleted,
+	}
+}
+
+func InteractChest(name object.Name, isCompleted func(game.Data) bool) *InteractObjectStep {
 	return &InteractObjectStep{
 		basicStep:   newBasicStep(),
 		objectName:  name,

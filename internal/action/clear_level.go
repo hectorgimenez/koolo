@@ -1,8 +1,9 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -140,7 +141,7 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			for _, o := range d.Objects {
 				if o.IsChest() && o.Selectable && currentRoom.IsInside(o.Position) {
 					chest := o
-					return []Action{b.InteractObject(chest.Name, func(d game.Data) bool {
+					return []Action{b.InteractChest(chest.Name, func(d game.Data) bool {
 						for _, obj := range d.Objects {
 							if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
 								return false
