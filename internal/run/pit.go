@@ -44,8 +44,8 @@ func (a Pit) BuildActions() (actions []action.Action) {
 	)
 
 	return append(actions,
-		a.builder.ClearArea(openChests, filter),            // Clear pit level 1
-		a.builder.MoveToArea(area.PitLevel2),               // Travel to pit level 2
-		a.builder.ClearArea(true, data.MonsterAnyFilter()), // Clear pit level 2
+		a.builder.ClearArea(openChests, filter), // Clear pit level 1
+		a.builder.MoveToArea(area.PitLevel2),    // Travel to pit level 2
+		a.builder.ClearArea(openChests, filter), // Clear pit level 2
 	)
 }
