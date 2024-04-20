@@ -15,6 +15,13 @@ func (a AncientTunnels) Name() string {
 }
 
 func (a AncientTunnels) BuildActions() []action.Action {
+	onlyElites := a.CharacterCfg.Game.AncientTunnels.FocusOnElitePacks
+	filter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		filter = data.MonsterEliteFilter()
+	}
+
 	actions := []action.Action{
 		a.builder.WayPoint(area.LostCity),         // Moving to starting point (Lost City)
 		a.builder.MoveToArea(area.AncientTunnels), // Travel to ancient tunnels
@@ -25,5 +32,5 @@ func (a AncientTunnels) BuildActions() []action.Action {
 	)
 
 	// Clear Ancient Tunnels
-	return append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
+	return append(actions, a.builder.ClearArea(true, filter))
 }
