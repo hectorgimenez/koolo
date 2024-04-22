@@ -32,6 +32,7 @@ character:
   class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
   castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
+  stashToShared: false
 
 game:
   minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items

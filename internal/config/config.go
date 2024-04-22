@@ -75,6 +75,7 @@ type CharacterCfg struct {
 		Class         string `yaml:"class"`
 		CastingFrames int    `yaml:"castingFrames"`
 		UseMerc       bool   `yaml:"useMerc"`
+		StashToShared bool   `yaml:"stashToShared"`
 	} `yaml:"character"`
 	Game struct {
 		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
