@@ -16,33 +16,6 @@ health: # Healing configuration, all values in %
   chickenAt: 30
   mercChickenAt: 10
 
-bindings:
-  teleport: f1
-  tp: f4
-  CTABattleCommand: f6
-  CTABattleOrders: f7
-
-  # Class specific bindings
-  sorceress:
-    blizzard: f2
-    staticField: f3
-    frozenArmor: f5
-    fireBall: f2 # During leveling only
-    nova: f2
-    energyShield: f8
-
-  paladin:
-    concentration: f2 # Will be used for Might during leveling
-    holyShield: f5
-    vigor: f1
-    redemption: f8
-    cleansing: f4
-
-  foh:
-    conviction: f2
-    holyShield: f5
-    vigor: f1
-
 inventory:
   inventoryLock:
     - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ] # 0: Item locked and won't be moved.

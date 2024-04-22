@@ -12,7 +12,7 @@ func (b *Builder) OpenTPIfLeader() *StepChainAction {
 
 	return NewStepChain(func(d game.Data) []step.Step {
 		if isLeader {
-			return []step.Step{step.OpenPortal(b.CharacterCfg.Bindings.TP)}
+			return []step.Step{step.OpenPortal()}
 		}
 
 		return []step.Step{step.Wait(50)}

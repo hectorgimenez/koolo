@@ -62,34 +62,6 @@ type CharacterCfg struct {
 		ChickenAt           int `yaml:"chickenAt"`
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
-	Bindings struct {
-		Teleport         string `yaml:"teleport"`
-		TP               string `yaml:"tp"`
-		CTABattleCommand string `yaml:"CTABattleCommand"`
-		CTABattleOrders  string `yaml:"CTABattleOrders"`
-
-		// Class Specific bindings
-		Sorceress struct {
-			Blizzard     string `yaml:"blizzard"`
-			StaticField  string `yaml:"staticField"`
-			FrozenArmor  string `yaml:"frozenArmor"`
-			FireBall     string `yaml:"fireBall"`
-			Nova         string `yaml:"nova"`
-			EnergyShield string `yaml:"energyShield"`
-		} `yaml:"sorceress"`
-		Paladin struct {
-			Concentration string `yaml:"concentration"`
-			HolyShield    string `yaml:"holyShield"`
-			Vigor         string `yaml:"vigor"`
-			Redemption    string `yaml:"redemption"`
-			Cleansing     string `yaml:"cleansing"`
-		} `yaml:"paladin"`
-		Foh struct {
-			Conviction string `yaml:"conviction"`
-			HolyShield string `yaml:"holyShield"`
-			Vigor      string `yaml:"vigor"`
-		} `yaml:"foh"`
-	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`
 		BeltColumns   struct {

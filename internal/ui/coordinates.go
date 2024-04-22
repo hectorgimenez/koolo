@@ -31,9 +31,10 @@ const (
 	GambleRefreshButtonX = 390
 	GambleRefreshButtonY = 515
 
-	SkillListFirstSkillX = 687
-	SkillListFirstSkillY = 590
-	SkillListSkillOffset = 45
+	SecondarySkillListFirstSkillX = 687
+	MainSkillListFirstSkillX      = 550
+	SkillListFirstSkillY          = 590
+	SkillListSkillOffset          = 45
 
 	FirstMercFromContractorListX = 175
 	FirstMercFromContractorListY = 142

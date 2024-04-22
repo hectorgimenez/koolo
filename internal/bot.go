@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
+	"runtime/debug"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -68,7 +69,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v", r)
+			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v\n Stacktrace: %s", r, debug.Stack())
 		}
 	}()
 
