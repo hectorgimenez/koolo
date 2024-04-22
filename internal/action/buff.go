@@ -17,15 +17,19 @@ import (
 var lastBuffedAt = map[string]time.Time{}
 
 func (b *Builder) BuffIfRequired(d game.Data) *StepChainAction {
-	// Don't buff if we have 2 or more monsters close to the character
+	if !b.IsRebuffRequired(d) {
+		return nil
+	}
+
+	// Don't buff if we have 2 or more monsters close to the character.
+	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
 	closeMonsters := 0
 	for _, m := range d.Monsters {
 		if pather.DistanceFromMe(d, m.Position) < 15 {
 			closeMonsters++
 		}
 	}
-
-	if !b.IsRebuffRequired(d) || closeMonsters >= 2 {
+	if closeMonsters >= 2 {
 		return nil
 	}
 
