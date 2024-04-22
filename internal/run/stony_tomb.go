@@ -15,6 +15,14 @@ func (a StonyTomb) Name() string {
 }
 
 func (a StonyTomb) BuildActions() (actions []action.Action) {
+	openChests := a.CharacterCfg.Game.StonyTomb.OpenChests
+	onlyElites := a.CharacterCfg.Game.StonyTomb.FocusOnElitePacks
+	filter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		filter = data.MonsterEliteFilter()
+	}
+
 	actions = append(actions,
 		a.builder.WayPoint(area.DryHills),
 		a.builder.MoveToArea(area.RockyWaste),
@@ -27,9 +35,9 @@ func (a StonyTomb) BuildActions() (actions []action.Action) {
 
 	// Clear both level of Stony Tomb
 	actions = append(actions,
-		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+		a.builder.ClearArea(openChests, filter),
 		a.builder.MoveToArea(area.StonyTombLevel2),
-		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+		a.builder.ClearArea(openChests, filter),
 	)
 
 	return
