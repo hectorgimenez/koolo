@@ -13,12 +13,12 @@ type Data struct {
 }
 
 func (d Data) CanTeleport() bool {
-	_, found := d.PlayerUnit.Skills[skill.Teleport]
-
 	// Duriel's Lair is bugged and teleport doesn't work here
 	if d.PlayerUnit.Area == area.DurielsLair {
 		return false
 	}
 
-	return found && d.CharacterCfg.Bindings.Teleport != "" && !d.PlayerUnit.Area.IsTown()
+	_, isTpBound := d.KeyBindings.KeyBindingForSkill(skill.Teleport)
+
+	return isTpBound && !d.PlayerUnit.Area.IsTown()
 }

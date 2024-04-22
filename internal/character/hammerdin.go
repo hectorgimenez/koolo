@@ -66,7 +66,7 @@ func (s Hammerdin) KillMonsterSequence(
 				id,
 				8,
 				step.Distance(2, 8),
-				step.EnsureAura(s.container.CharacterCfg.Bindings.Paladin.Concentration),
+				step.EnsureAura(skill.Concentration),
 			),
 		)
 		completedAttackLoops++
@@ -76,10 +76,8 @@ func (s Hammerdin) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Hammerdin) BuffSkills() map[skill.ID]string {
-	return map[skill.ID]string{
-		skill.HolyShield: s.container.CharacterCfg.Bindings.Paladin.HolyShield,
-	}
+func (s Hammerdin) BuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{skill.HolyShield}
 }
 
 func (s Hammerdin) KillCountess() action.Action {
@@ -177,7 +175,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 						m.UnitID,
 						8,
 						step.Distance(2, 8),
-						step.EnsureAura(s.container.CharacterCfg.Bindings.Paladin.Concentration),
+						step.EnsureAura(skill.Concentration),
 					),
 				)
 			}
@@ -204,7 +202,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 					m.UnitID,
 					8,
 					step.Distance(2, 8),
-					step.EnsureAura(s.container.CharacterCfg.Bindings.Paladin.Concentration),
+					step.EnsureAura(skill.Concentration),
 				),
 			)
 		}

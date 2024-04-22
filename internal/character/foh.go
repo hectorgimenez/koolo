@@ -54,7 +54,7 @@ func (s Foh) KillMonsterSequence(
 				id,
 				3,
 				step.Distance(fohMinDistance, fohMaxDistance),
-				step.EnsureAura(s.container.CharacterCfg.Bindings.Foh.Conviction),
+				step.EnsureAura(skill.Conviction),
 			),
 		}
 
@@ -65,10 +65,8 @@ func (s Foh) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Foh) BuffSkills() map[skill.ID]string {
-	return map[skill.ID]string{
-		skill.HolyShield: s.container.CharacterCfg.Bindings.Foh.HolyShield,
-	}
+func (s Foh) BuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{skill.HolyShield}
 }
 
 func (s Foh) KillCountess() action.Action {
@@ -166,7 +164,7 @@ func (s Foh) KillCouncil() action.Action {
 						m.UnitID,
 						3,
 						step.Distance(fohMinDistance, fohMaxDistance),
-						step.EnsureAura(s.container.CharacterCfg.Bindings.Foh.Conviction),
+						step.EnsureAura(skill.Conviction),
 					),
 				)
 			}
@@ -193,7 +191,7 @@ func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 					m.UnitID,
 					3,
 					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(s.container.CharacterCfg.Bindings.Foh.Conviction),
+					step.EnsureAura(skill.Conviction),
 				),
 			)
 		}

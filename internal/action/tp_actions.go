@@ -15,7 +15,7 @@ func (b *Builder) ReturnTown() *StepChainAction {
 		}
 
 		return []step.Step{
-			step.OpenPortal(d.CharacterCfg.Bindings.TP),
+			step.OpenPortal(),
 			step.InteractObject(object.TownPortal, func(d game.Data) bool {
 				return d.PlayerUnit.Area.IsTown()
 			}),

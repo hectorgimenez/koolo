@@ -27,23 +27,22 @@ func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
 	return false
 }
 
-func (s SorceressLevelingLightning) GetKeyBindings(d game.Data) map[skill.ID]string {
-	skillBindings := map[skill.ID]string{
-		skill.FrozenArmor:      s.container.CharacterCfg.Bindings.Sorceress.FrozenArmor,
-		skill.StaticField:      s.container.CharacterCfg.Bindings.Sorceress.StaticField,
-		skill.Teleport:         s.container.CharacterCfg.Bindings.Teleport,
-		skill.TomeOfTownPortal: s.container.CharacterCfg.Bindings.TP,
+func (s SorceressLevelingLightning) SkillsToBind(d game.Data) []skill.ID {
+	skillBindings := []skill.ID{
+		skill.FrozenArmor,
+		skill.StaticField,
+		skill.Teleport,
+		skill.TomeOfTownPortal,
 	}
 
 	if d.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
-		skillBindings[skill.Blizzard] = s.container.CharacterCfg.Bindings.Sorceress.Blizzard
-		skillBindings[skill.GlacialSpike] = ""
+		skillBindings = append(skillBindings, skill.Blizzard)
 	} else if d.PlayerUnit.Skills[skill.Nova].Level > 1 {
-		skillBindings[skill.Nova] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
+		skillBindings = append(skillBindings, skill.Nova)
 	} else if d.PlayerUnit.Skills[skill.ChargedBolt].Level > 0 {
-		skillBindings[skill.ChargedBolt] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
+		skillBindings = append(skillBindings, skill.ChargedBolt)
 	} else if d.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
-		skillBindings[skill.FireBolt] = s.container.CharacterCfg.Bindings.Sorceress.FireBall
+		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
 	return skillBindings
@@ -206,7 +205,7 @@ func (s SorceressLevelingLightning) KillAndariel() action.Action {
 			action.NewStepChain(func(d game.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Andariel, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5)),
+					step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5)),
 				}
 			}),
 			s.killMonster(npc.Andariel, data.MonsterTypeNone),
@@ -224,7 +223,7 @@ func (s SorceressLevelingLightning) KillDuriel() action.Action {
 			action.NewStepChain(func(d game.Data) []step.Step {
 				m, _ := d.Monsters.FindOne(npc.Duriel, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
+					step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
 				}
 			}),
 			s.killMonster(npc.Duriel, data.MonsterTypeNone),
@@ -257,7 +256,7 @@ func (s SorceressLevelingLightning) KillMephisto() action.Action {
 			action.NewStepChain(func(d game.Data) []step.Step {
 				mephisto, _ := d.Monsters.FindOne(npc.Mephisto, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, mephisto.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
+					step.SecondaryAttack(skill.StaticField, mephisto.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
 				}
 			}),
 			s.killMonster(npc.Mephisto, data.MonsterTypeNone),
@@ -331,7 +330,7 @@ func (s SorceressLevelingLightning) KillDiablo() action.Action {
 		return []action.Action{
 			action.NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
+					step.SecondaryAttack(skill.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5)),
 				}
 			}),
 			s.killMonster(npc.Diablo, data.MonsterTypeNone),
@@ -345,7 +344,7 @@ func (s SorceressLevelingLightning) KillIzual() action.Action {
 			action.NewStepChain(func(d game.Data) []step.Step {
 				monster, _ := d.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, monster.UnitID, s.staticFieldCasts(), step.Distance(1, 4)),
+					step.SecondaryAttack(skill.StaticField, monster.UnitID, s.staticFieldCasts(), step.Distance(1, 4)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably
@@ -366,7 +365,7 @@ func (s SorceressLevelingLightning) KillBaal() action.Action {
 			action.NewStepChain(func(d game.Data) []step.Step {
 				baal, _ := d.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
 				return []step.Step{
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, baal.UnitID, s.staticFieldCasts(), step.Distance(1, 4)),
+					step.SecondaryAttack(skill.StaticField, baal.UnitID, s.staticFieldCasts(), step.Distance(1, 4)),
 				}
 			}),
 			// We will need a lot of cycles to kill him probably
@@ -385,7 +384,7 @@ func (s SorceressLevelingLightning) KillAncients() action.Action {
 				action.NewStepChain(func(d game.Data) []step.Step {
 					m, _ := d.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
 					return []step.Step{
-						step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10)),
+						step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10)),
 						step.MoveTo(data.Position{
 							X: 10062,
 							Y: 12639,
@@ -430,23 +429,27 @@ func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d g
 		if d.PlayerUnit.MPPercent() < 15 && d.PlayerUnit.Stats[stat.Level] < 15 {
 			steps = append(steps, step.PrimaryAttack(id, 1, step.Distance(1, 3)))
 		} else {
-			if _, found := d.PlayerUnit.Skills[skill.Blizzard]; found {
+			if _, found := d.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
 				if completedAttackLoops%2 == 0 {
 					for _, m := range d.Monsters.Enemies() {
 						if d := pather.DistanceFromMe(d, m.Position); d < 4 {
 							s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
-							steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.Blizzard, m.UnitID, 1, step.Distance(25, 30)))
+							steps = append(steps, step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, step.Distance(25, 30)))
 							break
 						}
 					}
 				}
 
 				steps = append(steps,
-					step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.Blizzard, id, 1, step.Distance(25, 30)),
+					step.SecondaryAttack(skill.Blizzard, id, 1, step.Distance(25, 30)),
 					step.PrimaryAttack(id, 3, step.Distance(25, 30)),
 				)
-			} else {
-				steps = append(steps, step.SecondaryAttack(s.container.CharacterCfg.Bindings.Sorceress.FireBall, id, 4, step.Distance(1, 5)))
+			} else if _, found := d.KeyBindings.KeyBindingForSkill(skill.Nova); found {
+				steps = append(steps, step.SecondaryAttack(skill.Nova, id, 4, step.Distance(1, 5)))
+			} else if _, found := d.KeyBindings.KeyBindingForSkill(skill.ChargedBolt); found {
+				steps = append(steps, step.SecondaryAttack(skill.ChargedBolt, id, 4, step.Distance(1, 5)))
+			} else if _, found := d.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
+				steps = append(steps, step.SecondaryAttack(skill.FireBolt, id, 4, step.Distance(1, 5)))
 			}
 		}
 
@@ -468,10 +471,8 @@ func (s SorceressLevelingLightning) killMonster(npc npc.ID, t data.MonsterType) 
 	}, nil)
 }
 
-func (s SorceressLevelingLightning) BuffSkills() map[skill.ID]string {
-	return map[skill.ID]string{
-		skill.FrozenArmor: s.container.CharacterCfg.Bindings.Sorceress.FrozenArmor,
-	}
+func (s SorceressLevelingLightning) BuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{skill.FrozenArmor}
 }
 
 func (s SorceressLevelingLightning) staticFieldCasts() int {

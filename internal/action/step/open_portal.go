@@ -1,6 +1,7 @@
 package step
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
@@ -10,13 +11,11 @@ import (
 
 type OpenPortalStep struct {
 	basicStep
-	tpKB string
 }
 
-func OpenPortal(tpKB string) *OpenPortalStep {
+func OpenPortal() *OpenPortalStep {
 	return &OpenPortalStep{
 		basicStep: newBasicStep(),
-		tpKB:      tpKB,
 	}
 }
 
@@ -38,13 +37,13 @@ func (s *OpenPortalStep) Status(d game.Data, _ container.Container) Status {
 	return StatusInProgress
 }
 
-func (s *OpenPortalStep) Run(_ game.Data, container container.Container) error {
+func (s *OpenPortalStep) Run(d game.Data, container container.Container) error {
 	// Give some time to portal to popup before retrying...
 	if time.Since(s.LastRun()) < time.Second*2 {
 		return nil
 	}
 
-	container.HID.PressKey(container.HID.GetASCIICode(s.tpKB))
+	container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
 	helper.Sleep(250)
 	container.HID.Click(game.RightButton, 300, 300)
 	s.lastRun = time.Now()

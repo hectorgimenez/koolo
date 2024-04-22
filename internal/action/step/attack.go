@@ -1,6 +1,7 @@
 package step
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -17,12 +18,12 @@ type AttackStep struct {
 	target                data.UnitID
 	numOfAttacksRemaining int
 	primaryAttack         bool
-	keyBinding            string
+	skill                 skill.ID
 	followEnemy           bool
 	minDistance           int
 	maxDistance           int
 	moveToStep            *MoveToStep
-	auraKeyBinding        string
+	aura                  skill.ID
 	forceApplyKeyBinding  bool
 	aoe                   bool
 }
@@ -37,9 +38,9 @@ func Distance(minimum, maximum int) AttackOption {
 	}
 }
 
-func EnsureAura(keyBinding string) AttackOption {
+func EnsureAura(aura skill.ID) AttackOption {
 	return func(step *AttackStep) {
-		step.auraKeyBinding = keyBinding
+		step.aura = aura
 	}
 }
 
@@ -58,13 +59,13 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *
 	return s
 }
 
-func SecondaryAttack(keyBinding string, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         false,
 		basicStep:             newBasicStep(),
 		target:                target,
 		numOfAttacksRemaining: numOfAttacks,
-		keyBinding:            keyBinding,
+		skill:                 skill,
 		aoe:                   target == 0,
 	}
 	for _, o := range opts {
@@ -116,13 +117,11 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 	}
 
 	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
-		if p.keyBinding != "" {
-			container.HID.PressKey(container.HID.GetASCIICode(p.keyBinding))
-			helper.Sleep(100)
-		}
+		container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.skill))
+		helper.Sleep(100)
 
-		if p.auraKeyBinding != "" {
-			container.HID.PressKey(container.HID.GetASCIICode(p.auraKeyBinding))
+		if p.aura != 0 {
+			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.aura))
 		}
 		p.forceApplyKeyBinding = false
 	}

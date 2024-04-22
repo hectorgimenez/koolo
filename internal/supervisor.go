@@ -65,6 +65,7 @@ func (s *baseSupervisor) Stop() {
 	}
 
 	s.c.Injector.Unload()
+	s.c.Reader.Close()
 	s.c.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 
