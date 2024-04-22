@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -16,7 +17,15 @@ import (
 var lastBuffedAt = map[string]time.Time{}
 
 func (b *Builder) BuffIfRequired(d game.Data) *StepChainAction {
-	if !b.IsRebuffRequired(d) {
+	// Don't buff if we have 2 or more monsters close to the character
+	closeMonsters := 0
+	for _, m := range d.Monsters {
+		if pather.DistanceFromMe(d, m.Position) < 15 {
+			closeMonsters++
+		}
+	}
+
+	if !b.IsRebuffRequired(d) || closeMonsters >= 2 {
 		return nil
 	}
 
