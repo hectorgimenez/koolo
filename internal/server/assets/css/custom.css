@@ -26,3 +26,12 @@
     height: 45px;
     margin-bottom: 0;
 }
+
+.compact-form select {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.run-list {
+    list-style-type: none;
+}

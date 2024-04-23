@@ -6,20 +6,22 @@
     <meta name="color-scheme" content="light dark"/>
     <link rel="stylesheet" href="../assets/css/pico.min.css">
     <link rel="stylesheet" href="../assets/css/custom.css">
+    <script src="../assets/js/Sortable.min.js"></script>
+    <script src="../assets/js/character_settings.js"></script>
     <title>Koolo Settings</title>
 </head>
 <body>
 <main class="container">
     {{ if ne .ErrorMessage "" }}
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <div class="error-message">
-                    {{ .ErrorMessage }}
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="error-message">
+                        {{ .ErrorMessage }}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     {{ end }}
     <div class="notification">
         <h2>Settings</h2>
@@ -56,55 +58,15 @@
                     Realm
                     <select name="realm">
                         <option value="eu.actual.battle.net" {{ if eq .Config.Realm
-                        "eu.actual.battle.net" }}selected{{ end }}>Europe</option>
+                        "eu.actual.battle.net" }}selected{{ end }}>Europe
+                        </option>
                         <option value="us.actual.battle.net" {{ if eq .Config.Realm
-                        "us.actual.battle.net" }}selected{{ end }}>America</option>
+                        "us.actual.battle.net" }}selected{{ end }}>America
+                        </option>
                         <option value="kr.actual.battle.net" {{ if eq .Config.Realm
-                        "kr.actual.battle.net" }}selected{{ end }}>Korea</option>
+                        "kr.actual.battle.net" }}selected{{ end }}>Korea
+                        </option>
                     </select>
-                </label>
-            </fieldset>
-            <h4>Key Bindings</h4>
-            <fieldset class="grid">
-                <label>
-                    Inventory
-                    <input name="bindingsOpenInventory" placeholder="{{ .Config.Bindings.OpenInventory }}"
-                           value="{{ .Config.Bindings.OpenInventory }}"/>
-                </label>
-                <label>
-                    Character
-                    <input name="bindingsopenCharacterScreen" placeholder="{{ .Config.Bindings.OpenCharacterScreen }}"
-                           value="{{ .Config.Bindings.OpenCharacterScreen }}"/>
-                </label>
-                <label>
-                    Skill Tree
-                    <input name="bindingsopenSkillTree" placeholder="{{ .Config.Bindings.OpenSkillTree }}"
-                           value="{{ .Config.Bindings.OpenSkillTree }}"/>
-                </label>
-                <label>
-                    Quest log
-                    <input name="bindingsopenQuestLog" placeholder="{{ .Config.Bindings.OpenQuestLog }}"
-                           value="{{ .Config.Bindings.OpenQuestLog }}"/>
-                </label>
-                <label>
-                    Potion 1
-                    <input name="bindingspotion1" placeholder="{{ .Config.Bindings.Potion1 }}"
-                           value="{{ .Config.Bindings.Potion1 }}"/>
-                </label>
-                <label>
-                    Potion 2
-                    <input name="bindingspotion2" placeholder="{{ .Config.Bindings.Potion2 }}"
-                           value="{{ .Config.Bindings.Potion2 }}"/>
-                </label>
-                <label>
-                    Potion 3
-                    <input name="bindingspotion3" placeholder="{{ .Config.Bindings.Potion3 }}"
-                           value="{{ .Config.Bindings.Potion3 }}"/>
-                </label>
-                <label>
-                    Potion 4
-                    <input name="bindingspotion4" placeholder="{{ .Config.Bindings.Potion4 }}"
-                           value="{{ .Config.Bindings.Potion4 }}"/>
                 </label>
             </fieldset>
             <h4>Health settings</h4>
@@ -162,15 +124,20 @@
                     Class
                     <select name="characterClass">
                         <option value="sorceress" {{ if eq .Config.Character.Class
-                        "sorceress" }}selected{{ end }}>Sorc (Blizzard)</option>
+                        "sorceress" }}selected{{ end }}>Sorc (Blizzard)
+                        </option>
                         <option value="hammerdin" {{ if eq .Config.Character.Class
-                        "hammerdin" }}selected{{ end }}>Paladin (Hammer)</option>
+                        "hammerdin" }}selected{{ end }}>Paladin (Hammer)
+                        </option>
                         <option value="lightning" {{ if eq .Config.Character.Class
-                        "lightning" }}selected{{ end }}>Sorc (Nova)</option>
+                        "lightning" }}selected{{ end }}>Sorc (Nova)
+                        </option>
                         <option value="paladin" {{ if eq .Config.Character.Class
-                        "paladin" }}selected{{ end }}>Paladin (Leveling)</option>
+                        "paladin" }}selected{{ end }}>Paladin (Leveling)
+                        </option>
                         <option value="sorceress_leveling_lightning" {{ if eq .Config.Character.Class
-                        "sorceress_leveling_lightning" }}selected{{ end }}>Sorc (Leveling as Lightning)</option>
+                        "sorceress_leveling_lightning" }}selected{{ end }}>Sorc (Leveling as Lightning)
+                        </option>
                     </select>
                 </label>
                 <label>
@@ -183,29 +150,32 @@
             <h4>Inventory (Checked means locked)</h4>
             <table>
                 {{ range $rowIndex, $row := .Config.Inventory.InventoryLock }}
-                <tr>
-                    {{ range $columnIndex, $unlocked := $row }}
-                    <td>
-                        <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
-                               {{ if not $unlocked }}checked{{ end }}/>
-                        {{ end}}
-                </tr>
+                    <tr>
+                        {{ range $columnIndex, $unlocked := $row }}
+                        <td>
+                            <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
+                                   {{ if not $unlocked }}checked{{ end }}/>
+                            {{ end}}
+                    </tr>
                 {{ end }}
             </table>
             <h4>Potion belt</h4>
             <fieldset class="grid">
                 {{ range $index, $potionType := .Config.Inventory.BeltColumns }}
-                <label>
-                    Column {{ $index }}
-                    <select name="inventoryBeltColumns[]">
-                        <option value="healing" {{ if eq $potionType
-                        "healing" }}selected{{ end }}>Healing</option>
-                        <option value="mana" {{ if eq $potionType
-                        "mana" }}selected{{ end }}>Mana</option>
-                        <option value="rejuvenation" {{ if eq $potionType
-                        "rejuvenation" }}selected{{ end }}>Rejuvenation</option>
-                    </select>
-                </label>
+                    <label>
+                        Column {{ $index }}
+                        <select name="inventoryBeltColumns[]">
+                            <option value="healing" {{ if eq $potionType
+                            "healing" }}selected{{ end }}>Healing
+                            </option>
+                            <option value="mana" {{ if eq $potionType
+                            "mana" }}selected{{ end }}>Mana
+                            </option>
+                            <option value="rejuvenation" {{ if eq $potionType
+                            "rejuvenation" }}selected{{ end }}>Rejuvenation
+                            </option>
+                        </select>
+                    </label>
                 {{ end }}
             </fieldset>
             <h4>Game</h4>
@@ -219,31 +189,86 @@
                 Difficulty
                 <select name="gameDifficulty">
                     <option value="normal" {{ if eq .Config.Game.Difficulty
-                    "normal" }}selected{{ end }}>Normal</option>
+                    "normal" }}selected{{ end }}>Normal
+                    </option>
                     <option value="nightmare" {{ if eq .Config.Game.Difficulty
-                    "nightmare" }}selected{{ end }}>Nightmare</option>
+                    "nightmare" }}selected{{ end }}>Nightmare
+                    </option>
                     <option value="hell" {{ if eq .Config.Game.Difficulty
-                    "hell" }}selected{{ end }}>Hell</option>
+                    "hell" }}selected{{ end }}>Hell
+                    </option>
                 </select>
             </label>
             <label>
                 Randomize runs
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
             </label>
-            <fieldset>
-                <legend>Runs</legend>
-                {{ range $index, $run := .AvailableRuns }}
-                <input type="checkbox" id="{{ $run }}" name="gameRuns[]" value="{{ $run }}" checked/>
-                <label htmlFor="{{ $run }}">{{ $run }}</label>
-                {{ end }}
-            </fieldset>
+            <div class="grid">
+                <div>
+                    <h6>Enabled runs</h6>
+                    <ul class="run-list" id="enabled_runs">
+                        {{ range $index, $run := .EnabledRuns }}
+                            <li>
+                                <details>
+                                    <summary>{{ $run }}</summary>
+                                    <p>...</p>
+                                </details>
+                            </li>
+                        {{ end }}
+                    </ul>
+                </div>
+                <div>
+                    <h6>Disabled runs</h6>
+                    <ul class="run-list" id="disabled_runs">
+                        {{ range $index, $run := .DisabledRuns }}
+                            <li>
+                                <details>
+                                    <summary>{{ $run }}</summary>
+                                    <p>...</p>
+                                </details>
+                            </li>
+                        {{ end }}
+                    </ul>
+                </div>
+            </div>
+
             <h4>Gambling</h4>
             <label>
                 Enabled
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
             </label>
+            <h4>Companion mode</h4>
+            <label>
+                Enabled
+                <input type="checkbox" name="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>
+            </label>
+            <label>
+                Leader
+                <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
+            </label>
+            <label>
+                Attack
+                <input type="checkbox" name="companionAttack" {{ if .Config.Companion.Attack }}checked{{ end }}/>
+            </label>
             <fieldset class="grid">
-                <a href="/"><input type="button" value="Cancel"/></a>
+                <label>
+                    Leader Name
+                    <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
+                           value="{{ .Config.Companion.LeaderName }}"/>
+                </label>
+                <label>
+                    Game name pattern
+                    <input name="companionGameNameTemplate" placeholder="{{ .Config.Companion.GameNameTemplate }}"
+                           value="{{ .Config.Companion.GameNameTemplate }}"/>
+                </label>
+                <label>
+                    Game password
+                    <input name="companionGamePassword" placeholder="{{ .Config.Companion.GamePassword }}"
+                           value="{{ .Config.Companion.GamePassword }}"/>
+                </label>
+            </fieldset>
+            <fieldset class="grid">
+                <a href="/"><input type="button" value="Cancel" class="secondary"/></a>
                 <input type="submit" value="Save"/>
             </fieldset>
         </form>

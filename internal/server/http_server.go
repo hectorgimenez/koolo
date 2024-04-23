@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 )
 
@@ -24,9 +25,9 @@ var (
 	//go:embed all:templates
 	templates embed.FS
 
-	configTpl       = template.Must(template.ParseFS(templates, "templates/config.html"))
-	indexTpl        = template.Must(template.ParseFS(templates, "templates/index.html"))
-	charSettingsTpl = template.Must(template.ParseFS(templates, "templates/character_settings.html"))
+	configTpl       = template.Must(template.ParseFS(templates, "templates/config.gohtml"))
+	indexTpl        = template.Must(template.ParseFS(templates, "templates/index.gohtml"))
+	charSettingsTpl = template.Must(template.ParseFS(templates, "templates/character_settings.gohtml"))
 )
 
 func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
@@ -53,7 +54,7 @@ func (s *HttpServer) Listen(port int) error {
 
 func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {
 	if !helper.HasAdminPermission() {
-		tmpl := template.Must(template.ParseFS(templates, "templates/admin_required.html"))
+		tmpl := template.Must(template.ParseFS(templates, "templates/admin_required.gohtml"))
 		tmpl.Execute(w, nil)
 		return
 	}
@@ -171,15 +172,21 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		cfg = config.Characters[supervisor]
 	}
 
-	availableRuns := make([]string, 0, len(config.AvailableRuns))
+	enabledRuns := make([]string, 0)
+	disabledRuns := make([]string, 0)
 	for run := range config.AvailableRuns {
-		availableRuns = append(availableRuns, string(run))
+		if slices.Contains(cfg.Game.Runs, run) {
+			enabledRuns = append(enabledRuns, string(run))
+		} else {
+			disabledRuns = append(disabledRuns, string(run))
+		}
 	}
 
 	charSettingsTpl.Execute(w, CharacterSettings{
-		Supervisor:    supervisor,
-		Config:        cfg,
-		AvailableRuns: availableRuns,
+		Supervisor:   supervisor,
+		Config:       cfg,
+		EnabledRuns:  enabledRuns,
+		DisabledRuns: disabledRuns,
 	})
 }
 
