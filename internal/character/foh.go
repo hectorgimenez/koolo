@@ -1,29 +1,30 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
-	"sort"
-	"time"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"sort"
+	"time"
 )
 
 const (
-	hammerdinMaxAttacksLoop = 20
+	fohMaxAttacksLoop = 10
+	fohMinDistance    = 5
+	fohMaxDistance    = 20
 )
 
-type Hammerdin struct {
+type Foh struct {
 	BaseCharacter
 }
 
-func (s Hammerdin) KillMonsterSequence(
+func (s Foh) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
@@ -44,31 +45,19 @@ func (s Hammerdin) KillMonsterSequence(
 			return []step.Step{}
 		}
 
-		if completedAttackLoops >= hammerdinMaxAttacksLoop {
+		if completedAttackLoops >= fohMaxAttacksLoop {
 			return []step.Step{}
 		}
 
-		steps := make([]step.Step, 0)
-		// Add a random movement, maybe hammer is not hitting the target
-		if previousUnitID == int(id) {
-			steps = append(steps,
-				step.SyncStep(func(d game.Data) error {
-					monster, f := d.Monsters.FindByID(id)
-					if f && monster.Stats[stat.Life] > 0 {
-						s.container.PathFinder.RandomMovement()
-					}
-					return nil
-				}),
-			)
-		}
-		steps = append(steps,
+		steps := []step.Step{
 			step.PrimaryAttack(
 				id,
-				8,
-				step.Distance(2, 8),
-				step.EnsureAura(skill.Concentration),
+				3,
+				step.Distance(fohMinDistance, fohMaxDistance),
+				step.EnsureAura(skill.Conviction),
 			),
-		)
+		}
+
 		completedAttackLoops++
 		previousUnitID = int(id)
 
@@ -76,39 +65,39 @@ func (s Hammerdin) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Hammerdin) BuffSkills(_ game.Data) []skill.ID {
+func (s Foh) BuffSkills(_ game.Data) []skill.ID {
 	return []skill.ID{skill.HolyShield}
 }
 
-func (s Hammerdin) KillCountess() action.Action {
+func (s Foh) KillCountess() action.Action {
 	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (s Hammerdin) KillAndariel() action.Action {
+func (s Foh) KillAndariel() action.Action {
 	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (s Hammerdin) KillSummoner() action.Action {
+func (s Foh) KillSummoner() action.Action {
 	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (s Hammerdin) KillDuriel() action.Action {
+func (s Foh) KillDuriel() action.Action {
 	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (s Hammerdin) KillPindle(_ []stat.Resist) action.Action {
+func (s Foh) KillPindle(_ []stat.Resist) action.Action {
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (s Hammerdin) KillMephisto() action.Action {
+func (s Foh) KillMephisto() action.Action {
 	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (s Hammerdin) KillNihlathak() action.Action {
+func (s Foh) KillNihlathak() action.Action {
 	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (s Hammerdin) KillDiablo() action.Action {
+func (s Foh) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
@@ -146,11 +135,11 @@ func (s Hammerdin) KillDiablo() action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Hammerdin) KillIzual() action.Action {
+func (s Foh) KillIzual() action.Action {
 	return s.killMonster(npc.Izual, data.MonsterTypeNone)
 }
 
-func (s Hammerdin) KillCouncil() action.Action {
+func (s Foh) KillCouncil() action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
@@ -169,13 +158,13 @@ func (s Hammerdin) KillCouncil() action.Action {
 		})
 
 		for _, m := range councilMembers {
-			for range hammerdinMaxAttacksLoop {
+			for range fohMaxAttacksLoop {
 				steps = append(steps,
 					step.PrimaryAttack(
 						m.UnitID,
-						8,
-						step.Distance(2, 8),
-						step.EnsureAura(skill.Concentration),
+						3,
+						step.Distance(fohMinDistance, fohMaxDistance),
+						step.EnsureAura(skill.Conviction),
 					),
 				)
 			}
@@ -184,11 +173,11 @@ func (s Hammerdin) KillCouncil() action.Action {
 	}, action.CanBeSkipped())
 }
 
-func (s Hammerdin) KillBaal() action.Action {
+func (s Foh) KillBaal() action.Action {
 	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }
 
-func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
@@ -196,13 +185,13 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		}
 
 		helper.Sleep(100)
-		for range hammerdinMaxAttacksLoop {
+		for range fohMaxAttacksLoop {
 			steps = append(steps,
 				step.PrimaryAttack(
 					m.UnitID,
-					8,
-					step.Distance(2, 8),
-					step.EnsureAura(skill.Concentration),
+					3,
+					step.Distance(fohMinDistance, fohMaxDistance),
+					step.EnsureAura(skill.Conviction),
 				),
 			)
 		}

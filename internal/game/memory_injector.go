@@ -114,13 +114,13 @@ func (i *MemoryInjector) CursorPos(x, y int) error {
 	return windows.WriteProcessMemory(i.handle, i.getCursorPosAddr, &bytes[0], uintptr(len(bytes)), nil)
 }
 
-func (i *MemoryInjector) OverrideGetKeyState(key int) error {
+func (i *MemoryInjector) OverrideGetKeyState(key byte) error {
 	/*
 		cmp rcx, 0x12
 		mov rax, 0x8000
 		ret
 	*/
-	bytes := []byte{0x48, 0x81, 0xF9, byte(key), 0x00, 0x00, 0x00, 0x48, 0xB8, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC3}
+	bytes := []byte{0x48, 0x81, 0xF9, key, 0x00, 0x00, 0x00, 0x48, 0xB8, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC3}
 	return windows.WriteProcessMemory(i.handle, i.getKeyStateAddr, &bytes[0], uintptr(len(bytes)), nil)
 }
 

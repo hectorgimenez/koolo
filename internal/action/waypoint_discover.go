@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/lxn/win"
 	"log/slog"
 )
 
@@ -19,7 +20,7 @@ func (b *Builder) DiscoverWaypoint() *Chain {
 					step.SyncStep(func(d game.Data) error {
 						b.Logger.Info("Waypoint discovered", slog.Any("area", d.PlayerUnit.Area))
 						helper.Sleep(500)
-						b.HID.PressKey("esc")
+						b.HID.PressKey(win.VK_ESCAPE)
 						return nil
 					}),
 				)}

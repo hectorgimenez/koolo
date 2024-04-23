@@ -8,17 +8,17 @@ import (
 
 type KeySequenceStep struct {
 	basicStep
-	keysToPress []string
+	keysToPress []byte
 }
 
-func KeySequence(keysToPress ...string) *KeySequenceStep {
+func KeySequence(keysToPress ...byte) *KeySequenceStep {
 	return &KeySequenceStep{
 		basicStep:   newBasicStep(),
 		keysToPress: keysToPress,
 	}
 }
 
-func (o *KeySequenceStep) Status(_ game.Data, container container.Container) Status {
+func (o *KeySequenceStep) Status(_ game.Data, _ container.Container) Status {
 	if o.status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -36,7 +36,7 @@ func (o *KeySequenceStep) Run(_ game.Data, container container.Container) error 
 		return nil
 	}
 
-	var k string
+	var k byte
 	k, o.keysToPress = o.keysToPress[0], o.keysToPress[1:]
 	container.HID.PressKey(k)
 

@@ -150,12 +150,25 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 		return true
 	}
 
+	minGoldPickupThreshold := b.Container.CharacterCfg.Game.MinGoldPickupThreshold
 	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
-	if d.PlayerUnit.TotalGold() < 500000 && i.Quality >= item.QualityMagic {
+	if d.PlayerUnit.TotalGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
 	}
 
-	_, found := itemfilter.Evaluate(i, d.CharacterCfg.Runtime.Rules)
+	stashItems := b.allStashItems(d)
 
-	return found
+	matchedRule, found := itemfilter.Evaluate(i, d.CharacterCfg.Runtime.Rules)
+
+	if len(stashItems) == 0 {
+		return found
+	}
+
+	if matchedRule.Properties == nil {
+		return found
+	}
+
+	exceedQuantity := b.doesExceedQuantity(i, matchedRule, stashItems)
+
+	return !exceedQuantity
 }

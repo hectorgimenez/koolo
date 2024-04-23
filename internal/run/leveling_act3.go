@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/lxn/win"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -88,7 +89,7 @@ func (a Leveling) findKhalimsEye() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.KhalimChest3, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest3)
 			return !chest.Selectable
@@ -136,7 +137,7 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 			}
 			return data.Position{}, false
 		}),
-		a.builder.ClearAreaAroundPlayer(10),
+		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.Act3SewerStairsToLevel3, func(d game.Data) bool {
 			o, _ := d.Objects.FindOne(object.Act3SewerStairsToLevel3)
 
@@ -153,7 +154,7 @@ func (a Leveling) findKhalimsHeart() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.KhalimChest1, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.KhalimChest1)
 			return !chest.Selectable
@@ -190,13 +191,13 @@ func (a Leveling) openMephistoStairs() []action.Action {
 						return nil
 					}
 
-					a.HID.PressKey(a.CharacterCfg.Bindings.SwapWeapon)
+					a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 					helper.Sleep(1000)
-					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
+					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					screenPos := ui.GetScreenCoordsForItem(khalimsWill)
 					a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
 					helper.Sleep(300)
-					a.HID.PressKey("esc")
+					a.HID.PressKey(win.VK_ESCAPE)
 					return nil
 				}),
 			}
@@ -209,7 +210,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 			},
 			step.SyncStep(func(d game.Data) error {
 				helper.Sleep(1000)
-				a.HID.PressKey(a.CharacterCfg.Bindings.SwapWeapon)
+				a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 				return nil
 			})),
 		a.builder.Wait(time.Second*12),

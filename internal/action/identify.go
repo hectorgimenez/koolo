@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 )
 
 func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
@@ -36,7 +37,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				step.SyncStepWithCheck(func(d game.Data) error {
-					b.HID.PressKey(d.CharacterCfg.Bindings.OpenInventory)
+					b.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					return nil
 				}, func(d game.Data) step.Status {
 					if d.OpenMenus.Inventory {
@@ -50,7 +51,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 						b.identifyItem(idTome, i)
 					}
 
-					b.HID.PressKey("esc")
+					b.HID.PressKey(win.VK_ESCAPE)
 
 					return nil
 				}),

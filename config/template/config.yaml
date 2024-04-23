@@ -16,41 +16,6 @@ health: # Healing configuration, all values in %
   chickenAt: 30
   mercChickenAt: 10
 
-bindings:
-  openInventory: i
-  openCharacterScreen: c
-  openSkillTree: t
-  openQuestLog: q
-  potion1: 1
-  potion2: 2
-  potion3: 3
-  potion4: 4
-
-  # Skills
-  forceMove: e
-  standStill: shift
-  swapWeapon: w
-  teleport: f1
-  tp: f4
-  CTABattleCommand: f6
-  CTABattleOrders: f7
-
-  # Class specific bindings
-  sorceress:
-    blizzard: f2
-    staticField: f3
-    frozenArmor: f5
-    fireBall: f2 # During leveling only
-    nova: f2
-    energyShield: f8
-
-  paladin:
-    concentration: f2 # Will be used for Might during leveling
-    holyShield: f5
-    vigor: f1
-    redemption: f8
-    cleansing: f4
-
 inventory:
   inventoryLock:
     - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ] # 0: Item locked and won't be moved.
@@ -64,11 +29,13 @@ inventory:
     rejuvenation: 1
 
 character:
-  class: sorceress # Allowed values: sorceress, lightning, hammerdin, paladin (leveling only)
+  class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
   castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
+  stashToShared: false
 
 game:
+  minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
   clearTPArea: true # Will clear the TP area before clicking it
   difficulty: hell # Allowed values: normal, nightmare, hell
   randomizeRuns: true # Will randomize the order of the runs each game
@@ -82,6 +49,17 @@ game:
   # Specific runs settings
   pindleskin:
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
+  stonytomb:
+    openChests: true
+    focusOnElitePacks: false
+  ancienttunnels:
+    openChests: true
+    focusOnElitePacks: false
+  pit:
+    # default - Outer Cloister -> Monastery Gates -> Tamoe Highland
+    moveThroughBlackMarsh: false # Use Black Marsh -> Tamoe Highland route
+    openChests: true
+    focusOnElitePacks: false
   mephisto:
     killCouncilMembers: true # Will kill the council members after killing Mephisto
     openChests: true # Will open chests after killing Mephisto
@@ -90,6 +68,10 @@ game:
     clearPortal: true # Kills Rakanishu and makes easier selecting the portal
   nihlathak:
     clearArea: true
+  diablo:
+    killDiablo: true # Should bot kill Diablo after seals
+    clearArea: true # Should bot clear regular monsters
+    onlyElites: true # Should bot target only elites
   baal:
     killBaal: false
     dollQuit: false

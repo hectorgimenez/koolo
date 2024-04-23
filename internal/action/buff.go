@@ -1,7 +1,9 @@
 package action
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -16,6 +18,18 @@ var lastBuffedAt = map[string]time.Time{}
 
 func (b *Builder) BuffIfRequired(d game.Data) *StepChainAction {
 	if !b.IsRebuffRequired(d) {
+		return nil
+	}
+
+	// Don't buff if we have 2 or more monsters close to the character.
+	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
+	closeMonsters := 0
+	for _, m := range d.Monsters {
+		if pather.DistanceFromMe(d, m.Position) < 15 {
+			closeMonsters++
+		}
+	}
+	if closeMonsters >= 2 {
 		return nil
 	}
 
@@ -37,15 +51,14 @@ func (b *Builder) Buff() *StepChainAction {
 
 		steps = append(steps, b.buffCTA(d)...)
 
-		keys := make([]string, 0)
-		for buff, kb := range b.ch.BuffSkills() {
-			if _, found := d.PlayerUnit.Skills[buff]; !found {
+		keys := make([]data.KeyBinding, 0)
+		for _, buff := range b.ch.BuffSkills(d) {
+			kb, found := d.KeyBindings.KeyBindingForSkill(buff)
+			if !found {
 				return nil
 			}
 
-			if kb != "" {
-				keys = append(keys, kb)
-			}
+			keys = append(keys, kb)
 		}
 
 		if len(keys) > 0 {
@@ -55,7 +68,7 @@ func (b *Builder) Buff() *StepChainAction {
 				step.SyncStep(func(_ game.Data) error {
 					for _, kb := range keys {
 						helper.Sleep(200)
-						b.HID.PressKey(kb)
+						b.HID.PressKeyBinding(kb)
 						helper.Sleep(300)
 						b.HID.Click(game.RightButton, 300, 300)
 						helper.Sleep(300)
@@ -81,9 +94,9 @@ func (b *Builder) IsRebuffRequired(d game.Data) bool {
 	}
 
 	// TODO: Find a better way to convert skill to state
-	buffs := b.ch.BuffSkills()
-	for buff, kb := range buffs {
-		if kb != "" {
+	buffs := b.ch.BuffSkills(d)
+	for _, buff := range buffs {
+		if _, found := d.KeyBindings.KeyBindingForSkill(buff); found {
 			if buff == skill.HolyShield && !d.PlayerUnit.States.HasState(state.Holyshield) {
 				return true
 			}
@@ -105,16 +118,16 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 
 		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 		if _, found := d.PlayerUnit.Skills[skill.BattleCommand]; !found {
-			steps = append(steps, step.SwapToCTA(d.CharacterCfg.Bindings.SwapWeapon))
+			steps = append(steps, step.SwapToCTA())
 		}
 
 		steps = append(steps,
 			step.SyncStep(func(d game.Data) error {
-				b.HID.PressKey(d.CharacterCfg.Bindings.CTABattleCommand)
+				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleCommand))
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(300)
-				b.HID.PressKey(d.CharacterCfg.Bindings.CTABattleOrders)
+				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleOrders))
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
 				helper.Sleep(100)
@@ -122,7 +135,7 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 				return nil
 			}),
 			step.Wait(time.Millisecond*500),
-			step.SwapToMainWeapon(d.CharacterCfg.Bindings.SwapWeapon),
+			step.SwapToMainWeapon(),
 		)
 	}
 
@@ -130,10 +143,6 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 }
 
 func (b *Builder) isCTAEnabled(d game.Data) bool {
-	if d.CharacterCfg.Bindings.CTABattleCommand == "" || d.CharacterCfg.Bindings.CTABattleOrders == "" {
-		return false
-	}
-
 	for _, itm := range d.Items.ByLocation(item.LocationEquipped) {
 		if itm.Stats[stat.NumSockets].Value == 5 && itm.Stats[stat.ReplenishLife].Value == 12 && itm.Stats[stat.NonClassSkill].Value > 0 && itm.Stats[stat.PreventMonsterHeal].Value > 0 {
 			return true

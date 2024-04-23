@@ -15,7 +15,7 @@ const (
 )
 
 type MouseButton uint
-type ModifierKey uint
+type ModifierKey byte
 
 // MovePointer moves the mouse to the requested position, x and y should be the final position based on
 // pixels shown in the screen. Top-left corner is 0,0
@@ -52,7 +52,7 @@ func (hid *HID) Click(btn MouseButton, x, y int) {
 }
 
 func (hid *HID) ClickWithModifier(btn MouseButton, x, y int, modifier ModifierKey) {
-	hid.gi.OverrideGetKeyState(int(modifier))
+	hid.gi.OverrideGetKeyState(byte(modifier))
 	hid.Click(btn, x, y)
 	hid.gi.RestoreGetKeyState()
 }

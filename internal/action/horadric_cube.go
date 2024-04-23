@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 	"log/slog"
 )
 
@@ -89,7 +90,7 @@ func (b *Builder) CubeTransmute() *Chain {
 
 			return []step.Step{
 				step.SyncStepWithCheck(func(d game.Data) error {
-					b.HID.PressKey("esc")
+					b.HID.PressKey(win.VK_ESCAPE)
 					helper.Sleep(300)
 					return nil
 				}, func(d game.Data) step.Status {

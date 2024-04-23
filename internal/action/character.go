@@ -9,7 +9,7 @@ import (
 )
 
 type Character interface {
-	BuffSkills() map[skill.ID]string
+	BuffSkills(game.Data) []skill.ID
 	KillCountess() Action
 	KillAndariel() Action
 	KillSummoner() Action
@@ -33,7 +33,7 @@ type LevelingCharacter interface {
 	// StatPoints Stats will be assigned in the order they are returned by this function.
 	StatPoints(game.Data) map[stat.ID]int
 	SkillPoints(game.Data) []skill.ID
-	GetKeyBindings(game.Data) map[skill.ID]string
+	SkillsToBind(game.Data) (skill.ID, []skill.ID)
 	ShouldResetSkills(game.Data) bool
 	KillAncients() Action
 }

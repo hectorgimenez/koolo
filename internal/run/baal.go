@@ -35,7 +35,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		s.builder.MoveToCoords(baalThronePosition),
 		// Kill monsters inside Baal throne
 		s.checkForSoulsOrDolls(),
-		s.builder.ClearAreaAroundPlayer(50),
+		s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
 		s.builder.Buff(),
 	)
 
@@ -74,7 +74,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 				}
 			}
 
-			return []action.Action{s.builder.ClearAreaAroundPlayer(50)}
+			return []action.Action{s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())}
 		}
 
 		return nil

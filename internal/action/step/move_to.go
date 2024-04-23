@@ -72,11 +72,11 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 	if d.CanTeleport() {
 		if d.PlayerUnit.RightSkill != skill.Teleport {
-			container.HID.PressKey(d.CharacterCfg.Bindings.Teleport)
+			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.Teleport))
 		}
-	} else if d.PlayerUnit.Skills[skill.Vigor].Level > 0 && d.CharacterCfg.Bindings.Paladin.Vigor != "" {
+	} else if kb, found := d.KeyBindings.KeyBindingForSkill(skill.Vigor); found {
 		if d.PlayerUnit.RightSkill != skill.Vigor {
-			container.HID.PressKey(d.CharacterCfg.Bindings.Paladin.Vigor)
+			container.HID.PressKeyBinding(kb)
 		}
 	}
 
@@ -137,7 +137,7 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 	if len(m.path.AstarPather) == 0 {
 		return nil
 	}
-	container.PathFinder.MoveThroughPath(m.path, calculateMaxDistance(d, walkDuration), d.CanTeleport())
+	container.PathFinder.MoveThroughPath(d, m.path, calculateMaxDistance(d, walkDuration))
 
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 )
 
 const scrollOfInifuss = "ScrollOfInifuss"
@@ -113,7 +114,7 @@ func (a Leveling) deckardCain(d game.Data) (actions []action.Action) {
 			a.builder.ReturnTown(),
 			a.builder.InteractNPC(
 				npc.Akara,
-				step.KeySequence("esc"),
+				step.KeySequence(win.VK_ESCAPE),
 			),
 		}
 
@@ -180,7 +181,7 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 		action.NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d game.Data) error {
-					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
+					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					x := 0
 					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 						if itm.Name != "AntidotePotion" {
@@ -200,7 +201,7 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 						x++
 					}
 
-					a.HID.PressKey("esc")
+					a.HID.PressKey(win.VK_ESCAPE)
 					return nil
 				}),
 			}
@@ -216,7 +217,7 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 		}),
 		a.char.KillAndariel(),
 		a.builder.ReturnTown(),
-		a.builder.InteractNPC(npc.Warriv, step.KeySequence("home", "down", "enter")),
+		a.builder.InteractNPC(npc.Warriv, step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)),
 	)
 
 	return actions

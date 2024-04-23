@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 )
 
 func (a Leveling) act2() action.Action {
@@ -90,7 +91,7 @@ func (a Leveling) findHoradricCube() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.HoradricCubeChest, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.HoradricCubeChest)
 			return !chest.Selectable
@@ -111,7 +112,7 @@ func (a Leveling) findStaff() []action.Action {
 
 			return chest.Position, found
 		}),
-		a.builder.ClearAreaAroundPlayer(15),
+		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.StaffOfKingsChest, func(d game.Data) bool {
 			chest, _ := d.Objects.FindOne(object.StaffOfKingsChest)
 			return !chest.Selectable
@@ -154,7 +155,7 @@ func (a Leveling) summoner() []action.Action {
 		}),
 		a.builder.DiscoverWaypoint(),
 		a.builder.ReturnTown(),
-		a.builder.InteractNPC(npc.Atma, step.KeySequence("esc")),
+		a.builder.InteractNPC(npc.Atma, step.KeySequence(win.VK_ESCAPE)),
 	)
 
 	return actions
@@ -177,7 +178,7 @@ func (a Leveling) prepareStaff() action.Action {
 
 							a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 							helper.Sleep(300)
-							a.HID.PressKey("esc")
+							a.HID.PressKey(win.VK_ESCAPE)
 							return nil
 						}),
 					),
@@ -244,7 +245,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 	// If staff has not been used, then put it in the orifice and wait for the entrance to open
 	if !staffAlreadyUsed {
 		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(30),
+			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
 			a.builder.InteractObject(object.HoradricOrifice, func(d game.Data) bool {
 				return d.OpenMenus.Anvil
 			},
@@ -284,7 +285,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 		action.NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d game.Data) error {
-					a.HID.PressKey(a.CharacterCfg.Bindings.OpenInventory)
+					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					x := 0
 					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 						if itm.Name != "ThawingPotion" {
@@ -304,7 +305,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 						x++
 					}
 
-					a.HID.PressKey("esc")
+					a.HID.PressKey(win.VK_ESCAPE)
 					return nil
 				}),
 			}
@@ -342,11 +343,11 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 			X: 5092,
 			Y: 5144,
 		}),
-		a.builder.InteractNPC(npc.Jerhyn, step.KeySequence("esc")),
+		a.builder.InteractNPC(npc.Jerhyn, step.KeySequence(win.VK_ESCAPE)),
 		a.builder.MoveToCoords(data.Position{
 			X: 5195,
 			Y: 5060,
 		}),
-		a.builder.InteractNPC(npc.Meshif, step.KeySequence("home", "down", "enter")),
+		a.builder.InteractNPC(npc.Meshif, step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)),
 	)
 }

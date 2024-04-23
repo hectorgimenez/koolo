@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
+	"runtime/debug"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -67,7 +69,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v", r)
+			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v\n Stacktrace: %s", r, debug.Stack())
 		}
 	}()
 
@@ -206,14 +208,14 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 	}
 
 	actions := []action.Action{
-		b.ab.ClearAreaAroundPlayer(5),
+		b.ab.ClearAreaAroundPlayer(5, data.MonsterAnyFilter()),
 		b.ab.ItemPickup(true, -1),
 	}
 
 	// Don't return town on last run
 	if currentRun != len(runs)-1 {
 		if config.Characters[b.supervisorName].Game.ClearTPArea {
-			actions = append(actions, b.ab.ClearAreaAroundPlayer(5))
+			actions = append(actions, b.ab.ClearAreaAroundPlayer(5, data.MonsterAnyFilter()))
 			actions = append(actions, b.ab.ItemPickup(false, -1))
 		}
 		actions = append(actions, b.ab.ReturnTown())

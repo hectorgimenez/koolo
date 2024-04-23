@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -31,6 +32,14 @@ func (a A1) RepairNPC() npc.ID {
 }
 
 func (a A1) TPWaitingArea(d game.Data) data.Position {
+	rogueBonfire, found := d.Objects.FindOne(object.RogueBonfire)
+	if found {
+		return data.Position{
+			X: rogueBonfire.Position.X,
+			Y: rogueBonfire.Position.Y + 8,
+		}
+	}
+
 	cain, _ := d.NPCs.FindOne(npc.Kashya)
 
 	return cain.Positions[0]

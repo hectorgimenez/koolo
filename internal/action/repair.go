@@ -10,6 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/lxn/win"
 )
 
 func (b *Builder) Repair() *Chain {
@@ -22,12 +23,12 @@ func (b *Builder) Repair() *Chain {
 				if repairNPC == npc.Hratli {
 					actions = append(actions, b.MoveToCoords(data.Position{X: 5224, Y: 5045}))
 				}
-				keys := make([]string, 0)
-				keys = append(keys, "home")
+				keys := make([]byte, 0)
+				keys = append(keys, win.VK_HOME)
 				if repairNPC != npc.Halbu {
-					keys = append(keys, "down")
+					keys = append(keys, win.VK_DOWN)
 				}
-				keys = append(keys, "enter")
+				keys = append(keys, win.VK_DOWN)
 
 				return append(actions, b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).RepairNPC(),
 					step.KeySequence(keys...),
@@ -37,7 +38,7 @@ func (b *Builder) Repair() *Chain {
 						helper.Sleep(500)
 						return nil
 					}),
-					step.KeySequence("esc"),
+					step.KeySequence(win.VK_ESCAPE),
 				))
 			}
 		}

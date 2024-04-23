@@ -3,14 +3,15 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	cp "github.com/otiai10/copy"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/nip"
 
@@ -62,40 +63,6 @@ type CharacterCfg struct {
 		ChickenAt           int `yaml:"chickenAt"`
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
-	Bindings struct {
-		OpenInventory       string `yaml:"openInventory"`
-		OpenCharacterScreen string `yaml:"openCharacterScreen"`
-		OpenSkillTree       string `yaml:"openSkillTree"`
-		OpenQuestLog        string `yaml:"openQuestLog"`
-		Potion1             string `yaml:"potion1"`
-		Potion2             string `yaml:"potion2"`
-		Potion3             string `yaml:"potion3"`
-		Potion4             string `yaml:"potion4"`
-		ForceMove           string `yaml:"forceMove"`
-		StandStill          string `yaml:"standStill"`
-		SwapWeapon          string `yaml:"swapWeapon"`
-		Teleport            string `yaml:"teleport"`
-		TP                  string `yaml:"tp"`
-		CTABattleCommand    string `yaml:"CTABattleCommand"`
-		CTABattleOrders     string `yaml:"CTABattleOrders"`
-
-		// Class Specific bindings
-		Sorceress struct {
-			Blizzard     string `yaml:"blizzard"`
-			StaticField  string `yaml:"staticField"`
-			FrozenArmor  string `yaml:"frozenArmor"`
-			FireBall     string `yaml:"fireBall"`
-			Nova         string `yaml:"nova"`
-			EnergyShield string `yaml:"energyShield"`
-		} `yaml:"sorceress"`
-		Paladin struct {
-			Concentration string `yaml:"concentration"`
-			HolyShield    string `yaml:"holyShield"`
-			Vigor         string `yaml:"vigor"`
-			Redemption    string `yaml:"redemption"`
-			Cleansing     string `yaml:"cleansing"`
-		} `yaml:"paladin"`
-	} `yaml:"bindings"`
 	Inventory struct {
 		InventoryLock [][]int `yaml:"inventoryLock"`
 		BeltColumns   struct {
@@ -108,15 +75,30 @@ type CharacterCfg struct {
 		Class         string `yaml:"class"`
 		CastingFrames int    `yaml:"castingFrames"`
 		UseMerc       bool   `yaml:"useMerc"`
+		StashToShared bool   `yaml:"stashToShared"`
 	} `yaml:"character"`
 	Game struct {
-		ClearTPArea   bool                  `yaml:"clearTPArea"`
-		Difficulty    difficulty.Difficulty `yaml:"difficulty"`
-		RandomizeRuns bool                  `yaml:"randomizeRuns"`
-		Runs          []string              `yaml:"runs"`
-		Pindleskin    struct {
+		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
+		ClearTPArea            bool                  `yaml:"clearTPArea"`
+		Difficulty             difficulty.Difficulty `yaml:"difficulty"`
+		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
+		Runs                   []string              `yaml:"runs"`
+		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
+		Pit struct {
+			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
+			OpenChests            bool `yaml:"openChests"`
+			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
+		} `yaml:"pit"`
+		StonyTomb struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"stonytomb"`
+		AncientTunnels struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"ancienttunnels"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
@@ -128,6 +110,11 @@ type CharacterCfg struct {
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
 		} `yaml:"nihlathak"`
+		Diablo struct {
+			KillDiablo bool `yaml:"killDiablo"`
+			ClearArea  bool `yaml:"clearArea"`
+			OnlyElites bool `yaml:"onlyElites"`
+		} `yaml:"diablo"`
 		Baal struct {
 			KillBaal bool `yaml:"killBaal"`
 			DollQuit bool `yaml:"dollQuit"`

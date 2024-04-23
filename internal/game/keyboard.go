@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/inkeliz/w32"
 	"github.com/lxn/win"
 	"math/rand"
@@ -13,40 +14,60 @@ const (
 	keyPressMaxTime = 90 // ms
 )
 
-// PressKey toggles a key, it holds the key between keyPressMinTime and keyPressMaxTime ms randomly
-func (hid *HID) PressKey(key string) {
-	keyCode := hid.getASCIICode(key)
-	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, keyCode, hid.calculatelParam(keyCode, true))
+// PressKey receives an ASCII code and sends a key press event to the game window
+func (hid *HID) PressKey(key byte) {
+	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, uintptr(key), hid.calculatelParam(key, true))
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, keyCode, hid.calculatelParam(keyCode, false))
+	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, uintptr(key), hid.calculatelParam(key, false))
 }
 
-func (hid *HID) PressKeyWithModifier(key string, modifier ModifierKey) {
-	hid.gi.OverrideGetKeyState(int(modifier))
+// PressKeyWithModifier works the same as PressKey but with a modifier key (shift, ctrl, alt)
+func (hid *HID) PressKeyWithModifier(key byte, modifier ModifierKey) {
+	hid.gi.OverrideGetKeyState(byte(modifier))
 	hid.PressKey(key)
 	hid.gi.RestoreGetKeyState()
 }
 
-func (hid *HID) KeyDown(key string) {
-	keyCode := hid.getASCIICode(key)
-	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, keyCode, hid.calculatelParam(keyCode, true))
+func (hid *HID) PressKeyBinding(kb data.KeyBinding) {
+	keys := getKeysForKB(kb)
+	if keys[1] == 0 || keys[1] == 255 {
+		hid.PressKey(keys[0])
+		return
+	}
+
+	hid.PressKeyWithModifier(keys[0], ModifierKey(keys[1]))
 }
 
-func (hid *HID) KeyUp(key string) {
-	keyCode := hid.getASCIICode(key)
-	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, keyCode, hid.calculatelParam(keyCode, false))
+// KeyDown sends a key down event to the game window
+func (hid *HID) KeyDown(kb data.KeyBinding) {
+	keys := getKeysForKB(kb)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYDOWN, uintptr(keys[0]), hid.calculatelParam(keys[0], true))
 }
 
-func (hid *HID) getASCIICode(key string) uintptr {
+// KeyUp sends a key up event to the game window
+func (hid *HID) KeyUp(kb data.KeyBinding) {
+	keys := getKeysForKB(kb)
+	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, uintptr(keys[0]), hid.calculatelParam(keys[0], false))
+}
+
+func getKeysForKB(kb data.KeyBinding) [2]byte {
+	if kb.Key1[0] == 0 || kb.Key1[0] == 255 {
+		return [2]byte{kb.Key2[0], kb.Key2[1]}
+	}
+
+	return [2]byte{kb.Key1[0], kb.Key1[1]}
+}
+
+func (hid *HID) GetASCIICode(key string) byte {
 	if len(key) == 1 {
-		return uintptr(strings.ToUpper(key)[0])
+		return strings.ToUpper(key)[0]
 	}
 
 	return specialChars[strings.ToLower(key)]
 }
 
-var specialChars = map[string]uintptr{
+var specialChars = map[string]byte{
 	"esc":       win.VK_ESCAPE,
 	"enter":     win.VK_RETURN,
 	"f1":        win.VK_F1,
@@ -80,7 +101,7 @@ var specialChars = map[string]uintptr{
 	"-":         win.VK_OEM_MINUS,
 }
 
-func (hid *HID) calculatelParam(keyCode uintptr, down bool) uintptr {
+func (hid *HID) calculatelParam(keyCode byte, down bool) uintptr {
 	scanCode := int(w32.MapVirtualKey(uint(keyCode), w32.MAPVK_VK_TO_VSC))
 	repeatCount := 1
 	extendedKeyFlag := 0

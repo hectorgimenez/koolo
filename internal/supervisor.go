@@ -65,6 +65,7 @@ func (s *baseSupervisor) Stop() {
 	}
 
 	s.c.Injector.Unload()
+	s.c.Reader.Close()
 	s.c.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 
@@ -108,7 +109,7 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 				return nil
 			}
 
-			s.c.HID.PressKey("down")
+			s.c.HID.PressKey(win.VK_DOWN)
 			time.Sleep(time.Millisecond * 500)
 			previousSelection = characterName
 		}
