@@ -17,6 +17,7 @@ func (a ArachnidLair) Name() string {
 func (a ArachnidLair) BuildActions() []action.Action {
 	actions := []action.Action{
 		a.builder.WayPoint(area.SpiderForest), // Moving to starting point (Spider Forest)
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.SpiderCave), // Travel to ArachnidLair
 	}
 

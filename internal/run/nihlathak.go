@@ -21,7 +21,10 @@ func (a Nihlathak) Name() string {
 
 func (a Nihlathak) BuildActions() (actions []action.Action) {
 	// Moving to starting point (Halls of Pain)
-	actions = append(actions, a.builder.WayPoint(area.HallsOfPain))
+	actions = append(actions,
+		a.builder.WayPoint(area.HallsOfPain),
+		a.builder.Buff(),
+	)
 
 	// Travel to boss position
 	actions = append(actions, a.builder.MoveToArea(area.HallsOfVaught))

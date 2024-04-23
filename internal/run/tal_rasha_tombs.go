@@ -22,6 +22,7 @@ func (a TalRashaTombs) BuildActions() (actions []action.Action) {
 	for _, tomb := range talRashaTombs {
 		actions = append(actions,
 			a.builder.WayPoint(area.CanyonOfTheMagi),
+			a.builder.Buff(),
 			a.builder.MoveToArea(tomb),
 			a.builder.OpenTPIfLeader(),
 			a.builder.Buff(),

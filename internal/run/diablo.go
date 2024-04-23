@@ -77,6 +77,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 	actions = append(actions,
 		// Moving to starting point (RiverOfFlame)
 		a.builder.WayPoint(area.RiverOfFlame),
+		a.builder.Buff(),
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
 	)
 

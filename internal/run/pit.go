@@ -25,6 +25,7 @@ func (a Pit) BuildActions() (actions []action.Action) {
 
 	actions = append(actions,
 		a.builder.WayPoint(area.OuterCloister),
+		a.builder.Buff(),
 		a.builder.MoveToArea(area.MonasteryGate),
 		a.builder.MoveToArea(area.TamoeHighland),
 	)

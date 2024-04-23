@@ -19,6 +19,7 @@ func (s Summoner) Name() string {
 func (s Summoner) BuildActions() (actions []action.Action) {
 	return []action.Action{
 		s.builder.WayPoint(area.ArcaneSanctuary), // Moving to starting point (Arcane Sanctuary)
+		s.builder.Buff(),
 		s.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			m, found := d.NPCs.FindOne(npc.Summoner)
 

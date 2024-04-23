@@ -26,6 +26,7 @@ func (a LowerKurastChest) Name() string {
 func (a LowerKurastChest) BuildActions() []action.Action {
 	actions := []action.Action{
 		a.builder.WayPoint(area.LowerKurast),
+		a.builder.Buff(),
 		action.NewChain(func(d game.Data) []action.Action {
 			// We can have one or two bonfires
 			var bonFirePositions []data.Position

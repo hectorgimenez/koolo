@@ -29,6 +29,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	actions = append(actions,
 		// Moving to starting point (The World StoneKeep Level 2)
 		s.builder.WayPoint(area.TheWorldStoneKeepLevel2),
+		s.builder.Buff(),
 		// Travel to boss position
 		s.builder.MoveToArea(area.TheWorldStoneKeepLevel3),
 		s.builder.MoveToArea(area.ThroneOfDestruction),
