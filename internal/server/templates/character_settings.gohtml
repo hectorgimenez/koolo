@@ -1,3 +1,4 @@
+{{$topLevelContext := .}}
 <!doctype html>
 <html lang="en">
 <head>
@@ -98,8 +99,8 @@
                 </label>
             </fieldset>
             <label>
-                Use merc
                 <input id="use_merc" type="checkbox" name="useMerc" {{ if .Config.Character.UseMerc }}checked{{ end }}/>
+                Use merc
             </label>
             <fieldset id="merc_health_settings" class="grid">
                 <label>
@@ -200,8 +201,8 @@
                 </select>
             </label>
             <label>
-                Randomize runs
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
+                Randomize runs
             </label>
             <div class="grid">
                 <div>
@@ -210,8 +211,8 @@
                         {{ range $index, $run := .EnabledRuns }}
                             <li>
                                 <details>
-                                    <summary>{{ $run }}</summary>
-                                    <p>...</p>
+                                    <summary role="button" class="outline secondary">{{ $run }}</summary>
+                                    <p>{{ executeTemplateByName $run $topLevelContext }}</p>
                                 </details>
                             </li>
                         {{ end }}
@@ -223,8 +224,8 @@
                         {{ range $index, $run := .DisabledRuns }}
                             <li>
                                 <details>
-                                    <summary>{{ $run }}</summary>
-                                    <p>...</p>
+                                    <summary role="button" class="outline secondary">{{ $run }}</summary>
+                                    <p>{{ executeTemplateByName $run $topLevelContext }}</p>
                                 </details>
                             </li>
                         {{ end }}
@@ -234,21 +235,21 @@
 
             <h4>Gambling</h4>
             <label>
-                Enabled
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
+                Enabled
             </label>
             <h4>Companion mode</h4>
             <label>
-                Enabled
                 <input type="checkbox" name="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>
+                Enabled
             </label>
             <label>
-                Leader
                 <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
+                Leader
             </label>
             <label>
-                Attack
                 <input type="checkbox" name="companionAttack" {{ if .Config.Companion.Attack }}checked{{ end }}/>
+                Attack
             </label>
             <fieldset class="grid">
                 <label>

@@ -42,39 +42,39 @@
                     />
                 </label>
                 <label>
-                    Use custom game settings
                     <input
                             {{ if .UseCustomSettings }}
-                            checked="checked"
+                                checked="checked"
                             {{ end }}
                             type="checkbox"
                             name="use_custom_settings"
                             value="true"
                     />
+                    Use custom game settings
                 </label>
                 <label>
-                    Auto reposition game windows
                     <input
                             {{ if .GameWindowArrangement }}
-                            checked="checked"
+                                checked="checked"
                             {{ end }}
                             type="checkbox"
                             name="game_window_arrangement"
                             value="true"
                     />
+                    Auto reposition game windows
                 </label>
 
                 <h4>Discord integration</h4>
                 <label>
-                    Enabled (Restart required)
                     <input
                             {{ if .Discord.Enabled }}
-                            checked="checked"
+                                checked="checked"
                             {{ end }}
                             type="checkbox"
                             name="discord_enabled"
                             value="true"
                     />
+                    Enabled (Restart required)
                 </label>
                 <input
                         name="discord_token"
@@ -88,15 +88,15 @@
                 />
                 <h4>Telegram integration</h4>
                 <label>
-                    Enabled (Restart required)
                     <input
                             {{ if .Telegram.Enabled }}
-                            checked="checked"
+                                checked="checked"
                             {{ end }}
                             type="checkbox"
                             name="telegram_enabled"
                             value="true"
                     />
+                    Enabled (Restart required)
                 </label>
                 <input
                         name="telegram_token"
@@ -109,10 +109,12 @@
                         value="{{ .Telegram.ChatID }}"
                 />
             </fieldset>
-            <input
-                    type="submit"
-                    value="Continue"
-            />
+            <fieldset class="grid">
+                {{ if not .FirstRun }}
+                    <a href="/"><input type="button" value="Cancel" class="secondary"/></a>
+                {{ end }}
+                <input type="submit" value="Save"/>
+            </fieldset>
         </form>
     </div>
 </main>

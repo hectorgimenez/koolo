@@ -1,3 +1,10 @@
+:root {
+    --pico-typography-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-horizontal: 0.5rem;
+    --pico-font-size: 100%;
+}
+
 .error-message {
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
@@ -22,16 +29,12 @@
     flex-grow: 1;
 }
 
-.compact-form input:not([type="checkbox"]), .compact-form select, .compact-form textarea {
-    height: 45px;
-    margin-bottom: 0;
-}
-
-.compact-form select {
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-
 .run-list {
-    list-style-type: none;
+    padding: 0;
+}
+
+.run-list li {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 0;
 }

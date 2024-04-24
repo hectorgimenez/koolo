@@ -91,11 +91,11 @@ type CharacterCfg struct {
 		StonyTomb struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
-		} `yaml:"stonytomb"`
+		} `yaml:"stony_tomb"`
 		AncientTunnels struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
-		} `yaml:"ancienttunnels"`
+		} `yaml:"ancient_tunnels"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
@@ -122,8 +122,8 @@ type CharacterCfg struct {
 			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
 			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
-			Areas             []area.Area   `yaml:"areas"`
-		} `yaml:"terrorZone"`
+			Areas             []area.ID     `yaml:"areas"`
+		} `yaml:"terror_zone"`
 		Leveling struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`

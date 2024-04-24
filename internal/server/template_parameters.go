@@ -17,6 +17,7 @@ type CharacterSettings struct {
 	Config       *config.CharacterCfg
 	EnabledRuns  []string
 	DisabledRuns []string
+	AvailableTZs map[int]string
 }
 
 type ConfigData struct {

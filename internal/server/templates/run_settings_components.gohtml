@@ -1,0 +1,98 @@
+{{ define "pit" }}
+    <fieldset>
+        <label><input type="checkbox" name="gamePitMoveThroughBlackMarsh" {{ if .Config.Game.Pit.MoveThroughBlackMarsh }}checked{{ end }}> Move through Black Marsh</label>
+        <label><input type="checkbox" name="gamePitOpenChests" {{ if .Config.Game.Pit.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gamePitFocusOnElitePacks" {{ if .Config.Game.Pit.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
+{{ define "pindleskin" }}
+    <fieldset>
+        <label>Skip on immunities</label>
+        <fieldset class="grid">
+            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="cold" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "cold" }}checked{{ end }}> Cold</label>
+            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="fire" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "fire" }}checked{{ end }}> Fire</label>
+            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="light" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "light" }}checked{{ end }}> Light</label>
+            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="poison" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "poison" }}checked{{ end }}> Poison</label>
+        </fieldset>
+    </fieldset>
+{{ end }}
+
+{{ define "stony_tomb" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameStonytombOpenChests" {{ if .Config.Game.StonyTomb.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameStonytombFocusOnElitePacks" {{ if .Config.Game.StonyTomb.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
+{{ define "ancient_tunnels" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameAncientTunnelsOpenChests" {{ if .Config.Game.AncientTunnels.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameAncientTunnelsFocusOnElitePacks" {{ if .Config.Game.AncientTunnels.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
+{{ define "mephisto" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameMephistoKillCouncilMembers" {{ if .Config.Game.Mephisto.KillCouncilMembers }}checked{{ end }}> Kill council members</label>
+        <label><input type="checkbox" name="gameMephistoOpenChests" {{ if .Config.Game.Mephisto.OpenChests }}checked{{ end }}> Open chests</label>
+    </fieldset>
+{{ end }}
+
+{{ define "tristram" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameTristramFocusOnElitePacks" {{ if .Config.Game.Tristram.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+        <label><input type="checkbox" name="gameTristramClearPortal" {{ if .Config.Game.Tristram.ClearPortal }}checked{{ end }}> Clear portal</label>
+    </fieldset>
+{{ end }}
+
+{{ define "nihlathak" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameNihlathakClearArea" {{ if .Config.Game.Nihlathak.ClearArea }}checked{{ end }}> Clear area</label>
+    </fieldset>
+{{ end }}
+
+{{ define "baal" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameBaalKillBaal" {{ if .Config.Game.Baal.KillBaal }}checked{{ end }}> Kill Baal</label>
+    </fieldset>
+{{ end }}
+
+{{ define "eldritch" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameEldritchKillShenk" {{ if .Config.Game.Eldritch.KillShenk }}checked{{ end }}> Kill Shenk</label>
+    </fieldset>
+{{ end }}
+
+{{ define "diablo" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameDiabloClearArea" {{ if .Config.Game.Diablo.ClearArea }}checked{{ end }}> Clear area</label>
+        <label><input type="checkbox" name="gameDiabloOnlyElites" {{ if .Config.Game.Diablo.OnlyElites }}checked{{ end }}> Focus on elite packs</label>
+        <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label>
+    </fieldset>
+{{ end }}
+
+{{ define "leveling" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
+        <label><input type="checkbox" name="gameLevelingEnsureKeyBinding" {{ if .Config.Game.Leveling.EnsureKeyBinding }}checked{{ end }}> Automatically bind skills</label>
+    </fieldset>
+{{ end }}
+
+{{ define "terror_zone" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameTerrorZoneFocusOnElitePacks" {{ if .Config.Game.TerrorZone.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+        <label><input type="checkbox" name="gameTerrorZoneSkipOtherRuns" {{ if .Config.Game.TerrorZone.SkipOtherRuns }}checked{{ end }}> Skip all runs and only do TZ when available</label>
+        <label>Skip on immunities</label>
+        <fieldset class="grid">
+            <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="cold" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "cold" }}checked{{ end }}> Cold</label>
+            <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="fire" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "fire" }}checked{{ end }}> Fire</label>
+            <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="light" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "light" }}checked{{ end }}> Light</label>
+            <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="poison" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "poison" }}checked{{ end }}> Poison</label>
+        </fieldset>
+        <label>Tracked areas</label>
+        {{ range $id, $name := .AvailableTZs }}
+            <label><input type="checkbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" checked>{{ $name }}</label>
+        {{ end }}
+    </fieldset>
+{{ end }}

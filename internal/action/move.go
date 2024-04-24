@@ -15,7 +15,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
+func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain {
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary {
 		return NewChain(func(d game.Data) []Action {

@@ -18,7 +18,7 @@ const (
 	wpAreaBtnHeight = 41
 )
 
-func (b *Builder) WayPoint(a area.Area) *Chain {
+func (b *Builder) WayPoint(a area.ID) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		// We don't need to move, we are already at destination area
 		if d.PlayerUnit.Area == a {
@@ -32,7 +32,7 @@ func (b *Builder) WayPoint(a area.Area) *Chain {
 	})
 }
 
-func (b *Builder) openWPAndSelectTab(a area.Area, d game.Data) Action {
+func (b *Builder) openWPAndSelectTab(a area.ID, d game.Data) Action {
 	wpCoords, found := area.WPAddresses[a]
 	if !found {
 		panic("Area destination is not mapped on WayPoint Action (waypoint.go)")
@@ -58,10 +58,10 @@ func (b *Builder) openWPAndSelectTab(a area.Area, d game.Data) Action {
 	return nil
 }
 
-func (b *Builder) useWP(a area.Area) *Chain {
+func (b *Builder) useWP(a area.ID) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		finalDestination := a
-		traverseAreas := make([]area.Area, 0)
+		traverseAreas := make([]area.ID, 0)
 		currentWP := area.WPAddresses[a]
 		if !slices.Contains(d.PlayerUnit.AvailableWaypoints, a) {
 			for {

@@ -1,8 +1,11 @@
 package server
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -15,26 +18,50 @@ import (
 )
 
 type HttpServer struct {
-	logger  *slog.Logger
-	manager *koolo.SupervisorManager
+	logger    *slog.Logger
+	manager   *koolo.SupervisorManager
+	templates *template.Template
 }
 
 var (
 	//go:embed all:assets
-	assets embed.FS
+	assetsFS embed.FS
 	//go:embed all:templates
-	templates embed.FS
-
-	configTpl       = template.Must(template.ParseFS(templates, "templates/config.gohtml"))
-	indexTpl        = template.Must(template.ParseFS(templates, "templates/index.gohtml"))
-	charSettingsTpl = template.Must(template.ParseFS(templates, "templates/character_settings.gohtml"))
+	templatesFS embed.FS
 )
 
-func New(logger *slog.Logger, manager *koolo.SupervisorManager) *HttpServer {
-	return &HttpServer{
-		logger:  logger,
-		manager: manager,
+func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, error) {
+	var templates *template.Template
+	helperFuncs := template.FuncMap{
+		"isInSlice": func(slice []stat.Resist, value string) bool {
+			for _, v := range slice {
+				if string(v) == value {
+					return true
+				}
+			}
+			return false
+		},
+		"executeTemplateByName": func(name string, data interface{}) template.HTML {
+			tmpl := templates.Lookup(name)
+			var buf bytes.Buffer
+			if tmpl == nil {
+				return "This run is not configurable."
+			}
+
+			tmpl.Execute(&buf, data)
+			return template.HTML(buf.String())
+		},
 	}
+	templates, err := template.New("").Funcs(helperFuncs).ParseFS(templatesFS, "templates/*.gohtml")
+	if err != nil {
+		return nil, err
+	}
+
+	return &HttpServer{
+		logger:    logger,
+		manager:   manager,
+		templates: templates,
+	}, nil
 }
 
 func (s *HttpServer) Listen(port int) error {
@@ -46,7 +73,7 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/stop", s.stopSupervisor)
 	http.HandleFunc("/togglePause", s.togglePause)
 
-	assets, _ := fs.Sub(assets, "assets")
+	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
@@ -54,8 +81,7 @@ func (s *HttpServer) Listen(port int) error {
 
 func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {
 	if !helper.HasAdminPermission() {
-		tmpl := template.Must(template.ParseFS(templates, "templates/admin_required.gohtml"))
-		tmpl.Execute(w, nil)
+		s.templates.ExecuteTemplate(w, "templates/admin_required.gohtml", nil)
 		return
 	}
 
@@ -92,7 +118,7 @@ func (s *HttpServer) index(w http.ResponseWriter) {
 		status[supervisorName] = s.manager.Status(supervisorName)
 	}
 
-	indexTpl.Execute(w, IndexData{
+	s.templates.ExecuteTemplate(w, "index.gohtml", IndexData{
 		Version: config.Version,
 		Status:  status,
 	})
@@ -102,7 +128,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
 		if err != nil {
-			configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: "Error parsing form"})
+			s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: "Error parsing form"})
 			return
 		}
 
@@ -121,14 +147,14 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.Telegram.Token = r.Form.Get("telegram_token")
 		telegramChatId, err := strconv.ParseInt(r.Form.Get("telegram_chat_id"), 10, 64)
 		if err != nil {
-			configTpl.Execute(w, ConfigData{KooloCfg: &newConfig, ErrorMessage: "Invalid Telegram Chat ID"})
+			s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: &newConfig, ErrorMessage: "Invalid Telegram Chat ID"})
 			return
 		}
 		newConfig.Telegram.ChatID = telegramChatId
 
 		err = config.ValidateAndSaveConfig(newConfig)
 		if err != nil {
-			configTpl.Execute(w, ConfigData{KooloCfg: &newConfig, ErrorMessage: err.Error()})
+			s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: &newConfig, ErrorMessage: err.Error()})
 			return
 		}
 
@@ -136,7 +162,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	configTpl.Execute(w, ConfigData{KooloCfg: config.Koolo, ErrorMessage: ""})
+	s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: ""})
 }
 
 func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +170,7 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		err = r.ParseForm()
 		if err != nil {
-			charSettingsTpl.Execute(w, CharacterSettings{
+			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
 				ErrorMessage: err.Error(),
 			})
 
@@ -154,7 +180,7 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		supervisorName := r.Form.Get("name")
 		err = config.CreateFromTemplate(supervisorName)
 		if err != nil {
-			charSettingsTpl.Execute(w, CharacterSettings{
+			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
 				ErrorMessage: err.Error(),
 				Supervisor:   supervisorName,
 			})
@@ -182,11 +208,18 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	charSettingsTpl.Execute(w, CharacterSettings{
+	availableTZs := make(map[int]string)
+	for _, tz := range area.Areas {
+		if tz.CanBeTerrorized {
+			availableTZs[int(tz.ID)] = tz.Name
+		}
+	}
+	s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
 		Supervisor:   supervisor,
 		Config:       cfg,
 		EnabledRuns:  enabledRuns,
 		DisabledRuns: disabledRuns,
+		AvailableTZs: availableTZs,
 	})
 }
 
