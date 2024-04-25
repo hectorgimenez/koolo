@@ -147,6 +147,10 @@
                            placeholder="{{ .Config.Character.CastingFrames }}"
                            value="{{ .Config.Character.CastingFrames }}"/>
                 </label>
+                <label>
+                    Use teleport when available
+                    <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
+                </label>
             </fieldset>
             <h4>Inventory (Checked means locked)</h4>
             <table>
