@@ -4,11 +4,24 @@ window.onload = function () {
 
     new Sortable(enabled_runs_ul, {
         group: 'runs',
-        animation: 150
+        animation: 150,
+        onSort: function (evt) {
+            updateEnabledRunsHiddenField();
+        }
     });
 
     new Sortable(disabled_runs_ul, {
         group: 'runs',
         animation: 150
     });
+
+    updateEnabledRunsHiddenField();
+}
+
+function updateEnabledRunsHiddenField() {
+    let listItems = document.querySelectorAll('#enabled_runs li');
+    let values = Array.from(listItems).map(function(item) {
+        return item.getAttribute("value");
+    });
+    document.getElementById('gameRuns').value = JSON.stringify(values);
 }

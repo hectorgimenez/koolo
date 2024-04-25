@@ -16,7 +16,7 @@
             <a href="/config" style="text-decoration: none;">
                 <button class="button">Settings</button>
             </a>
-            <a href="/addCharacter" style="text-decoration: none;">
+            <a href="/supervisorSettings" style="text-decoration: none;">
                 <button class="button">Add Character</button>
             </a>
         </div>
@@ -51,6 +51,9 @@
             <td>{{.TotalErrors}}</td>
             <td>{{.TotalDeaths}}</td>
             <td>
+                <a href="/supervisorSettings?supervisor={{$key}}" style="text-decoration: none;">
+                    <button class="button">Settings</button>
+                </a>
                 {{ if eq .SupervisorStatus "Paused" }}
                 <a href="/togglePause?characterName={{$key}}" style="text-decoration: none;">
                     <button class="button">Resume</button>

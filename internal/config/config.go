@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"path/filepath"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -266,6 +267,21 @@ func ValidateAndSaveConfig(config KooloCfg) error {
 	err = os.WriteFile("config/koolo.yaml", text, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing koolo config: %w", err)
+	}
+
+	return Load()
+}
+
+func SaveSupervisorConfig(supervisorName string, config *CharacterCfg) error {
+	filePath := filepath.Join("config", supervisorName, "config.yaml")
+	d, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, d, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing supervisor config: %w", err)
 	}
 
 	return Load()

@@ -3,8 +3,10 @@ package server
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -34,12 +36,10 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, er
 	var templates *template.Template
 	helperFuncs := template.FuncMap{
 		"isInSlice": func(slice []stat.Resist, value string) bool {
-			for _, v := range slice {
-				if string(v) == value {
-					return true
-				}
-			}
-			return false
+			return slices.Contains(slice, stat.Resist(value))
+		},
+		"isTZSelected": func(slice []area.ID, value int) bool {
+			return slices.Contains(slice, area.ID(value))
 		},
 		"executeTemplateByName": func(name string, data interface{}) template.HTML {
 			tmpl := templates.Lookup(name)
@@ -67,8 +67,7 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, er
 func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/", s.getRoot)
 	http.HandleFunc("/config", s.config)
-	http.HandleFunc("/addCharacter", s.add)
-	http.HandleFunc("/editCharacter", s.edit)
+	http.HandleFunc("/supervisorSettings", s.characterSettings)
 	http.HandleFunc("/start", s.startSupervisor)
 	http.HandleFunc("/stop", s.stopSupervisor)
 	http.HandleFunc("/togglePause", s.togglePause)
@@ -165,7 +164,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 	s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: ""})
 }
 
-func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if r.Method == http.MethodPost {
 		err = r.ParseForm()
@@ -178,16 +177,117 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		}
 
 		supervisorName := r.Form.Get("name")
-		err = config.CreateFromTemplate(supervisorName)
-		if err != nil {
-			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
-				ErrorMessage: err.Error(),
-				Supervisor:   supervisorName,
-			})
+		cfg, found := config.Characters[supervisorName]
+		if !found {
+			err = config.CreateFromTemplate(supervisorName)
+			if err != nil {
+				s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+					ErrorMessage: err.Error(),
+					Supervisor:   supervisorName,
+				})
 
-			return
+				return
+			}
+			cfg = config.Characters["template"]
 		}
 
+		cfg.MaxGameLength, _ = strconv.Atoi(r.Form.Get("maxGameLength"))
+		cfg.CharacterName = r.Form.Get("characterName")
+		// Bnet config
+		cfg.Username = r.Form.Get("username")
+		cfg.Password = r.Form.Get("password")
+		cfg.Realm = r.Form.Get("realm")
+		// Health config
+		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))
+		cfg.Health.ManaPotionAt, _ = strconv.Atoi(r.Form.Get("manaPotionAt"))
+		cfg.Health.RejuvPotionAtLife, _ = strconv.Atoi(r.Form.Get("rejuvPotionAtLife"))
+		cfg.Health.RejuvPotionAtMana, _ = strconv.Atoi(r.Form.Get("rejuvPotionAtMana"))
+		cfg.Health.ChickenAt, _ = strconv.Atoi(r.Form.Get("chickenAt"))
+		cfg.Character.UseMerc = r.Form.Has("useMerc")
+		cfg.Health.MercHealingPotionAt, _ = strconv.Atoi(r.Form.Get("mercHealingPotionAt"))
+		cfg.Health.MercRejuvPotionAt, _ = strconv.Atoi(r.Form.Get("mercRejuvPotionAt"))
+		cfg.Health.MercChickenAt, _ = strconv.Atoi(r.Form.Get("mercChickenAt"))
+		// Character
+		cfg.Character.Class = r.Form.Get("characterClass")
+		cfg.Character.CastingFrames, _ = strconv.Atoi(r.Form.Get("characterCastingFrames"))
+		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
+
+		for y, row := range cfg.Inventory.InventoryLock {
+			for x := range row {
+				if r.Form.Has(fmt.Sprintf("inventoryLock[%d][%d]", y, x)) {
+					cfg.Inventory.InventoryLock[y][x] = 0
+				}
+			}
+		}
+
+		for x, value := range r.Form["inventoryBeltColumns[]"] {
+			cfg.Inventory.BeltColumns[x] = value
+		}
+
+		// Game
+		cfg.Game.MinGoldPickupThreshold, _ = strconv.Atoi(r.Form.Get("gameMinGoldPickupThreshold"))
+		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))
+		cfg.Game.RandomizeRuns = r.Form.Has("gameRandomizeRuns")
+
+		// Runs specific config
+
+		enabledRuns := make([]config.Run, 0)
+		// we don't like errors, so we ignore them
+		json.Unmarshal([]byte(r.FormValue("gameRuns")), &enabledRuns)
+		cfg.Game.Runs = enabledRuns
+
+		cfg.Game.Pit.MoveThroughBlackMarsh = r.Form.Has("gamePitMoveThroughBlackMarsh")
+		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")
+		cfg.Game.Pit.FocusOnElitePacks = r.Form.Has("gamePitFocusOnElitePacks")
+
+		cfg.Game.Pindleskin.SkipOnImmunities = []stat.Resist{}
+		for _, i := range r.Form["gamePindleskinSkipOnImmunities[]"] {
+			cfg.Game.Pindleskin.SkipOnImmunities = append(cfg.Game.Pindleskin.SkipOnImmunities, stat.Resist(i))
+		}
+
+		cfg.Game.StonyTomb.OpenChests = r.Form.Has("gameStonytombOpenChests")
+		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")
+		cfg.Game.AncientTunnels.OpenChests = r.Form.Has("gameAncientTunnelsOpenChests")
+		cfg.Game.AncientTunnels.FocusOnElitePacks = r.Form.Has("gameAncientTunnelsFocusOnElitePacks")
+		cfg.Game.Mephisto.KillCouncilMembers = r.Form.Has("gameMephistoKillCouncilMembers")
+		cfg.Game.Mephisto.OpenChests = r.Form.Has("gameMephistoOpenChests")
+		cfg.Game.Tristram.ClearPortal = r.Form.Has("gameTristramClearPortal")
+		cfg.Game.Tristram.FocusOnElitePacks = r.Form.Has("gameTristramFocusOnElitePacks")
+		cfg.Game.Nihlathak.ClearArea = r.Form.Has("gameNihlathakClearArea")
+		cfg.Game.Baal.KillBaal = r.Form.Has("gameBaalKillBaal")
+		cfg.Game.Eldritch.KillShenk = r.Form.Has("gameEldritchKillShenk")
+		cfg.Game.Diablo.ClearArea = r.Form.Has("gameDiabloClearArea")
+		cfg.Game.Diablo.OnlyElites = r.Form.Has("gameDiabloOnlyElites")
+		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
+		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
+		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
+		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
+		cfg.Game.TerrorZone.SkipOtherRuns = r.Form.Has("gameTerrorZoneSkipOtherRuns")
+
+		cfg.Game.TerrorZone.SkipOnImmunities = []stat.Resist{}
+		for _, i := range r.Form["gameTerrorZoneSkipOnImmunities[]"] {
+			cfg.Game.TerrorZone.SkipOnImmunities = append(cfg.Game.TerrorZone.SkipOnImmunities, stat.Resist(i))
+		}
+
+		tzAreas := make([]area.ID, 0)
+		for _, a := range r.Form["gameTerrorZoneAreas[]"] {
+			ID, _ := strconv.Atoi(a)
+			tzAreas = append(tzAreas, area.ID(ID))
+		}
+		cfg.Game.TerrorZone.Areas = tzAreas
+
+		// Gambling
+		cfg.Gambling.Enabled = r.Form.Has("gamblingEnabled")
+
+		// Companion config
+		cfg.Companion.Enabled = r.Form.Has("companionEnabled")
+		cfg.Companion.Leader = r.Form.Has("companionLeader")
+		cfg.Companion.Attack = r.Form.Has("companionAttack")
+		cfg.Companion.LeaderName = r.Form.Get("companionLeaderName")
+		cfg.Companion.GameNameTemplate = r.Form.Get("companionGameNameTemplate")
+		cfg.Companion.GamePassword = r.Form.Get("companionGamePassword")
+
+		config.SaveSupervisorConfig(supervisorName, cfg)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -199,11 +299,13 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	enabledRuns := make([]string, 0)
+	// Let's iterate cfg.Game.Runs to preserve current order
+	for _, run := range cfg.Game.Runs {
+		enabledRuns = append(enabledRuns, string(run))
+	}
 	disabledRuns := make([]string, 0)
 	for run := range config.AvailableRuns {
-		if slices.Contains(cfg.Game.Runs, run) {
-			enabledRuns = append(enabledRuns, string(run))
-		} else {
+		if !slices.Contains(cfg.Game.Runs, run) {
 			disabledRuns = append(disabledRuns, string(run))
 		}
 	}
@@ -221,8 +323,4 @@ func (s *HttpServer) add(w http.ResponseWriter, r *http.Request) {
 		DisabledRuns: disabledRuns,
 		AvailableTZs: availableTZs,
 	})
-}
-
-func (s *HttpServer) edit(w http.ResponseWriter, r *http.Request) {
-
 }

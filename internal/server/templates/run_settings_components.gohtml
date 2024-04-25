@@ -80,6 +80,7 @@
 {{ end }}
 
 {{ define "terror_zone" }}
+    {{$topLevelContext := .}}
     <fieldset>
         <label><input type="checkbox" name="gameTerrorZoneFocusOnElitePacks" {{ if .Config.Game.TerrorZone.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
         <label><input type="checkbox" name="gameTerrorZoneSkipOtherRuns" {{ if .Config.Game.TerrorZone.SkipOtherRuns }}checked{{ end }}> Skip all runs and only do TZ when available</label>
@@ -92,7 +93,7 @@
         </fieldset>
         <label>Tracked areas</label>
         {{ range $id, $name := .AvailableTZs }}
-            <label><input type="checkbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" checked>{{ $name }}</label>
+            <label><input type="checkbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" {{ if isTZSelected $topLevelContext.Config.Game.TerrorZone.Areas $id }}checked{{ end }}>{{ $name }}</label>
         {{ end }}
     </fieldset>
 {{ end }}

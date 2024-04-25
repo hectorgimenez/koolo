@@ -27,14 +27,14 @@
     <div class="notification">
         <h2>Settings</h2>
         <form method="post" autocomplete="off" class="compact-form">
-            <label>
+            <label {{ if ne .Supervisor "" }}hidden="hidden" {{ end }}>
                 <span>Supervisor name</span>
                 <input name="name" placeholder="SuperSorc" value="{{ .Supervisor }}" required/>
             </label>
             <fieldset class="grid">
                 <label>
                     Max game length (seconds)
-                    <input name="maxGameLength" type="number" placeholder="{{ .Config.MaxGameLength }}"
+                    <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
                            value="{{ .Config.MaxGameLength }}"/>
 
                 </label>
@@ -74,27 +74,27 @@
             <fieldset class="grid">
                 <label>
                     Healing at (%)
-                    <input type="number" name="healingPotionAt" placeholder="{{ .Config.Health.HealingPotionAt }}"
+                    <input type="number" name="healingPotionAt" min="0" max="99" placeholder="{{ .Config.Health.HealingPotionAt }}"
                            value="{{ .Config.Health.HealingPotionAt }}"/>
                 </label>
                 <label>
                     Mana at (%)
-                    <input type="number" name="manaPotionAt" placeholder="{{ .Config.Health.ManaPotionAt }}"
+                    <input type="number" name="manaPotionAt" min="0" max="99" placeholder="{{ .Config.Health.ManaPotionAt }}"
                            value="{{ .Config.Health.ManaPotionAt }}"/>
                 </label>
                 <label>
                     Reju at (% of life)
-                    <input type="number" name="rejuvPotionAtLife" placeholder="{{ .Config.Health.RejuvPotionAtLife }}"
+                    <input type="number" name="rejuvPotionAtLife" min="0" max="99" placeholder="{{ .Config.Health.RejuvPotionAtLife }}"
                            value="{{ .Config.Health.RejuvPotionAtLife }}"/>
                 </label>
                 <label>
                     Reju at (% of mana)
-                    <input type="number" name="rejuvPotionAtMana" placeholder="{{ .Config.Health.RejuvPotionAtMana }}"
+                    <input type="number" name="rejuvPotionAtMana" min="0" max="99" placeholder="{{ .Config.Health.RejuvPotionAtMana }}"
                            value="{{ .Config.Health.RejuvPotionAtMana }}"/>
                 </label>
                 <label>
                     Chicken at (%)
-                    <input type="number" name="chickenAt" placeholder="{{ .Config.Health.ChickenAt }}"
+                    <input type="number" name="chickenAt" min="0" max="99" placeholder="{{ .Config.Health.ChickenAt }}"
                            value="{{ .Config.Health.ChickenAt }}"/>
                 </label>
             </fieldset>
@@ -105,18 +105,18 @@
             <fieldset id="merc_health_settings" class="grid">
                 <label>
                     Merc healing at (%)
-                    <input type="number" name="mercHealingPotionAt"
+                    <input type="number" min="0" max="99" name="mercHealingPotionAt"
                            placeholder="{{ .Config.Health.MercHealingPotionAt }}"
                            value="{{ .Config.Health.MercHealingPotionAt }}"/>
                 </label>
                 <label>
                     Merc reju at (%)
-                    <input type="number" name="mercRejuvPotionAt" placeholder="{{ .Config.Health.MercRejuvPotionAt }}"
+                    <input type="number" min="0" max="99" name="mercRejuvPotionAt" placeholder="{{ .Config.Health.MercRejuvPotionAt }}"
                            value="{{ .Config.Health.MercRejuvPotionAt }}"/>
                 </label>
                 <label>
                     Merc chicken at (%)
-                    <input type="number" name="mercChickenAt" placeholder="{{ .Config.Health.MercChickenAt }}"
+                    <input type="number" min="0" max="99" name="mercChickenAt" placeholder="{{ .Config.Health.MercChickenAt }}"
                            value="{{ .Config.Health.MercChickenAt }}"/>
                 </label>
             </fieldset>
@@ -143,7 +143,7 @@
                 </label>
                 <label>
                     Casting frames
-                    <input type="number" name="characterCastingFrames"
+                    <input type="number" min="0" max="23" name="characterCastingFrames"
                            placeholder="{{ .Config.Character.CastingFrames }}"
                            value="{{ .Config.Character.CastingFrames }}"/>
                 </label>
@@ -156,7 +156,7 @@
                         <td>
                             <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
                                    {{ if not $unlocked }}checked{{ end }}/>
-                            {{ end}}
+                            {{ end }}
                     </tr>
                 {{ end }}
             </table>
@@ -181,8 +181,12 @@
             </fieldset>
             <h4>Game</h4>
             <label>
+                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
+                Always stash to shared tab
+            </label>
+            <label>
                 Minimum gold to pickup
-                <input type="number" name="gameMinGoldPickupThreshold"
+                <input min="0" type="number" name="gameMinGoldPickupThreshold"
                        placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
                        value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
             </label>
@@ -204,12 +208,13 @@
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
                 Randomize runs
             </label>
+            <input type="hidden" id="gameRuns" name="gameRuns" value="">
             <div class="grid">
                 <div>
                     <h6>Enabled runs</h6>
                     <ul class="run-list" id="enabled_runs">
                         {{ range $index, $run := .EnabledRuns }}
-                            <li>
+                            <li value="{{ $run }}">
                                 <details>
                                     <summary role="button" class="outline secondary">{{ $run }}</summary>
                                     <p>{{ executeTemplateByName $run $topLevelContext }}</p>
@@ -222,7 +227,7 @@
                     <h6>Disabled runs</h6>
                     <ul class="run-list" id="disabled_runs">
                         {{ range $index, $run := .DisabledRuns }}
-                            <li>
+                            <li value="{{ $run }}">
                                 <details>
                                     <summary role="button" class="outline secondary">{{ $run }}</summary>
                                     <p>{{ executeTemplateByName $run $topLevelContext }}</p>
