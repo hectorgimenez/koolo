@@ -14,11 +14,11 @@ type Town interface {
 	MercContractorNPC() npc.ID
 	GamblingNPC() npc.ID
 	TPWaitingArea(d game.Data) data.Position
-	TownArea() area.Area
+	TownArea() area.ID
 }
 
-func GetTownByArea(a area.Area) Town {
-	towns := map[area.Area]Town{
+func GetTownByArea(a area.ID) Town {
+	towns := map[area.ID]Town{
 		area.RogueEncampment:        A1{},
 		area.LutGholein:             A2{},
 		area.KurastDocks:            A3{},

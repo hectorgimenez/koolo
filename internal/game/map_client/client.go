@@ -56,7 +56,7 @@ func getDifficultyAsNum(df difficulty.Difficulty) string {
 
 type MapData []serverLevel
 
-func (md MapData) CollisionGrid(area area.Area) [][]bool {
+func (md MapData) CollisionGrid(area area.ID) [][]bool {
 	level := md.getLevel(area)
 
 	var cg [][]bool
@@ -93,7 +93,7 @@ func (md MapData) CollisionGrid(area area.Area) [][]bool {
 	return cg
 }
 
-func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (data.NPCs, []data.Level, []data.Object, []data.Room) {
+func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.ID) (data.NPCs, []data.Level, []data.Object, []data.Room) {
 	var npcs []data.NPC
 	var exits []data.Level
 	var objects []data.Object
@@ -125,7 +125,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 			npcs = append(npcs, n)
 		case "exit":
 			lvl := data.Level{
-				Area: area.Area(obj.ID),
+				Area: area.ID(obj.ID),
 				Position: data.Position{
 					X: obj.X + areaOrigin.X,
 					Y: obj.Y + areaOrigin.Y,
@@ -150,7 +150,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 		case "exit_area":
 			found := false
 			for _, exit := range exits {
-				if exit.Area == area.Area(obj.ID) {
+				if exit.Area == area.ID(obj.ID) {
 					exit.IsEntrance = false
 					found = true
 					break
@@ -159,7 +159,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 
 			if !found {
 				lvl := data.Level{
-					Area: area.Area(obj.ID),
+					Area: area.ID(obj.ID),
 					Position: data.Position{
 						X: obj.X + areaOrigin.X,
 						Y: obj.Y + areaOrigin.Y,
@@ -175,7 +175,7 @@ func (md MapData) NPCsExitsAndObjects(areaOrigin data.Position, a area.Area) (da
 	return npcs, exits, objects, rooms
 }
 
-func (md MapData) Origin(area area.Area) data.Position {
+func (md MapData) Origin(area area.ID) data.Position {
 	level := md.getLevel(area)
 
 	return data.Position{
@@ -184,7 +184,7 @@ func (md MapData) Origin(area area.Area) data.Position {
 	}
 }
 
-func (md MapData) getLevel(area area.Area) serverLevel {
+func (md MapData) getLevel(area area.ID) serverLevel {
 	for _, level := range md {
 		if level.ID == int(area) {
 			return level
@@ -198,9 +198,9 @@ func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool)
 	for _, lvl := range md {
 		lvlMaxX := lvl.Offset.X + lvl.Size.Width
 		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
-		if area.Area(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
+		if area.ID(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
 			return LevelData{
-				Area: area.Area(lvl.ID),
+				Area: area.ID(lvl.ID),
 				Name: lvl.Name,
 				Offset: data.Position{
 					X: lvl.Offset.X,
@@ -210,7 +210,7 @@ func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool)
 					X: lvl.Size.Width,
 					Y: lvl.Size.Height,
 				},
-				CollisionGrid: md.CollisionGrid(area.Area(lvl.ID)),
+				CollisionGrid: md.CollisionGrid(area.ID(lvl.ID)),
 			}, true
 		}
 	}
@@ -218,11 +218,11 @@ func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool)
 	return LevelData{}, false
 }
 
-func (md MapData) GetLevelData(id area.Area) (LevelData, bool) {
+func (md MapData) GetLevelData(id area.ID) (LevelData, bool) {
 	for _, lvl := range md {
 		if lvl.ID == int(id) {
 			return LevelData{
-				Area: area.Area(lvl.ID),
+				Area: area.ID(lvl.ID),
 				Name: lvl.Name,
 				Offset: data.Position{
 					X: lvl.Offset.X,
@@ -232,7 +232,7 @@ func (md MapData) GetLevelData(id area.Area) (LevelData, bool) {
 					X: lvl.Size.Width,
 					Y: lvl.Size.Height,
 				},
-				CollisionGrid: md.CollisionGrid(area.Area(lvl.ID)),
+				CollisionGrid: md.CollisionGrid(area.ID(lvl.ID)),
 			}, true
 		}
 	}

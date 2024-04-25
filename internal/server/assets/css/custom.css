@@ -1,3 +1,10 @@
+:root {
+    --pico-typography-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-horizontal: 0.5rem;
+    --pico-font-size: 100%;
+}
+
 .error-message {
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
@@ -5,4 +12,29 @@
     padding: 10px 15px;
     border-radius: 5px;
     margin-bottom: 20px;
+}
+
+.inline-label {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.inline-label span {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.inline-label input {
+    flex-grow: 1;
+}
+
+.run-list {
+    padding: 0;
+}
+
+.run-list li {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 0;
 }

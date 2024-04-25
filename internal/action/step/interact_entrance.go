@@ -14,12 +14,12 @@ import (
 
 type InteractEntranceStep struct {
 	basicStep
-	area                  area.Area
+	area                  area.ID
 	waitingForInteraction bool
 	mouseOverAttempts     int
 }
 
-func InteractEntrance(area area.Area) *InteractEntranceStep {
+func InteractEntrance(area area.ID) *InteractEntranceStep {
 	return &InteractEntranceStep{
 		basicStep: newBasicStep(),
 		area:      area,

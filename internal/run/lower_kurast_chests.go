@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"slices"
@@ -20,7 +21,7 @@ type LowerKurastChest struct {
 }
 
 func (a LowerKurastChest) Name() string {
-	return "LowerKurastChest"
+	return string(config.LowerKurastChestRun)
 }
 
 func (a LowerKurastChest) BuildActions() []action.Action {

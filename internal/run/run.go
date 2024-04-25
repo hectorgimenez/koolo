@@ -1,9 +1,9 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -59,7 +59,7 @@ func (f *Factory) BuildRuns() (runs []Run) {
 
 	for _, run := range f.container.CharacterCfg.Game.Runs {
 		// Prepend terror zone runs, we want to run it always first
-		if run == "terror_zone" {
+		if run == config.TerrorZoneRun {
 			tz := TerrorZone{baseRun: baseRun}
 
 			if len(tz.AvailableTZs(d)) > 0 {
@@ -73,55 +73,54 @@ func (f *Factory) BuildRuns() (runs []Run) {
 	}
 
 	for _, run := range f.container.CharacterCfg.Game.Runs {
-		run = strings.ToLower(run)
 		switch run {
-		case "countess":
+		case config.CountessRun:
 			runs = append(runs, Countess{baseRun})
-		case "andariel":
+		case config.AndarielRun:
 			runs = append(runs, Andariel{baseRun})
-		case "summoner":
+		case config.SummonerRun:
 			runs = append(runs, Summoner{baseRun})
-		case "mephisto":
+		case config.MephistoRun:
 			runs = append(runs, Mephisto{baseRun})
-		case "council":
+		case config.CouncilRun:
 			runs = append(runs, Council{baseRun})
-		case "diablo":
+		case config.DiabloRun:
 			runs = append(runs, Diablo{
 				baseRun: baseRun,
 				bm:      f.bm,
 			})
-		case "eldritch":
+		case config.EldritchRun:
 			runs = append(runs, Eldritch{
 				baseRun: baseRun,
 			})
-		case "pindleskin":
+		case config.PindleskinRun:
 			runs = append(runs, Pindleskin{
 				SkipOnImmunities: f.container.CharacterCfg.Game.Pindleskin.SkipOnImmunities,
 				baseRun:          baseRun,
 			})
-		case "nihlathak":
+		case config.NihlathakRun:
 			runs = append(runs, Nihlathak{baseRun})
-		case "ancient_tunnels":
+		case config.AncientTunnelsRun:
 			runs = append(runs, AncientTunnels{baseRun})
-		case "pit":
+		case config.PitRun:
 			runs = append(runs, Pit{baseRun})
-		case "stony_tomb":
+		case config.StonyTombRun:
 			runs = append(runs, StonyTomb{baseRun})
-		case "arachnid_lair":
+		case config.ArachnidLairRun:
 			runs = append(runs, ArachnidLair{baseRun})
-		case "tristram":
+		case config.TristramRun:
 			runs = append(runs, Tristram{baseRun})
-		case "lower_kurast":
+		case config.LowerKurastRun:
 			runs = append(runs, LowerKurast{baseRun})
-		case "lower_kurast_chest":
+		case config.LowerKurastChestRun:
 			runs = append(runs, LowerKurastChest{baseRun})
-		case "baal":
+		case config.BaalRun:
 			runs = append(runs, Baal{baseRun})
-		case "tal_rasha_tombs":
+		case config.TalRashaTombsRun:
 			runs = append(runs, TalRashaTombs{baseRun})
-		case "leveling":
+		case config.LevelingRun:
 			runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
-		case "cows":
+		case config.CowsRun:
 			runs = append(runs, Cows{baseRun})
 		}
 	}

@@ -3,15 +3,17 @@ package config
 import (
 	"errors"
 	"fmt"
-	"os"
-	"strings"
-	"time"
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"path/filepath"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	cp "github.com/otiai10/copy"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/nip"
 
@@ -64,12 +66,8 @@ type CharacterCfg struct {
 		MercChickenAt       int `yaml:"mercChickenAt"`
 	} `yaml:"health"`
 	Inventory struct {
-		InventoryLock [][]int `yaml:"inventoryLock"`
-		BeltColumns   struct {
-			Healing      int `yaml:"healing"`
-			Mana         int `yaml:"mana"`
-			Rejuvenation int `yaml:"rejuvenation"`
-		} `yaml:"beltColumns"`
+		InventoryLock [][]int     `yaml:"inventoryLock"`
+		BeltColumns   BeltColumns `yaml:"beltColumns"`
 	} `yaml:"inventory"`
 	Character struct {
 		Class         string `yaml:"class"`
@@ -82,7 +80,7 @@ type CharacterCfg struct {
 		ClearTPArea            bool                  `yaml:"clearTPArea"`
 		Difficulty             difficulty.Difficulty `yaml:"difficulty"`
 		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
-		Runs                   []string              `yaml:"runs"`
+		Runs                   []Run                 `yaml:"runs"`
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
@@ -94,11 +92,11 @@ type CharacterCfg struct {
 		StonyTomb struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
-		} `yaml:"stonytomb"`
+		} `yaml:"stony_tomb"`
 		AncientTunnels struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
-		} `yaml:"ancienttunnels"`
+		} `yaml:"ancient_tunnels"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
@@ -125,8 +123,8 @@ type CharacterCfg struct {
 			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
 			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
-			Areas             []area.Area   `yaml:"areas"`
-		} `yaml:"terrorZone"`
+			Areas             []area.ID     `yaml:"areas"`
+		} `yaml:"terror_zone"`
 		Leveling struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
@@ -148,6 +146,29 @@ type CharacterCfg struct {
 		CastDuration time.Duration
 		Rules        []nip.Rule
 	}
+}
+
+type BeltColumns [4]string
+
+func (bm BeltColumns) Total(potionType data.PotionType) int {
+	typeString := ""
+	switch potionType {
+	case data.HealingPotion:
+		typeString = "healing"
+	case data.ManaPotion:
+		typeString = "mana"
+	case data.RejuvenationPotion:
+		typeString = "rejuv"
+	}
+
+	total := 0
+	for _, v := range bm {
+		if strings.EqualFold(v, typeString) {
+			total++
+		}
+	}
+
+	return total
 }
 
 // Load reads the config.ini file and returns a Config struct filled with data from the ini file
@@ -246,6 +267,21 @@ func ValidateAndSaveConfig(config KooloCfg) error {
 	err = os.WriteFile("config/koolo.yaml", text, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing koolo config: %w", err)
+	}
+
+	return Load()
+}
+
+func SaveSupervisorConfig(supervisorName string, config *CharacterCfg) error {
+	filePath := filepath.Join("config", supervisorName, "config.yaml")
+	d, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, d, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing supervisor config: %w", err)
 	}
 
 	return Load()

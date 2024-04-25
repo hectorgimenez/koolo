@@ -37,6 +37,6 @@ func (a A3) TPWaitingArea(_ game.Data) data.Position {
 	}
 }
 
-func (a A3) TownArea() area.Area {
+func (a A3) TownArea() area.ID {
 	return area.KurastDocks
 }

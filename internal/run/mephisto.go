@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 var mephistoSafePosition = data.Position{
@@ -17,7 +18,7 @@ type Mephisto struct {
 }
 
 func (m Mephisto) Name() string {
-	return "Mephisto"
+	return string(config.MephistoRun)
 }
 
 func (m Mephisto) BuildActions() []action.Action {

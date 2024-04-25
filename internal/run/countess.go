@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -14,7 +15,7 @@ type Countess struct {
 }
 
 func (c Countess) Name() string {
-	return "Countess"
+	return string(config.CountessRun)
 }
 
 func (c Countess) BuildActions() (actions []action.Action) {

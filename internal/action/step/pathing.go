@@ -13,7 +13,7 @@ type pathingStep struct {
 	path                    *pather.Pather
 	lastRunPositions        [][2]int
 	blacklistedPositions    [][2]int
-	previousArea            area.Area
+	previousArea            area.ID
 }
 
 func newPathingStep() pathingStep {

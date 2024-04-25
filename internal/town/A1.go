@@ -45,6 +45,6 @@ func (a A1) TPWaitingArea(d game.Data) data.Position {
 	return cain.Positions[0]
 }
 
-func (a A1) TownArea() area.Area {
+func (a A1) TownArea() area.ID {
 	return area.RogueEncampment
 }

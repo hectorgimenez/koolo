@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 var andarielStartingPosition = data.Position{
@@ -16,7 +17,7 @@ type Andariel struct {
 }
 
 func (a Andariel) Name() string {
-	return "Andariel"
+	return string(config.AndarielRun)
 }
 
 func (a Andariel) BuildActions() []action.Action {
