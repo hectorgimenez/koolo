@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type AncientTunnels struct {
@@ -11,7 +12,7 @@ type AncientTunnels struct {
 }
 
 func (a AncientTunnels) Name() string {
-	return "AncientTunnels"
+	return string(config.AncientTunnelsRun)
 }
 
 func (a AncientTunnels) BuildActions() []action.Action {

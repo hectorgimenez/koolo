@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type Pit struct {
@@ -11,7 +12,7 @@ type Pit struct {
 }
 
 func (a Pit) Name() string {
-	return "Pit"
+	return string(config.PitRun)
 }
 
 func (a Pit) BuildActions() (actions []action.Action) {

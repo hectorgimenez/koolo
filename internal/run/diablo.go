@@ -2,6 +2,7 @@ package run
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"slices"
@@ -70,7 +71,7 @@ type Diablo struct {
 }
 
 func (a Diablo) Name() string {
-	return "Diablo"
+	return string(config.DiabloRun)
 }
 
 func (a Diablo) BuildActions() (actions []action.Action) {

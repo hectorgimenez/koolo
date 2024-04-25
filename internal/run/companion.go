@@ -25,7 +25,7 @@ type Companion struct {
 }
 
 func (s Companion) Name() string {
-	return "Companion"
+	return "companion"
 }
 
 func (s Companion) BuildActions() []action.Action {
@@ -85,7 +85,7 @@ func (s Companion) BuildActions() []action.Action {
 			if lastInteractionEvent != nil {
 				switch lastInteractionEvent.InteractionType {
 				case event.InteractionTypeEntrance:
-					a := area.Area(lastInteractionEvent.ID)
+					a := area.ID(lastInteractionEvent.ID)
 					lastInteractionEvent = nil
 					if !d.PlayerUnit.Area.IsTown() {
 						return []action.Action{

@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -13,7 +14,7 @@ type Summoner struct {
 }
 
 func (s Summoner) Name() string {
-	return "Summoner"
+	return string(config.SummonerRun)
 }
 
 func (s Summoner) BuildActions() (actions []action.Action) {

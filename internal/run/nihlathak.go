@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"log/slog"
@@ -16,7 +17,7 @@ type Nihlathak struct {
 }
 
 func (a Nihlathak) Name() string {
-	return "Nihlathak"
+	return string(config.NihlathakRun)
 }
 
 func (a Nihlathak) BuildActions() (actions []action.Action) {

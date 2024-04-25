@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -25,7 +26,7 @@ type Pindleskin struct {
 }
 
 func (p Pindleskin) Name() string {
-	return "Pindleskin"
+	return string(config.PindleskinRun)
 }
 
 func (p Pindleskin) BuildActions() (actions []action.Action) {

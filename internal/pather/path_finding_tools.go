@@ -173,7 +173,7 @@ func (w World) renderPathImg(d game.Data, path []astar.Pather, cgOffset data.Pos
 	png.Encode(outFile, img)
 }
 
-func IsNarrowMap(a area.Area) bool {
+func IsNarrowMap(a area.ID) bool {
 	switch a {
 	case area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3, area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame, area.ChaosSanctuary:
 		return true

@@ -39,6 +39,11 @@ func main() {
 	eventListener := event.NewListener(logger)
 	manager := koolo.NewSupervisorManager(logger, eventListener)
 
+	srv, err := server.New(logger, manager)
+	if err != nil {
+		log.Fatalf("Error starting local server: %s", err.Error())
+	}
+
 	g.Go(func() error {
 		displayScale := config.GetCurrentDisplayScale()
 		w, err := gowebview.New(&gowebview.Config{URL: "http://localhost:8087", WindowConfig: &gowebview.WindowConfig{
@@ -95,7 +100,6 @@ func main() {
 	}
 
 	g.Go(func() error {
-		srv := server.New(logger, manager)
 		return srv.Listen(8087)
 	})
 

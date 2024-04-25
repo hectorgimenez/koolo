@@ -2,10 +2,9 @@ package run
 
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/health"
 )
-
-const NameLeveling = "Leveling"
 
 type Leveling struct {
 	baseRun
@@ -13,7 +12,7 @@ type Leveling struct {
 }
 
 func (a Leveling) Name() string {
-	return NameLeveling
+	return string(config.LevelingRun)
 }
 
 func (a Leveling) BuildActions() []action.Action {

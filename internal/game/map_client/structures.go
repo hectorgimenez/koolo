@@ -6,7 +6,7 @@ import (
 )
 
 type LevelData struct {
-	Area          area.Area
+	Area          area.ID
 	Name          string
 	Offset        data.Position
 	Size          data.Position

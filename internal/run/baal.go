@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
@@ -22,7 +23,7 @@ type Baal struct {
 }
 
 func (s Baal) Name() string {
-	return "Baal"
+	return string(config.BaalRun)
 }
 
 func (s Baal) BuildActions() (actions []action.Action) {
