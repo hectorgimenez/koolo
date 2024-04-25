@@ -28,7 +28,7 @@ func (b *Builder) Repair() *Chain {
 				if repairNPC != npc.Halbu {
 					keys = append(keys, win.VK_DOWN)
 				}
-				keys = append(keys, win.VK_DOWN)
+				keys = append(keys, win.VK_RETURN)
 
 				return append(actions, b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).RepairNPC(),
 					step.KeySequence(keys...),
