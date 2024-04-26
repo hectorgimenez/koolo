@@ -176,7 +176,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (
 			}
 
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(skill.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(skill.HolyFire)),
 			)
 		}
 
