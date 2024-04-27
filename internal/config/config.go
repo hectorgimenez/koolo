@@ -3,17 +3,19 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"path/filepath"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
+
+	"os"
+	"strings"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	cp "github.com/otiai10/copy"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/nip"
 
@@ -74,6 +76,7 @@ type CharacterCfg struct {
 		CastingFrames int    `yaml:"castingFrames"`
 		UseMerc       bool   `yaml:"useMerc"`
 		StashToShared bool   `yaml:"stashToShared"`
+		UseTeleport   bool   `yaml:"useTeleport"`
 	} `yaml:"character"`
 	Game struct {
 		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
@@ -143,9 +146,9 @@ type CharacterCfg struct {
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
 	Runtime struct {
-		CastDuration time.Duration
-		Rules        []nip.Rule
-	}
+		CastDuration time.Duration `yaml:"-"`
+		Rules        []nip.Rule    `yaml:"-"`
+	} `yaml:"-"`
 }
 
 type BeltColumns [4]string

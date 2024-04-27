@@ -84,7 +84,7 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 	_, isLevelingChar := b.ch.(LevelingCharacter)
 	for _, itm := range d.Items.ByLocation(item.LocationGround) {
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
-		if d.CharacterCfg.Companion.Enabled && isLevelingChar && !itm.IsFromQuest() && (d.PlayerUnit.Area == area.MaggotLairLevel1 || d.PlayerUnit.Area == area.MaggotLairLevel2 || d.PlayerUnit.Area == area.MaggotLairLevel3) {
+		if d.CharacterCfg.Companion.Enabled && isLevelingChar && !itm.IsFromQuest() && (d.PlayerUnit.Area == area.MaggotLairLevel1 || d.PlayerUnit.Area == area.MaggotLairLevel2 || d.PlayerUnit.Area == area.MaggotLairLevel3 || d.PlayerUnit.Area == area.ArcaneSanctuary) {
 			continue
 		}
 

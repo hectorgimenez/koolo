@@ -27,7 +27,7 @@ func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
 	return false
 }
 
-func (s SorceressLevelingLightning) SkillsToBind(d game.Data) []skill.ID {
+func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
 	skillBindings := []skill.ID{
 		skill.FrozenArmor,
 		skill.StaticField,
@@ -45,7 +45,12 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) []skill.ID {
 		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
-	return skillBindings
+	mainSkill := skill.AttackSkill
+	if d.PlayerUnit.Skills[skill.GlacialSpike].Level > 0 {
+		mainSkill = skill.GlacialSpike
+	}
+
+	return mainSkill, skillBindings
 }
 
 func (s SorceressLevelingLightning) StatPoints(d game.Data) map[stat.ID]int {

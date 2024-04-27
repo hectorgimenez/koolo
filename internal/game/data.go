@@ -13,6 +13,10 @@ type Data struct {
 }
 
 func (d Data) CanTeleport() bool {
+	if !d.CharacterCfg.Character.UseTeleport {
+		return false
+	}
+
 	// Duriel's Lair is bugged and teleport doesn't work here
 	if d.PlayerUnit.Area == area.DurielsLair {
 		return false

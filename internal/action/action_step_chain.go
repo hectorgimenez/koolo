@@ -30,7 +30,7 @@ func NewStepChain(builder func(d game.Data) []step.Step, opts ...Option) *StepCh
 }
 
 func (a *StepChainAction) NextStep(d game.Data, container container.Container) error {
-	if a.markSkipped {
+	if a.markSkipped || a == nil {
 		return ErrNoMoreSteps
 	}
 
