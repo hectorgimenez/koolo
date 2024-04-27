@@ -198,6 +198,17 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 }
 
 func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
+	// Check if config or Characters map is nil
+	if config.Characters == nil {
+		return fmt.Errorf("configuration is not initialized")
+	}
+
+	// Check if specific supervisor config is nil
+	characterConfig, exists := config.Characters[b.supervisorName]
+	if !exists || characterConfig == nil {
+		return fmt.Errorf("character configuration for %s not found or is nil", b.supervisorName)
+	}
+
 	if time.Since(startedAt).Seconds() > float64(config.Characters[b.supervisorName].MaxGameLength) {
 		return fmt.Errorf(
 			"max game length reached, try to exit game: %0.2f",
