@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"runtime/debug"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/container"
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -155,6 +156,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				}
 
 				for k, act := range actions {
+
+					// Ensure we're not trying to access a nil action
+					if act == nil {
+						continue
+					}
 					err := act.NextStep(d, b.c)
 					loopTime = time.Now()
 					if errors.Is(err, action.ErrNoMoreSteps) {
