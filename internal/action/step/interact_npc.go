@@ -2,9 +2,10 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -75,7 +76,7 @@ func (i *InteractNPCStep) Run(d game.Data, container container.Container) error 
 
 		// Act 4 Tyrael has a super weird hitbox
 		if i.NPC == npc.Tyrael2 {
-			container.HID.MovePointer(x, y-20)
+			container.HID.MovePointer(x, y-40)
 		} else {
 			container.HID.MovePointer(x, y)
 		}
