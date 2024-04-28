@@ -161,7 +161,7 @@ func (bm BeltColumns) Total(potionType data.PotionType) int {
 	case data.ManaPotion:
 		typeString = "mana"
 	case data.RejuvenationPotion:
-		typeString = "rejuv"
+		typeString = "rejuvenation"
 	}
 
 	total := 0
