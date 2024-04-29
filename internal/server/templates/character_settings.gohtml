@@ -277,6 +277,22 @@
                            value="{{ .Config.Companion.GamePassword }}"/>
                 </label>
             </fieldset>
+
+            <h4>Back to Town Settings:</h4>
+            <fieldset class="grid">    
+                <label>
+                <input id="no_hp_potions" type="checkbox" name="noHpPotions" {{ if .Config.BackToTown.NoHpPotions }}checked{{ end }}/>
+                No HP potions
+                </label>
+                <label>
+                <input id="no_mp_potions" type="checkbox" name="noMpPotions" {{ if .Config.BackToTown.NoMpPotions }}checked{{ end }}/>
+                No MP potions
+                </label>
+                <label>
+                <input id="merc_died" type="checkbox" name="mercDied" {{ if .Config.BackToTown.MercDied }}checked{{ end }}/>
+                Mercenary is dead
+                </label>
+            </fieldset>
             <fieldset class="grid">
                 <a href="/"><input type="button" value="Cancel" class="secondary"/></a>
                 <input type="submit" value="Save"/>

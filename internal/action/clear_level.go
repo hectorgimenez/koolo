@@ -1,8 +1,9 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -22,6 +23,17 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 				currentRoom = r
 				break
 			}
+		}
+
+		// Check if we have HP & MP potions
+		_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
+		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+
+		// Go back to town check
+		if d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 {
+			return b.InRunReturnTownRoutine()
 		}
 
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
