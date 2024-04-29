@@ -149,7 +149,7 @@ type CharacterCfg struct {
 		NoHpPotions bool `yaml:"noHpPotions"`
 		NoMpPotions bool `yaml:"noMpPotions"`
 		MercDied    bool `yaml:"mercDied"`
-	} `yaml:"backToTown"`
+	} `yaml:"backtotown"`
 	Runtime struct {
 		CastDuration time.Duration `yaml:"-"`
 		Rules        []nip.Rule    `yaml:"-"`

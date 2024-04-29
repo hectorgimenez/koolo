@@ -170,3 +170,8 @@ companion:
 gambling:
   enabled: true # If gambling is disabled, bot will stop picking up gold when can not carry more
   items: [ coronet, amulet, ring ] # Items to gamble, same value as [name] in pickit files.
+
+backtotown:
+    noHpPotions: true
+    noMpPotions: false
+    mercDied: true
