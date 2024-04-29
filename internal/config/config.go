@@ -145,6 +145,11 @@ type CharacterCfg struct {
 		Enabled bool        `yaml:"enabled"`
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
+	BackToTown struct {
+		NoHpPotions bool `yaml:"noHpPotions"`
+		NoMpPotions bool `yaml:"noMpPotions"`
+		MercDied    bool `yaml:"mercDied"`
+	} `yaml:"backtotown"`
 	Runtime struct {
 		CastDuration time.Duration `yaml:"-"`
 		Rules        []nip.Rule    `yaml:"-"`
