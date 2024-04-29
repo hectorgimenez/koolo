@@ -1,8 +1,9 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -83,7 +84,7 @@ func (s LightningSorceress) KillMonsterSequence(
 
 func (s LightningSorceress) BuffSkills(d game.Data) []skill.ID {
 	armor := skill.FrozenArmor
-	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor}
+	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
 	for _, arm := range armors {
 		if _, found := d.KeyBindings.KeyBindingForSkill(arm); found {
 			armor = arm
