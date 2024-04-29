@@ -133,9 +133,9 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
 
 		// Go back to town check
-		if d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+		if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
 			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
-			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 {
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0) && !d.PlayerUnit.Area.IsTown() {
 			return []Action{NewChain(func(d game.Data) []Action {
 				return b.InRunReturnTownRoutine()
 			})}
