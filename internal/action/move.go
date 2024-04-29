@@ -136,7 +136,9 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		if d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
 			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 {
-			return b.InRunReturnTownRoutine()
+			return []Action{NewChain(func(d game.Data) []Action {
+				return b.InRunReturnTownRoutine()
+			})}
 		}
 
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
