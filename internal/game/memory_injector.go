@@ -5,11 +5,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/memory"
-	"golang.org/x/sys/windows"
 	"log/slog"
 	"strings"
 	"syscall"
+
+	"github.com/hectorgimenez/d2go/pkg/memory"
+	"golang.org/x/sys/windows"
 )
 
 const fullAccess = windows.PROCESS_VM_OPERATION | windows.PROCESS_VM_WRITE | windows.PROCESS_VM_READ
@@ -23,6 +24,7 @@ type MemoryInjector struct {
 	trackMouseEventBytes  [32]byte
 	getKeyStateAddr       uintptr
 	getKeyStateOrigBytes  [18]byte
+	setCursorPosAddr      uintptr
 	logger                *slog.Logger
 }
 
@@ -51,6 +53,7 @@ func (i *MemoryInjector) Load() error {
 			i.getCursorPosAddr, err = syscall.GetProcAddress(module.ModuleHandle, "GetCursorPos")
 			i.getKeyStateAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "GetKeyState")
 			i.trackMouseEventAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "TrackMouseEvent")
+			i.setCursorPosAddr, _ = syscall.GetProcAddress(module.ModuleHandle, "SetCursorPos")
 
 			err = windows.ReadProcessMemory(i.handle, i.getCursorPosAddr, &i.getCursorPosOrigBytes[0], uintptr(len(i.getCursorPosOrigBytes)), nil)
 			if err != nil {
@@ -58,6 +61,11 @@ func (i *MemoryInjector) Load() error {
 			}
 
 			err = i.stopTrackingMouseLeaveEvents()
+			if err != nil {
+				return err
+			}
+
+			err = i.OverrideSetCursorPos()
 			if err != nil {
 				return err
 			}
@@ -122,6 +130,17 @@ func (i *MemoryInjector) OverrideGetKeyState(key byte) error {
 	*/
 	bytes := []byte{0x48, 0x81, 0xF9, key, 0x00, 0x00, 0x00, 0x48, 0xB8, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC3}
 	return windows.WriteProcessMemory(i.handle, i.getKeyStateAddr, &bytes[0], uintptr(len(bytes)), nil)
+}
+
+func (i *MemoryInjector) OverrideSetCursorPos() error {
+	/*
+		Just do nothing, this prevents the game from moving our cursor, for example when opening inventory or wp list
+		mov eax, 1
+		ret
+	*/
+
+	blob := []byte{0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3}
+	return windows.WriteProcessMemory(i.handle, i.setCursorPosAddr, &blob[0], uintptr(len(blob)), nil)
 }
 
 func (i *MemoryInjector) RestoreGetKeyState() error {
