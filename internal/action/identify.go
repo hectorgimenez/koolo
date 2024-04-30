@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -37,7 +38,11 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				step.SyncStepWithCheck(func(d game.Data) error {
+
+					cPosX, cPosY := b.HID.GetMousePosition()
 					b.HID.PressKeyBinding(d.KeyBindings.Inventory)
+					helper.Sleep(200)
+					b.HID.SetMousePosition(cPosX, cPosY)
 					return nil
 				}, func(d game.Data) step.Status {
 					if d.OpenMenus.Inventory {

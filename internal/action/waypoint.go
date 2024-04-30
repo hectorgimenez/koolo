@@ -1,12 +1,13 @@
 package action
 
 import (
+	"log/slog"
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"log/slog"
-	"slices"
 )
 
 const (
@@ -28,6 +29,7 @@ func (b *Builder) WayPoint(a area.ID) *Chain {
 		return []Action{
 			b.openWPAndSelectTab(a, d),
 			b.useWP(a),
+			// TODO: add the
 		}
 	})
 }
@@ -40,7 +42,9 @@ func (b *Builder) openWPAndSelectTab(a area.ID, d game.Data) Action {
 
 	for _, o := range d.Objects {
 		if o.IsWaypoint() {
+			cPosX, cPosY := b.HID.GetMousePosition()
 			return b.InteractObject(o.Name, func(d game.Data) bool {
+				b.HID.SetMousePosition(cPosX, cPosY)
 				return d.OpenMenus.Waypoint
 			},
 				step.SyncStep(func(d game.Data) error {
