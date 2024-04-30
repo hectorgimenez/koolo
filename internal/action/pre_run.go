@@ -1,7 +1,12 @@
 package action
 
+import (
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
+)
+
 func (b *Builder) PreRun(firstRun bool) []Action {
 	actions := []Action{
+		b.UseSkillIfBind(skill.Vigor),
 		b.RecoverCorpse(),
 		b.UpdateQuestLog(),
 		b.IdentifyAll(firstRun),
@@ -37,6 +42,7 @@ func (b *Builder) PreRun(firstRun bool) []Action {
 
 func (b *Builder) InRunReturnTownRoutine() []Action {
 	actions := []Action{
+		b.UseSkillIfBind(skill.Vigor),
 		b.ReturnTown(),
 		b.RecoverCorpse(),
 		b.IdentifyAll(false),
