@@ -41,7 +41,6 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 
 					cPosX, cPosY := b.HID.GetMousePosition()
 					b.HID.PressKeyBinding(d.KeyBindings.Inventory)
-					helper.Sleep(200)
 					b.HID.SetMousePosition(cPosX, cPosY)
 					return nil
 				}, func(d game.Data) step.Status {
