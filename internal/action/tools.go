@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -25,4 +26,16 @@ func (b *Builder) IsMonsterSealElite(monster data.Monster) bool {
 	}
 
 	return false
+}
+
+func (b *Builder) UseSkillIfBind(id skill.ID) *Chain {
+	return NewChain(func(d game.Data) []Action {
+		if kb, found := d.KeyBindings.KeyBindingForSkill(id); found {
+			if d.PlayerUnit.RightSkill != id {
+				b.Container.HID.PressKeyBinding(kb)
+			}
+		}
+
+		return []Action{}
+	})
 }
