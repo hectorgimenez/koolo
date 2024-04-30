@@ -67,8 +67,8 @@ func (a TerrorZone) BuildActions() (actions []action.Action) {
 	return []action.Action{act}
 }
 
-func (a TerrorZone) AvailableTZs(d game.Data) []area.Area {
-	var availableTZs []area.Area
+func (a TerrorZone) AvailableTZs(d game.Data) []area.ID {
+	var availableTZs []area.ID
 	for _, tz := range d.TerrorZones {
 		for _, tzArea := range a.CharacterCfg.Game.TerrorZone.Areas {
 			if tz == tzArea {
@@ -80,7 +80,7 @@ func (a TerrorZone) AvailableTZs(d game.Data) []area.Area {
 	return availableTZs
 }
 
-func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
+func (a TerrorZone) buildTZAction(dstArea area.ID) action.Action {
 	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		if d.PlayerUnit.Area != dstArea && d.PlayerUnit.Area.IsTown() {
 			actions = append(actions, a.builder.WayPoint(dstArea))
@@ -114,66 +114,66 @@ func (a TerrorZone) buildTZAction(dstArea area.Area) action.Action {
 	})
 }
 
-func (a TerrorZone) tzAreaChain(firstTZ area.Area) [][]area.Area {
+func (a TerrorZone) tzAreaChain(firstTZ area.ID) [][]area.ID {
 	switch firstTZ {
 	// Act 1
 	case area.BloodMoor:
-		return [][]area.Area{{area.RogueEncampment, area.BloodMoor, area.DenOfEvil}}
+		return [][]area.ID{{area.RogueEncampment, area.BloodMoor, area.DenOfEvil}}
 	case area.ColdPlains:
-		return [][]area.Area{{area.ColdPlains, area.CaveLevel1, area.CaveLevel2}}
+		return [][]area.ID{{area.ColdPlains, area.CaveLevel1, area.CaveLevel2}}
 	case area.BurialGrounds:
-		return [][]area.Area{{area.ColdPlains, area.BurialGrounds, area.Crypt}, {area.ColdPlains, area.BurialGrounds, area.Mausoleum}}
+		return [][]area.ID{{area.ColdPlains, area.BurialGrounds, area.Crypt}, {area.ColdPlains, area.BurialGrounds, area.Mausoleum}}
 	case area.StonyField:
-		return [][]area.Area{{area.StonyField}}
+		return [][]area.ID{{area.StonyField}}
 	case area.DarkWood:
-		return [][]area.Area{{area.DarkWood, area.UndergroundPassageLevel1, area.UndergroundPassageLevel2}}
+		return [][]area.ID{{area.DarkWood, area.UndergroundPassageLevel1, area.UndergroundPassageLevel2}}
 	case area.BlackMarsh:
-		return [][]area.Area{{area.BlackMarsh, area.HoleLevel1, area.HoleLevel2}}
+		return [][]area.ID{{area.BlackMarsh, area.HoleLevel1, area.HoleLevel2}}
 	case area.ForgottenTower:
-		return [][]area.Area{{area.BlackMarsh, area.ForgottenTower, area.TowerCellarLevel1, area.TowerCellarLevel2, area.TowerCellarLevel3, area.TowerCellarLevel4, area.TowerCellarLevel5}}
+		return [][]area.ID{{area.BlackMarsh, area.ForgottenTower, area.TowerCellarLevel1, area.TowerCellarLevel2, area.TowerCellarLevel3, area.TowerCellarLevel4, area.TowerCellarLevel5}}
 	case area.JailLevel1:
-		return [][]area.Area{{area.JailLevel1, area.JailLevel2, area.JailLevel3}}
+		return [][]area.ID{{area.JailLevel1, area.JailLevel2, area.JailLevel3}}
 	case area.Cathedral:
-		return [][]area.Area{{area.InnerCloister, area.Cathedral, area.CatacombsLevel1, area.CatacombsLevel2, area.CatacombsLevel3}}
+		return [][]area.ID{{area.InnerCloister, area.Cathedral, area.CatacombsLevel1, area.CatacombsLevel2, area.CatacombsLevel3}}
 	// Act 2
 	case area.SewersLevel1Act2:
-		return [][]area.Area{{area.LutGholein, area.SewersLevel1Act2, area.SewersLevel2Act2, area.SewersLevel3Act2}}
+		return [][]area.ID{{area.LutGholein, area.SewersLevel1Act2, area.SewersLevel2Act2, area.SewersLevel3Act2}}
 	case area.DryHills:
-		return [][]area.Area{{area.DryHills, area.HallsOfTheDeadLevel1, area.HallsOfTheDeadLevel2, area.HallsOfTheDeadLevel3}}
+		return [][]area.ID{{area.DryHills, area.HallsOfTheDeadLevel1, area.HallsOfTheDeadLevel2, area.HallsOfTheDeadLevel3}}
 	case area.FarOasis:
-		return [][]area.Area{{area.FarOasis}}
+		return [][]area.ID{{area.FarOasis}}
 	case area.LostCity:
-		return [][]area.Area{{area.LostCity, area.ValleyOfSnakes, area.ClawViperTempleLevel1, area.ClawViperTempleLevel2}}
+		return [][]area.ID{{area.LostCity, area.ValleyOfSnakes, area.ClawViperTempleLevel1, area.ClawViperTempleLevel2}}
 	case area.ArcaneSanctuary:
-		return [][]area.Area{{area.ArcaneSanctuary}}
+		return [][]area.ID{{area.ArcaneSanctuary}}
 	// Act 3
 	case area.SpiderForest:
-		return [][]area.Area{{area.SpiderForest, area.SpiderCavern}}
+		return [][]area.ID{{area.SpiderForest, area.SpiderCavern}}
 	case area.GreatMarsh:
-		return [][]area.Area{{area.GreatMarsh}}
+		return [][]area.ID{{area.GreatMarsh}}
 	case area.FlayerJungle:
-		return [][]area.Area{{area.FlayerJungle, area.FlayerDungeonLevel1, area.FlayerDungeonLevel2, area.FlayerDungeonLevel3}}
+		return [][]area.ID{{area.FlayerJungle, area.FlayerDungeonLevel1, area.FlayerDungeonLevel2, area.FlayerDungeonLevel3}}
 	case area.KurastBazaar:
-		return [][]area.Area{{area.KurastBazaar, area.RuinedTemple, area.DisusedFane}}
+		return [][]area.ID{{area.KurastBazaar, area.RuinedTemple, area.DisusedFane}}
 	// Act 4
 	case area.OuterSteppes:
-		return [][]area.Area{{area.ThePandemoniumFortress, area.OuterSteppes, area.PlainsOfDespair}}
+		return [][]area.ID{{area.ThePandemoniumFortress, area.OuterSteppes, area.PlainsOfDespair}}
 	case area.RiverOfFlame:
-		return [][]area.Area{{area.CityOfTheDamned, area.RiverOfFlame}}
+		return [][]area.ID{{area.CityOfTheDamned, area.RiverOfFlame}}
 	// Act 5
 	case area.BloodyFoothills:
-		return [][]area.Area{{area.Harrogath, area.BloodyFoothills, area.FrigidHighlands, area.Abaddon}}
+		return [][]area.ID{{area.Harrogath, area.BloodyFoothills, area.FrigidHighlands, area.Abaddon}}
 	case area.GlacialTrail:
-		return [][]area.Area{{area.GlacialTrail, area.DrifterCavern}}
+		return [][]area.ID{{area.GlacialTrail, area.DrifterCavern}}
 	case area.CrystallinePassage:
-		return [][]area.Area{{area.CrystallinePassage, area.FrozenRiver}}
+		return [][]area.ID{{area.CrystallinePassage, area.FrozenRiver}}
 	case area.ArreatPlateau:
-		return [][]area.Area{{area.ArreatPlateau, area.PitOfAcheron}}
+		return [][]area.ID{{area.ArreatPlateau, area.PitOfAcheron}}
 	case area.TheAncientsWay:
-		return [][]area.Area{{area.TheAncientsWay, area.IcyCellar}}
+		return [][]area.ID{{area.TheAncientsWay, area.IcyCellar}}
 	}
 
-	return [][]area.Area{}
+	return [][]area.ID{}
 }
 
 func (a TerrorZone) customTZEnemyFilter(resists ...stat.Resist) data.MonsterFilter {

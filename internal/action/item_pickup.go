@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
@@ -80,7 +81,13 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 	missingManaPotions := b.bm.GetMissingCount(d, data.ManaPotion)
 	missingRejuvenationPotions := b.bm.GetMissingCount(d, data.RejuvenationPotion)
 	var itemsToPickup []data.Item
+	_, isLevelingChar := b.ch.(LevelingCharacter)
 	for _, itm := range d.Items.ByLocation(item.LocationGround) {
+		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
+		if d.CharacterCfg.Companion.Enabled && isLevelingChar && !itm.IsFromQuest() && (d.PlayerUnit.Area == area.MaggotLairLevel1 || d.PlayerUnit.Area == area.MaggotLairLevel2 || d.PlayerUnit.Area == area.MaggotLairLevel3 || d.PlayerUnit.Area == area.ArcaneSanctuary) {
+			continue
+		}
+
 		// Skip items that are outside pickup radius, this is useful when clearing big areas to prevent
 		// character going back to pickup potions all the time after using them
 		itemDistance := pather.DistanceFromMe(d, itm.Position)

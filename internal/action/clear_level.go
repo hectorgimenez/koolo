@@ -1,8 +1,9 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -24,12 +25,23 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			}
 		}
 
+		// Check if we have HP & MP potions
+		_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
+		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+
+		// Go back to town check
+		if d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 {
+			return b.InRunReturnTownRoutine()
+		}
+
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return b.InRunReturnTownRoutine()
 			}
 		}

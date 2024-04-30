@@ -6,6 +6,7 @@ import (
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
@@ -20,6 +21,7 @@ import (
 func main() {
 	err := config.Load()
 	if err != nil {
+		helper.ShowDialog("Error loading configuration", err.Error())
 		log.Fatalf("Error loading configuration: %s", err.Error())
 	}
 
@@ -36,6 +38,11 @@ func main() {
 
 	eventListener := event.NewListener(logger)
 	manager := koolo.NewSupervisorManager(logger, eventListener)
+
+	srv, err := server.New(logger, manager)
+	if err != nil {
+		log.Fatalf("Error starting local server: %s", err.Error())
+	}
 
 	g.Go(func() error {
 		displayScale := config.GetCurrentDisplayScale()
@@ -93,7 +100,6 @@ func main() {
 	}
 
 	g.Go(func() error {
-		srv := server.New(logger, manager)
 		return srv.Listen(8087)
 	})
 

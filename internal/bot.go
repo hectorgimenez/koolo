@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"runtime/debug"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/container"
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -125,7 +126,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				}
 
 				// Check if game length is exceeded, only if it's not a leveling run
-				if r.Name() != run.NameLeveling {
+				if r.Name() != string(config.LevelingRun) {
 					if err := b.maxGameLengthExceeded(gameStartedAt); err != nil {
 						return err
 					}
@@ -155,6 +156,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 				}
 
 				for k, act := range actions {
+
+					// Ensure we're not trying to access a nil action
+					if act == nil {
+						continue
+					}
 					err := act.NextStep(d, b.c)
 					loopTime = time.Now()
 					if errors.Is(err, action.ErrNoMoreSteps) {
@@ -192,6 +198,17 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 }
 
 func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
+	// Check if config or Characters map is nil
+	if config.Characters == nil {
+		return fmt.Errorf("configuration is not initialized")
+	}
+
+	// Check if specific supervisor config is nil
+	characterConfig, exists := config.Characters[b.supervisorName]
+	if !exists || characterConfig == nil {
+		return fmt.Errorf("character configuration for %s not found or is nil", b.supervisorName)
+	}
+
 	if time.Since(startedAt).Seconds() > float64(config.Characters[b.supervisorName].MaxGameLength) {
 		return fmt.Errorf(
 			"max game length reached, try to exit game: %0.2f",

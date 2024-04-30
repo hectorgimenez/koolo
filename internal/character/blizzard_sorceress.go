@@ -1,8 +1,9 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -70,8 +71,8 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		}
 
 		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
-		if completedAttackLoops > 5 {
-			if completedAttackLoops == 6 {
+		if completedAttackLoops > 3 {
+			if completedAttackLoops == 4 {
 				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance")
 			}
 			opts = []step.AttackOption{step.Distance(1, 5)}

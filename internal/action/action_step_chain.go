@@ -3,9 +3,10 @@ package action
 import (
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"reflect"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
 )
@@ -30,7 +31,9 @@ func NewStepChain(builder func(d game.Data) []step.Step, opts ...Option) *StepCh
 }
 
 func (a *StepChainAction) NextStep(d game.Data, container container.Container) error {
-	if a.markSkipped {
+
+	// Ensure that we first check if its nill to avoid accessing a nill value (can result in panic)
+	if a == nil || a.markSkipped {
 		return ErrNoMoreSteps
 	}
 

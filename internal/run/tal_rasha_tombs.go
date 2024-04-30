@@ -4,16 +4,17 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
-var talRashaTombs = []area.Area{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
+var talRashaTombs = []area.ID{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
 
 type TalRashaTombs struct {
 	baseRun
 }
 
 func (a TalRashaTombs) Name() string {
-	return "TalRashaTombs"
+	return string(config.TalRashaTombsRun)
 }
 
 func (a TalRashaTombs) BuildActions() (actions []action.Action) {

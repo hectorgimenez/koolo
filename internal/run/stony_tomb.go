@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type StonyTomb struct {
@@ -11,7 +12,7 @@ type StonyTomb struct {
 }
 
 func (a StonyTomb) Name() string {
-	return "StonyTomb"
+	return string(config.StonyTombRun)
 }
 
 func (a StonyTomb) BuildActions() (actions []action.Action) {

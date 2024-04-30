@@ -2,10 +2,11 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -15,7 +16,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b *Builder) MoveToArea(dst area.Area, opts ...step.MoveToStepOption) *Chain {
+func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain {
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary {
 		return NewChain(func(d game.Data) []Action {
@@ -105,6 +106,7 @@ func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) 
 }
 
 func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
+
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
@@ -126,12 +128,25 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 			return nil
 		}
 
+		// Check if we have HP & MP potions
+		_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
+		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+
+		// Go back to town check
+		if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0) && !d.PlayerUnit.Area.IsTown() {
+			return []Action{NewChain(func(d game.Data) []Action {
+				return b.InRunReturnTownRoutine()
+			})}
+		}
+
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
 			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
 			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Healing > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Mana > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return []Action{NewChain(func(d game.Data) []Action {
 					return b.InRunReturnTownRoutine()
 				})}

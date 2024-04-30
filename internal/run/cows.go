@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"slices"
 	"strings"
@@ -20,7 +21,7 @@ type Cows struct {
 }
 
 func (a Cows) Name() string {
-	return "Cows"
+	return string(config.CowsRun)
 }
 
 func (a Cows) BuildActions() []action.Action {

@@ -23,16 +23,14 @@ inventory:
     - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ]
     - [ 1, 1, 1, 1, 1, 1, 1, 0, 0, 0 ]
 
-  beltColumns: # Amount of columns for each type of potion, sum of all should not be more than 4
-    healing: 2
-    mana: 1
-    rejuvenation: 1
+  beltColumns: [healing, healing, mana, rejuvenation] # 4 values, each represents the belt column type, allowed values: healing, mana, rejuvenation
 
 character:
   class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
   castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
   stashToShared: false
+  useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
 
 game:
   minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
@@ -49,10 +47,10 @@ game:
   # Specific runs settings
   pindleskin:
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
-  stonytomb:
+  stony_tomb:
     openChests: true
     focusOnElitePacks: false
-  ancienttunnels:
+  ancient_tunnels:
     openChests: true
     focusOnElitePacks: false
   pit:
@@ -70,7 +68,7 @@ game:
     clearArea: true
   diablo:
     killDiablo: true # Should bot kill Diablo after seals
-    clearArea: true # Should bot clear regular monsters
+    clearArea: true # Should bot clear Chaos Sanctuary
     onlyElites: true # Should bot target only elites
   baal:
     killBaal: false
@@ -81,7 +79,7 @@ game:
   leveling:
     ensurePointsAllocation: true # Bot will allocate skill and stat points by itself or perform stat/skill reset. Set to false if you do NOT want it
     ensureKeyBinding: true       # Bot will set key bindings by itself. Set to false if you want to do it manually
-  terrorZone:
+  terror_zone:
     focusOnElitePacks: false # Will clear only Elite monsters
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
     skipOtherRuns: false # If current TZ is allowed, will skip other runs and only do TZ instead
@@ -174,3 +172,8 @@ companion:
 gambling:
   enabled: true # If gambling is disabled, bot will stop picking up gold when can not carry more
   items: [ coronet, amulet, ring ] # Items to gamble, same value as [name] in pickit files.
+
+backtotown:
+    noHpPotions: true
+    noMpPotions: false
+    mercDied: true

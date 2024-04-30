@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -12,7 +13,7 @@ type Council struct {
 }
 
 func (s Council) Name() string {
-	return "Council"
+	return string(config.CouncilRun)
 }
 
 func (s Council) BuildActions() []action.Action {

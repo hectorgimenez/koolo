@@ -210,7 +210,7 @@ func (a Leveling) prepareStaff() action.Action {
 func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.Action) {
 	a.logger.Info("Starting Duriel....")
 
-	var realTomb area.Area
+	var realTomb area.ID
 	for _, tomb := range talRashaTombs {
 		_, _, objects, _ := a.Reader.CachedMapData.NPCsExitsAndObjects(data.Position{}, tomb)
 		for _, obj := range objects {

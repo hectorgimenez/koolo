@@ -1,6 +1,7 @@
 package run
 
 import (
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
@@ -17,7 +18,7 @@ type Tristram struct {
 }
 
 func (a Tristram) Name() string {
-	return "Tristram"
+	return string(config.TristramRun)
 }
 
 func (a Tristram) BuildActions() []action.Action {
