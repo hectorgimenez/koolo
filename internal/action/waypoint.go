@@ -28,6 +28,7 @@ func (b *Builder) WayPoint(a area.ID) *Chain {
 		return []Action{
 			b.openWPAndSelectTab(a, d),
 			b.useWP(a),
+			b.Buff(),
 		}
 	})
 }
