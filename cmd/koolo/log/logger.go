@@ -37,6 +37,16 @@ func NewLogger(debug bool, logDir string) (*slog.Logger, error) {
 
 	opts := &slog.HandlerOptions{
 		Level: level,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key != slog.TimeKey {
+				return a
+			}
+
+			t := a.Value.Time()
+			a.Value = slog.StringValue(t.Format(time.TimeOnly))
+
+			return a
+		},
 	}
 
 	handler := slog.NewTextHandler(io.MultiWriter(logFileHandler, os.Stdout), opts)
