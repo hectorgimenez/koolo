@@ -30,8 +30,9 @@ var (
 
 type KooloCfg struct {
 	Debug struct {
-		Log       bool `yaml:"log"`
-		RenderMap bool `yaml:"renderMap"`
+		Log         bool `yaml:"log"`
+		Screenshots bool `yaml:"screenshots"`
+		RenderMap   bool `yaml:"renderMap"`
 	} `yaml:"debug"`
 	FirstRun              bool   `yaml:"firstRun"`
 	UseCustomSettings     bool   `yaml:"useCustomSettings"`
