@@ -2,10 +2,11 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -105,6 +106,7 @@ func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) 
 }
 
 func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
+
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
@@ -124,6 +126,19 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		// To stop the movement, not very accurate
 		if pather.DistanceFromMe(d, to) < 7 {
 			return nil
+		}
+
+		// Check if we have HP & MP potions
+		_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
+		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+
+		// Go back to town check
+		if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0) && !d.PlayerUnit.Area.IsTown() {
+			return []Action{NewChain(func(d game.Data) []Action {
+				return b.InRunReturnTownRoutine()
+			})}
 		}
 
 		// Let's go pickup more pots if we have less than 2 (only during leveling)

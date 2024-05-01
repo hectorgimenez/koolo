@@ -5,18 +5,19 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	koolo "github.com/hectorgimenez/koolo/internal"
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"html/template"
 	"io/fs"
 	"log/slog"
 	"net/http"
 	"slices"
 	"strconv"
+
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	koolo "github.com/hectorgimenez/koolo/internal"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type HttpServer struct {
@@ -137,6 +138,9 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
 		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
 		newConfig.GameWindowArrangement = r.Form.Get("game_window_arrangement") == "true"
+		// Debug
+		newConfig.Debug.Log = r.Form.Get("debug_log") == "true"
+		newConfig.Debug.Screenshots = r.Form.Get("debug_screenshots") == "true"
 		// Discord
 		newConfig.Discord.Enabled = r.Form.Get("discord_enabled") == "true"
 		newConfig.Discord.Token = r.Form.Get("discord_token")
@@ -287,6 +291,11 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Companion.LeaderName = r.Form.Get("companionLeaderName")
 		cfg.Companion.GameNameTemplate = r.Form.Get("companionGameNameTemplate")
 		cfg.Companion.GamePassword = r.Form.Get("companionGamePassword")
+
+		// Back to town config
+		cfg.BackToTown.NoHpPotions = r.Form.Has("noHpPotions")
+		cfg.BackToTown.NoMpPotions = r.Form.Has("noMpPotions")
+		cfg.BackToTown.MercDied = r.Form.Has("mercDied")
 
 		config.SaveSupervisorConfig(supervisorName, cfg)
 		http.Redirect(w, r, "/", http.StatusSeeOther)

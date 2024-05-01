@@ -3,12 +3,14 @@ package event
 import (
 	"context"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"log/slog"
 	"math"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 var events = make(chan Event)
@@ -43,7 +45,7 @@ func (l *Listener) Listen(ctx context.Context) error {
 				}
 			}
 
-			if e.Image() != nil {
+			if e.Image() != nil && config.Koolo.Debug.Screenshots {
 				fileName := fmt.Sprintf("screenshots/error-%s.jpeg", time.Now().Format("2006-01-02 15_04_05"))
 				err := helper.SaveImageJPEG(e.Image(), fileName)
 				if err != nil {

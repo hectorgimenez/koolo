@@ -2,13 +2,14 @@ package pather
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
 	"math"
 	"os"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -196,6 +197,11 @@ func DistanceFromPoint(from data.Position, to data.Position) int {
 func IsWalkable(pos data.Position, areaOriginPos data.Position, collisionGrid [][]bool) bool {
 	indexX := pos.X - areaOriginPos.X
 	indexY := pos.Y - areaOriginPos.Y
+
+	// When we are close to the level border, we need to check if monster is outside the collision grid
+	if indexX < 0 || indexY < 0 || indexY >= len(collisionGrid) || indexX >= len(collisionGrid[indexY]) {
+		return false
+	}
 
 	return collisionGrid[indexY][indexX]
 }

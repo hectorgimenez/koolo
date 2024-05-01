@@ -30,8 +30,9 @@ var (
 
 type KooloCfg struct {
 	Debug struct {
-		Log       bool `yaml:"log"`
-		RenderMap bool `yaml:"renderMap"`
+		Log         bool `yaml:"log"`
+		Screenshots bool `yaml:"screenshots"`
+		RenderMap   bool `yaml:"renderMap"`
 	} `yaml:"debug"`
 	FirstRun              bool   `yaml:"firstRun"`
 	UseCustomSettings     bool   `yaml:"useCustomSettings"`
@@ -145,6 +146,11 @@ type CharacterCfg struct {
 		Enabled bool        `yaml:"enabled"`
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
+	BackToTown struct {
+		NoHpPotions bool `yaml:"noHpPotions"`
+		NoMpPotions bool `yaml:"noMpPotions"`
+		MercDied    bool `yaml:"mercDied"`
+	} `yaml:"backtotown"`
 	Runtime struct {
 		CastDuration time.Duration `yaml:"-"`
 		Rules        []nip.Rule    `yaml:"-"`

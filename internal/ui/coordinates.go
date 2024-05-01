@@ -32,7 +32,7 @@ const (
 	GambleRefreshButtonY = 515
 
 	SecondarySkillListFirstSkillX = 687
-	MainSkillListFirstSkillX      = 550
+	MainSkillListFirstSkillX      = 592
 	SkillListFirstSkillY          = 590
 	SkillListSkillOffset          = 45
 

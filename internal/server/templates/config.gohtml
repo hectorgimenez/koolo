@@ -63,7 +63,31 @@
                     />
                     Auto reposition game windows
                 </label>
-
+                <h4>Debug</h4>
+                <fieldset class="grid">
+                    <label>
+                        <input
+                                {{ if .Debug.Log }}
+                                    checked="checked"
+                                {{ end }}
+                                type="checkbox"
+                                name="debug_log"
+                                value="true"
+                        />
+                        Debug mode (better details in logs, more noise)
+                    </label>
+                    <label>
+                        <input
+                                {{ if .Debug.Screenshots }}
+                                    checked="checked"
+                                {{ end }}
+                                type="checkbox"
+                                name="debug_screenshots"
+                                value="true"
+                        />
+                        Save screenshot on error
+                    </label>
+                </fieldset>
                 <h4>Discord integration</h4>
                 <label>
                     <input

@@ -3,6 +3,7 @@ useCustomSettings: true # If set to true, koolo will use config/Settings.json fi
 gameWindowArrangement: true # If set to true, game windows will be automatically repositioned to avoid overlapping
 debug:
   log: true # Prints extra log information
+  screenshots: false # Saves screenshots of the game in case of errors
   renderMap: false # Render current map data into 'cg.png' file
 
 logSaveDirectory: logs

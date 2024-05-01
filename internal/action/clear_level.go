@@ -25,6 +25,17 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			}
 		}
 
+		// Check if we have HP & MP potions
+		_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
+		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+
+		// Go back to town check
+		if d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 {
+			return b.InRunReturnTownRoutine()
+		}
+
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar {
