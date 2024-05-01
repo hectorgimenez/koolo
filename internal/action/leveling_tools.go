@@ -1,12 +1,13 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/lxn/win"
 	"log/slog"
 	"slices"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -276,14 +277,12 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 		}
 		descs[skID] = sk
 
-		// Main skill list grows to the left, secondary skill list grows to the right
-		displaceSkill := targetSkill.ID < skID
-		if mainSkill {
-			displaceSkill = targetSkill.ID > skID
-		}
-
-		if skID != targetSkill.ID && sk.Desc().ListRow == targetSkill.Desc().ListRow && displaceSkill {
-			column++
+		if skID != targetSkill.ID && sk.Desc().Page == targetSkill.Desc().Page {
+			if sk.Desc().ListRow > targetSkill.Desc().ListRow {
+				column++
+			} else if sk.Desc().ListRow == targetSkill.Desc().ListRow && sk.Desc().Column > targetSkill.Desc().Column {
+				column++
+			}
 		}
 
 		totalRows = append(totalRows, sk.Desc().ListRow)
@@ -298,12 +297,11 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 	totalRows = slices.Compact(totalRows)
 
 	// If we don't have any skill of a specific tree, the entire row gets one line down
-	previousRow := 0
-	for _, currentRow := range totalRows {
-		if currentRow != 0 && currentRow != previousRow+1 {
-			row--
+	for i, currentRow := range totalRows {
+		if currentRow == row {
+			row = i
+			break
 		}
-		previousRow = currentRow
 	}
 
 	// Scrolls and charges are not in the same list
@@ -320,13 +318,13 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 		}
 	}
 
-	skillOffsetX := ui.MainSkillListFirstSkillX
+	skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
 	if !mainSkill {
-		skillOffsetX = ui.SecondarySkillListFirstSkillX
+		skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
 	}
 
 	return data.Position{
-		X: skillOffsetX + ui.SkillListSkillOffset*column,
+		X: skillOffsetX,
 		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
 	}, true
 }
