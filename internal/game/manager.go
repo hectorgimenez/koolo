@@ -3,15 +3,16 @@ package game
 import (
 	"errors"
 	"fmt"
+	"os/exec"
+	"syscall"
+	"time"
+	"unsafe"
+
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
-	"os/exec"
-	"syscall"
-	"time"
-	"unsafe"
 )
 
 type Manager struct {
@@ -181,17 +182,17 @@ func (gm *Manager) InGame() bool {
 	return gm.gr.InGame()
 }
 
-func StartGame(username string, password string, realm string, useCustomSettings bool) (uint32, win.HWND, error) {
+func StartGame(username string, password string, realm string, arguments string, useCustomSettings bool) (uint32, win.HWND, error) {
 	// First check for other instances of the game and kill the handles, otherwise we will not be able to start the game
 	err := KillAllClientHandles()
 	if err != nil {
 		return 0, 0, err
 	}
 
-	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", "-username", username, "-password", password, "-address", realm)
+	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", "-username", username, "-password", password, "-address", realm, arguments)
 	// In case multiclient info is not set, start the game without any parameters
 	if username == "" || password == "" || realm == "" {
-		cmd = exec.Command(config.Koolo.D2RPath + "\\D2R.exe")
+		cmd = exec.Command(config.Koolo.D2RPath+"\\D2R.exe", arguments)
 	}
 
 	if useCustomSettings {
