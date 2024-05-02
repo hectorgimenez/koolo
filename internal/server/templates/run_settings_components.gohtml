@@ -55,6 +55,8 @@
 {{ define "baal" }}
     <fieldset>
         <label><input type="checkbox" name="gameBaalKillBaal" {{ if .Config.Game.Baal.KillBaal }}checked{{ end }}> Kill Baal</label>
+        <label><input type="checkbox" name="gameBaalDollQuit" {{ if .Config.Game.Baal.DollQuit }}checked{{ end }}> Chicken on Dolls</label>
+        <label><input type="checkbox" name="gameBaalSoulQuit" {{ if .Config.Game.Baal.SoulQuit }}checked{{ end }}> Chicken on Souls</label>
     </fieldset>
 {{ end }}
 
