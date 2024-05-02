@@ -1,12 +1,13 @@
 package game
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/inkeliz/w32"
-	"github.com/lxn/win"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/inkeliz/w32"
+	"github.com/lxn/win"
 )
 
 const (
@@ -60,11 +61,12 @@ func getKeysForKB(kb data.KeyBinding) [2]byte {
 }
 
 func (hid *HID) GetASCIICode(key string) byte {
-	if len(key) == 1 {
-		return strings.ToUpper(key)[0]
+	char, found := specialChars[strings.ToLower(key)]
+	if found {
+		return char
 	}
 
-	return specialChars[strings.ToLower(key)]
+	return strings.ToUpper(key)[0]
 }
 
 var specialChars = map[string]byte{

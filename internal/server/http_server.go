@@ -138,6 +138,9 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
 		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
 		newConfig.GameWindowArrangement = r.Form.Get("game_window_arrangement") == "true"
+		// Debug
+		newConfig.Debug.Log = r.Form.Get("debug_log") == "true"
+		newConfig.Debug.Screenshots = r.Form.Get("debug_screenshots") == "true"
 		// Discord
 		newConfig.Discord.Enabled = r.Form.Get("discord_enabled") == "true"
 		newConfig.Discord.Token = r.Form.Get("discord_token")
