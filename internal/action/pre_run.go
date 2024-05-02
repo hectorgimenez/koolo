@@ -14,6 +14,7 @@ func (b *Builder) PreRun(firstRun bool) []Action {
 		b.VendorRefill(false, true),
 		b.Gamble(),
 		b.Stash(false),
+		b.CubeRecipes(),
 	}
 
 	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {

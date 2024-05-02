@@ -1,6 +1,8 @@
 package action
 
 import (
+	"log/slog"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -9,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-	"log/slog"
 )
 
 func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
@@ -29,11 +30,23 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 
 		b.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
 
-		// If items are on the Stash, pickup them to the inventory (only personal stash is supported for now)
+		// If items are on the Stash, pickup them to the inventory
 		for _, itm := range items {
 			nwIt := itm
 			if nwIt.Location != item.LocationStash && nwIt.Location != item.LocationSharedStash1 && nwIt.Location != item.LocationSharedStash2 && nwIt.Location != item.LocationSharedStash3 {
 				continue
+			}
+
+			// Check in which tab the item is and switch to it
+			switch nwIt.Location {
+			case item.LocationStash:
+				actions = append(actions, b.SwitchTab(1))
+			case item.LocationSharedStash1:
+				actions = append(actions, b.SwitchTab(2))
+			case item.LocationSharedStash2:
+				actions = append(actions, b.SwitchTab(3))
+			case item.LocationSharedStash3:
+				actions = append(actions, b.SwitchTab(4))
 			}
 
 			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
@@ -124,5 +137,39 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 				return step.StatusInProgress
 			}),
 		}
+	})
+}
+
+func (b *Builder) CubeTakeItem(cubedItem data.Item) *Chain {
+	return NewChain(func(d game.Data) (actions []Action) {
+		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+		if !found {
+			b.Logger.Info("No Horadric Cube found in inventory")
+			return nil
+		}
+
+		actions = append(actions, b.ensureCubeIsOpen(cube))
+
+		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
+			b.Logger.Debug("Taking item from the Horadric Cube", slog.String("Item", string(cubedItem.Name)))
+			screenPos := ui.GetScreenCoordsForItem(cubedItem)
+			b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+			helper.Sleep(300)
+
+			return []step.Step{
+				step.SyncStepWithCheck(func(d game.Data) error {
+					b.HID.PressKey(win.VK_ESCAPE)
+					helper.Sleep(300)
+					return nil
+				}, func(d game.Data) step.Status {
+					if d.OpenMenus.Inventory {
+						return step.StatusInProgress
+					}
+					return step.StatusCompleted
+				}),
+			}
+		}))
+
+		return
 	})
 }
