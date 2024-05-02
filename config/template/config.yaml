@@ -72,6 +72,8 @@ game:
     onlyElites: true # Should bot target only elites
   baal:
     killBaal: false
+    dollQuit: false
+    soulQuit: false
   eldritch:
     killShenk: true
   leveling:
