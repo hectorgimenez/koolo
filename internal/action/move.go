@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -65,6 +66,14 @@ func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain 
 
 				lvl, _ := b.Reader.CachedMapData.GetLevelData(a.Area)
 				_, _, objects, _ := b.Reader.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
+
+				// Sort objects by the distance from me
+				sort.Slice(objects, func(i, j int) bool {
+					distanceI := pather.DistanceFromMe(d, objects[i].Position)
+					distanceJ := pather.DistanceFromMe(d, objects[j].Position)
+
+					return distanceI < distanceJ
+				})
 
 				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 				for _, obj := range objects {
