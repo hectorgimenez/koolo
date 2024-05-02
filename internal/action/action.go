@@ -6,12 +6,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-type AbortReason string
-
-const (
-	ReasonChicken AbortReason = "chicken occurred"
-)
-
 const maxRetries = 5
 
 var ErrWillBeRetried = errors.New("error occurred, but it will be retried")
@@ -32,8 +26,6 @@ type basicAction struct {
 	markSkipped            bool
 	ignoreErrors           bool
 	repeatUntilNoMoreSteps bool
-	abortOtherActionsIfNil bool
-	abortReason            AbortReason
 }
 
 type Option func(action *basicAction)
@@ -60,13 +52,6 @@ func Resettable() Option {
 func RepeatUntilNoSteps() Option {
 	return func(action *basicAction) {
 		action.repeatUntilNoMoreSteps = true
-	}
-}
-
-func AbortOtherActionsIfNil(reason AbortReason) Option {
-	return func(action *basicAction) {
-		action.abortOtherActionsIfNil = true
-		action.abortReason = reason
 	}
 }
 
