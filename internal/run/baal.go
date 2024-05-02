@@ -112,7 +112,7 @@ func (s Baal) checkForSoulsOrDolls() *action.Chain {
 
 		if len(npcIds) != 0 {
 			return []action.Action{
-				s.builder.ChickenOnMonsters(npcIds),
+				s.builder.ChickenOnMonsters(60, npcIds),
 			}
 		}
 
