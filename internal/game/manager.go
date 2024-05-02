@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -189,10 +190,15 @@ func StartGame(username string, password string, realm string, arguments string,
 		return 0, 0, err
 	}
 
-	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", "-username", username, "-password", password, "-address", realm, arguments)
+	baseArgs := []string{"-username", username, "-password", password, "-address", realm}
+	additionalArguments := strings.Fields(arguments)
+
+	fullArgs := append(baseArgs, additionalArguments...)
+
+	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", fullArgs...)
 	// In case multiclient info is not set, start the game without any parameters
 	if username == "" || password == "" || realm == "" {
-		cmd = exec.Command(config.Koolo.D2RPath+"\\D2R.exe", arguments)
+		cmd = exec.Command(config.Koolo.D2RPath+"\\D2R.exe", additionalArguments...)
 	}
 
 	if useCustomSettings {
