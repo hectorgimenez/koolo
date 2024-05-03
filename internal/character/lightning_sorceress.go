@@ -54,6 +54,9 @@ func (s LightningSorceress) KillMonsterSequence(
 		}
 
 		steps := make([]step.Step, 0)
+		steps = append(steps,
+			step.SecondaryAttack(skill.StaticField, id, 1, opts...),
+		)		
 		if completedAttackLoops%2 == 0 {
 			for _, m := range d.Monsters.Enemies() {
 				if d := pather.DistanceFromMe(d, m.Position); d < 5 {
