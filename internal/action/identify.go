@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -28,7 +29,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 			return
 		}
 
-		if st, statFound := idTome.Stats[stat.Quantity]; !statFound || st.Value < len(items) {
+		if st, statFound := idTome.FindStat(stat.Quantity, 0); !statFound || st.Value < len(items) {
 			b.Logger.Info("Not enough ID scrolls, refilling...")
 			actions = append(actions, b.VendorRefill(true, false))
 		}

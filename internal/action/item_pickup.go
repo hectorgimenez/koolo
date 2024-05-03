@@ -2,15 +2,15 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
@@ -165,13 +165,9 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 
 	stashItems := b.allStashItems(d)
 
-	matchedRule, found := itemfilter.Evaluate(i, d.CharacterCfg.Runtime.Rules)
+	matchedRule, found := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 
 	if len(stashItems) == 0 {
-		return found
-	}
-
-	if matchedRule.Properties == nil {
 		return found
 	}
 

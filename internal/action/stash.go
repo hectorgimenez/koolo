@@ -2,19 +2,19 @@ package action
 
 import (
 	"fmt"
+	"log/slog"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-	"log/slog"
 )
 
 const (
@@ -161,13 +161,9 @@ func (b *Builder) shouldStashIt(i data.Item, forceStash bool, stashItems []data.
 		return true
 	}
 
-	matchedRule, found := itemfilter.Evaluate(i, b.CharacterCfg.Runtime.Rules)
+	matchedRule, found := b.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 
 	if len(stashItems) == 0 {
-		return found
-	}
-
-	if matchedRule.Properties == nil {
 		return found
 	}
 

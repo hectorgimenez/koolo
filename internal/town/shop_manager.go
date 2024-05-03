@@ -2,10 +2,11 @@ package town
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"math/rand"
+
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -102,7 +103,7 @@ func (sm ShopManager) ShouldBuyTPs(d game.Data) bool {
 		return true
 	}
 
-	qty, found := portalTome.Stats[stat.Quantity]
+	qty, found := portalTome.FindStat(stat.Quantity, 0)
 
 	return qty.Value <= rand.Intn(5-1)+1 || !found
 }
@@ -113,7 +114,7 @@ func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
 		return true
 	}
 
-	qty, found := idTome.Stats[stat.Quantity]
+	qty, found := idTome.FindStat(stat.Quantity, 0)
 
 	return qty.Value <= rand.Intn(7-3)+1 || !found
 }
@@ -124,7 +125,7 @@ func (sm ShopManager) ShouldBuyKeys(d game.Data) bool {
 		return false
 	}
 
-	qty, found := keys.Stats[stat.Quantity]
+	qty, found := keys.FindStat(stat.Quantity, 0)
 	if found && qty.Value == 12 {
 		return false
 	}
