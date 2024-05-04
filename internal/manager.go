@@ -99,6 +99,16 @@ func (mng *SupervisorManager) Status(characterName string) Stats {
 	return Stats{}
 }
 
+func (mng *SupervisorManager) GetData(characterName string) game.Data {
+	for name, supervisor := range mng.supervisors {
+		if name == characterName {
+			return supervisor.GetData()
+		}
+	}
+
+	return game.Data{}
+}
+
 func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger) (Supervisor, error) {
 	cfg, found := config.Characters[supervisorName]
 	if !found {
