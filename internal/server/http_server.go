@@ -197,6 +197,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		cfg.MaxGameLength, _ = strconv.Atoi(r.Form.Get("maxGameLength"))
 		cfg.CharacterName = r.Form.Get("characterName")
+		cfg.CommandLineArgs = r.Form.Get("commandLineArgs")
 		// Bnet config
 		cfg.Username = r.Form.Get("username")
 		cfg.Password = r.Form.Get("password")
