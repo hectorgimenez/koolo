@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -165,10 +166,13 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 
 	stashItems := b.allStashItems(d)
 
-	matchedRule, found := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
+	matchedRule, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
+	if result == nip.RuleResultNoMatch {
+		return false
+	}
 
 	if len(stashItems) == 0 {
-		return found
+		return true
 	}
 
 	exceedQuantity := b.doesExceedQuantity(i, matchedRule, stashItems)

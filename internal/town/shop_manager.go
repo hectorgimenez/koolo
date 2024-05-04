@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand"
 
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 
@@ -172,6 +173,10 @@ func ItemsToBeSold(lockPattern [][]int, d game.Data) (items []data.Item) {
 		}
 
 		if lockPattern[itm.Position.Y][itm.Position.X] == 1 {
+			// If item is a full match will be stashed, we don't want to sell it
+			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch {
+				continue
+			}
 			items = append(items, itm)
 		}
 	}

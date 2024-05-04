@@ -4,14 +4,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/lxn/win"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
@@ -79,7 +78,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				}
 			}
 
-			if _, found := d.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought); found {
+			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought); result == nip.RuleResultFullMatch {
 				lastStep = true
 				return []step.Step{step.Wait(time.Millisecond * 200)}
 			} else {

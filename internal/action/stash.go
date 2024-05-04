@@ -14,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	"github.com/lxn/win"
 )
 
 const (
@@ -28,7 +27,7 @@ const (
 func (b *Builder) Stash(forceStash bool) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		b.Logger.Debug("Checking for items to stash...")
-		if !b.isStashingRequired(d, forceStash) {
+		if !b.isStashingRequired(d) {
 			b.Logger.Debug("No items to stash...")
 			return
 		}
@@ -73,9 +72,9 @@ func (b *Builder) orderInventoryPotions(d game.Data) {
 	}
 }
 
-func (b *Builder) isStashingRequired(d game.Data, forceStash bool) bool {
+func (b *Builder) isStashingRequired(d game.Data) bool {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if b.shouldStashIt(i, forceStash, []data.Item{}) {
+		if b.shouldStashIt(i, []data.Item{}) {
 			return true
 		}
 	}
@@ -114,7 +113,7 @@ func (b *Builder) stashGold(d game.Data) {
 	b.Logger.Info("All stash tabs are full of gold :D")
 }
 
-func (b *Builder) stashInventory(d game.Data, forceStash bool) {
+func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	currentTab := 1
 	if b.CharacterCfg.Character.StashToShared {
 		currentTab = 2
@@ -124,11 +123,11 @@ func (b *Builder) stashInventory(d game.Data, forceStash bool) {
 	itemsInStashTabs := b.allStashItems(d)
 
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if !b.shouldStashIt(i, forceStash, itemsInStashTabs) {
+		if !b.shouldStashIt(i, itemsInStashTabs) {
 			continue
 		}
 		for currentTab < 5 {
-			if b.stashItemAction(i, forceStash) {
+			if b.stashItemAction(i, firstRun) {
 				b.Logger.Debug(fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality))
 				break
 			}
@@ -142,7 +141,7 @@ func (b *Builder) stashInventory(d game.Data, forceStash bool) {
 	}
 }
 
-func (b *Builder) shouldStashIt(i data.Item, forceStash bool, stashItems []data.Item) bool {
+func (b *Builder) shouldStashIt(i data.Item, inventoryItems []data.Item) bool {
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
 		return false
@@ -157,22 +156,10 @@ func (b *Builder) shouldStashIt(i data.Item, forceStash bool, stashItems []data.
 		return false
 	}
 
-	if forceStash {
-		return true
-	}
-
-	matchedRule, found := b.CharacterCfg.Runtime.Rules.EvaluateAll(i)
-
-	if len(stashItems) == 0 {
-		return found
-	}
-
-	exceedQuantity := b.doesExceedQuantity(i, matchedRule, stashItems)
-
-	return !exceedQuantity
+	return true
 }
 
-func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
+func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	b.HID.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(170)
@@ -189,7 +176,7 @@ func (b *Builder) stashItemAction(i data.Item, forceStash bool) bool {
 	}
 
 	// Don't log items that we already have in inventory during first run
-	if !forceStash {
+	if !firstRun {
 		event.Send(event.ItemStashed(event.WithScreenshot(b.Supervisor, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i))
 	}
 	return true
