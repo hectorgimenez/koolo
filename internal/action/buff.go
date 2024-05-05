@@ -1,10 +1,12 @@
 package action
 
 import (
+	"log/slog"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -55,10 +57,10 @@ func (b *Builder) Buff() *StepChainAction {
 		for _, buff := range b.ch.BuffSkills(d) {
 			kb, found := d.KeyBindings.KeyBindingForSkill(buff)
 			if !found {
-				return nil
+				b.Logger.Info("Key binding not found", slog.Int("skill", int(buff)))
+			} else {
+				keys = append(keys, kb)
 			}
-
-			keys = append(keys, kb)
 		}
 
 		if len(keys) > 0 {
@@ -89,7 +91,7 @@ func (b *Builder) IsRebuffRequired(d game.Data) bool {
 		return false
 	}
 
-	if b.isCTAEnabled(d) && (!d.PlayerUnit.States.HasState(state.Battleorders) || !d.PlayerUnit.States.HasState(state.Battlecommand)) {
+	if b.ctaFound(d) && (!d.PlayerUnit.States.HasState(state.Battleorders) || !d.PlayerUnit.States.HasState(state.Battlecommand)) {
 		return true
 	}
 
@@ -113,7 +115,7 @@ func (b *Builder) IsRebuffRequired(d game.Data) bool {
 }
 
 func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
-	if b.isCTAEnabled(d) {
+	if b.ctaFound(d) {
 		b.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
 		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
@@ -142,7 +144,7 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 	return
 }
 
-func (b *Builder) isCTAEnabled(d game.Data) bool {
+func (b *Builder) ctaFound(d game.Data) bool {
 	for _, itm := range d.Items.ByLocation(item.LocationEquipped) {
 		if itm.Stats[stat.NumSockets].Value == 5 && itm.Stats[stat.ReplenishLife].Value == 12 && itm.Stats[stat.NonClassSkill].Value > 0 && itm.Stats[stat.PreventMonsterHeal].Value > 0 {
 			return true
