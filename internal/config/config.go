@@ -156,7 +156,7 @@ type CharacterCfg struct {
 	} `yaml:"backtotown"`
 	Runtime struct {
 		CastDuration time.Duration `yaml:"-"`
-		Rules        []nip.Rule    `yaml:"-"`
+		Rules        nip.Rules     `yaml:"-"`
 	} `yaml:"-"`
 }
 

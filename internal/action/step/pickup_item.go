@@ -2,10 +2,11 @@ package step
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -43,7 +44,7 @@ func (p *PickupItemStep) Status(d game.Data, _ container.Container) Status {
 		}
 	}
 
-	p.logger.Info(fmt.Sprintf("Item picked up: %s [%s]", p.item.Name, p.item.Quality.ToString()))
+	p.logger.Info(fmt.Sprintf("Item picked up: %s [%s]", p.item.Desc().Name, p.item.Quality.ToString()))
 
 	return p.tryTransitionStatus(StatusCompleted)
 }
@@ -51,16 +52,16 @@ func (p *PickupItemStep) Status(d game.Data, _ container.Container) Status {
 func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 	for _, m := range d.Monsters.Enemies() {
 		if dist := pather.DistanceFromMe(d, m.Position); dist < 7 && p.mouseOverAttempts > 1 {
-			return fmt.Errorf("monster %d [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Name, p.item.Quality.ToString())
+			return fmt.Errorf("monster %d [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Desc().Name, p.item.Quality.ToString())
 		}
 	}
 
 	if p.mouseOverAttempts > maxInteractions || !p.waitingForInteraction.IsZero() && time.Since(p.waitingForInteraction) > time.Second*3 {
-		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Name, p.item.Quality.ToString())
+		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Desc().Name, p.item.Quality.ToString())
 	}
 
 	if p.status == StatusNotStarted {
-		p.logger.Debug(fmt.Sprintf("Picking up: %s [%s]", p.item.Name, p.item.Quality.ToString()))
+		p.logger.Debug(fmt.Sprintf("Picking up: %s [%s]", p.item.Desc().Name, p.item.Quality.ToString()))
 		p.startedAt = time.Now()
 	}
 
@@ -95,8 +96,8 @@ func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 
 				distance := pather.DistanceFromMe(d, i.Position)
 				if distance > 7 {
-					p.logger.Info("item is too far away", slog.String("item", string(p.item.Name)))
-					return fmt.Errorf("item is too far away: %s", p.item.Name)
+					p.logger.Info("item is too far away", slog.String("item", p.item.Desc().Name))
+					return fmt.Errorf("item is too far away: %s", p.item.Desc().Name)
 				}
 
 				x, y := helper.Spiral(p.mouseOverAttempts)
@@ -108,7 +109,7 @@ func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 		}
 	}
 
-	return fmt.Errorf("item %s not found", p.item.Name)
+	return fmt.Errorf("item %s not found", p.item.Desc().Name)
 }
 
 func (p *PickupItemStep) isChestHovered(d game.Data) bool {

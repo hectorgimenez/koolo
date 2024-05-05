@@ -2,6 +2,9 @@ package run
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -16,8 +19,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
-	"strings"
-	"time"
 )
 
 type Companion struct {
@@ -223,7 +224,10 @@ func getClosestPortal(d game.Data, leaderName string) (*data.Object, bool) {
 func hasEnoughPortals(d game.Data) bool {
 	portalTome, pFound := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if pFound {
-		return portalTome.Stats[stat.Quantity].Value > 0
+		st, found := portalTome.FindStat(stat.Quantity, 0)
+		if found && st.Value > 0 {
+			return true
+		}
 	}
 
 	return false

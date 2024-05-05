@@ -10,8 +10,8 @@ func (b *Builder) PreRun(firstRun bool) []Action {
 		b.RecoverCorpse(),
 		b.UpdateQuestLog(),
 		b.IdentifyAll(firstRun),
-		b.Stash(firstRun),
 		b.VendorRefill(false, true),
+		b.Stash(firstRun),
 		b.Gamble(),
 		b.Stash(false),
 	}
@@ -46,8 +46,8 @@ func (b *Builder) InRunReturnTownRoutine() []Action {
 		b.ReturnTown(),
 		b.RecoverCorpse(),
 		b.IdentifyAll(false),
-		b.Stash(false),
 		b.VendorRefill(false, true),
+		b.Stash(false),
 		b.Gamble(),
 		b.Stash(false),
 	}

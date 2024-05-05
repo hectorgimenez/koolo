@@ -2,10 +2,12 @@ package town
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"math/rand"
+
+	"github.com/hectorgimenez/d2go/pkg/nip"
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -102,7 +104,7 @@ func (sm ShopManager) ShouldBuyTPs(d game.Data) bool {
 		return true
 	}
 
-	qty, found := portalTome.Stats[stat.Quantity]
+	qty, found := portalTome.FindStat(stat.Quantity, 0)
 
 	return qty.Value <= rand.Intn(5-1)+1 || !found
 }
@@ -113,7 +115,7 @@ func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
 		return true
 	}
 
-	qty, found := idTome.Stats[stat.Quantity]
+	qty, found := idTome.FindStat(stat.Quantity, 0)
 
 	return qty.Value <= rand.Intn(7-3)+1 || !found
 }
@@ -124,7 +126,7 @@ func (sm ShopManager) ShouldBuyKeys(d game.Data) bool {
 		return false
 	}
 
-	qty, found := keys.Stats[stat.Quantity]
+	qty, found := keys.FindStat(stat.Quantity, 0)
 	if found && qty.Value == 12 {
 		return false
 	}
@@ -145,7 +147,7 @@ func (sm ShopManager) SellItem(i data.Item) {
 	helper.Sleep(500)
 	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	helper.Sleep(500)
-	sm.logger.Debug(fmt.Sprintf("Item %s [%d] sold", i.Name, i.Quality))
+	sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Desc().Name, i.Quality.ToString()))
 }
 
 func (sm ShopManager) BuyItem(i data.Item, quantity int) {
@@ -154,7 +156,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	for k := 0; k < quantity; k++ {
 		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 		helper.Sleep(900)
-		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
+		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Desc().Name, i.Position.X, i.Position.Y))
 	}
 }
 
@@ -171,6 +173,10 @@ func ItemsToBeSold(lockPattern [][]int, d game.Data) (items []data.Item) {
 		}
 
 		if lockPattern[itm.Position.Y][itm.Position.X] == 1 {
+			// If item is a full match will be stashed, we don't want to sell it
+			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch {
+				continue
+			}
 			items = append(items, itm)
 		}
 	}
