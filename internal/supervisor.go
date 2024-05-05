@@ -3,22 +3,24 @@ package koolo
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
-	"log/slog"
-	"time"
 )
 
 type Supervisor interface {
 	Start() error
 	Name() string
 	Stop()
-	TogglePause()
 	Stats() Stats
+	TogglePause()
 	SetWindowPosition(x, y int)
+	GetData() game.Data
 }
 
 type baseSupervisor struct {
@@ -52,6 +54,10 @@ func (s *baseSupervisor) Name() string {
 
 func (s *baseSupervisor) Stats() Stats {
 	return s.statsHandler.Stats()
+}
+
+func (s *baseSupervisor) GetData() game.Data {
+	return s.c.Reader.GetData(false)
 }
 
 func (s *baseSupervisor) TogglePause() {
