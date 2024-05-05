@@ -129,7 +129,13 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 		}
 		for currentTab < 5 {
 			if b.stashItemAction(i, firstRun) {
-				b.Logger.Debug(fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality))
+				r, _ := b.CharacterCfg.Runtime.Rules.EvaluateAll(i)
+
+				b.Logger.Debug(
+					fmt.Sprintf("Item %s [%s] stashed", i.Desc().Name, i.Quality.ToString()),
+					slog.String("nipFile", fmt.Sprintf("%s:%d", r.Filename, r.LineNumber)),
+					slog.String("rawRule", r.RawLine),
+				)
 				break
 			}
 			if currentTab == 5 {

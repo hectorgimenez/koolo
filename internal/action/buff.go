@@ -57,7 +57,7 @@ func (b *Builder) Buff() *StepChainAction {
 		for _, buff := range b.ch.BuffSkills(d) {
 			kb, found := d.KeyBindings.KeyBindingForSkill(buff)
 			if !found {
-				b.Logger.Info("Key binding not found", slog.Int("skill", int(buff)))
+				b.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
 			} else {
 				keys = append(keys, kb)
 			}
@@ -146,7 +146,10 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 
 func (b *Builder) ctaFound(d game.Data) bool {
 	for _, itm := range d.Items.ByLocation(item.LocationEquipped) {
-		if itm.Stats[stat.NumSockets].Value == 5 && itm.Stats[stat.ReplenishLife].Value == 12 && itm.Stats[stat.NonClassSkill].Value > 0 && itm.Stats[stat.PreventMonsterHeal].Value > 0 {
+		_, boFound := itm.FindStat(stat.NonClassSkill, int(skill.BattleOrders))
+		_, bcFound := itm.FindStat(stat.NonClassSkill, int(skill.BattleCommand))
+
+		if boFound && bcFound {
 			return true
 		}
 	}

@@ -147,7 +147,7 @@ func (sm ShopManager) SellItem(i data.Item) {
 	helper.Sleep(500)
 	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	helper.Sleep(500)
-	sm.logger.Debug(fmt.Sprintf("Item %s [%d] sold", i.Name, i.Quality))
+	sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Desc().Name, i.Quality.ToString()))
 }
 
 func (sm ShopManager) BuyItem(i data.Item, quantity int) {
@@ -156,7 +156,7 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 	for k := 0; k < quantity; k++ {
 		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 		helper.Sleep(900)
-		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Name, i.Position.X, i.Position.Y))
+		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Desc().Name, i.Position.X, i.Position.Y))
 	}
 }
 
