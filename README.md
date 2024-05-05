@@ -53,10 +53,11 @@ There are some considerations to take into account:
 - If item doesn't match the full rule, will be identified and checked again, if fully matches a rule it will be stashed.
 - There are some NIP properties that are **not implemented yet** and the bot will let you know during the startup process, please be sure to not use them:
   - plusmindamage
-  - mindamage
+  - mindamage (Only working for items with no base damage like rings, amulets, armors, etc.)
   - plusmaxdamage
-  - maxdamage
-  - enhanceddamage
+  - maxdamage (Only working for items with no base damage like rings, amulets, armors, etc.)
+  - enhanceddamage (Only working for items with no base damage like rings, amulets, armors, etc.)
+  - enhanceddefense (Only working for white bases and is not 100% accurate, avoid using it as much as possible)
   - itemarmorpercent
   - itemmindamagepercent
   - itemslashdamage
@@ -68,7 +69,6 @@ There are some considerations to take into account:
   - secondarymindamage
   - secondarymaxdamage
   - damagepercent
-- Special case for **enhanceddefense**: It's only working for white bases and is not 100% accurate, avoid using it as much as possible.
 
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).
