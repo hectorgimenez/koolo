@@ -43,6 +43,33 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Follow the setup wizard, it will guide you through the process of setting up the bot, you will need to setup some directories and character configuration.
 - If you want to back up/restore your configuration, and for manual setup, you can find the configuration files in the `config` directory.
 
+## Pickit rules
+Item pickit is based on [NIP files](https://github.com/blizzhackers/pickits/blob/master/NipGuide.md), you can find them in the `config/{character}/pickit` directory.
+
+All the .nip files contained in the pickit directory will be loaded, so you can have multiple pickit files.
+
+There are some considerations to take into account:
+- If item fully matches the pickit rule before being identified, it will be picked up and stashed unidentified.
+- If item doesn't match the full rule, will be identified and checked again, if fully matches a rule it will be stashed.
+- There are some NIP properties that are **not implemented yet** and the bot will let you know during the startup process, please be sure to not use them:
+  - plusmindamage
+  - mindamage
+  - plusmaxdamage
+  - maxdamage
+  - enhanceddamage
+  - itemarmorpercent
+  - itemmindamagepercent
+  - itemslashdamage
+  - itemslashdamagepercent
+  - itemcrushdamage
+  - itemcrushdamagepercent
+  - itemthrustdamage
+  - itemthrustdamagepercent
+  - secondarymindamage
+  - secondarymaxdamage
+  - damagepercent
+- Special case for **enhanceddefense**: It's only working for white bases and is not 100% accurate, avoid using it as much as possible.
+
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).
 

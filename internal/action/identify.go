@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 )
 
 func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {

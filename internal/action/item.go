@@ -31,8 +31,8 @@ func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []da
 	matchedItemsInStash := 0
 
 	for _, stashItem := range stashItems {
-		found, _ := rule.Evaluate(stashItem)
-		if found {
+		res, _ := rule.Evaluate(stashItem)
+		if res == nip.RuleResultFullMatch {
 			matchedItemsInStash += 1
 		}
 	}

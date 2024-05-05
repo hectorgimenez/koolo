@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/lxn/win"
 )
 
 func (b *Builder) Gamble() *Chain {
