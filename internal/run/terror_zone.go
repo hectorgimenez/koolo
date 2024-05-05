@@ -1,21 +1,31 @@
 package run
 
 import (
+	"log/slog"
+	"strings"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"log/slog"
 )
 
 type TerrorZone struct {
 	baseRun
-	currentTZ string
 }
 
 func (a TerrorZone) Name() string {
-	return a.currentTZ
+	d := a.Reader.GetData(false)
+	if len(d.TerrorZones) == 0 {
+		return "TerrorZone Run: no TerrorZones detected"
+	}
+	tzs := make([]string, 0)
+	for _, tz := range d.TerrorZones {
+		tzs = append(tzs, tz.Area().Name)
+	}
+
+	return "TerrorZone Run: " + strings.Join(tzs, ", ")
 }
 
 func (a TerrorZone) BuildActions() (actions []action.Action) {
@@ -104,10 +114,10 @@ func (a TerrorZone) buildTZAction(dstArea area.ID) action.Action {
 		}
 
 		if clearArea {
-			a.logger.Debug("Clearing TZ area", slog.Any("area", dstArea))
+			a.logger.Debug("Clearing TZ area", slog.String("area", dstArea.Area().Name))
 			actions = append(actions, a.builder.ClearArea(true, a.customTZEnemyFilter(a.CharacterCfg.Game.TerrorZone.SkipOnImmunities...)))
 		} else {
-			a.logger.Debug("TZ area skipped", slog.Any("area", dstArea))
+			a.logger.Debug("TZ area skipped", slog.String("area", dstArea.Area().Name))
 		}
 
 		return actions
