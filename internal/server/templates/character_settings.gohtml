@@ -51,6 +51,12 @@
                         value="{{ .Config.CommandLineArgs }}"/>
                 </label>
             </fieldset>
+            <fieldset class="grid">
+                <label>
+                    <input id="kill_d2_process" type="checkbox" name="kill_d2_process" {{ if .Config.KillD2OnStop }}checked{{ end }}/>
+                    Kill D2 process on bot stop
+                </label>
+            </fieldset>
             <h4>Battle.net settings</h4>
             <fieldset class="grid">
                 <label>

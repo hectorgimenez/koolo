@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/container"
@@ -72,6 +73,17 @@ func (s *baseSupervisor) Stop() {
 
 	s.c.Injector.Unload()
 	s.c.Reader.Close()
+
+	if s.c.CharacterCfg.KillD2OnStop {
+		process, err := os.FindProcess(int(s.c.Reader.Process.GetPID()))
+		if err != nil {
+			s.c.Logger.Info("Failed to find process", slog.String("configuration", s.name))
+		}
+		err = process.Kill()
+		if err != nil {
+			s.c.Logger.Info("Failed to kill process", slog.String("configuration", s.name))
+		}
+	}
 	s.c.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 

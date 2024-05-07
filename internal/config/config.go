@@ -59,6 +59,7 @@ type CharacterCfg struct {
 	Realm           string `yaml:"realm"`
 	CharacterName   string `yaml:"characterName"`
 	CommandLineArgs string `yaml:"commandLineArgs"`
+	KillD2OnStop    bool   `yaml:"killD2OnStop"`
 	Health          struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
