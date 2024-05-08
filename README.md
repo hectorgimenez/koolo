@@ -50,25 +50,9 @@ All the .nip files contained in the pickit directory will be loaded, so you can 
 
 There are some considerations to take into account:
 - If item fully matches the pickit rule before being identified, it will be picked up and stashed unidentified.
-- If item doesn't match the full rule, will be identified and checked again, if fully matches a rule it will be stashed.
-- There are some NIP properties that are **not implemented yet** and the bot will let you know during the startup process, please be sure to not use them:
-  - plusmindamage
-  - mindamage (Only working for items with no base damage like rings, amulets, armors, etc.)
-  - plusmaxdamage
-  - maxdamage (Only working for items with no base damage like rings, amulets, armors, etc.)
-  - enhanceddamage (Only working for items with no base damage like rings, amulets, armors, etc.)
-  - enhanceddefense (Only working for white bases and is not 100% accurate, avoid using it as much as possible)
-  - itemarmorpercent
-  - itemmindamagepercent
-  - itemslashdamage
-  - itemslashdamagepercent
-  - itemcrushdamage
-  - itemcrushdamagepercent
-  - itemthrustdamage
-  - itemthrustdamagepercent
-  - secondarymindamage
-  - secondarymaxdamage
-  - damagepercent
+- If item doesn't match the full rule, will be identified and checked again, if fully matches a rule it will be stashed otherwise sold to vendor.
+- If there is an error on the NIP file or Koolo can not understand it, the application will not start.
+- Pickit rules can not be changed in runtime (yet), you will need to restart Koolo to apply changes.
 
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).

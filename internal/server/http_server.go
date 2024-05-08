@@ -351,7 +351,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 	availableTZs := make(map[int]string)
 	for _, tz := range area.Areas {
-		if tz.CanBeTerrorized {
+		if tz.CanBeTerrorized() {
 			availableTZs[int(tz.ID)] = tz.Name
 		}
 	}

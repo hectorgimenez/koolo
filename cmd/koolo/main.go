@@ -2,6 +2,12 @@ package main
 
 import (
 	"context"
+	"log"
+	"log/slog"
+	"os"
+
+	_ "net/http/pprof"
+
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -13,9 +19,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/server"
 	"github.com/inkeliz/gowebview"
 	"golang.org/x/sync/errgroup"
-	"log"
-	"log/slog"
-	"os"
 )
 
 func main() {

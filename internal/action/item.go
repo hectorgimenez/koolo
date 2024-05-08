@@ -17,8 +17,8 @@ func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []da
 	}
 
 	// For now, use this only for gems, runes, tokens, ubers. Add more items after testing
-	allowedTypeGroups := []string{"runes", "ubers", "tokens", "chippedgems", "flawedgems", "gems", "flawlessgems", "perfectgems"}
-	if !slices.Contains(allowedTypeGroups, i.TypeAsString()) {
+	allowedTypeGroups := []string{item.TypeRune, item.TypeQuest, item.TypeGem}
+	if !slices.Contains(allowedTypeGroups, i.Type().Code) {
 		b.Logger.Debug(fmt.Sprintf("Skipping max quantity check for %s item", i.Name))
 		return false
 	}
