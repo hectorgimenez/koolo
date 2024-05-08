@@ -6,6 +6,7 @@ password: '' # Battle.net pwd
 realm: 'eu.actual.battle.net' # Battle.net realm (kr.actual.battle.net, us.actual.battle.net, eu.actual.battle.net)
 characterName: '' # If left empty, koolo will use first listed character, if name is wrong, it will fail to create the game
 commandLineArgs: '' # Command line arguments for D2
+killD2OnStop: true # Terminate D2 process on bot stop
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75
