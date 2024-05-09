@@ -238,7 +238,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Health.MercChickenAt, _ = strconv.Atoi(r.Form.Get("mercChickenAt"))
 		// Character
 		cfg.Character.Class = r.Form.Get("characterClass")
-		cfg.Character.CastingFrames, _ = strconv.Atoi(r.Form.Get("characterCastingFrames"))
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
 

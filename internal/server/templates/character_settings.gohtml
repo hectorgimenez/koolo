@@ -158,12 +158,6 @@
                     </select>
                 </label>
                 <label>
-                    Casting frames
-                    <input type="number" min="0" max="23" name="characterCastingFrames"
-                           placeholder="{{ .Config.Character.CastingFrames }}"
-                           value="{{ .Config.Character.CastingFrames }}"/>
-                </label>
-                <label>
                     Use teleport when available
                     <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
                 </label>

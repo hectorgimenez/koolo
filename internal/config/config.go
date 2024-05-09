@@ -9,7 +9,6 @@ import (
 
 	"os"
 	"strings"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -76,7 +75,6 @@ type CharacterCfg struct {
 	} `yaml:"inventory"`
 	Character struct {
 		Class         string `yaml:"class"`
-		CastingFrames int    `yaml:"castingFrames"`
 		UseMerc       bool   `yaml:"useMerc"`
 		StashToShared bool   `yaml:"stashToShared"`
 		UseTeleport   bool   `yaml:"useTeleport"`
@@ -156,8 +154,7 @@ type CharacterCfg struct {
 		MercDied    bool `yaml:"mercDied"`
 	} `yaml:"backtotown"`
 	Runtime struct {
-		CastDuration time.Duration `yaml:"-"`
-		Rules        nip.Rules     `yaml:"-"`
+		Rules nip.Rules `yaml:"-"`
 	} `yaml:"-"`
 }
 
@@ -233,8 +230,6 @@ func Load() error {
 
 		charCfg.Runtime.Rules = rules
 
-		secs := float32(charCfg.Character.CastingFrames)*0.04 + 0.01
-		charCfg.Runtime.CastDuration = time.Duration(secs*1000) * time.Millisecond
 		Characters[entry.Name()] = &charCfg
 	}
 

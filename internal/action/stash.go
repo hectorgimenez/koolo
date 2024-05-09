@@ -80,7 +80,8 @@ func (b *Builder) isStashingRequired(d game.Data) bool {
 		}
 	}
 
-	if d.PlayerUnit.Stats[stat.Gold] > d.PlayerUnit.MaxGold()/3 {
+	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
+	if gold.Value > d.PlayerUnit.MaxGold()/3 {
 		return true
 	}
 
@@ -88,14 +89,15 @@ func (b *Builder) isStashingRequired(d game.Data) bool {
 }
 
 func (b *Builder) stashGold(d game.Data) {
-	gold, found := d.PlayerUnit.Stats[stat.Gold]
-	if !found || gold == 0 {
+	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
+	if gold.Value == 0 {
 		return
 	}
 
-	b.Logger.Info("Stashing gold...", slog.Int("gold", gold))
+	b.Logger.Info("Stashing gold...", slog.Int("gold", gold.Value))
 
-	if d.PlayerUnit.Stats[stat.StashGold] < maxGoldPerStashTab {
+	stashGold, _ := d.PlayerUnit.FindStat(stat.StashGold, 0)
+	if stashGold.Value < maxGoldPerStashTab {
 		b.switchTab(1)
 		b.clickStashGoldBtn()
 		helper.Sleep(500)
@@ -103,8 +105,8 @@ func (b *Builder) stashGold(d game.Data) {
 
 	for i := 2; i < 5; i++ {
 		d = b.Reader.GetData(false)
-		gold, found = d.PlayerUnit.Stats[stat.Gold]
-		if !found || gold == 0 {
+		gold, _ = d.PlayerUnit.FindStat(stat.Gold, 0)
+		if gold.Value == 0 {
 			return
 		}
 

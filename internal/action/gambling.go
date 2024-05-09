@@ -18,7 +18,8 @@ import (
 
 func (b *Builder) Gamble() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
-		if d.CharacterCfg.Gambling.Enabled && d.PlayerUnit.Stats[stat.StashGold] >= 2500000 {
+		stashedGold, _ := d.PlayerUnit.FindStat(stat.StashGold, 0)
+		if d.CharacterCfg.Gambling.Enabled && stashedGold.Value >= 2500000 {
 			b.Logger.Info("Time to gamble! Visiting vendor...")
 
 			openShopStep := step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_DOWN, win.VK_RETURN)
