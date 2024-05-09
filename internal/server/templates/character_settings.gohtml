@@ -257,6 +257,11 @@
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
                 Enabled
             </label>
+            <h4>Cube Recipes - Flawlesses & Essenses</h4>
+            <label>
+                <input type="checkbox" name="enableCubeRecipes" {{ if .Config.EnableCubeRecipes }}checked{{ end }}/>
+                Enabled
+            </label>
             <h4>Companion mode</h4>
             <label>
                 <input type="checkbox" name="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>

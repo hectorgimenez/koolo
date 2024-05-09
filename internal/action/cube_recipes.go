@@ -50,6 +50,11 @@ var (
 
 func (b *Builder) CubeRecipes() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
+		// If cubing is disabled from settings just return nil
+		if !b.CharacterCfg.EnableCubeRecipes {
+			return nil
+		}
+
 		itemsInStash := d.Items.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
 		for _, recipe := range recipies {
 			continueProcessing := true
