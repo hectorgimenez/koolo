@@ -53,12 +53,14 @@ type KooloCfg struct {
 }
 
 type CharacterCfg struct {
-	MaxGameLength int    `yaml:"maxGameLength"`
-	Username      string `yaml:"username"`
-	Password      string `yaml:"password"`
-	Realm         string `yaml:"realm"`
-	CharacterName string `yaml:"characterName"`
-	Health        struct {
+	MaxGameLength   int    `yaml:"maxGameLength"`
+	Username        string `yaml:"username"`
+	Password        string `yaml:"password"`
+	Realm           string `yaml:"realm"`
+	CharacterName   string `yaml:"characterName"`
+	CommandLineArgs string `yaml:"commandLineArgs"`
+	KillD2OnStop    bool   `yaml:"killD2OnStop"`
+	Health          struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
@@ -155,7 +157,7 @@ type CharacterCfg struct {
 	} `yaml:"backtotown"`
 	Runtime struct {
 		CastDuration time.Duration `yaml:"-"`
-		Rules        []nip.Rule    `yaml:"-"`
+		Rules        nip.Rules     `yaml:"-"`
 	} `yaml:"-"`
 }
 

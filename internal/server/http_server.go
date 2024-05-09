@@ -72,6 +72,8 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/start", s.startSupervisor)
 	http.HandleFunc("/stop", s.stopSupervisor)
 	http.HandleFunc("/togglePause", s.togglePause)
+	http.HandleFunc("/debug", s.debugHandler)
+	http.HandleFunc("/debug-data", s.debugData)
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -91,6 +93,26 @@ func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.index(w)
+}
+
+func (s *HttpServer) debugData(w http.ResponseWriter, r *http.Request) {
+	characterName := r.URL.Query().Get("characterName")
+	if characterName == "" {
+		http.Error(w, "Character name is required", http.StatusBadRequest)
+		return
+	}
+	gameData := s.manager.GetData(characterName)
+	jsonData, err := json.Marshal(gameData)
+	if err != nil {
+		http.Error(w, "Failed to serialize game data", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func (s *HttpServer) debugHandler(w http.ResponseWriter, r *http.Request) {
+	s.templates.ExecuteTemplate(w, "debug.gohtml", nil)
 }
 
 func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
@@ -197,6 +219,9 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		cfg.MaxGameLength, _ = strconv.Atoi(r.Form.Get("maxGameLength"))
 		cfg.CharacterName = r.Form.Get("characterName")
+		cfg.CommandLineArgs = r.Form.Get("commandLineArgs")
+		cfg.KillD2OnStop = r.Form.Has("kill_d2_process")
+
 		// Bnet config
 		cfg.Username = r.Form.Get("username")
 		cfg.Password = r.Form.Get("password")
@@ -326,7 +351,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 	availableTZs := make(map[int]string)
 	for _, tz := range area.Areas {
-		if tz.CanBeTerrorized {
+		if tz.CanBeTerrorized() {
 			availableTZs[int(tz.ID)] = tz.Name
 		}
 	}

@@ -1,16 +1,17 @@
 package action
 
 import (
+	"log/slog"
+
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/lxn/win"
-	"log/slog"
 )
 
 func (b *Builder) DiscoverWaypoint() *Chain {
 	return NewChain(func(d game.Data) []Action {
-		b.Logger.Info("Trying to autodiscover Waypoint for current area", slog.Any("area", d.PlayerUnit.Area))
+		b.Logger.Info("Trying to autodiscover Waypoint for current area", slog.String("area", d.PlayerUnit.Area.Area().Name))
 		for _, o := range d.Objects {
 			if o.IsWaypoint() {
 				return []Action{b.InteractObject(o.Name,
@@ -18,7 +19,7 @@ func (b *Builder) DiscoverWaypoint() *Chain {
 						return d.OpenMenus.Waypoint
 					},
 					step.SyncStep(func(d game.Data) error {
-						b.Logger.Info("Waypoint discovered", slog.Any("area", d.PlayerUnit.Area))
+						b.Logger.Info("Waypoint discovered", slog.String("area", d.PlayerUnit.Area.Area().Name))
 						helper.Sleep(500)
 						b.HID.PressKey(win.VK_ESCAPE)
 						return nil
@@ -27,7 +28,7 @@ func (b *Builder) DiscoverWaypoint() *Chain {
 			}
 		}
 
-		b.Logger.Info("Waypoint not found :(", slog.Any("area", d.PlayerUnit.Area))
+		b.Logger.Info("Waypoint not found :(", slog.String("area", d.PlayerUnit.Area.Area().Name))
 		return nil
 	})
 }

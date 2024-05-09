@@ -2,9 +2,11 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -28,7 +30,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 			return
 		}
 
-		if st, statFound := idTome.Stats[stat.Quantity]; !statFound || st.Value < len(items) {
+		if st, statFound := idTome.FindStat(stat.Quantity, 0); !statFound || st.Value < len(items) {
 			b.Logger.Info("Not enough ID scrolls, refilling...")
 			actions = append(actions, b.VendorRefill(true, false))
 		}
@@ -65,6 +67,11 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
+			continue
+		}
+
+		// Skip identifying items that fully match a rule when unid
+		if _, result := b.CharacterCfg.Runtime.Rules.EvaluateAll(i); result == nip.RuleResultFullMatch {
 			continue
 		}
 

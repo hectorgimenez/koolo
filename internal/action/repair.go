@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -16,8 +17,8 @@ import (
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		for _, i := range d.Items.ByLocation(item.LocationEquipped) {
-			du, found := i.Stats[stat.Durability]
-			if _, maxDurabilityFound := i.Stats[stat.MaxDurability]; maxDurabilityFound && !found || (found && du.Value <= 1) {
+			du, found := i.FindStat(stat.Durability, 0)
+			if _, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0); maxDurabilityFound && !found || (found && du.Value <= 1) {
 				b.Logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))
 				repairNPC := town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()
 				if repairNPC == npc.Hratli {

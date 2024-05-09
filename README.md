@@ -43,6 +43,17 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Follow the setup wizard, it will guide you through the process of setting up the bot, you will need to setup some directories and character configuration.
 - If you want to back up/restore your configuration, and for manual setup, you can find the configuration files in the `config` directory.
 
+## Pickit rules
+Item pickit is based on [NIP files](https://github.com/blizzhackers/pickits/blob/master/NipGuide.md), you can find them in the `config/{character}/pickit` directory.
+
+All the .nip files contained in the pickit directory will be loaded, so you can have multiple pickit files.
+
+There are some considerations to take into account:
+- If item fully matches the pickit rule before being identified, it will be picked up and stashed unidentified.
+- If item doesn't match the full rule, will be identified and checked again, if fully matches a rule it will be stashed otherwise sold to vendor.
+- If there is an error on the NIP file or Koolo can not understand it, the application will not start.
+- Pickit rules can not be changed in runtime (yet), you will need to restart Koolo to apply changes.
+
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).
 

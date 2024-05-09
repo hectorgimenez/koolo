@@ -51,6 +51,9 @@
             <td>{{.TotalErrors}}</td>
             <td>{{.TotalDeaths}}</td>
             <td>
+                <a href="/debug?characterName={{$key}}" style="text-decoration: none;">
+                    <button class="button">Debug</button>
+                </a>
                 <a href="/supervisorSettings?supervisor={{$key}}" style="text-decoration: none;">
                     <button class="button">Settings</button>
                 </a>

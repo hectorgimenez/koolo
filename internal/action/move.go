@@ -38,7 +38,7 @@ func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain 
 
 	toFun := func(d game.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
-			b.Logger.Debug("Reached area", slog.Any("area", dst))
+			b.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
 			return data.Position{}, false
 		}
 
@@ -87,7 +87,7 @@ func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain 
 			}
 		}
 
-		b.Logger.Debug("Destination area not found", slog.Any("area", dst))
+		b.Logger.Debug("Destination area not found", slog.String("area", dst.Area().Name))
 
 		return data.Position{}, false
 	}

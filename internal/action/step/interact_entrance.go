@@ -3,9 +3,10 @@ package step
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -43,7 +44,7 @@ func (m *InteractEntranceStep) Run(d game.Data, container container.Container) e
 	m.tryTransitionStatus(StatusInProgress)
 
 	if m.mouseOverAttempts > maxInteractions {
-		return fmt.Errorf("area %d could not be interacted", m.area)
+		return fmt.Errorf("area %s [%d] could not be interacted", m.area.Area().Name, m.area)
 	}
 
 	if (m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1) || d.PlayerUnit.Area == m.area {
@@ -71,9 +72,9 @@ func (m *InteractEntranceStep) Run(d game.Data, container container.Container) e
 				return nil
 			}
 
-			return fmt.Errorf("area %d is not an entrance", m.area)
+			return fmt.Errorf("area %s [%d]  is not an entrance", m.area.Area().Name, m.area)
 		}
 	}
 
-	return fmt.Errorf("area %d not found", m.area)
+	return fmt.Errorf("area %s [%d]  not found", m.area.Area().Name, m.area)
 }

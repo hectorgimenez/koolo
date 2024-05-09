@@ -3,22 +3,25 @@ package koolo
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/lxn/win"
-	"log/slog"
-	"time"
 )
 
 type Supervisor interface {
 	Start() error
 	Name() string
 	Stop()
-	TogglePause()
 	Stats() Stats
+	TogglePause()
 	SetWindowPosition(x, y int)
+	GetData() game.Data
 }
 
 type baseSupervisor struct {
@@ -54,6 +57,10 @@ func (s *baseSupervisor) Stats() Stats {
 	return s.statsHandler.Stats()
 }
 
+func (s *baseSupervisor) GetData() game.Data {
+	return s.c.Reader.GetData(false)
+}
+
 func (s *baseSupervisor) TogglePause() {
 	s.bot.TogglePause()
 }
@@ -66,6 +73,17 @@ func (s *baseSupervisor) Stop() {
 
 	s.c.Injector.Unload()
 	s.c.Reader.Close()
+
+	if s.c.CharacterCfg.KillD2OnStop {
+		process, err := os.FindProcess(int(s.c.Reader.Process.GetPID()))
+		if err != nil {
+			s.c.Logger.Info("Failed to find process", slog.String("configuration", s.name))
+		}
+		err = process.Kill()
+		if err != nil {
+			s.c.Logger.Info("Failed to kill process", slog.String("configuration", s.name))
+		}
+	}
 	s.c.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 

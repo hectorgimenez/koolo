@@ -2,35 +2,25 @@ package action
 
 import (
 	"fmt"
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/d2go/pkg/itemfilter"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"slices"
 )
 
 func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []data.Item) bool {
-	if len(rule.MaxQuantity) == 0 {
+	maxQuantity := rule.MaxQuantity()
+	if maxQuantity == 0 {
 		return false
 	}
 
 	// For now, use this only for gems, runes, tokens, ubers. Add more items after testing
-	allowedTypeGroups := []string{"runes", "ubers", "tokens", "chippedgems", "flawedgems", "gems", "flawlessgems", "perfectgems"}
-	if !slices.Contains(allowedTypeGroups, i.Type()) {
+	allowedTypeGroups := []string{item.TypeRune, item.TypeQuest, item.TypeGem}
+	if !slices.Contains(allowedTypeGroups, i.Type().Code) {
 		b.Logger.Debug(fmt.Sprintf("Skipping max quantity check for %s item", i.Name))
 		return false
-	}
-
-	maxQuantity := 0
-
-	for _, maxQuantityGroup := range rule.MaxQuantity {
-		for _, maxQComparable := range maxQuantityGroup.Comparable {
-			if maxQComparable.Keyword == "maxquantity" && maxQComparable.ValueInt > 0 {
-				maxQuantity = maxQComparable.ValueInt
-				break
-			}
-		}
 	}
 
 	if maxQuantity == 0 {
@@ -41,8 +31,8 @@ func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []da
 	matchedItemsInStash := 0
 
 	for _, stashItem := range stashItems {
-		_, found := itemfilter.Evaluate(stashItem, []nip.Rule{rule})
-		if found {
+		res, _ := rule.Evaluate(stashItem)
+		if res == nip.RuleResultFullMatch {
 			matchedItemsInStash += 1
 		}
 	}

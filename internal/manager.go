@@ -2,6 +2,9 @@ package koolo
 
 import (
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -13,8 +16,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
-	"log/slog"
-	"time"
 )
 
 type SupervisorManager struct {
@@ -98,13 +99,23 @@ func (mng *SupervisorManager) Status(characterName string) Stats {
 	return Stats{}
 }
 
+func (mng *SupervisorManager) GetData(characterName string) game.Data {
+	for name, supervisor := range mng.supervisors {
+		if name == characterName {
+			return supervisor.GetData()
+		}
+	}
+
+	return game.Data{}
+}
+
 func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger) (Supervisor, error) {
 	cfg, found := config.Characters[supervisorName]
 	if !found {
 		return nil, fmt.Errorf("character %s not found", supervisorName)
 	}
 
-	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.Realm, config.Koolo.UseCustomSettings)
+	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.Realm, cfg.CommandLineArgs, config.Koolo.UseCustomSettings)
 	if err != nil {
 		return nil, fmt.Errorf("error starting game: %w", err)
 	}

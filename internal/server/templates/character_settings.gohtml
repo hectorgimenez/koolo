@@ -41,7 +41,20 @@
                 <label>
                     Character name
                     <input name="characterName" placeholder="{{ .Config.CharacterName }}"
-                           value="{{ .Config.CharacterName }}"/>
+                        value="{{ .Config.CharacterName }}"/>
+                </label>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
+                    Diablo2 Command Line Arguments
+                    <input name="commandLineArgs" placeholder="{{ .Config.CommandLineArgs }}"
+                        value="{{ .Config.CommandLineArgs }}"/>
+                </label>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
+                    <input id="kill_d2_process" type="checkbox" name="kill_d2_process" {{ if .Config.KillD2OnStop }}checked{{ end }}/>
+                    Kill D2 process on bot stop
                 </label>
             </fieldset>
             <h4>Battle.net settings</h4>
