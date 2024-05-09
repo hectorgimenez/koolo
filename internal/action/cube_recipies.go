@@ -49,7 +49,6 @@ var (
 func (b *Builder) CubeRecipes() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		itemsInStash := d.Items.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
-
 		for _, recipe := range recipies {
 			continueProcessing := true
 			for continueProcessing {

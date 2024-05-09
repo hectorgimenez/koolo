@@ -97,15 +97,7 @@ func (b *Builder) CubeTransmute() *Chain {
 			b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 			helper.Sleep(2000)
 
-			cubedItems := d.Items.ByLocation(item.LocationCube)
-			for _, cubedItem := range cubedItems {
-				itmLoc := ui.GetScreenCoordsForItem(cubedItem)
-				b.HID.ClickWithModifier(game.LeftButton, itmLoc.X, itmLoc.Y, game.CtrlKey)
-				helper.Sleep(300)
-			}
-
-			// Move the Item back to the inventory
-			//b.HID.ClickWithModifier(game.LeftButton, 238, 262, game.CtrlKey)
+			b.HID.ClickWithModifier(game.LeftButton, 306, 365, game.CtrlKey)
 			helper.Sleep(300)
 
 			return []step.Step{
@@ -160,39 +152,5 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 				return step.StatusInProgress
 			}),
 		}
-	})
-}
-
-func (b *Builder) CubeTakeItem(cubedItem data.Item) *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
-		if !found {
-			b.Logger.Info("No Horadric Cube found in inventory")
-			return nil
-		}
-
-		actions = append(actions, b.ensureCubeIsOpen(cube))
-
-		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-			b.Logger.Debug("Taking item from the Horadric Cube", slog.String("Item", string(cubedItem.Name)))
-			screenPos := ui.GetScreenCoordsForItem(cubedItem)
-			b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-			helper.Sleep(300)
-
-			return []step.Step{
-				step.SyncStepWithCheck(func(d game.Data) error {
-					b.HID.PressKey(win.VK_ESCAPE)
-					helper.Sleep(300)
-					return nil
-				}, func(d game.Data) step.Status {
-					if d.OpenMenus.Inventory {
-						return step.StatusInProgress
-					}
-					return step.StatusCompleted
-				}),
-			}
-		}))
-
-		return
 	})
 }
