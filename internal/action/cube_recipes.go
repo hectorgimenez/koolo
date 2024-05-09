@@ -52,7 +52,7 @@ func (b *Builder) CubeRecipes() *Chain {
 		for _, recipe := range recipies {
 			continueProcessing := true
 			for continueProcessing {
-				if items, hasItems := b.hasItemsForRecipie(itemsInStash, recipe); hasItems {
+				if items, hasItems := b.hasItemsForRecipe(itemsInStash, recipe); hasItems {
 					// Add items to the cube and perform the transmutation
 					actions = append(actions, b.CubeAddItems(items...))
 					actions = append(actions, b.CubeTransmute())
@@ -71,35 +71,31 @@ func (b *Builder) CubeRecipes() *Chain {
 	})
 }
 
-func (b *Builder) hasItemsForRecipie(items []data.Item, recipie CubeRecipie) ([]data.Item, bool) {
+func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipie) ([]data.Item, bool) {
 	// Create a map of the items we need for the recipie.
-	recipieItems := make(map[string]int)
-	for _, item := range recipie.Items {
-		recipieItems[item]++
+	recipeItems := make(map[string]int)
+	for _, item := range recipe.Items {
+		recipeItems[item]++
 		b.Logger.Debug("Increasing number for: ", slog.String("Item", item))
 	}
 
-	itemsForRecipie := []data.Item{}
+	itemsForRecipe := []data.Item{}
 
 	// Iterate over the items in our stash to see if we have the items for the recipie.
 	for _, item := range items {
-		// If we have the item, decrement the count in the map.
-		if count, ok := recipieItems[string(item.Name)]; ok {
+		if count, ok := recipeItems[string(item.Name)]; ok {
+			itemsForRecipe = append(itemsForRecipe, item)
 
-			// If the count is now 0, we have all the items for the recipie.
+			// Check if we now have exactly the needed count before decrementing
+			count -= 1
 			if count == 0 {
-				delete(recipieItems, string(item.Name))
-
-				// If the map is now empty, we have all the items for the recipie.
-				if len(recipieItems) == 0 {
-					b.Logger.Debug("Found all items for recipie: ", slog.String("Recipie", recipie.Name))
-
-					return itemsForRecipie, true
+				delete(recipeItems, string(item.Name))
+				if len(recipeItems) == 0 {
+					return itemsForRecipe, true
 				}
+			} else {
+				recipeItems[string(item.Name)] = count
 			}
-
-			recipieItems[string(item.Name)] = count - 1
-			itemsForRecipie = append(itemsForRecipie, item)
 		}
 	}
 
