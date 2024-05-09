@@ -95,10 +95,17 @@ func (b *Builder) CubeTransmute() *Chain {
 			b.Logger.Debug("Transmuting items in the Horadric Cube")
 			helper.Sleep(150)
 			b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
-			helper.Sleep(3000)
+			helper.Sleep(2000)
+
+			cubedItems := d.Items.ByLocation(item.LocationCube)
+			for _, cubedItem := range cubedItems {
+				itmLoc := ui.GetScreenCoordsForItem(cubedItem)
+				b.HID.ClickWithModifier(game.LeftButton, itmLoc.X, itmLoc.Y, game.CtrlKey)
+				helper.Sleep(300)
+			}
 
 			// Move the Item back to the inventory
-			b.HID.ClickWithModifier(game.LeftButton, 238, 262, game.CtrlKey)
+			//b.HID.ClickWithModifier(game.LeftButton, 238, 262, game.CtrlKey)
 			helper.Sleep(300)
 
 			return []step.Step{
@@ -124,6 +131,22 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 		b.Logger.Debug("Opening Horadric Cube...")
 		return []step.Step{
 			step.SyncStepWithCheck(func(d game.Data) error {
+				cubeTab := 1
+
+				switch cube.Location {
+				case item.LocationStash:
+					cubeTab = 1
+				case item.LocationSharedStash1:
+					cubeTab = 2
+				case item.LocationSharedStash2:
+					cubeTab = 3
+				case item.LocationSharedStash3:
+					cubeTab = 4
+				}
+
+				// Switch to the tab
+				b.switchTab(cubeTab)
+
 				screenPos := ui.GetScreenCoordsForItem(cube)
 				helper.Sleep(300)
 				b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)

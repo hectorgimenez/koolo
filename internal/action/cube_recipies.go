@@ -58,11 +58,7 @@ func (b *Builder) CubeRecipes() *Chain {
 					actions = append(actions, b.CubeAddItems(items...))
 					actions = append(actions, b.CubeTransmute())
 
-					// Retrieve the transmuted items and restash them
-					cubedItems := d.Items.ByLocation(item.LocationCube)
-					for _, cubedItem := range cubedItems {
-						actions = append(actions, b.CubeTakeItem(cubedItem))
-					}
+					// Add items to the stash
 					actions = append(actions, b.Stash(true))
 
 					// Remove or decrement the used items from itemsInStash
@@ -90,8 +86,6 @@ func (b *Builder) hasItemsForRecipie(items []data.Item, recipie CubeRecipie) ([]
 	for _, item := range items {
 		// If we have the item, decrement the count in the map.
 		if count, ok := recipieItems[string(item.Name)]; ok {
-			recipieItems[string(item.Name)] = count - 1
-			itemsForRecipie = append(itemsForRecipie, item)
 
 			// If the count is now 0, we have all the items for the recipie.
 			if count == 0 {
@@ -104,6 +98,9 @@ func (b *Builder) hasItemsForRecipie(items []data.Item, recipie CubeRecipie) ([]
 					return itemsForRecipie, true
 				}
 			}
+
+			recipieItems[string(item.Name)] = count - 1
+			itemsForRecipie = append(itemsForRecipie, item)
 		}
 	}
 
