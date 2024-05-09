@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -75,7 +76,7 @@ func (b *Builder) orderInventoryPotions(d game.Data) {
 
 func (b *Builder) isStashingRequired(d game.Data) bool {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if b.shouldStashIt(i, []data.Item{}) {
+		if b.shouldStashIt(d, i) {
 			return true
 		}
 	}
@@ -123,10 +124,8 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	}
 	b.switchTab(currentTab)
 
-	itemsInStashTabs := b.allStashItems(d)
-
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if !b.shouldStashIt(i, itemsInStashTabs) {
+		if !b.shouldStashIt(d, i) {
 			continue
 		}
 		for currentTab < 5 {
@@ -150,7 +149,7 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	}
 }
 
-func (b *Builder) shouldStashIt(i data.Item, inventoryItems []data.Item) bool {
+func (b *Builder) shouldStashIt(d game.Data, i data.Item) bool {
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
 		return false
@@ -162,6 +161,11 @@ func (b *Builder) shouldStashIt(i data.Item, inventoryItems []data.Item) bool {
 	}
 
 	if b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
+		return false
+	}
+
+	rule, res := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
+	if res == nip.RuleResultFullMatch && b.doesExceedQuantity(i, rule, d) {
 		return false
 	}
 

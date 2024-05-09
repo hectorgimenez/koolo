@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -10,16 +9,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []data.Item) bool {
+func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, d game.Data) bool {
+	stashItems := d.Items.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
+
 	maxQuantity := rule.MaxQuantity()
 	if maxQuantity == 0 {
-		return false
-	}
-
-	// For now, use this only for gems, runes, tokens, ubers. Add more items after testing
-	allowedTypeGroups := []string{item.TypeRune, item.TypeQuest, item.TypeGem}
-	if !slices.Contains(allowedTypeGroups, i.Type().Code) {
-		b.Logger.Debug(fmt.Sprintf("Skipping max quantity check for %s item", i.Name))
 		return false
 	}
 
@@ -40,14 +34,4 @@ func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, stashItems []da
 	b.Logger.Debug(fmt.Sprintf("For item %s found %d max quantity from pickit rule, number of items in the stash tabs %d", i.Name, maxQuantity, matchedItemsInStash))
 
 	return matchedItemsInStash >= maxQuantity
-}
-
-func (b *Builder) allStashItems(d game.Data) (S []data.Item) {
-	return slices.Concat(
-		d.Items.ByLocation(item.LocationStash),
-		d.Items.ByLocation(item.LocationVendor),       // When stash is open, this returns all items in the three shared stash tabs
-		d.Items.ByLocation(item.LocationSharedStash1), // Broken, always returns nil
-		d.Items.ByLocation(item.LocationSharedStash2), // Broken, always returns nil
-		d.Items.ByLocation(item.LocationSharedStash3), // Broken, always returns nil
-	)
 }

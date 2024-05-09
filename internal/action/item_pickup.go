@@ -165,18 +165,16 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 		return true
 	}
 
-	stashItems := b.allStashItems(d)
-
 	matchedRule, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 	if result == nip.RuleResultNoMatch {
 		return false
 	}
 
-	if len(stashItems) == 0 {
+	if result == nip.RuleResultPartial {
 		return true
 	}
 
-	exceedQuantity := b.doesExceedQuantity(i, matchedRule, stashItems)
+	exceedQuantity := b.doesExceedQuantity(i, matchedRule, d)
 
 	return !exceedQuantity
 }
