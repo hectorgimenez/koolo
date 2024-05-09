@@ -1,8 +1,6 @@
 package action
 
 import (
-	"log/slog"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -80,7 +78,6 @@ func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]dat
 	recipeItems := make(map[string]int)
 	for _, item := range recipe.Items {
 		recipeItems[item]++
-		b.Logger.Debug("Increasing number for: ", slog.String("Item", item))
 	}
 
 	itemsForRecipe := []data.Item{}
