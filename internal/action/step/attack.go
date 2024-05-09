@@ -1,11 +1,12 @@
 package step
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -79,7 +80,7 @@ func (p *AttackStep) Status(d game.Data, _ container.Container) Status {
 		return StatusCompleted
 	}
 
-	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > d.CharacterCfg.Runtime.CastDuration {
+	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > d.PlayerCastDuration() {
 		return p.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -127,7 +128,7 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > d.CharacterCfg.Runtime.CastDuration && p.numOfAttacksRemaining > 0 {
+	if time.Since(p.lastRun) > d.PlayerCastDuration() && p.numOfAttacksRemaining > 0 {
 		container.HID.KeyDown(d.KeyBindings.StandStill)
 		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 

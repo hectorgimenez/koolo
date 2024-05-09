@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -25,4 +27,10 @@ func (d Data) CanTeleport() bool {
 	_, isTpBound := d.KeyBindings.KeyBindingForSkill(skill.Teleport)
 
 	return isTpBound && !d.PlayerUnit.Area.IsTown()
+}
+
+func (d Data) PlayerCastDuration() time.Duration {
+	secs := float32(d.PlayerUnit.CastingFrames())*0.04 + 0.01
+
+	return time.Duration(secs*1000) * time.Millisecond
 }

@@ -29,7 +29,6 @@ inventory:
 
 character:
   class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
-  castingFrames: 8 # https://diablo2.diablowiki.net/Breakpoints#Faster_Cast_Rate
   useMerc: true
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination

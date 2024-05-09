@@ -40,7 +40,7 @@ var uiSkillColumnPosition = [3]int{920, 1010, 1095}
 func (b *Builder) EnsureStatPoints() *StepChainAction {
 	return NewStepChain(func(d game.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
-		_, unusedStatPoints := d.PlayerUnit.Stats[stat.StatPoints]
+		_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
 		if !isLevelingChar || !unusedStatPoints {
 			if d.OpenMenus.Character {
 				return []step.Step{
@@ -55,8 +55,8 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 		}
 
 		for st, targetPoints := range char.StatPoints(d) {
-			currentPoints, found := d.PlayerUnit.Stats[st]
-			if !found || currentPoints >= targetPoints {
+			currentPoints, found := d.PlayerUnit.FindStat(st, 0)
+			if !found || currentPoints.Value >= targetPoints {
 				continue
 			}
 
@@ -88,8 +88,8 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 	assignAttempts := 0
 	return NewStepChain(func(d game.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
-		availablePoints, unusedSkillPoints := d.PlayerUnit.Stats[stat.SkillPoints]
-		if !isLevelingChar || !unusedSkillPoints || assignAttempts >= availablePoints {
+		availablePoints, unusedSkillPoints := d.PlayerUnit.FindStat(stat.SkillPoints, 0)
+		if !isLevelingChar || !unusedSkillPoints || assignAttempts >= availablePoints.Value {
 			if d.OpenMenus.SkillTree {
 				return []step.Step{
 					step.SyncStep(func(_ game.Data) error {

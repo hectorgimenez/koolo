@@ -2,9 +2,10 @@ package step
 
 import (
 	"errors"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -97,7 +98,7 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 		return nil
 	}
 
-	if d.CanTeleport() && time.Since(m.lastRun) < d.CharacterCfg.Runtime.CastDuration {
+	if d.CanTeleport() && time.Since(m.lastRun) < d.PlayerCastDuration() {
 		return nil
 	}
 

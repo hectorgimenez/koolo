@@ -1,9 +1,10 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"sort"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -20,7 +21,8 @@ type SorceressLevelingLightning struct {
 }
 
 func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 25 && d.PlayerUnit.Skills[skill.Nova].Level > 10 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value >= 25 && d.PlayerUnit.Skills[skill.Nova].Level > 10 {
 		return true
 	}
 
@@ -54,13 +56,14 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 }
 
 func (s SorceressLevelingLightning) StatPoints(d game.Data) map[stat.ID]int {
-	if d.PlayerUnit.Stats[stat.Level] < 9 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value < 9 {
 		return map[stat.ID]int{
 			stat.Vitality: 9999,
 		}
 	}
 
-	if d.PlayerUnit.Stats[stat.Level] < 15 {
+	if lvl.Value < 15 {
 		return map[stat.ID]int{
 			stat.Energy:   45,
 			stat.Strength: 25,
@@ -76,7 +79,8 @@ func (s SorceressLevelingLightning) StatPoints(d game.Data) map[stat.ID]int {
 }
 
 func (s SorceressLevelingLightning) SkillPoints(d game.Data) []skill.ID {
-	if d.PlayerUnit.Stats[stat.Level] < 25 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value < 25 {
 		return []skill.ID{
 			skill.ChargedBolt,
 			skill.ChargedBolt,
@@ -176,28 +180,6 @@ func (s SorceressLevelingLightning) SkillPoints(d game.Data) []skill.ID {
 		skill.GlacialSpike,
 		skill.GlacialSpike,
 	}
-}
-
-func (s SorceressLevelingLightning) EnsureStatPoints() action.Action {
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		_, found := d.PlayerUnit.Stats[stat.StatPoints]
-		if !found {
-			return []step.Step{}
-		}
-
-		return nil
-	})
-}
-
-func (s SorceressLevelingLightning) EnsureSkillPoints() action.Action {
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		_, found := d.PlayerUnit.Stats[stat.SkillPoints]
-		if !found {
-			return []step.Step{}
-		}
-
-		return nil
-	})
 }
 
 func (s SorceressLevelingLightning) KillCountess() action.Action {
@@ -431,7 +413,8 @@ func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d g
 		steps := make([]step.Step, 0)
 
 		// During early game stages amount of mana is ridiculous...
-		if d.PlayerUnit.MPPercent() < 15 && d.PlayerUnit.Stats[stat.Level] < 15 {
+		lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+		if d.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
 			steps = append(steps, step.PrimaryAttack(id, 1, step.Distance(1, 3)))
 		} else {
 			if _, found := d.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {

@@ -1,9 +1,10 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"sort"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -187,7 +188,9 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (
 }
 
 func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
-	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Stats[stat.Level] < 30 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+
+	if lvl.Value >= 21 && lvl.Value < 30 {
 		return map[stat.ID]int{
 			stat.Strength: 35,
 			stat.Vitality: 200,
@@ -195,7 +198,7 @@ func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
 		}
 	}
 
-	if d.PlayerUnit.Stats[stat.Level] >= 30 && d.PlayerUnit.Stats[stat.Level] < 45 {
+	if lvl.Value >= 30 && lvl.Value < 45 {
 		return map[stat.ID]int{
 			stat.Strength:  50,
 			stat.Dexterity: 40,
@@ -204,7 +207,7 @@ func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
 		}
 	}
 
-	if d.PlayerUnit.Stats[stat.Level] >= 45 {
+	if lvl.Value >= 45 {
 		return map[stat.ID]int{
 			stat.Strength:  86,
 			stat.Dexterity: 50,
@@ -222,7 +225,8 @@ func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
 }
 
 func (p PaladinLeveling) SkillPoints(d game.Data) []skill.ID {
-	if d.PlayerUnit.Stats[stat.Level] < 21 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value < 21 {
 		return []skill.ID{
 			skill.Might,
 			skill.Sacrifice,
@@ -348,13 +352,14 @@ func (p PaladinLeveling) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
 		skill.HolyShield,
 	}
 
-	if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+	if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && lvl.Value >= 18 {
 		mainSkill = skill.BlessedHammer
 	} else if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
 		mainSkill = skill.Zeal
 	}
 
-	if d.PlayerUnit.Skills[skill.Concentration].Level > 0 && d.PlayerUnit.Stats[stat.Level] >= 18 {
+	if d.PlayerUnit.Skills[skill.Concentration].Level > 0 && lvl.Value >= 18 {
 		skillBindings = append(skillBindings, skill.Concentration)
 	} else {
 		if _, found := d.PlayerUnit.Skills[skill.HolyFire]; found {
@@ -368,7 +373,8 @@ func (p PaladinLeveling) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
 }
 
 func (p PaladinLeveling) ShouldResetSkills(d game.Data) bool {
-	if d.PlayerUnit.Stats[stat.Level] >= 21 && d.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value >= 21 && d.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
 		return true
 	}
 

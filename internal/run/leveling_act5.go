@@ -1,6 +1,8 @@
 package run
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -14,7 +16,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-	"time"
 )
 
 func (a Leveling) act5() action.Action {
@@ -27,14 +28,15 @@ func (a Leveling) act5() action.Action {
 			a.logger.Info("Starting Baal run...")
 			actions := Baal{baseRun: a.baseRun}.BuildActions()
 			return append(actions, action.NewStepChain(func(d game.Data) []step.Step {
+				lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 				if d.PlayerUnit.Area == area.TheWorldstoneChamber && len(d.Monsters.Enemies()) == 0 {
 					switch a.CharacterCfg.Game.Difficulty {
 					case difficulty.Normal:
-						if d.PlayerUnit.Stats[stat.Level] >= 46 {
+						if lvl.Value >= 46 {
 							a.CharacterCfg.Game.Difficulty = difficulty.Nightmare
 						}
 					case difficulty.Nightmare:
-						if d.PlayerUnit.Stats[stat.Level] >= 65 {
+						if lvl.Value >= 65 {
 							a.CharacterCfg.Game.Difficulty = difficulty.Hell
 						}
 					}

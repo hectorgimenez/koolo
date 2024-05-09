@@ -2,12 +2,13 @@ package game
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/d2go/pkg/utils"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/map_client"
 	"github.com/lxn/win"
-	"strconv"
 )
 
 type MemoryReader struct {
@@ -57,8 +58,7 @@ func (gd *MemoryReader) GetData(isNewGame bool) Data {
 	d := gd.GameReader.GetData()
 
 	if isNewGame {
-		playerUnitPtr, _ := gd.GetPlayerUnitPtr(d.Roster)
-		gd.cachedMapSeed, _ = gd.getMapSeed(playerUnitPtr)
+		gd.cachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
 		gd.CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
 	}
 

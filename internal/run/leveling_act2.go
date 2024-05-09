@@ -36,7 +36,8 @@ func (a Leveling) act2() action.Action {
 
 		if d.Quests[quest.Act2TheSummoner].Completed() {
 			// Try to get level 21 before moving to Duriel and Act3
-			if d.PlayerUnit.Stats[stat.Level] < 18 {
+
+			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 18 {
 				return TalRashaTombs{a.baseRun}.BuildActions()
 			}
 

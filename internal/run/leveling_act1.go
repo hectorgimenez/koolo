@@ -30,7 +30,7 @@ func (a Leveling) act1() action.Action {
 			return a.denOfEvil()
 		}
 
-		if d.PlayerUnit.Stats[stat.Level] < 13 {
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 13 {
 			return a.countess()
 		}
 
