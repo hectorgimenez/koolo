@@ -8,13 +8,13 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-type CubeRecipie struct {
+type CubeRecipe struct {
 	Name  string
 	Items []string
 }
 
 var (
-	recipies = []CubeRecipie{
+	recipies = []CubeRecipe{
 		{
 			Name:  "Perfect Amethyst",
 			Items: []string{"FlawlessAmethyst", "FlawlessAmethyst", "FlawlessAmethyst"},
@@ -42,6 +42,10 @@ var (
 		{
 			Name:  "Perfect Skull",
 			Items: []string{"FlawlessSkull", "FlawlessSkull", "FlawlessSkull"},
+		},
+		{
+			Name:  "Token of absolution",
+			Items: []string{"TwistedEssenceOfSuffering", "ChargedEssenceOfHatred", "BurningEssenceOfTerror", "FesteringEssenceOfDestruction"},
 		},
 	}
 )
@@ -71,7 +75,7 @@ func (b *Builder) CubeRecipes() *Chain {
 	})
 }
 
-func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipie) ([]data.Item, bool) {
+func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]data.Item, bool) {
 	// Create a map of the items we need for the recipie.
 	recipeItems := make(map[string]int)
 	for _, item := range recipe.Items {
