@@ -135,7 +135,7 @@ func (sm ShopManager) ShouldBuyKeys(d game.Data) bool {
 }
 
 func (sm ShopManager) SellJunk(d game.Data) {
-	for _, i := range ItemsToBeSold(d.CharacterCfg.Inventory.InventoryLock, d) {
+	for _, i := range ItemsToBeSold(d) {
 		if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
 			sm.SellItem(i)
 		}
@@ -166,13 +166,17 @@ func (sm ShopManager) buyFullStack(i data.Item) {
 	helper.Sleep(500)
 }
 
-func ItemsToBeSold(lockPattern [][]int, d game.Data) (items []data.Item) {
+func ItemsToBeSold(d game.Data) (items []data.Item) {
 	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
 		if itm.IsFromQuest() {
 			continue
 		}
 
-		if lockPattern[itm.Position.Y][itm.Position.X] == 1 {
+		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == item.Key || itm.Name == "WirtsLeg" {
+			continue
+		}
+
+		if d.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
 			// If item is a full match will be stashed, we don't want to sell it
 			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch {
 				continue

@@ -29,7 +29,7 @@ const (
 func (b *Builder) Stash(forceStash bool) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		b.Logger.Debug("Checking for items to stash...")
-		if !b.isStashingRequired(d) {
+		if !b.isStashingRequired(d, forceStash) {
 			b.Logger.Debug("No items to stash...")
 			return
 		}
@@ -74,9 +74,9 @@ func (b *Builder) orderInventoryPotions(d game.Data) {
 	}
 }
 
-func (b *Builder) isStashingRequired(d game.Data) bool {
+func (b *Builder) isStashingRequired(d game.Data, firstRun bool) bool {
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if b.shouldStashIt(d, i) {
+		if b.shouldStashIt(d, i, firstRun) {
 			return true
 		}
 	}
@@ -125,7 +125,7 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	b.switchTab(currentTab)
 
 	for _, i := range d.Items.ByLocation(item.LocationInventory) {
-		if !b.shouldStashIt(d, i) {
+		if !b.shouldStashIt(d, i, firstRun) {
 			continue
 		}
 		for currentTab < 5 {
@@ -149,7 +149,7 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	}
 }
 
-func (b *Builder) shouldStashIt(d game.Data, i data.Item) bool {
+func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) bool {
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
 		return false
@@ -160,8 +160,13 @@ func (b *Builder) shouldStashIt(d game.Data, i data.Item) bool {
 		return false
 	}
 
-	if b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
+	if i.Location == item.LocationInventory && b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
+	}
+
+	// Let's stash everything during first run, we don't want to sell items from the user
+	if firstRun {
+		return true
 	}
 
 	rule, res := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)

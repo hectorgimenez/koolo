@@ -1,10 +1,11 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/lxn/win"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -93,7 +94,7 @@ type VendorItemRequest struct {
 
 func (b *Builder) shouldVisitVendor(d game.Data) bool {
 	// Check if we should sell junk
-	if len(town.ItemsToBeSold(d.CharacterCfg.Inventory.InventoryLock, d)) > 0 {
+	if len(town.ItemsToBeSold(d)) > 0 {
 		return true
 	}
 
