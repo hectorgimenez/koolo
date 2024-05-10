@@ -8,14 +8,20 @@ func (b *Builder) PreRun(firstRun bool) []Action {
 	actions := []Action{
 		b.UseSkillIfBind(skill.Vigor),
 		b.RecoverCorpse(),
+	}
+
+	if firstRun {
+		actions = append(actions, b.Stash(firstRun))
+	}
+
+	actions = append(actions,
 		b.UpdateQuestLog(),
 		b.IdentifyAll(firstRun),
 		b.VendorRefill(false, true),
 		b.Stash(firstRun),
 		b.Gamble(),
 		b.Stash(false),
-		b.CubeRecipes(),
-	}
+	)
 
 	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
 		actions = append(actions,
@@ -51,6 +57,7 @@ func (b *Builder) InRunReturnTownRoutine() []Action {
 		b.Stash(false),
 		b.Gamble(),
 		b.Stash(false),
+		b.CubeRecipes(),
 	}
 
 	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
