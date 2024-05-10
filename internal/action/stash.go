@@ -213,7 +213,7 @@ func (b *Builder) switchTab(tab int) {
 	helper.Sleep(500)
 }
 
-func (b *Builder) SwitchTab(tab int) *Chain {
+func (b *Builder) SwitchStashTab(tab int) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		x := 107
 		y := 128
