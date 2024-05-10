@@ -40,13 +40,13 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 			// Check in which tab the item is and switch to it
 			switch nwIt.Location {
 			case item.LocationStash:
-				actions = append(actions, b.SwitchTab(1))
+				actions = append(actions, b.SwitchStashTab(1))
 			case item.LocationSharedStash1:
-				actions = append(actions, b.SwitchTab(2))
+				actions = append(actions, b.SwitchStashTab(2))
 			case item.LocationSharedStash2:
-				actions = append(actions, b.SwitchTab(3))
+				actions = append(actions, b.SwitchStashTab(3))
 			case item.LocationSharedStash3:
-				actions = append(actions, b.SwitchTab(4))
+				actions = append(actions, b.SwitchStashTab(4))
 			}
 
 			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
