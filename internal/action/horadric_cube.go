@@ -1,6 +1,8 @@
 package action
 
 import (
+	"log/slog"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -9,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-	"log/slog"
 )
 
 func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
@@ -29,11 +30,23 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 
 		b.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
 
-		// If items are on the Stash, pickup them to the inventory (only personal stash is supported for now)
+		// If items are on the Stash, pickup them to the inventory
 		for _, itm := range items {
 			nwIt := itm
 			if nwIt.Location != item.LocationStash && nwIt.Location != item.LocationSharedStash1 && nwIt.Location != item.LocationSharedStash2 && nwIt.Location != item.LocationSharedStash3 {
 				continue
+			}
+
+			// Check in which tab the item is and switch to it
+			switch nwIt.Location {
+			case item.LocationStash:
+				actions = append(actions, b.SwitchStashTab(1))
+			case item.LocationSharedStash1:
+				actions = append(actions, b.SwitchStashTab(2))
+			case item.LocationSharedStash2:
+				actions = append(actions, b.SwitchStashTab(3))
+			case item.LocationSharedStash3:
+				actions = append(actions, b.SwitchStashTab(4))
 			}
 
 			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
@@ -82,10 +95,9 @@ func (b *Builder) CubeTransmute() *Chain {
 			b.Logger.Debug("Transmuting items in the Horadric Cube")
 			helper.Sleep(150)
 			b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
-			helper.Sleep(3000)
+			helper.Sleep(2000)
 
-			// Move the Item back to the inventory
-			b.HID.ClickWithModifier(game.LeftButton, 238, 262, game.CtrlKey)
+			b.HID.ClickWithModifier(game.LeftButton, 306, 365, game.CtrlKey)
 			helper.Sleep(300)
 
 			return []step.Step{
@@ -111,6 +123,22 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 		b.Logger.Debug("Opening Horadric Cube...")
 		return []step.Step{
 			step.SyncStepWithCheck(func(d game.Data) error {
+				cubeTab := 1
+
+				switch cube.Location {
+				case item.LocationStash:
+					cubeTab = 1
+				case item.LocationSharedStash1:
+					cubeTab = 2
+				case item.LocationSharedStash2:
+					cubeTab = 3
+				case item.LocationSharedStash3:
+					cubeTab = 4
+				}
+
+				// Switch to the tab
+				b.switchTab(cubeTab)
+
 				screenPos := ui.GetScreenCoordsForItem(cube)
 				helper.Sleep(300)
 				b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)

@@ -312,6 +312,11 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		// Gambling
 		cfg.Gambling.Enabled = r.Form.Has("gamblingEnabled")
 
+		// Cube Recipes
+		cfg.EnableCubeRecipes = r.Form.Has("enableCubeRecipes")
+
+		// Companion
+
 		// Companion config
 		cfg.Companion.Enabled = r.Form.Has("companionEnabled")
 		cfg.Companion.Leader = r.Form.Has("companionLeader")

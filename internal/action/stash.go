@@ -217,3 +217,16 @@ func (b *Builder) switchTab(tab int) {
 	b.HID.Click(game.LeftButton, x, y)
 	helper.Sleep(500)
 }
+
+func (b *Builder) SwitchStashTab(tab int) *Chain {
+	return NewChain(func(d game.Data) (actions []Action) {
+		x := 107
+		y := 128
+		tabSize := 82
+		x = x + tabSize*tab - tabSize/2
+		b.HID.Click(game.LeftButton, x, y)
+		helper.Sleep(500)
+
+		return []Action{}
+	})
+}
