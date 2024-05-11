@@ -58,7 +58,6 @@ func (b *Builder) InRunReturnTownRoutine() []Action {
 		b.Stash(false),
 		b.Gamble(),
 		b.Stash(false),
-		b.CubeRecipes(),
 	}
 
 	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
