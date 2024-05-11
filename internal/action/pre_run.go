@@ -21,7 +21,6 @@ func (b *Builder) PreRun(firstRun bool) []Action {
 		b.Stash(firstRun),
 		b.Gamble(),
 		b.Stash(false),
-		b.CubeRecipes(),
 	)
 
 	if b.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
