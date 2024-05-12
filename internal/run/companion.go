@@ -37,7 +37,7 @@ func (s Companion) BuildActions() []action.Action {
 
 	// TODO: Deregister this listener or will leak
 	s.EventListener.Register(func(ctx context.Context, e event.Event) error {
-		if config.Characters[e.Supervisor()].CharacterName == s.CharacterCfg.Companion.LeaderName {
+		if strings.EqualFold(config.Characters[e.Supervisor()].CharacterName, s.CharacterCfg.Companion.LeaderName) {
 			if evt, ok := e.(event.CompanionLeaderAttackEvent); ok {
 				leaderUnitIDTarget = evt.TargetUnitID
 			}

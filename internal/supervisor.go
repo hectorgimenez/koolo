@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/container"
@@ -119,10 +120,10 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 		previousSelection := ""
 		for {
 			characterName := s.c.Reader.GameReader.GetSelectedCharacterName()
-			if previousSelection == characterName {
+			if strings.EqualFold(previousSelection, characterName) {
 				return fmt.Errorf("character %s not found", s.c.CharacterCfg.CharacterName)
 			}
-			if characterName == s.c.CharacterCfg.CharacterName {
+			if strings.EqualFold(characterName, s.c.CharacterCfg.CharacterName) {
 				s.c.Logger.Info("Character found")
 				return nil
 			}

@@ -10,9 +10,10 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
+
+const attackCycleDuration = 120 * time.Millisecond
 
 type AttackStep struct {
 	basicStep
@@ -80,7 +81,7 @@ func (p *AttackStep) Status(d game.Data, _ container.Container) Status {
 		return StatusCompleted
 	}
 
-	if p.numOfAttacksRemaining <= 0 && time.Since(p.lastRun) > d.PlayerCastDuration() {
+	if p.numOfAttacksRemaining <= 0 {
 		return p.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -119,7 +120,6 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 
 	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
 		container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.skill))
-		helper.Sleep(100)
 
 		if p.aura != 0 {
 			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.aura))
@@ -128,7 +128,7 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > d.PlayerCastDuration() && p.numOfAttacksRemaining > 0 {
+	if time.Since(p.lastRun) > d.PlayerCastDuration()-attackCycleDuration && p.numOfAttacksRemaining > 0 {
 		container.HID.KeyDown(d.KeyBindings.StandStill)
 		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
@@ -137,7 +137,6 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 		} else {
 			container.HID.Click(game.RightButton, x, y)
 		}
-		helper.Sleep(20)
 		container.HID.KeyUp(d.KeyBindings.StandStill)
 		p.lastRun = time.Now()
 		p.numOfAttacksRemaining--
