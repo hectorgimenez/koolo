@@ -1,9 +1,10 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/game"
 	"sort"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -65,7 +66,7 @@ func (s Hammerdin) KillMonsterSequence(
 			step.PrimaryAttack(
 				id,
 				8,
-				step.Distance(2, 8),
+				step.Distance(1, 8),
 				step.EnsureAura(skill.Concentration),
 			),
 		)
@@ -174,7 +175,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 					step.PrimaryAttack(
 						m.UnitID,
 						8,
-						step.Distance(2, 8),
+						step.Distance(1, 8),
 						step.EnsureAura(skill.Concentration),
 					),
 				)
@@ -201,7 +202,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					8,
-					step.Distance(2, 8),
+					step.Distance(1, 8),
 					step.EnsureAura(skill.Concentration),
 				),
 			)

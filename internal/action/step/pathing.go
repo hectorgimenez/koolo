@@ -35,7 +35,7 @@ func (s *pathingStep) cachePath(d game.Data) bool {
 	for k, pos := range s.path.AstarPather {
 		tile := pos.(*pather.Tile)
 		expandedGrid := 0
-		if len(tile.W) == 3000 {
+		if len(tile.W.World) == 3000 {
 			expandedGrid = 1500
 		}
 

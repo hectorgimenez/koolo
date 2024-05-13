@@ -86,11 +86,11 @@ func (gm *Manager) NewGame() error {
 	helper.Sleep(250)
 	gm.hid.Click(LeftButton, createX, createY)
 
-	for range 30 {
+	for range 12 {
 		if gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(1000)
+		helper.Sleep(500)
 	}
 
 	return errors.New("error creating game! Timeout")

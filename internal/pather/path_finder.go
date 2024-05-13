@@ -1,27 +1,31 @@
 package pather
 
 import (
+	"math"
+	"math/rand"
+
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"math"
-	"math/rand"
 )
 
 type PathFinder struct {
-	gr  *game.MemoryReader
-	hid *game.HID
-	cfg *config.CharacterCfg
+	gr              *game.MemoryReader
+	hid             *game.HID
+	cfg             *config.CharacterCfg
+	worldCache      World
+	worldCachedArea area.ID
+	worldCachedSeed uint
 }
 
-func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCfg) PathFinder {
-	return PathFinder{gr: gr, hid: hid, cfg: cfg}
+func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCfg) *PathFinder {
+	return &PathFinder{gr: gr, hid: hid, cfg: cfg}
 }
 
-func (pf PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	outsideCurrentLevel := outsideBoundary(d, to)
 	collisionGrid := d.CollisionGrid
 
@@ -124,26 +128,30 @@ func (pf PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ..
 		}
 	}
 
-	w := parseWorld(collisionGrid, d)
+	if pf.gr.CachedMapSeed != pf.worldCachedSeed || pf.worldCachedArea != d.PlayerUnit.Area || pf.worldCache.World == nil {
+		pf.worldCache = parseWorld(collisionGrid, d)
+		pf.worldCachedSeed = pf.gr.CachedMapSeed
+		pf.worldCachedArea = d.PlayerUnit.Area
+	}
 
 	// Set Origin and Destination points
-	w.SetTile(w.NewTile(KindFrom, fromX, fromY))
-	w.SetTile(w.NewTile(KindTo, toX, toY))
+	pf.worldCache.SetFrom(data.Position{X: fromX, Y: fromY})
+	pf.worldCache.SetTo(data.Position{X: toX, Y: toY})
 
-	//w.renderPathImg(d, nil, collisionGridOffset)
+	//W.renderPathImg(d, nil, collisionGridOffset)
 
-	p, distFloat, found := astar.Path(w.From(), w.To())
+	p, distFloat, found := astar.Path(pf.worldCache.From(), pf.worldCache.To())
 
 	distance = int(distFloat)
 
 	// Debug only, this will render a png file with map and origin/destination points
 	if config.Koolo.Debug.RenderMap {
-		w.renderPathImg(d, p, collisionGridOffset)
+		pf.worldCache.renderPathImg(d, p, collisionGridOffset)
 	}
 
 	return &Pather{AstarPather: p, Destination: data.Position{
-		X: w.To().X + d.AreaOrigin.X,
-		Y: w.To().Y + d.AreaOrigin.Y,
+		X: pf.worldCache.To().X + d.AreaOrigin.X,
+		Y: pf.worldCache.To().Y + d.AreaOrigin.Y,
 	}}, distance, found
 }
 
@@ -159,7 +167,7 @@ func ensureValueInCG(val, cgSize int) int {
 	return val
 }
 
-func (pf PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf *PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
 	maxRange := 20
 	step := 4
 	dst := 1
@@ -185,7 +193,7 @@ func (pf PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, bla
 	return nil, 0, false
 }
 
-func (pf PathFinder) MoveThroughPath(d game.Data, p *Pather, distance int) {
+func (pf *PathFinder) MoveThroughPath(d game.Data, p *Pather, distance int) {
 	//if len(p.AstarPather) == 0 {
 	//	if teleport {
 	//		hid.Click(hid.RightButton)
@@ -211,7 +219,7 @@ func (pf PathFinder) MoveThroughPath(d game.Data, p *Pather, distance int) {
 	}
 }
 
-func (pf PathFinder) moveCharacter(d game.Data, x, y int) {
+func (pf *PathFinder) moveCharacter(d game.Data, x, y int) {
 	if d.CanTeleport() {
 		pf.hid.Click(game.RightButton, x, y)
 	} else {
@@ -221,12 +229,12 @@ func (pf PathFinder) moveCharacter(d game.Data, x, y int) {
 	}
 }
 
-func (pf PathFinder) GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (int, int) {
+func (pf *PathFinder) GameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (int, int) {
 	// Calculate diff between current player position and destination
 	diffX := destinationX - playerX
 	diffY := destinationY - playerY
 
-	// Transform cartesian movement (world) to isometric (screen)
+	// Transform cartesian movement (World) to isometric (screen)
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
 	screenX := int((float32(diffX-diffY) * 19.8) + float32(pf.gr.GameAreaSizeX/2))
 	screenY := int((float32(diffX+diffY) * 9.9) + float32(pf.gr.GameAreaSizeY/2))
@@ -234,7 +242,7 @@ func (pf PathFinder) GameCoordsToScreenCords(playerX, playerY, destinationX, des
 	return screenX, screenY
 }
 
-func (pf PathFinder) RandomMovement() {
+func (pf *PathFinder) RandomMovement() {
 	midGameX := pf.gr.GameAreaSizeX / 2
 	midGameY := pf.gr.GameAreaSizeY / 2
 	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)

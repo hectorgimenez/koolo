@@ -14,7 +14,7 @@ import (
 type MemoryReader struct {
 	cfg *config.CharacterCfg
 	*memory.GameReader
-	cachedMapSeed  uint
+	CachedMapSeed  uint
 	HWND           win.HWND
 	WindowLeftX    int
 	WindowTopY     int
@@ -58,8 +58,8 @@ func (gd *MemoryReader) GetData(isNewGame bool) Data {
 	d := gd.GameReader.GetData()
 
 	if isNewGame {
-		gd.cachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
-		gd.CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.cachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
+		gd.CachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
+		gd.CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.CachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
 	}
 
 	origin := gd.CachedMapData.Origin(d.PlayerUnit.Area)
@@ -92,11 +92,11 @@ func (gd *MemoryReader) getMapSeed(playerUnit uintptr) (uint, error) {
 	actPtr := uintptr(gd.Process.ReadUInt(playerUnit+0x20, memory.Uint64))
 	actMiscPtr := uintptr(gd.Process.ReadUInt(actPtr+0x78, memory.Uint64))
 
-	dwInitSeedHash1 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x840, memory.Uint32))
+	dwInitSeedHash1 := gd.Process.ReadUInt(actMiscPtr+0x840, memory.Uint32)
 	//dwInitSeedHash2 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x844, memory.Uint32))
-	dwEndSeedHash1 := uintptr(gd.Process.ReadUInt(actMiscPtr+0x868, memory.Uint32))
+	dwEndSeedHash1 := gd.Process.ReadUInt(actMiscPtr+0x868, memory.Uint32)
 
-	mapSeed, found := utils.GetMapSeed(uint(dwInitSeedHash1), uint(dwEndSeedHash1))
+	mapSeed, found := utils.GetMapSeed(dwInitSeedHash1, dwEndSeedHash1)
 	if !found {
 		return 0, fmt.Errorf("error calculating map seed")
 	}

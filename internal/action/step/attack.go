@@ -3,13 +3,12 @@ package step
 import (
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -81,7 +80,8 @@ func (p *AttackStep) Status(d game.Data, _ container.Container) Status {
 		return StatusCompleted
 	}
 
-	if p.numOfAttacksRemaining <= 0 {
+	monster, found := d.Monsters.FindByID(p.target)
+	if !found || monster.Stats[stat.Life] <= 0 || p.numOfAttacksRemaining <= 0 {
 		return p.tryTransitionStatus(StatusCompleted)
 	}
 

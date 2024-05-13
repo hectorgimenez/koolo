@@ -3,12 +3,11 @@ package action
 import (
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/game"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -39,8 +38,6 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar {
-			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
-			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
 			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalGold() > 1000 {
 				return b.InRunReturnTownRoutine()
 			}
