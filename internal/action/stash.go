@@ -166,6 +166,10 @@ func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) bool {
 		return false
 	}
 
+	if i.Position.Y >= len(b.CharacterCfg.Inventory.InventoryLock) || i.Position.X >= len(b.CharacterCfg.Inventory.InventoryLock[0]) {
+		return false
+	}
+
 	if i.Location == item.LocationInventory && b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}
