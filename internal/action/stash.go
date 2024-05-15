@@ -8,7 +8,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -80,8 +79,14 @@ func (b *Builder) isStashingRequired(d game.Data, firstRun bool) bool {
 		}
 	}
 
-	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
-	if gold.Value > d.PlayerUnit.MaxGold()/3 {
+	isStashFull := true
+	for _, goldInStash := range d.Inventory.StashedGold {
+		if goldInStash < maxGoldPerStashTab {
+			isStashFull = false
+		}
+	}
+
+	if d.Inventory.Gold > d.PlayerUnit.MaxGold()/3 && !isStashFull {
 		return true
 	}
 
