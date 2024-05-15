@@ -245,6 +245,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			for x := range row {
 				if r.Form.Has(fmt.Sprintf("inventoryLock[%d][%d]", y, x)) {
 					cfg.Inventory.InventoryLock[y][x] = 0
+				} else {
+					cfg.Inventory.InventoryLock[y][x] = 1
 				}
 			}
 		}
