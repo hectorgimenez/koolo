@@ -10,6 +10,10 @@ import (
 
 func (b *Builder) ReturnTown() *Chain {
 	return NewChain(func(d game.Data) []Action {
+		if d.PlayerUnit.Area.IsTown() {
+			return []Action{}
+		}
+
 		return []Action{
 			NewStepChain(func(d game.Data) (steps []step.Step) {
 				return []step.Step{step.OpenPortal()}
