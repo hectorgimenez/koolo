@@ -48,8 +48,7 @@ func (i *InteractObjectStep) Status(d game.Data, _ container.Container) Status {
 		i.tryTransitionStatus(StatusCompleted)
 	}
 
-	// Give some extra time to render the UI
-	if time.Since(i.lastRun) > time.Second*1 && i.isCompleted != nil && i.isCompleted(d) {
+	if i.isCompleted != nil && i.isCompleted(d) {
 		return i.tryTransitionStatus(StatusCompleted)
 	}
 
@@ -64,7 +63,7 @@ func (i *InteractObjectStep) Run(d game.Data, container container.Container) err
 	}
 
 	// Give some time before retrying the interaction
-	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second*1 {
+	if i.waitingForInteraction && time.Since(i.lastRun) < time.Millisecond*500 {
 		return nil
 	}
 

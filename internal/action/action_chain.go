@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -48,7 +49,15 @@ func (a *Chain) NextStep(d game.Data, container container.Container) error {
 		if errors.Is(err, ErrNoMoreSteps) || errors.Is(err, ErrLogAndContinue) {
 			continue
 		}
+		if err != nil && a.retries < maxRetries && a.resetStepsOnError {
+			a.retries++
+			a.actions = nil
+			return nil
+		}
 
+		if err != nil {
+			a.markSkipped = true
+		}
 		return err
 	}
 

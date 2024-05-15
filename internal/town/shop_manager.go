@@ -55,33 +55,33 @@ func (sm ShopManager) BuyConsumables(d game.Data, forceRefill bool) {
 	}
 
 	if sm.ShouldBuyTPs(d) || forceRefill {
-		if _, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
+		if _, found := d.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
 			sm.logger.Info("TP Tome not found, buying one...")
-			if itm, itmFound := d.Items.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
+			if itm, itmFound := d.Inventory.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
 				sm.BuyItem(itm, 1)
 			}
 		}
 		sm.logger.Debug("Filling TP Tome...")
-		if itm, found := d.Items.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
+		if itm, found := d.Inventory.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
 			sm.buyFullStack(itm)
 		}
 	}
 
 	if sm.ShouldBuyIDs(d) || forceRefill {
-		if _, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory); !found {
+		if _, found := d.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); !found {
 			sm.logger.Info("ID Tome not found, buying one...")
-			if itm, itmFound := d.Items.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
+			if itm, itmFound := d.Inventory.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
 				sm.BuyItem(itm, 1)
 			}
 		}
 		sm.logger.Debug("Filling IDs Tome...")
-		if itm, found := d.Items.Find(item.ScrollOfIdentify, item.LocationVendor); found {
+		if itm, found := d.Inventory.Find(item.ScrollOfIdentify, item.LocationVendor); found {
 			sm.buyFullStack(itm)
 		}
 	}
 
 	if sm.ShouldBuyKeys(d) || forceRefill {
-		if itm, found := d.Items.Find(item.Key, item.LocationVendor); found {
+		if itm, found := d.Inventory.Find(item.Key, item.LocationVendor); found {
 			sm.logger.Debug("Vendor with keys detected, provisioning...")
 			sm.buyFullStack(itm)
 		}
@@ -90,7 +90,7 @@ func (sm ShopManager) BuyConsumables(d game.Data, forceRefill bool) {
 
 func (sm ShopManager) findFirstMatch(d game.Data, itemNames ...string) (data.Item, bool) {
 	for _, name := range itemNames {
-		if itm, found := d.Items.Find(item.Name(name), item.LocationVendor); found {
+		if itm, found := d.Inventory.Find(item.Name(name), item.LocationVendor); found {
 			return itm, true
 		}
 	}
@@ -99,7 +99,7 @@ func (sm ShopManager) findFirstMatch(d game.Data, itemNames ...string) (data.Ite
 }
 
 func (sm ShopManager) ShouldBuyTPs(d game.Data) bool {
-	portalTome, found := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
+	portalTome, found := d.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if !found {
 		return true
 	}
@@ -110,7 +110,7 @@ func (sm ShopManager) ShouldBuyTPs(d game.Data) bool {
 }
 
 func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
-	idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
+	idTome, found := d.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
 		return true
 	}
@@ -121,7 +121,7 @@ func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
 }
 
 func (sm ShopManager) ShouldBuyKeys(d game.Data) bool {
-	keys, found := d.Items.Find(item.Key, item.LocationInventory)
+	keys, found := d.Inventory.Find(item.Key, item.LocationInventory)
 	if !found {
 		return false
 	}
@@ -167,7 +167,7 @@ func (sm ShopManager) buyFullStack(i data.Item) {
 }
 
 func ItemsToBeSold(d game.Data) (items []data.Item) {
-	for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+	for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
 		if itm.IsFromQuest() {
 			continue
 		}
@@ -178,7 +178,7 @@ func ItemsToBeSold(d game.Data) (items []data.Item) {
 
 		if d.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
 			// If item is a full match will be stashed, we don't want to sell it
-			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch {
+			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
 				continue
 			}
 			items = append(items, itm)

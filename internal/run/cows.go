@@ -1,11 +1,12 @@
 package run
 
 import (
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -44,7 +45,7 @@ func (a Cows) BuildActions() []action.Action {
 
 func (a Cows) getWirtsLeg() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
-		if _, found := d.Items.Find("WirtsLeg", item.LocationStash, item.LocationInventory); found {
+		if _, found := d.Inventory.Find("WirtsLeg", item.LocationStash, item.LocationInventory); found {
 			a.logger.Info("WirtsLeg found, skip finding it")
 			return nil
 		}
@@ -66,7 +67,7 @@ func (a Cows) getWirtsLeg() action.Action {
 				return d.PlayerUnit.Area == area.Tristram
 			}, step.Wait(time.Second)),
 			a.builder.InteractObject(object.WirtCorpse, func(d game.Data) bool {
-				_, found := d.Items.Find("WirtsLeg")
+				_, found := d.Inventory.Find("WirtsLeg")
 
 				return found
 			}),
@@ -83,14 +84,14 @@ func (a Cows) preparePortal() action.Action {
 		}
 
 		currentWPTomes := make([]data.UnitID, 0)
-		leg, found := d.Items.Find("WirtsLeg")
+		leg, found := d.Inventory.Find("WirtsLeg")
 		if !found {
 			a.logger.Error("WirtsLeg could not be found, portal cannot be opened")
 			return nil
 		}
 
 		// Backup current WP tomes in inventory, before getting new one at Akara
-		for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+		for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
 			if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) {
 				currentWPTomes = append(currentWPTomes, itm.UnitID)
 			}
@@ -105,7 +106,7 @@ func (a Cows) preparePortal() action.Action {
 			action.NewChain(func(d game.Data) []action.Action {
 				// Ensure we are using the new WP tome and not the one that we are using for TPs
 				var newWPTome data.Item
-				for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+				for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
 					if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) && !slices.Contains(currentWPTomes, itm.UnitID) {
 						newWPTome = itm
 					}

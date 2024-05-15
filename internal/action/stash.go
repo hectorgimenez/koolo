@@ -30,7 +30,6 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		b.Logger.Debug("Checking for items to stash...")
 		if !b.isStashingRequired(d, forceStash) {
-			b.Logger.Debug("No items to stash...")
 			return
 		}
 
@@ -61,7 +60,7 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 }
 
 func (b *Builder) orderInventoryPotions(d game.Data) {
-	for _, i := range d.Items.ByLocation(item.LocationInventory) {
+	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
 			if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
@@ -75,7 +74,7 @@ func (b *Builder) orderInventoryPotions(d game.Data) {
 }
 
 func (b *Builder) isStashingRequired(d game.Data, firstRun bool) bool {
-	for _, i := range d.Items.ByLocation(item.LocationInventory) {
+	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
 		if b.shouldStashIt(d, i, firstRun) {
 			return true
 		}
@@ -90,30 +89,25 @@ func (b *Builder) isStashingRequired(d game.Data, firstRun bool) bool {
 }
 
 func (b *Builder) stashGold(d game.Data) {
-	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
-	if gold.Value == 0 {
+	if d.Inventory.Gold == 0 {
 		return
 	}
 
-	b.Logger.Info("Stashing gold...", slog.Int("gold", gold.Value))
+	b.Logger.Info("Stashing gold...", slog.Int("gold", d.Inventory.Gold))
 
-	stashGold, _ := d.PlayerUnit.FindStat(stat.StashGold, 0)
-	if stashGold.Value < maxGoldPerStashTab {
-		b.switchTab(1)
-		b.clickStashGoldBtn()
-		helper.Sleep(500)
-	}
-
-	for i := 2; i < 5; i++ {
+	for tab, goldInStash := range d.Inventory.StashedGold {
 		d = b.Reader.GetData(false)
-		gold, _ = d.PlayerUnit.FindStat(stat.Gold, 0)
-		if gold.Value == 0 {
+		if d.Inventory.Gold == 0 {
 			return
 		}
 
-		b.switchTab(i)
-		b.clickStashGoldBtn()
+		if goldInStash < maxGoldPerStashTab {
+			b.switchTab(tab + 1)
+			b.clickStashGoldBtn()
+			helper.Sleep(500)
+		}
 	}
+
 	b.Logger.Info("All stash tabs are full of gold :D")
 }
 
@@ -124,7 +118,7 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	}
 	b.switchTab(currentTab)
 
-	for _, i := range d.Items.ByLocation(item.LocationInventory) {
+	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
 		if !b.shouldStashIt(d, i, firstRun) {
 			continue
 		}
@@ -194,7 +188,7 @@ func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
 	helper.Sleep(500)
 
 	d := b.Reader.GetData(false)
-	for _, it := range d.Items.ByLocation(item.LocationInventory) {
+	for _, it := range d.Inventory.ByLocation(item.LocationInventory) {
 		if it.UnitID == i.UnitID {
 			return false
 		}

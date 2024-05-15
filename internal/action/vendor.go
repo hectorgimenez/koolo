@@ -70,7 +70,7 @@ func (b *Builder) BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) *Chain 
 			step.SyncStep(func(d game.Data) error {
 				for _, i := range items {
 					b.switchTab(i.Tab)
-					itm, found := d.Items.Find(i.Item, item.LocationVendor)
+					itm, found := d.Inventory.Find(i.Item, item.LocationVendor)
 					if found {
 						b.sm.BuyItem(itm, i.Quantity)
 					} else {
@@ -100,7 +100,7 @@ func (b *Builder) shouldVisitVendor(d game.Data) bool {
 
 	// Skip the vendor if we don't have enough gold to do anything... this is not the optimal scenario,
 	// but I have no idea how to check vendor Item prices.
-	if d.PlayerUnit.TotalGold() < 1000 {
+	if d.PlayerUnit.TotalPlayerGold() < 1000 {
 		return false
 	}
 

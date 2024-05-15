@@ -89,7 +89,7 @@ func (a Leveling) anya() []action.Action {
 			step.SyncStep(func(d game.Data) error {
 				a.HID.PressKey(win.VK_ESCAPE)
 				a.HID.PressKeyBinding(d.KeyBindings.Inventory)
-				itm, _ := d.Items.Find("ScrollOfResistance")
+				itm, _ := d.Inventory.Find("ScrollOfResistance")
 				screenPos := ui.GetScreenCoordsForItem(itm)
 				helper.Sleep(200)
 				a.HID.Click(game.RightButton, screenPos.X, screenPos.Y)

@@ -10,7 +10,7 @@ import (
 )
 
 func (b *Builder) doesExceedQuantity(i data.Item, rule nip.Rule, d game.Data) bool {
-	stashItems := d.Items.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
+	stashItems := d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
 
 	maxQuantity := rule.MaxQuantity()
 	if maxQuantity == 0 {

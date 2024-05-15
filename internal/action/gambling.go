@@ -64,17 +64,15 @@ func (b *Builder) gambleItems() *StepChainAction {
 				})}
 			}
 
-			b.Logger.Info("Finished gambling", slog.Int("currentGold", d.PlayerUnit.TotalGold()))
+			b.Logger.Info("Finished gambling", slog.Int("currentGold", d.PlayerUnit.TotalPlayerGold()))
 
 			return nil
 		}
 
 		if itemBought.Name != "" {
-			// For any reason item is still detected as located in vendor, I will take a look later into this
-			for _, itm := range d.Items.ByLocation(item.LocationVendor) {
+			for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
 				if itm.UnitID == itemBought.UnitID {
 					itemBought = itm
-					itemBought.Location = item.LocationInventory
 					b.Logger.Debug("Gambled for item", slog.Any("item", itemBought))
 					break
 				}
@@ -93,7 +91,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 			}
 		}
 
-		if d.PlayerUnit.TotalGold() < 500000 {
+		if d.PlayerUnit.TotalPlayerGold() < 500000 {
 			lastStep = true
 			return []step.Step{step.Wait(time.Millisecond * 200)}
 		}
@@ -108,7 +106,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 				continue
 			}
 
-			itm, found := d.Items.Find(itmName, item.LocationVendor)
+			itm, found := d.Inventory.Find(itmName, item.LocationVendor)
 			if !found {
 				b.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
 

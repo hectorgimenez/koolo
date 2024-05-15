@@ -16,7 +16,7 @@ import (
 
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
-		for _, i := range d.Items.ByLocation(item.LocationEquipped) {
+		for _, i := range d.Inventory.ByLocation(item.LocationEquipped) {
 			du, found := i.FindStat(stat.Durability, 0)
 			if _, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0); maxDurabilityFound && !found || (found && du.Value <= 1) {
 				b.Logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))

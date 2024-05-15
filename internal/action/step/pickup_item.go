@@ -38,7 +38,7 @@ func (p *PickupItemStep) Status(d game.Data, _ container.Container) Status {
 		return p.status
 	}
 
-	for _, i := range d.Items.ByLocation(item.LocationGround) {
+	for _, i := range d.Inventory.ByLocation(item.LocationGround) {
 		if i.UnitID == p.item.UnitID {
 			return p.status
 		}
@@ -75,7 +75,7 @@ func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 	}
 
 	p.lastRun = time.Now()
-	for _, i := range d.Items.ByLocation(item.LocationGround) {
+	for _, i := range d.Inventory.ByLocation(item.LocationGround) {
 		if i.UnitID == p.item.UnitID {
 			objectX := i.Position.X - 1
 			objectY := i.Position.Y - 1

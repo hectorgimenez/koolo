@@ -138,8 +138,8 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		}
 
 		// Check if we have HP & MP potions
-		_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
-		_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
+		_, healingPotsFound := d.Inventory.Belt.GetFirstPotion(data.HealingPotion)
+		_, manaPotsFound := d.Inventory.Belt.GetFirstPotion(data.ManaPotion)
 
 		// Go back to town check
 		if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
@@ -153,9 +153,9 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		// Let's go pickup more pots if we have less than 2 (only during leveling)
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
-			_, healingPotsFound := d.Items.Belt.GetFirstPotion(data.HealingPotion)
-			_, manaPotsFound := d.Items.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalGold() > 1000 {
+			_, healingPotsFound := d.Inventory.Belt.GetFirstPotion(data.HealingPotion)
+			_, manaPotsFound := d.Inventory.Belt.GetFirstPotion(data.ManaPotion)
+			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalPlayerGold() > 1000 {
 				return []Action{NewChain(func(d game.Data) []Action {
 					return b.InRunReturnTownRoutine()
 				})}
@@ -171,7 +171,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 			}
 			// But if we are leveling and have enough money (to buy mana pots), let's teleport. We add the timeout
 			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
-			if d.PlayerUnit.TotalGold() > 30000 {
+			if d.PlayerUnit.TotalPlayerGold() > 30000 {
 				return []Action{NewStepChain(func(d game.Data) []step.Step {
 					newOpts := append(opts, step.WithTimeout(5*time.Second))
 					return []step.Step{step.MoveTo(to, newOpts...)}

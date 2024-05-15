@@ -55,7 +55,7 @@ func (b *Builder) CubeRecipes() *Chain {
 			return nil
 		}
 
-		itemsInStash := d.Items.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
+		itemsInStash := d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3)
 		for _, recipe := range recipies {
 			continueProcessing := true
 			for continueProcessing {

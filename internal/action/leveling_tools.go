@@ -334,7 +334,7 @@ func (b *Builder) HireMerc() *Chain {
 		_, isLevelingChar := b.ch.(LevelingCharacter)
 		if isLevelingChar && d.CharacterCfg.Character.UseMerc {
 			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
-			if d.CharacterCfg.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
+			if d.CharacterCfg.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalPlayerGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
 				b.Logger.Info("Hiring merc...")
 				// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
 				actions = append(actions,

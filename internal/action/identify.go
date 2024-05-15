@@ -24,7 +24,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 			return
 		}
 
-		idTome, found := d.Items.Find(item.TomeOfIdentify, item.LocationInventory)
+		idTome, found := d.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
 		if !found {
 			b.Logger.Warn("ID Tome not found, not identifying items")
 			return
@@ -65,7 +65,7 @@ func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
 }
 
 func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
-	for _, i := range d.Items.ByLocation(item.LocationInventory) {
+	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
 			continue
 		}

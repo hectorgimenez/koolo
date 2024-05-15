@@ -1,11 +1,12 @@
 package run
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/lxn/win"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -31,7 +32,7 @@ func (a Leveling) act3() action.Action {
 		}
 
 		running = true
-		_, willFound := d.Items.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
+		_, willFound := d.Inventory.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
 		if willFound {
 			return append(actions, a.openMephistoStairs()...)
 		}
@@ -46,7 +47,7 @@ func (a Leveling) act3() action.Action {
 		}
 
 		// Find KhalimsEye
-		_, found = d.Items.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
+		_, found = d.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
 		if found {
 			a.logger.Info("KhalimsEye found, skipping quest")
 		} else {
@@ -55,7 +56,7 @@ func (a Leveling) act3() action.Action {
 		}
 
 		// Find KhalimsBrain
-		_, found = d.Items.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
+		_, found = d.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
 		if found {
 			a.logger.Info("KhalimsBrain found, skipping quest")
 		} else {
@@ -64,7 +65,7 @@ func (a Leveling) act3() action.Action {
 		}
 
 		// Find KhalimsHeart
-		_, found = d.Items.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
+		_, found = d.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
 		if found {
 			a.logger.Info("KhalimsHeart found, skipping quest")
 		} else {
@@ -170,10 +171,10 @@ func (a Leveling) openMephistoStairs() []action.Action {
 		a.builder.ItemPickup(true, 40),
 		a.builder.ReturnTown(),
 		action.NewChain(func(d game.Data) []action.Action {
-			eye, _ := d.Items.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
-			brain, _ := d.Items.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
-			heart, _ := d.Items.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
-			flail, _ := d.Items.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
+			eye, _ := d.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
+			brain, _ := d.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
+			heart, _ := d.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
+			flail, _ := d.Inventory.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
 
 			return []action.Action{
 				a.builder.CubeAddItems(eye, brain, heart, flail),
@@ -186,7 +187,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 			return []step.Step{
 				// Let's asume we don't have secondary weapon, so we swap to it and equip Khalim's Will
 				step.SyncStep(func(d game.Data) error {
-					khalimsWill, found := d.Items.Find("KhalimsWill")
+					khalimsWill, found := d.Inventory.Find("KhalimsWill")
 					if !found {
 						return nil
 					}

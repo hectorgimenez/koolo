@@ -222,7 +222,7 @@ func getClosestPortal(d game.Data, leaderName string) (*data.Object, bool) {
 }
 
 func hasEnoughPortals(d game.Data) bool {
-	portalTome, pFound := d.Items.Find(item.TomeOfTownPortal, item.LocationInventory)
+	portalTome, pFound := d.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if pFound {
 		st, found := portalTome.FindStat(stat.Quantity, 0)
 		if found && st.Value > 0 {

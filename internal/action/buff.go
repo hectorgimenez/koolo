@@ -145,7 +145,7 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 }
 
 func (b *Builder) ctaFound(d game.Data) bool {
-	for _, itm := range d.Items.ByLocation(item.LocationEquipped) {
+	for _, itm := range d.Inventory.ByLocation(item.LocationEquipped) {
 		_, boFound := itm.FindStat(stat.NonClassSkill, int(skill.BattleOrders))
 		_, bcFound := itm.FindStat(stat.NonClassSkill, int(skill.BattleCommand))
 

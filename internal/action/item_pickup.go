@@ -83,7 +83,7 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 	missingRejuvenationPotions := b.bm.GetMissingCount(d, data.RejuvenationPotion)
 	var itemsToPickup []data.Item
 	_, isLevelingChar := b.ch.(LevelingCharacter)
-	for _, itm := range d.Items.ByLocation(item.LocationGround) {
+	for _, itm := range d.Inventory.ByLocation(item.LocationGround) {
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
 		if d.CharacterCfg.Companion.Enabled && isLevelingChar && !itm.IsFromQuest() && (d.PlayerUnit.Area == area.MaggotLairLevel1 || d.PlayerUnit.Area == area.MaggotLairLevel2 || d.PlayerUnit.Area == area.MaggotLairLevel3 || d.PlayerUnit.Area == area.ArcaneSanctuary) {
 			continue
@@ -155,13 +155,13 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that
-	if isLevelingChar && d.PlayerUnit.TotalGold() < 50000 && i.Name != "Gold" {
+	if isLevelingChar && d.PlayerUnit.TotalPlayerGold() < 50000 && i.Name != "Gold" {
 		return true
 	}
 
 	minGoldPickupThreshold := b.Container.CharacterCfg.Game.MinGoldPickupThreshold
 	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
-	if d.PlayerUnit.TotalGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
+	if d.PlayerUnit.TotalPlayerGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
 	}
 

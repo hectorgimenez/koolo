@@ -93,7 +93,7 @@ func (a Leveling) countess() []action.Action {
 
 func (a Leveling) deckardCain(d game.Data) (actions []action.Action) {
 	a.logger.Info("Rescuing Cain")
-	if _, found := d.Items.Find("KeyToTheCairnStones"); !found {
+	if _, found := d.Inventory.Find("KeyToTheCairnStones"); !found {
 		actions = []action.Action{
 			a.builder.WayPoint(area.DarkWood),
 			a.builder.Buff(),
@@ -107,7 +107,7 @@ func (a Leveling) deckardCain(d game.Data) (actions []action.Action) {
 				return data.Position{}, false
 			}),
 			a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
-				_, found := d.Items.Find(scrollOfInifuss)
+				_, found := d.Inventory.Find(scrollOfInifuss)
 				return found
 			}),
 			a.builder.ItemPickup(false, 30),
@@ -183,7 +183,7 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 				step.SyncStep(func(d game.Data) error {
 					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					x := 0
-					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+					for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
 						if itm.Name != "AntidotePotion" {
 							continue
 						}

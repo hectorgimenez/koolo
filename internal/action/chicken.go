@@ -11,7 +11,7 @@ func (b *Builder) ChickenOnMonsters(distance int, monsterIds []npc.ID) *Chain {
 		for _, enemy := range d.Monsters.Enemies() {
 			for _, m := range monsterIds {
 				if m == enemy.Name && pather.DistanceFromMe(d, enemy.Position) <= distance {
-					b.Logger.Info("Triggering chicken action")
+					b.Logger.Info("Triggering chicken action, monster detected", "monster", enemy.Name, "distance", pather.DistanceFromMe(d, enemy.Position))
 
 					return nil
 				}

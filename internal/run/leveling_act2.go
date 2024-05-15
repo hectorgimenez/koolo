@@ -26,7 +26,7 @@ func (a Leveling) act2() action.Action {
 
 		running = true
 		// Find Horadric Cube
-		_, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+		_, found := d.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if found {
 			a.logger.Info("Horadric Cube found, skipping quest")
 		} else {
@@ -44,10 +44,10 @@ func (a Leveling) act2() action.Action {
 			return a.duriel(d.Quests[quest.Act2TheHoradricStaff].Completed(), d)
 		}
 
-		_, horadricStaffFound := d.Items.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		_, horadricStaffFound := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 
 		// Find Staff of Kings
-		_, found = d.Items.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		_, found = d.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if found || horadricStaffFound {
 			a.logger.Info("StaffOfKings found, skipping quest")
 		} else {
@@ -56,7 +56,7 @@ func (a Leveling) act2() action.Action {
 		}
 
 		// Find Amulet
-		_, found = d.Items.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		_, found = d.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if found || horadricStaffFound {
 			a.logger.Info("Amulet of the Viper found, skipping quest")
 		} else {
@@ -164,7 +164,7 @@ func (a Leveling) summoner() []action.Action {
 
 func (a Leveling) prepareStaff() action.Action {
 	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		horadricStaff, found := d.Items.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		horadricStaff, found := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if found {
 			a.logger.Info("Horadric Staff found!")
 			if horadricStaff.Location == item.LocationStash {
@@ -189,13 +189,13 @@ func (a Leveling) prepareStaff() action.Action {
 			return nil
 		}
 
-		staff, found := d.Items.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		staff, found := d.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if !found {
 			a.logger.Info("Staff of Kings not found, skipping")
 			return nil
 		}
 
-		amulet, found := d.Items.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		amulet, found := d.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if !found {
 			a.logger.Info("AmuletOfTheViper not found, skipping")
 			return nil
@@ -251,7 +251,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 				return d.OpenMenus.Anvil
 			},
 				step.SyncStep(func(d game.Data) error {
-					staff, _ := d.Items.Find("HoradricStaff", item.LocationInventory)
+					staff, _ := d.Inventory.Find("HoradricStaff", item.LocationInventory)
 
 					screenPos := ui.GetScreenCoordsForItem(staff)
 
@@ -288,7 +288,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 				step.SyncStep(func(d game.Data) error {
 					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 					x := 0
-					for _, itm := range d.Items.ByLocation(item.LocationInventory) {
+					for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
 						if itm.Name != "ThawingPotion" {
 							continue
 						}

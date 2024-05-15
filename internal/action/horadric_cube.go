@@ -15,7 +15,7 @@ import (
 
 func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
-		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+		cube, found := d.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
 			b.Logger.Info("No Horadric Cube found in inventory")
 			return nil
@@ -64,7 +64,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 		for _, itm := range items {
 			nwIt := itm
 			actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-				for _, updatedItem := range d.Items.AllItems {
+				for _, updatedItem := range d.Inventory.AllItems {
 					if nwIt.UnitID == updatedItem.UnitID {
 						b.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
 						screenPos := ui.GetScreenCoordsForItem(updatedItem)
@@ -83,7 +83,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 
 func (b *Builder) CubeTransmute() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
-		cube, found := d.Items.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+		cube, found := d.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 		if !found {
 			b.Logger.Info("No Horadric Cube found in inventory")
 			return nil

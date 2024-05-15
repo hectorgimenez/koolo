@@ -26,7 +26,7 @@ func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 				return steps
 			}),
 		}
-	})
+	}, Resettable())
 }
 
 func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Data) bool, additionalSteps ...step.Step) *Chain {
@@ -45,7 +45,7 @@ func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Dat
 				return steps
 			}),
 		}
-	})
+	}, Resettable())
 }
 
 func (b *Builder) InteractObject(name object.Name, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *Chain {
@@ -68,7 +68,7 @@ func (b *Builder) InteractObject(name object.Name, isCompletedFn func(game.Data)
 				return append(steps, additionalSteps...)
 			}),
 		}
-	})
+	}, Resettable())
 }
 
 func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *Chain {
@@ -95,7 +95,7 @@ func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Dat
 		}
 
 		return nil
-	})
+	}, Resettable())
 }
 
 func (b *Builder) getNPCPosition(npc npc.ID, d game.Data) (data.Position, bool) {

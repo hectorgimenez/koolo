@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -12,7 +13,7 @@ const (
 	ReasonChicken AbortReason = "chicken occurred"
 )
 
-const maxRetries = 5
+const maxRetries = 3
 
 var ErrWillBeRetried = errors.New("error occurred, but it will be retried")
 var ErrNoRecover = errors.New("unrecoverable error occurred, game can not continue")

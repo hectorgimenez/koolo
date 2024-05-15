@@ -1,9 +1,10 @@
 package run
 
 import (
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -104,10 +105,10 @@ func (s Baal) checkForSoulsOrDolls() *action.Chain {
 		var npcIds []npc.ID
 
 		if s.CharacterCfg.Game.Baal.DollQuit {
-			npcIds = append(npcIds, npc.UndeadSoulKiller2)
+			npcIds = append(npcIds, npc.UndeadStygianDoll2, npc.UndeadSoulKiller2)
 		}
 		if s.CharacterCfg.Game.Baal.SoulQuit {
-			npcIds = append(npcIds, npc.UndeadSoulKiller2)
+			npcIds = append(npcIds, npc.BlackSoul2, npc.BurningSoul2)
 		}
 
 		if len(npcIds) != 0 {
