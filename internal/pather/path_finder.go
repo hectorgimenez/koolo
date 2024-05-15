@@ -1,6 +1,7 @@
 package pather
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
@@ -13,12 +14,11 @@ import (
 )
 
 type PathFinder struct {
-	gr              *game.MemoryReader
-	hid             *game.HID
-	cfg             *config.CharacterCfg
-	worldCache      World
-	worldCachedArea area.ID
-	worldCachedSeed uint
+	gr             *game.MemoryReader
+	hid            *game.HID
+	cfg            *config.CharacterCfg
+	worldCache     World
+	worldCacheHash string
 }
 
 func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCfg) *PathFinder {
@@ -108,9 +108,15 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 		collisionGrid[13][210] = false
 	}
 
-	for _, cord := range blacklistedCoords {
-		collisionGrid[cord[1]][cord[0]] = false
+	worldCacheHash := fmt.Sprintf("%d-%d-%d-%d", pf.gr.CachedMapSeed, d.PlayerUnit.Area, len(collisionGrid), len(collisionGrid[0]))
+	if pf.worldCacheHash != worldCacheHash {
+		pf.worldCache = parseWorld(collisionGrid, d)
+		pf.worldCacheHash = worldCacheHash
 	}
+
+	// Set Origin and Destination points
+	pf.worldCache.SetFrom(data.Position{X: fromX, Y: fromY})
+	pf.worldCache.SetTo(data.Position{X: toX, Y: toY})
 
 	// Add some padding to the origin/destination, sometimes when the origin or destination are close to a non-walkable
 	// area, pather is not able to calculate the path, so we add some padding around origin/dest to avoid this
@@ -118,25 +124,14 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 	if d.CanTeleport() {
 		for i := -3; i < 4; i++ {
 			for k := -3; k < 4; k++ {
-				if i == 0 && k == 0 {
-					continue
-				}
-
-				//collisionGrid[ensureValueInCG(fromY+i, len(collisionGrid))][ensureValueInCG(fromX+k, len(collisionGrid[0]))] = true
-				collisionGrid[ensureValueInCG(toY+i, len(collisionGrid))][ensureValueInCG(toX+k, len(collisionGrid[0]))] = true
+				pf.worldCache.SetTile(pf.worldCache.NewTile(KindPlain, ensureValueInCG(toX+k, len(collisionGrid[0])), ensureValueInCG(toY+i, len(collisionGrid))))
 			}
 		}
 	}
 
-	if pf.gr.CachedMapSeed != pf.worldCachedSeed || pf.worldCachedArea != d.PlayerUnit.Area || pf.worldCache.World == nil {
-		pf.worldCache = parseWorld(collisionGrid, d)
-		pf.worldCachedSeed = pf.gr.CachedMapSeed
-		pf.worldCachedArea = d.PlayerUnit.Area
+	for _, cord := range blacklistedCoords {
+		pf.worldCache.SetTile(pf.worldCache.NewTile(KindBlocker, cord[0], cord[1]))
 	}
-
-	// Set Origin and Destination points
-	pf.worldCache.SetFrom(data.Position{X: fromX, Y: fromY})
-	pf.worldCache.SetTo(data.Position{X: toX, Y: toY})
 
 	//W.renderPathImg(d, nil, collisionGridOffset)
 

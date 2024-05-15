@@ -110,14 +110,6 @@ func (w *World) renderPathImg(d game.Data, path []astar.Pather, cgOffset data.Po
 		img.Set(rPosX, rPosY, color.RGBA{204, 204, 0, 255})
 	}
 
-	img.Set(w.From().X, w.From().Y, color.RGBA{
-		R: 255, G: 0, B: 0, A: 255,
-	})
-
-	img.Set(w.To().X, w.To().Y, color.RGBA{
-		R: 0, G: 0, B: 255, A: 255,
-	})
-
 	for _, o := range d.Objects {
 		oPosX, oPosY := relativePosition(d, o.Position, cgOffset)
 		if o.IsDoor() {
@@ -131,6 +123,14 @@ func (w *World) renderPathImg(d game.Data, path []astar.Pather, cgOffset data.Po
 		mPosX, mPosY := relativePosition(d, m.Position, cgOffset)
 		img.Set(mPosX, mPosY, color.RGBA{255, 0, 255, 255})
 	}
+
+	img.Set(w.From().X, w.From().Y, color.RGBA{
+		R: 255, G: 0, B: 0, A: 255,
+	})
+
+	img.Set(w.To().X, w.To().Y, color.RGBA{
+		R: 0, G: 0, B: 255, A: 255,
+	})
 
 	outFile, _ := os.Create("cg.png")
 	defer outFile.Close()

@@ -8,15 +8,13 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 )
 
-func (b *Builder) ReturnTown() *StepChainAction {
-	return NewStepChain(func(d game.Data) (steps []step.Step) {
-		if d.PlayerUnit.Area.IsTown() {
-			return
-		}
-
-		return []step.Step{
-			step.OpenPortal(),
-			step.InteractObject(object.TownPortal, func(d game.Data) bool {
+func (b *Builder) ReturnTown() *Chain {
+	return NewChain(func(d game.Data) []Action {
+		return []Action{
+			NewStepChain(func(d game.Data) (steps []step.Step) {
+				return []step.Step{step.OpenPortal()}
+			}),
+			b.InteractObject(object.TownPortal, func(d game.Data) bool {
 				return d.PlayerUnit.Area.IsTown()
 			}),
 		}

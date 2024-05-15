@@ -1,12 +1,13 @@
 package run
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"slices"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -160,25 +161,14 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 				}
 				return []action.Action{}
 			}),
-			action.NewStepChain(func(d game.Data) []step.Step {
-				a.logger.Debug("Trying to activate seal...", slog.Int("seal", sealNumber+1))
-				lastInteractionAt := time.Now()
-				return []step.Step{
-					step.InteractObject(seal, func(d game.Data) bool {
-						if obj, found := d.Objects.FindOne(seal); found {
-							if !obj.Selectable {
-								a.logger.Debug("Seal activated, waiting for elite group to spawn", slog.Int("seal", sealNumber+1))
-							}
-							return !obj.Selectable
-						}
-						if time.Since(lastInteractionAt) > time.Second*3 {
-							lastInteractionAt = time.Now()
-							a.PathFinder.RandomMovement()
-							time.Sleep(time.Second)
-						}
-						return false
-					}),
+			a.builder.InteractObject(seal, func(d game.Data) bool {
+				if obj, found := d.Objects.FindOne(seal); found {
+					if !obj.Selectable {
+						a.logger.Debug("Seal activated, waiting for elite group to spawn", slog.Int("seal", sealNumber+1))
+					}
+					return !obj.Selectable
 				}
+				return false
 			}),
 		)
 
