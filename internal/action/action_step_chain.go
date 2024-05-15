@@ -31,7 +31,6 @@ func NewStepChain(builder func(d game.Data) []step.Step, opts ...Option) *StepCh
 }
 
 func (a *StepChainAction) NextStep(d game.Data, container container.Container) error {
-
 	// Ensure that we first check if its nill to avoid accessing a nill value (can result in panic)
 	if a == nil || a.markSkipped {
 		return ErrNoMoreSteps
