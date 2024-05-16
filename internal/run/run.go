@@ -1,10 +1,10 @@
 package run
 
 import (
+	"log/slog"
+
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
-	"log/slog"
-	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/health"
@@ -41,10 +41,7 @@ func NewFactory(logger *slog.Logger, builder *action.Builder, char action.Charac
 }
 
 func (f *Factory) BuildRuns() (runs []Run) {
-	t := time.Now()
-	f.logger.Debug("Fetching map data...")
 	d := f.container.Reader.GetData(true)
-	f.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
 
 	baseRun := baseRun{
 		builder:   f.builder,

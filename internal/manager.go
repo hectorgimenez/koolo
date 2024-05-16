@@ -120,7 +120,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		return nil, fmt.Errorf("error starting game: %w", err)
 	}
 
-	gr, err := game.NewGameReader(cfg, supervisorName, pid, hwnd)
+	gr, err := game.NewGameReader(cfg, supervisorName, pid, hwnd, logger)
 	if err != nil {
 		return nil, fmt.Errorf("error creating game reader: %w", err)
 	}

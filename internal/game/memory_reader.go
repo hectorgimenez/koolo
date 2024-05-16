@@ -2,7 +2,9 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/d2go/pkg/utils"
@@ -22,9 +24,10 @@ type MemoryReader struct {
 	GameAreaSizeY  int
 	supervisorName string
 	CachedMapData  map_client.MapData
+	logger         *slog.Logger
 }
 
-func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, window win.HWND) (*MemoryReader, error) {
+func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, window win.HWND, logger *slog.Logger) (*MemoryReader, error) {
 	process, err := memory.NewProcessForPID(pid)
 	if err != nil {
 		return nil, err
@@ -35,6 +38,7 @@ func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, 
 		HWND:           window,
 		supervisorName: supervisorName,
 		cfg:            cfg,
+		logger:         logger,
 	}
 
 	gr.updateWindowPositionData()
@@ -59,7 +63,10 @@ func (gd *MemoryReader) GetData(isNewGame bool) Data {
 
 	if isNewGame {
 		gd.CachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
+		t := time.Now()
+		gd.logger.Debug("Fetching map data...", slog.Uint64("seed", uint64(gd.CachedMapSeed)))
 		gd.CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.CachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
+		gd.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
 	}
 
 	origin := gd.CachedMapData.Origin(d.PlayerUnit.Area)
