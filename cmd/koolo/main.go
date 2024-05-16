@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
-	"os"
-
 	_ "net/http/pprof"
+	"os"
+	"runtime/debug"
 
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	koolo "github.com/hectorgimenez/koolo/internal"
@@ -26,6 +27,7 @@ func main() {
 	if err != nil {
 		helper.ShowDialog("Error loading configuration", err.Error())
 		log.Fatalf("Error loading configuration: %s", err.Error())
+		return
 	}
 
 	logger, err := sloggger.NewLogger(config.Koolo.Debug.Log, config.Koolo.LogSaveDirectory)
@@ -33,6 +35,15 @@ func main() {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}
 	defer sloggger.FlushLog()
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("fatal error detected, Koolo will close with the following error: %v\n Stacktrace: %s", r, debug.Stack())
+			logger.Error(err.Error())
+			sloggger.FlushLog()
+			helper.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)

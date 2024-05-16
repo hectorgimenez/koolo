@@ -56,6 +56,7 @@ func NewLogger(debug bool, logDir string) (*slog.Logger, error) {
 
 func FlushLog() error {
 	if logFileHandler != nil {
+		logFileHandler.Sync()
 		return logFileHandler.Close()
 	}
 

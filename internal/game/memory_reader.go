@@ -8,8 +8,10 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/d2go/pkg/utils"
+	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/map_client"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/lxn/win"
 )
 
@@ -65,7 +67,16 @@ func (gd *MemoryReader) GetData(isNewGame bool) Data {
 		gd.CachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
 		t := time.Now()
 		gd.logger.Debug("Fetching map data...", slog.Uint64("seed", uint64(gd.CachedMapSeed)))
-		gd.CachedMapData = map_client.GetMapData(strconv.Itoa(int(gd.CachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
+
+		mapData, err := map_client.GetMapData(strconv.Itoa(int(gd.CachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
+		if err != nil {
+			// TODO: Refactor this crap with proper error handling
+			gd.logger.Error(fmt.Sprintf("Error fetching map data: %s", err.Error()))
+			sloggger.FlushLog()
+			helper.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
+			panic(fmt.Sprintf("Error fetching map data: %s", err.Error()))
+		}
+		gd.CachedMapData = mapData
 		gd.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
 	}
 
