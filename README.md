@@ -16,7 +16,7 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 ## Features
 - Blizzard Sorceress, Nova Sorceress and Hammerdin are currently supported
 - Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch, Pindleskin, Nihlathak,
-  Tristram, Lower Kurast, Stony Tomb, The Pit, Arachnid Lair, Baal, Tal Rasha Tombs, Diablo (WIP), Cows
+  Tristram, Lower Kurast, Stony Tomb, The Pit, Arachnid Lair, Baal, Tal Rasha Tombs, Diablo, Cows
 - Bot integration for Discord and Telegram
 - "Companion mode" one leader bot will be creating games and the rest of the bots will join the game... and sometimes it
   works
@@ -30,12 +30,22 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Skip on immune
 - Auto leveling sorceress and paladin (WIP)
 - Auto gambling
+- Auto cubing (WIP)
+- Terror Zones (WIP)
 
 ## Requirements
 - Diablo II: Resurrected (1280x720 required, windowed mode, ensure accessibility large fonts disabled)
 - **Diablo II: LOD 1.13c** (IMPORTANT: It will **NOT** work without it, this step is not optional)
 
 ## Quick Start
+### Preparing the character
+- Koolo will read game keybindings in order to use the skills, doesn't matter what key is used, but the skills for the build must be set.
+- For blizzard sorceress, set the **left** skill to Glacial Spike or Ice Blast, and for Hammerdin to Blessed Hammer.
+- Buy TP and ID tomes and one stack of keys and keep them in the inventory.
+- Horadric Cube can be stashed or kept in inventory, Koolo will use it to cube recipes if enabled.
+- Keep the charms in the inventory, Koolo can be configured to lock specific inventory slots.
+
+### Running the tool
 - If you haven't done yet, install **Diablo II: LOD 1.13c** (required)
 - [Download](https://github.com/hectorgimenez/koolo/releases) the latest Koolo release (recommended for most users), or alternatively you can [build it from source](#development-environment)
 - Extract the zip file in a directory of your choice.
