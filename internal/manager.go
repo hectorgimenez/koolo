@@ -70,7 +70,7 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		defer func() {
 			if r := recover(); r != nil {
 				mng.logger.Error(
-					"fatal error detected, forcing shutdown supervisor",
+					"fatal error detected, forcing shutdown",
 					slog.String("supervisor", supervisorName),
 					slog.Any("error", r),
 					slog.String("stacktrace", string(debug.Stack())),
