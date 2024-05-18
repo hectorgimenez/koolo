@@ -3,9 +3,10 @@ package health
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -35,8 +36,8 @@ type Manager struct {
 	lastMercHeal  time.Time
 }
 
-func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *game.Manager, cfg *config.CharacterCfg) Manager {
-	return Manager{
+func NewHealthManager(logger *slog.Logger, beltManager BeltManager, gm *game.Manager, cfg *config.CharacterCfg) *Manager {
+	return &Manager{
 		logger:      logger,
 		beltManager: beltManager,
 		gameManager: gm,

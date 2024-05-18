@@ -2,8 +2,10 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -11,6 +13,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -22,6 +25,7 @@ import (
 
 type HttpServer struct {
 	logger    *slog.Logger
+	server    *http.Server
 	manager   *koolo.SupervisorManager
 	templates *template.Template
 }
@@ -78,7 +82,22 @@ func (s *HttpServer) Listen(port int) error {
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
 
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	s.server = &http.Server{
+		Addr: fmt.Sprintf(":%d", port),
+	}
+
+	if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	return nil
+}
+
+func (s *HttpServer) Stop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return s.server.Shutdown(ctx)
 }
 
 func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {

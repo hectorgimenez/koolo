@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/container"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/container"
 
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -41,57 +42,52 @@ func (s *CompanionSupervisor) Start() error {
 
 	gameCounter := 0
 	firstRun := true
-	go func() {
-		err = s.waitUntilCharacterSelectionScreen()
-		if err != nil {
-			s.c.Logger.Error(fmt.Sprintf("Error waiting for character selection screen: %s", err.Error()))
-			return
-		}
+	err = s.waitUntilCharacterSelectionScreen()
+	if err != nil {
+		return fmt.Errorf("error waiting for character selection screen: %w", err)
+	}
 
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if s.c.CharacterCfg.Companion.Leader {
-					time.Sleep(time.Second * 5)
-					gameName, err := s.c.Manager.CreateOnlineGame(gameCounter)
-					gameCounter++ // Sometimes game is created but error during join, so game name will be in use
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			if s.c.CharacterCfg.Companion.Leader {
+				time.Sleep(time.Second * 5)
+				gameName, err := s.c.Manager.CreateOnlineGame(gameCounter)
+				gameCounter++ // Sometimes game is created but error during join, so game name will be in use
+				if err != nil {
+					s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+					continue
+				}
+
+				event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
+
+				err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
+				if err != nil {
+					return err
+				}
+				firstRun = false
+			} else {
+				s.c.Logger.Debug("Waiting for new game to be created...")
+				evt := s.c.EventListener.WaitForEvent(ctx)
+				if gcEvent, ok := evt.(event.GameCreatedEvent); ok {
+					err = s.c.Manager.JoinOnlineGame(gcEvent.Name, gcEvent.Password)
 					if err != nil {
-						s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+						s.c.Logger.Error(err.Error())
 						continue
 					}
 
-					event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
-
-					err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
-					if err != nil {
-						return
-					}
+					runs := s.runFactory.BuildRuns()
+					err = s.startBot(ctx, runs, firstRun)
 					firstRun = false
-				} else {
-					s.c.Logger.Debug("Waiting for new game to be created...")
-					evt := s.c.EventListener.WaitForEvent(ctx)
-					if gcEvent, ok := evt.(event.GameCreatedEvent); ok {
-						err = s.c.Manager.JoinOnlineGame(gcEvent.Name, gcEvent.Password)
-						if err != nil {
-							s.c.Logger.Error(err.Error())
-							continue
-						}
-
-						runs := s.runFactory.BuildRuns()
-						err = s.startBot(ctx, runs, firstRun)
-						firstRun = false
-						if err != nil {
-							return
-						}
+					if err != nil {
+						return err
 					}
 				}
 			}
 		}
-	}()
-
-	return nil
+	}
 }
 
 func (s *CompanionSupervisor) startBot(ctx context.Context, runs []run.Run, firstRun bool) error {

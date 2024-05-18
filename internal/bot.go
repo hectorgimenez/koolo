@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"runtime/debug"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -22,7 +21,7 @@ import (
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
 type Bot struct {
 	logger         *slog.Logger
-	hm             health.Manager
+	hm             *health.Manager
 	ab             *action.Builder
 	c              container.Container
 	paused         bool
@@ -31,7 +30,7 @@ type Bot struct {
 
 func NewBot(
 	logger *slog.Logger,
-	hm health.Manager,
+	hm *health.Manager,
 	ab *action.Builder,
 	container container.Container,
 	supervisorName string,
@@ -67,12 +66,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 			return nil
 		})
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("fatal error detected, Koolo will try to exit game and create a new one: %v\n Stacktrace: %s", r, debug.Stack())
-		}
-	}()
 
 	gameStartedAt := time.Now()
 	loadingScreensDetected := 0

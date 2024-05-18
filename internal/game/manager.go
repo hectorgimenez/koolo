@@ -64,7 +64,6 @@ func (gm *Manager) NewGame() error {
 	}
 
 	for range 30 {
-		gm.gr.InGame()
 		if gm.gr.InCharacterSelectionScreen() {
 			helper.Sleep(2000) // Wait for character selection screen to load
 			break
@@ -93,7 +92,7 @@ func (gm *Manager) NewGame() error {
 		helper.Sleep(500)
 	}
 
-	return errors.New("error creating game! Timeout")
+	return errors.New("timeout")
 }
 
 func (gm *Manager) clearGameNameOrPasswordField() {

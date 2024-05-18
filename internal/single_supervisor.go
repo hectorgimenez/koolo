@@ -42,67 +42,62 @@ func (s *SinglePlayerSupervisor) Start() error {
 	}
 
 	firstRun := true
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if firstRun {
-					err = s.waitUntilCharacterSelectionScreen()
-					if err != nil {
-						s.c.Logger.Error(fmt.Sprintf("Error waiting for character selection screen: %s", err.Error()))
-						return
-					}
-				}
-				if !s.c.Manager.InGame() {
-					if err = s.c.Manager.NewGame(); err != nil {
-						s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-						continue
-					}
-				}
-
-				runs := s.runFactory.BuildRuns()
-				gameStart := time.Now()
-				if config.Characters[s.name].Game.RandomizeRuns {
-					rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
-				}
-				s.logGameStart(runs)
-				err = s.bot.Run(ctx, firstRun, runs)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			if firstRun {
+				err = s.waitUntilCharacterSelectionScreen()
 				if err != nil {
-					if errors.Is(context.Canceled, ctx.Err()) {
-						continue
-					}
-
-					switch {
-					case errors.Is(err, health.ErrChicken):
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedChicken))
-						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
-					case errors.Is(err, health.ErrMercChicken):
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedMercChicken))
-						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
-					case errors.Is(err, health.ErrDied):
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedDied))
-						s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
-					default:
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedError))
-						s.c.Logger.Warn(
-							fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
-							slog.String("supervisor", s.name),
-							slog.Uint64("mapSeed", uint64(s.c.Reader.CachedMapSeed)),
-						)
-					}
+					return fmt.Errorf("error waiting for character selection screen: %w", err)
 				}
-				if exitErr := s.c.Manager.ExitGame(); exitErr != nil {
-					errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
-					event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.c.Reader.Screenshot()), event.FinishedError))
-					s.c.Logger.Warn(errMsg)
-					return
-				}
-				firstRun = false
 			}
-		}
-	}()
+			if !s.c.Manager.InGame() {
+				if err = s.c.Manager.NewGame(); err != nil {
+					s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+					continue
+				}
+			}
 
-	return nil
+			runs := s.runFactory.BuildRuns()
+			gameStart := time.Now()
+			if config.Characters[s.name].Game.RandomizeRuns {
+				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
+			}
+			s.logGameStart(runs)
+			err = s.bot.Run(ctx, firstRun, runs)
+			if err != nil {
+				if errors.Is(context.Canceled, ctx.Err()) {
+					continue
+				}
+
+				switch {
+				case errors.Is(err, health.ErrChicken):
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedChicken))
+					s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
+				case errors.Is(err, health.ErrMercChicken):
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedMercChicken))
+					s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
+				case errors.Is(err, health.ErrDied):
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedDied))
+					s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
+				default:
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedError))
+					s.c.Logger.Warn(
+						fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
+						slog.String("supervisor", s.name),
+						slog.Uint64("mapSeed", uint64(s.c.Reader.CachedMapSeed)),
+					)
+				}
+			}
+			if exitErr := s.c.Manager.ExitGame(); exitErr != nil {
+				errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
+				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.c.Reader.Screenshot()), event.FinishedError))
+
+				return errors.New(errMsg)
+			}
+			firstRun = false
+		}
+	}
 }

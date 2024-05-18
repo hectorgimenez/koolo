@@ -3,6 +3,7 @@ package koolo
 import (
 	"fmt"
 	"log/slog"
+	"runtime/debug"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -65,7 +66,26 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		}()
 	}
 
-	return supervisor.Start()
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				mng.logger.Error(
+					"fatal error detected, forcing shutdown supervisor",
+					slog.String("supervisor", supervisorName),
+					slog.Any("error", r),
+					slog.String("stacktrace", string(debug.Stack())),
+				)
+				mng.Stop(supervisorName)
+			}
+		}()
+
+		err = supervisor.Start()
+		if err != nil {
+			mng.logger.Error(fmt.Sprintf("error running supervisor %s: %s", supervisorName, err.Error()))
+		}
+	}()
+
+	return nil
 }
 
 func (mng *SupervisorManager) StopAll() {

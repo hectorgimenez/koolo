@@ -6,7 +6,6 @@ import (
 	"log"
 	"log/slog"
 	_ "net/http/pprof"
-	"os"
 	"runtime/debug"
 
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
@@ -46,6 +45,8 @@ func main() {
 	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	winproc.SetProcessDpiAware.Call() // Set DPI awareness to be able to read the correct scale and show the window correctly
@@ -59,6 +60,7 @@ func main() {
 	}
 
 	g.Go(func() error {
+		defer cancel()
 		displayScale := config.GetCurrentDisplayScale()
 		w, err := gowebview.New(&gowebview.Config{URL: "http://localhost:8087", WindowConfig: &gowebview.WindowConfig{
 			Title: "Koolo",
@@ -68,7 +70,8 @@ func main() {
 			},
 		}})
 		if err != nil {
-			panic(err)
+			w.Destroy()
+			return fmt.Errorf("error creating webview: %w", err)
 		}
 
 		w.SetSize(&gowebview.Point{
@@ -79,9 +82,6 @@ func main() {
 		defer w.Destroy()
 		w.Run()
 
-		cancel()
-		manager.StopAll()
-		os.Exit(0)
 		return nil
 	})
 
@@ -114,16 +114,34 @@ func main() {
 	}
 
 	g.Go(func() error {
+		defer cancel()
 		return srv.Listen(8087)
 	})
 
 	g.Go(func() error {
+		defer cancel()
 		return eventListener.Listen(ctx)
+	})
+
+	g.Go(func() error {
+		<-ctx.Done()
+		logger.Info("Koolo shutting down...")
+		cancel()
+		manager.StopAll()
+		err = srv.Stop()
+		if err != nil {
+			logger.Error("error stopping local server", slog.Any("error", err))
+		}
+
+		return err
 	})
 
 	err = g.Wait()
 	if err != nil {
+		cancel()
 		logger.Error("Error running Koolo", slog.Any("error", err))
 		return
 	}
+
+	sloggger.FlushLog()
 }
