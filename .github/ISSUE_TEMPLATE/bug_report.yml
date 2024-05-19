@@ -16,3 +16,10 @@ body:
       placeholder: v0.4.0
     validations:
       required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Check latest logs (logs directory) for any errors, if information is relevant, please include it here.
+    validations:
+      required: true
