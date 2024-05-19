@@ -170,7 +170,7 @@ func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) bool {
 		return false
 	}
 
-	if i.Location == item.LocationInventory && b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
+	if i.Location.LocationType == item.LocationInventory && b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
 		return false
 	}
 

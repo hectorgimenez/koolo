@@ -167,7 +167,7 @@ func (a Leveling) prepareStaff() action.Action {
 		horadricStaff, found := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if found {
 			a.logger.Info("Horadric Staff found!")
-			if horadricStaff.Location == item.LocationStash {
+			if horadricStaff.Location.LocationType == item.LocationStash {
 				a.logger.Info("It's in the stash, let's pickup it (not done yet)")
 
 				return []action.Action{

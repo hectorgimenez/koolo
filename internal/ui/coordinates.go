@@ -41,8 +41,8 @@ const (
 )
 
 func GetScreenCoordsForItem(itm data.Item) data.Position {
-	switch itm.Location {
-	case item.LocationVendor, item.LocationStash, item.LocationSharedStash1, item.LocationSharedStash2, item.LocationSharedStash3:
+	switch itm.Location.LocationType {
+	case item.LocationVendor, item.LocationStash, item.LocationSharedStash:
 		x := topCornerVendorWindowX + itm.Position.X*itemBoxSize + (itemBoxSize / 2)
 		y := topCornerVendorWindowY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
 

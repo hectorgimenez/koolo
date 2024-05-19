@@ -33,20 +33,16 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 		// If items are on the Stash, pickup them to the inventory
 		for _, itm := range items {
 			nwIt := itm
-			if nwIt.Location != item.LocationStash && nwIt.Location != item.LocationSharedStash1 && nwIt.Location != item.LocationSharedStash2 && nwIt.Location != item.LocationSharedStash3 {
+			if nwIt.Location.LocationType != item.LocationStash && nwIt.Location.LocationType != item.LocationSharedStash {
 				continue
 			}
 
 			// Check in which tab the item is and switch to it
-			switch nwIt.Location {
+			switch nwIt.Location.LocationType {
 			case item.LocationStash:
 				actions = append(actions, b.SwitchStashTab(1))
-			case item.LocationSharedStash1:
-				actions = append(actions, b.SwitchStashTab(2))
-			case item.LocationSharedStash2:
-				actions = append(actions, b.SwitchStashTab(3))
-			case item.LocationSharedStash3:
-				actions = append(actions, b.SwitchStashTab(4))
+			case item.LocationSharedStash:
+				actions = append(actions, b.SwitchStashTab(nwIt.Location.Page+1))
 			}
 
 			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
@@ -123,21 +119,8 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 		b.Logger.Debug("Opening Horadric Cube...")
 		return []step.Step{
 			step.SyncStepWithCheck(func(d game.Data) error {
-				cubeTab := 1
-
-				switch cube.Location {
-				case item.LocationStash:
-					cubeTab = 1
-				case item.LocationSharedStash1:
-					cubeTab = 2
-				case item.LocationSharedStash2:
-					cubeTab = 3
-				case item.LocationSharedStash3:
-					cubeTab = 4
-				}
-
 				// Switch to the tab
-				b.switchTab(cubeTab)
+				b.switchTab(cube.Location.Page + 1)
 
 				screenPos := ui.GetScreenCoordsForItem(cube)
 				helper.Sleep(300)

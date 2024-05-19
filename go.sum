@@ -13,8 +13,8 @@ github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.1 h1:gmztn0JnHVt9JZquRuzLw3g4wouNVzKL15iLr/zn/QY=
 github.com/gorilla/websocket v1.5.1/go.mod h1:x3kM2JMyaluk02fnUJpQuwD2dCS5NDG2ZHL0uE0tcaY=
-github.com/hectorgimenez/d2go v0.0.0-20240515082353-2a5f31885e1e h1:klGU0Z9Ly9A2ofeEjEp2Dc00X+j3ecYg4GWULn6S5DM=
-github.com/hectorgimenez/d2go v0.0.0-20240515082353-2a5f31885e1e/go.mod h1:1U3l3Ma//LIj2CAOcP3Yg3s84LAWrI6F8E+38B4su9Y=
+github.com/hectorgimenez/d2go v0.0.0-20240519114543-079df7a6acb0 h1:nyftxvB1Yya3zhzVmPt5V/Y4SQzkUK0lgCC6mJZn7VQ=
+github.com/hectorgimenez/d2go v0.0.0-20240519114543-079df7a6acb0/go.mod h1:1U3l3Ma//LIj2CAOcP3Yg3s84LAWrI6F8E+38B4su9Y=
 github.com/inkeliz/gowebview v1.0.1 h1:4gpLE2qt4kV3DB+xHkHKUeLLiGPN5Xw3or9A3hVqYyA=
 github.com/inkeliz/gowebview v1.0.1/go.mod h1:4SNjXp/fogE11MwvJD67kMBmSObY2BBqinEgH8+8eM8=
 github.com/inkeliz/w32 v1.0.2 h1:Es8Bmw9ApOY0PVRpGs7wsqIKdK5C3xBkP5TOATfVmtU=
