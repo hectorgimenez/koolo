@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -66,7 +67,7 @@ func (gd *MemoryReader) GetData(isNewGame bool) Data {
 	if isNewGame {
 		gd.CachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
 		t := time.Now()
-		gd.logger.Debug("Fetching map data...", slog.Uint64("seed", uint64(gd.CachedMapSeed)))
+		gd.logger.Debug("Fetching map data...", slog.Uint64("seed", uint64(gd.CachedMapSeed)), slog.String("difficulty", string(config.Characters[gd.supervisorName].Game.Difficulty)))
 
 		mapData, err := map_client.GetMapData(strconv.Itoa(int(gd.CachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
 		if err != nil {
@@ -116,7 +117,7 @@ func (gd *MemoryReader) getMapSeed(playerUnit uintptr) (uint, error) {
 
 	mapSeed, found := utils.GetMapSeed(dwInitSeedHash1, dwEndSeedHash1)
 	if !found {
-		return 0, fmt.Errorf("error calculating map seed")
+		return 0, errors.New("error calculating map seed")
 	}
 
 	return mapSeed, nil
