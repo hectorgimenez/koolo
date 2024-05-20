@@ -65,6 +65,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
+			event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
 			s.logGameStart(runs)
 			err = s.bot.Run(ctx, firstRun, runs)
 			if err != nil {

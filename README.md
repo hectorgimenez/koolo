@@ -17,6 +17,7 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - Blizzard Sorceress, Nova Sorceress and Hammerdin are currently supported
 - Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch, Pindleskin, Nihlathak,
   Tristram, Lower Kurast, Stony Tomb, The Pit, Arachnid Lair, Baal, Tal Rasha Tombs, Diablo, Cows
+- Multi window support (run multiple bots at the same time)
 - Bot integration for Discord and Telegram
 - "Companion mode" one leader bot will be creating games and the rest of the bots will join the game... and sometimes it
   works

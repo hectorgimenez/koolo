@@ -71,7 +71,7 @@ func (s *CompanionSupervisor) Start() error {
 			} else {
 				s.c.Logger.Debug("Waiting for new game to be created...")
 				evt := s.c.EventListener.WaitForEvent(ctx)
-				if gcEvent, ok := evt.(event.GameCreatedEvent); ok {
+				if gcEvent, ok := evt.(event.GameCreatedEvent); ok && gcEvent.Name != "" {
 					err = s.c.Manager.JoinOnlineGame(gcEvent.Name, gcEvent.Password)
 					if err != nil {
 						s.c.Logger.Error(err.Error())
