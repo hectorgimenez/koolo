@@ -105,7 +105,7 @@ func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain 
 				}
 			}),
 		}
-	})
+	}, Resettable())
 }
 
 func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Chain {
