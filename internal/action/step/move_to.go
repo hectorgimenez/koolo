@@ -56,14 +56,18 @@ func WithTimeout(timeout time.Duration) MoveToStepOption {
 	}
 }
 
-func (m *MoveToStep) Status(d game.Data, _ container.Container) Status {
+func (m *MoveToStep) Status(d game.Data, container container.Container) Status {
 	if m.status == StatusCompleted {
 		return StatusCompleted
 	}
 
 	distance := pather.DistanceFromMe(d, m.destination)
 	if distance < 5 || distance < m.stopAtDistance {
-		return m.tryTransitionStatus(StatusCompleted)
+		// In case distance is lower, we double-check with the pathfinder and the full path instead of euclidean distance
+		_, distance, _ = container.PathFinder.GetPath(d, m.destination)
+		if distance < 5 || distance < m.stopAtDistance {
+			return m.tryTransitionStatus(StatusCompleted)
+		}
 	}
 
 	return m.status

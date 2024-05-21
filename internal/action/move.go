@@ -133,7 +133,8 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		}
 
 		// To stop the movement, not very accurate
-		if pather.DistanceFromMe(d, to) < 7 {
+		_, distance, _ := b.PathFinder.GetPath(d, to)
+		if distance < 6 {
 			return nil
 		}
 
