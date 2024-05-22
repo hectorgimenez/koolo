@@ -161,7 +161,33 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 				}
 				return []action.Action{}
 			}),
-			a.builder.InteractObject(seal, func(d game.Data) bool {
+		)
+
+		actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
+			obj, _ := d.Objects.FindOne(seal)
+			// Bugged seal, we need to move to a specific position to activate it
+			if obj.Position.X == 7773 && obj.Position.Y == 5155 {
+				return []action.Action{
+					a.builder.MoveToCoords(data.Position{
+						X: 7768,
+						Y: 5160,
+					}),
+					a.builder.Wait(time.Second * 3),
+					action.NewStepChain(func(d game.Data) []step.Step {
+						return []step.Step{step.InteractObjectByID(obj.ID, func(d game.Data) bool {
+							if obj, found := d.Objects.FindOne(seal); found {
+								if !obj.Selectable {
+									a.logger.Debug("Seal activated, waiting for elite group to spawn", slog.Int("seal", sealNumber+1))
+								}
+								return !obj.Selectable
+							}
+							return false
+						})}
+					}),
+				}
+			}
+
+			return []action.Action{a.builder.InteractObject(seal, func(d game.Data) bool {
 				if obj, found := d.Objects.FindOne(seal); found {
 					if !obj.Selectable {
 						a.logger.Debug("Seal activated, waiting for elite group to spawn", slog.Int("seal", sealNumber+1))
@@ -169,8 +195,8 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 					return !obj.Selectable
 				}
 				return false
-			}),
-		)
+			})}
+		}))
 
 		// Only if we are not in the first seal
 		if sealNumber != 0 {

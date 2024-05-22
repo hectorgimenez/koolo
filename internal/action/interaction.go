@@ -15,7 +15,7 @@ func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
 		return []Action{
 			b.MoveTo(func(d game.Data) (data.Position, bool) {
 				return b.getNPCPosition(npc, d)
-			}, step.StopAtDistance(6)),
+			}, step.StopAtDistance(7)),
 			NewStepChain(func(d game.Data) []step.Step {
 				steps := []step.Step{step.InteractNPC(npc), step.SyncStep(func(d game.Data) error {
 					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
@@ -34,7 +34,7 @@ func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Dat
 		return []Action{
 			b.MoveTo(func(d game.Data) (data.Position, bool) {
 				return b.getNPCPosition(npc, d)
-			}, step.StopAtDistance(6)),
+			}, step.StopAtDistance(7)),
 			NewStepChain(func(d game.Data) []step.Step {
 				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn), step.SyncStep(func(d game.Data) error {
 					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
@@ -58,7 +58,7 @@ func (b *Builder) InteractObject(name object.Name, isCompletedFn func(game.Data)
 		}
 
 		return []Action{
-			b.MoveToCoords(pos, step.StopAtDistance(6)),
+			b.MoveToCoords(pos, step.StopAtDistance(7)),
 			NewStepChain(func(d game.Data) []step.Step {
 				steps := []step.Step{step.InteractObject(o.Name, isCompletedFn), step.SyncStep(func(d game.Data) error {
 					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
@@ -81,7 +81,7 @@ func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Dat
 				}
 
 				return []Action{
-					b.MoveToCoords(pos, step.StopAtDistance(6)),
+					b.MoveToCoords(pos, step.StopAtDistance(7)),
 					NewStepChain(func(d game.Data) []step.Step {
 						steps := []step.Step{step.InteractObjectByID(id, isCompletedFn), step.SyncStep(func(d game.Data) error {
 							event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(o.Name), event.InteractionTypeObject))
