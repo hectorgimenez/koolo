@@ -11,7 +11,7 @@ type pathingStep struct {
 	basicStep
 	consecutivePathNotFound int
 	path                    *pather.Pather
-	lastRunPositions        [][2]int
+	lastRunPositions        []data.Position
 	blacklistedPositions    [][2]int
 	previousArea            area.ID
 }
@@ -66,15 +66,15 @@ func (s *pathingStep) isPlayerStuck(d game.Data) bool {
 		return false
 	}
 
-	s.lastRunPositions = append(s.lastRunPositions, [2]int{d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y})
-	if len(s.lastRunPositions) > 20 {
+	s.lastRunPositions = append(s.lastRunPositions, d.PlayerUnit.Position)
+	if len(s.lastRunPositions) > 3 {
 		s.lastRunPositions = s.lastRunPositions[1:]
 	} else {
 		return false
 	}
 
 	for _, pos := range s.lastRunPositions {
-		if pos[0] != d.PlayerUnit.Position.X || pos[1] != d.PlayerUnit.Position.Y {
+		if pather.DistanceFromMe(d, pos) > 5 {
 			return false
 		}
 	}

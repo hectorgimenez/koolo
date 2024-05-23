@@ -172,7 +172,6 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 						X: 7768,
 						Y: 5160,
 					}),
-					a.builder.Wait(time.Second * 3),
 					action.NewStepChain(func(d game.Data) []step.Step {
 						return []step.Step{step.InteractObjectByID(obj.ID, func(d game.Data) bool {
 							if obj, found := d.Objects.FindOne(seal); found {

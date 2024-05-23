@@ -20,12 +20,14 @@ import (
 
 // Bot will be in charge of running the run loop: create games, traveling, killing bosses, repairing, picking...
 type Bot struct {
-	logger         *slog.Logger
-	hm             *health.Manager
-	ab             *action.Builder
-	c              container.Container
-	paused         bool
-	supervisorName string
+	logger          *slog.Logger
+	hm              *health.Manager
+	ab              *action.Builder
+	c               container.Container
+	paused          bool
+	pauseRequested  bool
+	resumeRequested bool
+	supervisorName  string
 }
 
 func NewBot(
@@ -88,6 +90,24 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 			case <-ctx.Done():
 				return context.Canceled
 			default:
+				if b.resumeRequested {
+					b.paused = false
+					b.resumeRequested = false
+					b.pauseRequested = false
+					b.logger.Info("Resuming...")
+					b.c.Injector.Load()
+					event.Send(event.GamePaused(event.Text(b.supervisorName, "Game resumed"), false))
+				}
+				if b.pauseRequested {
+					b.paused = true
+					b.resumeRequested = false
+					b.pauseRequested = false
+					b.logger.Info("Pausing...")
+					b.c.Injector.RestoreMemory()
+					event.Send(event.GamePaused(event.Text(b.supervisorName, "Game paused"), true))
+					b.paused = true
+				}
+
 				if b.paused {
 					time.Sleep(time.Second)
 					continue
@@ -236,14 +256,8 @@ func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
 
 func (b *Bot) TogglePause() {
 	if b.paused {
-		b.logger.Info("Resuming...")
-		b.c.Injector.Load()
-		event.Send(event.GamePaused(event.Text(b.supervisorName, "Game resumed"), false))
-		b.paused = false
+		b.resumeRequested = true
 	} else {
-		b.logger.Info("Pausing...")
-		b.c.Injector.RestoreMemory()
-		event.Send(event.GamePaused(event.Text(b.supervisorName, "Game paused"), true))
-		b.paused = true
+		b.pauseRequested = true
 	}
 }
