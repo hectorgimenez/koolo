@@ -77,3 +77,28 @@ func IsWalkable(pos data.Position, areaOriginPos data.Position, collisionGrid []
 
 	return collisionGrid[indexY][indexX]
 }
+
+// FindFirstWalkable finds the first walkable position from a given position and radius
+func FindFirstWalkable(from data.Position, areaOriginPos data.Position, grid [][]bool, radius int) (int, int) {
+	startX := from.X - areaOriginPos.X
+	startY := from.Y - areaOriginPos.Y
+
+	for r := radius; r >= 0; r-- {
+		for dx := -r; dx <= r; dx++ {
+			dy := int(math.Sqrt(float64(r*r - dx*dx)))
+			positions := [][2]int{
+				{startX + dx, startY + dy},
+				{startX + dx, startY - dy},
+				{startX - dx, startY + dy},
+				{startX - dx, startY - dy},
+			}
+			for _, pos := range positions {
+				newX, newY := pos[0]+areaOriginPos.X, pos[1]+areaOriginPos.Y
+				if pos[0] >= 0 && pos[0] < len(grid) && pos[1] >= 0 && pos[1] < len(grid[0]) && IsWalkable(data.Position{newX, newY}, areaOriginPos, grid) {
+					return newX, newY
+				}
+			}
+		}
+	}
+	return -1, -1
+}

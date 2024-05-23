@@ -189,15 +189,6 @@ func (pf *PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, bl
 }
 
 func (pf *PathFinder) MoveThroughPath(d game.Data, p *Pather, distance int) {
-	//if len(p.AstarPather) == 0 {
-	//	if teleport {
-	//		hid.Click(hid.RightButton)
-	//	} else {
-	//		hid.PressKey(config.Config.Bindings.ForceMove)
-	//	}
-	//	return
-	//}
-
 	moveTo := p.AstarPather[0].(*Tile)
 	if distance > 0 && len(p.AstarPather) > distance {
 		moveTo = p.AstarPather[len(p.AstarPather)-distance].(*Tile)
@@ -210,11 +201,11 @@ func (pf *PathFinder) MoveThroughPath(d game.Data, p *Pather, distance int) {
 	}
 
 	if distance > 0 {
-		pf.moveCharacter(d, screenX, screenY)
+		pf.MoveCharacter(d, screenX, screenY)
 	}
 }
 
-func (pf *PathFinder) moveCharacter(d game.Data, x, y int) {
+func (pf *PathFinder) MoveCharacter(d game.Data, x, y int) {
 	if d.CanTeleport() {
 		pf.hid.Click(game.RightButton, x, y)
 	} else {

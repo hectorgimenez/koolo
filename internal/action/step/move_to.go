@@ -111,7 +111,9 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 	if m.path == nil || !m.cachePath(d) || stuck {
 		if stuck {
 			if len(m.path.AstarPather) == 0 {
-				container.PathFinder.RandomMovement()
+				randomPosX, randomPosY := pather.FindFirstWalkable(d.PlayerUnit.Position, d.AreaOrigin, d.CollisionGrid, 15)
+				screenX, screenY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, randomPosX, randomPosY)
+				container.PathFinder.MoveCharacter(d, screenX, screenY)
 				m.lastRun = time.Now()
 
 				return nil
