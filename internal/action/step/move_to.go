@@ -64,8 +64,8 @@ func (m *MoveToStep) Status(d game.Data, container container.Container) Status {
 	distance := pather.DistanceFromMe(d, m.destination)
 	if distance < 5 || distance < m.stopAtDistance {
 		// In case distance is lower, we double-check with the pathfinder and the full path instead of euclidean distance
-		_, distance, _ = container.PathFinder.GetPath(d, m.destination)
-		if distance < 7 || distance < m.stopAtDistance {
+		_, distance, found := container.PathFinder.GetPath(d, m.destination)
+		if !found || distance < 7 || distance < m.stopAtDistance {
 			return m.tryTransitionStatus(StatusCompleted)
 		}
 	}

@@ -35,8 +35,8 @@ func (a A1) TPWaitingArea(d game.Data) data.Position {
 	rogueBonfire, found := d.Objects.FindOne(object.RogueBonfire)
 	if found {
 		return data.Position{
-			X: rogueBonfire.Position.X,
-			Y: rogueBonfire.Position.Y + 8,
+			X: rogueBonfire.Position.X + 10,
+			Y: rogueBonfire.Position.Y + 10,
 		}
 	}
 
