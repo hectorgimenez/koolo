@@ -135,9 +135,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 
 	//W.renderPathImg(d, nil, collisionGridOffset)
 
-	p, distFloat, found := astar.Path(pf.worldCache.From(), pf.worldCache.To())
-
-	distance = int(distFloat)
+	p, _, found := astar.Path(pf.worldCache.From(), pf.worldCache.To())
 
 	// Debug only, this will render a png file with map and origin/destination points
 	if config.Koolo.Debug.RenderMap {
@@ -147,7 +145,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 	return &Pather{AstarPather: p, Destination: data.Position{
 		X: pf.worldCache.To().X + d.AreaOrigin.X,
 		Y: pf.worldCache.To().Y + d.AreaOrigin.Y,
-	}}, distance, found
+	}}, len(p), found
 }
 
 func ensureValueInCG(val, cgSize int) int {

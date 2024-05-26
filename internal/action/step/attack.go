@@ -120,6 +120,7 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 
 	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
 		container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.skill))
+		time.Sleep(time.Millisecond * 80)
 
 		if p.aura != 0 {
 			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.aura))
