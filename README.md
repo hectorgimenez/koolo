@@ -9,6 +9,8 @@ Koolo is a small bot for Diablo II: Resurrected. Koolo project was built for inf
 only, it's not intended for online usage. Feel free to contribute opening pull requests with new features or bugfixes.
 Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window. As good as it can.
 
+Feel free to join our Discord community to report bugs, ask for help or just to chat: [Koolo Discord]( https://discord.gg/zgFMyzAFHE)
+
 ## Disclaimer
 Can I get banned for using Koolo? The answer is a crystal clear yes, you can get banned although at this point I'm
 not aware of any ban for using it. I'm not responsible for any ban or any other consequence that may arise from it.
