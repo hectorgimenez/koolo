@@ -141,7 +141,7 @@ func (a TerrorZone) tzAreaChain(firstTZ area.ID) [][]area.ID {
 		return [][]area.ID{{area.BlackMarsh, area.HoleLevel1, area.HoleLevel2}}
 	case area.ForgottenTower:
 		return [][]area.ID{{area.BlackMarsh, area.ForgottenTower, area.TowerCellarLevel1, area.TowerCellarLevel2, area.TowerCellarLevel3, area.TowerCellarLevel4, area.TowerCellarLevel5}}
-	case area.JailLevel1:
+	case area.Barracks:
 		return [][]area.ID{{area.JailLevel1, area.JailLevel2, area.JailLevel3}}
 	case area.Cathedral:
 		return [][]area.ID{{area.InnerCloister, area.Cathedral, area.CatacombsLevel1, area.CatacombsLevel2, area.CatacombsLevel3}}

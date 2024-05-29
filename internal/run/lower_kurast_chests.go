@@ -1,14 +1,16 @@
 package run
 
 import (
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"slices"
 )
 
 var bonfireName = object.SmallFire
@@ -41,9 +43,7 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 
 			for _, bonfirePos := range bonFirePositions {
 				bonfireActions = append(bonfireActions,
-					a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-						return bonfirePos, true
-					}),
+					a.builder.MoveToCoords(bonfirePos, step.StopAtDistance(5)),
 					action.NewChain(func(d game.Data) []action.Action {
 						var chests []data.Object
 
@@ -57,10 +57,7 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 
 						for _, chest := range chests {
 							subActions = append(subActions,
-								a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-									return chest.Position, true
-								}),
-								a.builder.InteractObject(chest.Name, func(d game.Data) bool {
+								a.builder.InteractObjectByID(chest.ID, func(d game.Data) bool {
 									for _, obj := range d.Objects {
 										isSameObj := obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y
 
