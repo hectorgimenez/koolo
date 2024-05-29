@@ -60,6 +60,7 @@ type CharacterCfg struct {
 	CommandLineArgs   string `yaml:"commandLineArgs"`
 	KillD2OnStop      bool   `yaml:"killD2OnStop"`
 	EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
+	AuthMethod        string `yaml:"authMethod"`
 	Health            struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
