@@ -61,8 +61,3 @@ func (hid *HID) ClickWithModifier(btn MouseButton, x, y int, modifier ModifierKe
 func calculateLparam(x, y int) uintptr {
 	return uintptr(y<<16 | x)
 }
-
-func calculateLparam2(x, y int) uintptr {
-	return uintptr((y << 16) | (x & 0xFFFF))
-
-}

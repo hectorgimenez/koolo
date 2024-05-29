@@ -3,8 +3,6 @@ package game
 import (
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -22,7 +20,8 @@ var (
 	user32                  = windows.NewLazySystemDLL("user32.dll")
 	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
 	procSendMessageW        = user32.NewProc("SendMessageW")
-	procClientToScreen      = user32.NewProc("ClientToScreen")
+	procPostMessageW        = user32.NewProc("PostMessageW")
+	procGetClassName        = user32.NewProc("GetClassNameW")
 )
 
 type Manager struct {
@@ -259,13 +258,23 @@ func SendMessage(hwnd windows.HWND, msg uint32, wparam, lparam uintptr) uintptr 
 	return ret
 }
 
-type POINT struct {
-	X, Y int32
+func PostMessage(hwnd windows.HWND, msg uint32, wparam, lparam uintptr) uintptr {
+	ret, _, _ := procPostMessageW.Call(
+		uintptr(hwnd),
+		uintptr(msg),
+		wparam,
+		lparam,
+	)
+	return ret
 }
 
-func ClientToScreen(hwnd windows.HWND, point *POINT) bool {
-	ret, _, _ := procClientToScreen.Call(uintptr(hwnd), uintptr(unsafe.Pointer(point)))
-	return ret != 0
+func GetClassName(hwnd windows.HWND) (string, error) {
+	var className [256]uint16
+	ret, _, err := procGetClassName.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&className[0])), uintptr(len(className)))
+	if ret == 0 {
+		return "", err
+	}
+	return syscall.UTF16ToString(className[:]), nil
 }
 
 // END HELPER FUNCTIONS
@@ -281,7 +290,7 @@ func StartGame(username string, password string, authmethod string, realm string
 	var baseArgs []string
 
 	if authmethod == "BattleNetClient" {
-		baseArgs = []string{"-uid osi"}
+		baseArgs = []string{"-uid", "osi", "-username", username, "-password", password, "-address", realm}
 	} else if authmethod == "UsernamePassword" {
 		baseArgs = []string{"-username", username, "-password", password, "-address", realm}
 	} else if authmethod == "None" {
@@ -317,7 +326,7 @@ func StartGame(username string, password string, authmethod string, realm string
 		}
 
 		// Give enough time for the process to start
-		helper.Sleep(5000)
+		helper.Sleep(3000)
 
 		// Log in process
 		var bnetHandle windows.HWND
@@ -326,11 +335,19 @@ func StartGame(username string, password string, authmethod string, realm string
 			var pid uint32
 			windows.GetWindowThreadProcessId(hwnd, &pid)
 			if pid == uint32(bnetCmd.Process.Pid) {
-				bnetHandle = hwnd
-				return 0
+				className, err := GetClassName(hwnd)
+				if err != nil {
+					fmt.Println("Error getting class name:", err)
+					return 1
+				}
+				if className == "Qt5151QWindowIcon" {
+					bnetHandle = hwnd
+					return 0
+				}
 			}
 			return 1
 		})
+
 		for {
 			windows.EnumWindows(cb, unsafe.Pointer(&bnetCmd.Process.Pid))
 			if bnetHandle != 0 {
@@ -341,92 +358,82 @@ func StartGame(username string, password string, authmethod string, realm string
 			}
 		}
 
+		// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 		const (
 			WM_LBUTTONDOWN = 0x0201
 			WM_LBUTTONUP   = 0x0202
 			WM_KEYDOWN     = 0x0100
 			WM_KEYUP       = 0x0101
+			VK_SHIFT       = 0x10
 			VK_CONTROL     = 0x11
 			VK_A           = 0x41
 			VK_BACK        = 0x08
 			MK_LBUTTON     = 0x0001
 			VK_TAB         = 0x09
+			VK_RETURN      = 0x0D
+			VK_LSHIFT      = 0xA0
+			VK_ESCAPE      = 0x1B
 		)
 
 		if bnetHandle == 0 {
 			return 0, 0, errors.New("failed to find Battle.net handle")
 		}
 
-		helper.Sleep(5000)
-
 		// Bring the window to front
 		SetForegroundWindow(bnetHandle)
 
-		x, y := int32(216), int32(275)
+		//PostMessage(bnetHandle, WM_KEYDOWN, VK_LSHIFT, 0)
+		//helper.Sleep(500)
+		//PostMessage(bnetHandle, WM_KEYDOWN, VK_TAB, 0)
+		//PostMessage(bnetHandle, WM_KEYUP, VK_TAB, 0)
+		//PostMessage(bnetHandle, WM_KEYUP, VK_LSHIFT, 0)
 
-		// Convert client coordinates to screen coordinates
-		point := POINT{X: x, Y: y}
-		if !ClientToScreen(bnetHandle, &point) {
-			fmt.Println("Failed to convert client coordinates to screen coordinates")
+		// Coords for username field
+		x, y := 390, 270
+		unLParam := uintptr((y << 16) | (x & 0xFFFF))
+
+		PostMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, unLParam)
+		PostMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, unLParam)
+
+		helper.Sleep(500)
+		for i := 0; i < 25; i++ {
+			PostMessage(bnetHandle, WM_KEYDOWN, VK_BACK, unLParam)
+			PostMessage(bnetHandle, WM_KEYUP, VK_BACK, unLParam)
+			helper.Sleep(50)
 		}
 
-		lparam := uintptr((point.Y << 16) | (point.X & 0xFFFF))
-
-		SendMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, lparam)
-		SendMessage(bnetHandle, WM_LBUTTONUP, 0, lparam)
-		helper.Sleep(100)
-		SendMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, lparam)
-		SendMessage(bnetHandle, WM_LBUTTONUP, 0, lparam)
-		helper.Sleep(250)
-		SendMessage(bnetHandle, WM_KEYDOWN, VK_BACK, 0)
-		SendMessage(bnetHandle, WM_KEYUP, VK_BACK, 0)
-
-		helper.ShowDialog("Username should be deleted", "Username should be deleted")
-		os.Exit(0)
+		helper.Sleep(500)
 
 		// Type out the username
 		for _, char := range username {
-			SendMessage(bnetHandle, win.WM_CHAR, uintptr(char), 0)
-			log.Print("Posted WM_CHAR message")
+			PostMessage(bnetHandle, win.WM_CHAR, uintptr(char), 0)
 			helper.Sleep(50)
 		}
 
-		// Click on the password field
-		SendMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, calculateLparam2(209, 329))
-		log.Printf("Posted WM_LBUTTONDOWN MK_LBUTTON message")
-		helper.Sleep(100)
-		SendMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, calculateLparam2(209, 329))
-		log.Printf("Posted WM_LBUTTONUP MK_LBUTTON message")
-		helper.Sleep(100)
-
-		// Delete the current text that's in the password field
-		SendMessage(bnetHandle, WM_KEYDOWN, VK_CONTROL, 0)
-		log.Printf("Sent VK_CONTROL WM_KEYDOWN message")
-		SendMessage(bnetHandle, WM_KEYDOWN, VK_A, 0)
-		log.Printf("Sent WM_KEYDOWN VK_A message")
-		SendMessage(bnetHandle, WM_KEYUP, VK_A, 0)
-		log.Printf("Sent WM_KEYUP VK_A message")
-		SendMessage(bnetHandle, WM_KEYUP, VK_CONTROL, 0)
-		log.Printf("Sent VK_CONTROL WM_KEYUP message")
+		// Click the escape key to remove any autocomplete windows
+		PostMessage(bnetHandle, WM_KEYDOWN, VK_ESCAPE, 0)
+		PostMessage(bnetHandle, WM_KEYUP, VK_ESCAPE, 0)
 		helper.Sleep(1000)
-		SendMessage(bnetHandle, WM_KEYDOWN, VK_BACK, 0)
-		log.Printf("Sent VK_BACK WM_KEYDOWN message")
-		SendMessage(bnetHandle, WM_KEYUP, VK_BACK, 0)
-		log.Printf("Sent VK_BACK WM_KEYUP message")
-		helper.Sleep(100)
+
+		x2, y2 := 390, 329
+		pwLParam := uintptr((y2 << 16) | (x2 & 0xFFFF))
+
+		// Click on the password field
+		PostMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, pwLParam)
+		PostMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, pwLParam)
+		helper.Sleep(1000)
 
 		// Type out the password
 		for _, char := range password {
-			SendMessage(bnetHandle, win.WM_CHAR, uintptr(char), 0)
-			log.Print("Sent WM_CHAR message")
+			PostMessage(bnetHandle, win.WM_CHAR, uintptr(char), 0)
 			helper.Sleep(50)
 		}
 
-		// Click on the login button
-		SendMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, calculateLparam2(222, 451))
-		log.Printf("Sent WM_LBUTTONDOWN MK_LBUTTON message")
-		SendMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, calculateLparam2(222, 451))
-		log.Printf("Sent WM_LBUTTONUP MK_LBUTTON message")
+		helper.Sleep(1000)
+
+		// Click Enter
+		SendMessage(bnetHandle, WM_KEYDOWN, VK_RETURN, 0)
+		SendMessage(bnetHandle, WM_KEYUP, VK_RETURN, 0)
 
 		// Wait for the login to finish
 		helper.Sleep(5000)
