@@ -26,9 +26,10 @@ type MoveToStepOption func(step *MoveToStep)
 
 func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 	step := &MoveToStep{
-		pathingStep: newPathingStep(),
-		destination: destination,
-		timeout:     time.Second * 30,
+		pathingStep:    newPathingStep(),
+		destination:    destination,
+		timeout:        time.Second * 30,
+		stopAtDistance: 5,
 	}
 
 	for _, o := range opts {
@@ -40,7 +41,7 @@ func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 
 func StopAtDistance(distance int) MoveToStepOption {
 	return func(step *MoveToStep) {
-		step.stopAtDistance = distance
+		step.stopAtDistance = distance + 3 // Add some padding, origin and destination point are not walkable and should be ignored
 	}
 }
 
@@ -62,10 +63,10 @@ func (m *MoveToStep) Status(d game.Data, container container.Container) Status {
 	}
 
 	distance := pather.DistanceFromMe(d, m.destination)
-	if distance < 5 || distance < m.stopAtDistance {
+	if distance < m.stopAtDistance {
 		// In case distance is lower, we double-check with the pathfinder and the full path instead of euclidean distance
 		_, distance, found := container.PathFinder.GetPath(d, m.destination)
-		if !found || distance < 7 || distance < m.stopAtDistance {
+		if !found || distance < m.stopAtDistance {
 			return m.tryTransitionStatus(StatusCompleted)
 		}
 	}
@@ -123,19 +124,16 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 			}
 		}
 
-		path, _, found := container.PathFinder.GetPath(d, m.destination, m.blacklistedPositions...)
+		path, _, found := container.PathFinder.GetClosestWalkablePath(d, m.destination, m.blacklistedPositions...)
 		if !found {
-			// Try to find the nearest walkable place
-			if m.nearestWalkable {
-				path, _, found = container.PathFinder.GetClosestWalkablePath(d, m.destination, m.blacklistedPositions...)
-				if !found {
-					return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
-				}
-				m.destination = path.Destination
-			} else {
-				return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+			if pather.DistanceFromMe(d, m.destination) < m.stopAtDistance+5 {
+				m.tryTransitionStatus(StatusCompleted)
+				return nil
 			}
+
+			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
+		m.destination = path.Destination
 		m.path = path
 	}
 

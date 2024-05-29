@@ -17,7 +17,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain {
+func (b *Builder) MoveToArea(dst area.ID) *Chain {
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary {
 		return NewChain(func(d game.Data) []Action {
@@ -94,7 +94,7 @@ func (b *Builder) MoveToArea(dst area.ID, opts ...step.MoveToStepOption) *Chain 
 
 	return NewChain(func(d game.Data) []Action {
 		return []Action{
-			b.MoveTo(toFun, opts...),
+			b.MoveTo(toFun, step.StopAtDistance(4)),
 			NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
 					step.InteractEntrance(dst),
@@ -134,7 +134,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 
 		// To stop the movement, not very accurate
 		_, distance, _ := b.PathFinder.GetPath(d, to)
-		if distance < 7 {
+		if distance < 8 {
 			return nil
 		}
 
@@ -145,7 +145,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 		// Go back to town check
 		if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
 			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
-			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0) && !d.PlayerUnit.Area.IsTown() {
+			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 && d.CharacterCfg.Character.UseMerc) && !d.PlayerUnit.Area.IsTown() {
 			return []Action{NewChain(func(d game.Data) []Action {
 				return b.InRunReturnTownRoutine()
 			})}

@@ -10,69 +10,73 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *Chain {
-	return NewChain(func(d game.Data) []Action {
-		return []Action{
-			b.MoveTo(func(d game.Data) (data.Position, bool) {
-				return b.getNPCPosition(npc, d)
-			}, step.StopAtDistance(7)),
-			NewStepChain(func(d game.Data) []step.Step {
-				steps := []step.Step{step.InteractNPC(npc), step.SyncStep(func(d game.Data) error {
-					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
-					return nil
-				})}
-				steps = append(steps, additionalSteps...)
+func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *StepChainAction {
+	return NewStepChain(func(d game.Data) []step.Step {
+		pos, found := b.getNPCPosition(npc, d)
+		if !found {
+			return nil
+		}
 
-				return steps
+		steps := []step.Step{
+			step.MoveTo(pos, step.StopAtDistance(7)),
+			step.InteractNPC(npc), step.SyncStep(func(d game.Data) error {
+				event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
+				return nil
 			}),
 		}
+		steps = append(steps, additionalSteps...)
+
+		return steps
 	}, Resettable())
 }
 
-func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Data) bool, additionalSteps ...step.Step) *Chain {
-	return NewChain(func(d game.Data) []Action {
-		return []Action{
-			b.MoveTo(func(d game.Data) (data.Position, bool) {
-				return b.getNPCPosition(npc, d)
-			}, step.StopAtDistance(7)),
-			NewStepChain(func(d game.Data) []step.Step {
-				steps := []step.Step{step.InteractNPCWithCheck(npc, isCompletedFn), step.SyncStep(func(d game.Data) error {
-					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
-					return nil
-				})}
-				steps = append(steps, additionalSteps...)
+func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Data) bool, additionalSteps ...step.Step) *StepChainAction {
+	return NewStepChain(func(d game.Data) []step.Step {
+		pos, found := b.getNPCPosition(npc, d)
+		if !found {
+			return nil
+		}
 
-				return steps
+		steps := []step.Step{
+			step.MoveTo(pos, step.StopAtDistance(7)),
+			step.InteractNPCWithCheck(npc, isCompletedFn), step.SyncStep(func(d game.Data) error {
+				event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
+				return nil
 			}),
 		}
+		steps = append(steps, additionalSteps...)
+
+		return steps
 	}, Resettable())
 }
 
-func (b *Builder) InteractObject(name object.Name, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *Chain {
-	return NewChain(func(d game.Data) []Action {
+func (b *Builder) InteractObject(name object.Name, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *StepChainAction {
+	return NewStepChain(func(d game.Data) []step.Step {
 		o, _ := d.Objects.FindOne(name)
 
 		pos := o.Position
 		if d.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
 			pos = data.Position{X: 7800, Y: 5919}
 		}
+		distance := 5
+		if o.Desc().HasCollision && o.Desc().SizeX > 0 {
+			distance = o.Desc().SizeX
+		}
 
-		return []Action{
-			b.MoveToCoords(pos, step.StopAtDistance(7)),
-			NewStepChain(func(d game.Data) []step.Step {
-				steps := []step.Step{step.InteractObject(o.Name, isCompletedFn), step.SyncStep(func(d game.Data) error {
-					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
-					return nil
-				})}
-
-				return append(steps, additionalSteps...)
+		steps := []step.Step{
+			step.MoveTo(pos, step.StopAtDistance(distance)),
+			step.InteractObject(o.Name, isCompletedFn), step.SyncStep(func(d game.Data) error {
+				event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
+				return nil
 			}),
 		}
+
+		return append(steps, additionalSteps...)
 	}, Resettable())
 }
 
-func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *Chain {
-	return NewChain(func(d game.Data) []Action {
+func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *StepChainAction {
+	return NewStepChain(func(d game.Data) []step.Step {
 		for _, o := range d.Objects {
 			if o.ID == id {
 				pos := o.Position
@@ -80,17 +84,20 @@ func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Dat
 					pos = data.Position{X: 7800, Y: 5919}
 				}
 
-				return []Action{
-					b.MoveToCoords(pos, step.StopAtDistance(7)),
-					NewStepChain(func(d game.Data) []step.Step {
-						steps := []step.Step{step.InteractObjectByID(id, isCompletedFn), step.SyncStep(func(d game.Data) error {
-							event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(o.Name), event.InteractionTypeObject))
-							return nil
-						})}
+				distance := 5
+				if o.Desc().HasCollision && o.Desc().SizeX > 0 {
+					distance = o.Desc().SizeX
+				}
 
-						return append(steps, additionalSteps...)
+				steps := []step.Step{
+					step.MoveTo(pos, step.StopAtDistance(distance)),
+					step.InteractObjectByID(id, isCompletedFn), step.SyncStep(func(d game.Data) error {
+						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(o.Name), event.InteractionTypeObject))
+						return nil
 					}),
 				}
+
+				return append(steps, additionalSteps...)
 			}
 		}
 

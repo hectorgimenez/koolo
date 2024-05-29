@@ -161,6 +161,13 @@ func ensureValueInCG(val, cgSize int) int {
 }
 
 func (pf *PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+	if IsWalkable(dest, d.AreaOrigin, d.CollisionGrid) {
+		path, distance, found = pf.GetPath(d, dest, blacklistedCoords...)
+		if found {
+			return
+		}
+	}
+
 	maxRange := 20
 	step := 4
 	dst := 1
