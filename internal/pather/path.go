@@ -6,25 +6,20 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-type Pather struct {
-	AstarPather
-	Destination data.Position
-}
+type Pather []astar.Pather
 
-type AstarPather []astar.Pather
-
-func (p *Pather) Distance() int {
-	return len(p.AstarPather)
+func (p Pather) Distance() int {
+	return len(p)
 }
 
 // Intersects checks if the given position intersects with the path, padding parameter is used to increase the area
-func (p *Pather) Intersects(d game.Data, position data.Position, padding int) bool {
+func (p Pather) Intersects(d game.Data, position data.Position, padding int) bool {
 	position = data.Position{
 		X: position.X - d.AreaOrigin.X,
 		Y: position.Y - d.AreaOrigin.Y,
 	}
 
-	for _, path := range p.AstarPather {
+	for _, path := range p {
 		pT := path.(*Tile)
 		xMatch := false
 		yMatch := false

@@ -10,7 +10,7 @@ import (
 type pathingStep struct {
 	basicStep
 	consecutivePathNotFound int
-	path                    *pather.Pather
+	path                    pather.Pather
 	lastRunPositions        []data.Position
 	blacklistedPositions    [][2]int
 	previousArea            area.ID
@@ -32,7 +32,7 @@ func (s *pathingStep) cachePath(d game.Data) bool {
 		return false
 	}
 
-	for k, pos := range s.path.AstarPather {
+	for k, pos := range s.path {
 		tile := pos.(*pather.Tile)
 		expandedGrid := 0
 		if len(tile.W.World) == 3000 {
@@ -51,9 +51,9 @@ func (s *pathingStep) cachePath(d game.Data) bool {
 		}
 	}
 
-	if nearestDistance < 5 && len(s.path.AstarPather) > nearestKey {
+	if nearestDistance < 5 && len(s.path) > nearestKey {
 		//fmt.Println(fmt.Sprintf("Max deviation: %d, using Path Key: %d [%d]", nearestDistance, nearestKey, len(s.path)-1))
-		s.path.AstarPather = s.path.AstarPather[:nearestKey]
+		s.path = s.path[:nearestKey]
 
 		return true
 	}

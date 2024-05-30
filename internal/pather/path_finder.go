@@ -25,7 +25,7 @@ func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCf
 	return &PathFinder{gr: gr, hid: hid, cfg: cfg}
 }
 
-func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
 	outsideCurrentLevel := outsideBoundary(d, to)
 	collisionGrid := d.CollisionGrid
 
@@ -108,6 +108,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 		collisionGrid[13][210] = false
 	}
 
+	// Cache the world map, so we don't need to calculate it every time
 	worldCacheHash := fmt.Sprintf("%d-%d-%d-%d", pf.gr.CachedMapSeed, d.PlayerUnit.Area, len(collisionGrid), len(collisionGrid[0]))
 	if pf.worldCacheHash != worldCacheHash {
 		pf.worldCache = parseWorld(collisionGrid, d)
@@ -133,8 +134,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 		pf.worldCache.SetTile(pf.worldCache.NewTile(KindBlocker, cord[0], cord[1]))
 	}
 
-	//W.renderPathImg(d, nil, collisionGridOffset)
-
+	// aster path is returning the effort to reach that point, but we want to know the real distance in tiles, we count the tiles in the path
 	p, _, found := astar.Path(pf.worldCache.From(), pf.worldCache.To())
 
 	// Debug only, this will render a png file with map and origin/destination points
@@ -142,10 +142,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 		pf.worldCache.renderPathImg(d, p, collisionGridOffset)
 	}
 
-	return &Pather{AstarPather: p, Destination: data.Position{
-		X: pf.worldCache.To().X + d.AreaOrigin.X,
-		Y: pf.worldCache.To().Y + d.AreaOrigin.Y,
-	}}, len(p), found
+	return p, len(p), found
 }
 
 func ensureValueInCG(val, cgSize int) int {
@@ -160,7 +157,7 @@ func ensureValueInCG(val, cgSize int) int {
 	return val
 }
 
-func (pf *PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, blacklistedCoords ...[2]int) (path *Pather, distance int, found bool) {
+func (pf *PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
 	if IsWalkable(dest, d.AreaOrigin, d.CollisionGrid) || outsideBoundary(d, dest) {
 		path, distance, found = pf.GetPath(d, dest, blacklistedCoords...)
 		if found {
@@ -193,13 +190,13 @@ func (pf *PathFinder) GetClosestWalkablePath(d game.Data, dest data.Position, bl
 	return nil, 0, false
 }
 
-func (pf *PathFinder) MoveThroughPath(d game.Data, p *Pather, distance int) {
-	moveTo := p.AstarPather[0].(*Tile)
-	if distance > 0 && len(p.AstarPather) > distance {
-		moveTo = p.AstarPather[len(p.AstarPather)-distance].(*Tile)
+func (pf *PathFinder) MoveThroughPath(d game.Data, p Pather, distance int) {
+	moveTo := p[0].(*Tile)
+	if distance > 0 && len(p) > distance {
+		moveTo = p[len(p)-distance].(*Tile)
 	}
 
-	screenX, screenY := pf.GameCoordsToScreenCords(p.AstarPather[len(p.AstarPather)-1].(*Tile).X, p.AstarPather[len(p.AstarPather)-1].(*Tile).Y, moveTo.X, moveTo.Y)
+	screenX, screenY := pf.GameCoordsToScreenCords(p[len(p)-1].(*Tile).X, p[len(p)-1].(*Tile).Y, moveTo.X, moveTo.Y)
 	// Prevent mouse overlap the HUD
 	if screenY > int(float32(pf.gr.GameAreaSizeY)/1.21) {
 		screenY = int(float32(pf.gr.GameAreaSizeY) / 1.21)

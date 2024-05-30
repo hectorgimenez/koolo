@@ -111,7 +111,7 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 
 	if m.path == nil || !m.cachePath(d) || stuck {
 		if stuck {
-			if len(m.path.AstarPather) == 0 {
+			if len(m.path) == 0 {
 				randomPosX, randomPosY := pather.FindFirstWalkable(d.PlayerUnit.Position, d.AreaOrigin, d.CollisionGrid, 15)
 				screenX, screenY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, randomPosX, randomPosY)
 				container.PathFinder.MoveCharacter(d, screenX, screenY)
@@ -119,7 +119,7 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 
 				return nil
 			} else {
-				tile := m.path.AstarPather[len(m.path.AstarPather)-1].(*pather.Tile)
+				tile := m.path[len(m.path)-1].(*pather.Tile)
 				m.blacklistedPositions = append(m.blacklistedPositions, [2]int{tile.X, tile.Y})
 			}
 		}
@@ -133,13 +133,12 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
-		m.destination = path.Destination
 		m.path = path
 	}
 
 	m.lastRun = time.Now()
 	m.previousArea = d.PlayerUnit.Area
-	if len(m.path.AstarPather) == 0 {
+	if len(m.path) == 0 {
 		return nil
 	}
 	container.PathFinder.MoveThroughPath(d, m.path, calculateMaxDistance(d, walkDuration))
