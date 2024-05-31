@@ -138,33 +138,9 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 			return nil
 		}
 
-		// Check if we have HP & MP potions
-		_, healingPotsFound := d.Inventory.Belt.GetFirstPotion(data.HealingPotion)
-		_, manaPotsFound := d.Inventory.Belt.GetFirstPotion(data.ManaPotion)
-
-		// Go back to town check
-		if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
-			d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
-			d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 && d.CharacterCfg.Character.UseMerc) && !d.PlayerUnit.Area.IsTown() {
-			return []Action{NewChain(func(d game.Data) []Action {
-				return b.InRunReturnTownRoutine()
-			})}
-		}
-
-		// Let's go pickup more pots if we have less than 2 (only during leveling)
-		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar && !d.PlayerUnit.Area.IsTown() {
-			_, healingPotsFound := d.Inventory.Belt.GetFirstPotion(data.HealingPotion)
-			_, manaPotsFound := d.Inventory.Belt.GetFirstPotion(data.ManaPotion)
-			if ((!healingPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.HealingPotion) > 0) || (!manaPotsFound && d.CharacterCfg.Inventory.BeltColumns.Total(data.ManaPotion) > 0)) && d.PlayerUnit.TotalPlayerGold() > 1000 {
-				return []Action{NewChain(func(d game.Data) []Action {
-					return b.InRunReturnTownRoutine()
-				})}
-			}
-		}
-
 		if d.CanTeleport() {
 			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
+			_, isLevelingChar := b.ch.(LevelingCharacter)
 			if !isLevelingChar {
 				return []Action{NewStepChain(func(d game.Data) []step.Step {
 					return []step.Step{step.MoveTo(to, opts...)}

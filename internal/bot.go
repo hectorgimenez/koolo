@@ -7,12 +7,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
 
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -77,14 +75,14 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
-		actions := b.ab.PreRun(firstRun)
+		actions := b.ab.PreRunHook(firstRun)
 		actions = append(actions, r.BuildActions()...)
-		actions = append(actions, b.postRunActions(k, runs)...)
+		actions = append(actions, b.ab.PostRunHook(k == len(runs)-1)...)
+		eachLoopActions := make([]action.Action, 0)
 
 		firstRun = false
 		running := true
 		loopTime := time.Now()
-		var buffAct *action.StepChainAction
 		for running {
 			select {
 			case <-ctx.Done():
@@ -144,13 +142,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 						return err
 					}
 				}
-
-				// TODO: Maybe add some kind of "on every iteration action", something that can be executed/skipped on every iteration
-				if b.ab.IsRebuffRequired(d) && (buffAct == nil || buffAct.Steps == nil || buffAct.Steps[len(buffAct.Steps)-1].Status(d, b.c) == step.StatusCompleted) {
-					buffAct = b.ab.BuffIfRequired(d)
-					actions = append([]action.Action{buffAct}, actions...)
-				}
-
 				// Some hacky stuff for companion mode, ideally should be encapsulated everything together in a different place
 				if d.CharacterCfg.Companion.Enabled {
 					if companionTPRequested {
@@ -168,8 +159,14 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					}
 				}
 
-				for k, act := range actions {
+				if len(eachLoopActions) == 0 || eachLoopActions[len(eachLoopActions)-1].IsFinished() {
+					eachLoopActions = b.ab.EachLoopHook(d)
+					if len(eachLoopActions) > 0 {
+						actions = append(eachLoopActions, actions...)
+					}
+				}
 
+				for k, act := range actions {
 					// Ensure we're not trying to access a nil action
 					if act == nil {
 						continue
@@ -230,28 +227,6 @@ func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
 	}
 
 	return nil
-}
-
-func (b *Bot) postRunActions(currentRun int, runs []run.Run) []action.Action {
-	if config.Characters[b.supervisorName].Companion.Enabled && !config.Characters[b.supervisorName].Companion.Leader {
-		return []action.Action{}
-	}
-
-	actions := []action.Action{
-		b.ab.ClearAreaAroundPlayer(5, data.MonsterAnyFilter()),
-		b.ab.ItemPickup(true, -1),
-	}
-
-	// Don't return town on last run
-	if currentRun != len(runs)-1 {
-		if config.Characters[b.supervisorName].Game.ClearTPArea {
-			actions = append(actions, b.ab.ClearAreaAroundPlayer(5, data.MonsterAnyFilter()))
-			actions = append(actions, b.ab.ItemPickup(false, -1))
-		}
-		actions = append(actions, b.ab.ReturnTown())
-	}
-
-	return actions
 }
 
 func (b *Bot) TogglePause() {

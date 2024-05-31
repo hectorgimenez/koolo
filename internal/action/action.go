@@ -24,13 +24,14 @@ var ErrLogAndContinue = errors.New("error occurred, but marking action as comple
 type Action interface {
 	NextStep(d game.Data, container container.Container) error
 	Skip()
+	IsFinished() bool
 }
 
 type basicAction struct {
 	retries                int
 	canBeSkipped           bool
 	resetStepsOnError      bool
-	markSkipped            bool
+	isFinished             bool
 	ignoreErrors           bool
 	repeatUntilNoMoreSteps bool
 	abortOtherActionsIfNil bool
@@ -72,5 +73,9 @@ func AbortOtherActionsIfNil(reason AbortReason) Option {
 }
 
 func (b *basicAction) Skip() {
-	b.markSkipped = true
+	b.isFinished = true
+}
+
+func (b *basicAction) IsFinished() bool {
+	return b.isFinished
 }
