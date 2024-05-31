@@ -7,10 +7,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
-
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -159,7 +158,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					}
 				}
 
-				if len(eachLoopActions) == 0 || eachLoopActions[len(eachLoopActions)-1].IsFinished() {
+				if len(eachLoopActions) == 0 || (eachLoopActions[len(eachLoopActions)-1] != nil && eachLoopActions[len(eachLoopActions)-1].IsFinished()) {
 					eachLoopActions = b.ab.EachLoopHook(d)
 					if len(eachLoopActions) > 0 {
 						actions = append(eachLoopActions, actions...)
