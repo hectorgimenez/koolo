@@ -35,7 +35,7 @@ func NewSupervisorManager(logger *slog.Logger, eventListener *event.Listener) *S
 
 func (mng *SupervisorManager) AvailableSupervisors() []string {
 	availableSupervisors := make([]string, 0)
-	for name, _ := range config.Characters {
+	for name := range config.Characters {
 		if name != "template" {
 			availableSupervisors = append(availableSupervisors, name)
 		}

@@ -26,7 +26,7 @@ func NewChain(builder func(d game.Data) []Action, opts ...Option) *Chain {
 }
 
 func (a *Chain) NextStep(d game.Data, container container.Container) error {
-	if a.markSkipped {
+	if a.isFinished {
 		return ErrNoMoreSteps
 	}
 
@@ -38,7 +38,7 @@ func (a *Chain) NextStep(d game.Data, container container.Container) error {
 		}
 
 		if a.actions == nil || len(a.actions) == 0 {
-			a.Skip()
+			a.isFinished = true
 			return ErrNoMoreSteps
 		}
 	}
@@ -56,7 +56,7 @@ func (a *Chain) NextStep(d game.Data, container container.Container) error {
 		}
 
 		if err != nil {
-			a.markSkipped = true
+			a.isFinished = true
 		}
 		return err
 	}
@@ -66,6 +66,8 @@ func (a *Chain) NextStep(d game.Data, container container.Container) error {
 		a.actions = nil
 		return nil
 	}
+
+	a.isFinished = true
 
 	return ErrNoMoreSteps
 }

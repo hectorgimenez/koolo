@@ -32,7 +32,7 @@ func NewStepChain(builder func(d game.Data) []step.Step, opts ...Option) *StepCh
 
 func (a *StepChainAction) NextStep(d game.Data, container container.Container) error {
 	// Ensure that we first check if its nill to avoid accessing a nill value (can result in panic)
-	if a == nil || a.markSkipped {
+	if a == nil || a.isFinished {
 		return ErrNoMoreSteps
 	}
 
@@ -55,7 +55,7 @@ func (a *StepChainAction) NextStep(d game.Data, container container.Container) e
 
 			if a.retries >= maxRetries {
 				if a.ignoreErrors {
-					a.markSkipped = true
+					a.isFinished = true
 					return errors.Join(err, ErrLogAndContinue)
 				}
 				if a.canBeSkipped {
@@ -74,9 +74,11 @@ func (a *StepChainAction) NextStep(d game.Data, container container.Container) e
 		if a.Steps != nil && len(a.Steps) > 0 {
 			return nil
 		} else {
-			a.Skip()
+			a.isFinished = true
 		}
 	}
+
+	a.isFinished = true
 
 	return ErrNoMoreSteps
 }
