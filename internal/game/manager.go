@@ -326,7 +326,7 @@ func StartGame(username string, password string, authmethod string, realm string
 		}
 
 		// Give enough time for the process to start
-		helper.Sleep(3000)
+		helper.Sleep(5000)
 
 		// Log in process
 		var bnetHandle windows.HWND
@@ -396,7 +396,7 @@ func StartGame(username string, password string, authmethod string, realm string
 		PostMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, unLParam)
 
 		helper.Sleep(500)
-		for i := 0; i < 25; i++ {
+		for i := 0; i < 40; i++ {
 			PostMessage(bnetHandle, WM_KEYDOWN, VK_BACK, unLParam)
 			PostMessage(bnetHandle, WM_KEYUP, VK_BACK, unLParam)
 			helper.Sleep(50)
