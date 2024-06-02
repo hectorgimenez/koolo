@@ -245,6 +245,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Username = r.Form.Get("username")
 		cfg.Password = r.Form.Get("password")
 		cfg.Realm = r.Form.Get("realm")
+		cfg.AuthMethod = r.Form.Get("authmethod")
+
 		// Health config
 		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))
 		cfg.Health.ManaPotionAt, _ = strconv.Atoi(r.Form.Get("manaPotionAt"))

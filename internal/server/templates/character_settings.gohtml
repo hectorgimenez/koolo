@@ -82,6 +82,20 @@
                         </option>
                     </select>
                 </label>
+                <label>
+                    Authentication Method
+                    <select name="authmethod">
+                        <option value="BattleNetClient" {{ if eq .Config.AuthMethod
+                        "BattleNetClient" }}selected{{ end }}>Battle.net Client
+                        </option>
+                        <option value="UsernamePassword" {{ if eq .Config.AuthMethod
+                        "UsernamePassword" }}selected{{ end }}>Username & Password
+                        </option>
+                        <option value="None" {{ if eq .Config.AuthMethod
+                        "None" }}selected{{ end }}>None
+                        </option>
+                    </select>
+                </label>
             </fieldset>
             <h4>Health settings</h4>
             <fieldset class="grid">

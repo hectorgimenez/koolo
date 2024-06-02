@@ -1,9 +1,10 @@
 package game
 
 import (
-	"github.com/lxn/win"
 	"math/rand"
 	"time"
+
+	"github.com/lxn/win"
 )
 
 const (
