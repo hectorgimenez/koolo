@@ -1,6 +1,9 @@
 package character
 
 import (
+	"sort"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -10,13 +13,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
-	"time"
 )
 
 const (
 	fohMaxAttacksLoop = 10
-	fohMinDistance    = 5
+	fohMinDistance    = 10
 	fohMaxDistance    = 20
 )
 
@@ -74,7 +75,7 @@ func (s Foh) KillCountess() action.Action {
 }
 
 func (s Foh) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
 }
 
 func (s Foh) KillSummoner() action.Action {
@@ -82,15 +83,15 @@ func (s Foh) KillSummoner() action.Action {
 }
 
 func (s Foh) KillDuriel() action.Action {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
 }
 
 func (s Foh) KillPindle(_ []stat.Resist) action.Action {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+	return s.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s Foh) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
 }
 
 func (s Foh) KillNihlathak() action.Action {
@@ -128,15 +129,15 @@ func (s Foh) KillDiablo() action.Action {
 		s.logger.Info("Diablo detected, attacking")
 
 		return []action.Action{
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
 		}
 	}, action.RepeatUntilNoSteps())
 }
 
 func (s Foh) KillIzual() action.Action {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killBoss(npc.Izual, data.MonsterTypeNone)
 }
 
 func (s Foh) KillCouncil() action.Action {
@@ -193,6 +194,24 @@ func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
+			)
+		}
+
+		return
+	}, action.CanBeSkipped())
+}
+
+func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found {
+			return nil
+		}
+
+		helper.Sleep(100)
+		for range fohMaxAttacksLoop {
+			steps = append(steps,
+				step.SecondaryAttack(skill.HolyBolt, m.UnitID, 3, step.Distance(fohMinDistance, fohMaxDistance)),
 			)
 		}
 
