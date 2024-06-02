@@ -158,9 +158,11 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 		return false
 	}
 
-	if distance > p.maxDistance {
+	hasLoS := pather.LineOfSight(d, d.PlayerUnit.Position, monster.Position)
+
+	if distance > p.maxDistance || !hasLoS {
 		if p.moveToStep == nil {
-			if found && p.minDistance > 0 {
+			if found && p.minDistance > 0 || !hasLoS {
 				// Try to move to the minimum distance
 				if distance > p.minDistance {
 					moveTo := p.minDistance - 1
@@ -168,14 +170,24 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 						moveTo = 0
 					}
 
-					pos := path[moveTo].(*pather.Tile)
-					p.moveToStep = MoveTo(data.Position{
-						X: pos.X + d.AreaOrigin.X,
-						Y: pos.Y + d.AreaOrigin.Y,
-					})
+					for i := moveTo; i > 0; i-- {
+						posTile := path[i].(*pather.Tile)
+						pos := data.Position{
+							X: posTile.X + d.AreaOrigin.X,
+							Y: posTile.Y + d.AreaOrigin.Y,
+						}
+
+						hasLoS = pather.LineOfSight(d, pos, monster.Position)
+						if hasLoS {
+							path, distance, _ = container.PathFinder.GetPath(d, pos)
+							p.moveToStep = MoveTo(pos)
+							break
+						}
+					}
 				}
 			}
 
+			// Okay, enough, let's telestomp
 			if p.moveToStep == nil {
 				p.moveToStep = MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
 			}

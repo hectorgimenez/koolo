@@ -108,7 +108,7 @@ func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Dat
 func (b *Builder) getNPCPosition(npc npc.ID, d game.Data) (data.Position, bool) {
 	monster, found := d.Monsters.FindOne(npc, data.MonsterTypeNone)
 	if found {
-		return data.Position{X: monster.Position.X, Y: monster.Position.Y}, true
+		return monster.Position, true
 	}
 
 	n, found := d.NPCs.FindOne(npc)
