@@ -163,7 +163,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (
 			if previousUnitID == id {
 				steps = append(steps,
 					step.SyncStep(func(_ game.Data) error {
-						p.container.PathFinder.RandomMovement()
+						p.container.PathFinder.RandomMovement(d)
 						return nil
 					}),
 				)

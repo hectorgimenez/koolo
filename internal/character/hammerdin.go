@@ -56,7 +56,7 @@ func (s Hammerdin) KillMonsterSequence(
 				step.SyncStep(func(d game.Data) error {
 					monster, f := d.Monsters.FindByID(id)
 					if f && monster.Stats[stat.Life] > 0 {
-						s.container.PathFinder.RandomMovement()
+						s.container.PathFinder.RandomMovement(d)
 					}
 					return nil
 				}),
@@ -65,7 +65,7 @@ func (s Hammerdin) KillMonsterSequence(
 		steps = append(steps,
 			step.PrimaryAttack(
 				id,
-				8,
+				3,
 				step.Distance(1, 8),
 				step.EnsureAura(skill.Concentration),
 			),
