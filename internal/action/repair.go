@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 )
 
@@ -35,7 +36,11 @@ func (b *Builder) Repair() *Chain {
 					step.KeySequence(keys...),
 					step.SyncStep(func(_ game.Data) error {
 						helper.Sleep(100)
-						b.HID.Click(game.LeftButton, 390, 515)
+						if b.CharacterCfg.ClassicMode {
+							b.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
+						} else {
+							b.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)
+						}
 						helper.Sleep(500)
 						return nil
 					}),

@@ -57,6 +57,12 @@ const (
 	WpAreaBtnHeight        = 41
 	WpAreaBtnHeightClassic = 43
 
+	RepairButtonX        = 390
+	RepairButtonXClassic = 602
+
+	RepairButtonY        = 515
+	RepairButtonYClassic = 557
+
 	AnvilCenterX = 272
 	AnvilCenterY = 333
 	AnvilBtnX    = 272
