@@ -29,7 +29,7 @@ func (a TalRashaTombs) BuildActions() (actions []action.Action) {
 			a.builder.ClearArea(true, data.MonsterAnyFilter()),
 			a.builder.ReturnTown(),
 		)
-		actions = append(actions, a.builder.PreRun(false)...)
+		actions = append(actions, a.builder.PreRun(false, true)...)
 	}
 
 	return actions

@@ -143,7 +143,14 @@ func (sm ShopManager) SellJunk(d game.Data) {
 }
 
 func (sm ShopManager) SellItem(i data.Item) {
-	screenPos := ui.GetScreenCoordsForItem(i)
+	var screenPos data.Position
+
+	if sm.container.CharacterCfg.ClassicMode {
+		screenPos = ui.GetScreenCoordsForItemClassic(i)
+	} else {
+		screenPos = ui.GetScreenCoordsForItem(i)
+	}
+
 	helper.Sleep(500)
 	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	helper.Sleep(500)
@@ -151,7 +158,13 @@ func (sm ShopManager) SellItem(i data.Item) {
 }
 
 func (sm ShopManager) BuyItem(i data.Item, quantity int) {
-	screenPos := ui.GetScreenCoordsForItem(i)
+	var screenPos data.Position
+
+	if sm.container.CharacterCfg.ClassicMode {
+		screenPos = ui.GetScreenCoordsForItemClassic(i)
+	} else {
+		screenPos = ui.GetScreenCoordsForItem(i)
+	}
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
 		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
@@ -161,7 +174,13 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 }
 
 func (sm ShopManager) buyFullStack(i data.Item) {
-	screenPos := ui.GetScreenCoordsForItem(i)
+	var screenPos data.Position
+
+	if sm.container.CharacterCfg.ClassicMode {
+		screenPos = ui.GetScreenCoordsForItemClassic(i)
+	} else {
+		screenPos = ui.GetScreenCoordsForItem(i)
+	}
 	sm.container.HID.ClickWithModifier(game.RightButton, screenPos.X, screenPos.Y, game.ShiftKey)
 	helper.Sleep(500)
 }

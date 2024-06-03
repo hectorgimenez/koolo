@@ -56,6 +56,10 @@
                     <input id="kill_d2_process" type="checkbox" name="kill_d2_process" {{ if .Config.KillD2OnStop }}checked{{ end }}/>
                     Kill D2 process on bot stop
                 </label>
+                                <label>
+                    <input id="classic_mode" type="checkbox" name="classic_mode" {{ if .Config.ClassicMode }}checked{{ end }}/>
+                    Use Classic Mode (Legacy Graphics)
+                </label>
             </fieldset>
             <h4>Battle.net settings</h4>
             <fieldset class="grid">

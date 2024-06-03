@@ -48,6 +48,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	companionTPRequestedAt := time.Time{}
 	companionTPRequested := false
 	companionLeftGame := false
+	shouldToggleLegacyMode := b.ab.CharacterCfg.ClassicMode
+
 	if b.c.CharacterCfg.Companion.Enabled && b.c.CharacterCfg.Companion.Leader {
 		b.c.EventListener.Register(func(ctx context.Context, e event.Event) error {
 			switch evt := e.(type) {
@@ -75,12 +77,14 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
-		actions := b.ab.PreRunHook(firstRun)
+		actions := b.ab.PreRunHook(firstRun, shouldToggleLegacyMode)
 		actions = append(actions, r.BuildActions()...)
 		actions = append(actions, b.ab.PostRunHook(k == len(runs)-1)...)
 		eachLoopActions := make([]action.Action, 0)
 
 		firstRun = false
+		// Set it to false so we don't try to toggle it on each run
+		shouldToggleLegacyMode = false
 		running := true
 		loopTime := time.Now()
 		for running {

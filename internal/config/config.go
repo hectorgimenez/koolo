@@ -59,6 +59,7 @@ type CharacterCfg struct {
 	CharacterName     string `yaml:"characterName"`
 	CommandLineArgs   string `yaml:"commandLineArgs"`
 	KillD2OnStop      bool   `yaml:"killD2OnStop"`
+	ClassicMode       bool   `yaml:"classicMode"`
 	EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
 	AuthMethod        string `yaml:"authMethod"`
 	Health            struct {

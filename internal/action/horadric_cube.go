@@ -47,7 +47,14 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 
 			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
 			actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-				screenPos := ui.GetScreenCoordsForItem(nwIt)
+				var screenPos data.Position
+
+				if b.CharacterCfg.ClassicMode {
+					screenPos = ui.GetScreenCoordsForItemClassic(nwIt)
+				} else {
+					screenPos = ui.GetScreenCoordsForItem(nwIt)
+				}
+
 				b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 				helper.Sleep(300)
 
@@ -63,7 +70,15 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 				for _, updatedItem := range d.Inventory.AllItems {
 					if nwIt.UnitID == updatedItem.UnitID {
 						b.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
-						screenPos := ui.GetScreenCoordsForItem(updatedItem)
+
+						var screenPos data.Position
+
+						if b.CharacterCfg.ClassicMode {
+							screenPos = ui.GetScreenCoordsForItemClassic(updatedItem)
+						} else {
+							screenPos = ui.GetScreenCoordsForItem(updatedItem)
+						}
+
 						b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 						helper.Sleep(300)
 					}
@@ -90,10 +105,21 @@ func (b *Builder) CubeTransmute() *Chain {
 		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			b.Logger.Debug("Transmuting items in the Horadric Cube")
 			helper.Sleep(150)
-			b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
+
+			if b.CharacterCfg.ClassicMode {
+				b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic)
+			} else {
+				b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
+			}
+
 			helper.Sleep(2000)
 
-			b.HID.ClickWithModifier(game.LeftButton, 306, 365, game.CtrlKey)
+			if b.CharacterCfg.ClassicMode {
+				b.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
+			} else {
+				b.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
+			}
+
 			helper.Sleep(300)
 
 			return []step.Step{
@@ -122,7 +148,14 @@ func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
 				// Switch to the tab
 				b.switchTab(cube.Location.Page + 1)
 
-				screenPos := ui.GetScreenCoordsForItem(cube)
+				var screenPos data.Position
+
+				if b.CharacterCfg.ClassicMode {
+					screenPos = ui.GetScreenCoordsForItemClassic(cube)
+				} else {
+					screenPos = ui.GetScreenCoordsForItem(cube)
+				}
+
 				helper.Sleep(300)
 				b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 				helper.Sleep(200)

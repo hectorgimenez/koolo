@@ -1,21 +1,14 @@
 package action
 
 import (
+	"log/slog"
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"log/slog"
-	"slices"
-)
-
-const (
-	wpTabStartX     = 131
-	wpTabStartY     = 148
-	wpTabSizeX      = 57
-	wpListPositionX = 200
-	wpListStartY    = 158
-	wpAreaBtnHeight = 41
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 func (b *Builder) WayPoint(a area.ID) *Chain {
@@ -45,9 +38,14 @@ func (b *Builder) openWPAndSelectTab(a area.ID, d game.Data) Action {
 				return d.OpenMenus.Waypoint
 			},
 				step.SyncStep(func(d game.Data) error {
-					actTabX := wpTabStartX + (wpCoords.Tab-1)*wpTabSizeX + (wpTabSizeX / 2)
 
-					b.HID.Click(game.LeftButton, actTabX, wpTabStartY)
+					if b.CharacterCfg.ClassicMode {
+						actTabX := ui.WpTabStartXClassic + (wpCoords.Tab-1)*ui.WpTabSizeXClassic + (ui.WpTabSizeXClassic / 2)
+						b.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic)
+					} else {
+						actTabX := ui.WpTabStartX + (wpCoords.Tab-1)*ui.WpTabSizeX + (ui.WpTabSizeX / 2)
+						b.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
+					}
 					helper.Sleep(200)
 
 					return nil
@@ -86,8 +84,13 @@ func (b *Builder) useWP(a area.ID) *Chain {
 		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d game.Data) error {
-					areaBtnY := wpListStartY + (currentWP.Row-1)*wpAreaBtnHeight + (wpAreaBtnHeight / 2)
-					b.HID.Click(game.LeftButton, wpListPositionX, areaBtnY)
+					if b.CharacterCfg.ClassicMode {
+						areaBtnY := ui.WpListStartYClassic + (currentWP.Row-1)*ui.WpAreaBtnHeightClassic + (ui.WpAreaBtnHeightClassic / 2)
+						b.HID.Click(game.LeftButton, ui.WpListPositionXClassic, areaBtnY)
+					} else {
+						areaBtnY := ui.WpListStartY + (currentWP.Row-1)*ui.WpAreaBtnHeight + (ui.WpAreaBtnHeight / 2)
+						b.HID.Click(game.LeftButton, ui.WpListPositionX, areaBtnY)
+					}
 					helper.Sleep(1000)
 
 					return nil

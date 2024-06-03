@@ -188,13 +188,25 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 							continue
 						}
 
-						pos := ui.GetScreenCoordsForItem(itm)
+						var pos data.Position
+
+						if a.CharacterCfg.ClassicMode {
+							pos = ui.GetScreenCoordsForItemClassic(itm)
+						} else {
+							pos = ui.GetScreenCoordsForItem(itm)
+						}
+
 						helper.Sleep(500)
 
 						if x > 3 {
 							a.HID.Click(game.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+							if a.CharacterCfg.ClassicMode {
+								a.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
+							} else {
+								a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+							}
+
 						} else {
 							a.HID.Click(game.RightButton, pos.X, pos.Y)
 						}
