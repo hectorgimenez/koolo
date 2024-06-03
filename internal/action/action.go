@@ -77,5 +77,9 @@ func (b *basicAction) Skip() {
 }
 
 func (b *basicAction) IsFinished() bool {
+	if b == nil {
+		return true
+	}
+
 	return b.isFinished
 }

@@ -131,7 +131,9 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 	}
 
 	for _, cord := range blacklistedCoords {
-		pf.worldCache.SetTile(pf.worldCache.NewTile(KindBlocker, cord[0], cord[1]))
+		if len(collisionGrid) < cord[1] && len(collisionGrid[0]) < cord[1] {
+			pf.worldCache.SetTile(pf.worldCache.NewTile(KindBlocker, cord[0], cord[1]))
+		}
 	}
 
 	// aster path is returning the effort to reach that point, but we want to know the real distance in tiles, we count the tiles in the path
@@ -230,12 +232,14 @@ func (pf *PathFinder) GameCoordsToScreenCords(playerX, playerY, destinationX, de
 	return screenX, screenY
 }
 
-func (pf *PathFinder) RandomMovement() {
+func (pf *PathFinder) RandomMovement(d game.Data) {
 	midGameX := pf.gr.GameAreaSizeX / 2
 	midGameY := pf.gr.GameAreaSizeY / 2
 	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
-	pf.hid.Click(game.LeftButton, x, y)
+	pf.hid.MovePointer(x, y)
+	pf.hid.PressKeyBinding(d.KeyBindings.ForceMove)
+	helper.Sleep(50)
 }
 
 func relativePosition(d game.Data, p data.Position, cgOffset data.Position) (int, int) {

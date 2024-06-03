@@ -30,11 +30,16 @@ func parseWorld(collisionGrid [][]bool, d game.Data) World {
 			}
 
 			if walkable {
-				// Add some padding around non-walkable areas, this prevents problems when cornering
-				if (y > 1 && (!xValues[y-1] || !xValues[y-2])) || (y < len(xValues)-2 && (!xValues[y+1] || !xValues[y+2])) ||
-					(x > 1 && (!collisionGrid[x-1][y] || !collisionGrid[x-2][y])) || (x < len(collisionGrid)-2 && (!collisionGrid[x+1][y] || !collisionGrid[x+2][y])) {
+				// Add some padding around non-walkable areas, this prevents problems when cornering without teleport
+				if !d.CanTeleport() && ((y > 1 && (!xValues[y-1] || !xValues[y-2])) || (y < len(xValues)-2 && (!xValues[y+1] || !xValues[y+2])) ||
+					(x > 1 && (!collisionGrid[x-1][y] || !collisionGrid[x-2][y])) || (x < len(collisionGrid)-2 && (!collisionGrid[x+1][y] || !collisionGrid[x+2][y]))) {
 					kind = KindSoftBlocker
 				} else {
+					kind = KindPlain
+				}
+			}
+			if !walkable && d.CanTeleport() {
+				if (x > 1 && x < len(collisionGrid) && collisionGrid[x-1][y] && collisionGrid[x+1][y]) || (y > 1 && y < len(xValues) && collisionGrid[x][y-1] && collisionGrid[x][y+1]) {
 					kind = KindPlain
 				}
 			}
