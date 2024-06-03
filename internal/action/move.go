@@ -134,7 +134,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 
 		// To stop the movement, not very accurate
 		_, distance, _ := b.PathFinder.GetPath(d, to)
-		if distance < 8 {
+		if distance < 9 {
 			return nil
 		}
 
@@ -163,16 +163,25 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 					return []Action{NewStepChain(func(d game.Data) []step.Step {
 						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObject(o.Name, func(d game.Data) bool {
-							for _, obj := range d.Objects {
-								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
-									return true
-								}
-							}
-							return false
+						return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
+							obj, found := d.Objects.FindByID(o.ID)
+
+							return found && !obj.Selectable
 						})}
 					}, CanBeSkipped())}
 				}
+			}
+		}
+
+		// Check if there is any object blocking our path
+		for _, o := range d.Objects {
+			if o.Name == object.Barrel && pather.DistanceFromMe(d, o.Position) < 3 {
+				return []Action{NewStepChain(func(d game.Data) []step.Step {
+					return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
+						obj, found := d.Objects.FindByID(o.ID)
+						return found && !obj.Selectable
+					})}
+				})}
 			}
 		}
 

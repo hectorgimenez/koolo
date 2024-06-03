@@ -29,7 +29,7 @@ func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 		pathingStep:    newPathingStep(),
 		destination:    destination,
 		timeout:        time.Second * 30,
-		stopAtDistance: 5,
+		stopAtDistance: 6,
 	}
 
 	for _, o := range opts {
@@ -41,7 +41,7 @@ func MoveTo(destination data.Position, opts ...MoveToStepOption) *MoveToStep {
 
 func StopAtDistance(distance int) MoveToStepOption {
 	return func(step *MoveToStep) {
-		step.stopAtDistance = distance + 3 // Add some padding, origin and destination point are not walkable and should be ignored
+		step.stopAtDistance = distance + 4 // Add some padding, origin and destination point are not walkable and should be ignored
 	}
 }
 
