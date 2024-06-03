@@ -4,10 +4,14 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 )
 
-func (b *Builder) PreRun(firstRun bool) []Action {
+func (b *Builder) PreRun(firstRun bool, shouldToggleToLegacyMode bool) []Action {
 	actions := []Action{
 		b.UseSkillIfBind(skill.Vigor),
 		b.RecoverCorpse(),
+	}
+
+	if shouldToggleToLegacyMode {
+		actions = append(actions, b.SwitchToLegacyMode())
 	}
 
 	if firstRun {

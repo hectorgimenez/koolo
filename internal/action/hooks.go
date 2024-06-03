@@ -12,8 +12,8 @@ Be sure to do appropriate checks to avoid infinite loops or unwanted behavior, s
 */
 
 // PreRunHook is executed before the main actions are executed. Actions returned here will be executed before the main actions for each run.
-func (b *Builder) PreRunHook(firstRun bool) []Action {
-	return b.PreRun(firstRun)
+func (b *Builder) PreRunHook(firstRun bool, shouldToggleToLegacyMode bool) []Action {
+	return b.PreRun(firstRun, shouldToggleToLegacyMode)
 }
 
 // EachLoopHook is executed every loop iteration before the main actions are executed. If you return any actions here, they will be executed before the main actions.

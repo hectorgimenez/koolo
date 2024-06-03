@@ -175,7 +175,13 @@ func (a Leveling) prepareStaff() action.Action {
 						return d.OpenMenus.Stash
 					},
 						step.SyncStep(func(d game.Data) error {
-							screenPos := ui.GetScreenCoordsForItem(horadricStaff)
+							var screenPos data.Position
+
+							if a.CharacterCfg.ClassicMode {
+								screenPos = ui.GetScreenCoordsForItemClassic(horadricStaff)
+							} else {
+								screenPos = ui.GetScreenCoordsForItem(horadricStaff)
+							}
 
 							a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 							helper.Sleep(300)
@@ -253,7 +259,14 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 				step.SyncStep(func(d game.Data) error {
 					staff, _ := d.Inventory.Find("HoradricStaff", item.LocationInventory)
 
-					screenPos := ui.GetScreenCoordsForItem(staff)
+					var screenPos data.Position
+
+					if a.CharacterCfg.ClassicMode {
+						screenPos = ui.GetScreenCoordsForItemClassic(staff)
+					} else {
+						screenPos = ui.GetScreenCoordsForItem(staff)
+
+					}
 
 					a.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
 					helper.Sleep(300)
@@ -293,13 +306,25 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 							continue
 						}
 
-						pos := ui.GetScreenCoordsForItem(itm)
+						var pos data.Position
+
+						if a.CharacterCfg.ClassicMode {
+							pos = ui.GetScreenCoordsForItemClassic(itm)
+						} else {
+							pos = ui.GetScreenCoordsForItem(itm)
+
+						}
+
 						helper.Sleep(500)
 
 						if x > 3 {
 							a.HID.Click(game.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+							if a.CharacterCfg.ClassicMode {
+								a.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
+							} else {
+								a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+							}
 						} else {
 							a.HID.Click(game.RightButton, pos.X, pos.Y)
 						}

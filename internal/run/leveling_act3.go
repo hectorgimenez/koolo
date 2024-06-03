@@ -195,7 +195,14 @@ func (a Leveling) openMephistoStairs() []action.Action {
 					a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 					helper.Sleep(1000)
 					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
-					screenPos := ui.GetScreenCoordsForItem(khalimsWill)
+					var screenPos data.Position
+
+					if a.CharacterCfg.ClassicMode {
+						screenPos = ui.GetScreenCoordsForItemClassic(khalimsWill)
+					} else {
+						screenPos = ui.GetScreenCoordsForItem(khalimsWill)
+					}
+
 					a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
 					helper.Sleep(300)
 					a.HID.PressKey(win.VK_ESCAPE)

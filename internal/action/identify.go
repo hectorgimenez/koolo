@@ -82,12 +82,24 @@ func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
 }
 
 func (b *Builder) identifyItem(idTome data.Item, i data.Item) {
-	screenPos := ui.GetScreenCoordsForItem(idTome)
+	var screenPos data.Position
+
+	if b.CharacterCfg.ClassicMode {
+		screenPos = ui.GetScreenCoordsForItemClassic(idTome)
+	} else {
+		screenPos = ui.GetScreenCoordsForItem(idTome)
+	}
+
 	helper.Sleep(500)
 	b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	helper.Sleep(1000)
 
-	screenPos = ui.GetScreenCoordsForItem(i)
+	if b.CharacterCfg.ClassicMode {
+		screenPos = ui.GetScreenCoordsForItemClassic(i)
+	} else {
+		screenPos = ui.GetScreenCoordsForItem(i)
+	}
+
 	b.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
 	helper.Sleep(350)
 }
