@@ -108,6 +108,16 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 	}, Resettable())
 }
 
+func (b *Builder) MoveToCoordsWithMinDistance(to data.Position, minDistance int, opts ...step.MoveToStepOption) *Chain {
+	return b.MoveTo(func(d game.Data) (data.Position, bool) {
+		_, distance, _ := b.PathFinder.GetPath(d, to)
+		if distance <= minDistance {
+			return d.PlayerUnit.Position, false
+		}
+		return to, true
+	}, opts...)
+}
+
 func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Chain {
 	return b.MoveTo(func(d game.Data) (data.Position, bool) {
 		return to, true

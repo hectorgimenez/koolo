@@ -82,15 +82,6 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
 	)
 
-	// Let's move to a safe area and open the portal in companion mode
-	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
-		actions = append(actions,
-			a.builder.MoveToCoords(diabloSpawnPosition),
-			a.builder.OpenTPIfLeader(),
-			a.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
-		)
-	}
-
 	if a.Container.CharacterCfg.Game.Diablo.ClearArea {
 		monsterFilter := data.MonsterAnyFilter()
 		if a.Container.CharacterCfg.Game.Diablo.OnlyElites {
@@ -252,7 +243,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 	_, isLevelingChar := a.char.(action.LevelingCharacter)
 
-	// For leveling we always want to kill Diablo
+	// For leveling, we always want to kill Diablo
 	if isLevelingChar || a.Container.CharacterCfg.Game.Diablo.KillDiablo {
 		// Go back to town to buy potions if needed
 		actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
@@ -333,7 +324,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				multiplier := 1
 
 				if pather.IsWalkable(pos, d.AreaOrigin, d.CollisionGrid) {
-					return []action.Action{a.builder.MoveToCoords(pos)}
+					return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 20)}
 				}
 
 				for _ = range 2 {
@@ -342,7 +333,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 						newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
 
 						if pather.IsWalkable(newPos, d.AreaOrigin, d.CollisionGrid) {
-							return []action.Action{a.builder.MoveToCoords(newPos)}
+							return []action.Action{a.builder.MoveToCoordsWithMinDistance(newPos, 20)}
 						}
 
 					}
@@ -351,7 +342,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				}
 
 				// Let it fail then
-				return []action.Action{a.builder.MoveToCoords(pos)}
+				return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 20)}
 			}),
 			// Skip storm casters for now completely while clearing non-seals
 			a.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
