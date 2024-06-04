@@ -44,7 +44,7 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 ### Preparing the character
 - Koolo will read game keybindings in order to use the skills, doesn't matter what key is used, but the skills for the build must be set.
 - For blizzard sorceress, set the **left** skill to Glacial Spike or Ice Blast, and for Hammerdin to Blessed Hammer.
-- Buy TP and ID tomes and one stack of keys and keep them in the inventory.
+- Buy TP and ID tomes and one stack of keys and keep them in the inventory, additionally set the TP tome to a key binding, this is **required**.
 - Horadric Cube can be stashed or kept in inventory, Koolo will use it to cube recipes if enabled.
 - Keep the charms in the inventory, Koolo can be configured to lock specific inventory slots.
 

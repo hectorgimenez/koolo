@@ -293,6 +293,10 @@
                 <input type="checkbox" name="companionAttack" {{ if .Config.Companion.Attack }}checked{{ end }}/>
                 Attack
             </label>
+            <label>
+                <input type="checkbox" name="companionFollowLeader" {{ if .Config.Companion.FollowLeader }}checked{{ end }}/>
+                Follow Leader
+            </label>
             <fieldset class="grid">
                 <label>
                     Leader Name

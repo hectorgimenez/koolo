@@ -18,13 +18,16 @@ type Town interface {
 }
 
 func GetTownByArea(a area.ID) Town {
-	towns := map[area.ID]Town{
-		area.RogueEncampment:        A1{},
-		area.LutGholein:             A2{},
-		area.KurastDocks:            A3{},
-		area.ThePandemoniumFortress: A4{},
-		area.Harrogath:              A5{},
+	switch a.Act() {
+	case 1:
+		return A1{}
+	case 2:
+		return A2{}
+	case 3:
+		return A3{}
+	case 4:
+		return A4{}
 	}
 
-	return towns[a]
+	return A5{}
 }

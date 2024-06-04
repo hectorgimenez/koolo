@@ -15,7 +15,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 func (a Leveling) act3() action.Action {
@@ -195,13 +194,7 @@ func (a Leveling) openMephistoStairs() []action.Action {
 					a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
 					helper.Sleep(1000)
 					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
-					var screenPos data.Position
-
-					if a.CharacterCfg.ClassicMode {
-						screenPos = ui.GetScreenCoordsForItemClassic(khalimsWill)
-					} else {
-						screenPos = ui.GetScreenCoordsForItem(khalimsWill)
-					}
+					screenPos := a.UIManager.GetScreenCoordsForItem(khalimsWill)
 
 					a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
 					helper.Sleep(300)

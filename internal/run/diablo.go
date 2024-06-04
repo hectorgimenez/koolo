@@ -82,6 +82,15 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
 	)
 
+	// Let's move to a safe area and open the portal in companion mode
+	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
+		actions = append(actions,
+			a.builder.MoveToCoords(diabloSpawnPosition),
+			a.builder.OpenTPIfLeader(),
+			a.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
+		)
+	}
+
 	if a.Container.CharacterCfg.Game.Diablo.ClearArea {
 		monsterFilter := data.MonsterAnyFilter()
 		if a.Container.CharacterCfg.Game.Diablo.OnlyElites {

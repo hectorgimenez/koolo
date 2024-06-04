@@ -11,9 +11,16 @@ Hooks file provide an easy way to execute specific actions in specific stages of
 Be sure to do appropriate checks to avoid infinite loops or unwanted behavior, specially on hooks that are executed often.
 */
 
+// NewGameHook is executed when a new game is created. Actions returned here will be executed when a new game is created before the main actions.
+func (b *Builder) NewGameHook() []Action {
+	return []Action{
+		b.SwitchToLegacyMode(),
+	}
+}
+
 // PreRunHook is executed before the main actions are executed. Actions returned here will be executed before the main actions for each run.
-func (b *Builder) PreRunHook(firstRun bool, shouldToggleToLegacyMode bool) []Action {
-	return b.PreRun(firstRun, shouldToggleToLegacyMode)
+func (b *Builder) PreRunHook(firstRun bool) []Action {
+	return b.PreRun(firstRun)
 }
 
 // EachLoopHook is executed every loop iteration before the main actions are executed. If you return any actions here, they will be executed before the main actions.

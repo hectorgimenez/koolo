@@ -36,7 +36,7 @@ func (b *Builder) Repair() *Chain {
 					step.KeySequence(keys...),
 					step.SyncStep(func(_ game.Data) error {
 						helper.Sleep(100)
-						if b.CharacterCfg.ClassicMode {
+						if d.LegacyGraphics {
 							b.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
 						} else {
 							b.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)

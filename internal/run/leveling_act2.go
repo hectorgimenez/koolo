@@ -175,13 +175,7 @@ func (a Leveling) prepareStaff() action.Action {
 						return d.OpenMenus.Stash
 					},
 						step.SyncStep(func(d game.Data) error {
-							var screenPos data.Position
-
-							if a.CharacterCfg.ClassicMode {
-								screenPos = ui.GetScreenCoordsForItemClassic(horadricStaff)
-							} else {
-								screenPos = ui.GetScreenCoordsForItem(horadricStaff)
-							}
+							screenPos := a.UIManager.GetScreenCoordsForItem(horadricStaff)
 
 							a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 							helper.Sleep(300)
@@ -259,14 +253,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 				step.SyncStep(func(d game.Data) error {
 					staff, _ := d.Inventory.Find("HoradricStaff", item.LocationInventory)
 
-					var screenPos data.Position
-
-					if a.CharacterCfg.ClassicMode {
-						screenPos = ui.GetScreenCoordsForItemClassic(staff)
-					} else {
-						screenPos = ui.GetScreenCoordsForItem(staff)
-
-					}
+					screenPos := a.UIManager.GetScreenCoordsForItem(staff)
 
 					a.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
 					helper.Sleep(300)
@@ -306,21 +293,13 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 							continue
 						}
 
-						var pos data.Position
-
-						if a.CharacterCfg.ClassicMode {
-							pos = ui.GetScreenCoordsForItemClassic(itm)
-						} else {
-							pos = ui.GetScreenCoordsForItem(itm)
-
-						}
-
+						pos := a.UIManager.GetScreenCoordsForItem(itm)
 						helper.Sleep(500)
 
 						if x > 3 {
 							a.HID.Click(game.LeftButton, pos.X, pos.Y)
 							helper.Sleep(300)
-							if a.CharacterCfg.ClassicMode {
+							if d.LegacyGraphics {
 								a.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
 							} else {
 								a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)

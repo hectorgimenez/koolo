@@ -57,17 +57,11 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 func (b *Builder) orderInventoryPotions(d game.Data) {
 	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
-			var screenPos data.Position
 			if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
 				continue
 			}
 
-			if b.CharacterCfg.ClassicMode {
-				screenPos = ui.GetScreenCoordsForItemClassic(i)
-			} else {
-				screenPos = ui.GetScreenCoordsForItem(i)
-			}
-
+			screenPos := b.UIManager.GetScreenCoordsForItem(i)
 			helper.Sleep(100)
 			b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 			helper.Sleep(200)
@@ -191,14 +185,7 @@ func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) bool {
 }
 
 func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
-	var screenPos data.Position
-
-	if b.CharacterCfg.ClassicMode {
-		screenPos = ui.GetScreenCoordsForItemClassic(i)
-	} else {
-		screenPos = ui.GetScreenCoordsForItem(i)
-	}
-
+	screenPos := b.UIManager.GetScreenCoordsForItem(i)
 	b.HID.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(170)
 	screenshot := b.Reader.Screenshot()
@@ -222,7 +209,7 @@ func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
 
 func (b *Builder) clickStashGoldBtn() {
 	helper.Sleep(170)
-	if b.CharacterCfg.ClassicMode {
+	if b.Reader.LegacyGraphics() {
 		b.HID.Click(game.LeftButton, ui.StashGoldBtnXClassic, ui.StashGoldBtnYClassic)
 		helper.Sleep(1000)
 		b.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmXClassic, ui.StashGoldBtnConfirmYClassic)
@@ -235,7 +222,7 @@ func (b *Builder) clickStashGoldBtn() {
 }
 
 func (b *Builder) switchTab(tab int) {
-	if b.CharacterCfg.ClassicMode {
+	if b.Reader.LegacyGraphics() {
 		x := ui.SwitchStashTabBtnXClassic
 		y := ui.SwitchStashTabBtnYClassic
 
@@ -256,7 +243,7 @@ func (b *Builder) switchTab(tab int) {
 
 func (b *Builder) SwitchStashTab(tab int) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
-		if b.CharacterCfg.ClassicMode {
+		if d.LegacyGraphics {
 			x := ui.SwitchStashTabBtnXClassic
 			y := ui.SwitchStashTabBtnYClassic
 

@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 )
 
@@ -82,23 +81,13 @@ func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
 }
 
 func (b *Builder) identifyItem(idTome data.Item, i data.Item) {
-	var screenPos data.Position
-
-	if b.CharacterCfg.ClassicMode {
-		screenPos = ui.GetScreenCoordsForItemClassic(idTome)
-	} else {
-		screenPos = ui.GetScreenCoordsForItem(idTome)
-	}
+	screenPos := b.UIManager.GetScreenCoordsForItem(idTome)
 
 	helper.Sleep(500)
 	b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	helper.Sleep(1000)
 
-	if b.CharacterCfg.ClassicMode {
-		screenPos = ui.GetScreenCoordsForItemClassic(i)
-	} else {
-		screenPos = ui.GetScreenCoordsForItem(i)
-	}
+	screenPos = b.UIManager.GetScreenCoordsForItem(i)
 
 	b.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
 	helper.Sleep(350)

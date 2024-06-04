@@ -14,7 +14,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 type ShopManager struct {
@@ -143,13 +142,7 @@ func (sm ShopManager) SellJunk(d game.Data) {
 }
 
 func (sm ShopManager) SellItem(i data.Item) {
-	var screenPos data.Position
-
-	if sm.container.CharacterCfg.ClassicMode {
-		screenPos = ui.GetScreenCoordsForItemClassic(i)
-	} else {
-		screenPos = ui.GetScreenCoordsForItem(i)
-	}
+	screenPos := sm.container.UIManager.GetScreenCoordsForItem(i)
 
 	helper.Sleep(500)
 	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
@@ -158,13 +151,8 @@ func (sm ShopManager) SellItem(i data.Item) {
 }
 
 func (sm ShopManager) BuyItem(i data.Item, quantity int) {
-	var screenPos data.Position
+	screenPos := sm.container.UIManager.GetScreenCoordsForItem(i)
 
-	if sm.container.CharacterCfg.ClassicMode {
-		screenPos = ui.GetScreenCoordsForItemClassic(i)
-	} else {
-		screenPos = ui.GetScreenCoordsForItem(i)
-	}
 	helper.Sleep(250)
 	for k := 0; k < quantity; k++ {
 		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
@@ -174,13 +162,8 @@ func (sm ShopManager) BuyItem(i data.Item, quantity int) {
 }
 
 func (sm ShopManager) buyFullStack(i data.Item) {
-	var screenPos data.Position
+	screenPos := sm.container.UIManager.GetScreenCoordsForItem(i)
 
-	if sm.container.CharacterCfg.ClassicMode {
-		screenPos = ui.GetScreenCoordsForItemClassic(i)
-	} else {
-		screenPos = ui.GetScreenCoordsForItem(i)
-	}
 	sm.container.HID.ClickWithModifier(game.RightButton, screenPos.X, screenPos.Y, game.ShiftKey)
 	helper.Sleep(500)
 }
