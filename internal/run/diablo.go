@@ -82,7 +82,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
 	)
 
-		// Let's move to a safe area and open the portal in companion mode
+	// Let's move to a safe area and open the portal in companion mode
 	if a.CharacterCfg.Companion.Enabled && a.CharacterCfg.Companion.Leader {
 		actions = append(actions,
 			a.builder.MoveToCoords(diabloSpawnPosition),
