@@ -15,96 +15,125 @@ import (
 )
 
 const (
-	fohMaxAttacksLoop = 10
-	fohMinDistance    = 5
-	fohMaxDistance    = 20
+	maxAttacksLoop = 5
+	minDistance    = 2
+	maxDistance    = 6
 )
 
-type Foh struct {
+type Trapsin struct {
 	BaseCharacter
 }
 
-func (s Foh) KillMonsterSequence(
+func (s Trapsin) BuffSkills(d game.Data) []skill.ID {
+	armor := skill.Fade
+	armors := []skill.ID{skill.BurstOfSpeed, skill.Fade}
+	for _, arm := range armors {
+		if _, found := d.KeyBindings.KeyBindingForSkill(arm); found {
+			armor = arm
+		}
+	}
+
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.BladeShield); found {
+		return []skill.ID{armor, skill.BladeShield}
+	}
+
+	return []skill.ID{armor}
+}
+
+func (s Trapsin) PreCTABuffSkills(d game.Data) []skill.ID {
+	armor := skill.ShadowWarrior
+	armors := []skill.ID{skill.ShadowWarrior, skill.ShadowMaster}
+	hasShadow := false
+	for _, arm := range armors {
+		if _, found := d.KeyBindings.KeyBindingForSkill(arm); found {
+			armor = arm
+			hasShadow = true
+		}
+	}
+
+	if hasShadow {
+		return []skill.ID{armor}
+	}
+
+	return []skill.ID{}
+}
+
+func (s Trapsin) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
 ) action.Action {
-	completedAttackLoops := 0
-	previousUnitID := 0
-
-	return action.NewStepChain(func(d game.Data) []step.Step {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
 		}
-		if previousUnitID != int(id) {
-			completedAttackLoops = 0
-		}
-
 		if !s.preBattleChecks(d, id, skipOnImmunities) {
 			return []step.Step{}
 		}
 
-		if completedAttackLoops >= fohMaxAttacksLoop {
-			return []step.Step{}
-		}
+		opts := []step.AttackOption{step.Distance(minDistance, maxDistance)}
 
-		steps := []step.Step{
-			step.PrimaryAttack(
-				id,
-				3,
-				step.Distance(fohMinDistance, fohMaxDistance),
-				step.EnsureAura(skill.Conviction),
-			),
-		}
+		helper.Sleep(100)
+		steps = append(steps,
+			step.SecondaryAttack(skill.LightningSentry, id, 3, opts...),
+			step.SecondaryAttack(skill.DeathSentry, id, 2, opts...),
+			step.PrimaryAttack(id, 2, step.Distance(minDistance, maxDistance)),
+		)
 
-		completedAttackLoops++
-		previousUnitID = int(id)
-
-		return steps
+		return
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Foh) BuffSkills(d game.Data) []skill.ID {
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
-		return []skill.ID{skill.HolyShield}
-	}
-	return []skill.ID{}
+func (s Trapsin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found || &m == nil {
+			return nil
+		}
+
+		opts := []step.AttackOption{step.Distance(minDistance, maxDistance)}
+
+		helper.Sleep(100)
+		steps = append(steps,
+			step.SecondaryAttack(skill.LightningSentry, m.UnitID, 3, opts...),
+			step.SecondaryAttack(skill.DeathSentry, m.UnitID, 2, opts...),
+			step.PrimaryAttack(m.UnitID, 2, opts...),
+		)
+
+		return
+	}, action.CanBeSkipped())
 }
 
-func (s Foh) PreCTABuffSkills(_ game.Data) []skill.ID {
-	return []skill.ID{}
-}
-
-func (s Foh) KillCountess() action.Action {
+func (s Trapsin) KillCountess() action.Action {
 	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (s Foh) KillAndariel() action.Action {
+func (s Trapsin) KillAndariel() action.Action {
 	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (s Foh) KillSummoner() action.Action {
+func (s Trapsin) KillSummoner() action.Action {
 	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (s Foh) KillDuriel() action.Action {
+func (s Trapsin) KillDuriel() action.Action {
 	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (s Foh) KillPindle(_ []stat.Resist) action.Action {
+func (s Trapsin) KillPindle(_ []stat.Resist) action.Action {
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (s Foh) KillMephisto() action.Action {
+func (s Trapsin) KillMephisto() action.Action {
 	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (s Foh) KillNihlathak() action.Action {
+func (s Trapsin) KillNihlathak() action.Action {
 	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (s Foh) KillDiablo() action.Action {
+func (s Trapsin) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
@@ -142,11 +171,11 @@ func (s Foh) KillDiablo() action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Foh) KillIzual() action.Action {
+func (s Trapsin) KillIzual() action.Action {
 	return s.killMonster(npc.Izual, data.MonsterTypeNone)
 }
 
-func (s Foh) KillCouncil() action.Action {
+func (s Trapsin) KillCouncil() action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
@@ -165,14 +194,11 @@ func (s Foh) KillCouncil() action.Action {
 		})
 
 		for _, m := range councilMembers {
-			for range fohMaxAttacksLoop {
+			for range maxAttacksLoop {
 				steps = append(steps,
-					step.PrimaryAttack(
-						m.UnitID,
-						3,
-						step.Distance(fohMinDistance, fohMaxDistance),
-						step.EnsureAura(skill.Conviction),
-					),
+					step.SecondaryAttack(skill.LightningSentry, m.UnitID, 3, nil),
+					step.SecondaryAttack(skill.DeathSentry, m.UnitID, 2, nil),
+					step.PrimaryAttack(m.UnitID, 2, step.Distance(minDistance, maxDistance)),
 				)
 			}
 		}
@@ -180,29 +206,6 @@ func (s Foh) KillCouncil() action.Action {
 	}, action.CanBeSkipped())
 }
 
-func (s Foh) KillBaal() action.Action {
+func (s Trapsin) KillBaal() action.Action {
 	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-}
-
-func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return nil
-		}
-
-		helper.Sleep(100)
-		for range fohMaxAttacksLoop {
-			steps = append(steps,
-				step.PrimaryAttack(
-					m.UnitID,
-					3,
-					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(skill.Conviction),
-				),
-			)
-		}
-
-		return
-	}, action.CanBeSkipped())
 }

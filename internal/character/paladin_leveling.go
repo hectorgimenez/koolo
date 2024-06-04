@@ -19,8 +19,15 @@ type PaladinLeveling struct {
 	BaseCharacter
 }
 
-func (p PaladinLeveling) BuffSkills(_ game.Data) []skill.ID {
-	return []skill.ID{skill.HolyShield}
+func (p PaladinLeveling) BuffSkills(d game.Data) []skill.ID {
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+		return []skill.ID{skill.HolyShield}
+	}
+	return []skill.ID{}
+}
+
+func (p PaladinLeveling) PreCTABuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{}
 }
 
 func (p PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {

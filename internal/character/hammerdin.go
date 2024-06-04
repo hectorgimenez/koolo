@@ -77,8 +77,15 @@ func (s Hammerdin) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Hammerdin) BuffSkills(_ game.Data) []skill.ID {
-	return []skill.ID{skill.HolyShield}
+func (s Hammerdin) BuffSkills(d game.Data) []skill.ID {
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+		return []skill.ID{skill.HolyShield}
+	}
+	return []skill.ID{}
+}
+
+func (s Hammerdin) PreCTABuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{}
 }
 
 func (s Hammerdin) KillCountess() action.Action {
