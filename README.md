@@ -16,7 +16,7 @@ Can I get banned for using Koolo? The answer is a crystal clear yes, you can get
 not aware of any ban for using it. I'm not responsible for any ban or any other consequence that may arise from it.
 
 ## Features
-- Blizzard Sorceress, Nova Sorceress and Hammerdin are currently supported
+- Blizzard Sorceress, Nova Sorceress, Hammerdin and FoH are currently supported
 - Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch, Pindleskin, Nihlathak,
   Tristram, Lower Kurast, Stony Tomb, The Pit, Arachnid Lair, Baal, Tal Rasha Tombs, Diablo, Cows
 - Multi window support (run multiple bots at the same time)
