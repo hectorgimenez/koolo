@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	fohMaxAttacksLoop = 10
+	fohMaxAttacksLoop = 20
 	fohMinDistance    = 5
 	fohMaxDistance    = 20
 )
