@@ -90,14 +90,14 @@ func (s BlizzardSorceress) KillMonsterSequence(
 }
 
 func (s BlizzardSorceress) BuffSkills(d game.Data) []skill.ID {
-	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
-	for _, armor := range armors {
-		if _, found := d.KeyBindings.KeyBindingForSkill(armor); found {
-			return []skill.ID{armor}
-		}
-	}
+    armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
+    for _, armor := range armors {
+        if _, found := d.KeyBindings.KeyBindingForSkill(armor); found {
+            return []skill.ID{armor, skill.EnergyShield, skill.FrozenArmor} // Ensure buffs are casted before roaming.
+        }
+    }
 
-	return []skill.ID{}
+    return []skill.ID{}
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
