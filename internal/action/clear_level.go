@@ -130,15 +130,21 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 			for _, o := range d.Objects {
 				if o.IsChest() && o.Selectable && currentRoom.IsInside(o.Position) {
 					chest := o
-					return []Action{b.InteractObject(chest.Name, func(d game.Data) bool {
+					doorIsBlocking := false
+					if !d.CanTeleport() {
+						path, _, chestPathFound := b.PathFinder.GetPath(d, chest.Position)
 						for _, obj := range d.Objects {
-							if obj.Name == chest.Name && obj.Position.X == chest.Position.X && obj.Position.Y == chest.Position.Y && obj.Selectable {
-								return false
+							if chestPathFound && obj.IsDoor() && obj.Selectable && path.Intersects(d, obj.Position, 4) {
+								doorIsBlocking = true
 							}
 						}
-
-						return true
-					})}
+					}
+					if !doorIsBlocking {
+						return []Action{b.InteractObjectByID(chest.ID, func(d game.Data) bool {
+							chest, _ = d.Objects.FindByID(chest.ID)
+							return !chest.Selectable
+						})}
+					}
 				}
 			}
 		}

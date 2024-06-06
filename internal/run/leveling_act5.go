@@ -14,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 )
 
@@ -90,14 +89,7 @@ func (a Leveling) anya() []action.Action {
 				a.HID.PressKey(win.VK_ESCAPE)
 				a.HID.PressKeyBinding(d.KeyBindings.Inventory)
 				itm, _ := d.Inventory.Find("ScrollOfResistance")
-				var screenPos data.Position
-
-				if a.CharacterCfg.ClassicMode {
-					screenPos = ui.GetScreenCoordsForItemClassic(itm)
-				} else {
-					screenPos = ui.GetScreenCoordsForItem(itm)
-				}
-
+				screenPos := a.UIManager.GetScreenCoordsForItem(itm)
 				helper.Sleep(200)
 				a.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 				a.HID.PressKey(win.VK_ESCAPE)

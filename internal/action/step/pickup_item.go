@@ -23,6 +23,7 @@ type PickupItemStep struct {
 	mouseOverAttempts     int
 	logger                *slog.Logger
 	startedAt             time.Time
+	currentMouseCoords    data.Position
 }
 
 func PickupItem(logger *slog.Logger, item data.Item) *PickupItemStep {
@@ -82,7 +83,7 @@ func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 			mX, mY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
 
 			if i.IsHovered {
-				container.HID.Click(game.LeftButton, mX, mY)
+				container.HID.Click(game.LeftButton, p.currentMouseCoords.X, p.currentMouseCoords.Y)
 				if p.waitingForInteraction.IsZero() {
 					p.waitingForInteraction = time.Now()
 				}
@@ -91,7 +92,7 @@ func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 				// on Andariel, so we open it
 				if p.isChestHovered(d) {
-					container.HID.Click(game.LeftButton, mX, mY)
+					container.HID.Click(game.LeftButton, p.currentMouseCoords.X, p.currentMouseCoords.Y)
 				}
 
 				distance := pather.DistanceFromMe(d, i.Position)
@@ -101,6 +102,7 @@ func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
 				}
 
 				x, y := helper.Spiral(p.mouseOverAttempts)
+				p.currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 				container.HID.MovePointer(mX+x, mY+y)
 				p.mouseOverAttempts++
 

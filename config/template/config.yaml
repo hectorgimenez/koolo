@@ -8,6 +8,7 @@ authMethod: 'None' # Authentication method the bot will use (None, BattleNetClie
 characterName: '' # If left empty, koolo will use first listed character, if name is wrong, it will fail to create the game
 commandLineArgs: '' # Command line arguments for D2
 killD2OnStop: true # Terminate D2 process on bot stop
+classicMode: false # Set to true to use legacy graphics
 enableCubeRecipes: true # Enable cubing of flawlesses and tokens
 
 health: # Healing configuration, all values in %
@@ -166,6 +167,7 @@ companion:
   leader: true
   leaderName: ''
   attack: true # If set to true, character will try to attack the same target as the leader
+  followLeader: true # If set to true, character will follow the leader, otherwise will stay in the same area
   gameNameTemplate: game- # Template for the game name, for example "game-" will lead to "game-1", "game-2", etc.
   gamePassword: xxx
 

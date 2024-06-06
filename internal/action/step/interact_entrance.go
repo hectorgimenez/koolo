@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/helper"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -18,6 +19,7 @@ type InteractEntranceStep struct {
 	area                  area.ID
 	waitingForInteraction bool
 	mouseOverAttempts     int
+	currentMouseCoords    data.Position
 }
 
 func InteractEntrance(area area.ID) *InteractEntranceStep {
@@ -62,11 +64,12 @@ func (m *InteractEntranceStep) Run(d game.Data, container container.Container) e
 			if l.IsEntrance {
 				lx, ly := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
 				if d.HoverData.UnitType == 5 || d.HoverData.UnitType == 2 && d.HoverData.IsHovered {
-					container.HID.Click(game.LeftButton, lx, ly)
+					container.HID.Click(game.LeftButton, m.currentMouseCoords.X, m.currentMouseCoords.Y)
 					m.waitingForInteraction = true
 				}
 
 				x, y := helper.Spiral(m.mouseOverAttempts)
+				m.currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
 				container.HID.MovePointer(lx+x, ly+y)
 				m.mouseOverAttempts++
 				return nil

@@ -16,6 +16,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 )
 
@@ -165,6 +166,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		PathFinder:    pf,
 		CharacterCfg:  cfg,
 		EventListener: mng.eventListener,
+		UIManager:     ui.NewManager(gr),
 	}
 	sm := town.NewShopManager(logger, bm, c)
 

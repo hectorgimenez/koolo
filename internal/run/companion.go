@@ -33,7 +33,7 @@ func (s Companion) BuildActions() []action.Action {
 	var lastInteractionEvent *event.InteractedToEvent
 	var leaderUnitIDTarget data.UnitID
 	tpRequested := false
-	waitingForLeaderSince := time.Time{}
+	var portalUsedToGoCity data.UnitID
 
 	// TODO: Deregister this listener or will leak
 	s.EventListener.Register(func(ctx context.Context, e event.Event) error {
@@ -121,6 +121,24 @@ func (s Companion) BuildActions() []action.Action {
 				}
 			}
 
+			if leaderRosterMember.Area.IsTown() && !d.PlayerUnit.Area.IsTown() && s.CharacterCfg.Companion.FollowLeader {
+				return []action.Action{
+					s.builder.ReturnTown(),
+					action.NewStepChain(func(d game.Data) []step.Step {
+						return []step.Step{
+							step.SyncStep(func(g game.Data) error {
+								time.Sleep(time.Second * 2)
+								portal, found := getClosestPortal(d, leaderRosterMember.Name)
+								if found {
+									portalUsedToGoCity = portal.ID
+								}
+								return nil
+							}),
+						}
+					}),
+				}
+			}
+
 			// Is leader too far away?
 			if pather.DistanceFromMe(d, leaderRosterMember.Position) > 100 {
 				// In some cases this "follower in town -> use portal -> follower outside town -> use portal"
@@ -137,10 +155,12 @@ func (s Companion) BuildActions() []action.Action {
 						}
 					}
 
-					if _, foundPortal := getClosestPortal(d, leaderRosterMember.Name); foundPortal && !leaderRosterMember.Area.IsTown() {
-						tpRequested = false
-						return []action.Action{
-							s.builder.UsePortalFrom(leaderRosterMember.Name),
+					if p, foundPortal := getClosestPortal(d, leaderRosterMember.Name); foundPortal && !leaderRosterMember.Area.IsTown() {
+						if p.ID != portalUsedToGoCity {
+							tpRequested = false
+							return []action.Action{
+								s.builder.UsePortalFrom(leaderRosterMember.Name),
+							}
 						}
 					}
 
@@ -150,25 +170,17 @@ func (s Companion) BuildActions() []action.Action {
 					}
 				}
 
-				// Otherwise just wait
-				if waitingForLeaderSince.IsZero() || time.Since(waitingForLeaderSince) > time.Second*5 {
-					waitingForLeaderSince = time.Now()
-				}
-
-				if time.Since(waitingForLeaderSince) > time.Second*3 {
-					return []action.Action{
-						s.builder.ReturnTown(),
-					}
-				}
-
 				return []action.Action{
 					s.builder.Wait(100),
 				}
 			}
 
-			_, isLevelingChar := s.char.(action.LevelingCharacter)
+			if !s.CharacterCfg.Companion.FollowLeader {
+				return []action.Action{
+					s.builder.Wait(100),
+				}
+			}
 
-			waitingForLeaderSince = time.Time{}
 			// If distance from leader is acceptable and is attacking, support him
 			distanceFromMe := pather.DistanceFromMe(d, leaderRosterMember.Position)
 			if distanceFromMe < 30 {
@@ -180,11 +192,9 @@ func (s Companion) BuildActions() []action.Action {
 				// If there is no monster to attack, and we are close enough to the leader
 				if distanceFromMe < 4 {
 					// If we're not leveling AND we have at least some monsters nearby, let's kill them
-					if !isLevelingChar {
-						for _, m := range d.Monsters.Enemies() {
-							if d := pather.DistanceFromMe(d, m.Position); d <= 25 {
-								return []action.Action{s.killMonsterInCompanionMode(m)}
-							}
+					for _, m := range d.Monsters.Enemies() {
+						if d := pather.DistanceFromMe(d, m.Position); d <= 8 {
+							return []action.Action{s.killMonsterInCompanionMode(m)}
 						}
 					}
 
@@ -196,6 +206,7 @@ func (s Companion) BuildActions() []action.Action {
 			}
 
 			// If follower is in town and we are NOT leveling, let's NOT follow the leader
+			_, isLevelingChar := s.char.(action.LevelingCharacter)
 			if !isLevelingChar && d.PlayerUnit.Area.IsTown() {
 				return []action.Action{
 					s.builder.MoveToCoords(town.GetTownByArea(d.PlayerUnit.Area).TPWaitingArea(d)),
@@ -204,7 +215,7 @@ func (s Companion) BuildActions() []action.Action {
 
 			return []action.Action{
 				action.NewStepChain(func(d game.Data) []step.Step {
-					return []step.Step{step.MoveTo(leaderRosterMember.Position, step.WithTimeout(time.Millisecond*500))}
+					return []step.Step{step.MoveTo(leaderRosterMember.Position, step.WithTimeout(time.Millisecond*500), step.StopAtDistance(20))}
 				}),
 			}
 		}, action.RepeatUntilNoSteps()),

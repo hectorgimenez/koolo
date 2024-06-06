@@ -144,6 +144,7 @@ type CharacterCfg struct {
 		Leader           bool   `yaml:"leader"`
 		LeaderName       string `yaml:"leaderName"`
 		Attack           bool   `yaml:"attack"`
+		FollowLeader     bool   `yaml:"followLeader"`
 		GameNameTemplate string `yaml:"gameNameTemplate"`
 		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`

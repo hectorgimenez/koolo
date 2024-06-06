@@ -38,7 +38,6 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		// Kill monsters inside Baal throne
 		s.checkForSoulsOrDolls(),
 		s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
-		s.builder.Buff(),
 	)
 
 	// Let's move to a safe area and open the portal in companion mode
@@ -53,7 +52,7 @@ func (s Baal) BuildActions() (actions []action.Action) {
 	}
 
 	// Come back to previous position
-	actions = append(actions, s.builder.MoveToCoords(baalThronePosition))
+	actions = append(actions, s.builder.Buff(), s.builder.MoveToCoords(baalThronePosition))
 
 	lastWave := false
 	actions = append(actions, action.NewChain(func(d game.Data) []action.Action {

@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 type Container struct {
@@ -19,4 +20,5 @@ type Container struct {
 	PathFinder    *pather.PathFinder
 	CharacterCfg  *config.CharacterCfg
 	EventListener *event.Listener
+	UIManager     *ui.Manager
 }

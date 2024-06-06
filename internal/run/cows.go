@@ -31,7 +31,7 @@ func (a Cows) BuildActions() []action.Action {
 	}
 
 	// Sell junk, refill potions, etc. (basically ensure space for getting the TP tome)
-	actions = append(actions, a.builder.PreRun(false, true)...)
+	actions = append(actions, a.builder.PreRun(false)...)
 
 	return append(actions,
 		a.preparePortal(),

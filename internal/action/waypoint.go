@@ -39,7 +39,7 @@ func (b *Builder) openWPAndSelectTab(a area.ID, d game.Data) Action {
 			},
 				step.SyncStep(func(d game.Data) error {
 
-					if b.CharacterCfg.ClassicMode {
+					if d.LegacyGraphics {
 						actTabX := ui.WpTabStartXClassic + (wpCoords.Tab-1)*ui.WpTabSizeXClassic + (ui.WpTabSizeXClassic / 2)
 						b.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic)
 					} else {
@@ -84,7 +84,7 @@ func (b *Builder) useWP(a area.ID) *Chain {
 		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
 			return []step.Step{
 				step.SyncStep(func(d game.Data) error {
-					if b.CharacterCfg.ClassicMode {
+					if d.LegacyGraphics {
 						areaBtnY := ui.WpListStartYClassic + (currentWP.Row-1)*ui.WpAreaBtnHeightClassic + (ui.WpAreaBtnHeightClassic / 2)
 						b.HID.Click(game.LeftButton, ui.WpListPositionXClassic, areaBtnY)
 					} else {
