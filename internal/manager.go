@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -52,7 +53,12 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		return fmt.Errorf("error loading config: %w", err)
 	}
 
-	supervisor, err := mng.buildSupervisor(supervisorName, mng.logger)
+	supervisorLogger, err := log.NewLogger(config.Koolo.Debug.Log, config.Koolo.LogSaveDirectory, supervisorName)
+	if err != nil {
+		return err
+	}
+
+	supervisor, err := mng.buildSupervisor(supervisorName, supervisorLogger)
 	if err != nil {
 		return err
 	}
