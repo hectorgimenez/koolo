@@ -67,17 +67,15 @@ func (s Foh) KillMonsterSequence(
 
 func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		hbKey, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
-		fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found || m.Stats[stat.Life] <= 0 {
-			s.container.HID.PressKeyBinding(fohKey)
 			helper.Sleep(100)
 			return nil
 		}
 
+		_, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
 		// Switch between foh and holy bolt while attacking
-		if holyBoltFound && fohFound {
+		if holyBoltFound {
 			helper.Sleep(50)
 			steps = []step.Step{
 				step.PrimaryAttack(
@@ -86,22 +84,12 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
-				step.SyncStep(func(_ game.Data) error {
-					s.container.HID.PressKeyBinding(hbKey)
-					helper.Sleep(40)
-					return nil
-				}),
-				step.PrimaryAttack(
+				step.SecondaryAttack(
+					skill.HolyBolt,
 					m.UnitID,
-					3,
+					2,
 					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(skill.Conviction),
 				),
-				step.SyncStep(func(_ game.Data) error {
-					helper.Sleep(40)
-					s.container.HID.PressKeyBinding(fohKey)
-					return nil
-				}),
 			}
 		} else {
 			helper.Sleep(100)
