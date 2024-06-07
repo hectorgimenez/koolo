@@ -47,6 +47,10 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
+	if d.PlayerUnit.Skills[skill.EnergyShield].Level > 0 {
+		skillBindings = append(skillBindings, skill.EnergyShield)
+	}
+
 	mainSkill := skill.AttackSkill
 	if d.PlayerUnit.Skills[skill.GlacialSpike].Level > 0 {
 		mainSkill = skill.GlacialSpike
@@ -459,7 +463,13 @@ func (s SorceressLevelingLightning) killMonster(npc npc.ID, t data.MonsterType) 
 	}, nil)
 }
 
-func (s SorceressLevelingLightning) BuffSkills(_ game.Data) []skill.ID {
+func (s SorceressLevelingLightning) BuffSkills(d game.Data) []skill.ID {
+	if d.PlayerUnit.Skills[skill.EnergyShield].Level > 0 {
+		return []skill.ID{
+			skill.FrozenArmor,
+			skill.EnergyShield}
+	}
+
 	return []skill.ID{skill.FrozenArmor}
 }
 
