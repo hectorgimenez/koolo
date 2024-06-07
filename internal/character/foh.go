@@ -70,7 +70,7 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 		hbKey, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
 		fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
+		if !found || m.Stats[stat.Life] <= 0 {
 			s.container.HID.PressKeyBinding(fohKey)
 			helper.Sleep(100)
 			return nil
