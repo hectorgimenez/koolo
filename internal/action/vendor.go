@@ -30,7 +30,8 @@ func (b *Builder) VendorRefill(forceRefill, sellJunk bool) *Chain {
 		}
 
 		if vendorNPC == npc.Drognan {
-			if b.sm.ShouldBuyKeys(d) {
+			_, needsBuy := b.sm.ShouldBuyKeys(d)
+			if needsBuy {
 				vendorNPC = npc.Lysander
 			}
 		}
