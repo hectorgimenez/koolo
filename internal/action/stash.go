@@ -129,13 +129,13 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 				r, res := b.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 
 				if res != nip.RuleResultFullMatch && firstRun {
-					b.Logger.Debug(
+					b.Logger.Info(
 						fmt.Sprintf("Item %s [%s] stashed because it was found in the inventory during the first run.", i.Desc().Name, i.Quality.ToString()),
 					)
 					break
 				}
 
-				b.Logger.Debug(
+				b.Logger.Info(
 					fmt.Sprintf("Item %s [%s] stashed", i.Desc().Name, i.Quality.ToString()),
 					slog.String("nipFile", fmt.Sprintf("%s:%d", r.Filename, r.LineNumber)),
 					slog.String("rawRule", r.RawLine),
