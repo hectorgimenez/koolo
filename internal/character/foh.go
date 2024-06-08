@@ -49,14 +49,23 @@ func (s Foh) KillMonsterSequence(
 			return []step.Step{}
 		}
 
-		steps := []step.Step{
-			step.PrimaryAttack(
-				id,
-				3,
-				step.Distance(fohMinDistance, fohMaxDistance),
-				step.EnsureAura(skill.Conviction),
-			),
+		steps := make([]step.Step, 0)
+		if d.PlayerUnit.LeftSkill != skill.FistOfTheHeavens {
+			fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
+			if fohFound {
+				steps = append(steps, step.SyncStep(func(_ game.Data) error {
+					helper.Sleep(40)
+					s.container.HID.PressKeyBinding(fohKey)
+					return nil
+				}))
+			}
 		}
+		steps = append(steps, step.PrimaryAttack(
+			id,
+			3,
+			step.Distance(fohMinDistance, fohMaxDistance),
+			step.EnsureAura(skill.Conviction),
+		))
 
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -72,10 +81,11 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 			helper.Sleep(100)
 			return nil
 		}
+		hbKey, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
+		fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 
-		_, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
 		// Switch between foh and holy bolt while attacking
-		if holyBoltFound {
+		if holyBoltFound && fohFound {
 			helper.Sleep(50)
 			steps = []step.Step{
 				step.PrimaryAttack(
@@ -84,12 +94,22 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
-				step.SecondaryAttack(
-					skill.HolyBolt,
+				step.SyncStep(func(_ game.Data) error {
+					s.container.HID.PressKeyBinding(hbKey)
+					helper.Sleep(40)
+					return nil
+				}),
+				step.PrimaryAttack(
 					m.UnitID,
-					2,
+					3,
 					step.Distance(fohMinDistance, fohMaxDistance),
+					step.EnsureAura(skill.Conviction),
 				),
+				step.SyncStep(func(_ game.Data) error {
+					helper.Sleep(40)
+					s.container.HID.PressKeyBinding(fohKey)
+					return nil
+				}),
 			}
 		} else {
 			helper.Sleep(100)
