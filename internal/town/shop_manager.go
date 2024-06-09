@@ -79,10 +79,14 @@ func (sm ShopManager) BuyConsumables(d game.Data, forceRefill bool) {
 		}
 	}
 
-	if sm.ShouldBuyKeys(d) || forceRefill {
+	keyQuantity, shouldBuyKeys := sm.ShouldBuyKeys(d)
+	if shouldBuyKeys || forceRefill {
 		if itm, found := d.Inventory.Find(item.Key, item.LocationVendor); found {
 			sm.logger.Debug("Vendor with keys detected, provisioning...")
-			sm.buyFullStack(itm)
+			qty, _ := itm.FindStat(stat.Quantity, 0)
+			if (qty.Value + keyQuantity) <= 12 {
+				sm.buyFullStack(itm)
+			}
 		}
 	}
 }
@@ -119,18 +123,18 @@ func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
 	return qty.Value <= rand.Intn(7-3)+1 || !found
 }
 
-func (sm ShopManager) ShouldBuyKeys(d game.Data) bool {
+func (sm ShopManager) ShouldBuyKeys(d game.Data) (int, bool) {
 	keys, found := d.Inventory.Find(item.Key, item.LocationInventory)
 	if !found {
-		return false
+		return 12, false
 	}
 
 	qty, found := keys.FindStat(stat.Quantity, 0)
-	if found && qty.Value == 12 {
-		return false
+	if found && qty.Value >= 12 {
+		return 12, false
 	}
 
-	return true
+	return qty.Value, true
 }
 
 func (sm ShopManager) SellJunk(d game.Data) {
