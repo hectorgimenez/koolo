@@ -10,6 +10,7 @@ import (
 
 type Character interface {
 	BuffSkills(game.Data) []skill.ID
+	PreCTABuffSkills(game.Data) []skill.ID
 	KillCountess() Action
 	KillAndariel() Action
 	KillSummoner() Action

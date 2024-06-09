@@ -83,18 +83,28 @@ func (s LightningSorceress) KillMonsterSequence(
 }
 
 func (s LightningSorceress) BuffSkills(d game.Data) []skill.ID {
-	armor := skill.FrozenArmor
+	skillsList := make([]skill.ID, 0)
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+		skillsList = append(skillsList, skill.EnergyShield)
+	}
+
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.ThunderStorm); found {
+		skillsList = append(skillsList, skill.ThunderStorm)
+	}
+
 	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
-	for _, arm := range armors {
-		if _, found := d.KeyBindings.KeyBindingForSkill(arm); found {
-			armor = arm
+	for _, armor := range armors {
+		if _, found := d.KeyBindings.KeyBindingForSkill(armor); found {
+			skillsList = append(skillsList, armor)
+			return skillsList
 		}
 	}
 
-	return []skill.ID{
-		armor,
-		skill.EnergyShield,
-	}
+	return skillsList
+}
+
+func (s LightningSorceress) PreCTABuffSkills(d game.Data) []skill.ID {
+	return []skill.ID{}
 }
 
 func (s LightningSorceress) KillCountess() action.Action {

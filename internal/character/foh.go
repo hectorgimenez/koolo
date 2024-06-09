@@ -135,6 +135,10 @@ func (s Foh) BuffSkills(d game.Data) []skill.ID {
 	return []skill.ID{}
 }
 
+func (s Foh) PreCTABuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{}
+}
+
 func (s Foh) KillCountess() action.Action {
 	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
