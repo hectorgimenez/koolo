@@ -107,7 +107,7 @@ func (s BlizzardSorceress) BuffSkills(d game.Data) []skill.ID {
 }
 
 func (s BlizzardSorceress) PreCTABuffSkills(d game.Data) []skill.ID {
-	return []skill.ID{}
+    return []skill.ID{}
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {

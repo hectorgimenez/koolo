@@ -65,7 +65,7 @@ func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
 					if nwIt.UnitID == updatedItem.UnitID {
 						b.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
 
-						screenPos := b.UIManager.GetScreenCoordsForItem(nwIt)
+						screenPos := b.UIManager.GetScreenCoordsForItem(updatedItem)
 
 						b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 						helper.Sleep(300)
