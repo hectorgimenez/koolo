@@ -154,10 +154,10 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		//}))
 
 		// Kill all the monsters close to the seal and item pickup
-		//actions = append(actions,
-		//	a.builder.ClearAreaAroundPlayer(13),
-		//	a.builder.ItemPickup(false, 40),
-		//)
+		actions = append(actions,
+			a.builder.ClearAreaAroundPlayer(13, data.MonsterAnyFilter()),
+			a.builder.ItemPickup(false, 40),
+		)
 
 		// Activate the seal, buff only before opening the first seal
 		actions = append(actions,

@@ -36,6 +36,7 @@
             <th scope="col">Character</th>
             <th scope="col">Status</th>
             <th scope="col">Runs</th>
+            <th scope="col">Drops</th>
             <th scope="col">Chickens</th>
             <th scope="col">Deaths</th>
             <th scope="col">Errors</th>
@@ -47,6 +48,14 @@
             <th scope="row">{{$key}}</th>
             <td>{{.SupervisorStatus}}</td>
             <td>{{.TotalGames}}</td>
+            <td>{{ if eq (index $.DropCount $key) 0 }}
+                No Drops
+                {{ else }}
+                <a href="/drops?supervisor={{$key}}" style="text-decoration: none;">
+                    <button class="button">{{ index $.DropCount $key }} Drop(s)</button>
+                </a>  
+                {{ end }}
+            </td>
             <td>{{.TotalChickens}}</td>
             <td>{{.TotalErrors}}</td>
             <td>{{.TotalDeaths}}</td>
