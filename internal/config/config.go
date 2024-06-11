@@ -158,7 +158,8 @@ type CharacterCfg struct {
 		MercDied    bool `yaml:"mercDied"`
 	} `yaml:"backtotown"`
 	Runtime struct {
-		Rules nip.Rules `yaml:"-"`
+		Rules nip.Rules   `yaml:"-"`
+		Drops []data.Item `yaml:"-"`
 	} `yaml:"-"`
 }
 
