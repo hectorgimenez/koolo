@@ -56,6 +56,8 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, er
 			tmpl.Execute(&buf, data)
 			return template.HTML(buf.String())
 		},
+		"qualityClass": qualityClass,
+		"statIDToText": statIDToText,
 	}
 	templates, err := template.New("").Funcs(helperFuncs).ParseFS(templatesFS, "templates/*.gohtml")
 	if err != nil {
@@ -69,6 +71,31 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, er
 	}, nil
 }
 
+func qualityClass(quality string) string {
+	switch quality {
+	case "LowQuality":
+		return "low-quality"
+	case "Normal":
+		return "normal-quality"
+	case "Superior":
+		return "superior-quality"
+	case "Magic":
+		return "magic-quality"
+	case "Set":
+		return "set-quality"
+	case "Rare":
+		return "rare-quality"
+	case "Unique":
+		return "unique-quality"
+	default:
+		return "unknown-quality"
+	}
+}
+
+func statIDToText(id stat.ID) string {
+	return stat.StringStats[id]
+}
+
 func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/", s.getRoot)
 	http.HandleFunc("/config", s.config)
@@ -78,6 +105,7 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/togglePause", s.togglePause)
 	http.HandleFunc("/debug", s.debugHandler)
 	http.HandleFunc("/debug-data", s.debugData)
+	http.HandleFunc("/drops", s.drops)
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -151,17 +179,37 @@ func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 
 func (s *HttpServer) index(w http.ResponseWriter) {
 	status := make(map[string]koolo.Stats)
+	drops := make(map[string]int)
+
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
 		status[supervisorName] = koolo.Stats{
 			SupervisorStatus: koolo.NotStarted,
 		}
 
 		status[supervisorName] = s.manager.Status(supervisorName)
+		drops[supervisorName] = len(config.Characters[supervisorName].Runtime.Drops)
+
 	}
 
 	s.templates.ExecuteTemplate(w, "index.gohtml", IndexData{
-		Version: config.Version,
-		Status:  status,
+		Version:   config.Version,
+		Status:    status,
+		DropCount: drops,
+	})
+}
+
+func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
+	sup := r.URL.Query().Get("supervisor")
+	cfg, found := config.Characters[sup]
+	if !found {
+		http.Error(w, "Can't fetch drop data because the configuration "+sup+" wasn't found", http.StatusNotFound)
+		return
+	}
+
+	s.templates.ExecuteTemplate(w, "drops.gohtml", DropData{
+		NumberOfDrops: len(cfg.Runtime.Drops),
+		Character:     cfg.CharacterName,
+		Drops:         cfg.Runtime.Drops,
 	})
 }
 

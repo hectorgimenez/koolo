@@ -33,6 +33,7 @@ func (s LightningSorceress) KillMonsterSequence(
 	previousUnitID := 0
 
 	return action.NewStepChain(func(d game.Data) []step.Step {
+
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
@@ -54,6 +55,12 @@ func (s LightningSorceress) KillMonsterSequence(
 		}
 
 		steps := make([]step.Step, 0)
+
+		// Check if we should use static
+		if s.shouldCastStatic(d) {
+			steps = append(steps, step.SecondaryAttack(skill.StaticField, id, 1, opts...))
+		}
+
 		if completedAttackLoops%2 == 0 {
 			for _, m := range d.Monsters.Enemies() {
 				if d := pather.DistanceFromMe(d, m.Position); d < 5 {
@@ -83,18 +90,58 @@ func (s LightningSorceress) KillMonsterSequence(
 }
 
 func (s LightningSorceress) BuffSkills(d game.Data) []skill.ID {
-	armor := skill.FrozenArmor
+	skillsList := make([]skill.ID, 0)
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+		skillsList = append(skillsList, skill.EnergyShield)
+	}
+
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.ThunderStorm); found {
+		skillsList = append(skillsList, skill.ThunderStorm)
+	}
+
 	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
-	for _, arm := range armors {
-		if _, found := d.KeyBindings.KeyBindingForSkill(arm); found {
-			armor = arm
+	for _, armor := range armors {
+		if _, found := d.KeyBindings.KeyBindingForSkill(armor); found {
+			skillsList = append(skillsList, armor)
+			return skillsList
 		}
 	}
 
-	return []skill.ID{
-		armor,
-		skill.EnergyShield,
+	return skillsList
+}
+
+func (s LightningSorceress) PreCTABuffSkills(d game.Data) []skill.ID {
+	return []skill.ID{}
+}
+
+func (s LightningSorceress) shouldCastStatic(d game.Data) bool {
+
+	// Iterate through all mobs within max range and collect them
+	mobs := make([]data.Monster, 0)
+
+	for _, m := range d.Monsters.Enemies() {
+		if pather.DistanceFromMe(d, m.Position) <= lightningSorceressMaxDistance+5 {
+			mobs = append(mobs, m)
+		} else {
+			continue
+		}
 	}
+
+	// Iterate through the mob list and check their if more than 50% of the mobs are above 60% hp
+	var mobsAbove60Percent int
+	for _, mob := range mobs {
+
+		life := mob.Stats[stat.Life]
+		maxLife := mob.Stats[stat.MaxLife]
+
+		lifePercentage := int((float64(life) / float64(maxLife)) * 100)
+
+		if lifePercentage > 60 {
+			mobsAbove60Percent++
+		}
+	}
+
+	return mobsAbove60Percent > len(mobs)/2
 }
 
 func (s LightningSorceress) KillCountess() action.Action {

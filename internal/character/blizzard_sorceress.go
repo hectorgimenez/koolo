@@ -90,14 +90,24 @@ func (s BlizzardSorceress) KillMonsterSequence(
 }
 
 func (s BlizzardSorceress) BuffSkills(d game.Data) []skill.ID {
+	skillsList := make([]skill.ID, 0)
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+		skillsList = append(skillsList, skill.EnergyShield)
+	}
+
 	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
 	for _, armor := range armors {
 		if _, found := d.KeyBindings.KeyBindingForSkill(armor); found {
-			return []skill.ID{armor}
+			skillsList = append(skillsList, armor)
+			return skillsList
 		}
 	}
 
-	return []skill.ID{}
+	return skillsList
+}
+
+func (s BlizzardSorceress) PreCTABuffSkills(d game.Data) []skill.ID {
+    return []skill.ID{}
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {

@@ -17,6 +17,7 @@ type InteractNPCStep struct {
 	NPC                   npc.ID
 	waitingForInteraction bool
 	isCompletedFn         func(d game.Data) bool
+	currentMouseCoords    data.Position
 }
 
 func InteractNPC(npc npc.ID) *InteractNPCStep {
@@ -62,9 +63,8 @@ func (i *InteractNPCStep) Run(d game.Data, container container.Container) error 
 	i.lastRun = time.Now()
 	m, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
 	if found {
-		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 		if m.IsHovered {
-			container.HID.Click(game.LeftButton, x, y)
+			container.HID.Click(game.LeftButton, i.currentMouseCoords.X, i.currentMouseCoords.Y)
 			i.waitingForInteraction = true
 			return nil
 		}
@@ -74,12 +74,13 @@ func (i *InteractNPCStep) Run(d game.Data, container container.Container) error 
 			return fmt.Errorf("NPC is too far away: %d. Current distance: %d", i.NPC, distance)
 		}
 
+		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
 		// Act 4 Tyrael has a super weird hitbox
 		if i.NPC == npc.Tyrael2 {
-			container.HID.MovePointer(x, y-40)
-		} else {
-			container.HID.MovePointer(x, y)
+			y = y - 40
 		}
+		i.currentMouseCoords = data.Position{X: x, Y: y}
+		container.HID.MovePointer(x, y)
 
 		return nil
 	}

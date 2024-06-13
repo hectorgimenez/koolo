@@ -129,13 +129,13 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 				r, res := b.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 
 				if res != nip.RuleResultFullMatch && firstRun {
-					b.Logger.Debug(
+					b.Logger.Info(
 						fmt.Sprintf("Item %s [%s] stashed because it was found in the inventory during the first run.", i.Desc().Name, i.Quality.ToString()),
 					)
 					break
 				}
 
-				b.Logger.Debug(
+				b.Logger.Info(
 					fmt.Sprintf("Item %s [%s] stashed", i.Desc().Name, i.Quality.ToString()),
 					slog.String("nipFile", fmt.Sprintf("%s:%d", r.Filename, r.LineNumber)),
 					slog.String("rawRule", r.RawLine),
@@ -203,6 +203,9 @@ func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
 	// Don't log items that we already have in inventory during first run
 	if !firstRun {
 		event.Send(event.ItemStashed(event.WithScreenshot(b.Supervisor, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i))
+
+		//Append the drop to the drop list
+		b.CharacterCfg.Runtime.Drops = append(b.CharacterCfg.Runtime.Drops, i)
 	}
 	return true
 }

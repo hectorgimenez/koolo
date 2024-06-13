@@ -29,7 +29,7 @@ func main() {
 		return
 	}
 
-	logger, err := sloggger.NewLogger(config.Koolo.Debug.Log, config.Koolo.LogSaveDirectory)
+	logger, err := sloggger.NewLogger(config.Koolo.Debug.Log, config.Koolo.LogSaveDirectory, "")
 	if err != nil {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}

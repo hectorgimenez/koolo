@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <link rel="stylesheet" href="../assets/css/pico.min.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Drops for {{.Character}}</title>
+    <style>
+        .low-quality { color: gray; }
+        .normal-quality, .superior-quality { color: white; }
+        .magic-quality { color: blue; }
+        .set-quality { color: green; }
+        .rare-quality { color: yellow; }
+        .unique-quality { color: darkgoldenrod; }
+        .unknown-quality { color: black; }
+
+        .details {
+            display: none;
+            padding: 10px;
+            background-color: #2E3A4A;
+            border-left: 3px solid #3E4A61;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .item {
+            cursor: pointer;
+            padding: 10px 15px;
+            padding-right: 15px;
+            margin-right: 30px; 
+            margin-bottom: 10px;
+            list-style: none;
+            background-color: #2E3A4A;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .item:hover {
+            background-color: #3B4A5A;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+            background-color: #34495E;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .item-header span {
+            font-weight: bold;
+        }
+
+        .toggle-icon {
+            font-size: 14px;
+            margin-left: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .item.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        .details p, .details ul {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #CBD5E0;
+            padding-right: 15px;
+        }
+
+        .details ul {
+            padding-left: 20px;
+        }
+
+        .details li {
+            list-style: none;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .details li:before {
+            content: '\f054';
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #CBD5E0;
+            font-size: 12px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #BDC3C7;
+        }
+
+        .button.secondary {
+            background-color: #34495E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .button.secondary:hover {
+            background-color: #2C3E50;
+        }
+    </style>
+    <script>
+        function toggleDetails(event) {
+            const item = event.currentTarget;
+            const details = item.querySelector('.details');
+            if (details.style.display === "none" || details.style.display === "") {
+                details.style.display = "block";
+                details.style.maxHeight = details.scrollHeight + "px";
+                details.style.padding = "10px";
+                item.classList.add('expanded');
+            } else {
+                details.style.display = "none";
+                details.style.maxHeight = "0";
+                details.style.padding = "0 15px";
+                item.classList.remove('expanded');
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <a href="#" onclick="history.back(); return false;" class="button secondary">← Back</a>
+        <h1>Drops for {{.Character}}</h1>
+        <p>Total Drops: {{.NumberOfDrops}}</p>
+    </header>
+    <main>
+        <div class="card">
+            <div class="card-content">
+                <ul>
+                    {{ range .Drops }}
+                    <li class="item" onclick="toggleDetails(event)">
+                        <div class="item-header">
+                            <span class="{{ .Quality.ToString | qualityClass }}">{{ .Name }}</span>
+                            <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                        <div class="details">
+                            <p><strong>Quality:</strong> {{ .Quality.ToString }}</p>
+                            <p><strong>Ethereal:</strong> {{ if .Ethereal }}True{{ else }}False{{ end }}</p>
+                            <p><strong>Identified:</strong> {{ if .Identified }}True{{ else }}False{{ end }}</p>
+                            <p><strong>Stats:</strong></p>
+                            <ul>
+                                {{ range .Stats }}
+                                <li>{{ .ID | statIDToText }}: {{ .Value }}</li>
+                                {{ end }}
+                            </ul>
+                        </div>
+                    </li>
+                    {{ end }}
+                </ul>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

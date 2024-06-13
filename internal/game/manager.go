@@ -118,6 +118,18 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	gm.hid.Click(LeftButton, 845, 54)
 	helper.Sleep(200)
 
+	difficultyPosition := map[difficulty.Difficulty]struct {
+		X, Y int
+	}{
+		difficulty.Normal:    {X: 900, Y: 252},
+		difficulty.Nightmare: {X: 980, Y: 252},
+		difficulty.Hell:      {X: 1065, Y: 252},
+	}
+
+	difficultyPos := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty]
+	gm.hid.Click(LeftButton, difficultyPos.X, difficultyPos.Y)
+	helper.Sleep(200)
+
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 1000, 116)
 	gm.clearGameNameOrPasswordField()
