@@ -115,7 +115,6 @@ func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) 
 }
 
 func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
-
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
@@ -134,7 +133,8 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 
 		// To stop the movement, not very accurate
 		_, distance, _ := b.PathFinder.GetPath(d, to)
-		if distance < 9 {
+		mvtStep := step.MoveTo(to, opts...)
+		if distance <= mvtStep.GetStopDistance() {
 			return nil
 		}
 
