@@ -130,7 +130,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Debug("Moving to next seal", slog.Int("seal", sealNumber+1))
 			if obj, found := d.Objects.FindOne(seal); found {
-				if d := pather.DistanceFromMe(d, obj.Position); d < 7 {
+				if d := pather.DistanceFromMe(d, obj.Position); d <= 5 {
 					a.logger.Debug("We are close enough to the seal", slog.Int("seal", sealNumber+1))
 					return data.Position{}, false
 				}
@@ -142,7 +142,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			a.logger.Debug("Seal NOT found", slog.Int("seal", sealNumber+1))
 
 			return data.Position{}, false
-		}, step.StopAtDistance(7)))
+		}, step.StopAtDistance(5)))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
 		//actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
