@@ -140,17 +140,17 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		}, step.StopAtDistance(10)))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
-		//actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
-		//	if obj, found := d.Objects.FindOne(seal); found {
-		//		pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
-		//		return []step.Step{step.MoveTo(pos)}
-		//	}
-		//	return []step.Step{}
-		//}))
+		actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
+			if obj, found := d.Objects.FindOne(seal); found {
+				pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
+				return []step.Step{step.MoveTo(pos)}
+			}
+			return []step.Step{}
+		}))
 
 		// Kill all the monsters close to the seal and item pickup
 		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(13, data.MonsterAnyFilter()),
+			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.ItemPickup(false, 40),
 		)
 
@@ -328,7 +328,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				multiplier := 1
 
 				if pather.IsWalkable(pos, d.AreaOrigin, d.CollisionGrid) {
-					return []action.Action{a.builder.MoveToCoords(pos)}
+					return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
 				}
 
 				for _ = range 2 {
@@ -337,7 +337,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 						newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
 
 						if pather.IsWalkable(newPos, d.AreaOrigin, d.CollisionGrid) {
-							return []action.Action{a.builder.MoveToCoords(newPos)}
+							return []action.Action{a.builder.MoveToCoordsWithMinDistance(newPos, 30)}
 						}
 
 					}
@@ -346,7 +346,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				}
 
 				// Let it fail then
-				return []action.Action{a.builder.MoveToCoords(pos)}
+				return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
 			}),
 			// Skip storm casters for now completely while clearing non-seals
 			a.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
