@@ -117,7 +117,6 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 
 				return []step.Step{step.MoveTo(
 					closestRoom.GetCenter(),
-					step.ClosestWalkable(),
 					step.WithTimeout(time.Second),
 				)}
 			})}

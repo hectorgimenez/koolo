@@ -66,7 +66,6 @@ func (s *pathingStep) isPlayerStuck(d game.Data) bool {
 		return false
 	}
 
-	s.lastRunPositions = append(s.lastRunPositions, d.PlayerUnit.Position)
 	if len(s.lastRunPositions) > 3 {
 		s.lastRunPositions = s.lastRunPositions[1:]
 	} else {
