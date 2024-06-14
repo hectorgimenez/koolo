@@ -3,6 +3,7 @@ package character
 import (
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	sorceressMaxAttacksLoop = 10
+	sorceressMaxAttacksLoop = 40
 	sorceressMinDistance    = 25
 	sorceressMaxDistance    = 30
 )
@@ -31,6 +32,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 ) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	previousSelfBlizzard := time.Time{}
 
 	return action.NewStepChain(func(d game.Data) []step.Step {
 		id, found := monsterSelector(d)
@@ -48,44 +50,38 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		if len(opts) == 0 {
 			opts = append(opts, step.Distance(sorceressMinDistance, sorceressMaxDistance))
 		}
-		//if useStaticField {
-		//	steps = append(steps,
-		//		step.SecondaryAttack(config.Config.Bindings.Sorceress.Blizzard, id, 1, time.Millisecond*100, step.Distance(sorceressMinDistance, maxDistance)),
-		//		step.SecondaryAttack(config.Config.Bindings.Sorceress.StaticField, id, 5, config.Config.Runtime.CastDuration, step.Distance(sorceressMinDistance, 15)),
-		//	)
-		//}
+
 		if completedAttackLoops >= sorceressMaxAttacksLoop {
 			return []step.Step{}
 		}
 
-		steps := make([]step.Step, 0)
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		if completedAttackLoops%2 == 0 {
+		if time.Since(previousSelfBlizzard) > time.Second*4 && !d.PlayerUnit.States.HasState(state.Cooldown) {
 			for _, m := range d.Monsters.Enemies() {
-				if d := pather.DistanceFromMe(d, m.Position); d < 4 {
+				if dist := pather.DistanceFromMe(d, m.Position); dist < 4 {
 					s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
-					steps = append(steps, step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, opts...))
-					break
+					previousSelfBlizzard = time.Now()
+					return []step.Step{step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, opts...)}
 				}
 			}
 		}
 
 		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
-		if completedAttackLoops > 3 {
-			if completedAttackLoops == 4 {
+		if completedAttackLoops > 12 {
+			if completedAttackLoops == 13 {
 				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance")
 			}
 			opts = []step.AttackOption{step.Distance(1, 5)}
 		}
 
-		steps = append(steps,
-			step.SecondaryAttack(skill.Blizzard, id, 1, opts...),
-			step.PrimaryAttack(id, 4, opts...),
-		)
 		completedAttackLoops++
 		previousUnitID = int(id)
 
-		return steps
+		if d.PlayerUnit.States.HasState(state.Cooldown) {
+			return []step.Step{step.PrimaryAttack(id, 2, opts...)}
+		}
+
+		return []step.Step{step.SecondaryAttack(skill.Blizzard, id, 1, opts...)}
 	}, action.RepeatUntilNoSteps())
 }
 
@@ -107,7 +103,7 @@ func (s BlizzardSorceress) BuffSkills(d game.Data) []skill.ID {
 }
 
 func (s BlizzardSorceress) PreCTABuffSkills(d game.Data) []skill.ID {
-    return []skill.ID{}
+	return []skill.ID{}
 }
 
 func (s BlizzardSorceress) KillCountess() action.Action {
@@ -129,7 +125,6 @@ func (s BlizzardSorceress) KillDuriel() action.Action {
 func (s BlizzardSorceress) KillPindle(skipOnImmunities []stat.Resist) action.Action {
 	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, skipOnImmunities)
 }
-
 func (s BlizzardSorceress) KillMephisto() action.Action {
 	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeNone, sorceressMaxDistance, true, nil)
 }
