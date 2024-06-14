@@ -96,41 +96,29 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 			continue
 		}
 
-		// Pickup potions only if they are required
-		if itm.IsHealingPotion() {
-			if missingHealingPotions == 0 {
-				continue
-			}
-			if b.shouldBePickedUp(d, itm) {
-				itemsToPickup = append(itemsToPickup, itm)
-				missingHealingPotions--
-			}
-			continue
-		}
-		if itm.IsManaPotion() {
-			if missingManaPotions == 0 {
-				continue
-			}
-			if b.shouldBePickedUp(d, itm) {
-				itemsToPickup = append(itemsToPickup, itm)
-				missingManaPotions--
-			}
-			continue
-		}
-		if itm.IsRejuvPotion() {
-			if missingRejuvenationPotions == 0 {
-				continue
-			}
-			if b.shouldBePickedUp(d, itm) {
-				itemsToPickup = append(itemsToPickup, itm)
-				missingRejuvenationPotions--
-			}
+		if !b.shouldBePickedUp(d, itm) {
 			continue
 		}
 
-		if b.shouldBePickedUp(d, itm) {
+		// Pickup potions only if they are required
+		if itm.IsHealingPotion() && missingHealingPotions > 0 {
 			itemsToPickup = append(itemsToPickup, itm)
+			missingHealingPotions--
 			continue
+		}
+		if itm.IsManaPotion() && missingManaPotions > 0 {
+			itemsToPickup = append(itemsToPickup, itm)
+			missingManaPotions--
+			continue
+		}
+		if itm.IsRejuvPotion() && missingRejuvenationPotions > 0 {
+			itemsToPickup = append(itemsToPickup, itm)
+			missingRejuvenationPotions--
+			continue
+		}
+
+		if !itm.IsPotion() {
+			itemsToPickup = append(itemsToPickup, itm)
 		}
 	}
 
