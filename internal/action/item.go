@@ -51,8 +51,6 @@ func (b *Builder) DropMouseItem() *Chain {
 					}),
 				}
 			}))
-		} else {
-			return nil
 		}
 
 		return actions
