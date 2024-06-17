@@ -30,10 +30,19 @@ func (s MosiacSin) KillMonsterSequence(
 		}
 
 		// Check if we have the required states (charges)
+		opts := []step.AttackOption{step.Distance(2, 3)}
+
+		if !s.MobAlive(id, d) { // Check if the mob is still alive
+			return []step.Step{}
+		}
 
 		// Tiger Strike
 		if !d.PlayerUnit.States.HasState(state.Tigerstrike) {
 			steps = append(steps, step.SecondaryAttack(skill.TigerStrike, id, 4, opts...))
+		}
+
+		if !s.MobAlive(id, d) { // Check if the mob is still alive
+			return []step.Step{}
 		}
 
 		// Cobra Strike
@@ -41,9 +50,17 @@ func (s MosiacSin) KillMonsterSequence(
 			steps = append(steps, step.SecondaryAttack(skill.CobraStrike, id, 4, opts...))
 		}
 
+		if !s.MobAlive(id, d) { // Check if the mob is still alive
+			return []step.Step{}
+		}
+
 		// Phoenix Strike
 		if !d.PlayerUnit.States.HasState(state.Phoenixstrike) {
 			steps = append(steps, step.SecondaryAttack(skill.PhoenixStrike, id, 4, opts...))
+		}
+
+		if !s.MobAlive(id, d) { // Check if the mob is still alive
+			return []step.Step{}
 		}
 
 		// Claws of Thunder
@@ -51,9 +68,17 @@ func (s MosiacSin) KillMonsterSequence(
 			steps = append(steps, step.SecondaryAttack(skill.ClawsOfThunder, id, 4, opts...))
 		}
 
+		if !s.MobAlive(id, d) { // Check if the mob is still alive
+			return []step.Step{}
+		}
+
 		// Blades of Ice
 		if !d.PlayerUnit.States.HasState(state.Bladesofice) {
 			steps = append(steps, step.SecondaryAttack(skill.BladesOfIce, id, 4, opts...))
+		}
+
+		if !s.MobAlive(id, d) { // Check if the mob is still alive
+			return []step.Step{}
 		}
 
 		// Fists of Fire
@@ -66,6 +91,11 @@ func (s MosiacSin) KillMonsterSequence(
 
 		return steps
 	}, action.RepeatUntilNoSteps())
+}
+
+func (s MosiacSin) MobAlive(mob data.UnitID, d game.Data) bool {
+	_, mFround := d.Monsters.FindByID(mob)
+	return mFround
 }
 
 func (s MosiacSin) BuffSkills(d game.Data) []skill.ID {
@@ -97,11 +127,15 @@ func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		}
 
 		// Check if we have the required states (charges)
-		opts := []step.AttackOption{step.Distance(1, 3)}
+		opts := []step.AttackOption{step.Distance(2, 3)}
 
 		// Tiger Strike
 		if !d.PlayerUnit.States.HasState(state.Tigerstrike) {
 			steps = append(steps, step.SecondaryAttack(skill.TigerStrike, monster.UnitID, 4, opts...))
+		}
+
+		if !s.MobAlive(monster.UnitID, d) { // Check if the mob is still alive
+			return []step.Step{}
 		}
 
 		// Cobra Strike
@@ -109,14 +143,26 @@ func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 			steps = append(steps, step.SecondaryAttack(skill.CobraStrike, monster.UnitID, 4, opts...))
 		}
 
+		if !s.MobAlive(monster.UnitID, d) { // Check if the mob is still alive
+			return []step.Step{}
+		}
+
 		// Phoenix Strike
 		if !d.PlayerUnit.States.HasState(state.Phoenixstrike) {
 			steps = append(steps, step.SecondaryAttack(skill.PhoenixStrike, monster.UnitID, 4, opts...))
 		}
 
+		if !s.MobAlive(monster.UnitID, d) { // Check if the mob is still alive
+			return []step.Step{}
+		}
+
 		// Claws of Thunder
 		if !d.PlayerUnit.States.HasState(state.Clawsofthunder) {
 			steps = append(steps, step.SecondaryAttack(skill.ClawsOfThunder, monster.UnitID, 4, opts...))
+		}
+
+		if !s.MobAlive(monster.UnitID, d) { // Check if the mob is still alive
+			return []step.Step{}
 		}
 
 		// Blades of Ice
@@ -128,6 +174,10 @@ func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		//if !d.PlayerUnit.States.HasState(state.Fistsoffire) {
 		//	steps = append(steps, step.SecondaryAttack(skill.FistsOfFire, id, 4, opts...))
 		//}
+
+		if !s.MobAlive(monster.UnitID, d) { // Check if the mob is still alive
+			return []step.Step{}
+		}
 
 		// Finish it off with primary attack
 		steps = append(steps, step.PrimaryAttack(monster.UnitID, 2, opts...))
