@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -74,7 +75,11 @@ func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
 
 				if !doorIsBlocking {
 					return []Action{b.ch.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-						return targetMonster.UnitID, true
+						m, found := d.Monsters.FindByID(targetMonster.UnitID)
+						if found && m.Stats[stat.Life] > 0 {
+							return targetMonster.UnitID, true
+						}
+						return 0, false
 					}, nil)}
 				} else {
 					b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
