@@ -273,25 +273,25 @@ func (s MosiacSin) KillNihlathak() action.Action {
 }
 
 func (s MosiacSin) KillMephisto() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
 func (s MosiacSin) KillPindle(skipOnImmunities []stat.Resist) action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s MosiacSin) KillDuriel() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
 func (s MosiacSin) KillSummoner() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
 func (s MosiacSin) KillAndariel() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
 func (s MosiacSin) KillCountess() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
