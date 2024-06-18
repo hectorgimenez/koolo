@@ -30,7 +30,7 @@ func (s MosiacSin) KillMonsterSequence(
 		}
 
 		// Check if we have the required states (charges)
-		opts := []step.AttackOption{step.Distance(1, 3)}
+		opts := []step.AttackOption{step.Distance(1, 2)}
 
 		if !s.MobAlive(id, d) { // Check if the mob is still alive
 			return []step.Step{}
@@ -127,7 +127,7 @@ func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		}
 
 		// Check if we have the required states (charges)
-		opts := []step.AttackOption{step.Distance(1, 3)}
+		opts := []step.AttackOption{step.Distance(1, 2)}
 
 		// Tiger Strike
 		if !d.PlayerUnit.States.HasState(state.Tigerstrike) {
