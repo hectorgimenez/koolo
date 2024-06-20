@@ -115,7 +115,15 @@ func (s MosiacSin) BuffSkills(d game.Data) []skill.ID {
 }
 
 func (s MosiacSin) PreCTABuffSkills(d game.Data) []skill.ID {
-	return []skill.ID{}
+
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.ShadowMaster); found {
+		return []skill.ID{skill.ShadowMaster}
+	} else if _, found := d.KeyBindings.KeyBindingForSkill(skill.ShadowWarrior); found {
+		return []skill.ID{skill.ShadowWarrior}
+	} else {
+		return []skill.ID{}
+	}
+
 }
 
 func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
