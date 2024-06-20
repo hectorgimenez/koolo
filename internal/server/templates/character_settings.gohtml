@@ -60,6 +60,10 @@
                     <input id="classic_mode" type="checkbox" name="classic_mode" {{ if .Config.ClassicMode }}checked{{ end }}/>
                     Use Classic Mode (Legacy Graphics)
                 </label>
+                <label>
+                    <input id="close_mini_panel" type="checkbox" name="close_mini_panel" {{ if .Config.CloseMiniPanel }}checked{{ end }}/>
+                    Close the mini panel at game start (Legacy Graphics)
+                </label>
             </fieldset>
             <h4>Battle.net settings</h4>
             <fieldset class="grid">
