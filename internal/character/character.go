@@ -2,10 +2,11 @@ package character
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"log/slog"
 	"strings"
+
+	"github.com/hectorgimenez/koolo/internal/container"
+	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -40,6 +41,10 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 		return Hammerdin{BaseCharacter: bc}, nil
 	case "foh":
 		return Foh{BaseCharacter: bc}, nil
+	case "trapsin":
+		return Trapsin{BaseCharacter: bc}, nil
+	case "mosiac":
+		return MosiacSin{BaseCharacter: bc}, nil
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", container.CharacterCfg.Character.Class)

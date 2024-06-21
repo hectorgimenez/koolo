@@ -38,11 +38,6 @@ func parseWorld(collisionGrid [][]bool, d game.Data) World {
 					kind = KindPlain
 				}
 			}
-			if !walkable && d.CanTeleport() {
-				if (x > 1 && x < len(collisionGrid) && collisionGrid[x-1][y] && collisionGrid[x+1][y]) || (y > 1 && y < len(xValues) && collisionGrid[x][y-1] && collisionGrid[x][y+1]) {
-					kind = KindPlain
-				}
-			}
 
 			w.SetTile(w.NewTile(kind, y, x))
 		}

@@ -49,14 +49,23 @@ func (s Foh) KillMonsterSequence(
 			return []step.Step{}
 		}
 
-		steps := []step.Step{
-			step.PrimaryAttack(
-				id,
-				3,
-				step.Distance(fohMinDistance, fohMaxDistance),
-				step.EnsureAura(skill.Conviction),
-			),
+		steps := make([]step.Step, 0)
+		if d.PlayerUnit.LeftSkill != skill.FistOfTheHeavens {
+			fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
+			if fohFound {
+				steps = append(steps, step.SyncStep(func(_ game.Data) error {
+					helper.Sleep(40)
+					s.container.HID.PressKeyBinding(fohKey)
+					return nil
+				}))
+			}
 		}
+		steps = append(steps, step.PrimaryAttack(
+			id,
+			3,
+			step.Distance(fohMinDistance, fohMaxDistance),
+			step.EnsureAura(skill.Conviction),
+		))
 
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -65,8 +74,69 @@ func (s Foh) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s Foh) BuffSkills(_ game.Data) []skill.ID {
-	return []skill.ID{skill.HolyShield}
+func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found || m.Stats[stat.Life] <= 0 {
+			helper.Sleep(100)
+			return nil
+		}
+		hbKey, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
+		fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
+
+		// Switch between foh and holy bolt while attacking
+		if holyBoltFound && fohFound {
+			helper.Sleep(50)
+			steps = []step.Step{
+				step.PrimaryAttack(
+					m.UnitID,
+					1,
+					step.Distance(fohMinDistance, fohMaxDistance),
+					step.EnsureAura(skill.Conviction),
+				),
+				step.SyncStep(func(_ game.Data) error {
+					s.container.HID.PressKeyBinding(hbKey)
+					helper.Sleep(40)
+					return nil
+				}),
+				step.PrimaryAttack(
+					m.UnitID,
+					3,
+					step.Distance(fohMinDistance, fohMaxDistance),
+					step.EnsureAura(skill.Conviction),
+				),
+				step.SyncStep(func(_ game.Data) error {
+					helper.Sleep(40)
+					s.container.HID.PressKeyBinding(fohKey)
+					return nil
+				}),
+			}
+		} else {
+			helper.Sleep(100)
+			// Don't switch because no keybindings found
+			steps = []step.Step{
+				step.PrimaryAttack(
+					m.UnitID,
+					3,
+					step.Distance(fohMinDistance, fohMaxDistance),
+					step.EnsureAura(skill.Conviction),
+				),
+			}
+		}
+
+		return steps
+	}, action.RepeatUntilNoSteps())
+}
+
+func (s Foh) BuffSkills(d game.Data) []skill.ID {
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+		return []skill.ID{skill.HolyShield}
+	}
+	return []skill.ID{}
+}
+
+func (s Foh) PreCTABuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{}
 }
 
 func (s Foh) KillCountess() action.Action {
@@ -74,7 +144,7 @@ func (s Foh) KillCountess() action.Action {
 }
 
 func (s Foh) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
 }
 
 func (s Foh) KillSummoner() action.Action {
@@ -82,7 +152,7 @@ func (s Foh) KillSummoner() action.Action {
 }
 
 func (s Foh) KillDuriel() action.Action {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
 }
 
 func (s Foh) KillPindle(_ []stat.Resist) action.Action {
@@ -90,7 +160,7 @@ func (s Foh) KillPindle(_ []stat.Resist) action.Action {
 }
 
 func (s Foh) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
 }
 
 func (s Foh) KillNihlathak() action.Action {
@@ -128,15 +198,15 @@ func (s Foh) KillDiablo() action.Action {
 		s.logger.Info("Diablo detected, attacking")
 
 		return []action.Action{
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
 		}
 	}, action.RepeatUntilNoSteps())
 }
 
 func (s Foh) KillIzual() action.Action {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killBoss(npc.Izual, data.MonsterTypeNone)
 }
 
 func (s Foh) KillCouncil() action.Action {
@@ -174,7 +244,7 @@ func (s Foh) KillCouncil() action.Action {
 }
 
 func (s Foh) KillBaal() action.Action {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
 }
 
 func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {

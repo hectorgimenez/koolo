@@ -51,24 +51,52 @@ func (b *Builder) Buff() *StepChainAction {
 			return nil
 		}
 
+		preKeys := make([]data.KeyBinding, 0)
+		for _, buff := range b.ch.PreCTABuffSkills(d) {
+			kb, found := d.KeyBindings.KeyBindingForSkill(buff)
+			if !found {
+				b.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
+			} else {
+				preKeys = append(preKeys, kb)
+			}
+		}
+
+		if len(preKeys) > 0 {
+			b.Logger.Debug("PRE CTA Buffing...")
+
+			steps = append(steps,
+				step.SyncStep(func(_ game.Data) error {
+					for _, kb := range preKeys {
+						helper.Sleep(200)
+						b.HID.PressKeyBinding(kb)
+						helper.Sleep(300)
+						b.HID.Click(game.RightButton, 300, 300)
+						helper.Sleep(300)
+					}
+					return nil
+				}),
+			)
+			lastBuffedAt[b.Supervisor] = time.Now()
+		}
+
 		steps = append(steps, b.buffCTA(d)...)
 
-		keys := make([]data.KeyBinding, 0)
+		postKeys := make([]data.KeyBinding, 0)
 		for _, buff := range b.ch.BuffSkills(d) {
 			kb, found := d.KeyBindings.KeyBindingForSkill(buff)
 			if !found {
 				b.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
 			} else {
-				keys = append(keys, kb)
+				postKeys = append(postKeys, kb)
 			}
 		}
 
-		if len(keys) > 0 {
-			b.Logger.Debug("Buffing...")
+		if len(postKeys) > 0 {
+			b.Logger.Debug("Post CTA Buffing...")
 
 			steps = append(steps,
 				step.SyncStep(func(_ game.Data) error {
-					for _, kb := range keys {
+					for _, kb := range postKeys {
 						helper.Sleep(200)
 						b.HID.PressKeyBinding(kb)
 						helper.Sleep(300)

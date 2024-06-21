@@ -45,16 +45,14 @@ func StopAtDistance(distance int) MoveToStepOption {
 	}
 }
 
-func ClosestWalkable() MoveToStepOption {
-	return func(step *MoveToStep) {
-		step.nearestWalkable = true
-	}
-}
-
 func WithTimeout(timeout time.Duration) MoveToStepOption {
 	return func(step *MoveToStep) {
 		step.timeout = timeout
 	}
+}
+
+func (m *MoveToStep) GetStopDistance() int {
+	return m.stopAtDistance
 }
 
 func (m *MoveToStep) Status(d game.Data, container container.Container) Status {
@@ -63,12 +61,20 @@ func (m *MoveToStep) Status(d game.Data, container container.Container) Status {
 	}
 
 	distance := pather.DistanceFromMe(d, m.destination)
-	if distance < m.stopAtDistance {
+	if distance <= m.stopAtDistance {
 		// In case distance is lower, we double-check with the pathfinder and the full path instead of euclidean distance
 		_, distance, found := container.PathFinder.GetPath(d, m.destination)
-		if !found || distance < m.stopAtDistance {
+		if !found || distance <= m.stopAtDistance {
 			return m.tryTransitionStatus(StatusCompleted)
 		}
+	}
+
+	if m.isPlayerStuck(d) && d.CanTeleport() {
+		_, distance, found := container.PathFinder.GetPath(d, m.destination)
+		if found && distance > m.stopAtDistance {
+			m.stopAtDistance = distance
+		}
+		m.tryTransitionStatus(StatusCompleted)
 	}
 
 	return m.status
@@ -114,6 +120,7 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 			if len(m.path) == 0 {
 				randomPosX, randomPosY := pather.FindFirstWalkable(d.PlayerUnit.Position, d.AreaOrigin, d.CollisionGrid, 15)
 				screenX, screenY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, randomPosX, randomPosY)
+				m.lastRunPositions = append(m.lastRunPositions, d.PlayerUnit.Position)
 				container.PathFinder.MoveCharacter(d, screenX, screenY)
 				m.lastRun = time.Now()
 
@@ -141,6 +148,7 @@ func (m *MoveToStep) Run(d game.Data, container container.Container) error {
 	if len(m.path) == 0 {
 		return nil
 	}
+	m.lastRunPositions = append(m.lastRunPositions, d.PlayerUnit.Position)
 	container.PathFinder.MoveThroughPath(d, m.path, calculateMaxDistance(d, walkDuration))
 
 	return nil

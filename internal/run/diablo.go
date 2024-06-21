@@ -130,34 +130,29 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		actions = append(actions, a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			a.logger.Debug("Moving to next seal", slog.Int("seal", sealNumber+1))
 			if obj, found := d.Objects.FindOne(seal); found {
-				if d := pather.DistanceFromMe(d, obj.Position); d < 7 {
-					a.logger.Debug("We are close enough to the seal", slog.Int("seal", sealNumber+1))
-					return data.Position{}, false
-				}
-
-				a.logger.Debug("Seal found, start teleporting", slog.Int("seal", sealNumber+1))
+				a.logger.Debug("Seal found, moving closer", slog.Int("seal", sealNumber+1))
 
 				return obj.Position, true
 			}
 			a.logger.Debug("Seal NOT found", slog.Int("seal", sealNumber+1))
 
 			return data.Position{}, false
-		}, step.StopAtDistance(7)))
+		}, step.StopAtDistance(10)))
 
 		// Try to calculate based on a square boundary around the seal which corner is safer, then tele there
-		//actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
-		//	if obj, found := d.Objects.FindOne(seal); found {
-		//		pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
-		//		return []step.Step{step.MoveTo(pos)}
-		//	}
-		//	return []step.Step{}
-		//}))
+		actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
+			if obj, found := d.Objects.FindOne(seal); found {
+				pos := a.getLessConcurredCornerAroundSeal(d, obj.Position)
+				return []step.Step{step.MoveTo(pos)}
+			}
+			return []step.Step{}
+		}))
 
 		// Kill all the monsters close to the seal and item pickup
-		//actions = append(actions,
-		//	a.builder.ClearAreaAroundPlayer(13),
-		//	a.builder.ItemPickup(false, 40),
-		//)
+		actions = append(actions,
+			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			a.builder.ItemPickup(false, 40),
+		)
 
 		// Activate the seal, buff only before opening the first seal
 		actions = append(actions,
@@ -333,7 +328,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				multiplier := 1
 
 				if pather.IsWalkable(pos, d.AreaOrigin, d.CollisionGrid) {
-					return []action.Action{a.builder.MoveToCoords(pos)}
+					return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
 				}
 
 				for _ = range 2 {
@@ -342,7 +337,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 						newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
 
 						if pather.IsWalkable(newPos, d.AreaOrigin, d.CollisionGrid) {
-							return []action.Action{a.builder.MoveToCoords(newPos)}
+							return []action.Action{a.builder.MoveToCoordsWithMinDistance(newPos, 30)}
 						}
 
 					}
@@ -351,7 +346,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				}
 
 				// Let it fail then
-				return []action.Action{a.builder.MoveToCoords(pos)}
+				return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
 			}),
 			// Skip storm casters for now completely while clearing non-seals
 			a.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {

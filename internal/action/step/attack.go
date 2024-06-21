@@ -25,7 +25,6 @@ type AttackStep struct {
 	maxDistance           int
 	moveToStep            *MoveToStep
 	aura                  skill.ID
-	forceApplyKeyBinding  bool
 	aoe                   bool
 }
 
@@ -118,14 +117,15 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 		}
 	}
 
-	if p.status == StatusNotStarted || p.forceApplyKeyBinding {
-		container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.skill))
-		time.Sleep(time.Millisecond * 80)
+	if p.status == StatusNotStarted {
+		if !p.primaryAttack && d.PlayerUnit.RightSkill != p.skill {
+			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.skill))
+			time.Sleep(time.Millisecond * 80)
+		}
 
 		if p.aura != 0 {
 			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.aura))
 		}
-		p.forceApplyKeyBinding = false
 	}
 
 	p.tryTransitionStatus(StatusInProgress)
@@ -195,8 +195,10 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 
 		if p.moveToStep.Status(d, container) != StatusCompleted {
 			p.moveToStep.Run(d, container)
-			p.forceApplyKeyBinding = true
 			return false
+		}
+		if p.moveToStep.GetStopDistance() > p.maxDistance {
+			p.maxDistance = p.moveToStep.GetStopDistance()
 		}
 		p.moveToStep = nil
 	}

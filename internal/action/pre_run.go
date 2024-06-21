@@ -6,6 +6,7 @@ import (
 
 func (b *Builder) PreRun(firstRun bool) []Action {
 	actions := []Action{
+		b.DropMouseItem(),
 		b.UseSkillIfBind(skill.Vigor),
 		b.RecoverCorpse(),
 	}

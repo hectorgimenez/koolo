@@ -453,7 +453,24 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Ac
 }
 
 func (s SorceressLeveling) BuffSkills(d game.Data) []skill.ID {
-	return []skill.ID{skill.FrozenArmor}
+	skillsList := make([]skill.ID, 0)
+	if _, found := d.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+		skillsList = append(skillsList, skill.EnergyShield)
+	}
+
+	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
+	for _, armor := range armors {
+		if _, found := d.KeyBindings.KeyBindingForSkill(armor); found {
+			skillsList = append(skillsList, armor)
+			return skillsList
+		}
+	}
+
+	return skillsList
+}
+
+func (s SorceressLeveling) PreCTABuffSkills(_ game.Data) []skill.ID {
+	return []skill.ID{}
 }
 
 func (s SorceressLeveling) staticFieldCasts() int {

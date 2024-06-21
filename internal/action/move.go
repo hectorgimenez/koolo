@@ -94,7 +94,7 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 
 	return NewChain(func(d game.Data) []Action {
 		return []Action{
-			b.MoveTo(toFun, step.StopAtDistance(4)),
+			b.MoveTo(toFun),
 			NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
 					step.InteractEntrance(dst),
@@ -108,6 +108,16 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 	}, Resettable())
 }
 
+func (b *Builder) MoveToCoordsWithMinDistance(to data.Position, minDistance int, opts ...step.MoveToStepOption) *Chain {
+	return b.MoveTo(func(d game.Data) (data.Position, bool) {
+		distance := pather.DistanceFromMe(d, to)
+		if distance <= minDistance {
+			return d.PlayerUnit.Position, false
+		}
+		return to, true
+	}, opts...)
+}
+
 func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) *Chain {
 	return b.MoveTo(func(d game.Data) (data.Position, bool) {
 		return to, true
@@ -115,12 +125,9 @@ func (b *Builder) MoveToCoords(to data.Position, opts ...step.MoveToStepOption) 
 }
 
 func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ...step.MoveToStepOption) *Chain {
-
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
-	previousIterationTo := data.Position{}
-	var currentStep step.Step
 
 	return NewChain(func(d game.Data) []Action {
 		to, found := toFunc(d)
@@ -128,32 +135,23 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 			return nil
 		}
 
-		if previousIterationTo != to && currentStep != nil {
-			currentStep = nil
+		_, distance, _ := b.PathFinder.GetPath(d, to)
+		mvtStep := step.MoveTo(to, opts...)
+		if distance <= mvtStep.GetStopDistance() {
+			return nil
 		}
 
-		// To stop the movement, not very accurate
-		_, distance, _ := b.PathFinder.GetPath(d, to)
-		if distance < 9 {
+		// This prevents we stuck in an infinite loop when we can not get closer to the destination
+		if pather.DistanceFromMe(d, previousIterationPosition) < 5 {
 			return nil
 		}
 
 		if d.CanTeleport() {
-			// If we can teleport, and we're not on leveling sequence, just return the normal MoveTo step and stop here
-			_, isLevelingChar := b.ch.(LevelingCharacter)
-			if !isLevelingChar {
-				return []Action{NewStepChain(func(d game.Data) []step.Step {
-					return []step.Step{step.MoveTo(to, opts...)}
-				})}
-			}
-			// But if we are leveling and have enough money (to buy mana pots), let's teleport. We add the timeout
-			// to re-trigger this action, so we can get back to town to buy pots in case of empty belt
-			if d.PlayerUnit.TotalPlayerGold() > 30000 {
-				return []Action{NewStepChain(func(d game.Data) []step.Step {
-					newOpts := append(opts, step.WithTimeout(5*time.Second))
-					return []step.Step{step.MoveTo(to, newOpts...)}
-				})}
-			}
+			previousIterationPosition = d.PlayerUnit.Position
+
+			return []Action{NewStepChain(func(d game.Data) []step.Step {
+				return []step.Step{step.MoveTo(to, opts...)}
+			})}
 		}
 
 		// Check if there is a door blocking our path
@@ -252,18 +250,13 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 
 		// Continue moving
 		return []Action{b.WaitForAllMembersWhenLeveling(), NewStepChain(func(d game.Data) []step.Step {
-			newOpts := append(opts, step.ClosestWalkable(), step.WithTimeout(time.Millisecond*1000))
+			newOpts := append(opts, step.WithTimeout(time.Millisecond*1000))
 			previousIterationPosition = d.PlayerUnit.Position
-			if currentStep == nil {
-				currentStep = step.MoveTo(
-					to,
-					newOpts...,
-				)
-			} else {
-				currentStep.Reset()
-			}
 
-			return []step.Step{currentStep}
+			return []step.Step{step.MoveTo(
+				to,
+				newOpts...,
+			)}
 		})}
 	}, RepeatUntilNoSteps())
 }
