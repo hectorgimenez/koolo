@@ -25,6 +25,7 @@ func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCf
 	return &PathFinder{gr: gr, hid: hid, cfg: cfg}
 }
 
+// The GetPath method definition, combined and corrected
 func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
 	outsideCurrentLevel := outsideBoundary(d, to)
 	collisionGrid := d.CollisionGrid
@@ -40,8 +41,8 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 			panic("Error occurred calculating path, destination point outside current level and matching level not found")
 		}
 
-		// We're not going to calculate intersection, instead we're going to expand the collision grid, set the neew one
-		// starting point where is supposed to be and cross finger to make them match
+		// We're not going to calculate intersection, instead we're going to expand the collision grid, set the new one
+		// starting point where it is supposed to be and cross fingers to make them match
 		relativeStartX, relativeStartY := lvl.Offset.X-d.AreaOrigin.X, lvl.Offset.Y-d.AreaOrigin.Y
 
 		collisionGridOffset = data.Position{
@@ -92,11 +93,21 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 		collisionGrid = expandedCG
 	}
 
-	// Convert to relative coordinates (Current pelayer position)
+	// Convert to relative coordinates (Current player position)
 	fromX, fromY := relativePosition(d, d.PlayerUnit.Position, collisionGridOffset)
 
 	// Convert to relative coordinates (Target position)
 	toX, toY := relativePosition(d, to, collisionGridOffset)
+
+	// Ensure the target coordinates are within the collision grid bounds before accessing
+	if toX < 0 || toX >= len(collisionGrid[0]) || toY < 0 || toY >= len(collisionGrid) {
+		return nil, 0, false
+	}
+
+	// Ensure the origin coordinates are within the collision grid bounds before accessing
+	if fromX < 0 || fromX >= len(collisionGrid[0]) || fromY < 0 || fromY >= len(collisionGrid) {
+		return nil, 0, false
+	}
 
 	// Origin and destination are the same point
 	if fromX == toX && fromY == toY {
