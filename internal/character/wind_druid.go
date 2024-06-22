@@ -113,7 +113,6 @@ func (du WindDruid) BuffSkills(d game.Data) (buffs []skill.ID) {
 }
 
 func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
-	//_, foundWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonSpiritWolf)
 	_, foundDireWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonDireWolf)
 	_, foundBear := d.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
 	_, foundOak := d.KeyBindings.KeyBindingForSkill(skill.OakSage)
