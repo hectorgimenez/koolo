@@ -63,20 +63,18 @@ func (b *Builder) Buff() *StepChainAction {
 
 		if len(preKeys) > 0 {
 			b.Logger.Debug("PRE CTA Buffing...")
-
 			steps = append(steps,
 				step.SyncStep(func(_ game.Data) error {
 					for _, kb := range preKeys {
-						helper.Sleep(200)
+						helper.Sleep(100)
 						b.HID.PressKeyBinding(kb)
-						helper.Sleep(300)
-						b.HID.Click(game.RightButton, 300, 300)
-						helper.Sleep(300)
+						helper.Sleep(150)
+						b.HID.Click(game.RightButton, 640, 340)
+						helper.Sleep(100)
 					}
 					return nil
 				}),
 			)
-			lastBuffedAt[b.Supervisor] = time.Now()
 		}
 
 		steps = append(steps, b.buffCTA(d)...)
@@ -97,11 +95,11 @@ func (b *Builder) Buff() *StepChainAction {
 			steps = append(steps,
 				step.SyncStep(func(_ game.Data) error {
 					for _, kb := range postKeys {
-						helper.Sleep(200)
+						helper.Sleep(100)
 						b.HID.PressKeyBinding(kb)
-						helper.Sleep(300)
-						b.HID.Click(game.RightButton, 300, 300)
-						helper.Sleep(300)
+						helper.Sleep(150)
+						b.HID.Click(game.RightButton, 640, 340)
+						helper.Sleep(100)
 					}
 					return nil
 				}),
@@ -115,7 +113,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 func (b *Builder) IsRebuffRequired(d game.Data) bool {
 	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
-	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
+	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*time.Duration(d.CharacterCfg.BuffRefreshTime) {
 		return false
 	}
 
@@ -134,6 +132,9 @@ func (b *Builder) IsRebuffRequired(d game.Data) bool {
 				return true
 			}
 			if buff == skill.EnergyShield && !d.PlayerUnit.States.HasState(state.Energyshield) {
+				return true
+			}
+			if buff == skill.CycloneArmor && !d.PlayerUnit.States.HasState(state.Cyclonearmor) {
 				return true
 			}
 		}
@@ -156,7 +157,7 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleCommand))
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)
-				helper.Sleep(300)
+				helper.Sleep(150)
 				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleOrders))
 				helper.Sleep(100)
 				b.HID.Click(game.RightButton, 300, 300)

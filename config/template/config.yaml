@@ -11,6 +11,7 @@ killD2OnStop: true # Terminate D2 process on bot stop
 classicMode: false # Set to true to use legacy graphics
 closeMiniPanel: false # Set to true to close the mini panel at start of game in legacy graphics
 enableCubeRecipes: true # Enable cubing of flawlesses and tokens
+buffRefreshTime : 50 # Interval to check the need for recasting buffs
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75

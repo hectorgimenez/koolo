@@ -290,6 +290,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.KillD2OnStop = r.Form.Has("kill_d2_process")
 		cfg.ClassicMode = r.Form.Has("classic_mode")
 		cfg.CloseMiniPanel = r.Form.Has("close_mini_panel")
+		cfg.BuffRefreshTime, _ = strconv.Atoi(r.Form.Get("buff_refresh_time"))
 
 		// Bnet config
 		cfg.Username = r.Form.Get("username")

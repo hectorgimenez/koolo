@@ -3,9 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"path/filepath"
 
 	"os"
 	"strings"
@@ -63,6 +62,7 @@ type CharacterCfg struct {
 	CloseMiniPanel    bool   `yaml:"closeMiniPanel"`
 	EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
 	AuthMethod        string `yaml:"authMethod"`
+	BuffRefreshTime   int    `yaml:"buffRefreshTime"`
 	Health            struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
