@@ -18,7 +18,7 @@ import (
 const (
 	druMaxAttacksLoop = 20
 	druMinDistance    = 2
-	druMaxDistance    = 10
+	druMaxDistance    = 8
 )
 
 var lastRavenAt = map[string]time.Time{}
@@ -35,7 +35,7 @@ func (du WindDruid) KillMonsterSequence(
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
+	return action.NewStepChain(func(d game.Data) []step.Step {
 		id, found := monsterSelector(d)
 		if !found {
 			return []step.Step{}
@@ -52,6 +52,20 @@ func (du WindDruid) KillMonsterSequence(
 
 		if completedAttackLoops >= druMaxAttacksLoop {
 			return []step.Step{}
+		}
+
+		steps := make([]step.Step, 0)
+		// Add a random movement, maybe tornado is not hitting the target
+		if previousUnitID == int(id) {
+			steps = append(steps,
+				step.SyncStep(func(d game.Data) error {
+					monster, f := d.Monsters.FindByID(id)
+					if f && monster.Stats[stat.Life] > 0 {
+						du.container.PathFinder.RandomMovement(d)
+					}
+					return nil
+				}),
+			)
 		}
 
 		steps = append(steps,
@@ -118,6 +132,8 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	_, foundDireWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonDireWolf)
 	_, foundBear := d.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
 	_, foundOak := d.KeyBindings.KeyBindingForSkill(skill.OakSage)
+	_, foundSolar := d.KeyBindings.KeyBindingForSkill(skill.SolarCreeper)
+	_, foundCarrion := d.KeyBindings.KeyBindingForSkill(skill.CarrionVine)
 
 	if foundDireWolf {
 		skills = append(skills, skill.SummonDireWolf)
@@ -129,6 +145,12 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	}
 	if foundOak {
 		skills = append(skills, skill.OakSage)
+	}
+	if foundSolar {
+		skills = append(skills, skill.SolarCreeper)
+	}
+	if foundCarrion {
+		skills = append(skills, skill.CarrionVine)
 	}
 
 	return skills
@@ -258,6 +280,6 @@ func (du WindDruid) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 				step.Distance(druMinDistance, druMaxDistance),
 			))
 
-		return
+		return steps
 	}, action.CanBeSkipped())
 }
