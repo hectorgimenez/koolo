@@ -139,7 +139,7 @@ var (
 		},
 		{
 			Name:  "Upgrade Um",
-			Items: []string{"UmRune", "umrune", "umrune", "Topaz"},
+			Items: []string{"UmRune", "UmRune", "Topaz"},
 		},
 		{
 			Name:  "Upgrade Mal",
