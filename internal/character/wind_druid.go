@@ -73,8 +73,8 @@ func (du WindDruid) KillMonsterSequence(
 				id,
 				3,
 				step.Distance(druMinDistance, druMaxDistance),
-			))
-
+			),
+		)
 		completedAttackLoops++
 		previousUnitID = int(id)
 
@@ -83,38 +83,19 @@ func (du WindDruid) KillMonsterSequence(
 }
 
 func (du WindDruid) RecastBuffs(d game.Data) {
-	if hkb, hurricaneFound := d.KeyBindings.KeyBindingForSkill(skill.Hurricane); hurricaneFound {
-		du.logger.Error("Hurricane not found")
-		if !d.PlayerUnit.States.HasState(state.Hurricane) {
-			du.container.HID.PressKeyBinding(hkb)
-			helper.Sleep(100)
-			du.container.HID.Click(game.RightButton, 640, 340)
-			helper.Sleep(100)
+	skills := []skill.ID{skill.Hurricane, skill.OakSage, skill.CycloneArmor}
+
+	for _, druSkill := range skills {
+		if kb, found := d.KeyBindings.KeyBindingForSkill(druSkill); found {
+			du.logger.Error("Hurricane not found")
+			if !d.PlayerUnit.States.HasState(state.Hurricane) {
+				du.container.HID.PressKeyBinding(kb)
+				helper.Sleep(100)
+				du.container.HID.Click(game.RightButton, 640, 340)
+				helper.Sleep(100)
+			}
 		}
 	}
-
-	if okb, oakFound := d.KeyBindings.KeyBindingForSkill(skill.OakSage); oakFound {
-		if !d.PlayerUnit.States.HasState(state.Oaksage) {
-
-			du.container.HID.PressKeyBinding(okb)
-			helper.Sleep(100)
-			du.container.HID.Click(game.RightButton, 640, 340)
-			helper.Sleep(100)
-
-		}
-	}
-
-	if akb, armorFound := d.KeyBindings.KeyBindingForSkill(skill.CycloneArmor); armorFound {
-		if !d.PlayerUnit.States.HasState(state.Cyclonearmor) {
-
-			du.container.HID.PressKeyBinding(akb)
-			helper.Sleep(100)
-			du.container.HID.Click(game.RightButton, 640, 340)
-			helper.Sleep(100)
-
-		}
-	}
-
 }
 
 func (du WindDruid) BuffSkills(d game.Data) (buffs []skill.ID) {
@@ -124,16 +105,16 @@ func (du WindDruid) BuffSkills(d game.Data) (buffs []skill.ID) {
 	if _, ravenFound := d.KeyBindings.KeyBindingForSkill(skill.Raven); ravenFound {
 		buffs = append(buffs, skill.Raven, skill.Raven, skill.Raven, skill.Raven, skill.Raven)
 	}
+	if _, hurricaneFound := d.KeyBindings.KeyBindingForSkill(skill.Hurricane); hurricaneFound {
+		buffs = append(buffs, skill.Hurricane)
+	}
 	return buffs
 }
 
 func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
-	//_, foundWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonSpiritWolf)
 	_, foundDireWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonDireWolf)
 	_, foundBear := d.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
 	_, foundOak := d.KeyBindings.KeyBindingForSkill(skill.OakSage)
-	_, foundSolar := d.KeyBindings.KeyBindingForSkill(skill.SolarCreeper)
-	_, foundCarrion := d.KeyBindings.KeyBindingForSkill(skill.CarrionVine)
 
 	if foundDireWolf {
 		skills = append(skills, skill.SummonDireWolf)
@@ -145,12 +126,6 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	}
 	if foundOak {
 		skills = append(skills, skill.OakSage)
-	}
-	if foundSolar {
-		skills = append(skills, skill.SolarCreeper)
-	}
-	if foundCarrion {
-		skills = append(skills, skill.CarrionVine)
 	}
 
 	return skills
@@ -264,22 +239,24 @@ func (du WindDruid) KillBaal() action.Action {
 	return du.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }
 
-func (du WindDruid) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+func (du WindDruid) killMonster(npcId npc.ID, t data.MonsterType) action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		m, found := d.Monsters.FindOne(npc, t)
+		m, found := d.Monsters.FindOne(npcId, t)
 		if !found {
 			return nil
 		}
 
+		helper.Sleep(100)
 		du.RecastBuffs(d)
-
-		steps = append(steps,
-			step.PrimaryAttack(
-				m.UnitID,
-				3,
-				step.Distance(druMinDistance, druMaxDistance),
-			))
-
-		return steps
+		for range druMaxAttacksLoop {
+			steps = append(steps,
+				step.PrimaryAttack(
+					m.UnitID,
+					3,
+					step.Distance(druMinDistance, druMaxDistance),
+				),
+			)
+		}
+		return
 	}, action.CanBeSkipped())
 }
