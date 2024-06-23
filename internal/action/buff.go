@@ -113,7 +113,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 func (b *Builder) IsRebuffRequired(d game.Data) bool {
 	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
-	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*50 {
+	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
 		return false
 	}
 
