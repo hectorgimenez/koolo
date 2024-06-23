@@ -66,6 +66,7 @@ func (s Hammerdin) KillMonsterSequence(
 			step.PrimaryAttack(
 				id,
 				3,
+				true,
 				step.Distance(1, 8),
 				step.EnsureAura(skill.Concentration),
 			),
@@ -182,6 +183,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 					step.PrimaryAttack(
 						m.UnitID,
 						8,
+						true,
 						step.Distance(1, 8),
 						step.EnsureAura(skill.Concentration),
 					),
@@ -209,6 +211,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					8,
+					true,
 					step.Distance(1, 8),
 					step.EnsureAura(skill.Concentration),
 				),
