@@ -26,6 +26,7 @@ type CharacterSettings struct {
 	EnabledRuns  []string
 	DisabledRuns []string
 	AvailableTZs map[int]string
+	RecipeList   []string
 }
 
 type ConfigData struct {
