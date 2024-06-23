@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	hammerdinMaxAttacksLoop = 20
+	hammerdinMaxAttacksLoop = 20 // Adjust from 5-20 depending on DMG and rotation, lower attack loops would cause higher attack rotation whereas bigger would perform multiple(longer) attacks on one spot.
 )
 
 type Hammerdin struct {
@@ -67,7 +67,7 @@ func (s Hammerdin) KillMonsterSequence(
 				id,
 				3,
 				true,
-				step.Distance(1, 8),
+				step.Distance(2,2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 				step.EnsureAura(skill.Concentration),
 			),
 		)
@@ -184,7 +184,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 						m.UnitID,
 						8,
 						true,
-						step.Distance(1, 8),
+						step.Distance(2,2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 						step.EnsureAura(skill.Concentration),
 					),
 				)
@@ -212,7 +212,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 					m.UnitID,
 					8,
 					true,
-					step.Distance(1, 8),
+					step.Distance(2,2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 					step.EnsureAura(skill.Concentration),
 				),
 			)
