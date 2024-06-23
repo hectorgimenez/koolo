@@ -58,6 +58,7 @@ func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, er
 		},
 		"qualityClass": qualityClass,
 		"statIDToText": statIDToText,
+		"contains":     containss,
 	}
 	templates, err := template.New("").Funcs(helperFuncs).ParseFS(templatesFS, "templates/*.gohtml")
 	if err != nil {
@@ -94,6 +95,15 @@ func qualityClass(quality string) string {
 
 func statIDToText(id stat.ID) string {
 	return stat.StringStats[id]
+}
+
+func containss(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *HttpServer) Listen(port int) error {
@@ -289,6 +299,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.CommandLineArgs = r.Form.Get("commandLineArgs")
 		cfg.KillD2OnStop = r.Form.Has("kill_d2_process")
 		cfg.ClassicMode = r.Form.Has("classic_mode")
+		cfg.CloseMiniPanel = r.Form.Has("close_mini_panel")
 
 		// Bnet config
 		cfg.Username = r.Form.Get("username")
@@ -385,8 +396,9 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Gambling.Enabled = r.Form.Has("gamblingEnabled")
 
 		// Cube Recipes
-		cfg.EnableCubeRecipes = r.Form.Has("enableCubeRecipes")
-
+		cfg.CubeRecipes.Enabled = r.Form.Has("enableCubeRecipes")
+		enabledRecipes := r.Form["enabledRecipes"]
+		cfg.CubeRecipes.EnabledRecipes = enabledRecipes
 		// Companion
 
 		// Companion config
@@ -432,11 +444,13 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			availableTZs[int(tz.ID)] = tz.Name
 		}
 	}
+
 	s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
 		Supervisor:   supervisor,
 		Config:       cfg,
 		EnabledRuns:  enabledRuns,
 		DisabledRuns: disabledRuns,
 		AvailableTZs: availableTZs,
+		RecipeList:   config.AvailableRecipes,
 	})
 }

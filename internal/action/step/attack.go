@@ -26,6 +26,7 @@ type AttackStep struct {
 	moveToStep            *MoveToStep
 	aura                  skill.ID
 	aoe                   bool
+	shouldStandStill      bool
 }
 
 type AttackOption func(step *AttackStep)
@@ -44,13 +45,14 @@ func EnsureAura(aura skill.ID) AttackOption {
 	}
 }
 
-func PrimaryAttack(target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
+func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts ...AttackOption) *AttackStep {
 	s := &AttackStep{
 		primaryAttack:         true,
 		basicStep:             newBasicStep(),
 		target:                target,
 		numOfAttacksRemaining: numOfAttacks,
 		aoe:                   target == 0,
+		shouldStandStill:      standStill,
 	}
 
 	for _, o := range opts {
@@ -130,7 +132,10 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 
 	p.tryTransitionStatus(StatusInProgress)
 	if time.Since(p.lastRun) > d.PlayerCastDuration()-attackCycleDuration && p.numOfAttacksRemaining > 0 {
-		container.HID.KeyDown(d.KeyBindings.StandStill)
+
+		if p.shouldStandStill {
+			container.HID.KeyDown(d.KeyBindings.StandStill)
+		}
 		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
 		if p.primaryAttack {
@@ -138,7 +143,9 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 		} else {
 			container.HID.Click(game.RightButton, x, y)
 		}
-		container.HID.KeyUp(d.KeyBindings.StandStill)
+		if p.shouldStandStill {
+			container.HID.KeyUp(d.KeyBindings.StandStill)
+		}
 		p.lastRun = time.Now()
 		p.numOfAttacksRemaining--
 	}
