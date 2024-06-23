@@ -85,13 +85,13 @@ func (du WindDruid) KillMonsterSequence(
 
 func (du WindDruid) RecastBuffs(d game.Data) {
 	skills := []skill.ID{skill.Hurricane, skill.OakSage, skill.CycloneArmor}
+	states := []state.State{state.Hurricane, state.Oaksage, state.Cyclonearmor}
 
-	for _, druSkill := range skills {
+	for i, druSkill := range skills {
 		if kb, found := d.KeyBindings.KeyBindingForSkill(druSkill); found {
-			du.logger.Error("Hurricane not found")
-			if !d.PlayerUnit.States.HasState(state.Hurricane) {
+			if !d.PlayerUnit.States.HasState(states[i]) {
 				du.container.HID.PressKeyBinding(kb)
-				helper.Sleep(100)
+				helper.Sleep(180)
 				du.container.HID.Click(game.RightButton, 640, 340)
 				helper.Sleep(100)
 			}
@@ -113,21 +113,53 @@ func (du WindDruid) BuffSkills(d game.Data) (buffs []skill.ID) {
 }
 
 func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
+	needsBear := true
+	wolves := 5
+	direWolves := 3
+	needsOak := true
+
+	// Broken for now
+	//for _, summon := range d.NPCs {
+	//	if summon.ID == npc.DruBear {
+	//		du.logger.Info("found bear")
+	//		needsBear = false
+	//	}
+	//	if summon.ID == npc.DruFenris {
+	//		du.logger.Info("found wolf")
+	//		direWolves--
+	//	}
+	//	if summon.ID == npc.DruSpiritWolf {
+	//		du.logger.Info("found spirit wolf")
+	//		wolves--
+	//	}
+	//	du.logger.Info("npc name : ", summon.Name)
+	//}
+
+	if d.PlayerUnit.States.HasState(state.Oaksage) {
+		needsOak = false
+	}
+
 	_, foundDireWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonDireWolf)
+	_, foundWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonSpiritWolf)
 	_, foundBear := d.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
 	_, foundOak := d.KeyBindings.KeyBindingForSkill(skill.OakSage)
 	_, foundSolar := d.KeyBindings.KeyBindingForSkill(skill.SolarCreeper)
 	_, foundCarrion := d.KeyBindings.KeyBindingForSkill(skill.CarrionVine)
 
-	if foundDireWolf {
-		skills = append(skills, skill.SummonDireWolf)
-		skills = append(skills, skill.SummonDireWolf)
-		skills = append(skills, skill.SummonDireWolf)
+	if foundWolf {
+		for i := 0; i < wolves; i++ {
+			skills = append(skills, skill.SummonSpiritWolf)
+		}
 	}
-	if foundBear {
+	if foundDireWolf {
+		for i := 0; i < direWolves; i++ {
+			skills = append(skills, skill.SummonDireWolf)
+		}
+	}
+	if foundBear && needsBear {
 		skills = append(skills, skill.SummonGrizzly)
 	}
-	if foundOak {
+	if foundOak && needsOak {
 		skills = append(skills, skill.OakSage)
 	}
 	if foundSolar {
