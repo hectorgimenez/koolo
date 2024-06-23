@@ -72,6 +72,7 @@ func (du WindDruid) KillMonsterSequence(
 			step.PrimaryAttack(
 				id,
 				3,
+				true,
 				step.Distance(druMinDistance, druMaxDistance),
 			),
 		)
