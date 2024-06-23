@@ -1,6 +1,9 @@
 package character
 
 import (
+	"sort"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -10,8 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
-	"time"
 )
 
 const (
@@ -78,7 +79,7 @@ func (s Trapsin) KillMonsterSequence(
 		steps = append(steps,
 			step.SecondaryAttack(skill.LightningSentry, id, 3, opts...),
 			step.SecondaryAttack(skill.DeathSentry, id, 2, opts...),
-			step.PrimaryAttack(id, 2, step.Distance(minDistance, maxDistance)),
+			step.PrimaryAttack(id, 2, true, step.Distance(minDistance, maxDistance)),
 		)
 
 		return
@@ -88,7 +89,7 @@ func (s Trapsin) KillMonsterSequence(
 func (s Trapsin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		m, found := d.Monsters.FindOne(npc, t)
-		if !found || &m == nil {
+		if !found {
 			return nil
 		}
 
@@ -98,7 +99,7 @@ func (s Trapsin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		steps = append(steps,
 			step.SecondaryAttack(skill.LightningSentry, m.UnitID, 3, opts...),
 			step.SecondaryAttack(skill.DeathSentry, m.UnitID, 2, opts...),
-			step.PrimaryAttack(m.UnitID, 2, opts...),
+			step.PrimaryAttack(m.UnitID, 2, true, opts...),
 		)
 
 		return
@@ -198,7 +199,7 @@ func (s Trapsin) KillCouncil() action.Action {
 				steps = append(steps,
 					step.SecondaryAttack(skill.LightningSentry, m.UnitID, 3, nil),
 					step.SecondaryAttack(skill.DeathSentry, m.UnitID, 2, nil),
-					step.PrimaryAttack(m.UnitID, 2, step.Distance(minDistance, maxDistance)),
+					step.PrimaryAttack(m.UnitID, 2, true, step.Distance(minDistance, maxDistance)),
 				)
 			}
 		}

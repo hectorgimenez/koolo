@@ -1,6 +1,9 @@
 package character
 
 import (
+	"sort"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -10,8 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
-	"time"
 )
 
 const (
@@ -63,6 +64,7 @@ func (s Foh) KillMonsterSequence(
 		steps = append(steps, step.PrimaryAttack(
 			id,
 			3,
+			true,
 			step.Distance(fohMinDistance, fohMaxDistance),
 			step.EnsureAura(skill.Conviction),
 		))
@@ -91,6 +93,7 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					1,
+					true,
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
@@ -102,6 +105,7 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					3,
+					true,
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
@@ -118,6 +122,7 @@ func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					3,
+					true,
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
@@ -233,6 +238,7 @@ func (s Foh) KillCouncil() action.Action {
 					step.PrimaryAttack(
 						m.UnitID,
 						3,
+						true,
 						step.Distance(fohMinDistance, fohMaxDistance),
 						step.EnsureAura(skill.Conviction),
 					),
@@ -260,6 +266,7 @@ func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 				step.PrimaryAttack(
 					m.UnitID,
 					3,
+					true,
 					step.Distance(fohMinDistance, fohMaxDistance),
 					step.EnsureAura(skill.Conviction),
 				),
