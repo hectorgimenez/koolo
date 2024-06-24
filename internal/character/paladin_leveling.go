@@ -176,7 +176,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (
 				)
 			}
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(2, 7), step.EnsureAura(skill.Concentration)),
+				step.PrimaryAttack(id, numOfAttacks, false, step.Distance(2, 7), step.EnsureAura(skill.Concentration)),
 			)
 		} else {
 			if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
@@ -184,7 +184,7 @@ func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (
 			}
 
 			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, step.Distance(1, 3), step.EnsureAura(skill.HolyFire)),
+				step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.HolyFire)),
 			)
 		}
 
