@@ -118,22 +118,22 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	direWolves := 3
 	needsOak := true
 
-	// Broken for now
-	//for _, summon := range d.NPCs {
-	//	if summon.ID == npc.DruBear {
-	//		du.logger.Info("found bear")
-	//		needsBear = false
-	//	}
-	//	if summon.ID == npc.DruFenris {
-	//		du.logger.Info("found wolf")
-	//		direWolves--
-	//	}
-	//	if summon.ID == npc.DruSpiritWolf {
-	//		du.logger.Info("found spirit wolf")
-	//		wolves--
-	//	}
-	//	du.logger.Info("npc name : ", summon.Name)
-	//}
+	for _, monster := range d.Monsters {
+		if monster.IsPet() {
+			if monster.Name == npc.DruBear {
+				needsBear = false
+			}
+			if monster.Name == npc.DruFenris {
+				direWolves--
+			}
+			if monster.Name == npc.DruSpiritWolf {
+				wolves--
+			}
+			if monster.Name == npc.OakSage {
+				needsOak = false
+			}
+		}
+	}
 
 	if d.PlayerUnit.States.HasState(state.Oaksage) {
 		needsOak = false
@@ -268,7 +268,6 @@ func (du WindDruid) KillCouncil() action.Action {
 						3,
 						true,
 						step.Distance(druMinDistance, druMaxDistance),
-						step.EnsureAura(skill.Conviction),
 					),
 				)
 			}
