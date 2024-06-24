@@ -25,6 +25,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "mausoleum" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameMausoleumOpenChests" {{ if .Config.Game.Mausoleum.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameMausoleumFocusOnElitePacks" {{ if .Config.Game.Mausoleum.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
 {{ define "ancient_tunnels" }}
     <fieldset>
         <label><input type="checkbox" name="gameAncientTunnelsOpenChests" {{ if .Config.Game.AncientTunnels.OpenChests }}checked{{ end }}> Open chests</label>

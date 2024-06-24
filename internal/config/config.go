@@ -101,6 +101,10 @@ type CharacterCfg struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"stony_tomb"`
+		Mausoleum struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"mausoleum"`
 		AncientTunnels struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
