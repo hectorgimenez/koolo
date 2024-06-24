@@ -68,7 +68,7 @@ func (b *Builder) Buff() *StepChainAction {
 					for _, kb := range preKeys {
 						helper.Sleep(100)
 						b.HID.PressKeyBinding(kb)
-						helper.Sleep(150)
+						helper.Sleep(180)
 						b.HID.Click(game.RightButton, 640, 340)
 						helper.Sleep(100)
 					}
@@ -97,7 +97,7 @@ func (b *Builder) Buff() *StepChainAction {
 					for _, kb := range postKeys {
 						helper.Sleep(100)
 						b.HID.PressKeyBinding(kb)
-						helper.Sleep(150)
+						helper.Sleep(180)
 						b.HID.Click(game.RightButton, 640, 340)
 						helper.Sleep(100)
 					}
@@ -152,12 +152,12 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 		steps = append(steps,
 			step.SyncStep(func(d game.Data) error {
 				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleCommand))
+				helper.Sleep(180)
+				b.HID.Click(game.RightButton, 640, 340)
 				helper.Sleep(100)
-				b.HID.Click(game.RightButton, 300, 300)
-				helper.Sleep(150)
 				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleOrders))
-				helper.Sleep(100)
-				b.HID.Click(game.RightButton, 300, 300)
+				helper.Sleep(180)
+				b.HID.Click(game.RightButton, 640, 340)
 				helper.Sleep(100)
 
 				return nil
