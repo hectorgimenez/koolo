@@ -27,7 +27,7 @@
 
 {{ define "mausoleum" }}
     <fieldset>
-        <label><input type="checkbox" name="gameMausoleumsOpenChests" {{ if .Config.Game.Mausoleum.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameMausoleumOpenChests" {{ if .Config.Game.Mausoleum.OpenChests }}checked{{ end }}> Open chests</label>
         <label><input type="checkbox" name="gameMausoleumFocusOnElitePacks" {{ if .Config.Game.Mausoleum.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
     </fieldset>
 {{ end }}
