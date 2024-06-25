@@ -231,7 +231,7 @@ func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.templates.ExecuteTemplate(w, "drops.gohtml", DropData{
-		NumberOfDrops: len(cfg.Runtime.Drops),
+		NumberOfDrops: len(Drops),
 		Character:     cfg.CharacterName,
 		Drops:         Drops,
 	})
