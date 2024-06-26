@@ -375,6 +375,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Diablo.ClearArea = r.Form.Has("gameDiabloClearArea")
 		cfg.Game.Diablo.OnlyElites = r.Form.Has("gameDiabloOnlyElites")
 		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
+		cfg.Game.Rushing.GiveWPs = r.Form.Has("gameRushingGiveWPs")
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
