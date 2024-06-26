@@ -23,6 +23,7 @@ const (
 	BaalRun             Run = "baal"
 	DiabloRun           Run = "diablo"
 	CowsRun             Run = "cows"
+	RushingRun          Run = "rushing"	
 	LevelingRun         Run = "leveling"
 	TerrorZoneRun       Run = "terror_zone"
 )
@@ -48,6 +49,7 @@ var AvailableRuns = map[Run]interface{}{
 	BaalRun:             nil,
 	DiabloRun:           nil,
 	CowsRun:             nil,
+	RushingRun:          nil,	
 	LevelingRun:         nil,
 	TerrorZoneRun:       nil,
 }
