@@ -117,6 +117,8 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, Baal{baseRun})
 		case config.TalRashaTombsRun:
 			runs = append(runs, TalRashaTombs{baseRun})
+		case config.RushingRun:
+			runs = append(runs, Rushing{baseRun})
 		case config.LevelingRun:
 			runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
 		case config.CowsRun:
