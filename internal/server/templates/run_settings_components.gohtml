@@ -81,6 +81,12 @@
     </fieldset>
 {{ end }}
 
+{{ define "rushing" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameRushingGiveWPs" {{ if .Config.Game.Rushing.GiveWPs }}checked{{ end }}> Give Waypoints</label>
+    </fieldset>
+{{ end }}
+
 {{ define "leveling" }}
     <fieldset>
         <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
