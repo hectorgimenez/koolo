@@ -76,9 +76,9 @@ func (b *Builder) RepairRequired() bool {
 		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
 		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
-		// If we don't find the stats just return false
+		// If we don't find the stats just continue
 		if !currentDurabilityFound || !maxDurabilityFound {
-			return false
+			continue
 		}
 
 		// Let's calculate the durability percentage
