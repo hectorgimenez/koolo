@@ -82,7 +82,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		a.builder.MoveToCoords(chaosSanctuaryEntrancePosition),
 	)
 
-	// If we're doing online games open a TP because we're good people
+	// If we're doing online games open a TP at Chaos Entrance because we're good people
 	if a.CharacterCfg.Game.CreateOnlineGames && !a.CharacterCfg.Companion.Enabled {
 		actions = append(actions,
 			a.builder.OpenTP(),

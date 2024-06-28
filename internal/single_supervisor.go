@@ -43,6 +43,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 	firstRun := true
 	var gameCounter int
+	var alreadyJoined bool
 	for {
 		select {
 		case <-ctx.Done():
@@ -56,11 +57,37 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 			if !s.c.Manager.InGame() {
 
-				if s.c.CharacterCfg.Game.CreateOnlineGames {
-					// I know this will also increase it from 0 to 1 the first time, who does a run with 0 lol
-					gameCounter++
-					if _, err = s.c.Manager.CreateOnlineGame(gameCounter); err != nil {
-						s.c.Logger.Error(fmt.Sprintf("Error creating Online Game: %s", err.Error()))
+				if s.c.CharacterCfg.Game.EnableLobbyGames {
+
+					// Failsafe in case neither create or join have been selected
+					if !s.c.CharacterCfg.Game.CreateOnlineGames && !s.c.CharacterCfg.Game.JoinOnlineGame {
+						s.c.CharacterCfg.Game.CreateOnlineGames = true
+					}
+
+					if s.c.CharacterCfg.Game.CreateOnlineGames {
+						// I know this will also increase it from 0 to 1 the first time, who does a run with 0 lol
+						gameCounter++
+						if _, err = s.c.Manager.CreateOnlineGame(gameCounter); err != nil {
+							s.c.Logger.Error(fmt.Sprintf("Error creating Online Game: %s", err.Error()))
+							continue
+						}
+					} else if s.c.CharacterCfg.Game.JoinOnlineGame {
+						if !alreadyJoined {
+							if err = s.c.Manager.JoinOnlineGame(s.c.CharacterCfg.Game.OnlineGameNameTemplate, s.c.CharacterCfg.Game.OnlineGamePassowrd); err != nil {
+								s.c.Logger.Error(fmt.Sprintf("Error Joining Online Game: %s", err.Error()))
+								continue
+							} else {
+								alreadyJoined = true
+							}
+						} else {
+							// Avoid going in the same game again
+							s.bot.TogglePause()
+							// Reset the already joined check
+							alreadyJoined = false
+						}
+
+					} else {
+						s.c.Logger.Error(fmt.Sprintf("Error in Lobby Games loop. EnableLobbyGames: %t, CreateOnlineGames: %t, JoinOnlineGame: %t", s.c.CharacterCfg.Game.EnableLobbyGames, s.c.CharacterCfg.Game.CreateOnlineGames, s.c.CharacterCfg.Game.JoinOnlineGame))
 						continue
 					}
 				} else {

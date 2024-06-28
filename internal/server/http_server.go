@@ -352,7 +352,11 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Game
-		cfg.Game.CreateOnlineGames = r.Form.Has("createOnlineGames")
+
+		cfg.Game.EnableLobbyGames = r.Form.Has("enableLobbyGames")
+		selectedGameValue := r.FormValue("CreateJoinSelector")
+		cfg.Game.CreateOnlineGames = selectedGameValue == "create"
+		cfg.Game.JoinOnlineGame = selectedGameValue == "join"
 		cfg.Game.OnlineGameNameTemplate = r.Form.Get("onlineGameNameTemplate")
 		cfg.Game.OnlineGamePassowrd = r.Form.Get("onlineGamePassword")
 		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))

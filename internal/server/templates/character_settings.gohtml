@@ -224,14 +224,26 @@
                     </label>
                 {{ end }}
             </fieldset>
-            <h4>Game</h4>
-            <label>
-                <input type="checkbox" name="createOnlineGames" {{ if .Config.Game.CreateOnlineGames }}checked{{ end }}/>
-                Create Online Games (Through Lobby)
-            </label>
+            <h4>Game Settings:</h4>
+                <br />
+                <label>
+                    <input type="checkbox" name="enableLobbyGames" {{ if .Config.Game.EnableLobbyGames}}checked{{end}}/>
+                    Enable Loby Games
+                </label>
+                <br />
+                <fieldset>
+                    <label>
+                        <input type="radio" id="createOnlineGames" name="CreateJoinSelector" value="create" {{ if .Config.Game.CreateOnlineGames }}checked{{ end }}/>
+                        Create Online Games
+                    </label>
+                    <label>
+                        <input type="radio" id="joinOnlineGame" name="CreateJoinSelector" value="join" {{ if .Config.Game.JoinOnlineGame }}checked{{ end }}/>
+                        Join Online Game
+                    </label>
+                </fieldset>
             <fieldset class="grid">
                 <label>
-                    Game name pattern
+                    Game Name 
                     <input name="onlineGameNameTemplate" placeholder="{{ .Config.Game.OnlineGameNameTemplate }}"
                            value="{{ .Config.Game.OnlineGameNameTemplate }}"/>
                 </label>
