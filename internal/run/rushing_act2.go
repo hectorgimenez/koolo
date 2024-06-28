@@ -5,11 +5,11 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/object"	
-	"github.com/hectorgimenez/d2go/pkg/data/npc"		
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/action/step"	
 )
 
 func (a Rushing) rushAct2() action.Action {
@@ -20,32 +20,35 @@ func (a Rushing) rushAct2() action.Action {
 		}
 
 		running = true
-		
+
 		if a.CharacterCfg.Game.Rushing.GiveWPs {
 			return []action.Action{
 				a.builder.VendorRefill(true, false),
 				a.GiveAct2WPs(),
+				a.killRadamentQuest(),
 				a.getHoradricCube(),
 				a.getStaff(),
 				a.getAmulet(),
 				a.killSummonerQuest(),
-				a.killDurielQuest(),	
+				a.killDurielQuest(),
 			}
 		}
-		
+
 		return []action.Action{
 			a.builder.VendorRefill(true, false),
+			a.killRadamentQuest(),
 			a.getHoradricCube(),
 			a.getStaff(),
 			a.getAmulet(),
 			a.killSummonerQuest(),
-			a.killDurielQuest(),			
+			a.killDurielQuest(),
 		}
 	})
 }
 
 func (a Rushing) GiveAct2WPs() action.Action {
 	areas := []area.ID{
+		area.SewersLevel2Act2,
 		area.HallsOfTheDeadLevel2,
 		area.FarOasis,
 		area.LostCity,
@@ -69,6 +72,31 @@ func (a Rushing) GiveAct2WPs() action.Action {
 	})
 }
 
+func (a Rushing) killRadamentQuest() action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
+		return []action.Action{
+			a.builder.WayPoint(area.SewersLevel2Act2),
+			a.builder.OpenTP(),
+			a.builder.Buff(),
+			a.builder.MoveToArea(area.SewersLevel3Act2),
+			// cant find npc.Radament for some reason, using the sparkly chest with ID 355 next him to find him
+			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+				for _, o := range d.Objects {
+					if o.Name == object.Name(355) {
+						return o.Position, true
+					}
+				}
+
+				return data.Position{}, false
+			}, step.StopAtDistance(50)),
+			a.builder.OpenTP(),
+			//			a.waitForParty(d),
+			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			a.builder.ReturnTown(),
+		}
+	})
+}
+
 func (a Rushing) getHoradricCube() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
@@ -79,11 +107,11 @@ func (a Rushing) getHoradricCube() action.Action {
 				a.logger.Info("Horadric Cube chest found, moving to that room")
 				chest, found := d.Objects.FindOne(object.HoradricCubeChest)
 
-			return chest.Position, found
+				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),
+			//			a.waitForParty(d),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -93,7 +121,7 @@ func (a Rushing) getStaff() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.FarOasis),
-			a.builder.Buff(),			
+			a.builder.Buff(),
 			a.builder.MoveToArea(area.MaggotLairLevel1),
 			a.builder.MoveToArea(area.MaggotLairLevel2),
 			a.builder.MoveToArea(area.MaggotLairLevel3),
@@ -104,8 +132,8 @@ func (a Rushing) getStaff() action.Action {
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			a.builder.OpenTP(),			
-//			a.waitForParty(d),
+			a.builder.OpenTP(),
+			//			a.waitForParty(d),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -127,8 +155,8 @@ func (a Rushing) getAmulet() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),
-			a.builder.ReturnTown(),			
+			//			a.waitForParty(d),
+			a.builder.ReturnTown(),
 		}
 	})
 }
@@ -136,8 +164,8 @@ func (a Rushing) getAmulet() action.Action {
 func (a Rushing) killSummonerQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
-			a.builder.WayPoint(area.ArcaneSanctuary), 
-			a.builder.OpenTP(),			
+			a.builder.WayPoint(area.ArcaneSanctuary),
+			a.builder.OpenTP(),
 			a.builder.Buff(),
 
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
@@ -147,10 +175,10 @@ func (a Rushing) killSummonerQuest() action.Action {
 				return data.Position{}, false
 			}, step.StopAtDistance(80)),
 
-			a.builder.OpenTP(),			
-//			a.waitForParty(d),
+			a.builder.OpenTP(),
+			//			a.waitForParty(d),
 			a.char.KillSummoner(),
-			a.builder.ReturnTown(),			
+			a.builder.ReturnTown(),
 		}
 	})
 }
@@ -195,7 +223,7 @@ func (a Rushing) killDurielQuest() action.Action {
 		)
 
 		actions = append(actions,
-		action.NewChain(func(d game.Data) []action.Action {			
+			action.NewChain(func(d game.Data) []action.Action {
 				_, found := d.Objects.FindOne(object.DurielsLairPortal)
 				if found {
 					return []action.Action{
