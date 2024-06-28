@@ -10,6 +10,7 @@ import (
 
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/run"
 
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -49,6 +50,14 @@ func (s *SinglePlayerSupervisor) Start() error {
 		case <-ctx.Done():
 			return nil
 		default:
+			// Failsafe for when the bot is paused
+			if s.bot.paused {
+
+				// Sleep for a second before checking again
+				helper.Sleep(1000)
+				continue
+			}
+
 			if firstRun {
 				err = s.waitUntilCharacterSelectionScreen()
 				if err != nil {
@@ -84,6 +93,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 							s.bot.TogglePause()
 							// Reset the already joined check
 							alreadyJoined = false
+							continue
 						}
 
 					} else {
