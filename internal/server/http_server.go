@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -197,7 +198,12 @@ func (s *HttpServer) index(w http.ResponseWriter) {
 		}
 
 		status[supervisorName] = s.manager.Status(supervisorName)
-		drops[supervisorName] = len(config.Characters[supervisorName].Runtime.Drops)
+
+		if s.manager.GetSupervisorStats(supervisorName).Drops != nil {
+			drops[supervisorName] = len(s.manager.GetSupervisorStats(supervisorName).Drops)
+		} else {
+			drops[supervisorName] = 0
+		}
 
 	}
 
@@ -216,10 +222,18 @@ func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var Drops []data.Drop
+
+	if s.manager.GetSupervisorStats(sup).Drops == nil {
+		Drops = make([]data.Drop, 0)
+	} else {
+		Drops = s.manager.GetSupervisorStats(sup).Drops
+	}
+
 	s.templates.ExecuteTemplate(w, "drops.gohtml", DropData{
-		NumberOfDrops: len(cfg.Runtime.Drops),
+		NumberOfDrops: len(Drops),
 		Character:     cfg.CharacterName,
-		Drops:         cfg.Runtime.Drops,
+		Drops:         Drops,
 	})
 }
 

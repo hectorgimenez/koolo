@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -71,7 +72,8 @@ func (b *Builder) orderInventoryPotions(d game.Data) {
 
 func (b *Builder) isStashingRequired(d game.Data, firstRun bool) bool {
 	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
-		if b.shouldStashIt(d, i, firstRun) {
+		stashIt, _, _ := b.shouldStashIt(d, i, firstRun)
+		if stashIt {
 			return true
 		}
 	}
@@ -121,11 +123,13 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	b.switchTab(currentTab)
 
 	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
-		if !b.shouldStashIt(d, i, firstRun) {
+		stashIt, matchedRule, ruleFile := b.shouldStashIt(d, i, firstRun)
+
+		if !stashIt {
 			continue
 		}
 		for currentTab < 5 {
-			if b.stashItemAction(i, firstRun) {
+			if b.stashItemAction(i, matchedRule, ruleFile, firstRun) {
 				r, res := b.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 
 				if res != nip.RuleResultFullMatch && firstRun {
@@ -152,39 +156,39 @@ func (b *Builder) stashInventory(d game.Data, firstRun bool) {
 	}
 }
 
-func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) bool {
+func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) (bool, string, string) {
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := b.ch.(LevelingCharacter); isLevelingChar && i.IsFromQuest() {
-		return false
+		return false, "", ""
 	}
 
 	// Don't stash the Tomes, keys and WirtsLeg
 	if i.Name == item.TomeOfTownPortal || i.Name == item.TomeOfIdentify || i.Name == item.Key || i.Name == "WirtsLeg" {
-		return false
+		return false, "", ""
 	}
 
 	if i.Position.Y >= len(b.CharacterCfg.Inventory.InventoryLock) || i.Position.X >= len(b.CharacterCfg.Inventory.InventoryLock[0]) {
-		return false
+		return false, "", ""
 	}
 
 	if i.Location.LocationType == item.LocationInventory && b.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 || i.IsPotion() {
-		return false
+		return false, "", ""
 	}
 
 	// Let's stash everything during first run, we don't want to sell items from the user
 	if firstRun {
-		return true
+		return true, "FirstRun", ""
 	}
 
 	rule, res := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 	if res == nip.RuleResultFullMatch && b.doesExceedQuantity(i, rule, d) {
-		return false
+		return false, "", ""
 	}
 
-	return true
+	return true, rule.RawLine, rule.Filename + ":" + strconv.Itoa(rule.LineNumber)
 }
 
-func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
+func (b *Builder) stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) bool {
 	screenPos := b.UIManager.GetScreenCoordsForItem(i)
 	b.HID.MovePointer(screenPos.X, screenPos.Y)
 	helper.Sleep(170)
@@ -202,11 +206,9 @@ func (b *Builder) stashItemAction(i data.Item, firstRun bool) bool {
 
 	// Don't log items that we already have in inventory during first run
 	if !firstRun {
-		event.Send(event.ItemStashed(event.WithScreenshot(b.Supervisor, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), i))
-
-		//Append the drop to the drop list
-		b.CharacterCfg.Runtime.Drops = append(b.CharacterCfg.Runtime.Drops, i)
+		event.Send(event.ItemStashed(event.WithScreenshot(b.Supervisor, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
 	}
+
 	return true
 }
 
