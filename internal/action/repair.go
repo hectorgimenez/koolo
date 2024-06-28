@@ -19,7 +19,7 @@ func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		for _, i := range d.Inventory.ByLocation(item.LocationEquipped) {
 			du, found := i.FindStat(stat.Durability, 0)
-			if _, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0); maxDurabilityFound && !found || (found && du.Value <= 1) {
+			if _, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0); maxDurabilityFound && !found || (found && du.Value <= 5) {
 				b.Logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))
 				repairNPC := town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()
 				if repairNPC == npc.Hratli {
@@ -51,4 +51,26 @@ func (b *Builder) Repair() *Chain {
 
 		return nil
 	})
+}
+
+func (b *Builder) RepairRequired() bool {
+
+	gameData := b.Container.Reader.GetData(false)
+
+	for _, i := range gameData.Inventory.ByLocation(item.LocationEquipped) {
+		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
+		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+
+		// If we don't find the stats just return false
+		if !currentDurabilityFound || !maxDurabilityFound {
+			return false
+		}
+
+		// Let's check if the item requires repair plus a few fail-safes
+		if currentDurability.Value <= 5 && maxDurability.Value > currentDurability.Value && !i.Ethereal {
+			return true
+		}
+	}
+
+	return false
 }
