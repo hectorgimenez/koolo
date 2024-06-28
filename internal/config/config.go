@@ -84,6 +84,9 @@ type CharacterCfg struct {
 		UseTeleport   bool   `yaml:"useTeleport"`
 	} `yaml:"character"`
 	Game struct {
+		CreateOnlineGames      bool                  `yaml:"createOnlineGames"`
+		OnlineGameNameTemplate string                `yaml:"onlineGameNameTemplate"`
+		OnlineGamePassowrd     string                `yaml:"onlineGamePassword"`
 		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
 		ClearTPArea            bool                  `yaml:"clearTPArea"`
 		Difficulty             difficulty.Difficulty `yaml:"difficulty"`

@@ -226,15 +226,21 @@
             </fieldset>
             <h4>Game</h4>
             <label>
-                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
-                Always stash to shared tab
+                <input type="checkbox" name="createOnlineGames" {{ if .Config.Game.CreateOnlineGames }}checked{{ end }}/>
+                Create Online Games (Through Lobby)
             </label>
-            <label>
-                Minimum gold to pickup
-                <input min="0" type="number" name="gameMinGoldPickupThreshold"
-                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
-                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
-            </label>
+            <fieldset class="grid">
+                <label>
+                    Game name pattern
+                    <input name="onlineGameNameTemplate" placeholder="{{ .Config.Game.OnlineGameNameTemplate }}"
+                           value="{{ .Config.Game.OnlineGameNameTemplate }}"/>
+                </label>
+                <label>
+                    Game Password (leave blank for public games)
+                    <input name="onlineGamePassword" placeholder="{{ .Config.Game.OnlineGamePassowrd }}"
+                           value="{{ .Config.Game.OnlineGamePassowrd }}"/>
+                </label>
+            </fieldset>
             <label>
                 Difficulty
                 <select name="gameDifficulty">
@@ -248,6 +254,16 @@
                     "hell" }}selected{{ end }}>Hell
                     </option>
                 </select>
+            </label>
+            <label>
+                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
+                Always stash to shared tab
+            </label>
+            <label>
+                Minimum gold to pickup
+                <input min="0" type="number" name="gameMinGoldPickupThreshold"
+                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
+                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
             </label>
             <label>
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>

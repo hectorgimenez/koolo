@@ -42,6 +42,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 	}
 
 	firstRun := true
+	var gameCounter int
 	for {
 		select {
 		case <-ctx.Done():
@@ -54,9 +55,19 @@ func (s *SinglePlayerSupervisor) Start() error {
 				}
 			}
 			if !s.c.Manager.InGame() {
-				if err = s.c.Manager.NewGame(); err != nil {
-					s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-					continue
+
+				if s.c.CharacterCfg.Game.CreateOnlineGames {
+					// I know this will also increase it from 0 to 1 the first time, who does a run with 0 lol
+					gameCounter++
+					if _, err = s.c.Manager.CreateOnlineGame(gameCounter); err != nil {
+						s.c.Logger.Error(fmt.Sprintf("Error creating Online Game: %s", err.Error()))
+						continue
+					}
+				} else {
+					if err = s.c.Manager.NewGame(); err != nil {
+						s.c.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+						continue
+					}
 				}
 			}
 
