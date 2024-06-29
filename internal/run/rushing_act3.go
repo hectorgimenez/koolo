@@ -157,7 +157,7 @@ func (a Rushing) getKhalimsHeart() action.Action {
 func (a Rushing) retrieveBookQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
-			a.builder.WayPoint(area.UpperKurast),
+			a.builder.WayPoint(area.KurastBazaar),
 			a.builder.OpenTP(),
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.RuinedTemple),
