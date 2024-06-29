@@ -8,9 +8,11 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/lxn/win"
 )
 
 func (a Rushing) rushAct5() action.Action {
@@ -117,26 +119,62 @@ func (a Rushing) rescueAnyaQuest() action.Action {
 	})
 }
 
+// this one works a bit funky ... sometimes it clicks the altar and sometimes it doesnt.
+// func (a Rushing) killAncientsQuest() action.Action {
+// 	return action.NewChain(func(d game.Data) []action.Action {
+// 		return []action.Action{
+// 			a.builder.WayPoint(area.TheAncientsWay),
+// 			a.builder.Buff(),
+// 			a.builder.MoveToArea(area.ArreatSummit),
+// 			a.builder.OpenTP(),
+// 			// a.waitForParty(d),
+// 			a.builder.Buff(),
+// 			a.builder.InteractObject(object.AncientsAltar, func(d game.Data) bool {
+// 				helper.Sleep(2000)
+// 				a.HID.Click(game.LeftButton, 720, 260)
+// 				helper.Sleep(2000)
+// 				if len(d.Monsters.Enemies()) > 0 {
+// 					return true
+// 				}
+// 				return false
+// 			}),
+// 			a.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
+// 			a.builder.ReturnTown(),
+// 		}
+// 	})
+// }
+
+// This function works very smooth but depends on static wait times.
 func (a Rushing) killAncientsQuest() action.Action {
+	var ancientsAltar = data.Position{
+		X: 10049,
+		Y: 12623,
+	}
+
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.TheAncientsWay),
-
+			a.builder.OpenTP(),
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.ArreatSummit),
 			a.builder.OpenTP(),
 			a.waitForParty(),
 			a.builder.Buff(),
+			a.builder.MoveToCoords(ancientsAltar),
 
-			a.builder.InteractObject(object.AncientsAltar, func(d game.Data) bool {
-				if len(d.Monsters.Enemies()) > 0 {
-					return true
+			action.NewStepChain(func(d game.Data) []step.Step {
+				return []step.Step{
+					step.SyncStep(func(g game.Data) error {
+						helper.Sleep(1000)
+						a.HID.Click(game.LeftButton, 720, 260)
+						helper.Sleep(1000)
+						a.HID.PressKey(win.VK_RETURN)
+						helper.Sleep(2000)
+						return nil
+					}),
 				}
-				helper.Sleep(1000)
-				a.HID.Click(game.LeftButton, 300, 300)
-				helper.Sleep(1000)
-				return false
 			}),
+
 			a.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
 			a.builder.ReturnTown(),
 		}
