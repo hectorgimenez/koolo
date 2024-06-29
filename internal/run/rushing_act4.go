@@ -24,22 +24,51 @@ func (a Rushing) rushAct4() action.Action {
 
 		running = true
 
-		if a.CharacterCfg.Game.Rushing.GiveWPs {
-			return []action.Action{
-				a.builder.VendorRefill(true, false),
-				a.GiveAct4WPs(),
-				a.killIzualQuest(),
-				a.killDiabloQuest(),
-			}
+		actions := []action.Action{
+			a.builder.VendorRefill(true, false),
 		}
 
-		return []action.Action{
-			a.builder.VendorRefill(true, false),
-			a.killIzualQuest(),
-			a.killDiabloQuest(),
+		if a.CharacterCfg.Game.Rushing.GiveWPsA4 {
+			actions = append(actions, a.GiveAct4WPs())
 		}
+
+		if a.CharacterCfg.Game.Rushing.KillIzual {
+			actions = append(actions, a.killIzualQuest())
+		}
+
+		actions = append(actions,
+			a.killDiabloQuest(),
+		)
+
+		return actions
 	})
 }
+
+// func (a Rushing) rushAct4() action.Action {
+// 	running := false
+// 	return action.NewChain(func(d game.Data) []action.Action {
+// 		if running || d.PlayerUnit.Area != area.ThePandemoniumFortress {
+// 			return nil
+// 		}
+
+// 		running = true
+
+// 		if a.CharacterCfg.Game.Rushing.GiveWPs {
+// 			return []action.Action{
+// 				a.builder.VendorRefill(true, false),
+// 				a.GiveAct4WPs(),
+// 				a.killIzualQuest(),
+// 				a.killDiabloQuest(),
+// 			}
+// 		}
+
+// 		return []action.Action{
+// 			a.builder.VendorRefill(true, false),
+// 			a.killIzualQuest(),
+// 			a.killDiabloQuest(),
+// 		}
+// 	})
+// }
 
 func (a Rushing) GiveAct4WPs() action.Action {
 	areas := []area.ID{
@@ -68,7 +97,7 @@ func (a Rushing) killIzualQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.MoveToArea(area.OuterSteppes),
-			a.builder.Buff(),	
+			a.builder.Buff(),
 			a.builder.MoveToArea(area.PlainsOfDespair),
 
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
@@ -79,7 +108,7 @@ func (a Rushing) killIzualQuest() action.Action {
 			}, step.StopAtDistance(50)),
 
 			a.builder.OpenTP(),
-			// a.waitForParty(d),
+			a.waitForParty(),
 			a.char.KillIzual(),
 			a.builder.ReturnTown(),
 		}
@@ -214,11 +243,11 @@ func (a Rushing) killDiabloQuest() action.Action {
 				Y: 5252,
 			}),
 			a.builder.OpenTP(),
-			// a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.Buff(),
 			a.builder.MoveToCoords(diabloSpawnPosition),
 			a.char.KillDiablo(),
-			a.builder.ReturnTown(),			
+			a.builder.ReturnTown(),
 			a.builder.WayPoint(area.Harrogath),
 		)
 
@@ -274,48 +303,4 @@ func (a Rushing) getLessConcurredCornerAroundSeal(d game.Data, sealPosition data
 	a.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("monsters", bestCornerDistance))
 
 	return corners[bestCorner]
-}
-
-func (a Rushing) generateClearActions(positions []data.Position, filter data.MonsterFilter) []action.Action {
-	var actions []action.Action
-	var maxPosDiff = 20
-
-	for _, pos := range positions {
-		actions = append(actions,
-			action.NewChain(func(d game.Data) []action.Action {
-				multiplier := 1
-
-				if pather.IsWalkable(pos, d.AreaOrigin, d.CollisionGrid) {
-					return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
-				}
-
-				for _ = range 2 {
-					for i := 1; i < maxPosDiff; i++ {
-
-						newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
-
-						if pather.IsWalkable(newPos, d.AreaOrigin, d.CollisionGrid) {
-							return []action.Action{a.builder.MoveToCoordsWithMinDistance(newPos, 30)}
-						}
-
-					}
-
-					multiplier *= -1
-				}
-
-				return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
-			}),
-			a.builder.ClearAreaAroundPlayer(35, data.MonsterAnyFilter()),
-			a.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
-				var monsters []data.Monster
-
-				monsters = filter(m)
-				monsters = skipStormCasterFilter(monsters)
-
-				return monsters
-			}),
-			a.builder.ItemPickup(false, 35),
-		)
-	}
-	return actions
 }
