@@ -21,28 +21,27 @@ func (a Rushing) rushAct2() action.Action {
 
 		running = true
 
-		if a.CharacterCfg.Game.Rushing.GiveWPs {
-			return []action.Action{
-				a.builder.VendorRefill(true, false),
-				a.GiveAct2WPs(),
-				a.killRadamentQuest(),
-				a.getHoradricCube(),
-				a.getStaff(),
-				a.getAmulet(),
-				a.killSummonerQuest(),
-				a.killDurielQuest(),
-			}
+		actions := []action.Action{
+			a.builder.VendorRefill(true, true),
 		}
 
-		return []action.Action{
-			a.builder.VendorRefill(true, false),
-			a.killRadamentQuest(),
+		if a.CharacterCfg.Game.Rushing.GiveWPsA2 {
+			actions = append(actions, a.GiveAct2WPs())
+		}
+
+		if a.CharacterCfg.Game.Rushing.KillRadament {
+			actions = append(actions, a.killRadamentQuest())
+		}
+
+		actions = append(actions,
 			a.getHoradricCube(),
 			a.getStaff(),
 			a.getAmulet(),
 			a.killSummonerQuest(),
 			a.killDurielQuest(),
-		}
+		)
+
+		return actions
 	})
 }
 
@@ -90,7 +89,7 @@ func (a Rushing) killRadamentQuest() action.Action {
 				return data.Position{}, false
 			}, step.StopAtDistance(50)),
 			a.builder.OpenTP(),
-			//			a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
 			a.builder.ReturnTown(),
 		}
@@ -101,6 +100,7 @@ func (a Rushing) getHoradricCube() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.HallsOfTheDeadLevel2),
+			a.builder.OpenTP(),
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.HallsOfTheDeadLevel3),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
@@ -111,7 +111,7 @@ func (a Rushing) getHoradricCube() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			//			a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -121,6 +121,7 @@ func (a Rushing) getStaff() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.FarOasis),
+			a.builder.OpenTP(),
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.MaggotLairLevel1),
 			a.builder.MoveToArea(area.MaggotLairLevel2),
@@ -133,7 +134,7 @@ func (a Rushing) getStaff() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			//			a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -143,6 +144,7 @@ func (a Rushing) getAmulet() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.LostCity),
+			a.builder.OpenTP(),
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.ValleyOfSnakes),
 			a.builder.MoveToArea(area.ClawViperTempleLevel1),
@@ -155,7 +157,7 @@ func (a Rushing) getAmulet() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			//			a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -176,7 +178,7 @@ func (a Rushing) killSummonerQuest() action.Action {
 			}, step.StopAtDistance(80)),
 
 			a.builder.OpenTP(),
-			//			a.waitForParty(d),
+			a.waitForParty(),
 			a.char.KillSummoner(),
 			a.builder.ReturnTown(),
 		}
@@ -218,7 +220,7 @@ func (a Rushing) killDurielQuest() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			// a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.Buff(),
 		)
 
