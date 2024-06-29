@@ -26,7 +26,7 @@ func (b *Builder) Repair() *Chain {
 			// Calculate Durability percent
 			durabilityPercent := (durability.Value / maxDurability.Value) * 100
 
-			if maxDurabilityFound && !found || found && durabilityPercent <= 10 {
+			if maxDurabilityFound && !found || found && durabilityPercent <= 20 {
 
 				b.Logger.Info(fmt.Sprintf("Repairing %s, item durability is %d percent", i.Name, durabilityPercent))
 
@@ -85,7 +85,7 @@ func (b *Builder) RepairRequired() bool {
 		durabilityPercent := (currentDurability.Value / maxDurability.Value) * 100
 
 		// Let's check if the item requires repair plus a few fail-safes
-		if durabilityPercent <= 10 && maxDurability.Value > currentDurability.Value && !i.Ethereal {
+		if durabilityPercent <= 20 && maxDurability.Value > currentDurability.Value && !i.Ethereal {
 			return true
 		}
 	}
