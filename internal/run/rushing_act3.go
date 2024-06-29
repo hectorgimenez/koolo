@@ -5,7 +5,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/object"	
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -18,27 +18,31 @@ func (a Rushing) rushAct3() action.Action {
 		}
 
 		running = true
-		
-		if a.CharacterCfg.Game.Rushing.GiveWPs {
-			return []action.Action{
-				a.builder.VendorRefill(true, false),
-				a.GiveAct3WPs(),
-				a.getKhalimsEye(),
-				a.getKhalimsBrain(),
-				a.getKhalimsHeart(),
-				a.killCouncilQuest(),
-				a.killMephistoQuest(),	
-			}
+
+		actions := []action.Action{
+			a.builder.VendorRefill(true, true),
 		}
-		
-		return []action.Action{
-			a.builder.VendorRefill(true, false),
+
+		if a.CharacterCfg.Game.Rushing.GiveWPsA3 {
+			actions = append(actions, a.GiveAct3WPs())
+		}
+
+		actions = append(actions,
 			a.getKhalimsEye(),
 			a.getKhalimsBrain(),
 			a.getKhalimsHeart(),
-			a.killCouncilQuest(),
-			a.killMephistoQuest(),			
+		)
+
+		if a.CharacterCfg.Game.Rushing.RetrieveBook {
+			actions = append(actions, a.retrieveBookQuest())
 		}
+
+		actions = append(actions,
+			a.killCouncilQuest(),
+			a.killMephistoQuest(),
+		)
+
+		return actions
 	})
 }
 
@@ -74,17 +78,17 @@ func (a Rushing) getKhalimsEye() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.SpiderForest),
-			a.builder.Buff(),				
+			a.builder.OpenTP(),
+			a.builder.Buff(),
 			a.builder.MoveToArea(area.SpiderCavern),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-				a.logger.Info("Khalm Chest found, moving to that room")
 				chest, found := d.Objects.FindOne(object.KhalimChest3)
 
 				return chest.Position, found
 			}),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			a.builder.ClearAreaAroundPlayer(25, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -94,19 +98,19 @@ func (a Rushing) getKhalimsBrain() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.FlayerJungle),
-			a.builder.Buff(),				
+			a.builder.OpenTP(),
+			a.builder.Buff(),
 			a.builder.MoveToArea(area.FlayerDungeonLevel1),
 			a.builder.MoveToArea(area.FlayerDungeonLevel2),
 			a.builder.MoveToArea(area.FlayerDungeonLevel3),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-				a.logger.Info("Khalm Chest found, moving to that room")
 				chest, found := d.Objects.FindOne(object.KhalimChest2)
 
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),
+			a.waitForParty(),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -116,7 +120,8 @@ func (a Rushing) getKhalimsHeart() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.KurastBazaar),
-			a.builder.Buff(),	
+			a.builder.OpenTP(),
+			a.builder.Buff(),
 			a.builder.MoveToArea(area.SewersLevel1Act3),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, l := range d.AdjacentLevels {
@@ -138,12 +143,36 @@ func (a Rushing) getKhalimsHeart() action.Action {
 			}),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				chest, found := d.Objects.FindOne(object.KhalimChest1)
-	
+
 				return chest.Position, found
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),
+			a.waitForParty(),
+			a.builder.ReturnTown(),
+		}
+	})
+}
+
+func (a Rushing) retrieveBookQuest() action.Action {
+	return action.NewChain(func(d game.Data) []action.Action {
+		return []action.Action{
+			a.builder.WayPoint(area.UpperKurast),
+			a.builder.OpenTP(),
+			a.builder.Buff(),
+			a.builder.MoveToArea(area.RuinedTemple),
+			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+				for _, o := range d.Objects {
+					if o.Name == object.LamEsensTome {
+						return o.Position, true
+					}
+				}
+
+				return data.Position{}, false
+			}),
+			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			a.builder.OpenTP(),
+			a.waitForParty(),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -152,10 +181,10 @@ func (a Rushing) getKhalimsHeart() action.Action {
 func (a Rushing) killCouncilQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
-			a.builder.WayPoint(area.Travincal), // Moving to starting point (Travincal)
+			a.builder.WayPoint(area.Travincal),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),			
-			a.builder.Buff(),				
+			a.waitForParty(),
+			a.builder.Buff(),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, al := range d.AdjacentLevels {
 					if al.Area == area.DuranceOfHateLevel1 {
@@ -183,18 +212,18 @@ func (a Rushing) killMephistoQuest() action.Action {
 		X: 17568,
 		Y: 8069,
 	}
-	
+
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.DuranceOfHateLevel2),
 			a.builder.OpenTP(),
 			a.builder.MoveToArea(area.DuranceOfHateLevel3),
 			a.builder.MoveToCoords(mephistoSafePosition),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),			
+			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-//			a.waitForParty(d),			
-			a.builder.Buff(),	
-			a.builder.MoveToCoords(mephistoPosition),			
+			a.waitForParty(),
+			a.builder.Buff(),
+			a.builder.MoveToCoords(mephistoPosition),
 			a.char.KillMephisto(),
 			a.builder.InteractObject(object.HellGate, func(d game.Data) bool {
 				return d.PlayerUnit.Area == area.ThePandemoniumFortress
