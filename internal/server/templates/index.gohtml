@@ -577,6 +577,7 @@
                 <h4>${runName}</h4>
                 <p><span class="stat-label">Fastest Run:</span> <span class="stat-value">${formatDuration(stats.shortestTime)}</span></p>
                 <p><span class="stat-label">Slowest Run:</span> <span class="stat-value">${formatDuration(stats.longestTime)}</span></p>
+                <p><span class="stat-label">Average Run:</span> <span class="stat-value">${formatDuration(stats.averageTime)}</span></p>
                 <p><span class="stat-label">Errors:</span> <span class="stat-value">${stats.errorCount}</span></p>
                 <p><span class="stat-label">Total runs:</span> <span class="stat-value">${stats.runCount}</span></p>
             `;
@@ -597,14 +598,26 @@
             if (game.Runs && Array.isArray(game.Runs)) {
                 game.Runs.forEach(run => {
                     if (!runStats[run.Name]) {
-                        runStats[run.Name] = { shortestTime: Infinity, longestTime: 0, errorCount: 0, runCount: 0 };
+                        runStats[run.Name] = { 
+                            shortestTime: Infinity, 
+                            longestTime: 0, 
+                            totalTime: 0,
+                            errorCount: 0, 
+                            runCount: 0,
+                            successfulRunCount: 0
+                        };
                     }
 
                     const runTime = new Date(run.FinishedAt) - new Date(run.StartedAt);
                     if (run.FinishedAt !== "0001-01-01T00:00:00Z" && runTime > 0) {
-                        runStats[run.Name].shortestTime = Math.min(runStats[run.Name].shortestTime, runTime);
-                        runStats[run.Name].longestTime = Math.max(runStats[run.Name].longestTime, runTime);
                         runStats[run.Name].runCount++;
+
+                        if (run.Reason === 'ok') {
+                            runStats[run.Name].shortestTime = Math.min(runStats[run.Name].shortestTime, runTime);
+                            runStats[run.Name].longestTime = Math.max(runStats[run.Name].longestTime, runTime);
+                            runStats[run.Name].totalTime += runTime;
+                            runStats[run.Name].successfulRunCount++;
+                        }
                     }
 
                     if (run.Reason !== 'ok' && run.Reason !== '') {
@@ -613,6 +626,17 @@
                 });
             }
         });
+
+        // Calculate average time for successful runs
+        for (const stats of Object.values(runStats)) {
+            if (stats.successfulRunCount > 0) {
+                stats.averageTime = stats.totalTime / stats.successfulRunCount;
+            } else {
+                stats.shortestTime = 0;
+                stats.longestTime = 0;
+                stats.averageTime = 0;
+            }
+        }
 
         return runStats;
     }
