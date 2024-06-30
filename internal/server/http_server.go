@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -29,6 +30,7 @@ type HttpServer struct {
 	server    *http.Server
 	manager   *koolo.SupervisorManager
 	templates *template.Template
+	wsServer  *WebSocketServer
 }
 
 var (
@@ -36,7 +38,128 @@ var (
 	assetsFS embed.FS
 	//go:embed all:templates
 	templatesFS embed.FS
+
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 )
+
+type Client struct {
+	conn *websocket.Conn
+	send chan []byte
+}
+
+type WebSocketServer struct {
+	clients    map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
+	unregister chan *Client
+}
+
+func NewWebSocketServer() *WebSocketServer {
+	return &WebSocketServer{
+		clients:    make(map[*Client]bool),
+		broadcast:  make(chan []byte),
+		register:   make(chan *Client),
+		unregister: make(chan *Client),
+	}
+}
+
+func (s *WebSocketServer) Run() {
+	for {
+		select {
+		case client := <-s.register:
+			s.clients[client] = true
+		case client := <-s.unregister:
+			if _, ok := s.clients[client]; ok {
+				delete(s.clients, client)
+				close(client.send)
+			}
+		case message := <-s.broadcast:
+			for client := range s.clients {
+				select {
+				case client.send <- message:
+				default:
+					close(client.send)
+					delete(s.clients, client)
+				}
+			}
+		}
+	}
+}
+
+func (s *WebSocketServer) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		slog.Error("Failed to upgrade connection to WebSocket", "error", err)
+		return
+	}
+
+	client := &Client{conn: conn, send: make(chan []byte, 256)}
+	s.register <- client
+
+	go s.writePump(client)
+	go s.readPump(client)
+}
+
+func (s *WebSocketServer) writePump(client *Client) {
+	defer func() {
+		client.conn.Close()
+	}()
+
+	for {
+		select {
+		case message, ok := <-client.send:
+			if !ok {
+				client.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			w, err := client.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+
+			if err := w.Close(); err != nil {
+				return
+			}
+		}
+	}
+}
+
+func (s *WebSocketServer) readPump(client *Client) {
+	defer func() {
+		s.unregister <- client
+		client.conn.Close()
+	}()
+
+	for {
+		_, _, err := client.conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				slog.Error("WebSocket read error", "error", err)
+			}
+			break
+		}
+	}
+}
+
+func (s *HttpServer) BroadcastStatus() {
+	for {
+		data := s.getStatusData()
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			slog.Error("Failed to marshal status data", "error", err)
+			continue
+		}
+
+		s.wsServer.broadcast <- jsonData
+		time.Sleep(1 * time.Second)
+	}
+}
 
 func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, error) {
 	var templates *template.Template
@@ -107,7 +230,37 @@ func containss(slice []string, item string) bool {
 	return false
 }
 
+func (s *HttpServer) initialData(w http.ResponseWriter, r *http.Request) {
+	data := s.getStatusData()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
+func (s *HttpServer) getStatusData() IndexData {
+	status := make(map[string]koolo.Stats)
+	drops := make(map[string]int)
+
+	for _, supervisorName := range s.manager.AvailableSupervisors() {
+		status[supervisorName] = s.manager.Status(supervisorName)
+		if s.manager.GetSupervisorStats(supervisorName).Drops != nil {
+			drops[supervisorName] = len(s.manager.GetSupervisorStats(supervisorName).Drops)
+		} else {
+			drops[supervisorName] = 0
+		}
+	}
+
+	return IndexData{
+		Version:   config.Version,
+		Status:    status,
+		DropCount: drops,
+	}
+}
+
 func (s *HttpServer) Listen(port int) error {
+	s.wsServer = NewWebSocketServer()
+	go s.wsServer.Run()
+	go s.BroadcastStatus()
+
 	http.HandleFunc("/", s.getRoot)
 	http.HandleFunc("/config", s.config)
 	http.HandleFunc("/supervisorSettings", s.characterSettings)
@@ -117,6 +270,8 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/debug", s.debugHandler)
 	http.HandleFunc("/debug-data", s.debugData)
 	http.HandleFunc("/drops", s.drops)
+	http.HandleFunc("/ws", s.wsServer.HandleWebSocket) // Web socket
+	http.HandleFunc("/initial-data", s.initialData)    // Web socket data
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -175,17 +330,17 @@ func (s *HttpServer) debugHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 	s.manager.Start(r.URL.Query().Get("characterName"))
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	s.initialData(w, r)
 }
 
 func (s *HttpServer) stopSupervisor(w http.ResponseWriter, r *http.Request) {
 	s.manager.Stop(r.URL.Query().Get("characterName"))
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	s.initialData(w, r)
 }
 
 func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 	s.manager.TogglePause(r.URL.Query().Get("characterName"))
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	s.initialData(w, r)
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
