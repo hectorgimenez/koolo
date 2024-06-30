@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/event"
 	"log/slog"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/event"
 )
 
 const (
@@ -77,7 +78,11 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].FinishedAt = evt.OccurredAt()
 		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Reason = evt.Reason
 	case event.ItemStashedEvent:
-		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Items = append(h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Items, evt.Item)
+		// The hell is this Hector o.O
+		//h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Items = append(h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Items, evt.Item)
+
+		// Ain't this much easier?
+		h.stats.Drops = append(h.stats.Drops, evt.Item)
 	case event.UsedPotionEvent:
 		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].UsedPotions = append(h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].UsedPotions, evt)
 	}
@@ -154,6 +159,7 @@ type Stats struct {
 	StartedAt        time.Time
 	SupervisorStatus SupervisorStatus
 	Details          string
+	Drops            []data.Drop
 	Games            []GameStats
 }
 

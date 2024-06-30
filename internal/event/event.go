@@ -1,9 +1,10 @@
 package event
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"image"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
 const (
@@ -124,13 +125,13 @@ func RunFinished(be BaseEvent, runName string, reason FinishReason) RunFinishedE
 
 type ItemStashedEvent struct {
 	BaseEvent
-	Item data.Item
+	Item data.Drop
 }
 
-func ItemStashed(be BaseEvent, item data.Item) ItemStashedEvent {
+func ItemStashed(be BaseEvent, drop data.Drop) ItemStashedEvent {
 	return ItemStashedEvent{
 		BaseEvent: be,
-		Item:      item,
+		Item:      drop,
 	}
 }
 
