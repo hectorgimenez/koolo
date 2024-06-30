@@ -16,7 +16,7 @@ type IndexData struct {
 type DropData struct {
 	NumberOfDrops int
 	Character     string
-	Drops         []data.Item
+	Drops         []data.Drop
 }
 
 type CharacterSettings struct {

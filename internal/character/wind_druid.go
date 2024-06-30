@@ -117,23 +117,33 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	wolves := 5
 	direWolves := 3
 	needsOak := true
+	needsCreeper := true
 
-	// Broken for now
-	//for _, summon := range d.NPCs {
-	//	if summon.ID == npc.DruBear {
-	//		du.logger.Info("found bear")
-	//		needsBear = false
-	//	}
-	//	if summon.ID == npc.DruFenris {
-	//		du.logger.Info("found wolf")
-	//		direWolves--
-	//	}
-	//	if summon.ID == npc.DruSpiritWolf {
-	//		du.logger.Info("found spirit wolf")
-	//		wolves--
-	//	}
-	//	du.logger.Info("npc name : ", summon.Name)
-	//}
+	for _, monster := range d.Monsters {
+		if monster.IsPet() {
+			if monster.Name == npc.DruBear {
+				needsBear = false
+			}
+			if monster.Name == npc.DruFenris {
+				direWolves--
+			}
+			if monster.Name == npc.DruSpiritWolf {
+				wolves--
+			}
+			if monster.Name == npc.OakSage {
+				needsOak = false
+			}
+			if monster.Name == npc.DruCycleOfLife {
+				needsCreeper = false
+			}
+			if monster.Name == npc.VineCreature {
+				needsCreeper = false
+			}
+			if monster.Name == npc.DruPlaguePoppy {
+				needsCreeper = false
+			}
+		}
+	}
 
 	if d.PlayerUnit.States.HasState(state.Oaksage) {
 		needsOak = false
@@ -143,6 +153,9 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	_, foundWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonSpiritWolf)
 	_, foundBear := d.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
 	_, foundOak := d.KeyBindings.KeyBindingForSkill(skill.OakSage)
+	_, foundSolarCreeper := d.KeyBindings.KeyBindingForSkill(skill.SolarCreeper)
+	_, foundCarrionCreeper := d.KeyBindings.KeyBindingForSkill(skill.CarrionVine)
+	_, foundPoisonCreeper := d.KeyBindings.KeyBindingForSkill(skill.PoisonCreeper)
 
 	if foundWolf {
 		for i := 0; i < wolves; i++ {
@@ -159,6 +172,15 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	}
 	if foundOak && needsOak {
 		skills = append(skills, skill.OakSage)
+	}
+	if foundSolarCreeper && needsCreeper {
+		skills = append(skills, skill.SolarCreeper)
+	}
+	if foundCarrionCreeper && needsCreeper {
+		skills = append(skills, skill.CarrionVine)
+	}
+	if foundPoisonCreeper && needsCreeper {
+		skills = append(skills, skill.PoisonCreeper)
 	}
 
 	return skills

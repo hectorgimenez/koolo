@@ -174,6 +174,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		EventListener: mng.eventListener,
 		UIManager:     ui.NewManager(gr),
 	}
+
 	sm := town.NewShopManager(logger, bm, c)
 
 	char, err := character.BuildCharacter(logger, c)
@@ -193,6 +194,13 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	}
 
 	return NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, c)
+}
+
+func (mng *SupervisorManager) GetSupervisorStats(supervisor string) Stats {
+	if mng.supervisors[supervisor] == nil {
+		return Stats{}
+	}
+	return mng.supervisors[supervisor].Stats()
 }
 
 func (mng *SupervisorManager) rearrangeWindows() {
