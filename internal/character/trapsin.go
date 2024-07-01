@@ -17,8 +17,8 @@ import (
 
 const (
 	maxAttacksLoop = 5
-	minDistance    = 2
-	maxDistance    = 6
+	minDistance    = 25
+	maxDistance    = 30
 )
 
 type Trapsin struct {
