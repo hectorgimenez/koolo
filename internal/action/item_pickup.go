@@ -126,6 +126,10 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 }
 
 func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
+	if i.IsRuneword {
+		return true
+	}
+
 	// Skip picking up gold if we can not carry more
 	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
 	if gold.Value >= d.PlayerUnit.MaxGold() {
