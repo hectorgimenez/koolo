@@ -162,9 +162,10 @@ type CharacterCfg struct {
 		EnabledRecipes []string `yaml:"enabledRecipes"`
 	} `yaml:"cubing"`
 	BackToTown struct {
-		NoHpPotions bool `yaml:"noHpPotions"`
-		NoMpPotions bool `yaml:"noMpPotions"`
-		MercDied    bool `yaml:"mercDied"`
+		NoHpPotions     bool `yaml:"noHpPotions"`
+		NoMpPotions     bool `yaml:"noMpPotions"`
+		MercDied        bool `yaml:"mercDied"`
+		EquipmentBroken bool `yaml:"equipmentBroken"`
 	} `yaml:"backtotown"`
 	Runtime struct {
 		Rules nip.Rules   `yaml:"-"`

@@ -347,6 +347,10 @@
                 <input id="merc_died" type="checkbox" name="mercDied" {{ if .Config.BackToTown.MercDied }}checked{{ end }}/>
                 Mercenary is dead
                 </label>
+                <label>
+                <input id="equip_broken" type="checkbox" name="equipmentBroken" {{ if .Config.BackToTown.EquipmentBroken }}checked{{ end }}/>
+                Equipment Broken
+                </label>
             </fieldset>
             <fieldset class="grid">
                 <a href="/"><input type="button" value="Cancel" class="secondary"/></a>

@@ -18,18 +18,33 @@ import (
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		for _, i := range d.Inventory.ByLocation(item.LocationEquipped) {
-			du, found := i.FindStat(stat.Durability, 0)
-			if _, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0); maxDurabilityFound && !found || (found && du.Value <= 1) {
-				b.Logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))
+
+			// Get the durability stats
+			durability, found := i.FindStat(stat.Durability, 0)
+			maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+
+			// Calculate Durability percent
+			durabilityPercent := (durability.Value / maxDurability.Value) * 100
+
+			if maxDurabilityFound && !found || found && durabilityPercent <= 20 {
+
+				b.Logger.Info(fmt.Sprintf("Repairing %s, item durability is %d percent", i.Name, durabilityPercent))
+
+				// Get the repair NPC for the town
 				repairNPC := town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()
+
+				// Act3 repair NPC handling
 				if repairNPC == npc.Hratli {
 					actions = append(actions, b.MoveToCoords(data.Position{X: 5224, Y: 5045}))
 				}
+
 				keys := make([]byte, 0)
 				keys = append(keys, win.VK_HOME)
+
 				if repairNPC != npc.Halbu {
 					keys = append(keys, win.VK_DOWN)
 				}
+
 				keys = append(keys, win.VK_RETURN)
 
 				return append(actions, b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).RepairNPC(),
@@ -51,4 +66,29 @@ func (b *Builder) Repair() *Chain {
 
 		return nil
 	})
+}
+
+func (b *Builder) RepairRequired() bool {
+
+	gameData := b.Container.Reader.GetData(false)
+
+	for _, i := range gameData.Inventory.ByLocation(item.LocationEquipped) {
+		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
+		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+
+		// If we don't find the stats just continue
+		if !currentDurabilityFound || !maxDurabilityFound {
+			continue
+		}
+
+		// Let's calculate the durability percentage
+		durabilityPercent := (currentDurability.Value / maxDurability.Value) * 100
+
+		// Let's check if the item requires repair plus a few fail-safes
+		if durabilityPercent <= 20 && maxDurability.Value > currentDurability.Value && !i.Ethereal {
+			return true
+		}
+	}
+
+	return false
 }
