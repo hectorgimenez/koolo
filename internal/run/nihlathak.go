@@ -44,39 +44,41 @@ func (a Nihlathak) BuildActions() (actions []action.Action) {
 	actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
 		corners := [4]data.Position{
 			{
-				X: nilaO.Position.X + 13,
-				Y: nilaO.Position.Y + 13,
+				X: nilaO.Position.X + 20,
+				Y: nilaO.Position.Y + 20,
 			},
 			{
-				X: nilaO.Position.X - 13,
-				Y: nilaO.Position.Y + 13,
+				X: nilaO.Position.X - 20,
+				Y: nilaO.Position.Y + 20,
 			},
 			{
-				X: nilaO.Position.X - 13,
-				Y: nilaO.Position.Y - 13,
+				X: nilaO.Position.X - 20,
+				Y: nilaO.Position.Y - 20,
 			},
 			{
-				X: nilaO.Position.X + 13,
-				Y: nilaO.Position.Y - 13,
+				X: nilaO.Position.X + 20,
+				Y: nilaO.Position.Y - 20,
 			},
 		}
 
 		bestCorner := 0
 		bestCornerDistance := 0
 		for i, c := range corners {
-			averageDistance := 0
-			for _, m := range d.Monsters.Enemies() {
-				averageDistance += pather.DistanceFromPoint(c, m.Position)
+			if pather.IsWalkable(c, d.PlayerUnit.Position, d.CollisionGrid) {
+				averageDistance := 0
+				for _, m := range d.Monsters.Enemies() {
+					averageDistance += pather.DistanceFromPoint(c, m.Position)
+				}
+				if averageDistance > bestCornerDistance {
+					bestCorner = i
+					bestCornerDistance = averageDistance
+				}
+				a.logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", len(d.Monsters.Enemies())), slog.Int("distance", averageDistance))
 			}
-			if averageDistance > bestCornerDistance {
-				bestCorner = i
-				bestCornerDistance = averageDistance
-			}
-			a.logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", len(d.Monsters.Enemies())), slog.Int("distance", averageDistance))
 		}
 
 		a.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("averageDistance", bestCornerDistance))
-		return []step.Step{step.MoveTo(corners[bestCorner])}
+		return []step.Step{step.MoveTo(corners[bestCorner], step.StopAtDistance(5))}
 	}))
 
 	// Kill Nihlathak
