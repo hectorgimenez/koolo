@@ -410,7 +410,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d game.Data)
 		// During early game stages amount of mana is ridiculous...
 		lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 		if d.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
-			steps = append(steps, step.PrimaryAttack(id, 1, step.Distance(1, 3)))
+			steps = append(steps, step.PrimaryAttack(id, 1, false, step.Distance(1, 3)))
 		} else {
 			if _, found := d.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
 				if completedAttackLoops%2 == 0 {
@@ -425,7 +425,7 @@ func (s SorceressLeveling) KillMonsterSequence(monsterSelector func(d game.Data)
 
 				steps = append(steps,
 					step.SecondaryAttack(skill.Blizzard, id, 1, step.Distance(25, 30)),
-					step.PrimaryAttack(id, 3, step.Distance(25, 30)),
+					step.PrimaryAttack(id, 3, false, step.Distance(25, 30)),
 				)
 			} else if _, found := d.KeyBindings.KeyBindingForSkill(skill.FireBall); found {
 				steps = append(steps, step.SecondaryAttack(skill.FireBall, id, 4, step.Distance(1, 25)))

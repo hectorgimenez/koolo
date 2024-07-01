@@ -16,7 +16,7 @@ type IndexData struct {
 type DropData struct {
 	NumberOfDrops int
 	Character     string
-	Drops         []data.Item
+	Drops         []data.Drop
 }
 
 type CharacterSettings struct {
@@ -26,6 +26,7 @@ type CharacterSettings struct {
 	EnabledRuns  []string
 	DisabledRuns []string
 	AvailableTZs map[int]string
+	RecipeList   []string
 }
 
 type ConfigData struct {

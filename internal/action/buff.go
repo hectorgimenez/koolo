@@ -134,6 +134,9 @@ func (b *Builder) IsRebuffRequired(d game.Data) bool {
 			if buff == skill.EnergyShield && !d.PlayerUnit.States.HasState(state.Energyshield) {
 				return true
 			}
+			if buff == skill.CycloneArmor && !d.PlayerUnit.States.HasState(state.Cyclonearmor) {
+				return true
+			}
 		}
 	}
 

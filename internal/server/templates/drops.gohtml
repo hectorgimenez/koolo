@@ -160,19 +160,22 @@
                     {{ range .Drops }}
                     <li class="item" onclick="toggleDetails(event)">
                         <div class="item-header">
-                            <span class="{{ .Quality.ToString | qualityClass }}">{{ .Name }}</span>
+                            <span class="{{ .Item.Quality.ToString | qualityClass }}">{{ .Item.Name }}</span>
                             <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
                         </div>
                         <div class="details">
-                            <p><strong>Quality:</strong> {{ .Quality.ToString }}</p>
-                            <p><strong>Ethereal:</strong> {{ if .Ethereal }}True{{ else }}False{{ end }}</p>
-                            <p><strong>Identified:</strong> {{ if .Identified }}True{{ else }}False{{ end }}</p>
+                            
+                            <p><strong>Quality:</strong> {{ .Item.Quality.ToString }}</p>
+                            <p><strong>Ethereal:</strong> {{ if .Item.Ethereal }}True{{ else }}False{{ end }}</p>
+                            <p><strong>Identified:</strong> {{ if .Item.Identified }}True{{ else }}False{{ end }}</p>
                             <p><strong>Stats:</strong></p>
                             <ul>
-                                {{ range .Stats }}
+                                {{ range .Item.Stats }}
                                 <li>{{ .ID | statIDToText }}: {{ .Value }}</li>
                                 {{ end }}
                             </ul>
+                            <p><strong>Matched Rule:</strong> {{ .Rule }}</p>
+                            <p><strong>Rule File:</strong> {{ .RuleFile }}</p>
                         </div>
                     </li>
                     {{ end }}

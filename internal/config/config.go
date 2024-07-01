@@ -51,19 +51,19 @@ type KooloCfg struct {
 }
 
 type CharacterCfg struct {
-	MaxGameLength     int    `yaml:"maxGameLength"`
-	Username          string `yaml:"username"`
-	Password          string `yaml:"password"`
-	Realm             string `yaml:"realm"`
-	CharacterName     string `yaml:"characterName"`
-	CommandLineArgs   string `yaml:"commandLineArgs"`
-	KillD2OnStop      bool   `yaml:"killD2OnStop"`
-	ClassicMode       bool   `yaml:"classicMode"`
-	CloseMiniPanel    bool   `yaml:"closeMiniPanel"`
-	EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
-	AuthMethod        string `yaml:"authMethod"`
-	BuffRefreshTime   int    `yaml:"buffRefreshTime"`
-	Health            struct {
+	MaxGameLength   int    `yaml:"maxGameLength"`
+	Username        string `yaml:"username"`
+	Password        string `yaml:"password"`
+	Realm           string `yaml:"realm"`
+	CharacterName   string `yaml:"characterName"`
+	CommandLineArgs string `yaml:"commandLineArgs"`
+	KillD2OnStop    bool   `yaml:"killD2OnStop"`
+	ClassicMode     bool   `yaml:"classicMode"`
+	CloseMiniPanel  bool   `yaml:"closeMiniPanel"`
+	//EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
+	AuthMethod string `yaml:"authMethod"`
+  BuffRefreshTime   int    `yaml:"buffRefreshTime"`
+	Health     struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
@@ -101,6 +101,10 @@ type CharacterCfg struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"stony_tomb"`
+		Mausoleum struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"mausoleum"`
 		AncientTunnels struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
@@ -153,6 +157,10 @@ type CharacterCfg struct {
 		Enabled bool        `yaml:"enabled"`
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
+	CubeRecipes struct {
+		Enabled        bool     `yaml:"enabled"`
+		EnabledRecipes []string `yaml:"enabledRecipes"`
+	} `yaml:"cubing"`
 	BackToTown struct {
 		NoHpPotions bool `yaml:"noHpPotions"`
 		NoMpPotions bool `yaml:"noMpPotions"`

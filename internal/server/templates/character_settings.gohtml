@@ -187,6 +187,9 @@
                         <option value="mosiac" {{ if eq .Config.Character.Class
                         "mosiac" }}selected{{ end }}>Mosiac Assassin
                         </option>
+                        <option value="winddruid" {{ if eq .Config.Character.Class
+                        "winddruid" }}selected{{ end }}>Tornado druid
+                        </option>
                     </select>
                 </label>
                 <label>
@@ -283,17 +286,22 @@
                     </ul>
                 </div>
             </div>
-
             <h4>Gambling</h4>
             <label>
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
                 Enabled
             </label>
-            <h4>Cube Recipes - Flawlesses & Essenses</h4>
+            <h4>Cube Recipes:</h4>
             <label>
-                <input type="checkbox" name="enableCubeRecipes" {{ if .Config.EnableCubeRecipes }}checked{{ end }}/>
+                <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
                 Enabled
             </label>
+            {{ range $index, $recipe := .RecipeList }}
+                <label>
+                <input type="checkbox" name="enabledRecipes" value="{{ $recipe }}" {{ if contains $.Config.CubeRecipes.EnabledRecipes $recipe }}checked{{ end }}>
+                {{ $recipe }}
+                </label>
+            {{ end }}
             <h4>Companion mode</h4>
             <label>
                 <input type="checkbox" name="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>

@@ -87,7 +87,7 @@ func (s MosiacSin) KillMonsterSequence(
 		//}
 
 		// Finish it off with primary attack
-		steps = append(steps, step.PrimaryAttack(id, 1, opts...))
+		steps = append(steps, step.PrimaryAttack(id, 1, false, opts...))
 
 		return steps
 	}, action.RepeatUntilNoSteps())
@@ -188,7 +188,7 @@ func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 		}
 
 		// Finish it off with primary attack
-		steps = append(steps, step.PrimaryAttack(monster.UnitID, 2, opts...))
+		steps = append(steps, step.PrimaryAttack(monster.UnitID, 2, false, opts...))
 
 		return steps
 	}, action.RepeatUntilNoSteps())

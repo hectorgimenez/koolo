@@ -1,6 +1,8 @@
 package action
 
 import (
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -13,6 +15,8 @@ type CubeRecipe struct {
 
 var (
 	recipies = []CubeRecipe{
+
+		// Perfects
 		{
 			Name:  "Perfect Amethyst",
 			Items: []string{"FlawlessAmethyst", "FlawlessAmethyst", "FlawlessAmethyst"},
@@ -41,9 +45,141 @@ var (
 			Name:  "Perfect Skull",
 			Items: []string{"FlawlessSkull", "FlawlessSkull", "FlawlessSkull"},
 		},
+
+		// Token
 		{
-			Name:  "Token of absolution",
+			Name:  "Token of Absolution",
 			Items: []string{"TwistedEssenceOfSuffering", "ChargedEssenceOfHatred", "BurningEssenceOfTerror", "FesteringEssenceOfDestruction"},
+		},
+
+		// Runes
+		{
+			Name:  "Upgrade El",
+			Items: []string{"ElRune", "ElRune", "ElRune"},
+		},
+		{
+			Name:  "Upgrade Eld",
+			Items: []string{"EldRune", "EldRune", "EldRune"},
+		},
+		{
+			Name:  "Upgrade Tir",
+			Items: []string{"TirRune", "TirRune", "TirRune"},
+		},
+		{
+			Name:  "Upgrade Nef",
+			Items: []string{"NefRune", "NefRune", "NefRune"},
+		},
+		{
+			Name:  "Upgrade Eth",
+			Items: []string{"EthRune", "EthRune", "EthRune"},
+		},
+		{
+			Name:  "Upgrade Ith",
+			Items: []string{"IthRune", "IthRune", "IthRune"},
+		},
+		{
+			Name:  "Upgrade Tal",
+			Items: []string{"TalRune", "TalRune", "TalRune"},
+		},
+		{
+			Name:  "Upgrade Ral",
+			Items: []string{"RalRune", "RalRune", "RalRune"},
+		},
+		{
+			Name:  "Upgrade Ort",
+			Items: []string{"OrtRune", "OrtRune", "OrtRune"},
+		},
+		{
+			Name:  "Upgrade Thul",
+			Items: []string{"ThulRune", "ThulRune", "ThulRune", "ChippedTopaz"},
+		},
+		{
+			Name:  "Upgrade Amn",
+			Items: []string{"AmnRune", "AmnRune", "AmnRune", "ChippedAmethyst"},
+		},
+		{
+			Name:  "Upgrade Sol",
+			Items: []string{"SolRune", "SolRune", "SolRune", "ChippedSapphire"},
+		},
+		{
+			Name:  "Upgrade Shael",
+			Items: []string{"ShaelRune", "ShaelRune", "ShaelRune", "ChippedRuby"},
+		},
+		{
+			Name:  "Upgrade Dol",
+			Items: []string{"DolRune", "DolRune", "DolRune", "ChippedEmerald"},
+		},
+		{
+			Name:  "Upgrade Hel",
+			Items: []string{"HelRune", "HelRune", "HelRune", "ChippedDiamond"},
+		},
+		{
+			Name:  "Upgrade Io",
+			Items: []string{"IoRune", "IoRune", "IoRune", "FlawedTopaz"},
+		},
+		{
+			Name:  "Upgrade Lum",
+			Items: []string{"LumRune", "LumRune", "LumRune", "FlawedAmethyst"},
+		},
+		{
+			Name:  "Upgrade Ko",
+			Items: []string{"KoRune", "KoRune", "KoRune", "FlawedSapphire"},
+		},
+		{
+			Name:  "Upgrade Fal",
+			Items: []string{"FalRune", "FalRune", "FalRune", "FlawedRuby"},
+		},
+		{
+			Name:  "Upgrade Lem",
+			Items: []string{"LemRune", "LemRune", "LemRune", "FlawedEmerald"},
+		},
+		{
+			Name:  "Upgrade Pul",
+			Items: []string{"PulRune", "PulRune", "FlawedDiamond"},
+		},
+		{
+			Name:  "Upgrade Um",
+			Items: []string{"UmRune", "UmRune", "Topaz"},
+		},
+		{
+			Name:  "Upgrade Mal",
+			Items: []string{"MalRune", "MalRune", "Amethyst"},
+		},
+		{
+			Name:  "Upgrade Ist",
+			Items: []string{"IstRune", "IstRune", "Sapphire"},
+		},
+		{
+			Name:  "Upgrade Gul",
+			Items: []string{"GulRune", "GulRune", "Ruby"},
+		},
+		{
+			Name:  "Upgrade Vex",
+			Items: []string{"VexRune", "VexRune", "Emerald"},
+		},
+		{
+			Name:  "Upgrade Ohm",
+			Items: []string{"OhmRune", "OhmRune", "Diamond"},
+		},
+		{
+			Name:  "Upgrade Lo",
+			Items: []string{"LoRune", "LoRune", "FlawlessTopaz"},
+		},
+		{
+			Name:  "Upgrade Sur",
+			Items: []string{"SurRune", "SurRune", "FlawlessAmethyst"},
+		},
+		{
+			Name:  "Upgrade Ber",
+			Items: []string{"BerRune", "BerRune", "FlawlessSapphire"},
+		},
+		{
+			Name:  "Upgrade Jah",
+			Items: []string{"JahRune", "JahRune", "FlawlessRuby"},
+		},
+		{
+			Name:  "Upgrade Cham",
+			Items: []string{"ChamRune", "ChamRune", "FlawlessEmerald"},
 		},
 	}
 )
@@ -51,12 +187,18 @@ var (
 func (b *Builder) CubeRecipes() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		// If cubing is disabled from settings just return nil
-		if !b.CharacterCfg.EnableCubeRecipes {
+		if !b.CharacterCfg.CubeRecipes.Enabled {
 			return nil
 		}
 
 		itemsInStash := d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
 		for _, recipe := range recipies {
+
+			// Check if the current recipe is Enabled
+			if !slices.Contains(b.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
+				continue
+			}
+
 			continueProcessing := true
 			for continueProcessing {
 				if items, hasItems := b.hasItemsForRecipe(itemsInStash, recipe); hasItems {

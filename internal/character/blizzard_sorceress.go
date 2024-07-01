@@ -78,7 +78,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		previousUnitID = int(id)
 
 		if d.PlayerUnit.States.HasState(state.Cooldown) {
-			return []step.Step{step.PrimaryAttack(id, 2, opts...)}
+			return []step.Step{step.PrimaryAttack(id, 2, true, opts...)}
 		}
 
 		return []step.Step{step.SecondaryAttack(skill.Blizzard, id, 1, opts...)}
@@ -238,7 +238,7 @@ func (s BlizzardSorceress) KillCouncil() action.Action {
 	}, nil, step.Distance(8, sorceressMaxDistance))
 }
 
-func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, useStaticField bool, skipOnImmunities []stat.Resist) action.Action {
+func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) action.Action {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
