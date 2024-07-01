@@ -27,7 +27,7 @@ func (b *Builder) Repair() *Chain {
 			durabilityPercent := -1
 
 			if maxDurabilityFound && found {
-				durabilityPercent = (durability.Value / maxDurability.Value) * 100
+				durabilityPercent = int((float64(durability.Value) / float64(maxDurability.Value)) * 100)
 			}
 
 			if maxDurabilityFound && !found || durabilityPercent != -1 && found && durabilityPercent <= 20 || found && durability.Value <= 5 {
@@ -83,7 +83,7 @@ func (b *Builder) RepairRequired() bool {
 		durabilityPercent := -1
 
 		if maxDurabilityFound && currentDurabilityFound {
-			durabilityPercent = (currentDurability.Value / maxDurability.Value) * 100
+			durabilityPercent = int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
 		}
 
 		// If we don't find the stats just continue
