@@ -33,6 +33,7 @@ func (b *Builder) EachLoopHook(d game.Data) (actions []Action) {
 
 	// Check if we need to go back to town (no pots or merc died)
 	if (d.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+		d.CharacterCfg.BackToTown.EquipmentBroken && b.RepairRequired() ||
 		d.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 		d.CharacterCfg.BackToTown.MercDied && d.Data.MercHPPercent() <= 0 && d.CharacterCfg.Character.UseMerc) &&
 		!d.PlayerUnit.Area.IsTown() {
