@@ -113,7 +113,7 @@ func (b *Builder) Buff() *StepChainAction {
 
 func (b *Builder) IsRebuffRequired(d game.Data) bool {
 	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
-	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {
+	if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*time.Duration(d.CharacterCfg.BuffRefreshTime) {
 		return false
 	}
 
@@ -156,11 +156,11 @@ func (b *Builder) buffCTA(d game.Data) (steps []step.Step) {
 			step.SyncStep(func(d game.Data) error {
 				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleCommand))
 				helper.Sleep(180)
-				b.HID.Click(game.RightButton, 300, 300)
+				b.HID.Click(game.RightButton, 640, 340)
 				helper.Sleep(100)
 				b.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.BattleOrders))
 				helper.Sleep(180)
-				b.HID.Click(game.RightButton, 300, 300)
+				b.HID.Click(game.RightButton, 640, 340)
 				helper.Sleep(100)
 
 				return nil

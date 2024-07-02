@@ -36,7 +36,11 @@
                     Max game length (seconds)
                     <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
                            value="{{ .Config.MaxGameLength }}"/>
-
+                </label>
+                <label>
+                    Buff check refresh time (seconds)
+                    <input name="buff_refresh_time" min="20" max="300" type="number" placeholder="{{ .Config.BuffRefreshTime }}"
+                           value="{{ .Config.BuffRefreshTime }}"/>
                 </label>
                 <label>
                     Character name
