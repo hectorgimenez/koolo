@@ -224,17 +224,35 @@
                     </label>
                 {{ end }}
             </fieldset>
-            <h4>Game</h4>
-            <label>
-                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
-                Always stash to shared tab
-            </label>
-            <label>
-                Minimum gold to pickup
-                <input min="0" type="number" name="gameMinGoldPickupThreshold"
-                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
-                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
-            </label>
+            <h4>Game Settings:</h4>
+                <br />
+                <label>
+                    <input type="checkbox" name="enableLobbyGames" {{ if .Config.Game.EnableLobbyGames}}checked{{end}}/>
+                    Enable Loby Games
+                </label>
+                <br />
+                <fieldset>
+                    <label>
+                        <input type="radio" id="createOnlineGames" name="CreateJoinSelector" value="create" {{ if .Config.Game.CreateOnlineGames }}checked{{ end }}/>
+                        Create Online Games
+                    </label>
+                    <label>
+                        <input type="radio" id="joinOnlineGame" name="CreateJoinSelector" value="join" {{ if .Config.Game.JoinOnlineGame }}checked{{ end }}/>
+                        Join Online Game
+                    </label>
+                </fieldset>
+            <fieldset class="grid">
+                <label>
+                    Game Name 
+                    <input name="onlineGameNameTemplate" placeholder="{{ .Config.Game.OnlineGameNameTemplate }}"
+                           value="{{ .Config.Game.OnlineGameNameTemplate }}"/>
+                </label>
+                <label>
+                    Game Password (leave blank for public games)
+                    <input name="onlineGamePassword" placeholder="{{ .Config.Game.OnlineGamePassowrd }}"
+                           value="{{ .Config.Game.OnlineGamePassowrd }}"/>
+                </label>
+            </fieldset>
             <label>
                 Difficulty
                 <select name="gameDifficulty">
@@ -248,6 +266,16 @@
                     "hell" }}selected{{ end }}>Hell
                     </option>
                 </select>
+            </label>
+            <label>
+                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
+                Always stash to shared tab
+            </label>
+            <label>
+                Minimum gold to pickup
+                <input min="0" type="number" name="gameMinGoldPickupThreshold"
+                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
+                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
             </label>
             <label>
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>

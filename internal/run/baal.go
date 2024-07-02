@@ -40,6 +40,16 @@ func (s Baal) BuildActions() (actions []action.Action) {
 		s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
 	)
 
+	if s.CharacterCfg.Game.CreateOnlineGames && !s.CharacterCfg.Companion.Enabled {
+		actions = append(actions,
+			s.builder.MoveToCoords(data.Position{
+				X: 15116,
+				Y: 5071,
+			}),
+			s.builder.OpenTP(),
+		)
+	}
+
 	// Let's move to a safe area and open the portal in companion mode
 	if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
 		actions = append(actions,

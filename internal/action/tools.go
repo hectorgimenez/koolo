@@ -20,6 +20,12 @@ func (b *Builder) OpenTPIfLeader() *StepChainAction {
 	})
 }
 
+func (b *Builder) OpenTP() *StepChainAction {
+	return NewStepChain(func(d game.Data) []step.Step {
+		return []step.Step{step.OpenPortal()}
+	})
+}
+
 func (b *Builder) IsMonsterSealElite(monster data.Monster) bool {
 	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
 		return true
