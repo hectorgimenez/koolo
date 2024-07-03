@@ -18,18 +18,37 @@ import (
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		for _, i := range d.Inventory.ByLocation(item.LocationEquipped) {
-			du, found := i.FindStat(stat.Durability, 0)
-			if _, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0); maxDurabilityFound && !found || (found && du.Value <= 1) {
-				b.Logger.Info(fmt.Sprintf("Repairing %s, durability is: %d", i.Name, du.Value))
+
+			// Get the durability stats
+			durability, found := i.FindStat(stat.Durability, 0)
+			maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+
+			// Calculate Durability percent
+			durabilityPercent := -1
+
+			if maxDurabilityFound && found {
+				durabilityPercent = int((float64(durability.Value) / float64(maxDurability.Value)) * 100)
+			}
+
+			if maxDurabilityFound && !found || durabilityPercent != -1 && found && durabilityPercent <= 20 || found && durability.Value <= 5 {
+
+				b.Logger.Info(fmt.Sprintf("Repairing %s, item durability is %d percent", i.Name, durabilityPercent))
+
+				// Get the repair NPC for the town
 				repairNPC := town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()
+
+				// Act3 repair NPC handling
 				if repairNPC == npc.Hratli {
 					actions = append(actions, b.MoveToCoords(data.Position{X: 5224, Y: 5045}))
 				}
+
 				keys := make([]byte, 0)
 				keys = append(keys, win.VK_HOME)
+
 				if repairNPC != npc.Halbu {
 					keys = append(keys, win.VK_DOWN)
 				}
+
 				keys = append(keys, win.VK_RETURN)
 
 				return append(actions, b.InteractNPC(town.GetTownByArea(d.PlayerUnit.Area).RepairNPC(),
@@ -51,4 +70,32 @@ func (b *Builder) Repair() *Chain {
 
 		return nil
 	})
+}
+
+func (b *Builder) RepairRequired() bool {
+
+	gameData := b.Container.Reader.GetData(false)
+
+	for _, i := range gameData.Inventory.ByLocation(item.LocationEquipped) {
+		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
+		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+
+		durabilityPercent := -1
+
+		if maxDurabilityFound && currentDurabilityFound {
+			durabilityPercent = int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
+		}
+
+		// If we don't find the stats just continue
+		if !currentDurabilityFound && !maxDurabilityFound {
+			continue
+		}
+
+		// Let's check if the item requires repair plus a few fail-safes
+		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 5 {
+			return true
+		}
+	}
+
+	return false
 }
