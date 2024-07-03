@@ -133,7 +133,15 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 1000, 116)
 	gm.clearGameNameOrPasswordField()
-	gameName := config.Characters[gm.supervisorName].Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
+
+	var gameName string
+
+	if config.Characters[gm.supervisorName].Game.CreateOnlineGames {
+		gameName = config.Characters[gm.supervisorName].Game.OnlineGameNameTemplate + fmt.Sprintf("%d", gameCounter)
+	} else {
+		gameName = config.Characters[gm.supervisorName].Companion.GameNameTemplate + fmt.Sprintf("%d", gameCounter)
+	}
+
 	for _, ch := range gameName {
 		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
@@ -141,7 +149,15 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	// Same for password
 	gm.hid.Click(LeftButton, 1000, 161)
 	helper.Sleep(200)
-	gamePassword := config.Characters[gm.supervisorName].Companion.GamePassword
+
+	var gamePassword string
+
+	if config.Characters[gm.supervisorName].Game.CreateOnlineGames {
+		gamePassword = config.Characters[gm.supervisorName].Game.OnlineGamePassowrd
+	} else {
+		gamePassword = config.Characters[gm.supervisorName].Companion.GamePassword
+	}
+
 	if gamePassword != "" {
 		gm.clearGameNameOrPasswordField()
 		for _, ch := range gamePassword {
