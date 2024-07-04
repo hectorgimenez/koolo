@@ -19,7 +19,8 @@ type CompanionSupervisor struct {
 	*baseSupervisor
 }
 
-func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container) (*CompanionSupervisor, error) {
+func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container, pid uint32, hwnd uintptr) (*CompanionSupervisor, error) {
+
 	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, c)
 	if err != nil {
 		return nil, err
