@@ -92,6 +92,9 @@ type CharacterCfg struct {
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
+		Cows struct {
+			OpenChests bool `yaml:"openChests"`
+		}
 		Pit struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
 			OpenChests            bool `yaml:"openChests"`
