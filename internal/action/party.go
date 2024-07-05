@@ -8,45 +8,43 @@ import (
 
 var charactersInParty map[string][]string
 
-func (b Builder) AddCharacterToParty(supervisorName string, characterToBeRushed string) {
-	// Check if the rusher exists in the map
-	if foundCharacters, ok := charactersInParty[supervisorName]; ok {
+func (b Builder) AddCharacterToParty(charName string, characterToBeAdded string) {
+	if foundCharacters, ok := charactersInParty[charName]; ok {
 		// Check if the value already exists in the slice
 		for _, v := range foundCharacters {
-			if v == characterToBeRushed {
+			if v == characterToBeAdded {
 				return // Do nothing, it's already in there
 			}
 		}
 		// If character is not found in the slice, append it
-		charactersInParty[supervisorName] = append(charactersInParty[supervisorName], characterToBeRushed)
+		charactersInParty[charName] = append(charactersInParty[charName], characterToBeAdded)
 	} else {
-		// If rusher key does not exist, create a new slice with the character name
-		charactersInParty[supervisorName] = []string{characterToBeRushed}
+		charactersInParty[charName] = []string{characterToBeAdded}
 	}
 }
 
-func (b Builder) GetCharactersInParty(supervisorName string) []string {
-	if r, found := charactersInParty[supervisorName]; found {
+func (b Builder) GetCharactersInParty(charName string) []string {
+	if r, found := charactersInParty[charName]; found {
 		return r
 	}
 	return []string{}
 }
 
-func (b Builder) RemoveCharacterFromParty(supervisorName string, characterToBeRushed string) {
-	if foundCharacters, ok := charactersInParty[supervisorName]; ok {
+func (b Builder) RemoveCharacterFromParty(charName string, characterToBeRemoved string) {
+	if foundCharacters, ok := charactersInParty[charName]; ok {
 		for i, v := range foundCharacters {
-			if v == characterToBeRushed {
+			if v == characterToBeRemoved {
 				// Remove the value from the slice
-				charactersInParty[supervisorName] = append(foundCharacters[:i], foundCharacters[i+1:]...)
+				charactersInParty[charName] = append(foundCharacters[:i], foundCharacters[i+1:]...)
 				return
 			}
 		}
 	}
 }
 
-func (b *Builder) WaitForParty(supervisorName string) *Chain {
+func (b *Builder) WaitForParty(charName string) *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
-		partyMembers := b.GetCharactersInParty(supervisorName)
+		partyMembers := b.GetCharactersInParty(charName)
 
 		actions = append(actions, b.OpenTP())
 		everyonePresent := true
@@ -72,8 +70,8 @@ func (b *Builder) WaitForParty(supervisorName string) *Chain {
 	}, RepeatUntilNoSteps())
 }
 
-func (b Builder) WaitForPartyToEnterPortal(supervisorName string) *Chain {
-	partyMembers := b.GetCharactersInParty(supervisorName)
+func (b Builder) WaitForPartyToEnterPortal(charName string) *Chain {
+	partyMembers := b.GetCharactersInParty(charName)
 	var charactersEntered = make(map[string]bool)
 
 	for _, member := range partyMembers {
