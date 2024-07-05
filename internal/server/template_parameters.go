@@ -37,3 +37,22 @@ type ConfigData struct {
 type AutoSettings struct {
 	ErrorMessage string
 }
+
+type StashExport struct {
+	Runes     []RuneExport `json:"runes"`
+	Uniques   []ItemExport `json:"uniques"`
+	Runewords []ItemExport `json:"runewords"`
+	Bases     []ItemExport `json:"bases"`
+	Rares     []ItemExport `json:"rares"`
+	Charms    []ItemExport `json:"charms"`
+}
+
+type RuneExport struct {
+	Name     string `json:"name"`
+	Quantity int    `json:"quantity"`
+}
+
+type ItemExport struct {
+	Name  string            `json:"name"`
+	Stats map[string]string `json:"stats"`
+}

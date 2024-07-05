@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/character"
@@ -25,6 +26,16 @@ type SupervisorManager struct {
 	logger        *slog.Logger
 	supervisors   map[string]Supervisor
 	eventListener *event.Listener
+}
+
+// Add this method to the SupervisorManager struct in manager.go
+func (mng *SupervisorManager) GetStashItems(supervisorName string) []data.Item {
+	supervisor, found := mng.supervisors[supervisorName]
+	if !found {
+		return nil
+	}
+
+	return supervisor.GetStashItems()
 }
 
 func NewSupervisorManager(logger *slog.Logger, eventListener *event.Listener) *SupervisorManager {

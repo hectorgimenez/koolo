@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -20,6 +21,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
@@ -272,6 +274,9 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/drops", s.drops)
 	http.HandleFunc("/ws", s.wsServer.HandleWebSocket) // Web socket
 	http.HandleFunc("/initial-data", s.initialData)    // Web socket data
+	http.HandleFunc("/export-stash", s.exportStash)    // export stash
+
+	// Assets
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -623,4 +628,127 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		AvailableTZs: availableTZs,
 		RecipeList:   config.AvailableRecipes,
 	})
+}
+
+func (s *HttpServer) exportStash(w http.ResponseWriter, r *http.Request) {
+	supervisorName := r.URL.Query().Get("supervisor")
+	if supervisorName == "" {
+		http.Error(w, "Supervisor name is required", http.StatusBadRequest)
+		return
+	}
+
+	stashItems := s.manager.GetStashItems(supervisorName)
+	if stashItems == nil {
+		http.Error(w, "Failed to get stash items", http.StatusInternalServerError)
+		return
+	}
+
+	export := formatStashExport(stashItems)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s_stash_export.json", supervisorName))
+	json.NewEncoder(w).Encode(export)
+}
+
+func formatStashExport(items []data.Item) StashExport {
+	export := StashExport{
+		Runes:   make([]RuneExport, 0),
+		Uniques: make([]ItemExport, 0),
+		Bases:   make([]ItemExport, 0),
+		Rares:   make([]ItemExport, 0),
+		Charms:  make([]ItemExport, 0),
+	}
+
+	runeCount := make(map[string]int)
+
+	for _, item := range items {
+		switch {
+		case strings.HasSuffix(string(item.Name), "Rune"):
+			runeCount[string(item.Name)]++
+		case item.Quality.ToString() == "Unique":
+			export.Uniques = append(export.Uniques, itemToExport(item))
+		case item.IsRuneword:
+			export.Bases = append(export.Runewords, itemToExport(item))
+		case item.Quality.ToString() == "Superior" || item.Quality.ToString() == "Normal:" || item.Quality.ToString() == "LowQuality":
+			export.Bases = append(export.Bases, itemToExport(item))
+		case item.Quality.ToString() == "Rare":
+			export.Rares = append(export.Rares, itemToExport(item))
+		case item.Name == "SmallCharm" || item.Name == "LargeCharm" || item.Name == "GrandCharm":
+			export.Charms = append(export.Charms, itemToExport(item))
+		}
+	}
+
+	for name, count := range runeCount {
+		export.Runes = append(export.Runes, RuneExport{Name: name, Quantity: count})
+	}
+
+	return export
+}
+
+func itemToExport(item data.Item) ItemExport {
+	exportItem := ItemExport{
+		Name:  string(item.Name),
+		Stats: make(map[string]string),
+	}
+
+	for _, s := range item.Stats {
+		statAliases := getStatAliases(s.ID, s.Layer)
+		for _, alias := range statAliases {
+			exportItem.Stats[alias] = fmt.Sprintf("%d", s.Value)
+		}
+	}
+
+	return exportItem
+}
+
+func getStatAliases(id stat.ID, layer int) []string {
+	var aliases []string
+	for alias, ids := range nip.StatAliases {
+		if len(ids) > 0 && ids[0] == int(id) {
+			if len(ids) == 1 || (len(ids) > 1 && ids[1] == layer) {
+				aliases = append(aliases, alias)
+			}
+		}
+	}
+
+	// Special cases
+	switch id {
+	case stat.Defense:
+		return []string{"defense"}
+	case 188: // ItemAddSkillTab
+		return handleSkillTabAlias(layer)
+	}
+
+	return aliases
+}
+
+func handleSkillTabAlias(layer int) []string {
+	skillTabAliases := map[int]string{
+		0:  "bowandcrossbowskilltab",
+		1:  "passiveandmagicskilltab",
+		2:  "javelinandspearskilltab",
+		8:  "fireskilltab",
+		9:  "lightningskilltab",
+		10: "coldskilltab",
+		16: "cursesskilltab",
+		17: "poisonandboneskilltab",
+		18: "necromancersummoningskilltab",
+		24: "palicombatskilltab",
+		25: "offensiveaurasskilltab",
+		26: "defensiveaurasskilltab",
+		32: "barbcombatskilltab",
+		33: "masteriesskilltab",
+		34: "warcriesskilltab",
+		40: "druidsummoningskilltab",
+		41: "shapeshiftingskilltab",
+		42: "elementalskilltab",
+		48: "trapsskilltab",
+		49: "shadowdisciplinesskilltab",
+		50: "martialartsskilltab",
+	}
+
+	if alias, ok := skillTabAliases[layer]; ok {
+		return []string{alias}
+	}
+	return []string{"unknown_skilltab"}
 }
