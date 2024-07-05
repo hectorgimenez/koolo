@@ -89,6 +89,15 @@
         .character-card.expanded .character-details {
             display: block;
         }
+        .additional-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .export-stash {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
         .toggle-details {
             background: none;
             border: none;
@@ -487,6 +496,11 @@
                 </div>
             </div>
             <div class="character-details">
+                <div class="additional-controls">
+                    <button class="export-stash btn btn-outline" data-character="${key}">
+                        <i class="bi bi-box-arrow-down btn-icon"></i>Export Stash
+                    </button>
+                </div>
                 <div class="status-details">
                     <span class="status-badge"></span>
                 </div>
@@ -520,21 +534,23 @@
         return card;
     }
 
-
     function setupEventListeners(card, key) {
-        if (!card) return;
+    if (!card) return;
 
-        const toggleDetailsBtn = card.querySelector('.toggle-details');
-        const startPauseBtn = card.querySelector('.start-pause');
-        const stopBtn = card.querySelector('.stop');
+    const toggleDetailsBtn = card.querySelector('.toggle-details');
+    const startPauseBtn = card.querySelector('.start-pause');
+    const stopBtn = card.querySelector('.stop');
+    const exportStashBtn = card.querySelector('.export-stash');
+    const characterDetails = card.querySelector('.character-details');
 
-        if (toggleDetailsBtn) {
-            toggleDetailsBtn.addEventListener('click', function() {
-                card.classList.toggle('expanded');
-                this.querySelector('i').style.transform = card.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
-                saveExpandedState();
-            });
-        }
+    if (toggleDetailsBtn) {
+        toggleDetailsBtn.addEventListener('click', function() {
+            card.classList.toggle('expanded');
+            this.querySelector('i').style.transform = card.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
+            characterDetails.style.display = card.classList.contains('expanded') ? 'block' : 'none';
+            saveExpandedState();
+        });
+    }
 
         if (startPauseBtn) {
             startPauseBtn.addEventListener('click', function() {
@@ -548,6 +564,16 @@
                 fetch(`/stop?characterName=${key}`).then(() => fetchInitialData());
             });
         }
+
+        if (exportStashBtn) {
+            exportStashBtn.addEventListener('click', function() {
+                exportStash(key);
+            });
+        }
+    }
+
+    function exportStash(supervisorName) {
+        window.location.href = `/export-stash?supervisor=${supervisorName}`;
     }
 
 

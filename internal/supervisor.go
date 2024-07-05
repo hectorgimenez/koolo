@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper/winproc"
@@ -23,6 +24,7 @@ type Supervisor interface {
 	TogglePause()
 	SetWindowPosition(x, y int)
 	GetData() game.Data
+	GetStashItems() []data.Item
 }
 
 type baseSupervisor struct {

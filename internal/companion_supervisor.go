@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/container"
 
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -110,4 +112,9 @@ func (s *CompanionSupervisor) startBot(ctx context.Context, runs []run.Run, firs
 	helper.Sleep(5000)
 
 	return nil
+}
+
+func (s *CompanionSupervisor) GetStashItems() []data.Item {
+	d := s.c.Reader.GetData(false)
+	return d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
 }

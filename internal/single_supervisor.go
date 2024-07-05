@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -101,4 +103,9 @@ func (s *SinglePlayerSupervisor) Start() error {
 			firstRun = false
 		}
 	}
+}
+
+func (s *SinglePlayerSupervisor) GetStashItems() []data.Item {
+	d := s.c.Reader.GetData(false)
+	return d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
 }
