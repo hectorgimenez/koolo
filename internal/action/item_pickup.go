@@ -128,7 +128,7 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 	// Skip picking up gold if we can not carry more
 	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
-	if gold.Value >= d.PlayerUnit.MaxGold() {
+	if gold.Value >= d.PlayerUnit.MaxGold() && i.Name == "Gold" {
 		b.Logger.Debug("Skipping gold pickup, inventory full")
 		return false
 	}
