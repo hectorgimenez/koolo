@@ -15,6 +15,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 )
 
+func (a Rushing) getRushedAct4() action.Action {
+
+}
+
 func (a Rushing) rushAct4() action.Action {
 	running := false
 	return action.NewChain(func(d game.Data) []action.Action {
@@ -108,7 +112,7 @@ func (a Rushing) killIzualQuest() action.Action {
 			}, step.StopAtDistance(50)),
 
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.char.KillIzual(),
 			a.builder.ReturnTown(),
 		}
@@ -243,7 +247,7 @@ func (a Rushing) killDiabloQuest() action.Action {
 				Y: 5252,
 			}),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.Buff(),
 			a.builder.MoveToCoords(diabloSpawnPosition),
 			a.char.KillDiablo(),

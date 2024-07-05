@@ -1,16 +1,67 @@
 package run
 
 import (
-	"time"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"time"
 )
 
-func (a Rushing) rushAct1() action.Action {
+func (r Rushing) getRushedAct1() action.Action {
+	return action.NewChain(func(d game.Data) (actions []action.Action) {
+		rusherStatus := r.getRusherStatus(r.CharacterCfg.Companion.LeaderName)
+		if rusherStatus == None {
+			actions = append(actions, r.builder.Wait(time.Second))
+		}
+
+		if rusherStatus == GivingWPs {
+			// Check town for portals
+			// Take a portal if open
+			// Take waypoint
+			// Go back to town
+		}
+
+		if rusherStatus == ClearingDen {
+			// Take portal to den if open, otherwise we wait
+			// When rusher leaves den, we portal to town
+		}
+
+		if rusherStatus == FreeingCain {
+			// Wait for portal to dark wood
+			// Take portal
+			// Take scroll
+			// Go back to town
+			// Talk to Akara
+			// Wait for portal to stony field
+			// Interact with stones
+			// Go to town
+			// Wait for portal to tristram
+			// Take tristram portal
+			// Interact with gimp cage
+			// Go to town
+		}
+
+		if rusherStatus == RetrievingHammer {
+			// Wait for portal to barracks
+			// Take portal to barracks
+			// Get hammer
+			// Portal back to town
+		}
+
+		if rusherStatus == KillingAndy {
+			// Wait for portal to catacombs level 4
+			// Wait for andy death
+			// Portal back to town
+			// Talk with the blue teletubby
+			// Go to act 2
+		}
+		return actions
+	})
+}
+
+func (r Rushing) rushAct1() action.Action {
 	running := false
 	return action.NewChain(func(d game.Data) []action.Action {
 		if running || d.PlayerUnit.Area != area.RogueEncampment {
@@ -20,34 +71,34 @@ func (a Rushing) rushAct1() action.Action {
 		running = true
 
 		actions := []action.Action{
-			a.builder.VendorRefill(true, true),
+			r.builder.VendorRefill(true, true),
 		}
 
-		if a.CharacterCfg.Game.Rushing.GiveWPsA1 {
-			actions = append(actions, a.GiveAct1WPs())
+		if r.CharacterCfg.Game.Rushing.GiveWPsA1 {
+			actions = append(actions, r.GiveAct1WPs())
 		}
 
-		if a.CharacterCfg.Game.Rushing.ClearDen {
-			actions = append(actions, a.clearDenQuest())
+		if r.CharacterCfg.Game.Rushing.ClearDen {
+			actions = append(actions, r.clearDenQuest())
 		}
 
-		if a.CharacterCfg.Game.Rushing.RescueCain {
-			actions = append(actions, a.rescueCainQuest())
+		if r.CharacterCfg.Game.Rushing.RescueCain {
+			actions = append(actions, r.rescueCainQuest())
 		}
 
-		if a.CharacterCfg.Game.Rushing.RetrieveHammer {
-			actions = append(actions, a.retrieveHammerQuest())
+		if r.CharacterCfg.Game.Rushing.RetrieveHammer {
+			actions = append(actions, r.retrieveHammerQuest())
 		}
 
 		actions = append(actions,
-			a.killAandarielQuest(),
+			r.killAandarielQuest(),
 		)
 
 		return actions
 	})
 }
 
-func (a Rushing) GiveAct1WPs() action.Action {
+func (r Rushing) GiveAct1WPs() action.Action {
 	areas := []area.ID{
 		area.StonyField,
 		area.DarkWood,
@@ -58,14 +109,15 @@ func (a Rushing) GiveAct1WPs() action.Action {
 	}
 
 	return action.NewChain(func(d game.Data) []action.Action {
+		r.setRusherStatus(r.CharacterCfg.CharacterName, GivingWPs)
 		actions := []action.Action{}
 
 		for _, areaID := range areas {
 			actions = append(actions,
-				a.builder.WayPoint(areaID),
-				a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-				a.builder.OpenTP(),
-				a.builder.Wait(time.Second*5),
+				r.builder.WayPoint(areaID),
+				r.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
+				r.builder.OpenTP(),
+				r.builder.WaitForPartyToEnterPortal(r.CharacterCfg.CharacterName),
 			)
 		}
 
@@ -73,33 +125,35 @@ func (a Rushing) GiveAct1WPs() action.Action {
 	})
 }
 
-func (a Rushing) clearDenQuest() action.Action {
+func (r Rushing) clearDenQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
+		r.setRusherStatus(r.CharacterCfg.CharacterName, ClearingDen)
 		return []action.Action{
-			a.builder.MoveToArea(area.BloodMoor),
-			a.builder.Buff(),
-			a.builder.MoveToArea(area.DenOfEvil),
-			a.builder.OpenTP(),
-			a.waitForParty(),
-			a.builder.ClearArea(false, data.MonsterAnyFilter()),
-			a.builder.ReturnTown(),
+			r.builder.MoveToArea(area.BloodMoor),
+			r.builder.Buff(),
+			r.builder.MoveToArea(area.DenOfEvil),
+			r.builder.OpenTP(),
+			r.builder.WaitForParty(r.CharacterCfg.CharacterName),
+			r.builder.ClearArea(false, data.MonsterAnyFilter()),
+			r.builder.ReturnTown(),
 		}
 	})
 }
 
-func (a Rushing) rescueCainQuest() action.Action {
+func (r Rushing) rescueCainQuest() action.Action {
 	var gimpCage = data.Position{
 		X: 25140,
 		Y: 5145,
 	}
 
 	return action.NewChain(func(d game.Data) []action.Action {
+		r.setRusherStatus(r.CharacterCfg.CharacterName, FreeingCain)
 		return []action.Action{
 			// Go to Tree
-			a.builder.WayPoint(area.DarkWood),
-			a.builder.OpenTP(),
-			a.builder.Buff(),
-			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+			r.builder.WayPoint(area.DarkWood),
+			r.builder.OpenTP(),
+			r.builder.Buff(),
+			r.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, o := range d.Objects {
 					if o.Name == object.InifussTree {
 						return o.Position, true
@@ -108,14 +162,14 @@ func (a Rushing) rescueCainQuest() action.Action {
 
 				return data.Position{}, false
 			}),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			a.builder.OpenTP(),
-			a.builder.ReturnTown(),
+			r.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			r.builder.WaitForPartyToEnterPortal(r.CharacterCfg.CharacterName),
+			r.builder.ReturnTown(),
 
 			// Go to Stones
-			a.builder.WayPoint(area.StonyField),
-			a.builder.OpenTP(),
-			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+			r.builder.WayPoint(area.StonyField),
+			r.builder.OpenTP(),
+			r.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, o := range d.Objects {
 					if o.Name == object.CairnStoneAlpha {
 						return o.Position, true
@@ -124,38 +178,40 @@ func (a Rushing) rescueCainQuest() action.Action {
 
 				return data.Position{}, false
 			}),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			a.builder.OpenTP(),
-			a.waitForParty(),
+			r.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			r.builder.OpenTP(),
+			r.builder.WaitForParty(r.CharacterCfg.CharacterName),
 
 			// Wait for Tristram portal and enter
 			action.NewChain(func(d game.Data) []action.Action {
 				_, found := d.Objects.FindOne(object.PermanentTownPortal)
 				if found {
 					return []action.Action{
-						a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
+						r.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
 							return d.PlayerUnit.Area == area.Tristram
 						}),
 					}
 				}
 				return nil
 			}),
-			a.builder.MoveToArea(area.Tristram),
-			a.builder.MoveToCoords(gimpCage),
-			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
-			a.builder.ReturnTown(),
+			r.builder.MoveToArea(area.Tristram),
+			r.builder.MoveToCoords(gimpCage),
+			r.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			r.builder.WaitForParty(r.CharacterCfg.CharacterName),
+			r.builder.ReturnTown(),
 		}
 	})
 }
 
-func (a Rushing) retrieveHammerQuest() action.Action {
+func (r Rushing) retrieveHammerQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
+		r.setRusherStatus(r.CharacterCfg.CharacterName, RetrievingHammer)
 		return []action.Action{
-			a.builder.WayPoint(area.OuterCloister),
-			a.builder.OpenTP(),
-			a.builder.Buff(),
-			a.builder.MoveToArea(area.Barracks),
-			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+			r.builder.WayPoint(area.OuterCloister),
+			r.builder.OpenTP(),
+			r.builder.Buff(),
+			r.builder.MoveToArea(area.Barracks),
+			r.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, o := range d.Objects {
 					if o.Name == object.Malus {
 						return o.Position, true
@@ -164,29 +220,30 @@ func (a Rushing) retrieveHammerQuest() action.Action {
 
 				return data.Position{}, false
 			}),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			a.builder.OpenTP(),
-			a.waitForParty(),
-			a.builder.ReturnTown(),
+			r.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			r.builder.OpenTP(),
+			r.builder.WaitForParty(r.CharacterCfg.CharacterName),
+			r.builder.ReturnTown(),
 		}
 	})
 }
 
-func (a Rushing) killAandarielQuest() action.Action {
+func (r Rushing) killAandarielQuest() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
+		r.setRusherStatus(r.CharacterCfg.CharacterName, KillingAndy)
 		return []action.Action{
-			a.builder.WayPoint(area.CatacombsLevel2),
-			a.builder.OpenTP(),
-			a.builder.Buff(),
-			a.builder.MoveToArea(area.CatacombsLevel3),
-			a.builder.MoveToArea(area.CatacombsLevel4),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			a.builder.OpenTP(),
-			a.waitForParty(),
-			a.builder.MoveToCoords(andarielStartingPosition),
-			a.char.KillAndariel(),
-			a.builder.ReturnTown(),
-			a.builder.WayPoint(area.LutGholein),
+			r.builder.WayPoint(area.CatacombsLevel2),
+			r.builder.OpenTP(),
+			r.builder.Buff(),
+			r.builder.MoveToArea(area.CatacombsLevel3),
+			r.builder.MoveToArea(area.CatacombsLevel4),
+			r.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			r.builder.OpenTP(),
+			r.builder.WaitForParty(r.CharacterCfg.CharacterName),
+			r.builder.MoveToCoords(andarielStartingPosition),
+			r.char.KillAndariel(),
+			r.builder.ReturnTown(),
+			r.builder.WayPoint(area.LutGholein),
 		}
 	})
 }

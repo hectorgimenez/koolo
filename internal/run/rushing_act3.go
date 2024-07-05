@@ -10,6 +10,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
+func (a Rushing) getRushedAct3() action.Action {
+
+}
+
 func (a Rushing) rushAct3() action.Action {
 	running := false
 	return action.NewChain(func(d game.Data) []action.Action {
@@ -88,7 +92,7 @@ func (a Rushing) getKhalimsEye() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(25, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -110,7 +114,7 @@ func (a Rushing) getKhalimsBrain() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -148,7 +152,7 @@ func (a Rushing) getKhalimsHeart() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -172,7 +176,7 @@ func (a Rushing) retrieveBookQuest() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -183,7 +187,7 @@ func (a Rushing) killCouncilQuest() action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.Travincal),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.Buff(),
 			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 				for _, al := range d.AdjacentLevels {
@@ -221,7 +225,7 @@ func (a Rushing) killMephistoQuest() action.Action {
 			a.builder.MoveToCoords(mephistoSafePosition),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.Buff(),
 			a.builder.MoveToCoords(mephistoPosition),
 			a.char.KillMephisto(),

@@ -12,6 +12,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
+func (a Rushing) getRushedAct2() action.Action {
+
+}
+
 func (a Rushing) rushAct2() action.Action {
 	running := false
 	return action.NewChain(func(d game.Data) []action.Action {
@@ -89,7 +93,7 @@ func (a Rushing) killRadamentQuest() action.Action {
 				return data.Position{}, false
 			}, step.StopAtDistance(50)),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
 			a.builder.ReturnTown(),
 		}
@@ -111,7 +115,7 @@ func (a Rushing) getHoradricCube() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -134,7 +138,7 @@ func (a Rushing) getStaff() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -157,7 +161,7 @@ func (a Rushing) getAmulet() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
@@ -178,7 +182,7 @@ func (a Rushing) killSummonerQuest() action.Action {
 			}, step.StopAtDistance(80)),
 
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.char.KillSummoner(),
 			a.builder.ReturnTown(),
 		}
@@ -220,7 +224,7 @@ func (a Rushing) killDurielQuest() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.Buff(),
 		)
 

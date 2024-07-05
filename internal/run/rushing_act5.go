@@ -15,6 +15,10 @@ import (
 	"github.com/lxn/win"
 )
 
+func (a Rushing) getRushedAct5() action.Action {
+
+}
+
 func (a Rushing) rushAct5() action.Action {
 	running := false
 	return action.NewChain(func(d game.Data) []action.Action {
@@ -86,7 +90,7 @@ func (a Rushing) killShenkQuest() action.Action {
 		return []action.Action{
 			a.builder.WayPoint(area.FrigidHighlands),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.BloodyFoothills),
 			a.builder.MoveToCoords(shenkPosition),
@@ -113,38 +117,12 @@ func (a Rushing) rescueAnyaQuest() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.ReturnTown(),
 		}
 	})
 }
 
-// this one works a bit funky ... sometimes it clicks the altar and sometimes it doesnt.
-// func (a Rushing) killAncientsQuest() action.Action {
-// 	return action.NewChain(func(d game.Data) []action.Action {
-// 		return []action.Action{
-// 			a.builder.WayPoint(area.TheAncientsWay),
-// 			a.builder.Buff(),
-// 			a.builder.MoveToArea(area.ArreatSummit),
-// 			a.builder.OpenTP(),
-// 			// a.waitForParty(d),
-// 			a.builder.Buff(),
-// 			a.builder.InteractObject(object.AncientsAltar, func(d game.Data) bool {
-// 				helper.Sleep(2000)
-// 				a.HID.Click(game.LeftButton, 720, 260)
-// 				helper.Sleep(2000)
-// 				if len(d.Monsters.Enemies()) > 0 {
-// 					return true
-// 				}
-// 				return false
-// 			}),
-// 			a.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
-// 			a.builder.ReturnTown(),
-// 		}
-// 	})
-// }
-
-// This function works very smooth but depends on static wait times.
 func (a Rushing) killAncientsQuest() action.Action {
 	var ancientsAltar = data.Position{
 		X: 10049,
@@ -158,7 +136,7 @@ func (a Rushing) killAncientsQuest() action.Action {
 			a.builder.Buff(),
 			a.builder.MoveToArea(area.ArreatSummit),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.builder.Buff(),
 			a.builder.MoveToCoords(ancientsAltar),
 
@@ -248,7 +226,7 @@ func (a Rushing) killBaalQuest() action.Action {
 				return d.PlayerUnit.Area == area.TheWorldstoneChamber
 			}),
 			a.builder.OpenTP(),
-			a.waitForParty(),
+			a.builder.WaitForParty(a.Supervisor),
 			a.char.KillBaal(),
 			a.builder.ItemPickup(true, 50),
 			a.builder.ReturnTown(),

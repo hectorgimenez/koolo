@@ -3,8 +3,6 @@ package run
 import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 type Rushing struct {
@@ -16,74 +14,52 @@ func (a Rushing) Name() string {
 }
 
 func (a Rushing) BuildActions() []action.Action {
-	return []action.Action{
-		a.rushAct1(),
-		a.rushAct2(),
-		a.rushAct3(),
-		a.rushAct4(),
-		a.rushAct5(),
-	}
-}
-
-var charactersBeingRushed map[string][]string
-
-func (a Rushing) AddCharacterToRush(rusherSupervisorName string, characterToBeRushed string) {
-	// Check if the rusher exists in the map
-	if foundCharacters, ok := charactersBeingRushed[rusherSupervisorName]; ok {
-		// Check if the value already exists in the slice
-		for _, v := range foundCharacters {
-			if v == characterToBeRushed {
-				return // Do nothing, it's already in there
+	if a.CharacterCfg.Companion.Enabled {
+		if !a.CharacterCfg.Companion.Leader {
+			a.builder.AddCharacterToParty(a.CharacterCfg.Companion.LeaderName, a.CharacterCfg.CharacterName)
+			return []action.Action{
+				a.getRushedAct1(),
+				a.getRushedAct2(),
+				a.getRushedAct3(),
+				a.getRushedAct4(),
+				a.getRushedAct5(),
 			}
-		}
-		// If character is not found in the slice, append it
-		charactersBeingRushed[rusherSupervisorName] = append(charactersBeingRushed[rusherSupervisorName], characterToBeRushed)
-	} else {
-		// If rusher key does not exist, create a new slice with the character name
-		charactersBeingRushed[rusherSupervisorName] = []string{characterToBeRushed}
-	}
-}
-
-func (a Rushing) GetCharactersBeingRushed(rusherSupervisorName string) []string {
-	if r, found := charactersBeingRushed[rusherSupervisorName]; found {
-		return r
-	}
-	return []string{}
-}
-
-func (a Rushing) RemoveCharacterFromRush(rusherSupervisorName string, characterToBeRushed string) {
-	if foundCharacters, ok := charactersBeingRushed[rusherSupervisorName]; ok {
-		for i, v := range foundCharacters {
-			if v == characterToBeRushed {
-				// Remove the value from the slice
-				charactersBeingRushed[rusherSupervisorName] = append(foundCharacters[:i], foundCharacters[i+1:]...)
-				return
+		} else {
+			return []action.Action{
+				a.rushAct1(),
+				a.rushAct2(),
+				a.rushAct3(),
+				a.rushAct4(),
+				a.rushAct5(),
 			}
 		}
 	}
+
+	return []action.Action{}
 }
 
-func (a Rushing) waitForParty() action.Action {
-	return action.NewChain(func(d game.Data) []action.Action {
-		var actions []action.Action
-		for {
-			data := a.Container.Reader.GetData(false)
+const (
+	Moving RusherStatus = iota
+	Waiting
+	None
+	GivingWPs
+	ClearingDen
+	FreeingCain
+	RetrievingHammer
+	KillingAndy
+)
 
-			var shouldContinue bool
+type RusherStatus int
 
-			for _, c := range data.Roster {
-				if c.Area.Area() == d.PlayerUnit.Area.Area() {
-					shouldContinue = true
-					break
-				}
-			}
-			if shouldContinue == true {
-				break
-			} else {
-				helper.Sleep(1000) // sleep 1
-			}
-		}
+var rusherStatuses = make(map[string]RusherStatus)
 
-		return actions
-	})
+func (r Rushing) getRusherStatus(rusherName string) RusherStatus {
+	if s, found := rusherStatuses[rusherName]; found {
+		return s
+	}
+	return None
+}
+
+func (r Rushing) setRusherStatus(rusherName string, status RusherStatus) {
+	rusherStatuses[rusherName] = status
 }
