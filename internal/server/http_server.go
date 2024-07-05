@@ -517,8 +517,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal([]byte(r.FormValue("gameRuns")), &enabledRuns)
 		cfg.Game.Runs = enabledRuns
 
-		cfg.Game.Cows.OpenChests = r.Form.Has("gameCowsOpenChests")
-
 		cfg.Game.Pit.MoveThroughBlackMarsh = r.Form.Has("gamePitMoveThroughBlackMarsh")
 		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")
 		cfg.Game.Pit.FocusOnElitePacks = r.Form.Has("gamePitFocusOnElitePacks")
@@ -550,6 +548,22 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
 		cfg.Game.TerrorZone.SkipOtherRuns = r.Form.Has("gameTerrorZoneSkipOtherRuns")
+
+		// Quests options for Act 1
+		cfg.Game.Quests.ClearDen = r.Form.Has("gameQuestsClearDen")
+		cfg.Game.Quests.RescueCain = r.Form.Has("gameQuestsRescueCain")
+		cfg.Game.Quests.RetrieveHammer = r.Form.Has("gameQuestsRetrieveHammer")
+		// Quests options for Act 2
+		cfg.Game.Quests.KillRadament = r.Form.Has("gameQuestsKillRadament")
+		cfg.Game.Quests.GetCube = r.Form.Has("gameQuestsGetCube")
+		// Quests options for Act 3
+		cfg.Game.Quests.RetrieveBook = r.Form.Has("gameQuestsRetrieveBook")
+		// Quests options for Act 4
+		cfg.Game.Quests.KillIzual = r.Form.Has("gameQuestsKillIzual")
+		// Quests options for Act 5
+		cfg.Game.Quests.KillShenk = r.Form.Has("gameQuestsKillShenk")
+		cfg.Game.Quests.RescueAnya = r.Form.Has("gameQuestsRescueAnya")
+		cfg.Game.Quests.KillAncients = r.Form.Has("gameQuestsKillAncients")
 
 		cfg.Game.TerrorZone.SkipOnImmunities = []stat.Resist{}
 		for _, i := range r.Form["gameTerrorZoneSkipOnImmunities[]"] {

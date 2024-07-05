@@ -92,9 +92,6 @@ type CharacterCfg struct {
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
-		Cows struct {
-			OpenChests bool `yaml:"openChests"`
-		}
 		Pit struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
 			OpenChests            bool `yaml:"openChests"`
@@ -146,6 +143,18 @@ type CharacterCfg struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
 		} `yaml:"leveling"`
+		Quests struct {
+			ClearDen       bool `yaml:"clearDen"`
+			RescueCain     bool `yaml:"rescueCain"`
+			RetrieveHammer bool `yaml:"retrieveHammer"`
+			GetCube        bool `yaml:"getCube"`
+			KillRadament   bool `yaml:"killRadament"`
+			RetrieveBook   bool `yaml:"retrieveBook"`
+			KillIzual      bool `yaml:"killIzual"`
+			KillShenk      bool `yaml:"killShenk"`
+			RescueAnya     bool `yaml:"rescueAnya"`
+			KillAncients   bool `yaml:"killAncients"`
+		} `yaml:"quests"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`
