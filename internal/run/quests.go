@@ -188,7 +188,7 @@ func (a Quests) retrieveHammerQuest() action.Action {
 			}),
 			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			a.builder.InteractObject(object.Malus, nil),
-			a.builder.ItemPickup(true, 30),
+			a.builder.ItemPickup(false, 30),
 			a.builder.ReturnTown(),
 			a.builder.InteractNPC(
 				npc.Charsi,
@@ -219,9 +219,18 @@ func (a Quests) killRadamentQuest() action.Action {
 				}
 
 				return data.Position{}, false
-			}, step.StopAtDistance(50)),
-			a.builder.Buff(),
+			}),
 			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			// Sometimes it moves too far away from the book to pick it up, making sure it moves back to the chest
+			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+				for _, o := range d.Objects {
+					if o.Name == object.Name(355) {
+						return o.Position, true
+					}
+				}
+
+				return data.Position{}, false
+			}),
 			a.builder.ItemPickup(true, 50),
 			a.builder.ReturnTown(),
 			a.builder.MoveToCoords(startingPositionAtma),
