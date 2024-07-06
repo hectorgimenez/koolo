@@ -62,6 +62,18 @@ if exist build\config\Settings.json (
     )
 ) else (
     call :print_info "No existing Settings.json found in %cd%\build\config"
+    call :print_step "Copying Settings.json"
+    if not exist build\config (
+    	call :print_info "No config folder found in %cd%\build"
+	call :print_step "Creating config folder in %cd%\build"
+	mkdir build\config
+    )
+    copy /y config\Settings.json build\config\Settings.json > nul
+    if !errorlevel! equ 0 (
+            call :print_success "Settings.json successfully copied"
+        ) else (
+            call :print_error "Failed to copy Settings.json"
+        )
 )
 
 :: Handle tools folder
