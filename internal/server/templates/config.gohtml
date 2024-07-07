@@ -110,20 +110,6 @@
                         placeholder="Channel ID"
                         value="{{ .Discord.ChannelID }}"
                 />
-                <fieldset class="grid">
-                    <label>
-                        <input type="checkbox" name="enable_game_created_messages" value="{{ .Discord.EnableGameCreatedMessages }}" {{ if .Discord.EnableGameCreatedMessages }} checked="checked" {{ end }} />
-                        Enable Game Create Messages
-                    </label>
-                    <label>
-                        <input type="checkbox" name="enable_new_run_messages" value="{{ .Discord.EnableNewRunMessages }}" {{ if .Discord.EnableNewRunMessages }} checked="checked" {{ end }} />
-                        Enable New Run Messages
-                    </label>
-                    <label>
-                        <input type="checkbox" name="enable_run_finish_messages" value="{{ .Discord.EnableRunFinishMessages }}" {{ if .Discord.EnableRunFinishMessages }} checked="checked" {{ end }} />
-                        Enable Run Finish Messages
-                    </label>
-                </fieldset>
                 <h4>Telegram integration</h4>
                 <label>
                     <input
