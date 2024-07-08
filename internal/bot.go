@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/run"
 )
 
@@ -74,7 +75,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 
 	actions := b.ab.NewGameHook()
 	for k, r := range runs {
-		event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
+		if config.Koolo.Discord.EnableNewRunMessages {
+			event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
+		} else {
+			event.Send(event.RunStarted(event.Text(b.supervisorName, ""), r.Name()))
+		}
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -181,7 +186,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-							event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
+							if config.Koolo.Discord.EnableRunFinishMessages {
+								event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
+							}
 							running = false
 						}
 						continue
@@ -215,13 +222,20 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 func (b *Bot) maxGameLengthExceeded(startedAt time.Time) error {
 	// Check if config or Characters map is nil
 	if config.Characters == nil {
-		return fmt.Errorf("configuration is not initialized")
+		helper.Sleep(1000) // Wait a second a re-check to avoid configuration saved or reloads
+		if config.Characters == nil {
+			return fmt.Errorf("configuration is not initialized")
+		}
 	}
 
 	// Check if specific supervisor config is nil
 	characterConfig, exists := config.Characters[b.supervisorName]
 	if !exists || characterConfig == nil {
-		return fmt.Errorf("character configuration for %s not found or is nil", b.supervisorName)
+		helper.Sleep(1000) // Wait a second and re-check to avoid configuration saves or reloads resulting in errors
+		characterConfig, exists := config.Characters[b.supervisorName]
+		if !exists || characterConfig == nil {
+			return fmt.Errorf("character configuration for %s not found or is nil", b.supervisorName)
+		}
 	}
 
 	if time.Since(startedAt).Seconds() > float64(config.Characters[b.supervisorName].MaxGameLength) {
