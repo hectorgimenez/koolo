@@ -67,6 +67,8 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 			if config.Koolo.Discord.EnableGameCreatedMessages {
 				event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
+			} else {
+				event.Send(event.GameCreated(event.Text(s.name, ""), "", ""))
 			}
 			s.logGameStart(runs)
 			err = s.bot.Run(ctx, firstRun, runs)

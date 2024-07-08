@@ -77,6 +77,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	for k, r := range runs {
 		if config.Koolo.Discord.EnableNewRunMessages {
 			event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
+		} else {
+			event.Send(event.RunStarted(event.Text(b.supervisorName, ""), r.Name()))
 		}
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
