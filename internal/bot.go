@@ -75,7 +75,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 
 	actions := b.ab.NewGameHook()
 	for k, r := range runs {
-		event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
+		if config.Koolo.Discord.EnableNewRunMessages {
+			event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
+		} else {
+			event.Send(event.RunStarted(event.Text(b.supervisorName, ""), r.Name()))
+		}
 		runStart := time.Now()
 		b.logger.Info(fmt.Sprintf("Running: %s", r.Name()))
 
@@ -182,7 +186,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					if errors.Is(err, action.ErrNoMoreSteps) {
 						if len(actions)-1 == k {
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
-							event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
+							if config.Koolo.Discord.EnableRunFinishMessages {
+								event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
+							}
 							running = false
 						}
 						continue
