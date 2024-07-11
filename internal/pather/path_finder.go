@@ -2,15 +2,15 @@ package pather
 
 import (
 	"fmt"
-	"math"
-	"math/rand"
-
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"math"
+	"math/rand"
+	"sync"
 )
 
 type PathFinder struct {
@@ -19,6 +19,7 @@ type PathFinder struct {
 	cfg            *config.CharacterCfg
 	worldCache     World
 	worldCacheHash string
+	mu             sync.Mutex // Mutex to ensure only one instance runs the GetPath method at a time
 }
 
 func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCfg) *PathFinder {
@@ -27,6 +28,9 @@ func NewPathFinder(gr *game.MemoryReader, hid *game.HID, cfg *config.CharacterCf
 
 // The GetPath method definition, combined and corrected
 func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
+	pf.mu.Lock()
+	defer pf.mu.Unlock()
+
 	outsideCurrentLevel := outsideBoundary(d, to)
 	collisionGrid := d.CollisionGrid
 
@@ -36,7 +40,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 	}
 
 	if outsideCurrentLevel {
-		lvl, lvlFound := pf.gr.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
+		lvl, lvlFound := pf.gr.GetCachedMapData(false).LevelDataForCoords(to, d.PlayerUnit.Area.Act())
 		if !lvlFound {
 			panic("Error occurred calculating path, destination point outside current level and matching level not found")
 		}
