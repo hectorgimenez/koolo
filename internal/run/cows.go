@@ -39,7 +39,7 @@ func (a Cows) BuildActions() []action.Action {
 			return d.PlayerUnit.Area == area.MooMooFarm
 		}),
 		a.builder.Buff(),
-		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+		a.builder.ClearArea(a.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter()),
 	)
 }
 

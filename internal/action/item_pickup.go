@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -135,6 +136,20 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 
 	// Always pickup WirtsLeg!
 	if i.Name == "WirtsLeg" {
+		return true
+	}
+
+	// Pick up quest items if we're in leveling or questing run
+	specialRuns := slices.Contains(b.CharacterCfg.Game.Runs, "quests") || slices.Contains(b.CharacterCfg.Game.Runs, "leveling")
+	switch i.Name {
+	case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
+		if specialRuns {
+			return true
+		}
+	}
+
+	// Book of Skill doesnt work by name, so we find it by ID
+	if i.ID == 552 {
 		return true
 	}
 

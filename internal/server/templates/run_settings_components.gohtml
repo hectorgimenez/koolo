@@ -5,6 +5,11 @@
         <label><input type="checkbox" name="gamePitFocusOnElitePacks" {{ if .Config.Game.Pit.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
     </fieldset>
 {{ end }}
+{{ define "cows" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameCowsOpenChests" {{ if .Config.Game.Cows.OpenChests }}checked{{ end }}> Open chests</label>
+    </fieldset>
+{{ end }}
 
 {{ define "pindleskin" }}
     <fieldset>
@@ -85,6 +90,26 @@
     <fieldset>
         <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
         <label><input type="checkbox" name="gameLevelingEnsureKeyBinding" {{ if .Config.Game.Leveling.EnsureKeyBinding }}checked{{ end }}> Automatically bind skills</label>
+    </fieldset>
+{{ end }}
+
+{{ define "quests" }}
+    <fieldset>
+        <label>Act 1</label>
+        <label><input type="checkbox" name="gameQuestsClearDen" {{ if .Config.Game.Quests.ClearDen }}checked{{ end }}> Clear Den</label>
+        <label><input type="checkbox" name="gameQuestsRescueCain" {{ if .Config.Game.Quests.RescueCain }}checked{{ end }}> Rescue Cain</label>
+        <label><input type="checkbox" name="gameQuestsRetrieveHammer" {{ if .Config.Game.Quests.RetrieveHammer }}checked{{ end }}> Retrieve Hammer</label>                        
+        <label>Act 2</label>
+        <label><input type="checkbox" name="gameQuestsGetCube" {{ if .Config.Game.Quests.GetCube }}checked{{ end }}> Get Cube</label>
+        <label><input type="checkbox" name="gameQuestsKillRadament" {{ if .Config.Game.Quests.KillRadament }}checked{{ end }}> Kill Radament</label>                        
+        <label>Act 3</label>
+        <label><input type="checkbox" name="gameQuestsRetrieveBook" {{ if .Config.Game.Quests.RetrieveBook }}checked{{ end }}> Retrieve Book</label>                                
+        <label>Act 4</label>
+        <label><input type="checkbox" name="gameQuestsKillIzual" {{ if .Config.Game.Quests.KillIzual }}checked{{ end }}> Kill Izual</label>                                     
+        <label>Act 5</label>
+        <label><input type="checkbox" name="gameQuestsKillShenk" {{ if .Config.Game.Quests.KillShenk }}checked{{ end }}> Kill Shenk</label>
+        <label><input type="checkbox" name="gameQuestsRescueAnya" {{ if .Config.Game.Quests.RescueAnya }}checked{{ end }}> Rescue Anya</label>
+        <label><input type="checkbox" name="gameQuestsKillAncients" {{ if .Config.Game.Quests.KillAncients }}checked{{ end }}> Kill Ancients</label>
     </fieldset>
 {{ end }}
 
