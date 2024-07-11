@@ -40,9 +40,12 @@ type KooloCfg struct {
 	D2LoDPath             string `yaml:"D2LoDPath"`
 	D2RPath               string `yaml:"D2RPath"`
 	Discord               struct {
-		Enabled   bool   `yaml:"enabled"`
-		ChannelID string `yaml:"channelId"`
-		Token     string `yaml:"token"`
+		Enabled                   bool   `yaml:"enabled"`
+		EnableGameCreatedMessages bool   `yaml:"enableGameCreatedMessages"`
+		EnableNewRunMessages      bool   `yaml:"enableNewRunMessages"`
+		EnableRunFinishMessages   bool   `yaml:"enableRunFinishMessages"`
+		ChannelID                 string `yaml:"channelId"`
+		Token                     string `yaml:"token"`
 	} `yaml:"discord"`
 	Telegram struct {
 		Enabled bool   `yaml:"enabled"`
@@ -146,6 +149,18 @@ type CharacterCfg struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
 		} `yaml:"leveling"`
+		Quests struct {
+			ClearDen       bool `yaml:"clearDen"`
+			RescueCain     bool `yaml:"rescueCain"`
+			RetrieveHammer bool `yaml:"retrieveHammer"`
+			GetCube        bool `yaml:"getCube"`
+			KillRadament   bool `yaml:"killRadament"`
+			RetrieveBook   bool `yaml:"retrieveBook"`
+			KillIzual      bool `yaml:"killIzual"`
+			KillShenk      bool `yaml:"killShenk"`
+			RescueAnya     bool `yaml:"rescueAnya"`
+			KillAncients   bool `yaml:"killAncients"`
+		} `yaml:"quests"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`

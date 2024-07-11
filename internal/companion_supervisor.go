@@ -62,8 +62,11 @@ func (s *CompanionSupervisor) Start() error {
 					continue
 				}
 
-				event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
-
+				if config.Koolo.Discord.EnableGameCreatedMessages {
+					event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
+				} else {
+					event.Send(event.GameCreated(event.Text(s.name, ""), gameName, config.Characters[s.name].Companion.GamePassword))
+				}
 				err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
 				if err != nil {
 					return err
