@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/memory"
@@ -28,6 +29,7 @@ type MemoryReader struct {
 	supervisorName string
 	cachedMapData  map_client.MapData
 	logger         *slog.Logger
+	mu             sync.Mutex // Mutex to ensure only one instance runs the GetCachedMapData method at a time
 }
 
 func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, window win.HWND, logger *slog.Logger) (*MemoryReader, error) {
@@ -50,6 +52,8 @@ func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, 
 }
 
 func (gd *MemoryReader) GetCachedMapData(isNewGame bool) map_client.MapData {
+	gd.mu.Lock()
+	defer gd.mu.Unlock()
 	if isNewGame || gd.cachedMapData == nil {
 		d := gd.GameReader.GetData()
 		gd.CachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
