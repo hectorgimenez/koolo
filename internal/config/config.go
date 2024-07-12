@@ -132,9 +132,11 @@ type CharacterCfg struct {
 			OnlyElites bool `yaml:"onlyElites"`
 		} `yaml:"diablo"`
 		Baal struct {
-			KillBaal bool `yaml:"killBaal"`
-			DollQuit bool `yaml:"dollQuit"`
-			SoulQuit bool `yaml:"soulQuit"`
+			KillBaal    bool `yaml:"killBaal"`
+			DollQuit    bool `yaml:"dollQuit"`
+			SoulQuit    bool `yaml:"soulQuit"`
+			ClearFloors bool `yaml:"clearFloors"`
+			OnlyElites  bool `yaml:"onlyElites"`
 		} `yaml:"baal"`
 		Eldritch struct {
 			KillShenk bool `yaml:"killShenk"`

@@ -544,6 +544,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Baal.KillBaal = r.Form.Has("gameBaalKillBaal")
 		cfg.Game.Baal.DollQuit = r.Form.Has("gameBaalDollQuit")
 		cfg.Game.Baal.SoulQuit = r.Form.Has("gameBaalSoulQuit")
+		cfg.Game.Baal.ClearFloors = r.Form.Has("gameBaalClearFloors")
+		cfg.Game.Baal.OnlyElites = r.Form.Has("gameBaalOnlyElites")
 
 		cfg.Game.Eldritch.KillShenk = r.Form.Has("gameEldritchKillShenk")
 		cfg.Game.Diablo.ClearArea = r.Form.Has("gameDiabloClearArea")
