@@ -93,8 +93,8 @@
                 <label>
                     Authentication Method
                     <select name="authmethod">
-                        <option value="BattleNetClient" {{ if eq .Config.AuthMethod
-                        "BattleNetClient" }}selected{{ end }}>Battle.net Client
+                        <option value="TokenAuth" {{ if eq .Config.AuthMethod
+                        "TokenAuth" }}selected{{ end }}>Auth Token
                         </option>
                         <option value="UsernamePassword" {{ if eq .Config.AuthMethod
                         "UsernamePassword" }}selected{{ end }}>Username & Password
@@ -103,6 +103,12 @@
                         "None" }}selected{{ end }}>None
                         </option>
                     </select>
+                </label>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
+                    Authentication Token
+                    <input type="password" name="AuthToken" placeholder="{{ .Config.AuthToken }}" value="{{ .Config.AuthToken }}"/>
                 </label>
             </fieldset>
             <h4>Health settings</h4>

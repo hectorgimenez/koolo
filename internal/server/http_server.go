@@ -329,7 +329,28 @@ func (s *HttpServer) debugHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
-	s.manager.Start(r.URL.Query().Get("characterName"))
+	supervisorList := s.manager.AvailableSupervisors()
+	Supervisor := r.URL.Query().Get("characterName")
+
+	// Prevent launching of other clients while there's a client with TokenAuth still starting
+	for _, sup := range supervisorList {
+
+		// If the current don't check against the one we're trying to launch
+		if sup == Supervisor {
+			continue
+		}
+
+		if string(s.manager.GetSupervisorStats(sup).SupervisorStatus) == "Starting" {
+			sCfg, found := config.Characters[sup]
+			if found {
+				if sCfg.AuthMethod == "TokenAuth" {
+					return
+				}
+			}
+		}
+	}
+
+	s.manager.Start(Supervisor)
 	s.initialData(w, r)
 }
 
@@ -478,6 +499,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Password = r.Form.Get("password")
 		cfg.Realm = r.Form.Get("realm")
 		cfg.AuthMethod = r.Form.Get("authmethod")
+		cfg.AuthToken = r.Form.Get("AuthToken")
 
 		// Health config
 		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))
