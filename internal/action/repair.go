@@ -2,24 +2,27 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
-
-	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		shouldRepair := false
 		for _, i := range d.Inventory.ByLocation(item.LocationEquipped) {
-			if !i.Ethereal && game.WeaponUtils.IsItemThrowable(i) {
+			if i.Ethereal {
+				continue
+			}
+			if game.WeaponUtils.IsItemThrowable(i) {
 				quantity, qtyFound := i.FindStat(stat.Quantity, 0)
 				if qtyFound && quantity.Value <= game.WeaponUtils.GetThrowableMaxQuantity(i)/3 || quantity.Value < 20 {
 					b.Logger.Info(fmt.Sprintf("Repairing %s, item quantity is at %d", i.Name, quantity.Value))
@@ -89,7 +92,10 @@ func (b *Builder) RepairRequired() bool {
 	gameData := b.Container.Reader.GetData(false)
 
 	for _, i := range gameData.Inventory.ByLocation(item.LocationEquipped) {
-		if !i.Ethereal && game.WeaponUtils.IsItemThrowable(i) {
+		if i.Ethereal {
+			continue
+		}
+		if game.WeaponUtils.IsItemThrowable(i) {
 			quantity, qtyFound := i.FindStat(stat.Quantity, 0)
 			if qtyFound && quantity.Value <= game.WeaponUtils.GetThrowableMaxQuantity(i)/3 || quantity.Value < 20 {
 				b.Logger.Info(fmt.Sprintf("Repairing %s, item quantity is at %d", i.Name, quantity.Value))
