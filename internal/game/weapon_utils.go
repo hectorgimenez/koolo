@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 )
 
+//@TODO Remove this file when the d2go project is updated to manage throwable max quantities
 type weaponUtilsInterface interface {
 	GetThrowableMaxQuantity(itemToCheck data.Item) int
 	IsItemThrowable(item data.Item) bool
