@@ -15,6 +15,7 @@ import (
 	"github.com/lxn/win"
 )
 
+//@TODO Remove usage of WeaponsUtils when the d2go project is updated to manage throwables
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		shouldRepair := false
