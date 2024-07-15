@@ -26,6 +26,11 @@ func LineOfSight(d game.Data, origin data.Position, destination data.Position) b
 	err := dx - dy
 
 	for {
+		// Boundary check for x0, y0
+		if x0 < 0 || y0 < 0 || x0 >= len(d.CollisionGrid[0]) || y0 >= len(d.CollisionGrid) {
+			return false
+		}
+
 		// Check if the current position is not walkable
 		if !d.CollisionGrid[y0][x0] {
 			return false
