@@ -9,19 +9,17 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/billgraziano/dpapi"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 var (
-	user32                  = windows.NewLazySystemDLL("user32.dll")
-	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
-	procSendMessageW        = user32.NewProc("SendMessageW")
-	procPostMessageW        = user32.NewProc("PostMessageW")
-	procGetClassName        = user32.NewProc("GetClassNameW")
+	user32 = windows.NewLazySystemDLL("user32.dll")
 )
 
 type Manager struct {
@@ -256,45 +254,7 @@ func terminateProcessByName(name string) error {
 	return nil
 }
 
-// HELPER FUNCTIONS
-
-func SetForegroundWindow(hwnd windows.HWND) bool {
-	ret, _, _ := procSetForegroundWindow.Call(uintptr(hwnd))
-	return ret != 0
-}
-
-func SendMessage(hwnd windows.HWND, msg uint32, wparam, lparam uintptr) uintptr {
-	ret, _, _ := procSendMessageW.Call(
-		uintptr(hwnd),
-		uintptr(msg),
-		wparam,
-		lparam,
-	)
-	return ret
-}
-
-func PostMessage(hwnd windows.HWND, msg uint32, wparam, lparam uintptr) uintptr {
-	ret, _, _ := procPostMessageW.Call(
-		uintptr(hwnd),
-		uintptr(msg),
-		wparam,
-		lparam,
-	)
-	return ret
-}
-
-func GetClassName(hwnd windows.HWND) (string, error) {
-	var className [256]uint16
-	ret, _, err := procGetClassName.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&className[0])), uintptr(len(className)))
-	if ret == 0 {
-		return "", err
-	}
-	return syscall.UTF16ToString(className[:]), nil
-}
-
-// END HELPER FUNCTIONS
-
-func StartGame(username string, password string, authmethod string, realm string, arguments string, useCustomSettings bool) (uint32, win.HWND, error) {
+func StartGame(username string, password string, authmethod string, authToken string, realm string, arguments string, useCustomSettings bool) (uint32, win.HWND, error) {
 	// First check for other instances of the game and kill the handles, otherwise we will not be able to start the game
 	err := KillAllClientHandles()
 	if err != nil {
@@ -304,8 +264,8 @@ func StartGame(username string, password string, authmethod string, realm string
 	// Depending on the authentication method set base arguments
 	var baseArgs []string
 
-	if authmethod == "BattleNetClient" {
-		baseArgs = []string{"-uid", "osi", "-username", username, "-password", password, "-address", realm}
+	if authmethod == "TokenAuth" {
+		baseArgs = []string{"-uid", "osi"}
 	} else if authmethod == "UsernamePassword" {
 		baseArgs = []string{"-username", username, "-password", password, "-address", realm}
 	} else if authmethod == "None" {
@@ -321,137 +281,48 @@ func StartGame(username string, password string, authmethod string, realm string
 	// Add them to the full argument list
 	fullArgs := append(baseArgs, additionalArguments...)
 
-	var bnetCmd *exec.Cmd
+	if authmethod == "TokenAuth" {
 
-	// If auth method is set to battlenet client, start the process
-	if authmethod == "BattleNetClient" {
+		// Entropy buffer
+		entropy := []byte{0xc8, 0x76, 0xf4, 0xae, 0x4c, 0x95, 0x2e, 0xfe, 0xf2, 0xfa, 0x0f, 0x54, 0x19, 0xc0, 0x9c, 0x43}
+		tokenBytes := []byte(authToken)
 
-		// First we check if the process exists, if so, terminate it
-		// We're looking for the window by title as there can be many Battle.net.exe processes
-		err := terminateProcessByName("Battle.net.exe")
+		encryptedToken, err := dpapi.EncryptBytesEntropy(tokenBytes, entropy)
 		if err != nil {
-			return 0, 0, err
+			return 0, 0, fmt.Errorf("failed to encrypt auth token: %v", err)
 		}
 
-		// Start the Battle.net Process
-		bnetCmd = exec.Command("C:\\Program Files (x86)\\Battle.net\\Battle.net.exe", "--from-launcher")
-		err = bnetCmd.Start()
+		// Create or Open the OSI registry folder
+		key, _, err := registry.CreateKey(registry.CURRENT_USER, `SOFTWARE\Blizzard Entertainment\Battle.net\Launch Options\OSI`, registry.ALL_ACCESS)
 		if err != nil {
-			return 0, 0, err
+			return 0, 0, fmt.Errorf("failed to open registry key: %v", err)
+		}
+		defer key.Close()
+
+		region := "EU"
+		switch realm {
+		case "eu.actual.battle.net":
+			region = "EU"
+		case "us.actual.battle.net":
+			region = "US"
+		case "kr.actual.battle.net":
+			region = "KR"
+		default:
+			region = "EU"
 		}
 
-		// Give enough time for the process to start
-		helper.Sleep(5000)
-
-		// Log in process
-		var bnetHandle windows.HWND
-
-		cb := syscall.NewCallback(func(hwnd windows.HWND, lParam uintptr) uintptr {
-			var pid uint32
-			windows.GetWindowThreadProcessId(hwnd, &pid)
-			if pid == uint32(bnetCmd.Process.Pid) {
-				className, err := GetClassName(hwnd)
-				if err != nil {
-					fmt.Println("Error getting class name:", err)
-					return 1
-				}
-				if className == "Qt5151QWindowIcon" {
-					bnetHandle = hwnd
-					return 0
-				}
-			}
-			return 1
-		})
-
-		for {
-			windows.EnumWindows(cb, unsafe.Pointer(&bnetCmd.Process.Pid))
-			if bnetHandle != 0 {
-				// Small delay and read again, to be sure we are capturing the right hwnd
-				time.Sleep(time.Second)
-				windows.EnumWindows(cb, unsafe.Pointer(&bnetCmd.Process.Pid))
-				break
-			}
+		// Update the region registry
+		err = key.SetStringValue("REGION", region)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to set REGION registry value: %v", err)
 		}
 
-		// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-		const (
-			WM_LBUTTONDOWN = 0x0201
-			WM_LBUTTONUP   = 0x0202
-			WM_KEYDOWN     = 0x0100
-			WM_KEYUP       = 0x0101
-			VK_SHIFT       = 0x10
-			VK_CONTROL     = 0x11
-			VK_A           = 0x41
-			VK_BACK        = 0x08
-			MK_LBUTTON     = 0x0001
-			VK_TAB         = 0x09
-			VK_RETURN      = 0x0D
-			VK_LSHIFT      = 0xA0
-			VK_ESCAPE      = 0x1B
-		)
-
-		if bnetHandle == 0 {
-			return 0, 0, errors.New("failed to find Battle.net handle")
+		err = key.SetBinaryValue("WEB_TOKEN", encryptedToken)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to set WEB_TOKEN registry value: %v", err)
 		}
 
-		// Bring the window to front
-		SetForegroundWindow(bnetHandle)
-
-		//PostMessage(bnetHandle, WM_KEYDOWN, VK_LSHIFT, 0)
-		//helper.Sleep(500)
-		//PostMessage(bnetHandle, WM_KEYDOWN, VK_TAB, 0)
-		//PostMessage(bnetHandle, WM_KEYUP, VK_TAB, 0)
-		//PostMessage(bnetHandle, WM_KEYUP, VK_LSHIFT, 0)
-
-		// Coords for username field
-		x, y := 390, 270
-		unLParam := uintptr((y << 16) | (x & 0xFFFF))
-
-		PostMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, unLParam)
-		PostMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, unLParam)
-
-		helper.Sleep(500)
-		for i := 0; i < 40; i++ {
-			PostMessage(bnetHandle, WM_KEYDOWN, VK_BACK, unLParam)
-			PostMessage(bnetHandle, WM_KEYUP, VK_BACK, unLParam)
-			helper.Sleep(50)
-		}
-
-		helper.Sleep(500)
-
-		// Type out the username
-		for _, char := range username {
-			PostMessage(bnetHandle, win.WM_CHAR, uintptr(char), 0)
-			helper.Sleep(50)
-		}
-
-		// Click the escape key to remove any autocomplete windows
-		PostMessage(bnetHandle, WM_KEYDOWN, VK_ESCAPE, 0)
-		PostMessage(bnetHandle, WM_KEYUP, VK_ESCAPE, 0)
-		helper.Sleep(1000)
-
-		x2, y2 := 390, 329
-		pwLParam := uintptr((y2 << 16) | (x2 & 0xFFFF))
-
-		// Click on the password field
-		PostMessage(bnetHandle, WM_LBUTTONDOWN, MK_LBUTTON, pwLParam)
-		PostMessage(bnetHandle, WM_LBUTTONUP, MK_LBUTTON, pwLParam)
-		helper.Sleep(1000)
-
-		// Type out the password
-		for _, char := range password {
-			PostMessage(bnetHandle, win.WM_CHAR, uintptr(char), 0)
-			helper.Sleep(50)
-		}
-
-		helper.Sleep(1000)
-
-		// Click Enter
-		SendMessage(bnetHandle, WM_KEYDOWN, VK_RETURN, 0)
-		SendMessage(bnetHandle, WM_KEYUP, VK_RETURN, 0)
-
-		// Wait for the login to finish
-		helper.Sleep(5000)
+		// If we got to here we've successfully updated the auth token :)
 	}
 
 	// Start the game

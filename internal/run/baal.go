@@ -28,31 +28,69 @@ func (s Baal) Name() string {
 }
 
 func (s Baal) BuildActions() (actions []action.Action) {
-	actions = append(actions,
-		// Moving to starting point (The World StoneKeep Level 2)
-		s.builder.WayPoint(area.TheWorldStoneKeepLevel2),
-		// Travel to boss position
-		s.builder.MoveToArea(area.TheWorldStoneKeepLevel3),
-		s.builder.MoveToArea(area.ThroneOfDestruction),
-		s.builder.MoveToCoords(baalThronePosition),
-		// Kill monsters inside Baal throne
-		s.checkForSoulsOrDolls(),
-		s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
-	)
-
-	// Let's move to a safe area and open the portal in companion mode
-	if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
+	if s.CharacterCfg.Game.Baal.ClearFloors {
+		// Set filter
+		filter := data.MonsterAnyFilter()
+		if s.CharacterCfg.Game.Baal.OnlyElites {
+			filter = data.MonsterEliteFilter()
+		}
 		actions = append(actions,
-			s.builder.MoveToCoords(data.Position{
-				X: 15116,
-				Y: 5071,
-			}),
-			s.builder.OpenTPIfLeader(),
+			// Moving to starting point (The World StoneKeep Level 2)
+			s.builder.WayPoint(area.TheWorldStoneKeepLevel2),
+			s.builder.ClearArea(false, filter),
+			// Travel to boss position
+			s.builder.MoveToArea(area.TheWorldStoneKeepLevel3),
+			s.builder.ClearArea(false, filter),
+			s.builder.MoveToArea(area.ThroneOfDestruction),
+			s.builder.MoveToCoords(baalThronePosition),
+			// Kill monsters inside Baal throne
+			s.checkForSoulsOrDolls(),
+		)
+		// Let's move to a safe area and open the portal in companion mode
+		if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
+			actions = append(actions,
+				s.builder.MoveToCoords(data.Position{
+					X: 15116,
+					Y: 5071,
+				}),
+				s.builder.OpenTPIfLeader(),
+			)
+		}
+		actions = append(actions,
+			s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
+			s.builder.ItemPickup(false, 50),
+			s.builder.Buff(),
+		)
+	} else {
+		actions = append(actions,
+			// Moving to starting point (The World StoneKeep Level 2)
+			s.builder.WayPoint(area.TheWorldStoneKeepLevel2),
+			// Travel to boss position
+			s.builder.MoveToArea(area.TheWorldStoneKeepLevel3),
+			s.builder.MoveToArea(area.ThroneOfDestruction),
+			s.builder.MoveToCoords(baalThronePosition),
+			// Kill monsters inside Baal throne
+			s.checkForSoulsOrDolls(),
+		)
+		// Let's move to a safe area and open the portal in companion mode
+		if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
+			actions = append(actions,
+				s.builder.MoveToCoords(data.Position{
+					X: 15116,
+					Y: 5071,
+				}),
+				s.builder.OpenTPIfLeader(),
+			)
+		}
+		actions = append(actions,
+			s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
+			s.builder.ItemPickup(false, 50),
+			s.builder.Buff(),
 		)
 	}
 
 	// Come back to previous position
-	actions = append(actions, s.builder.Buff(), s.builder.MoveToCoords(baalThronePosition))
+	actions = append(actions, s.builder.MoveToCoords(baalThronePosition))
 
 	lastWave := false
 	actions = append(actions, action.NewChain(func(d game.Data) []action.Action {

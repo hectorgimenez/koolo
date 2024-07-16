@@ -1,4 +1,7 @@
 /.idea
+/.vscode
+/.github
+/bin
 /build
 /stats
 /screenshots
