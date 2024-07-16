@@ -61,9 +61,7 @@ func (a Javazon) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID
 
 		numOfAttacks := 5
 
-		steps = append(steps,
-			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1)),
-		)
+		steps = append(steps, step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1)))
 
 		completedAttackLoops++
 		previousUnitID = id
@@ -74,7 +72,8 @@ func (a Javazon) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID
 func (a Javazon) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
 	var previousUnitID data.UnitID = 0
-	skipOnImmunities = append(skipOnImmunities, stat.LightImmune)
+
+	//skipOnImmunities = append(skipOnImmunities, stat.LightImmune)
 
 	return action.NewStepChain(func(d game.Data) []step.Step {
 		id, found := monsterSelector(d)
@@ -97,9 +96,29 @@ func (a Javazon) KillMonsterSequence(monsterSelector func(d game.Data) (data.Uni
 
 		numOfAttacks := 5
 
-		steps = append(steps,
-			step.SecondaryAttack(skill.LightningFury, id, numOfAttacks, step.Distance(minJavazonDistance, maxJavazonDistance)),
-		)
+		monster, found := d.Monsters.FindByID(id)
+		if !found {
+			return []step.Step{}
+		}
+
+		closeMonsters := 0
+		for _, mob := range d.Monsters {
+			if mob.IsPet() || mob.IsMerc() || mob.IsGoodNPC() || mob.IsSkip() || monster.Stats[stat.Life] <= 0 && mob.UnitID != monster.UnitID {
+				continue
+			}
+			if pather.DistanceFromPoint(mob.Position, monster.Position) <= 20 {
+				closeMonsters++
+			}
+			if closeMonsters >= 3 {
+				break
+			}
+		}
+
+		if closeMonsters >= 3 {
+			steps = append(steps, step.SecondaryAttack(skill.LightningFury, id, numOfAttacks, step.Distance(minJavazonDistance, maxJavazonDistance)))
+		} else {
+			steps = append(steps, step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1)))
+		}
 
 		completedAttackLoops++
 		previousUnitID = id
