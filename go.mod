@@ -4,8 +4,10 @@ go 1.22
 
 require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
+	github.com/billgraziano/dpapi v0.5.0
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/gorilla/websocket v1.5.2
 	github.com/hectorgimenez/d2go v0.0.0-20240625124529-3d4b0bc7a495
 	github.com/inkeliz/gowebview v1.0.1
 	github.com/inkeliz/w32 v1.0.2
@@ -19,7 +21,7 @@ require (
 require (
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 // indirect
 	github.com/expr-lang/expr v1.16.9 // indirect
-	github.com/gorilla/websocket v1.5.2 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 )
