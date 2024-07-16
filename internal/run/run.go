@@ -100,7 +100,7 @@ func (f *Factory) BuildRuns() (runs []Run) {
 		case config.AncientTunnelsRun:
 			runs = append(runs, AncientTunnels{baseRun})
 		case config.MausoleumRun:
-			runs = append(runs, Mausoleum{baseRun})	
+			runs = append(runs, Mausoleum{baseRun})
 		case config.PitRun:
 			runs = append(runs, Pit{baseRun})
 		case config.StonyTombRun:
@@ -119,6 +119,8 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, TalRashaTombs{baseRun})
 		case config.LevelingRun:
 			runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
+		case config.QuestsRun:
+			runs = append(runs, Quests{baseRun})
 		case config.CowsRun:
 			runs = append(runs, Cows{baseRun})
 		}

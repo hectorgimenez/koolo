@@ -40,9 +40,12 @@ type KooloCfg struct {
 	D2LoDPath             string `yaml:"D2LoDPath"`
 	D2RPath               string `yaml:"D2RPath"`
 	Discord               struct {
-		Enabled   bool   `yaml:"enabled"`
-		ChannelID string `yaml:"channelId"`
-		Token     string `yaml:"token"`
+		Enabled                   bool   `yaml:"enabled"`
+		EnableGameCreatedMessages bool   `yaml:"enableGameCreatedMessages"`
+		EnableNewRunMessages      bool   `yaml:"enableNewRunMessages"`
+		EnableRunFinishMessages   bool   `yaml:"enableRunFinishMessages"`
+		ChannelID                 string `yaml:"channelId"`
+		Token                     string `yaml:"token"`
 	} `yaml:"discord"`
 	Telegram struct {
 		Enabled bool   `yaml:"enabled"`
@@ -55,15 +58,16 @@ type CharacterCfg struct {
 	MaxGameLength   int    `yaml:"maxGameLength"`
 	Username        string `yaml:"username"`
 	Password        string `yaml:"password"`
+	AuthMethod      string `yaml:"authMethod"`
+	AuthToken       string `yaml:"authToken"`
 	Realm           string `yaml:"realm"`
 	CharacterName   string `yaml:"characterName"`
 	CommandLineArgs string `yaml:"commandLineArgs"`
 	KillD2OnStop    bool   `yaml:"killD2OnStop"`
 	ClassicMode     bool   `yaml:"classicMode"`
 	CloseMiniPanel  bool   `yaml:"closeMiniPanel"`
-	//EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
-	AuthMethod string `yaml:"authMethod"`
-	Health     struct {
+
+	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
@@ -92,6 +96,9 @@ type CharacterCfg struct {
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
+		Cows struct {
+			OpenChests bool `yaml:"openChests"`
+		}
 		Pit struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
 			OpenChests            bool `yaml:"openChests"`
@@ -126,9 +133,11 @@ type CharacterCfg struct {
 			OnlyElites bool `yaml:"onlyElites"`
 		} `yaml:"diablo"`
 		Baal struct {
-			KillBaal bool `yaml:"killBaal"`
-			DollQuit bool `yaml:"dollQuit"`
-			SoulQuit bool `yaml:"soulQuit"`
+			KillBaal    bool `yaml:"killBaal"`
+			DollQuit    bool `yaml:"dollQuit"`
+			SoulQuit    bool `yaml:"soulQuit"`
+			ClearFloors bool `yaml:"clearFloors"`
+			OnlyElites  bool `yaml:"onlyElites"`
 		} `yaml:"baal"`
 		Eldritch struct {
 			KillShenk bool `yaml:"killShenk"`
@@ -143,6 +152,18 @@ type CharacterCfg struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
 		} `yaml:"leveling"`
+		Quests struct {
+			ClearDen       bool `yaml:"clearDen"`
+			RescueCain     bool `yaml:"rescueCain"`
+			RetrieveHammer bool `yaml:"retrieveHammer"`
+			GetCube        bool `yaml:"getCube"`
+			KillRadament   bool `yaml:"killRadament"`
+			RetrieveBook   bool `yaml:"retrieveBook"`
+			KillIzual      bool `yaml:"killIzual"`
+			KillShenk      bool `yaml:"killShenk"`
+			RescueAnya     bool `yaml:"rescueAnya"`
+			KillAncients   bool `yaml:"killAncients"`
+		} `yaml:"quests"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`

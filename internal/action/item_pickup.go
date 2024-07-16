@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -132,13 +133,27 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 
 	// Skip picking up gold if we can not carry more
 	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
-	if gold.Value >= d.PlayerUnit.MaxGold() {
+	if gold.Value >= d.PlayerUnit.MaxGold() && i.Name == "Gold" {
 		b.Logger.Debug("Skipping gold pickup, inventory full")
 		return false
 	}
 
 	// Always pickup WirtsLeg!
 	if i.Name == "WirtsLeg" {
+		return true
+	}
+
+	// Pick up quest items if we're in leveling or questing run
+	specialRuns := slices.Contains(b.CharacterCfg.Game.Runs, "quests") || slices.Contains(b.CharacterCfg.Game.Runs, "leveling")
+	switch i.Name {
+	case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
+		if specialRuns {
+			return true
+		}
+	}
+
+	// Book of Skill doesnt work by name, so we find it by ID
+	if i.ID == 552 {
 		return true
 	}
 

@@ -45,6 +45,10 @@ func getLastBuffedAt(supervisor string) time.Time {
 	return time.Time{}
 }
 
+func ResetBuffTime(supervisor string) {
+	delete(lastBuffedAt, supervisor)
+}
+
 func (b *Builder) Buff() *StepChainAction {
 	return NewStepChain(func(d game.Data) (steps []step.Step) {
 		if d.PlayerUnit.Area.IsTown() || time.Since(getLastBuffedAt(b.Supervisor)) < time.Second*30 {

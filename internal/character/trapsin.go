@@ -197,8 +197,8 @@ func (s Trapsin) KillCouncil() action.Action {
 		for _, m := range councilMembers {
 			for range maxAttacksLoop {
 				steps = append(steps,
-					step.SecondaryAttack(skill.LightningSentry, m.UnitID, 3, nil),
-					step.SecondaryAttack(skill.DeathSentry, m.UnitID, 2, nil),
+					step.SecondaryAttack(skill.LightningSentry, m.UnitID, 3, step.Distance(minDistance, maxDistance)),
+					step.SecondaryAttack(skill.DeathSentry, m.UnitID, 2, step.Distance(minDistance, maxDistance)),
 					step.PrimaryAttack(m.UnitID, 2, true, step.Distance(minDistance, maxDistance)),
 				)
 			}

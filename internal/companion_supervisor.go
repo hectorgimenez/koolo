@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"time"
 
@@ -61,12 +62,16 @@ func (s *CompanionSupervisor) Start() error {
 					continue
 				}
 
-				event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
-
+				if config.Koolo.Discord.EnableGameCreatedMessages {
+					event.Send(event.GameCreated(event.Text(s.name, "New game created: %s"), gameName, config.Characters[s.name].Companion.GamePassword))
+				} else {
+					event.Send(event.GameCreated(event.Text(s.name, ""), gameName, config.Characters[s.name].Companion.GamePassword))
+				}
 				err = s.startBot(ctx, s.runFactory.BuildRuns(), firstRun)
 				if err != nil {
 					return err
 				}
+				action.ResetBuffTime(s.Name())
 				firstRun = false
 			} else {
 				s.c.Logger.Debug("Waiting for new game to be created...")
@@ -84,6 +89,7 @@ func (s *CompanionSupervisor) Start() error {
 					if err != nil {
 						return err
 					}
+					action.ResetBuffTime(s.Name())
 				}
 			}
 		}

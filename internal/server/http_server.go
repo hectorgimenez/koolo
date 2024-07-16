@@ -329,7 +329,28 @@ func (s *HttpServer) debugHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
-	s.manager.Start(r.URL.Query().Get("characterName"))
+	supervisorList := s.manager.AvailableSupervisors()
+	Supervisor := r.URL.Query().Get("characterName")
+
+	// Prevent launching of other clients while there's a client with TokenAuth still starting
+	for _, sup := range supervisorList {
+
+		// If the current don't check against the one we're trying to launch
+		if sup == Supervisor {
+			continue
+		}
+
+		if string(s.manager.GetSupervisorStats(sup).SupervisorStatus) == "Starting" {
+			sCfg, found := config.Characters[sup]
+			if found {
+				if sCfg.AuthMethod == "TokenAuth" {
+					return
+				}
+			}
+		}
+	}
+
+	s.manager.Start(Supervisor)
 	s.initialData(w, r)
 }
 
@@ -411,6 +432,9 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.Debug.Screenshots = r.Form.Get("debug_screenshots") == "true"
 		// Discord
 		newConfig.Discord.Enabled = r.Form.Get("discord_enabled") == "true"
+		newConfig.Discord.EnableGameCreatedMessages = r.Form.Has("enable_game_created_messages")
+		newConfig.Discord.EnableNewRunMessages = r.Form.Has("enable_new_run_messages")
+		newConfig.Discord.EnableRunFinishMessages = r.Form.Has("enable_run_finish_messages")
 		newConfig.Discord.Token = r.Form.Get("discord_token")
 		newConfig.Discord.ChannelID = r.Form.Get("discord_channel_id")
 		// Telegram
@@ -475,6 +499,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Password = r.Form.Get("password")
 		cfg.Realm = r.Form.Get("realm")
 		cfg.AuthMethod = r.Form.Get("authmethod")
+		cfg.AuthToken = r.Form.Get("AuthToken")
 
 		// Health config
 		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))
@@ -517,6 +542,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal([]byte(r.FormValue("gameRuns")), &enabledRuns)
 		cfg.Game.Runs = enabledRuns
 
+		cfg.Game.Cows.OpenChests = r.Form.Has("gameCowsOpenChests")
+
 		cfg.Game.Pit.MoveThroughBlackMarsh = r.Form.Has("gamePitMoveThroughBlackMarsh")
 		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")
 		cfg.Game.Pit.FocusOnElitePacks = r.Form.Has("gamePitFocusOnElitePacks")
@@ -539,6 +566,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Baal.KillBaal = r.Form.Has("gameBaalKillBaal")
 		cfg.Game.Baal.DollQuit = r.Form.Has("gameBaalDollQuit")
 		cfg.Game.Baal.SoulQuit = r.Form.Has("gameBaalSoulQuit")
+		cfg.Game.Baal.ClearFloors = r.Form.Has("gameBaalClearFloors")
+		cfg.Game.Baal.OnlyElites = r.Form.Has("gameBaalOnlyElites")
 
 		cfg.Game.Eldritch.KillShenk = r.Form.Has("gameEldritchKillShenk")
 		cfg.Game.Diablo.ClearArea = r.Form.Has("gameDiabloClearArea")
@@ -546,6 +575,23 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
+
+		// Quests options for Act 1
+		cfg.Game.Quests.ClearDen = r.Form.Has("gameQuestsClearDen")
+		cfg.Game.Quests.RescueCain = r.Form.Has("gameQuestsRescueCain")
+		cfg.Game.Quests.RetrieveHammer = r.Form.Has("gameQuestsRetrieveHammer")
+		// Quests options for Act 2
+		cfg.Game.Quests.KillRadament = r.Form.Has("gameQuestsKillRadament")
+		cfg.Game.Quests.GetCube = r.Form.Has("gameQuestsGetCube")
+		// Quests options for Act 3
+		cfg.Game.Quests.RetrieveBook = r.Form.Has("gameQuestsRetrieveBook")
+		// Quests options for Act 4
+		cfg.Game.Quests.KillIzual = r.Form.Has("gameQuestsKillIzual")
+		// Quests options for Act 5
+		cfg.Game.Quests.KillShenk = r.Form.Has("gameQuestsKillShenk")
+		cfg.Game.Quests.RescueAnya = r.Form.Has("gameQuestsRescueAnya")
+		cfg.Game.Quests.KillAncients = r.Form.Has("gameQuestsKillAncients")
+
 		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
 		cfg.Game.TerrorZone.SkipOtherRuns = r.Form.Has("gameTerrorZoneSkipOtherRuns")
 
