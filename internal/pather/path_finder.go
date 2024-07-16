@@ -85,6 +85,9 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 					cgX = int(math.Abs(float64(relativeStartX))) + x
 				}
 
+				if cgY+1 >= len(expandedCG) || cgX+1 >= len(expandedCG[cgY]) {
+					continue
+				}
 				expandedCG[cgY][cgX] = lvl.CollisionGrid[y][x]
 			}
 		}
