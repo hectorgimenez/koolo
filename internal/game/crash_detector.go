@@ -56,7 +56,7 @@ func (cd *CrashDetector) Stop() {
 }
 
 func (cd *CrashDetector) isProcessRunning() bool {
-	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, cd.pid)
+	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(cd.pid))
 	if err != nil {
 		return false
 	}
