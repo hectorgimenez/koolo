@@ -152,6 +152,22 @@ type CharacterCfg struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
 		} `yaml:"leveling"`
+		Rushing struct {
+			GiveWPsA1      bool `yaml:"giveWPsA1"`
+			ClearDen       bool `yaml:"clearDen"`
+			RescueCain     bool `yaml:"rescueCain"`
+			RetrieveHammer bool `yaml:"retrieveHammer"`
+			GiveWPsA2      bool `yaml:"giveWPsA2"`
+			KillRadament   bool `yaml:"killRadament"`
+			GiveWPsA3      bool `yaml:"giveWPsA3"`
+			RetrieveBook   bool `yaml:"retrieveBook"`
+			GiveWPsA4      bool `yaml:"giveWPsA4"`
+			KillIzual      bool `yaml:"killIzual"`
+			GiveWPsA5      bool `yaml:"giveWPsA5"`
+			KillShenk      bool `yaml:"killShenk"`
+			RescueAnya     bool `yaml:"rescueAnya"`
+			KillAncients   bool `yaml:"killAncients"`
+		} `yaml:"rushing"`
 		Quests struct {
 			ClearDen       bool `yaml:"clearDen"`
 			RescueCain     bool `yaml:"rescueCain"`

@@ -95,6 +95,25 @@
     </fieldset>
 {{ end }}
 
+{{ define "rushing" }}
+    <fieldset>
+        <label>Act 1</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA1" {{ if .Config.Game.Rushing.GiveWPsA1 }}checked{{ end }}> Give Act 1 WPs</label>
+        <label><input type="checkbox" name="gameRushingClearDen" {{ if .Config.Game.Rushing.ClearDen }}checked{{ end }}> Clear Den</label>
+        <label><input type="checkbox" name="gameRushingRescueCain" {{ if .Config.Game.Rushing.RescueCain }}checked{{ end }}> Rescue Cain</label>
+        <label><input type="checkbox" name="gameRushingRetrieveHammer" {{ if .Config.Game.Rushing.RetrieveHammer }}checked{{ end }}> Retrieve Hammer</label>                        
+        <label>Act 2</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA2" {{ if .Config.Game.Rushing.GiveWPsA2 }}checked{{ end }}> Give Act 2 WPs</label>
+        <label><input type="checkbox" name="gameRushingKillRadament" {{ if .Config.Game.Rushing.KillRadament }}checked{{ end }}> Kill Radament</label>                        
+        <label>Act 3</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA3" {{ if .Config.Game.Rushing.GiveWPsA3 }}checked{{ end }}> Give Act 3 WPs</label>
+        <label><input type="checkbox" name="gameRushingRetrieveBook" {{ if .Config.Game.Rushing.RetrieveBook }}checked{{ end }}> Retrieve Book</label>                                
+        <label>Act 4</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA4" {{ if .Config.Game.Rushing.GiveWPsA4 }}checked{{ end }}> Give Act 4 WPs</label>
+        <label><input type="checkbox" name="gameRushingKillIzual" {{ if .Config.Game.Rushing.KillIzual }}checked{{ end }}> Kill Izual</label>                                     
+    </fieldset>
+{{ end }}
+
 {{ define "quests" }}
     <fieldset>
         <label>Act 1</label>

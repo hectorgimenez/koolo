@@ -576,6 +576,26 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 
+		// rushing options for Act 1
+		cfg.Game.Rushing.GiveWPsA1 = r.Form.Has("gameRushingGiveWPsA1")
+		cfg.Game.Rushing.ClearDen = r.Form.Has("gameRushingClearDen")
+		cfg.Game.Rushing.RescueCain = r.Form.Has("gameRushingRescueCain")
+		cfg.Game.Rushing.RetrieveHammer = r.Form.Has("gameRushingRetrieveHammer")
+		// rushing options for Act 2
+		cfg.Game.Rushing.GiveWPsA2 = r.Form.Has("gameRushingGiveWPsA2")
+		cfg.Game.Rushing.KillRadament = r.Form.Has("gameRushingKillRadament")
+		// rushing options for Act 3
+		cfg.Game.Rushing.GiveWPsA3 = r.Form.Has("gameRushingGiveWPsA3")
+		cfg.Game.Rushing.RetrieveBook = r.Form.Has("gameRushingRetrieveBook")
+		// rushing options for Act 4
+		cfg.Game.Rushing.GiveWPsA4 = r.Form.Has("gameRushingGiveWPsA4")
+		cfg.Game.Rushing.KillIzual = r.Form.Has("gameRushingKillIzual")
+		// rushing options for Act 5
+		cfg.Game.Rushing.GiveWPsA5 = r.Form.Has("gameRushingGiveWPsA5")
+		cfg.Game.Rushing.KillShenk = r.Form.Has("gameRushingKillShenk")
+		cfg.Game.Rushing.RescueAnya = r.Form.Has("gameRushingRescueAnya")
+		cfg.Game.Rushing.KillAncients = r.Form.Has("gameRushingKillAncients")
+
 		// Quests options for Act 1
 		cfg.Game.Quests.ClearDen = r.Form.Has("gameQuestsClearDen")
 		cfg.Game.Quests.RescueCain = r.Form.Has("gameQuestsRescueCain")
