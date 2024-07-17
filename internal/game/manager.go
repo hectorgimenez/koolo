@@ -33,6 +33,9 @@ func NewGameManager(gr *MemoryReader, hid *HID, sueprvisorName string) *Manager 
 }
 
 func (gm *Manager) ExitGame() error {
+	if !gm.gr.InGame() {
+		return nil
+	}
 	// First try to exit game as fast as possible, without any check, useful when chickening
 	gm.hid.PressKey(win.VK_ESCAPE)
 	gm.hid.Click(LeftButton, gm.gr.GameAreaSizeX/2, int(float64(gm.gr.GameAreaSizeY)/2.2))

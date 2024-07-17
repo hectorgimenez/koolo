@@ -2,15 +2,14 @@ package pather
 
 import (
 	"fmt"
-	"math"
-	"math/rand"
-
 	"github.com/beefsack/go-astar"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"math"
+	"math/rand"
 )
 
 type PathFinder struct {
@@ -36,7 +35,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 	}
 
 	if outsideCurrentLevel {
-		lvl, lvlFound := pf.gr.CachedMapData.LevelDataForCoords(to, d.PlayerUnit.Area.Act())
+		lvl, lvlFound := pf.gr.GetCachedMapData(false).LevelDataForCoords(to, d.PlayerUnit.Area.Act())
 		if !lvlFound {
 			panic("Error occurred calculating path, destination point outside current level and matching level not found")
 		}
@@ -68,7 +67,7 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 					cgX = int(math.Abs(float64(relativeStartX))) + x
 				}
 
-				if cgY >= len(expandedCG) {
+				if cgY+1 >= len(expandedCG) || cgX+1 >= len(expandedCG[cgY]) {
 					continue
 				}
 				expandedCG[cgY][cgX] = d.CollisionGrid[y][x]
@@ -86,6 +85,9 @@ func (pf *PathFinder) GetPath(d game.Data, to data.Position, blacklistedCoords .
 					cgX = int(math.Abs(float64(relativeStartX))) + x
 				}
 
+				if cgY+1 >= len(expandedCG) || cgX+1 >= len(expandedCG[cgY]) {
+					continue
+				}
 				expandedCG[cgY][cgX] = lvl.CollisionGrid[y][x]
 			}
 		}

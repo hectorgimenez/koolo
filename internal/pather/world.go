@@ -28,9 +28,11 @@ func (w *World) Tile(x, y int) *Tile {
 	return w.World[x][y]
 }
 
-// SetTile sets a tile at the given coordinates in the World.
+// SetTile sets a tile at the given coordinates in the World, if the World is big enough.
 func (w *World) SetTile(t *Tile) {
-	w.World[t.X][t.Y] = t
+	if len(w.World) >= t.X + 1 && len(w.World[t.X]) >= t.Y + 1 {
+		w.World[t.X][t.Y] = t
+	}
 }
 
 func (w *World) NewTile(kind uint8, x, y int) *Tile {

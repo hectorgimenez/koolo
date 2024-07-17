@@ -64,8 +64,8 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 					return a.Position, true
 				}
 
-				lvl, _ := b.Reader.CachedMapData.GetLevelData(a.Area)
-				_, _, objects, _ := b.Reader.CachedMapData.NPCsExitsAndObjects(lvl.Offset, a.Area)
+				lvl, _ := b.Reader.GetCachedMapData(false).GetLevelData(a.Area)
+				_, _, objects, _ := b.Reader.GetCachedMapData(false).NPCsExitsAndObjects(lvl.Offset, a.Area)
 
 				// Sort objects by the distance from me
 				sort.Slice(objects, func(i, j int) bool {
