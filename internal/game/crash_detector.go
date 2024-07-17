@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/process"
+	"golang.org/x/sys/windows"
 )
 
 type CrashDetector struct {
@@ -56,6 +56,11 @@ func (cd *CrashDetector) Stop() {
 }
 
 func (cd *CrashDetector) isProcessRunning() bool {
-	_, err := process.NewProcess(cd.pid)
-	return err == nil
+	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, cd.pid)
+	if err != nil {
+		return false
+	}
+	defer windows.CloseHandle(handle)
+
+	return true
 }
