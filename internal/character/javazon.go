@@ -106,7 +106,7 @@ func (a Javazon) KillMonsterSequence(monsterSelector func(d game.Data) (data.Uni
 			if mob.IsPet() || mob.IsMerc() || mob.IsGoodNPC() || mob.IsSkip() || monster.Stats[stat.Life] <= 0 && mob.UnitID != monster.UnitID {
 				continue
 			}
-			if pather.DistanceFromPoint(mob.Position, monster.Position) <= 20 {
+			if pather.DistanceFromPoint(mob.Position, monster.Position) <= 15 {
 				closeMonsters++
 			}
 			if closeMonsters >= 3 {
