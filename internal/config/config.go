@@ -58,15 +58,16 @@ type CharacterCfg struct {
 	MaxGameLength   int    `yaml:"maxGameLength"`
 	Username        string `yaml:"username"`
 	Password        string `yaml:"password"`
+	AuthMethod      string `yaml:"authMethod"`
+	AuthToken       string `yaml:"authToken"`
 	Realm           string `yaml:"realm"`
 	CharacterName   string `yaml:"characterName"`
 	CommandLineArgs string `yaml:"commandLineArgs"`
 	KillD2OnStop    bool   `yaml:"killD2OnStop"`
 	ClassicMode     bool   `yaml:"classicMode"`
 	CloseMiniPanel  bool   `yaml:"closeMiniPanel"`
-	//EnableCubeRecipes bool   `yaml:"enableCubeRecipes"`
-	AuthMethod string `yaml:"authMethod"`
-	Health     struct {
+
+	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
@@ -132,9 +133,11 @@ type CharacterCfg struct {
 			OnlyElites bool `yaml:"onlyElites"`
 		} `yaml:"diablo"`
 		Baal struct {
-			KillBaal bool `yaml:"killBaal"`
-			DollQuit bool `yaml:"dollQuit"`
-			SoulQuit bool `yaml:"soulQuit"`
+			KillBaal    bool `yaml:"killBaal"`
+			DollQuit    bool `yaml:"dollQuit"`
+			SoulQuit    bool `yaml:"soulQuit"`
+			ClearFloors bool `yaml:"clearFloors"`
+			OnlyElites  bool `yaml:"onlyElites"`
 		} `yaml:"baal"`
 		Eldritch struct {
 			KillShenk bool `yaml:"killShenk"`

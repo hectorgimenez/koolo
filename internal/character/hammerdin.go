@@ -67,7 +67,7 @@ func (s Hammerdin) KillMonsterSequence(
 				id,
 				3,
 				true,
-				step.Distance(2,2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+				step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 				step.EnsureAura(skill.Concentration),
 			),
 		)
@@ -94,7 +94,7 @@ func (s Hammerdin) KillCountess() action.Action {
 }
 
 func (s Hammerdin) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillSummoner() action.Action {
@@ -102,7 +102,7 @@ func (s Hammerdin) KillSummoner() action.Action {
 }
 
 func (s Hammerdin) KillDuriel() action.Action {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillPindle(_ []stat.Resist) action.Action {
@@ -110,7 +110,7 @@ func (s Hammerdin) KillPindle(_ []stat.Resist) action.Action {
 }
 
 func (s Hammerdin) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) KillNihlathak() action.Action {
@@ -148,9 +148,9 @@ func (s Hammerdin) KillDiablo() action.Action {
 		s.logger.Info("Diablo detected, attacking")
 
 		return []action.Action{
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
+			s.killBoss(npc.Diablo, data.MonsterTypeNone),
 		}
 	}, action.RepeatUntilNoSteps())
 }
@@ -184,7 +184,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 						m.UnitID,
 						8,
 						true,
-						step.Distance(2,2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+						step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 						step.EnsureAura(skill.Concentration),
 					),
 				)
@@ -195,7 +195,7 @@ func (s Hammerdin) KillCouncil() action.Action {
 }
 
 func (s Hammerdin) KillBaal() action.Action {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
 }
 
 func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
@@ -212,7 +212,38 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 					m.UnitID,
 					8,
 					true,
-					step.Distance(2,2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+					step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+					step.EnsureAura(skill.Concentration),
+				),
+				step.SyncStep(func(d game.Data) error {
+					m, found = d.Monsters.FindOne(m.Name, t)
+					if found && m.Stats[stat.Life] > 0 {
+						s.container.PathFinder.RandomMovement(d)
+					}
+					return nil
+				}),
+			)
+		}
+
+		return
+	}, action.CanBeSkipped())
+}
+
+func (s Hammerdin) killBoss(npc npc.ID, t data.MonsterType) action.Action {
+	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found {
+			return nil
+		}
+
+		helper.Sleep(100)
+		for range hammerdinMaxAttacksLoop {
+			steps = append(steps,
+				step.PrimaryAttack(
+					m.UnitID,
+					8,
+					true,
+					step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 					step.EnsureAura(skill.Concentration),
 				),
 			)

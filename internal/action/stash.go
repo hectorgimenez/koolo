@@ -162,6 +162,10 @@ func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) (bool, 
 		return false, "", ""
 	}
 
+	if i.IsRuneword {
+		return true, "runeword", ""
+	}
+
 	// Don't stash the Tomes, keys and WirtsLeg
 	if i.Name == item.TomeOfTownPortal || i.Name == item.TomeOfIdentify || i.Name == item.Key || i.Name == "WirtsLeg" {
 		return false, "", ""

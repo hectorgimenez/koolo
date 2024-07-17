@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"math/rand"
 	"time"
@@ -70,6 +71,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			} else {
 				event.Send(event.GameCreated(event.Text(s.name, ""), "", ""))
 			}
+			action.ResetBuffTime(s.Name())
 			s.logGameStart(runs)
 			err = s.bot.Run(ctx, firstRun, runs)
 			if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"time"
 
@@ -70,6 +71,7 @@ func (s *CompanionSupervisor) Start() error {
 				if err != nil {
 					return err
 				}
+				action.ResetBuffTime(s.Name())
 				firstRun = false
 			} else {
 				s.c.Logger.Debug("Waiting for new game to be created...")
@@ -87,6 +89,7 @@ func (s *CompanionSupervisor) Start() error {
 					if err != nil {
 						return err
 					}
+					action.ResetBuffTime(s.Name())
 				}
 			}
 		}
