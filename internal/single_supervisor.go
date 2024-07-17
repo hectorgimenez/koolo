@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"math/rand"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/action"
 
 	"github.com/hectorgimenez/koolo/internal/container"
 	"github.com/hectorgimenez/koolo/internal/health"
@@ -21,7 +22,7 @@ type SinglePlayerSupervisor struct {
 	*baseSupervisor
 }
 
-func NewSinglePlayerSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container) (*SinglePlayerSupervisor, error) {
+func NewSinglePlayerSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container, pid uint32, hwnd uintptr) (*SinglePlayerSupervisor, error) {
 	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, c)
 	if err != nil {
 		return nil, err
