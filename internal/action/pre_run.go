@@ -7,6 +7,7 @@ import (
 func (b *Builder) PreRun(firstRun bool) []Action {
 	actions := []Action{
 		b.DropMouseItem(),
+		b.ItemPickup(false, 20), // Just in case we dropped our own gear
 		b.UseSkillIfBind(skill.Vigor),
 		b.RecoverCorpse(),
 	}
