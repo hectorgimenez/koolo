@@ -1,7 +1,7 @@
 // IGNORED by default, this directory is ONLY evaluated DURING the character leveling process.
 // Rules here are included ADDITIONALLY to the main pickit rules
 
-[type] == gold # [gold] >= 1
+[type] == gold # [gold] >= 200
 
 [name] == elrune
 [name] == eldrune
