@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/action"
 
 	"github.com/hectorgimenez/koolo/internal/container"
 
@@ -20,7 +21,7 @@ type CompanionSupervisor struct {
 	*baseSupervisor
 }
 
-func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container) (*CompanionSupervisor, error) {
+func NewCompanionSupervisor(name string, bot *Bot, runFactory *run.Factory, statsHandler *StatsHandler, c container.Container, pid uint32, hwnd uintptr) (*CompanionSupervisor, error) {
 	bs, err := newBaseSupervisor(bot, runFactory, name, statsHandler, c)
 	if err != nil {
 		return nil, err

@@ -14,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -22,16 +23,18 @@ import (
 )
 
 type SupervisorManager struct {
-	logger        *slog.Logger
-	supervisors   map[string]Supervisor
-	eventListener *event.Listener
+	logger         *slog.Logger
+	supervisors    map[string]Supervisor
+	crashDetectors map[string]*game.CrashDetector
+	eventListener  *event.Listener
 }
 
 func NewSupervisorManager(logger *slog.Logger, eventListener *event.Listener) *SupervisorManager {
 	return &SupervisorManager{
-		logger:        logger,
-		supervisors:   make(map[string]Supervisor),
-		eventListener: eventListener,
+		logger:         logger,
+		supervisors:    make(map[string]Supervisor),
+		crashDetectors: make(map[string]*game.CrashDetector),
+		eventListener:  eventListener,
 	}
 }
 
@@ -47,6 +50,12 @@ func (mng *SupervisorManager) AvailableSupervisors() []string {
 }
 
 func (mng *SupervisorManager) Start(supervisorName string) error {
+
+	// Avoid multiple instances of the supervisor - shitstorm prevention
+	if _, exists := mng.supervisors[supervisorName]; exists {
+		return fmt.Errorf("supervisor %s is already running", supervisorName)
+	}
+
 	// Reload config to get the latest local changes before starting the supervisor
 	err := config.Load()
 	if err != nil {
@@ -58,11 +67,64 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		return err
 	}
 
-	supervisor, err := mng.buildSupervisor(supervisorName, supervisorLogger)
+	// This function will be used to restart the client - passed to the crashDetector
+	restartFunc := func() {
+		mng.logger.Info("Restarting supervisor after crash", slog.String("supervisor", supervisorName))
+		mng.Stop(supervisorName)
+		time.Sleep(5 * time.Second) // Wait a bit before restarting
+
+		// Get a list of all available Supervisors
+		supervisorList := mng.AvailableSupervisors()
+
+		for {
+
+			tokenAuthStarting := false
+
+			for _, sup := range supervisorList {
+
+				// If the current don't check against the one we're trying to launch
+				if sup == supervisorName {
+					continue
+				}
+
+				if string(mng.GetSupervisorStats(sup).SupervisorStatus) == "Starting" {
+					sCfg, found := config.Characters[sup]
+					if found {
+						if sCfg.AuthMethod == "TokenAuth" {
+							// A client that uses token auth is currently starting, hold off restart
+							tokenAuthStarting = true
+							mng.logger.Info("Waiting before restart as a client that's using token auth is already starting", slog.String("supervisor", sup))
+							break
+						}
+					}
+				}
+			}
+
+			if !tokenAuthStarting {
+				break
+			}
+
+			// Wait 5 seconds before checking again
+			helper.Sleep(5000)
+		}
+
+		err := mng.Start(supervisorName)
+		if err != nil {
+			mng.logger.Error("Failed to restart supervisor", slog.String("supervisor", supervisorName), slog.String("Error: ", err.Error()))
+		}
+	}
+
+	supervisor, crashDetector, err := mng.buildSupervisor(supervisorName, supervisorLogger, restartFunc)
 	if err != nil {
 		return err
 	}
+
+	if oldCrashDetector, exists := mng.crashDetectors[supervisorName]; exists {
+		oldCrashDetector.Stop() // Stop the old crash detector if it exists
+	}
+
 	mng.supervisors[supervisorName] = supervisor
+	mng.crashDetectors[supervisorName] = crashDetector
 
 	if config.Koolo.GameWindowArrangement {
 		go func() {
@@ -73,24 +135,24 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		}()
 	}
 
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				mng.logger.Error(
-					"fatal error detected, forcing shutdown",
-					slog.String("supervisor", supervisorName),
-					slog.Any("error", r),
-					slog.String("stacktrace", string(debug.Stack())),
-				)
-				mng.Stop(supervisorName)
-			}
-		}()
-
-		err = supervisor.Start()
-		if err != nil {
-			mng.logger.Error(fmt.Sprintf("error running supervisor %s: %s", supervisorName, err.Error()))
+	defer func() {
+		if r := recover(); r != nil {
+			mng.logger.Error(
+				"fatal error detected, forcing shutdown",
+				slog.String("supervisor", supervisorName),
+				slog.Any("error", r),
+				slog.String("Stacktrace", string(debug.Stack())),
+			)
 		}
 	}()
+
+	// Start the Crash Detector in a thread to avoid blocking and speed up start
+	go crashDetector.Start()
+
+	err = supervisor.Start()
+	if err != nil {
+		mng.logger.Error(fmt.Sprintf("error running supervisor %s: %s", supervisorName, err.Error()))
+	}
 
 	return nil
 }
@@ -102,10 +164,20 @@ func (mng *SupervisorManager) StopAll() {
 }
 
 func (mng *SupervisorManager) Stop(supervisor string) {
+
 	s, found := mng.supervisors[supervisor]
 	if found {
+
+		// Stop the Supervisor
 		s.Stop()
+
+		// Delete him from the list of Supervisors
 		delete(mng.supervisors, supervisor)
+
+		if cd, ok := mng.crashDetectors[supervisor]; ok {
+			cd.Stop()
+			delete(mng.crashDetectors, supervisor)
+		}
 	}
 }
 
@@ -136,25 +208,25 @@ func (mng *SupervisorManager) GetData(characterName string) game.Data {
 	return game.Data{}
 }
 
-func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger) (Supervisor, error) {
+func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger, restartFunc func()) (Supervisor, *game.CrashDetector, error) {
 	cfg, found := config.Characters[supervisorName]
 	if !found {
-		return nil, fmt.Errorf("character %s not found", supervisorName)
+		return nil, nil, fmt.Errorf("character %s not found", supervisorName)
 	}
 
 	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.AuthMethod, cfg.AuthToken, cfg.Realm, cfg.CommandLineArgs, config.Koolo.UseCustomSettings)
 	if err != nil {
-		return nil, fmt.Errorf("error starting game: %w", err)
+		return nil, nil, fmt.Errorf("error starting game: %w", err)
 	}
 
 	gr, err := game.NewGameReader(cfg, supervisorName, pid, hwnd, logger)
 	if err != nil {
-		return nil, fmt.Errorf("error creating game reader: %w", err)
+		return nil, nil, fmt.Errorf("error creating game reader: %w", err)
 	}
 
 	gi, err := game.InjectorInit(logger, gr.GetPID())
 	if err != nil {
-		return nil, fmt.Errorf("error creating game injector: %w", err)
+		return nil, nil, fmt.Errorf("error creating game injector: %w", err)
 	}
 
 	hidM := game.NewHID(gr, gi)
@@ -179,7 +251,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 
 	char, err := character.BuildCharacter(logger, c)
 	if err != nil {
-		return nil, fmt.Errorf("error creating character: %w", err)
+		return nil, nil, fmt.Errorf("error creating character: %w", err)
 	}
 
 	ab := action.NewBuilder(c, sm, bm, char)
@@ -189,11 +261,20 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	statsHandler := NewStatsHandler(supervisorName, logger)
 	mng.eventListener.Register(statsHandler.Handle)
 
+	var supervisor Supervisor
 	if config.Characters[supervisorName].Companion.Enabled {
-		return NewCompanionSupervisor(supervisorName, bot, runFactory, statsHandler, c)
+		supervisor, err = NewCompanionSupervisor(supervisorName, bot, runFactory, statsHandler, c, pid, uintptr(hwnd))
+	} else {
+		supervisor, err = NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, c, pid, uintptr(hwnd))
 	}
 
-	return NewSinglePlayerSupervisor(supervisorName, bot, runFactory, statsHandler, c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	crashDetector := game.NewCrashDetector(supervisorName, int32(pid), uintptr(hwnd), mng.logger, restartFunc)
+
+	return supervisor, crashDetector, nil
 }
 
 func (mng *SupervisorManager) GetSupervisorStats(supervisor string) Stats {

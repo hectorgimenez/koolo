@@ -13,6 +13,7 @@ require (
 	github.com/inkeliz/w32 v1.0.2
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/otiai10/copy v1.14.0
+	github.com/shirou/gopsutil/v3 v3.24.5
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -21,7 +22,13 @@ require (
 require (
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 // indirect
 	github.com/expr-lang/expr v1.16.9 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
+	github.com/shoenig/go-m1cpu v0.1.6 // indirect
+	github.com/tklauser/go-sysconf v0.3.12 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
 )
