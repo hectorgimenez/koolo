@@ -153,16 +153,21 @@ type CharacterCfg struct {
 			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
 		} `yaml:"leveling"`
 		Rushing struct {
+			A1Enabled      bool `yaml:"a1Enabled"`
 			GiveWPsA1      bool `yaml:"giveWPsA1"`
 			ClearDen       bool `yaml:"clearDen"`
 			RescueCain     bool `yaml:"rescueCain"`
 			RetrieveHammer bool `yaml:"retrieveHammer"`
+			A2Enabled      bool `yaml:"a2Enabled"`
 			GiveWPsA2      bool `yaml:"giveWPsA2"`
 			KillRadament   bool `yaml:"killRadament"`
+			A3Enabled      bool `yaml:"a3Enabled"`
 			GiveWPsA3      bool `yaml:"giveWPsA3"`
 			RetrieveBook   bool `yaml:"retrieveBook"`
+			A4Enabled      bool `yaml:"a4Enabled"`
 			GiveWPsA4      bool `yaml:"giveWPsA4"`
 			KillIzual      bool `yaml:"killIzual"`
+			A5Enabled      bool `yaml:"a5Enabled"`
 			GiveWPsA5      bool `yaml:"giveWPsA5"`
 			KillShenk      bool `yaml:"killShenk"`
 			RescueAnya     bool `yaml:"rescueAnya"`
