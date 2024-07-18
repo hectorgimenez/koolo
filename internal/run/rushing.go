@@ -25,13 +25,30 @@ func (a Rushing) Name() string {
 }
 
 func (a Rushing) BuildActions() []action.Action {
-	return []action.Action{
-		a.rushAct1(),
-		a.rushAct2(),
-		a.rushAct3(),
-		a.rushAct4(),
-		a.rushAct5(),
+
+	actions := []action.Action{}
+
+	if a.CharacterCfg.Game.Rushing.A1Enabled {
+		actions = append(actions, a.rushAct1())
 	}
+
+	if a.CharacterCfg.Game.Rushing.A2Enabled {
+		actions = append(actions, a.rushAct2())
+	}
+
+	if a.CharacterCfg.Game.Rushing.A3Enabled {
+		actions = append(actions, a.rushAct3())
+	}
+
+	if a.CharacterCfg.Game.Rushing.A4Enabled {
+		actions = append(actions, a.rushAct4())
+	}
+
+	if a.CharacterCfg.Game.Rushing.A5Enabled {
+		actions = append(actions, a.rushAct5())
+	}
+
+	return actions
 }
 
 // Waypoints
