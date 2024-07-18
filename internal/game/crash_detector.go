@@ -56,11 +56,21 @@ func (cd *CrashDetector) Stop() {
 }
 
 func (cd *CrashDetector) isProcessRunning() bool {
-	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(cd.pid))
+	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION, false, uint32(cd.pid))
 	if err != nil {
+		cd.logger.Debug("Failed to open process", slog.Int("PID", int(cd.pid)), slog.String("err", err.Error()))
 		return false
 	}
 	defer windows.CloseHandle(handle)
 
-	return true
+	var exitCode uint32
+	err = windows.GetExitCodeProcess(handle, &exitCode)
+	if err != nil {
+		cd.logger.Debug("Failed to get exit code", slog.Int("PID", int(cd.pid)), slog.String("error", err.Error()))
+		return false
+	}
+
+	isRunning := exitCode == 259 // STILL_ACTIVE
+
+	return isRunning
 }
