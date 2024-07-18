@@ -78,7 +78,11 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 
 		for {
 
+			// Set the default state
 			tokenAuthStarting := false
+
+			// Get the current supervisor's config
+			supCfg := config.Characters[supervisorName]
 
 			for _, sup := range supervisorList {
 
@@ -87,7 +91,13 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 					continue
 				}
 
-				if string(mng.GetSupervisorStats(sup).SupervisorStatus) == "Starting" {
+				if mng.GetSupervisorStats(sup).SupervisorStatus == Starting {
+					if supCfg.AuthMethod == "TokenAuth" {
+						tokenAuthStarting = true
+						mng.logger.Info("Waiting before restart as another client is already starting and we're using token auth", slog.String("supervisor", sup))
+						break
+					}
+
 					sCfg, found := config.Characters[sup]
 					if found {
 						if sCfg.AuthMethod == "TokenAuth" {
