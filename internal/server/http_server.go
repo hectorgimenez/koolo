@@ -332,6 +332,13 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 	supervisorList := s.manager.AvailableSupervisors()
 	Supervisor := r.URL.Query().Get("characterName")
 
+	// Get the current auth method for the supervisor we wanna start
+	supCfg, currFound := config.Characters[Supervisor]
+	if !currFound {
+		// There's no config for the current supervisor. THIS SHOULDN'T HAPPEN
+		return
+	}
+
 	// Prevent launching of other clients while there's a client with TokenAuth still starting
 	for _, sup := range supervisorList {
 
@@ -340,7 +347,14 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if string(s.manager.GetSupervisorStats(sup).SupervisorStatus) == "Starting" {
+		if s.manager.GetSupervisorStats(sup).SupervisorStatus == koolo.Starting {
+
+			// Prevent launching if we're using token auth & another client is starting (no matter what auth method)
+			if supCfg.AuthMethod == "TokenAuth" {
+				return
+			}
+
+			// Prevent launching if another client that is using token auth is starting
 			sCfg, found := config.Characters[sup]
 			if found {
 				if sCfg.AuthMethod == "TokenAuth" {
