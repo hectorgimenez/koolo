@@ -195,7 +195,13 @@ func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool)
 	for _, lvl := range md {
 		lvlMaxX := lvl.Offset.X + lvl.Size.Width
 		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
-		if area.ID(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY {
+		check := false
+		if area.ID(lvl.ID) == area.RiverOfFlame || area.ID(lvl.ID) == area.ChaosSanctuary {
+			check = area.ID(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY
+		} else {
+			check = area.ID(lvl.ID).Act() == act && lvl.Offset.X <= lvlMaxX && p.X <= lvlMaxX && lvl.Offset.Y <= lvlMaxY && p.Y <= lvlMaxY
+		}
+		if check {
 			return LevelData{
 				Area: area.ID(lvl.ID),
 				Name: lvl.Name,
