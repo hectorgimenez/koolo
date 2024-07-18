@@ -40,12 +40,13 @@ type KooloCfg struct {
 	D2LoDPath             string `yaml:"D2LoDPath"`
 	D2RPath               string `yaml:"D2RPath"`
 	Discord               struct {
-		Enabled                   bool   `yaml:"enabled"`
-		EnableGameCreatedMessages bool   `yaml:"enableGameCreatedMessages"`
-		EnableNewRunMessages      bool   `yaml:"enableNewRunMessages"`
-		EnableRunFinishMessages   bool   `yaml:"enableRunFinishMessages"`
-		ChannelID                 string `yaml:"channelId"`
-		Token                     string `yaml:"token"`
+		Enabled                      bool   `yaml:"enabled"`
+		EnableGameCreatedMessages    bool   `yaml:"enableGameCreatedMessages"`
+		EnableNewRunMessages         bool   `yaml:"enableNewRunMessages"`
+		EnableRunFinishMessages      bool   `yaml:"enableRunFinishMessages"`
+		EnableDiscordChickenMessages bool   `yaml:"enableDiscordChickenMessages"`
+		ChannelID                    string `yaml:"channelId"`
+		Token                        string `yaml:"token"`
 	} `yaml:"discord"`
 	Telegram struct {
 		Enabled bool   `yaml:"enabled"`
