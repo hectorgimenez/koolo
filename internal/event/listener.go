@@ -54,7 +54,7 @@ func (l *Listener) Listen(ctx context.Context) error {
 			}
 
 			for _, h := range l.handlers {
-				if err := h(ctx, e); err != nil {
+				if err := h(ctx, e); err != nil && e.Message() != "" {
 					l.logger.Error("error running event handler", slog.Any("error", err))
 				}
 			}
