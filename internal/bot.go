@@ -188,6 +188,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 							b.logger.Info(fmt.Sprintf("Run %s finished, length: %0.2fs", r.Name(), time.Since(runStart).Seconds()))
 							if config.Koolo.Discord.EnableRunFinishMessages {
 								event.Send(event.RunFinished(event.Text(b.supervisorName, "Finished run"), r.Name(), event.FinishedOK))
+							} else {
+								event.Send(event.RunFinished(event.Text(b.supervisorName, ""), r.Name(), event.FinishedOK))
 							}
 							running = false
 						}
