@@ -97,20 +97,40 @@
 
 {{ define "rushing" }}
     <fieldset>
-        <label>Act 1</label>
-        <label><input type="checkbox" name="gameRushingGiveWPsA1" {{ if .Config.Game.Rushing.GiveWPsA1 }}checked{{ end }}> Give Act 1 WPs</label>
+    <label>Select the acts to rush through:</label>
+    </fieldset>
+    <fieldset class="grid">
+        <label><input type="checkbox" name="gameRushingA1Enabled" {{ if .Config.Game.Rushing.A1Enabled }}checked{{ end }}> Act 1</label>
+        <label><input type="checkbox" name="gameRushingA2Enabled" {{ if .Config.Game.Rushing.A2Enabled }}checked{{ end }}> Act 2</label>
+        <label><input type="checkbox" name="gameRushingA3Enabled" {{ if .Config.Game.Rushing.A3Enabled }}checked{{ end }}> Act 3</label>
+        <label><input type="checkbox" name="gameRushingA4Enabled" {{ if .Config.Game.Rushing.A4Enabled }}checked{{ end }}> Act 4</label>
+        <label><input type="checkbox" name="gameRushingA5Enabled" {{ if .Config.Game.Rushing.A5Enabled }}checked{{ end }}> Act 5</label>
+    </fieldset>
+    <fieldset>
+        <label>Select the acts to give waypoints:</label>
+    </fieldset>
+    <fieldset class="grid">
+        <label><input type="checkbox" name="gameRushingGiveWPsA1" {{ if .Config.Game.Rushing.GiveWPsA1 }}checked{{ end }}> Act 1</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA2" {{ if .Config.Game.Rushing.GiveWPsA2 }}checked{{ end }}> Act 2</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA3" {{ if .Config.Game.Rushing.GiveWPsA3 }}checked{{ end }}> Act 3</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA4" {{ if .Config.Game.Rushing.GiveWPsA4 }}checked{{ end }}> Act 4</label>
+        <label><input type="checkbox" name="gameRushingGiveWPsA5" {{ if .Config.Game.Rushing.GiveWPsA5 }}checked{{ end }}> Act 5</label>
+    </fieldset>
+    <fieldset>
+        <label>Select Act 1 Quests</label>
         <label><input type="checkbox" name="gameRushingClearDen" {{ if .Config.Game.Rushing.ClearDen }}checked{{ end }}> Clear Den</label>
         <label><input type="checkbox" name="gameRushingRescueCain" {{ if .Config.Game.Rushing.RescueCain }}checked{{ end }}> Rescue Cain</label>
         <label><input type="checkbox" name="gameRushingRetrieveHammer" {{ if .Config.Game.Rushing.RetrieveHammer }}checked{{ end }}> Retrieve Hammer</label>                        
-        <label>Act 2</label>
-        <label><input type="checkbox" name="gameRushingGiveWPsA2" {{ if .Config.Game.Rushing.GiveWPsA2 }}checked{{ end }}> Give Act 2 WPs</label>
+        <label>Select Act 2 Quests</label>
         <label><input type="checkbox" name="gameRushingKillRadament" {{ if .Config.Game.Rushing.KillRadament }}checked{{ end }}> Kill Radament</label>                        
-        <label>Act 3</label>
-        <label><input type="checkbox" name="gameRushingGiveWPsA3" {{ if .Config.Game.Rushing.GiveWPsA3 }}checked{{ end }}> Give Act 3 WPs</label>
+        <label>Select Act 3 Quests</label>
         <label><input type="checkbox" name="gameRushingRetrieveBook" {{ if .Config.Game.Rushing.RetrieveBook }}checked{{ end }}> Retrieve Book</label>                                
-        <label>Act 4</label>
-        <label><input type="checkbox" name="gameRushingGiveWPsA4" {{ if .Config.Game.Rushing.GiveWPsA4 }}checked{{ end }}> Give Act 4 WPs</label>
-        <label><input type="checkbox" name="gameRushingKillIzual" {{ if .Config.Game.Rushing.KillIzual }}checked{{ end }}> Kill Izual</label>                                     
+        <label>Select Act 4 Quests</label>
+        <label><input type="checkbox" name="gameRushingKillIzual" {{ if .Config.Game.Rushing.KillIzual }}checked{{ end }}> Kill Izual</label>
+        <label>Select Act 5 Quests</label>
+        <label><input type="checkbox" name="gameRushingKillShenk" {{ if .Config.Game.Rushing.KillShenk }}checked{{ end }}> Kill Shenk</label>
+        <label><input type="checkbox" name="gameRushingRescueAnya" {{ if .Config.Game.Rushing.RescueAnya }}checked{{ end }}> Rescue Anya</label>
+        <label><input type="checkbox" name="gameRushingKillAncients" {{ if .Config.Game.Rushing.KillAncients }}checked{{ end }}> Kill Ancients</label>                                     
     </fieldset>
 {{ end }}
 
