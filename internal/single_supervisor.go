@@ -85,21 +85,21 @@ func (s *SinglePlayerSupervisor) Start() error {
 					if config.Koolo.Discord.EnableDiscordChickenMessages {
 						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedChicken))
 					} else {
-						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedError))
+						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedChicken))
 					}
 					s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 				case errors.Is(err, health.ErrMercChicken):
 					if config.Koolo.Discord.EnableDiscordChickenMessages {
 						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedMercChicken))
 					} else {
-						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedError))
+						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedMercChicken))
 					}
 					s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 				case errors.Is(err, health.ErrDied):
 					if config.Koolo.Discord.EnableDiscordChickenMessages {
 						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.c.Reader.Screenshot()), event.FinishedDied))
 					} else {
-						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedError))
+						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedDied))
 					}
 					s.c.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 				default:
