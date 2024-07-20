@@ -160,7 +160,7 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 
 	path, distance, found := container.PathFinder.GetPath(d, monster.Position)
 
-	// We can not reach the enemy, let's skip the attack sequence
+	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
 		return false
 	}
@@ -174,7 +174,7 @@ func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster
 				if distance > p.minDistance {
 					moveTo := p.minDistance - 1
 					if len(path) < p.minDistance {
-						moveTo = 0
+						moveTo = len(path) - 1 // Ensure moveTo is within path bounds
 					}
 
 					for i := moveTo; i > 0; i-- {
