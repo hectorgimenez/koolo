@@ -175,8 +175,9 @@ type CharacterCfg struct {
 		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`
 	Gambling struct {
-		Enabled bool        `yaml:"enabled"`
-		Items   []item.Name `yaml:"items"`
+		Enabled     bool        `yaml:"enabled"`
+		Items       []item.Name `yaml:"items"`
+		AmountToBuy int         `yaml:"amountToBuy"`
 	} `yaml:"gambling"`
 	CubeRecipes struct {
 		Enabled        bool     `yaml:"enabled"`

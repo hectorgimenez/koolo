@@ -55,6 +55,34 @@ func (b *Builder) Stash(forceStash bool) *Chain {
 	})
 }
 
+func (b *Builder) StashGold() *Chain {
+	return NewChain(func(d game.Data) (actions []Action) {
+		b.Logger.Info("Stashing gold...")
+
+		switch d.PlayerUnit.Area {
+		case area.KurastDocks:
+			actions = append(actions, b.MoveToCoords(data.Position{X: 5146, Y: 5067}))
+		case area.LutGholein:
+			actions = append(actions, b.MoveToCoords(data.Position{X: 5130, Y: 5086}))
+		case area.Harrogath:
+			actions = append(actions, b.MoveToCoords(data.Position{X: 5118, Y: 5061}))
+		}
+
+		return append(actions,
+			b.InteractObject(object.Bank,
+				func(d game.Data) bool {
+					return d.OpenMenus.Stash
+				},
+				step.SyncStep(func(d game.Data) error {
+					b.stashGold(d)
+					b.HID.PressKey(win.VK_ESCAPE)
+					return nil
+				}),
+			),
+		)
+	})
+}
+
 func (b *Builder) orderInventoryPotions(d game.Data) {
 	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {

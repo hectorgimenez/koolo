@@ -296,6 +296,11 @@
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
                 Enabled
             </label>
+            <label>
+                Amount of item type to buy at once (careful of space)
+                <input name="amountToBuy" min="1" max="5" type="number" placeholder="{{ .Config.Gambling.AmountToBuy }}"
+                       value="{{ .Config.Gambling.AmountToBuy }}"/>
+            </label>
             <h4>Cube Recipes:</h4>
             <label>
                 <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
@@ -343,7 +348,7 @@
             </fieldset>
 
             <h4>Back to Town Settings:</h4>
-            <fieldset class="grid">    
+            <fieldset class="grid">
                 <label>
                 <input id="no_hp_potions" type="checkbox" name="noHpPotions" {{ if .Config.BackToTown.NoHpPotions }}checked{{ end }}/>
                 No HP potions

@@ -123,7 +123,7 @@ func (b *Builder) gambleItems() *StepChainAction {
 			}
 
 			return []step.Step{step.SyncStep(func(d game.Data) error {
-				b.sm.BuyItem(itm, 1)
+				b.sm.BuyItem(itm, d.CharacterCfg.Gambling.AmountToBuy)
 				itemBought = itm
 				currentIdx++
 				return nil
