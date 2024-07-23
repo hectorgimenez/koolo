@@ -15,6 +15,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/lxn/win"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -114,13 +115,14 @@ func (g GrindShopper) buyAndSell() action.Action {
 			lastStep = true
 		}
 
-		itemName, err := getGrindingWeaponName(g.Supervisor)
-		if err != nil {
-			itemName, err = setGrindingWeaponName(g.Supervisor, d)
-			if err != nil {
-				panic(err)
-			}
-		}
+		// @TODO : fix this
+		//itemName, err := getGrindingWeaponName(g.Supervisor)
+		//if err != nil {
+		//	itemName, err = setGrindingWeaponName(g.Supervisor, d)
+		//	if err != nil {
+		//		panic(err)
+		//	}
+		//}
 
 		if lastStep {
 			if d.OpenMenus.NPCShop && d.OpenMenus.Inventory {
@@ -128,7 +130,8 @@ func (g GrindShopper) buyAndSell() action.Action {
 					bought := false
 					for d.OpenMenus.Inventory && !bought {
 						helper.Sleep(1500)
-						_, found := d.Inventory.Find(itemName, item.LocationEquipped)
+						itmName := strings.ReplaceAll(g.CharacterCfg.Game.Grinding.WeaponName, " ", "")
+						_, found := d.Inventory.Find(item.Name(itmName), item.LocationEquipped)
 						if found {
 							bought = true
 						} else {
@@ -138,8 +141,6 @@ func (g GrindShopper) buyAndSell() action.Action {
 
 					g.HID.PressKey(win.VK_ESCAPE)
 					helper.Sleep(200)
-					g.HID.PressKeyBinding(d.KeyBindings.LegacyToggle)
-					helper.Sleep(1000)
 					return nil
 				})}
 			}

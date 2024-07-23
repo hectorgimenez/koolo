@@ -614,6 +614,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			cfg.Game.TerrorZone.SkipOnImmunities = append(cfg.Game.TerrorZone.SkipOnImmunities, stat.Resist(i))
 		}
 
+		cfg.Game.Grinding.WeaponName = r.Form.Get("gameGrindingWeapon")
+
 		tzAreas := make([]area.ID, 0)
 		for _, a := range r.Form["gameTerrorZoneAreas[]"] {
 			ID, _ := strconv.Atoi(a)
@@ -623,7 +625,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		// Gambling
 		cfg.Gambling.Enabled = r.Form.Has("gamblingEnabled")
-		cfg.Gambling.AmountToBuy, _ = strconv.Atoi(r.Form.Get("amountToBuy"))
 
 		// Cube Recipes
 		cfg.CubeRecipes.Enabled = r.Form.Has("enableCubeRecipes")

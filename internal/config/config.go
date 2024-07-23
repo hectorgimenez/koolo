@@ -164,6 +164,9 @@ type CharacterCfg struct {
 			RescueAnya     bool `yaml:"rescueAnya"`
 			KillAncients   bool `yaml:"killAncients"`
 		} `yaml:"quests"`
+		Grinding struct {
+			WeaponName string `yaml:"weaponName"`
+		} `yaml:"grinding"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled          bool   `yaml:"enabled"`
@@ -175,9 +178,8 @@ type CharacterCfg struct {
 		GamePassword     string `yaml:"gamePassword"`
 	} `yaml:"companion"`
 	Gambling struct {
-		Enabled     bool        `yaml:"enabled"`
-		Items       []item.Name `yaml:"items"`
-		AmountToBuy int         `yaml:"amountToBuy"`
+		Enabled bool        `yaml:"enabled"`
+		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
 	CubeRecipes struct {
 		Enabled        bool     `yaml:"enabled"`
