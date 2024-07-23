@@ -26,7 +26,7 @@ const (
 	LevelingRun         Run = "leveling"
 	QuestsRun           Run = "quests"
 	TerrorZoneRun       Run = "terror_zone"
-	GrindingShopperRun  Run = "grinding_shopper - NEEDS LEGACY"
+	GrindingShopperRun  Run = "grinding_shopper"
 )
 
 var AvailableRuns = map[Run]interface{}{
