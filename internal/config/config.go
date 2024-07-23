@@ -47,6 +47,11 @@ type KooloCfg struct {
 		ChannelID                 string `yaml:"channelId"`
 		Token                     string `yaml:"token"`
 	} `yaml:"discord"`
+	DiscordWebhook struct {
+		Enabled    bool   `yaml:"enabled"`
+		WebhookUrl string `yaml:"webhookUrl"`
+		Filter     string `yaml:"filter"`
+	} `yaml:"discordwebhook"`
 	Telegram struct {
 		Enabled bool   `yaml:"enabled"`
 		ChatID  int64  `yaml:"chatId"`
