@@ -23,22 +23,24 @@ var diabloSpawnPosition = data.Position{
 	Y: 5286,
 }
 
+// Changes entrance coordinates to the real entrance coordinates
 var chaosSanctuaryEntrancePosition = data.Position{
-	X: 7790,
-	Y: 5544,
+	X: 7792,
+	Y: 5569,
 }
 
+// Changed coordinates to better match clearing the first part of chaos, especially without teleport
 var entranceToStar = []data.Position{
-	{X: 7791, Y: 5491},
-	{X: 7768, Y: 5459},
-	{X: 7775, Y: 5424},
-	{X: 7817, Y: 5458},
-	{X: 7777, Y: 5408},
-	{X: 7769, Y: 5379},
-	{X: 7777, Y: 5357},
-	{X: 7809, Y: 5359},
-	{X: 7805, Y: 5330},
-	{X: 7780, Y: 5317},
+	{X: 7792, Y: 5539},
+	{X: 7792, Y: 5500},
+	{X: 7773, Y: 5489},
+	{X: 7812, Y: 5489},
+	{X: 7812, Y: 5446},
+	{X: 7788, Y: 5420},
+	{X: 7768, Y: 5388},
+	{X: 7777, Y: 5349},
+	{X: 7802, Y: 5349},
+	{X: 7772, Y: 5311},
 }
 
 var starToViz = []data.Position{
@@ -64,6 +66,13 @@ var starToInf = []data.Position{
 	{X: 7845, Y: 5290},
 	{X: 7870, Y: 5277},
 	{X: 7933, Y: 5316},
+}
+
+// Without teleport bot would sometimes just not walk to the diabloSpawnPosition, added 3 extra coordinates back to star
+var infToStar = []data.Position{
+	{X: 7882, Y: 5276},
+	{X: 7850, Y: 5283},
+	{X: 7819, Y: 5284},
 }
 
 type Diablo struct {
@@ -110,7 +119,7 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 		)
 	}
 
-	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal2, object.DiabloSeal1}
+	seals := []object.Name{object.DiabloSeal4, object.DiabloSeal5, object.DiabloSeal3, object.DiabloSeal1, object.DiabloSeal2}
 
 	// Move across all the seals, try to find the most clear spot around them, kill monsters and activate the seal.
 	for i, s := range seals {
@@ -154,17 +163,10 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 			a.builder.ItemPickup(false, 40),
 		)
 
-		// Activate the seal, buff only before opening the first seal
+		// Activate the seal, buff before opening the seal
 		actions = append(actions,
 			a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-			action.NewChain(func(d game.Data) []action.Action {
-				if i == 0 {
-					return []action.Action{
-						a.builder.Buff(),
-					}
-				}
-				return []action.Action{}
-			}),
+			a.builder.Buff(),
 		)
 
 		actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
@@ -203,10 +205,73 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 		// Only if we are not in the first seal
 		if sealNumber != 0 {
+
+			// Move to specific safer coordinates based on the seal coordinates for Vizier
+			if sealNumber == 1 {
+				actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
+					if obj, found := d.Objects.FindOne(seal); found && obj.Position.X == 7655 && obj.Position.Y == 5315 {
+						return []action.Action{
+							a.builder.MoveToCoords(data.Position{
+								X: 7664,
+								Y: 5305,
+							}),
+							a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+						}
+					} else {
+						return []action.Action{
+							a.builder.MoveToCoords(data.Position{
+								X: 7665,
+								Y: 5276,
+							}),
+							a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+						}
+					}
+				}))
+			}
+
+			// Move to specific safer coordinates based on the seal coordinates for Seis
 			if sealNumber == 2 {
-				actions = append(actions, a.builder.MoveToCoords(data.Position{
-					X: 7773,
-					Y: 5195,
+				actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
+					if obj, found := d.Objects.FindOne(seal); found && obj.Position.X == 7773 && obj.Position.Y == 5155 {
+						return []action.Action{
+							a.builder.MoveToCoords(data.Position{
+								X: 7795,
+								Y: 5195,
+							}),
+							a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+						}
+					} else {
+						return []action.Action{
+							a.builder.MoveToCoords(data.Position{
+								X: 7795,
+								Y: 5155,
+							}),
+							a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+						}
+					}
+				}))
+			}
+
+			// Move to specific safer coordinates based on the seal coordinates for Infector
+			if sealNumber == 3 {
+				actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
+					if obj, found := d.Objects.FindOne(seal); found && obj.Position.X == 7893 && obj.Position.Y == 5313 {
+						return []action.Action{
+							a.builder.MoveToCoords(data.Position{
+								X: 7894,
+								Y: 5294,
+							}),
+							a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+						}
+					} else {
+						return []action.Action{
+							a.builder.MoveToCoords(data.Position{
+								X: 7928,
+								Y: 5296,
+							}),
+							a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+						}
+					}
 				}))
 			}
 
@@ -260,6 +325,14 @@ func (a Diablo) BuildActions() (actions []action.Action) {
 
 		actions = append(actions,
 			a.builder.Buff(),
+		)
+
+		// Move back to diabloSpawnPosition coordinates following the infToStar coordinates.
+		for _, pos := range infToStar {
+			a.builder.MoveToCoords(pos)
+		}
+
+		actions = append(actions,
 			a.builder.MoveToCoords(diabloSpawnPosition),
 			a.char.KillDiablo(),
 		)
@@ -322,22 +395,27 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 	var actions []action.Action
 	var maxPosDiff = 20
 
+	// Sometimes the bot doesnt buff/BO due whatever reason, making sure we BO extra.
+	actions = append(actions,
+		a.builder.Buff(),
+	)
+
 	for _, pos := range positions {
 		actions = append(actions,
 			action.NewChain(func(d game.Data) []action.Action {
 				multiplier := 1
 
 				if pather.IsWalkable(pos, d.AreaOrigin, d.CollisionGrid) {
-					return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
+					return []action.Action{a.builder.MoveToCoords(pos)}
 				}
 
-				for _ = range 2 {
+				for range 2 {
 					for i := 1; i < maxPosDiff; i++ {
 						// Adjusting both X and Y gave fewer errors in testing
 						newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
 
 						if pather.IsWalkable(newPos, d.AreaOrigin, d.CollisionGrid) {
-							return []action.Action{a.builder.MoveToCoordsWithMinDistance(newPos, 30)}
+							return []action.Action{a.builder.MoveToCoords(pos)}
 						}
 
 					}
@@ -346,7 +424,7 @@ func (a Diablo) generateClearActions(positions []data.Position, filter data.Mons
 				}
 
 				// Let it fail then
-				return []action.Action{a.builder.MoveToCoordsWithMinDistance(pos, 30)}
+				return []action.Action{a.builder.MoveToCoords(pos)}
 			}),
 			// Skip storm casters for now completely while clearing non-seals
 			a.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
