@@ -44,7 +44,7 @@ func (m Mephisto) BuildActions() []action.Action {
 		m.builder.Wait(time.Second * 1),                     // wait 1 second for Mephisto to move
 		m.builder.MoveToCoords(mephistoSaferAttackPosition), // move to safer attack position
 		m.char.KillMephisto(),                               // attack mephisto
-		m.builder.ItemPickup(false, 20),                     // making sure we pick up stuff before moving to A4 through red portal for faster next game town movement
+		m.builder.ItemPickup(true, 40),                     // making sure we pick up stuff before moving to A4 through red portal for faster next game town movement
 		m.builder.InteractObject(object.HellGate, func(d game.Data) bool {
 			return d.PlayerUnit.Area == area.ThePandemoniumFortress
 		}),
