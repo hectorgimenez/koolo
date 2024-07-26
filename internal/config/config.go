@@ -259,7 +259,7 @@ func Load() error {
 			return err
 		}
 
-		if charCfg.Game.Runs[0] == "leveling" {
+		if len(charCfg.Game.Runs) > 0 && charCfg.Game.Runs[0] == "leveling" {
 			levelingRules, err := nip.ReadDir("config/" + entry.Name() + "/pickit_leveling/")
 			if err != nil {
 				return err
