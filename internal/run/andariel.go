@@ -68,24 +68,31 @@ func (a Andariel) BuildActions() (actions []action.Action) {
 
 	// Clearing inside room
 	a.logger.Info("Clearing inside room")
-	actions = append(actions,
-		a.builder.MoveToCoords(andarielClearPos1),
-		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-		a.builder.MoveToCoords(andarielClearPos2),
-		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-		a.builder.MoveToCoords(andarielClearPos3),
-		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-		a.builder.MoveToCoords(andarielClearPos4),
-		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-		a.builder.MoveToCoords(andarielClearPos5),
-		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-	)
+
+	if a.CharacterCfg.Game.Andariel.ClearRoom {
+		actions = append(actions,
+			a.builder.MoveToCoords(andarielClearPos1),
+			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
+			a.builder.MoveToCoords(andarielClearPos2),
+			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
+			a.builder.MoveToCoords(andarielClearPos3),
+			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
+			a.builder.MoveToCoords(andarielClearPos4),
+			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
+			a.builder.MoveToCoords(andarielClearPos5),
+			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
+			a.builder.MoveToCoords(andarielAttackPos1),
+			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+		)
+	} else {
+		actions = append(actions,
+			a.builder.MoveToCoords(andarielStartingPosition),
+		)
+	}
 
 	// Attacking Andariel
 	a.logger.Info("Killing Andariel")
 	actions = append(actions,
-		a.builder.MoveToCoords(andarielAttackPos1),
-		a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 		a.char.KillAndariel(),
 	)
 	return actions
