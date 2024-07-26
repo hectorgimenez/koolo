@@ -616,6 +616,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			cfg.Game.TerrorZone.SkipOnImmunities = append(cfg.Game.TerrorZone.SkipOnImmunities, stat.Resist(i))
 		}
 
+		cfg.Game.Grinding.WeaponName = r.Form.Get("gameGrindingWeapon")
+
 		tzAreas := make([]area.ID, 0)
 		for _, a := range r.Form["gameTerrorZoneAreas[]"] {
 			ID, _ := strconv.Atoi(a)

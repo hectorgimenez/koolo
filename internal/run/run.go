@@ -123,6 +123,8 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, Quests{baseRun})
 		case config.CowsRun:
 			runs = append(runs, Cows{baseRun})
+		case config.GrindingShopperRun:
+			runs = append(runs, GrindShopper{baseRun})
 		}
 	}
 

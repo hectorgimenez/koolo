@@ -106,4 +106,15 @@ const (
 
 	CloseMiniPanelClassicX = 639
 	CloseMiniPanelClassicY = 686
+
+	SellButtonClassicStartX = 467
+	SellButtonClassicStartY = 546
+
+	SellButtonClassicEndX = 486
+	SellButtonClassicEndY = 562
+
+	EquippedWeaponClassicStartX = 677
+	EquippedWeaponClassicStartY = 154
+	EquippedWeaponClassicEndX   = 712
+	EquippedWeaponClassicEndY   = 229
 )
