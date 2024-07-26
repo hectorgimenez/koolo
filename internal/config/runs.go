@@ -26,6 +26,7 @@ const (
 	LevelingRun         Run = "leveling"
 	QuestsRun           Run = "quests"
 	TerrorZoneRun       Run = "terror_zone"
+	ThreshsocketRun     Run = "threshsocket"
 )
 
 var AvailableRuns = map[Run]interface{}{
@@ -52,4 +53,5 @@ var AvailableRuns = map[Run]interface{}{
 	LevelingRun:         nil,
 	QuestsRun:           nil,
 	TerrorZoneRun:       nil,
+	ThreshsocketRun:     nil,
 }
