@@ -5,6 +5,13 @@
         <label><input type="checkbox" name="gamePitFocusOnElitePacks" {{ if .Config.Game.Pit.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
     </fieldset>
 {{ end }}
+
+{{ define "andariel" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameAndarielClearRoom" {{ if .Config.Game.Andariel.ClearRoom }}checked{{ end }}> Clear room first</label>
+    </fieldset>
+{{ end }}
+
 {{ define "cows" }}
     <fieldset>
         <label><input type="checkbox" name="gameCowsOpenChests" {{ if .Config.Game.Cows.OpenChests }}checked{{ end }}> Open chests</label>
