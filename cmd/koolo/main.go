@@ -99,6 +99,18 @@ func main() {
 		})
 	}
 
+	// Discord webhook initialization
+	if config.Koolo.DiscordWebhook.Enabled {
+
+		discordwebhook, err := discord_webhook.NewWebhookBot(config.Koolo.DiscordWebhook.WebhookUrl)
+		if err != nil {
+			logger.Error("Discord webhook could not be initialized", slog.Any("error", err))
+			return
+		}
+		logger.Debug("Discord webhook initialized")
+		eventListener.Register(discordwebhook.Handle)
+	}
+
 	// Telegram Bot initialization
 	if config.Koolo.Telegram.Enabled {
 		telegramBot, err := telegram.NewBot(config.Koolo.Telegram.Token, config.Koolo.Telegram.ChatID, logger)

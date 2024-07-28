@@ -124,6 +124,28 @@
                         Enable Run Finish Messages
                     </label>
                 </fieldset>
+                <h4>Discord webhook (Post Items)</h4>
+                <label>
+                    <input
+                            {{ if .DiscordWebhook.Enabled }}
+                                checked="checked"
+                            {{ end }}
+                            type="checkbox"
+                            name="discord_webhook_enabled"
+                            value="true"
+                    />
+                    Enabled (Restart required)
+                </label>
+                <input
+                        name="discord_webhook_url"
+                        placeholder="Webhook URL"
+                        value="{{.DiscordWebhook.WebhookUrl}}"
+                />
+                <input
+                        name="discord_webhook_filter"
+                        placeholder="Webhook Item Filter (Regex)"
+                        value="{{.DiscordWebhook.Filter}}"
+                />
                 <h4>Telegram integration</h4>
                 <label>
                     <input

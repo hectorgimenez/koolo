@@ -16,6 +16,11 @@ discord:
   channelId: ''
   token: ''
 
+discordwebhook:
+  enabled: false
+  webhookurl: ''
+  filter: '^$'
+
 telegram:
   enabled: false
   chatId: 0
