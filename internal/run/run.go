@@ -77,6 +77,8 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, Andariel{baseRun})
 		case config.SummonerRun:
 			runs = append(runs, Summoner{baseRun})
+		case config.DurielRun:
+			runs = append(runs, Duriel{baseRun})
 		case config.MephistoRun:
 			runs = append(runs, Mephisto{baseRun})
 		case config.CouncilRun:
