@@ -89,8 +89,7 @@
 
 {{ define "diablo" }}
     <fieldset>
-        <label><input type="checkbox" name="gameDiabloClearArea" {{ if .Config.Game.Diablo.ClearArea }}checked{{ end }}> Clear area</label>
-        <label><input type="checkbox" name="gameDiabloOnlyElites" {{ if .Config.Game.Diablo.OnlyElites }}checked{{ end }}> Focus on elite packs</label>
+        <label><input type="checkbox" name="gameDiabloFullClear" {{ if .Config.Game.Diablo.FullClear }}checked{{ end }}> Clear Chaos Sanctuary</label>
         <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label>
     </fieldset>
 {{ end }}
