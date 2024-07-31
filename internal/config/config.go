@@ -131,8 +131,9 @@ type CharacterCfg struct {
 			ClearArea bool `yaml:"clearArea"`
 		} `yaml:"nihlathak"`
 		Diablo struct {
-			KillDiablo bool `yaml:"killDiablo"`
-			FullClear  bool `yaml:"fullClear"`
+			KillDiablo        bool `yaml:"killDiablo"`
+			FullClear         bool `yaml:"fullClear"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"diablo"`
 		Baal struct {
 			KillBaal    bool `yaml:"killBaal"`

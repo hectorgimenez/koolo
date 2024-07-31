@@ -377,35 +377,63 @@ func (d Diablo) moveToInfectorSpawn() action.Action {
 }
 
 func (d Diablo) entranceToStarClear() []action.Action {
+	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
+	monsterFilter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		monsterFilter = data.MonsterEliteFilter()
+	}
+
 	d.logger.Debug("Clearing path from entrance to star")
-	return d.clearPath(d.entranceToStar, data.MonsterAnyFilter())
+	return d.clearPath(d.entranceToStar, monsterFilter)
 }
 
 func (d Diablo) starToVizClear() []action.Action {
-	d.logger.Debug("Clearing path from star to Vizier")
+	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
+	monsterFilter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		monsterFilter = data.MonsterEliteFilter()
+	}
+
 	path := d.starToVizA
 	if d.vizLayout == 2 {
 		path = d.starToVizB
 	}
-	return d.clearPath(path, data.MonsterAnyFilter())
+	d.logger.Debug("Clearing path from star to Vizier")
+	return d.clearPath(path, monsterFilter)
 }
 
 func (d Diablo) starToSeisClear() []action.Action {
-	d.logger.Debug("Clearing path from star to Seis")
+	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
+	monsterFilter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		monsterFilter = data.MonsterEliteFilter()
+	}
+
 	path := d.starToSeisA
 	if d.seisLayout == 2 {
 		path = d.starToSeisB
 	}
-	return d.clearPath(path, data.MonsterAnyFilter())
+	d.logger.Debug("Clearing path from star to Seis")
+	return d.clearPath(path, monsterFilter)
 }
 
 func (d Diablo) starToInfClear() []action.Action {
-	d.logger.Debug("Clearing path from star to Infector")
+	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
+	monsterFilter := data.MonsterAnyFilter()
+
+	if onlyElites {
+		monsterFilter = data.MonsterEliteFilter()
+	}
+
 	path := d.starToInfA
 	if d.infLayout == 2 {
 		path = d.starToInfB
 	}
-	return d.clearPath(path, data.MonsterAnyFilter())
+	d.logger.Debug("Clearing path from star to Infector")
+	return d.clearPath(path, monsterFilter)
 }
 
 func (d Diablo) clearPath(path []data.Position, filter data.MonsterFilter) []action.Action {
