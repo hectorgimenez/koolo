@@ -125,6 +125,10 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, Cows{baseRun})
 		case config.ThreshsocketRun:
 			runs = append(runs, Threshsocket{baseRun})
+		case config.DrifterCavernRun:
+			runs = append(runs, DrifterCavern{baseRun})
+		case config.EnduguRun:
+			runs = append(runs, Endugu{baseRun})
 		}
 	}
 

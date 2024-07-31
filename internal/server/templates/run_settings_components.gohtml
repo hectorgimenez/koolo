@@ -51,6 +51,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "drifter_cavern" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameDrifterCavernOpenChests" {{ if .Config.Game.DrifterCavern.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameDrifterCavernFocusOnElitePacks" {{ if .Config.Game.DrifterCavern.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
 {{ define "mephisto" }}
     <fieldset>
         <label><input type="checkbox" name="gameMephistoKillCouncilMembers" {{ if .Config.Game.Mephisto.KillCouncilMembers }}checked{{ end }}> Kill council members</label>
