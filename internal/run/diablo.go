@@ -140,7 +140,7 @@ func (d Diablo) killVizier() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal4, _ := gameData.Objects.FindOne(object.DiabloSeal4)
 				return seal4.Position, true
-			}, step.StopAtDistance(10)),
+			}, step.StopAtDistance(20)),
 			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal4),
@@ -148,7 +148,7 @@ func (d Diablo) killVizier() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal5, _ := gameData.Objects.FindOne(object.DiabloSeal5)
 				return seal5.Position, true
-			}, step.StopAtDistance(10)),
+			}, step.StopAtDistance(20)),
 			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal5),
@@ -167,7 +167,7 @@ func (d Diablo) killSeis() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal3, _ := gameData.Objects.FindOne(object.DiabloSeal3)
 				return seal3.Position, true
-			}, step.StopAtDistance(10)),
+			}, step.StopAtDistance(20)),
 			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal3),
@@ -186,7 +186,7 @@ func (d Diablo) killInfector() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal1, _ := gameData.Objects.FindOne(object.DiabloSeal1)
 				return seal1.Position, true
-			}, step.StopAtDistance(10)),
+			}, step.StopAtDistance(20)),
 			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal1),
@@ -198,7 +198,7 @@ func (d Diablo) killInfector() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal2, _ := gameData.Objects.FindOne(object.DiabloSeal2)
 				return seal2.Position, true
-			}, step.StopAtDistance(10)),
+			}, step.StopAtDistance(20)),
 			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			d.activateSeal(object.DiabloSeal2),
 			d.builder.ItemPickup(false, 40),
@@ -243,7 +243,7 @@ func (d Diablo) killSealElite() action.Action {
 			if eliteFound {
 				d.logger.Debug("Seal elite has been killed")
 			} else {
-				d.logger.Debug("No killable seal elite found")
+				d.logger.Debug("No killable seal elite found, possibly already dead")
 			}
 			return 0, false
 		}, nil))
@@ -267,7 +267,7 @@ func (d Diablo) activateSeal(seal object.Name) action.Action {
 					obj, found := gameData.Objects.FindOne(seal)
 					if found {
 						if !obj.Selectable {
-							d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal.Desc().Name))
+							d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal))
 						}
 						return !obj.Selectable
 					}
@@ -282,7 +282,7 @@ func (d Diablo) activateSeal(seal object.Name) action.Action {
 				obj, found := gameData.Objects.FindOne(seal)
 				if found {
 					if !obj.Selectable {
-						d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal.Desc().Name))
+						d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal))
 					}
 					return !obj.Selectable
 				}
@@ -294,55 +294,85 @@ func (d Diablo) activateSeal(seal object.Name) action.Action {
 
 func (d Diablo) moveToVizierSpawn() action.Action {
 	return action.NewChain(func(gameData game.Data) []action.Action {
+		var actions []action.Action
+
 		if d.vizLayout == 1 {
 			d.logger.Debug("Moving to X: 7664, Y: 5305 - vizLayout 1")
-			return []action.Action{
-				d.builder.MoveToCoords(data.Position{X: 7664, Y: 5305}),
-				d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			}
+			actions = append(actions, d.builder.MoveToCoords(data.Position{X: 7664, Y: 5305}))
 		} else {
 			d.logger.Debug("Moving to X: 7675, Y: 5284 - vizLayout 2")
-			return []action.Action{
-				d.builder.MoveToCoords(data.Position{X: 7675, Y: 5284}),
-				d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			}
+			actions = append(actions, d.builder.MoveToCoords(data.Position{X: 7675, Y: 5284}))
 		}
+
+		// Check for nearby monsters after moving
+		actions = append(actions, action.NewChain(func(gameData game.Data) []action.Action {
+			for _, m := range gameData.Monsters.Enemies() {
+				if dist := pather.DistanceFromMe(gameData, m.Position); dist < 4 {
+					d.logger.Debug("Monster detected close to the player, clearing small radius")
+					return []action.Action{d.builder.ClearAreaAroundPlayer(5, data.MonsterAnyFilter())}
+				}
+			}
+			// If no nearby monsters, do nothing
+			return nil
+		}))
+
+		return actions
 	})
 }
 
 func (d Diablo) moveToSeisSpawn() action.Action {
 	return action.NewChain(func(gameData game.Data) []action.Action {
+		var actions []action.Action
+
 		if d.seisLayout == 1 {
 			d.logger.Debug("Moving to X: 7795, Y: 5195 - seisLayout 1")
-			return []action.Action{
-				d.builder.MoveToCoords(data.Position{X: 7795, Y: 5195}),
-				d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			}
+			actions = append(actions, d.builder.MoveToCoords(data.Position{X: 7795, Y: 5195}))
 		} else {
 			d.logger.Debug("Moving to X: 7795, Y: 5155 - seisLayout 2")
-			return []action.Action{
-				d.builder.MoveToCoords(data.Position{X: 7795, Y: 5155}),
-				d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			}
+			actions = append(actions, d.builder.MoveToCoords(data.Position{X: 7795, Y: 5155}))
 		}
+
+		// Check for nearby monsters after moving
+		actions = append(actions, action.NewChain(func(gameData game.Data) []action.Action {
+			for _, m := range gameData.Monsters.Enemies() {
+				if dist := pather.DistanceFromMe(gameData, m.Position); dist < 4 {
+					d.logger.Debug("Monster detected close to the player, clearing small radius")
+					return []action.Action{d.builder.ClearAreaAroundPlayer(5, data.MonsterAnyFilter())}
+				}
+			}
+			// If no nearby monsters, do nothing
+			return nil
+		}))
+
+		return actions
 	})
 }
 
 func (d Diablo) moveToInfectorSpawn() action.Action {
 	return action.NewChain(func(gameData game.Data) []action.Action {
+		var actions []action.Action
+
 		if d.infLayout == 1 {
 			d.logger.Debug("Moving to X: 7894, Y: 5294 - infLayout 1")
-			return []action.Action{
-				d.builder.MoveToCoords(data.Position{X: 7894, Y: 5294}),
-				d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			}
+			actions = append(actions, d.builder.MoveToCoords(data.Position{X: 7894, Y: 5294}))
 		} else {
 			d.logger.Debug("Moving to X: 7928, Y: 5296 - infLayout 2")
-			return []action.Action{
-				d.builder.MoveToCoords(data.Position{X: 7928, Y: 5296}),
-				d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			}
+			actions = append(actions, d.builder.MoveToCoords(data.Position{X: 7928, Y: 5296}))
 		}
+
+		// Check for nearby monsters after moving
+		actions = append(actions, action.NewChain(func(gameData game.Data) []action.Action {
+			for _, m := range gameData.Monsters.Enemies() {
+				if dist := pather.DistanceFromMe(gameData, m.Position); dist < 4 {
+					d.logger.Debug("Monster detected close to the player, clearing small radius")
+					return []action.Action{d.builder.ClearAreaAroundPlayer(5, data.MonsterAnyFilter())}
+				}
+			}
+			// If no nearby monsters, do nothing
+			return nil
+		}))
+
+		return actions
 	})
 }
 
