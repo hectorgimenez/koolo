@@ -52,10 +52,8 @@ func (d Diablo) BuildActions() []action.Action {
 	)
 
 	if d.CharacterCfg.Game.Diablo.FullClear {
-		d.logger.Debug(fmt.Sprintf("Moving to Chaos Sanctuary entrance: %v", chaosSanctuaryEntrancePosition))
 		actions = append(actions, d.builder.MoveToCoords(chaosSanctuaryEntrancePosition))
 	} else {
-		d.logger.Debug(fmt.Sprintf("Moving to Diablo spawn position: %v", diabloSpawnPosition))
 		actions = append(actions, d.builder.MoveToCoords(diabloSpawnPosition))
 	}
 
@@ -82,7 +80,6 @@ func (d Diablo) BuildActions() []action.Action {
 	actions = append(actions, d.killInfector())
 
 	if d.CharacterCfg.Game.Diablo.KillDiablo {
-		d.logger.Debug(fmt.Sprintf("Moving to Diablo spawn position: %v", diabloSpawnPosition))
 		actions = append(actions,
 			d.builder.Buff(),
 			d.builder.MoveToCoords(diabloSpawnPosition),
@@ -143,20 +140,22 @@ func (d Diablo) killVizier() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal4, _ := gameData.Objects.FindOne(object.DiabloSeal4)
 				return seal4.Position, true
-			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			}, step.StopAtDistance(10)),
+			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal4),
 
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal5, _ := gameData.Objects.FindOne(object.DiabloSeal5)
 				return seal5.Position, true
-			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			}, step.StopAtDistance(10)),
+			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal5),
 			d.moveToVizierSpawn(),
 			d.builder.Wait(time.Millisecond * 500),
 			d.killSealElite(),
-			d.builder.ItemPickup(false, 20),
+			d.builder.ItemPickup(false, 40),
 		}
 	})
 }
@@ -168,13 +167,14 @@ func (d Diablo) killSeis() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal3, _ := gameData.Objects.FindOne(object.DiabloSeal3)
 				return seal3.Position, true
-			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			}, step.StopAtDistance(10)),
+			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal3),
 			d.moveToSeisSpawn(),
 			d.builder.Wait(time.Millisecond * 500),
 			d.killSealElite(),
-			d.builder.ItemPickup(false, 20),
+			d.builder.ItemPickup(false, 40),
 		}
 	})
 }
@@ -186,20 +186,22 @@ func (d Diablo) killInfector() action.Action {
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal1, _ := gameData.Objects.FindOne(object.DiabloSeal1)
 				return seal1.Position, true
-			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			}, step.StopAtDistance(10)),
+			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			d.builder.ItemPickup(false, 40),
 			d.activateSeal(object.DiabloSeal1),
 			d.moveToInfectorSpawn(),
 			d.builder.Wait(time.Millisecond * 500),
 			d.killSealElite(),
-			d.builder.ItemPickup(false, 20),
+			d.builder.ItemPickup(false, 40),
 
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal2, _ := gameData.Objects.FindOne(object.DiabloSeal2)
 				return seal2.Position, true
-			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+			}, step.StopAtDistance(10)),
+			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
 			d.activateSeal(object.DiabloSeal2),
+			d.builder.ItemPickup(false, 40),
 		}
 	})
 }
@@ -251,15 +253,42 @@ func (d Diablo) killSealElite() action.Action {
 }
 
 func (d Diablo) activateSeal(seal object.Name) action.Action {
-	return d.builder.InteractObject(seal, func(gameData game.Data) bool {
-		obj, found := gameData.Objects.FindOne(seal)
-		if found {
-			if !obj.Selectable {
-				d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal))
+	return action.NewChain(func(gameData game.Data) []action.Action {
+		obj, _ := gameData.Objects.FindOne(seal)
+
+		// Check for the bugged seal
+		if seal == object.DiabloSeal3 && obj.Position.X == 7773 && obj.Position.Y == 5155 {
+			return []action.Action{
+				d.builder.MoveToCoords(data.Position{
+					X: 7768,
+					Y: 5160,
+				}),
+				d.builder.InteractObject(seal, func(gameData game.Data) bool {
+					obj, found := gameData.Objects.FindOne(seal)
+					if found {
+						if !obj.Selectable {
+							d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal.Desc().Name))
+						}
+						return !obj.Selectable
+					}
+					return false
+				}),
 			}
-			return !obj.Selectable
 		}
-		return false
+
+		// Normal seal activation
+		return []action.Action{
+			d.builder.InteractObject(seal, func(gameData game.Data) bool {
+				obj, found := gameData.Objects.FindOne(seal)
+				if found {
+					if !obj.Selectable {
+						d.logger.Debug(fmt.Sprintf("Seal activated: %v", seal.Desc().Name))
+					}
+					return !obj.Selectable
+				}
+				return false
+			}),
+		}
 	})
 }
 
