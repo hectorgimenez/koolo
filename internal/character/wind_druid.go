@@ -1,6 +1,10 @@
 package character
 
 import (
+	"log/slog"
+	"sort"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -11,8 +15,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
-	"time"
 )
 
 const (
@@ -25,6 +27,23 @@ var lastRavenAt = map[string]time.Time{}
 
 type WindDruid struct {
 	BaseCharacter
+}
+
+func (s WindDruid) CheckKeyBindings(d game.Data) []skill.ID {
+	requireKeybindings := []skill.ID{skill.Hurricane, skill.OakSage, skill.CycloneArmor, skill.TomeOfTownPortal}
+	missingKeybindings := []skill.ID{}
+
+	for _, cskill := range requireKeybindings {
+		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+			missingKeybindings = append(missingKeybindings, cskill)
+		}
+	}
+
+	if len(missingKeybindings) > 0 {
+		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+	}
+
+	return missingKeybindings
 }
 
 func (du WindDruid) KillMonsterSequence(

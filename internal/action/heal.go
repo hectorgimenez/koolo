@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/lxn/win"
 
@@ -19,7 +20,7 @@ func (b *Builder) Heal() *Chain {
 		}
 
 		if d.PlayerUnit.HasDebuff() {
-			b.Logger.Info(fmt.Sprintf("Debuff detected, healing on NPC"))
+			b.Logger.Info("Debuff detected, healing on NPC")
 			shouldHeal = true
 		}
 
