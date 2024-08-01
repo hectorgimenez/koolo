@@ -19,6 +19,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/hectorgimenez/d2go v0.0.0-20240705125326-9d801c51dfb4 h1:RZshwZXAq6RIlFqf5UKFRgk8yFO5Tznfmye68SEQ/3o=
 github.com/hectorgimenez/d2go v0.0.0-20240705125326-9d801c51dfb4/go.mod h1:haet+1Z13euImIuyXR6IAFmJ2P4eaAqe5m3gEPjT1e8=
+github.com/hectorgimenez/d2go v0.0.0-20240801152822-67692abea333 h1:XmzQpvZ/Md0w/a/jXU+JbHrYCWEsGuwXpvSYdx4I5wA=
+github.com/hectorgimenez/d2go v0.0.0-20240801152822-67692abea333/go.mod h1:haet+1Z13euImIuyXR6IAFmJ2P4eaAqe5m3gEPjT1e8=
 github.com/inkeliz/gowebview v1.0.1 h1:4gpLE2qt4kV3DB+xHkHKUeLLiGPN5Xw3or9A3hVqYyA=
 github.com/inkeliz/gowebview v1.0.1/go.mod h1:4SNjXp/fogE11MwvJD67kMBmSObY2BBqinEgH8+8eM8=
 github.com/inkeliz/w32 v1.0.2 h1:Es8Bmw9ApOY0PVRpGs7wsqIKdK5C3xBkP5TOATfVmtU=
