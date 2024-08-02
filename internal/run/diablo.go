@@ -2,6 +2,7 @@ package run
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
@@ -141,16 +142,30 @@ func (d Diablo) killVizier() action.Action {
 				seal4, _ := gameData.Objects.FindOne(object.DiabloSeal4)
 				return seal4.Position, true
 			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			d.builder.ItemPickup(false, 40),
+			action.NewChain(func(gameData game.Data) []action.Action {
+				seal4, _ := gameData.Objects.FindOne(object.DiabloSeal4)
+				bestCorner := d.getLessConcurredCornerAroundSeal(gameData, seal4.Position)
+				return []action.Action{
+					d.builder.MoveToCoords(bestCorner),
+					d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+					d.builder.ItemPickup(false, 30),
+				}
+			}),
 			d.activateSeal(object.DiabloSeal4),
 
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal5, _ := gameData.Objects.FindOne(object.DiabloSeal5)
 				return seal5.Position, true
 			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			d.builder.ItemPickup(false, 40),
+			action.NewChain(func(gameData game.Data) []action.Action {
+				seal5, _ := gameData.Objects.FindOne(object.DiabloSeal5)
+				bestCorner := d.getLessConcurredCornerAroundSeal(gameData, seal5.Position)
+				return []action.Action{
+					d.builder.MoveToCoords(bestCorner),
+					d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+					d.builder.ItemPickup(false, 30),
+				}
+			}),
 			d.activateSeal(object.DiabloSeal5),
 			d.moveToVizierSpawn(),
 			d.builder.Wait(time.Millisecond * 500),
@@ -168,8 +183,15 @@ func (d Diablo) killSeis() action.Action {
 				seal3, _ := gameData.Objects.FindOne(object.DiabloSeal3)
 				return seal3.Position, true
 			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			d.builder.ItemPickup(false, 40),
+			action.NewChain(func(gameData game.Data) []action.Action {
+				seal3, _ := gameData.Objects.FindOne(object.DiabloSeal3)
+				bestCorner := d.getLessConcurredCornerAroundSeal(gameData, seal3.Position)
+				return []action.Action{
+					d.builder.MoveToCoords(bestCorner),
+					d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+					d.builder.ItemPickup(false, 30),
+				}
+			}),
 			d.activateSeal(object.DiabloSeal3),
 			d.moveToSeisSpawn(),
 			d.builder.Wait(time.Millisecond * 500),
@@ -187,8 +209,15 @@ func (d Diablo) killInfector() action.Action {
 				seal1, _ := gameData.Objects.FindOne(object.DiabloSeal1)
 				return seal1.Position, true
 			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-			d.builder.ItemPickup(false, 40),
+			action.NewChain(func(gameData game.Data) []action.Action {
+				seal1, _ := gameData.Objects.FindOne(object.DiabloSeal1)
+				bestCorner := d.getLessConcurredCornerAroundSeal(gameData, seal1.Position)
+				return []action.Action{
+					d.builder.MoveToCoords(bestCorner),
+					d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+					d.builder.ItemPickup(false, 30),
+				}
+			}),
 			d.activateSeal(object.DiabloSeal1),
 			d.moveToInfectorSpawn(),
 			d.builder.Wait(time.Millisecond * 500),
@@ -199,9 +228,17 @@ func (d Diablo) killInfector() action.Action {
 				seal2, _ := gameData.Objects.FindOne(object.DiabloSeal2)
 				return seal2.Position, true
 			}, step.StopAtDistance(20)),
-			d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			action.NewChain(func(gameData game.Data) []action.Action {
+				seal2, _ := gameData.Objects.FindOne(object.DiabloSeal2)
+				bestCorner := d.getLessConcurredCornerAroundSeal(gameData, seal2.Position)
+				return []action.Action{
+					d.builder.MoveToCoords(bestCorner),
+					d.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+					d.builder.ItemPickup(false, 30),
+				}
+			}),
 			d.activateSeal(object.DiabloSeal2),
-			d.builder.ItemPickup(false, 40),
+			d.builder.ItemPickup(false, 30),
 		}
 	})
 }
@@ -209,44 +246,59 @@ func (d Diablo) killInfector() action.Action {
 func (d Diablo) killSealElite() action.Action {
 	return action.NewChain(func(gameData game.Data) []action.Action {
 		d.logger.Debug("Waiting for and killing seal elite")
-		var actions []action.Action
 		startTime := time.Now()
-		eliteFound := false
+		var actions []action.Action
 
 		actions = append(actions, action.NewStepChain(func(gameData game.Data) []step.Step {
-			if eliteFound {
-				return nil
-			}
 			for _, m := range gameData.Monsters.Enemies(data.MonsterEliteFilter()) {
 				if d.builder.IsMonsterSealElite(m) {
 					d.logger.Debug("Seal defender found!")
-					eliteFound = true
-					return nil
+					return nil // Exit the step chain when elite is found
 				}
 			}
 			if time.Since(startTime) < time.Second*5 {
 				return []step.Step{step.Wait(time.Millisecond * 100)}
 			}
+			d.logger.Debug("No seal elite found within 5 seconds")
 			return nil
 		}, action.RepeatUntilNoSteps()))
 
-		actions = append(actions, d.char.KillMonsterSequence(func(gameData game.Data) (data.UnitID, bool) {
+		// After the wait, attempt to clear and kill
+		actions = append(actions, action.NewChain(func(gameData game.Data) []action.Action {
 			for _, m := range gameData.Monsters.Enemies(data.MonsterEliteFilter()) {
 				if d.builder.IsMonsterSealElite(m) {
-					_, _, found := d.PathFinder.GetPath(gameData, m.Position)
-					if found {
-						d.logger.Debug(fmt.Sprintf("Attempting to kill seal elite: %v", m.Name))
-						return m.UnitID, true
+					return []action.Action{
+						// Clear normal monsters around the elite
+						d.builder.ClearAreaAroundPlayer(20, func(m data.Monsters) []data.Monster {
+							return m.Enemies(func(m data.Monsters) []data.Monster {
+								return slices.DeleteFunc(m, func(monster data.Monster) bool {
+									return d.builder.IsMonsterSealElite(monster)
+								})
+							})
+						}),
+						// Kill the seal elite
+						d.char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
+							for _, m := range dat.Monsters.Enemies(data.MonsterEliteFilter()) {
+								if d.builder.IsMonsterSealElite(m) {
+									_, _, found := d.PathFinder.GetPath(dat, m.Position)
+									if found {
+										d.logger.Debug(fmt.Sprintf("Attempting to kill seal elite: %v", m.Name))
+										return m.UnitID, true
+									}
+								}
+							}
+							d.logger.Debug("Seal elite has been killed or is not found")
+							return 0, false
+						}, nil),
 					}
 				}
 			}
-			if eliteFound {
-				d.logger.Debug("Seal elite has been killed")
-			} else {
-				d.logger.Debug("No killable seal elite found, possibly already dead")
-			}
-			return 0, false
-		}, nil))
+			d.logger.Debug("No seal elite found after waiting")
+			return nil
+		}))
+
+		// Always perform item pickup at the end
+		actions = append(actions, d.builder.ItemPickup(false, 40))
 
 		return actions
 	})
@@ -378,10 +430,13 @@ func (d Diablo) moveToInfectorSpawn() action.Action {
 
 func (d Diablo) entranceToStarClear() []action.Action {
 	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
-	monsterFilter := data.MonsterAnyFilter()
 
-	if onlyElites {
-		monsterFilter = data.MonsterEliteFilter()
+	monsterFilter := func(monsters data.Monsters) []data.Monster {
+		filteredMonsters := skipStormCasterFilter(monsters)
+		if onlyElites {
+			return data.MonsterEliteFilter()(filteredMonsters)
+		}
+		return filteredMonsters
 	}
 
 	d.logger.Debug("Clearing path from entrance to star")
@@ -390,10 +445,13 @@ func (d Diablo) entranceToStarClear() []action.Action {
 
 func (d Diablo) starToVizClear() []action.Action {
 	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
-	monsterFilter := data.MonsterAnyFilter()
 
-	if onlyElites {
-		monsterFilter = data.MonsterEliteFilter()
+	monsterFilter := func(monsters data.Monsters) []data.Monster {
+		filteredMonsters := skipStormCasterFilter(monsters)
+		if onlyElites {
+			return data.MonsterEliteFilter()(filteredMonsters)
+		}
+		return filteredMonsters
 	}
 
 	path := d.starToVizA
@@ -406,10 +464,13 @@ func (d Diablo) starToVizClear() []action.Action {
 
 func (d Diablo) starToSeisClear() []action.Action {
 	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
-	monsterFilter := data.MonsterAnyFilter()
 
-	if onlyElites {
-		monsterFilter = data.MonsterEliteFilter()
+	monsterFilter := func(monsters data.Monsters) []data.Monster {
+		filteredMonsters := skipStormCasterFilter(monsters)
+		if onlyElites {
+			return data.MonsterEliteFilter()(filteredMonsters)
+		}
+		return filteredMonsters
 	}
 
 	path := d.starToSeisA
@@ -422,10 +483,13 @@ func (d Diablo) starToSeisClear() []action.Action {
 
 func (d Diablo) starToInfClear() []action.Action {
 	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
-	monsterFilter := data.MonsterAnyFilter()
 
-	if onlyElites {
-		monsterFilter = data.MonsterEliteFilter()
+	monsterFilter := func(monsters data.Monsters) []data.Monster {
+		filteredMonsters := skipStormCasterFilter(monsters)
+		if onlyElites {
+			return data.MonsterEliteFilter()(filteredMonsters)
+		}
+		return filteredMonsters
 	}
 
 	path := d.starToInfA
@@ -436,7 +500,8 @@ func (d Diablo) starToInfClear() []action.Action {
 	return d.clearPath(path, monsterFilter)
 }
 
-func (d Diablo) clearPath(path []data.Position, filter data.MonsterFilter) []action.Action {
+// func (d Diablo) clearPath(path []data.Position, filter data.MonsterFilter) []action.Action {
+func (d Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters) []data.Monster) []action.Action {
 	var actions []action.Action
 	var maxPosDiff = 20
 
@@ -461,7 +526,7 @@ func (d Diablo) clearPath(path []data.Position, filter data.MonsterFilter) []act
 				return []action.Action{d.builder.MoveToCoords(pos)}
 			}),
 			d.builder.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
-				monsters := filter(m)
+				monsters := monsterFilter(m)
 				return skipStormCasterFilter(monsters)
 			}),
 			d.builder.ItemPickup(false, 35),
@@ -469,19 +534,19 @@ func (d Diablo) clearPath(path []data.Position, filter data.MonsterFilter) []act
 		d.cleared = append(d.cleared, pos)
 	}
 
-	actions = append(actions, d.clearStrays(filter)...)
+	actions = append(actions, d.clearStrays(monsterFilter)...)
 
 	return actions
 }
 
-func (d Diablo) clearStrays(filter data.MonsterFilter) []action.Action {
+func (d Diablo) clearStrays(monsterFilter data.MonsterFilter) []action.Action {
 	d.logger.Debug("Clearing potential stray monsters")
 	return []action.Action{
 		action.NewChain(func(gameData game.Data) []action.Action {
 			var actions []action.Action
 			oldPos := gameData.PlayerUnit.Position
 
-			monsters := filter(gameData.Monsters)
+			monsters := monsterFilter(gameData.Monsters)
 			monsters = skipStormCasterFilter(monsters)
 			for _, monster := range monsters {
 				for _, clearedPos := range d.cleared {
@@ -489,7 +554,7 @@ func (d Diablo) clearStrays(filter data.MonsterFilter) []action.Action {
 						actions = append(actions,
 							d.builder.MoveToCoords(monster.Position),
 							d.builder.ClearAreaAroundPlayer(15, func(m data.Monsters) []data.Monster {
-								return skipStormCasterFilter(filter(m))
+								return skipStormCasterFilter(monsterFilter(m))
 							}),
 						)
 						break
@@ -517,4 +582,37 @@ func skipStormCasterFilter(monsters data.Monsters) []data.Monster {
 	}
 
 	return filteredMonsters
+}
+
+func (d Diablo) getLessConcurredCornerAroundSeal(gameData game.Data, sealPosition data.Position) data.Position {
+	corners := [4]data.Position{
+		{X: sealPosition.X + 7, Y: sealPosition.Y + 7},
+		{X: sealPosition.X - 7, Y: sealPosition.Y + 7},
+		{X: sealPosition.X - 7, Y: sealPosition.Y - 7},
+		{X: sealPosition.X + 7, Y: sealPosition.Y - 7},
+	}
+	bestCorner := 0
+	bestCornerDistance := 0
+	for i, c := range corners {
+		averageDistance := 0
+		monstersFound := 0
+		for _, m := range gameData.Monsters.Enemies() {
+			distance := pather.DistanceFromPoint(c, m.Position)
+			if distance < 5 {
+				monstersFound++
+				averageDistance += pather.DistanceFromPoint(c, m.Position)
+			}
+		}
+		if averageDistance > bestCornerDistance {
+			bestCorner = i
+			bestCornerDistance = averageDistance
+		}
+		if monstersFound == 0 {
+			d.logger.Debug("Moving to corner", slog.Int("corner", i), slog.Int("monsters", monstersFound))
+			return corners[i]
+		}
+		d.logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", monstersFound), slog.Int("distance", averageDistance))
+	}
+	d.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("monsters", bestCornerDistance))
+	return corners[bestCorner]
 }
