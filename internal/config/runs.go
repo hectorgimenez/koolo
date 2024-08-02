@@ -28,6 +28,8 @@ const (
 	QuestsRun           Run = "quests"
 	TerrorZoneRun       Run = "terror_zone"
 	ThreshsocketRun     Run = "threshsocket"
+	DrifterCavernRun    Run = "drifter_cavern"
+	EnduguRun           Run = "endugu"
 )
 
 var AvailableRuns = map[Run]interface{}{
@@ -56,4 +58,6 @@ var AvailableRuns = map[Run]interface{}{
 	QuestsRun:           nil,
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
+	DrifterCavernRun:    nil,
+	EnduguRun:           nil,
 }
