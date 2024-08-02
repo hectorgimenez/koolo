@@ -159,8 +159,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					helper.ShowDialog(b.supervisorName+" skill bindings missing", str)
 
 					// Pause the bot
-					b.paused = true
-					event.Send(event.GamePaused(event.Text(b.supervisorName, "Game paused"), true))
+					b.pauseRequested = true
+					continue
 				}
 
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
