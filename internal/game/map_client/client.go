@@ -196,7 +196,11 @@ func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool)
 		lvlMaxX := lvl.Offset.X + lvl.Size.Width
 		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
 		check := false
-		if area.ID(lvl.ID) == area.RiverOfFlame || area.ID(lvl.ID) == area.ChaosSanctuary {
+		if playerArea.ID == area.RiverOfFlame || playerArea.ID == area.ChaosSanctuary ||
+			playerArea.ID == area.BloodMoor || playerArea.ID == area.ColdPlains ||
+			playerArea.ID == area.OuterCloister || playerArea.ID == area.BlackMarsh ||
+			playerArea.ID == area.TamoeHighland || playerArea.ID == area.OuterSteppes ||
+			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands {
 			check = area.ID(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY
 		} else {
 			check = area.ID(lvl.ID).Act() == act && lvl.Offset.X <= lvlMaxX && p.X <= lvlMaxX && lvl.Offset.Y <= lvlMaxY && p.Y <= lvlMaxY
