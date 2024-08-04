@@ -8,6 +8,7 @@ const (
 	AncientTunnelsRun   Run = "ancient_tunnels"
 	MausoleumRun        Run = "mausoleum"
 	SummonerRun         Run = "summoner"
+	DurielRun           Run = "duriel"
 	MephistoRun         Run = "mephisto"
 	CouncilRun          Run = "council"
 	EldritchRun         Run = "eldritch"
@@ -27,6 +28,8 @@ const (
 	QuestsRun           Run = "quests"
 	TerrorZoneRun       Run = "terror_zone"
 	ThreshsocketRun     Run = "threshsocket"
+	DrifterCavernRun    Run = "drifter_cavern"
+	EnduguRun           Run = "endugu"
 )
 
 var AvailableRuns = map[Run]interface{}{
@@ -35,6 +38,7 @@ var AvailableRuns = map[Run]interface{}{
 	AncientTunnelsRun:   nil,
 	MausoleumRun:        nil,
 	SummonerRun:         nil,
+	DurielRun:           nil,
 	MephistoRun:         nil,
 	CouncilRun:          nil,
 	EldritchRun:         nil,
@@ -54,4 +58,6 @@ var AvailableRuns = map[Run]interface{}{
 	QuestsRun:           nil,
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
+	DrifterCavernRun:    nil,
+	EnduguRun:           nil,
 }

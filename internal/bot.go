@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/container"
@@ -50,7 +51,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	companionTPRequestedAt := time.Time{}
 	companionTPRequested := false
 	companionLeftGame := false
-
 	if b.c.CharacterCfg.Companion.Enabled && b.c.CharacterCfg.Companion.Leader {
 		b.c.EventListener.Register(func(ctx context.Context, e event.Event) error {
 			switch evt := e.(type) {
@@ -74,7 +74,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 	loadingScreensDetected := 0
 
 	actions := b.ab.NewGameHook()
+
 	for k, r := range runs {
+
 		if config.Koolo.Discord.EnableNewRunMessages {
 			event.Send(event.RunStarted(event.Text(b.supervisorName, "Starting run"), r.Name()))
 		} else {
@@ -141,6 +143,25 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) (err error
 					b.logger.Debug("Load completed, continuing execution")
 				}
 				loadingScreensDetected = 0
+
+				// By this point we're ingame
+
+				// Check if we have all keybindings
+				missingBindings := b.ab.CheckKeyBindings(d)
+				if len(missingBindings) > 0 {
+					var str = "Missing skill bindings for skills:"
+					for _, id := range missingBindings {
+						str += "\n" + skill.SkillNames[id]
+					}
+					str += "\nPlease bind the skills to a key. Pausing bot..."
+
+					// Display the message box
+					helper.ShowDialog(b.supervisorName+" skill bindings missing", str)
+
+					// Pause the bot
+					b.pauseRequested = true
+					continue
+				}
 
 				if err := b.hm.HandleHealthAndMana(d); err != nil {
 					return err

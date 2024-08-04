@@ -20,6 +20,12 @@ type SorceressLeveling struct {
 	BaseCharacter
 }
 
+func (s SorceressLeveling) CheckKeyBindings(d game.Data) []skill.ID {
+
+	// Not implemented
+	return []skill.ID{}
+}
+
 func (s SorceressLeveling) ShouldResetSkills(d game.Data) bool {
 	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 	if lvl.Value >= 25 && d.PlayerUnit.Skills[skill.FireBall].Level > 10 {

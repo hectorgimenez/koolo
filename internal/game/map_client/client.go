@@ -191,7 +191,7 @@ func (md MapData) getLevel(area area.ID) serverLevel {
 	return serverLevel{}
 }
 
-func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool) {
+func (md MapData) LevelDataForCoords(p data.Position, playerArea area.Area) (LevelData, bool) {
 	for _, lvl := range md {
 		lvlMaxX := lvl.Offset.X + lvl.Size.Width
 		lvlMaxY := lvl.Offset.Y + lvl.Size.Height
@@ -203,7 +203,7 @@ func (md MapData) LevelDataForCoords(p data.Position, act int) (LevelData, bool)
 			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands {
 			check = area.ID(lvl.ID).Act() == act && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY
 		} else {
-			check = area.ID(lvl.ID).Act() == act && lvl.Offset.X <= lvlMaxX && p.X <= lvlMaxX && lvl.Offset.Y <= lvlMaxY && p.Y <= lvlMaxY
+			check = area.ID(lvl.ID).Act() == playerArea.Act() && lvl.Offset.X <= lvlMaxX && p.X <= lvlMaxX && lvl.Offset.Y <= lvlMaxY && p.Y <= lvlMaxY
 		}
 		if check {
 			return LevelData{

@@ -1,6 +1,7 @@
 package character
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -13,11 +14,28 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-type MosiacSin struct {
+type MosaicSin struct {
 	BaseCharacter
 }
 
-func (s MosiacSin) KillMonsterSequence(
+func (s MosaicSin) CheckKeyBindings(d game.Data) []skill.ID {
+	requireKeybindings := []skill.ID{skill.TigerStrike, skill.CobraStrike, skill.PhoenixStrike, skill.ClawsOfThunder, skill.BladesOfIce, skill.TomeOfTownPortal}
+	missingKeybindings := []skill.ID{}
+
+	for _, cskill := range requireKeybindings {
+		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+			missingKeybindings = append(missingKeybindings, cskill)
+		}
+	}
+
+	if len(missingKeybindings) > 0 {
+		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+	}
+
+	return missingKeybindings
+}
+
+func (s MosaicSin) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
@@ -93,12 +111,12 @@ func (s MosiacSin) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s MosiacSin) MobAlive(mob data.UnitID, d game.Data) bool {
+func (s MosaicSin) MobAlive(mob data.UnitID, d game.Data) bool {
 	_, mFround := d.Monsters.FindByID(mob)
 	return mFround
 }
 
-func (s MosiacSin) BuffSkills(d game.Data) []skill.ID {
+func (s MosaicSin) BuffSkills(d game.Data) []skill.ID {
 	skillsList := make([]skill.ID, 0)
 
 	if _, found := d.KeyBindings.KeyBindingForSkill(skill.Fade); found {
@@ -114,7 +132,7 @@ func (s MosiacSin) BuffSkills(d game.Data) []skill.ID {
 	return skillsList
 }
 
-func (s MosiacSin) PreCTABuffSkills(d game.Data) []skill.ID {
+func (s MosaicSin) PreCTABuffSkills(d game.Data) []skill.ID {
 
 	if _, found := d.KeyBindings.KeyBindingForSkill(skill.ShadowMaster); found {
 		return []skill.ID{skill.ShadowMaster}
@@ -126,7 +144,7 @@ func (s MosiacSin) PreCTABuffSkills(d game.Data) []skill.ID {
 
 }
 
-func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 
 		monster, found := d.Monsters.FindOne(npc, t)
@@ -194,7 +212,7 @@ func (s MosiacSin) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s MosiacSin) KillCouncil() action.Action {
+func (s MosaicSin) KillCouncil() action.Action {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
@@ -213,7 +231,7 @@ func (s MosiacSin) KillCouncil() action.Action {
 	}, nil, step.Distance(1, 3))
 }
 
-func (s MosiacSin) KillBaal() action.Action {
+func (s MosaicSin) KillBaal() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			// We will need a lot of cycles to kill him probably
@@ -225,7 +243,7 @@ func (s MosiacSin) KillBaal() action.Action {
 	})
 }
 
-func (s MosiacSin) KillIzual() action.Action {
+func (s MosaicSin) KillIzual() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
 			// We will need a lot of cycles to kill him probably
@@ -240,7 +258,7 @@ func (s MosiacSin) KillIzual() action.Action {
 	})
 }
 
-func (s MosiacSin) KillDiablo() action.Action {
+func (s MosaicSin) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
@@ -276,30 +294,30 @@ func (s MosiacSin) KillDiablo() action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s MosiacSin) KillNihlathak() action.Action {
+func (s MosaicSin) KillNihlathak() action.Action {
 	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (s MosiacSin) KillMephisto() action.Action {
+func (s MosaicSin) KillMephisto() action.Action {
 	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (s MosiacSin) KillPindle(skipOnImmunities []stat.Resist) action.Action {
+func (s MosaicSin) KillPindle(skipOnImmunities []stat.Resist) action.Action {
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (s MosiacSin) KillDuriel() action.Action {
+func (s MosaicSin) KillDuriel() action.Action {
 	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (s MosiacSin) KillSummoner() action.Action {
+func (s MosaicSin) KillSummoner() action.Action {
 	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (s MosiacSin) KillAndariel() action.Action {
+func (s MosaicSin) KillAndariel() action.Action {
 	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (s MosiacSin) KillCountess() action.Action {
+func (s MosaicSin) KillCountess() action.Action {
 	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }

@@ -2,16 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Debug Page</title>
-    <script src="../assets/js/debug.js" defer></script>
-    <meta name="color-scheme" content="light"/>
-    <link rel="stylesheet" href="../assets/css/pico.min.css">
-    <link href="..//assets/css/jsoneditor.min.css" rel="stylesheet" type="text/css">
-    <script src="..//assets/js/jsoneditor.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koolo Debug Screen</title>
+    <link rel="stylesheet" href="../assets/css/debug.css">
 </head>
 <body>
-    <div id="jsoneditor" data-theme="light" style="height: 600px;"></div>
-    <a href="/"><input type="button" value="Back" class="button"/></a>
+    <div class="container">
+        <header>
+            <h1>Koolo Debug Screen</h1>
+            <span class="version-tag">Development Version</span>
+        </header>
+        <div id="supervisor-name"></div>
+        <div id="sticky-controls">
+            <div id="left-controls">
+                <div id="refresh-controls">
+                    <input type="number" id="refresh-interval" value="1" min="1" step="1">
+                    <button id="set-interval-btn">Set Refresh Interval (seconds)</button>
+                </div>
+                <div id="search-container">
+                    <input type="text" id="search-input" placeholder="Search...">
+                    <button id="search-prev-btn">Previous</button>
+                    <button id="search-next-btn">Next</button>
+                    <span id="search-results">0/0</span>
+                </div>
+            </div>
+            <div id="right-controls">
+                <button id="copy-data-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy Data
+                </button>
+                <button id="expand-all-btn">
+                    <span>Expand All</span>
+                </button>
+            </div>
+        </div>
+        <div id="debug-container"></div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script src="../assets/js/debug.js"></script>
 </body>
 </html>

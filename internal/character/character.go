@@ -43,8 +43,8 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 		return Foh{BaseCharacter: bc}, nil
 	case "trapsin":
 		return Trapsin{BaseCharacter: bc}, nil
-	case "mosiac":
-		return MosiacSin{BaseCharacter: bc}, nil
+	case "mosaic":
+		return MosaicSin{BaseCharacter: bc}, nil
 	case "winddruid":
 		return WindDruid{BaseCharacter: bc}, nil
 	case "javazon":
