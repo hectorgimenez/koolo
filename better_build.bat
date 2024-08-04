@@ -67,13 +67,13 @@ if not exist build (
         if exist config\Settings.json (
             copy /y config\Settings.json build\config\Settings.json > nul
             if !errorlevel! equ 0 (
-                call :print_success "Settings.json successfully copied to build\config"
+                call :print_success "Settings.json successfully copied to %cd%\build\config"
             ) else (
-                call :print_error "Failed to copy Settings.json to build\config"
+                call :print_error "Failed to copy Settings.json from %cd%\config\ to %cd%\build\config"
                 call :check_file_permissions "config\Settings.json"
             )
         ) else (
-            call :print_error "Settings.json not found in config folder"
+            call :print_error "Settings.json not found in %cd%\config folder"
         )
     ) else (
         call :print_error "Failed to create build folder"
