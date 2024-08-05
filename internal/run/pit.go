@@ -44,8 +44,12 @@ func (a Pit) BuildActions() (actions []action.Action) {
 		a.builder.OpenTPIfLeader(),
 	)
 
+	if !a.CharacterCfg.Game.Pit.OnlyClearLevel2 {
+		actions = append(actions,
+			a.builder.ClearArea(openChests, filter),) // Clear pit level 1
+	}
+
 	return append(actions,
-		a.builder.ClearArea(openChests, filter), // Clear pit level 1
 		a.builder.MoveToArea(area.PitLevel2),    // Travel to pit level 2
 		a.builder.ClearArea(openChests, filter), // Clear pit level 2
 	)

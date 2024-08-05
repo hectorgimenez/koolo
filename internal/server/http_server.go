@@ -562,6 +562,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Pit.MoveThroughBlackMarsh = r.Form.Has("gamePitMoveThroughBlackMarsh")
 		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")
 		cfg.Game.Pit.FocusOnElitePacks = r.Form.Has("gamePitFocusOnElitePacks")
+		cfg.Game.Pit.OnlyClearLevel2 = r.Form.Has("gamePitOnlyClearLevel2")
 
 		cfg.Game.Andariel.ClearRoom = r.Form.Has("gameAndarielClearRoom")
 
