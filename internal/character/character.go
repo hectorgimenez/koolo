@@ -49,6 +49,8 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 		return WindDruid{BaseCharacter: bc}, nil
 	case "javazon":
 		return Javazon{BaseCharacter: bc}, nil
+	case "berserker":
+		return Berserker{BaseCharacter: bc}, nil
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", container.CharacterCfg.Character.Class)
