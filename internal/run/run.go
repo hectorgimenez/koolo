@@ -131,6 +131,8 @@ func (f *Factory) BuildRuns() (runs []Run) {
 			runs = append(runs, DrifterCavern{baseRun})
 		case config.EnduguRun:
 			runs = append(runs, Endugu{baseRun})
+		case config.A3TemplesRun:
+			runs = append(runs, A3Temples{baseRun})
 		}
 	}
 

@@ -58,6 +58,19 @@
     </fieldset>
 {{ end }}
 
+{{ define "a3_temples" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameA3TemplesRuinedTemple" {{ if .Config.Game.A3Temples.DoRuinedTemple }}checked{{ end }}> Ruined Temple</label>
+        <label><input type="checkbox" name="gameA3TemplesBattlemaidSarinaOnly" {{ if .Config.Game.A3Temples.OnlyKillBattleMaidSarina }}checked{{ end }}> BattleMaid Sarina Only</label>
+        <label><input type="checkbox" name="gameA3TemplesDisusedFane" {{ if .Config.Game.A3Temples.DoDisusedFane }}checked{{ end }}> Disused Fane</label>
+        <label><input type="checkbox" name="gameA3TemplesForgottenTemple" {{ if .Config.Game.A3Temples.DoForgottenTemple }}checked{{ end }}> Forgotten Temple</label>
+        <label><input type="checkbox" name="gameA3TemplesForgottenReliquary" {{ if .Config.Game.A3Temples.DoForgottenReliquary }}checked{{ end }}> Forgotten Reliquary</label>
+        <label><input type="checkbox" name="gameA3TemplesDisusedReliquary" {{ if .Config.Game.A3Temples.DoDisusedReliquary }}checked{{ end }}> Disused Reliquary</label>
+        <label><input type="checkbox" name="gameA3TemplesRuinedFane" {{ if .Config.Game.A3Temples.DoRuinedFane }}checked{{ end }}> Ruined Fane</label>
+        <label><input type="checkbox" name="gameA3TemplesFocusOnElitePacks" {{ if .Config.Game.A3Temples.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
 {{ define "mephisto" }}
     <fieldset>
         <label><input type="checkbox" name="gameMephistoKillCouncilMembers" {{ if .Config.Game.Mephisto.KillCouncilMembers }}checked{{ end }}> Kill council members</label>

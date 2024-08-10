@@ -124,6 +124,17 @@ type CharacterCfg struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"drifter_cavern"`
+		A3Temples struct {
+			DoRuinedTemple           bool `yaml:"doRuinedTemple"`
+			OnlyKillBattleMaidSarina bool `yaml:"onlyKillBattleMaidSarina"`
+			DoDisusedFane            bool `yaml:"doDisusedFane"`
+			DoForgottenTemple        bool `yaml:"doForgottenTemple"`
+			DoForgottenReliquary     bool `yaml:"doForgottenReliquary"`
+			DoDisusedReliquary       bool `yaml:"doDisusedReliquary"`
+			DoRuinedFane             bool `yaml:"doRuinedFane"`
+			OpenChests               bool `yaml:"openChests"`
+			FocusOnElitePacks        bool `yaml:"focusOnElitePacks"`
+		} `yaml:"a3_temples"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
