@@ -1,9 +1,11 @@
 package run
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -36,8 +38,8 @@ func (a Tristram) BuildActions() []action.Action {
 	}
 
 	// Clear monsters around the portal
-	if a.CharacterCfg.Game.Tristram.ClearPortal {
-		actions = append(actions, a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()))
+	if a.CharacterCfg.Game.Tristram.ClearPortal || a.CharacterCfg.Game.Runs[0] == "leveling" {
+		actions = append(actions, a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()))
 	}
 
 	actions = append(actions, a.openPortalIfNotOpened())
@@ -61,7 +63,7 @@ func (a Tristram) BuildActions() []action.Action {
 			})}
 		} else {
 			filter := data.MonsterAnyFilter()
-			if a.CharacterCfg.Game.Tristram.FocusOnElitePacks {
+			if a.CharacterCfg.Game.Tristram.FocusOnElitePacks && a.CharacterCfg.Game.Runs[0] != "leveling" {
 				filter = data.MonsterEliteFilter()
 			}
 			return []action.Action{a.builder.ClearArea(false, filter)}
@@ -84,7 +86,10 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 		}
 
 		// We don't know which order the stones are, so we activate all of them one by one in sequential order, 5 times
-		for range 5 {
+		//activeStones := 0
+		for range 6 {
+			stoneTries := 0
+			activeStones := 0
 			for _, cainStone := range []object.Name{
 				object.CairnStoneAlpha,
 				object.CairnStoneBeta,
@@ -94,8 +99,30 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 			} {
 				st := cainStone
 				stone, _ := d.Objects.FindOne(st)
-				actions = append(actions, a.builder.InteractObject(stone.Name, nil))
+				if stone.Selectable {
+					actions = append(actions, a.builder.InteractObject(stone.Name, func(d game.Data) bool {
+						if stoneTries < 5 {
+							stoneTries++
+							helper.Sleep(200)
+							x, y := a.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, stone.Position.X, stone.Position.Y)
+							a.HID.Click(game.LeftButton, x+3*stoneTries, y)
+							a.logger.Debug(fmt.Sprintf("Tried to click %s at screen pos %vx%v", stone.Desc().Name, x, y))
+							return false
+						}
+						stoneTries = 0
+						return true
+					}),
+					)
+				} else {
+					helper.Sleep(500)
+					activeStones++
+				}
+				_, tristPortal := d.Objects.FindOne(object.PermanentTownPortal)
+				if activeStones >= 5 || tristPortal {
+					break
+				}
 			}
+
 		}
 
 		// Wait until portal is open
