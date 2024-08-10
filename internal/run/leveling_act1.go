@@ -26,20 +26,42 @@ func (a Leveling) act1() action.Action {
 		}
 
 		running = true
-		if !d.Quests[quest.Act1DenOfEvil].Completed() {
-			return a.denOfEvil()
+
+		// clear Bloodmoor until level 3
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 3 {
+			return a.bloodMoor()
 		}
 
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 13 {
-			return a.countess()
+		// do Den of Evil until level 6
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 6 || !d.Quests[quest.Act1DenOfEvil].Completed() {
+			return a.denOfEvil()
 		}
 
 		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
 			return a.deckardCain(d)
 		}
 
+		// do Tristram Runs until level 14
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 14 {
+			return a.tristram()
+		}
+
+		// do Countess Runs until level 17
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 17 {
+			return a.countess()
+		}
+
 		return a.andariel(d)
 	})
+}
+
+func (a Leveling) bloodMoor() []action.Action {
+	a.logger.Info("Starting Blood Moor run")
+	return []action.Action{
+		a.builder.MoveToArea(area.BloodMoor),
+		a.builder.Buff(),
+		a.builder.ClearArea(false, data.MonsterAnyFilter()),
+	}
 }
 
 func (a Leveling) denOfEvil() []action.Action {
@@ -53,38 +75,10 @@ func (a Leveling) denOfEvil() []action.Action {
 	}
 }
 
-//func (a Leveling) bloodRaven() action.Action {
-//	return action.NewChain(func(d game.Data) []action.Action {
-//		a.logger.Info("Starting Blood Raven quest")
-//		return []action.Action{
-//			a.builder.WayPoint(area.ColdPlains),
-//			a.builder.MoveToArea(area.BurialGrounds),
-//			a.char.Buff(),
-//			action.NewStepChain(func(d game.Data) []step.Step {
-//				for _, l := range d.AdjacentLevels {
-//					if l.Area == area.Mausoleum {
-//						return []step.Step{step.MoveTo(l.Position, step.StopAtDistance(50))}
-//					}
-//				}
-//
-//				return []step.Step{}
-//			}),
-//			a.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-//				for _, m := range d.Monsters.Enemies() {
-//					if pather.DistanceFromMe(d, m.Position) < 3 {
-//						return m.UnitID, true
-//					}
-//
-//					if m.Name == npc.BloodRaven {
-//						return m.UnitID, true
-//					}
-//				}
-//
-//				return 0, false
-//			}, nil, step.Distance(5, 15)),
-//		}
-//	})
-//}
+func (a Leveling) tristram() []action.Action {
+	a.logger.Info("Starting Tristram run")
+	return Tristram{baseRun: a.baseRun}.BuildActions()
+}
 
 func (a Leveling) countess() []action.Action {
 	a.logger.Info("Starting Countess run")
@@ -215,7 +209,6 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 	)
 
 	actions = append(actions,
-		a.builder.UsePortalInTown(),
 		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
 			return andarielStartingPosition, true
 		}),
