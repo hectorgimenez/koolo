@@ -215,16 +215,6 @@ func (s *Berserker) FindItemOnNearbyCorpses(d game.Data, maxRange int, waitTime 
 	return corpseFound
 }
 
-// func (s *Berserker) checkCloseMonsters(d game.Data, rangeDistance int) bool {
-// 	for _, monster := range d.Monsters.Enemies() {
-// 		if monster.Stats[stat.Life] > 0 &&
-// 			utils.DistanceFromPoint(d.PlayerUnit.Position, monster.Position) <= rangeDistance {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
-
 func (s Berserker) PreCTABuffSkills(d game.Data) []skill.ID {
 	return []skill.ID{}
 }
