@@ -2,6 +2,8 @@ module github.com/hectorgimenez/koolo
 
 go 1.22
 
+replace github.com/hectorgimenez/d2go => D:\git\d2golatest
+
 require (
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
 	github.com/billgraziano/dpapi v0.5.0
