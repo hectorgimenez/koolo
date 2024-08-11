@@ -449,6 +449,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.Discord.EnableGameCreatedMessages = r.Form.Has("enable_game_created_messages")
 		newConfig.Discord.EnableNewRunMessages = r.Form.Has("enable_new_run_messages")
 		newConfig.Discord.EnableRunFinishMessages = r.Form.Has("enable_run_finish_messages")
+		newConfig.Discord.EnableDiscordChickenMessages = r.Form.Has("enable_discord_chicken_messages")
 		newConfig.Discord.Token = r.Form.Get("discord_token")
 		newConfig.Discord.ChannelID = r.Form.Get("discord_channel_id")
 		// Telegram
@@ -562,6 +563,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")
 		cfg.Game.Pit.FocusOnElitePacks = r.Form.Has("gamePitFocusOnElitePacks")
 
+		cfg.Game.Andariel.ClearRoom = r.Form.Has("gameAndarielClearRoom")
+
 		cfg.Game.Pindleskin.SkipOnImmunities = []stat.Resist{}
 		for _, i := range r.Form["gamePindleskinSkipOnImmunities[]"] {
 			cfg.Game.Pindleskin.SkipOnImmunities = append(cfg.Game.Pindleskin.SkipOnImmunities, stat.Resist(i))
@@ -571,6 +574,10 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")
 		cfg.Game.AncientTunnels.OpenChests = r.Form.Has("gameAncientTunnelsOpenChests")
 		cfg.Game.AncientTunnels.FocusOnElitePacks = r.Form.Has("gameAncientTunnelsFocusOnElitePacks")
+		cfg.Game.Mausoleum.OpenChests = r.Form.Has("gameMausoleumOpenChests")
+		cfg.Game.Mausoleum.FocusOnElitePacks = r.Form.Has("gameMausoleumFocusOnElitePacks")
+		cfg.Game.DrifterCavern.OpenChests = r.Form.Has("gameDrifterCavernOpenChests")
+		cfg.Game.DrifterCavern.FocusOnElitePacks = r.Form.Has("gameDrifterCavernFocusOnElitePacks")
 		cfg.Game.Mephisto.KillCouncilMembers = r.Form.Has("gameMephistoKillCouncilMembers")
 		cfg.Game.Mephisto.OpenChests = r.Form.Has("gameMephistoOpenChests")
 		cfg.Game.Tristram.ClearPortal = r.Form.Has("gameTristramClearPortal")
@@ -584,9 +591,9 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Baal.OnlyElites = r.Form.Has("gameBaalOnlyElites")
 
 		cfg.Game.Eldritch.KillShenk = r.Form.Has("gameEldritchKillShenk")
-		cfg.Game.Diablo.ClearArea = r.Form.Has("gameDiabloClearArea")
-		cfg.Game.Diablo.OnlyElites = r.Form.Has("gameDiabloOnlyElites")
+		cfg.Game.Diablo.FullClear = r.Form.Has("gameDiabloFullClear")
 		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
+		cfg.Game.Diablo.FocusOnElitePacks = r.Form.Has("gameDiabloFocusOnElitePacks")
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 

@@ -40,12 +40,13 @@ type KooloCfg struct {
 	D2LoDPath             string `yaml:"D2LoDPath"`
 	D2RPath               string `yaml:"D2RPath"`
 	Discord               struct {
-		Enabled                   bool   `yaml:"enabled"`
-		EnableGameCreatedMessages bool   `yaml:"enableGameCreatedMessages"`
-		EnableNewRunMessages      bool   `yaml:"enableNewRunMessages"`
-		EnableRunFinishMessages   bool   `yaml:"enableRunFinishMessages"`
-		ChannelID                 string `yaml:"channelId"`
-		Token                     string `yaml:"token"`
+		Enabled                      bool   `yaml:"enabled"`
+		EnableGameCreatedMessages    bool   `yaml:"enableGameCreatedMessages"`
+		EnableNewRunMessages         bool   `yaml:"enableNewRunMessages"`
+		EnableRunFinishMessages      bool   `yaml:"enableRunFinishMessages"`
+		EnableDiscordChickenMessages bool   `yaml:"enableDiscordChickenMessages"`
+		ChannelID                    string `yaml:"channelId"`
+		Token                        string `yaml:"token"`
 	} `yaml:"discord"`
 	Telegram struct {
 		Enabled bool   `yaml:"enabled"`
@@ -104,6 +105,9 @@ type CharacterCfg struct {
 			OpenChests            bool `yaml:"openChests"`
 			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
 		} `yaml:"pit"`
+		Andariel struct {
+			ClearRoom bool `yaml:"clearRoom"`
+		}
 		StonyTomb struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
@@ -116,6 +120,10 @@ type CharacterCfg struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"ancient_tunnels"`
+		DrifterCavern struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"drifter_cavern"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
@@ -128,9 +136,9 @@ type CharacterCfg struct {
 			ClearArea bool `yaml:"clearArea"`
 		} `yaml:"nihlathak"`
 		Diablo struct {
-			KillDiablo bool `yaml:"killDiablo"`
-			ClearArea  bool `yaml:"clearArea"`
-			OnlyElites bool `yaml:"onlyElites"`
+			KillDiablo        bool `yaml:"killDiablo"`
+			FullClear         bool `yaml:"fullClear"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"diablo"`
 		Baal struct {
 			KillBaal    bool `yaml:"killBaal"`
@@ -256,7 +264,7 @@ func Load() error {
 			return err
 		}
 
-		if charCfg.Game.Runs[0] == "leveling" {
+		if len(charCfg.Game.Runs) > 0 && charCfg.Game.Runs[0] == "leveling" {
 			levelingRules, err := nip.ReadDir("config/" + entry.Name() + "/pickit_leveling/")
 			if err != nil {
 				return err

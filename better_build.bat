@@ -59,7 +59,27 @@ goto :eof
 if not exist build (
     call :print_step "Creating build folder"
     mkdir build
-    call :print_success "Build folder created at %cd%\build"
+    if !errorlevel! equ 0 (
+        call :print_success "Build folder created at %cd%\build"
+        
+        :: Copy Settings.json to the new build folder
+        call :print_step "Copying Settings.json to build folder"
+        if exist config\Settings.json (
+            copy /y config\Settings.json build\config\Settings.json > nul
+            if !errorlevel! equ 0 (
+                call :print_success "Settings.json successfully copied to %cd%\build\config"
+            ) else (
+                call :print_error "Failed to copy Settings.json from %cd%\config\ to %cd%\build\config"
+                call :check_file_permissions "config\Settings.json"
+            )
+        ) else (
+            call :print_error "Settings.json not found in %cd%\config folder"
+        )
+    ) else (
+        call :print_error "Failed to create build folder"
+        call :check_folder_permissions "%cd%"
+        exit /b 1
+    )
 ) else (
     call :print_step "Checking build folder"
     call :print_info "Build folder already exists at %cd%\build"
@@ -67,11 +87,13 @@ if not exist build (
     :: Check and delete koolo.exe if it exists
     if exist build\koolo.exe (
         call :print_step "Removing existing koolo.exe"
-        del /q build\koolo.exe
+        del /f /q build\koolo.exe
         if not exist build\koolo.exe (
             call :print_success "koolo.exe successfully deleted"
         ) else (
             call :print_error "Failed to delete koolo.exe"
+            call :check_file_permissions "build\koolo.exe"
+            exit /b 1
         )
     )
     
@@ -83,6 +105,8 @@ if not exist build (
             call :print_success "Tools folder successfully deleted"
         ) else (
             call :print_error "Failed to delete tools folder"
+            call :check_folder_permissions "build\tools"
+            exit /b 1
         )
     )
 )
@@ -100,12 +124,24 @@ if exist build\config\Settings.json (
             call :print_success "Settings.json successfully replaced"
         ) else (
             call :print_error "Failed to copy Settings.json"
+            call :check_file_permissions "config\Settings.json"
+            call :check_file_permissions "build\config\Settings.json"
         )
     ) else (
         call :print_info "Keeping existing Settings.json"
     )
 ) else (
     call :print_info "No existing Settings.json found in %cd%\build\config"
+    call :print_step "Copying Settings.json"
+    if not exist build\config mkdir build\config
+    copy /y config\Settings.json build\config\Settings.json > nul
+    if !errorlevel! equ 0 (
+        call :print_success "Settings.json successfully copied to build\config"
+    ) else (
+        call :print_error "Failed to copy Settings.json to build\config"
+        call :check_file_permissions "config\Settings.json"
+        call :check_folder_permissions "build\config"
+    )
 )
 
 :: Handle tools folder
@@ -117,6 +153,8 @@ if not exist build\tools (
         call :print_success "Tools folder successfully copied"
     ) else (
         call :print_error "Failed to copy tools folder"
+        call :check_folder_permissions "tools"
+        call :check_folder_permissions "build"
     )
 ) else (
     call :print_info "Tools folder already exists in %cd%\build\tools"
@@ -146,6 +184,8 @@ if not exist build\config\koolo.yaml (
         call :print_success "koolo.yaml.dist successfully copied to build\config\koolo.yaml"
     ) else (
         call :print_error "Failed to copy koolo.yaml.dist"
+        call :check_file_permissions "config\koolo.yaml.dist"
+        call :check_folder_permissions "build\config"
     )
 ) else (
     call :print_info "koolo.yaml already exists in build\config, skipping copy"
@@ -157,6 +197,8 @@ if !errorlevel! equ 0 (
     call :print_success "Template folder successfully copied"
 ) else (
     call :print_error "Failed to copy template folder"
+    call :check_folder_permissions "config\template"
+    call :check_folder_permissions "build\config"
 )
 
 call :print_step "Copying README.md"
@@ -165,6 +207,8 @@ if !errorlevel! equ 0 (
     call :print_success "README.md successfully copied"
 ) else (
     call :print_error "Failed to copy README.md"
+    call :check_file_permissions "README.md"
+    call :check_folder_permissions "build"
 )
 
 call :print_header "Build Process Completed"
@@ -214,4 +258,14 @@ goto :eof
 :: Function to print an info message
 :print_info
 powershell -Command "Write-Host '    INFO: %~1' -ForegroundColor Yellow"
+goto :eof
+
+:: Function to check file permissions
+:check_file_permissions
+powershell -Command "$acl = Get-Acl '%~1'; $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent(); $principal = New-Object System.Security.Principal.WindowsPrincipal($identity); $adminRole = [System.Security.Principal.WindowsBuiltInRole]::Administrator; if ($principal.IsInRole($adminRole)) { Write-Host '    INFO: Script is running with administrator privileges' -ForegroundColor Yellow } else { Write-Host '    WARNING: Script is not running with administrator privileges' -ForegroundColor Yellow }; Write-Host ('    INFO: Current user: ' + $identity.Name) -ForegroundColor Yellow; Write-Host ('    INFO: File owner: ' + $acl.Owner) -ForegroundColor Yellow; $acl.Access | ForEach-Object { Write-Host ('    INFO: ' + $_.IdentityReference + ' has ' + $_.FileSystemRights + ' rights') -ForegroundColor Yellow }"
+goto :eof
+
+:: Function to check folder permissions
+:check_folder_permissions
+powershell -Command "$acl = Get-Acl '%~1'; $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent(); $principal = New-Object System.Security.Principal.WindowsPrincipal($identity); $adminRole = [System.Security.Principal.WindowsBuiltInRole]::Administrator; if ($principal.IsInRole($adminRole)) { Write-Host '    INFO: Script is running with administrator privileges' -ForegroundColor Yellow } else { Write-Host '    WARNING: Script is not running with administrator privileges' -ForegroundColor Yellow }; Write-Host ('    INFO: Current user: ' + $identity.Name) -ForegroundColor Yellow; Write-Host ('    INFO: Folder owner: ' + $acl.Owner) -ForegroundColor Yellow; $acl.Access | ForEach-Object { Write-Host ('    INFO: ' + $_.IdentityReference + ' has ' + $_.FileSystemRights + ' rights') -ForegroundColor Yellow }"
 goto :eof

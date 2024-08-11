@@ -14,7 +14,7 @@ type CubeRecipe struct {
 }
 
 var (
-	recipies = []CubeRecipe{
+	recipes = []CubeRecipe{
 
 		// Perfects
 		{
@@ -192,7 +192,7 @@ func (b *Builder) CubeRecipes() *Chain {
 		}
 
 		itemsInStash := d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
-		for _, recipe := range recipies {
+		for _, recipe := range recipes {
 
 			// Check if the current recipe is Enabled
 			if !slices.Contains(b.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
@@ -221,7 +221,7 @@ func (b *Builder) CubeRecipes() *Chain {
 }
 
 func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]data.Item, bool) {
-	// Create a map of the items we need for the recipie.
+	// Create a map of the items we need for the recipe.
 	recipeItems := make(map[string]int)
 	for _, item := range recipe.Items {
 		recipeItems[item]++
@@ -229,7 +229,7 @@ func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]dat
 
 	itemsForRecipe := []data.Item{}
 
-	// Iterate over the items in our stash to see if we have the items for the recipie.
+	// Iterate over the items in our stash to see if we have the items for the recipe.
 	for _, item := range items {
 		if count, ok := recipeItems[string(item.Name)]; ok {
 			itemsForRecipe = append(itemsForRecipe, item)
@@ -247,7 +247,7 @@ func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]dat
 		}
 	}
 
-	// We don't have all the items for the recipie.
+	// We don't have all the items for the recipe.
 	return nil, false
 }
 

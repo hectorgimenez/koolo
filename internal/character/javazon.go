@@ -1,6 +1,10 @@
 package character
 
 import (
+	"log/slog"
+	"sort"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -9,8 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"sort"
-	"time"
 )
 
 const (
@@ -21,6 +23,23 @@ const (
 
 type Javazon struct {
 	BaseCharacter
+}
+
+func (s Javazon) CheckKeyBindings(d game.Data) []skill.ID {
+	requireKeybindings := []skill.ID{skill.LightningFury, skill.TomeOfTownPortal}
+	missingKeybindings := []skill.ID{}
+
+	for _, cskill := range requireKeybindings {
+		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+			missingKeybindings = append(missingKeybindings, cskill)
+		}
+	}
+
+	if len(missingKeybindings) > 0 {
+		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+	}
+
+	return missingKeybindings
 }
 
 func (s Javazon) PreCTABuffSkills(d game.Data) []skill.ID {

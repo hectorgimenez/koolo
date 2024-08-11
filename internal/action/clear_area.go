@@ -1,10 +1,11 @@
 package action
 
 import (
+	"log/slog"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"log/slog"
 )
 
 func (b *Builder) ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) Action {
