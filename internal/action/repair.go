@@ -15,7 +15,7 @@ import (
 	"github.com/lxn/win"
 )
 
-//@TODO Remove usage of WeaponsUtils when the d2go project is updated to manage throwables
+// @TODO Remove usage of WeaponsUtils when the d2go project is updated to manage throwables
 func (b *Builder) Repair() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
 		shouldRepair := false
@@ -102,6 +102,7 @@ func (b *Builder) RepairRequired() bool {
 				b.Logger.Info(fmt.Sprintf("Repairing %s, item quantity is at %d", i.Name, quantity.Value))
 				return true
 			}
+			continue
 		}
 
 		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
