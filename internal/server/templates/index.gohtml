@@ -8,355 +8,433 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <title>Koolo Dashboard</title>
     <style>
-        :root {
-            --primary: #4a9df8;
-            --primary-hover: #3a7dc8;
-            --background-color: #1a1d24;
-            --card-background-color: #22262e;
-            --card-hover-background-color: #2a2f38;
-        }
-        body { 
-            padding: 20px; 
-            background-color: var(--background-color);
-        }
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background-color: var(--card-background-color);
-            padding: 20px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .dashboard-title-container {
-            display: flex;
-            align-items: center;
-        }
-        .dashboard-title {
-            font-size: 2em;
-            margin: 0;
-            color: var(--primary);
-        }
-        .dashboard-controls {
-            display: flex;
-            gap: 10px;
-        }
-        .version-badge {
-            font-size: 0.8em;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background-color: #dc3545;
-            color: #fff;
-            margin-left: 10px;
-        }
-        .character-card {
-            background-color: var(--card-background-color);
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .character-card:hover {
-            background-color: var(--card-hover-background-color);
-            transform: translateY(-2px);
-        }
-        .character-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .character-name-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .character-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        .character-controls {
-            display: flex;
-            gap: 8px;
-        }
-        .character-details {
-            margin-top: 15px;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        .character-card.expanded .character-details {
-            display: block;
-        }
-        .toggle-details {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 1.2em;
-            padding: 0;
-            transition: transform 0.3s ease;
-            outline: none; /* Remove the outline */
-        }
-        .toggle-details:hover {
-            color: var(--primary-hover);
-        }
-        .toggle-details:focus {
-            outline: none; /* Remove the outline on focus */
-            box-shadow: none; /* Remove any box shadow on focus */
-        }
-        .toggle-details i {
-            transition: transform 0.3s ease;
-            display: inline-block;
-        }
-        .character-card.expanded .toggle-details i {
-            transform: rotate(180deg);
-        }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            font-size: 0.9em;
-            background-color: transparent;
-            color: #a0a0a0;
-        }
-        .status-label {
-            margin-right: 5px;
-        }
-        .status-value {
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-        .status-ingame .status-value { background-color: #28a745; color: white; }
-        .status-paused { background-color: #ffc107; color: black; }
-        .status-stopped { background-color: #dc3545; color: white; }
-        .status-paused .status-value { background-color: #ffc107; color: black; }
-        .status-notstarted .status-value { background-color: #dc3545; color: white; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .stat-item {
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .stat-label {
-            font-size: 0.8em;
-            color: #a0a0a0;
-        }
-        .stat-value {
-            color: #ffffff;
-            font-weight: bold;
-        }
-        .btn {
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            transition: all 0.2s ease;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        .btn-start { background-color: #28a745; color: white; }
-        .btn-start:hover { background-color: #218838; }
-        .btn-stop { background-color: #dc3545; color: white; }
-        .btn-stop:hover { background-color: #c82333; }
-        .btn-pause { background-color: #ffc107; color: black; }
-        .btn-pause:hover { background-color: #e0a800; }
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-        .btn-outline:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-        .btn-icon {
-            margin-right: 5px;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .loading::after {
-            content: "";
-            width: 50px;
-            height: 50px;
-            border: 10px solid #f3f3f3;
-            border-top: 10px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .run-stats {
-            margin-top: 20px;
-        }
-        .run-stat {
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        .run-stat h4 {
-            margin-top: 0;
-            color: var(--primary);
-        }
-        .status-details {
-            margin-bottom: 10px;
-        }
-        .run-stats h3 {
-        margin-top: 20px;
-        color: var(--primary);
-        }
-        .run-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .run-stat {
-            background: linear-gradient(145deg, #2a2f38, #252a32);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-        .run-stat:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
-        }
-        .run-stat h4 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #4a9df8;
-            font-size: 1.2em;
-            font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .run-stat p {
-            margin: 5px 0;
-        }
-        .stat-label {
-            color: #a0a0a0;
-        }
-        .run-stat-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .stat-label {
-            color: #a0a0a0;
-            font-size: 0.9em;
-        }
+body {
+    padding: 15px;
+    background-color: var(--background-color);
+}
+:root {
+    --primary: #4a9df8;
+    --primary-hover: #3a7dc8;
+    --background-color: #1a1d24;
+    --card-background-color: #22262e;
+    --card-hover-background-color: #2a2f38;
+}
+main.container {
+    width: 100%;
+    max-width: none;
+    padding: 0 15px;
+}
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    background-color: var(--card-background-color);
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.dashboard-title-container {
+    display: flex;
+    align-items: center;
+}
+.dashboard-title {
+    font-size: 2em;
+    margin: 0;
+    color: var(--primary);
+}
+.dashboard-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.total-drops-card {
+    background-color: var(--card-background-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--primary);
+    transition: background-color 0.3s ease;
+}
 
-        .stat-value {
-            font-weight: bold;
-            color: #ffffff;
-        }
-        .current-run-indicator {
-            font-size: 0.7em;
-            background-color: #4a9df8;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(74, 157, 248, 0.3);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 157, 248, 0.4); }
-            70% { opacity: 0.7; box-shadow: 0 0 0 10px rgba(74, 157, 248, 0); }
-            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 157, 248, 0); }
-        }
-        stat-value {
-            color: #ffffff;
-            font-weight: bold;
-        }
-        .run-stat h4 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: var(--primary);
-        }
-        .running-for {
-            margin-top: 5px;
-            font-size: 0.9em;
-            color: #a0a0a0;
-        }
-        .run-stat-item {
-            font-size: 0.95em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+.total-drops-card:hover {
+    background-color: var(--card-hover-background-color);
+}
 
-        .stat-label {
-            color: #a0a0a0;
-            font-weight: 500;
-            margin-right: 5px;
-        }
-        .stat-short { color: #28a745; }
-        .stat-long { color: #ffc107; }
-        .stat-error { color: #dc3545; }
-        .character-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-        }
+.total-drops-label {
+    margin-right: 8px;
+    font-size: 0.9em;
+}
 
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-left: 10px;
-            animation: breathe 2s ease-in-out infinite;
-        }
+.total-drops-count {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.version-badge {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: #dc3545;
+    color: #fff;
+    margin-left: 10px;
+}
+.character-card {
+    background-color: var(--card-background-color);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+.character-card:hover {
+    background-color: var(--card-hover-background-color);
+    transform: translateY(-2px);
+}
+.character-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.character-name-container {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+.character-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+.status-indicator-container {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: breathe 2s ease-in-out infinite;
+}
+.status-indicator.in-game {
+    background-color: #28a745;
+}
+.status-indicator.paused {
+    background-color: #ffc107;
+}
+.status-indicator.stopped {
+    background-color: #dc3545;
+}
+.character-controls {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+.character-details {
+    margin-top: 10px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+.character-card.expanded .character-details {
+    display: block;
+}
+.toggle-details {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0;
+    transition: transform 0.3s ease;
+    outline: none;
+}
+.toggle-details:hover {
+    color: var(--primary-hover);
+}
+.toggle-details:focus {
+    outline: none;
+    box-shadow: none;
+}
+.toggle-details i {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+.character-card.expanded .toggle-details i {
+    transform: rotate(180deg);
+}
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9em;
+    background-color: transparent;
+    color: #a0a0a0;
+}
+.status-label {
+    margin-right: 5px;
+}
+.status-value {
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.status-ingame .status-value { background-color: #28a745; color: white; }
+.status-paused .status-value { background-color: #ffc107; color: black; }
+.status-stopped .status-value { background-color: #dc3545; color: white; }
+.status-notstarted .status-value { background-color: #dc3545; color: white; }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    margin-top: 5px;
+}
+.stat-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+}
+.stat-label {
+    font-size: 0.9em;
+    color: #a0a0a0;
+}
+.stat-value {
+    color: #ffffff;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.btn-start { background-color: #28a745; color: white; }
+.btn-start:hover { background-color: #218838; }
+.btn-stop { background-color: #dc3545; color: white; }
+.btn-stop:hover { background-color: #c82333; }
+.btn-pause { background-color: #ffc107; color: black; }
+.btn-pause:hover { background-color: #e0a800; }
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+.btn-outline:hover {
+    background-color: var(--primary);
+    color: white;
+}
+.btn-icon {
+    margin-right: 5px;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.loading::after {
+    content: "";
+    width: 50px;
+    height: 50px;
+    border: 10px solid #f3f3f3;
+    border-top: 10px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.auto-start-checkbox {
+    float: right;
+    font-size: 0.9em;
+}
 
-        .status-indicator.in-game {
-            background-color: #28a745;
-        }
-
-        .status-indicator.paused {
-            background-color: #ffc107;
-        }
-
-        .status-indicator.stopped {
-            background-color: #dc3545;
-        }
-
-        @keyframes breathe {
-            0%, 100% {
-                opacity: 0.4;
-                transform: scale(0.9);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.1);
-            }
-        }
-    </style>
+.auto-start-input {
+    margin-left: 5px;
+}
+.run-stats {
+    margin-top: 10px;
+}
+.run-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(30%, 220px), 1fr));
+    gap: 10px 5px;
+}
+.run-stat {
+    background: linear-gradient(145deg, #2a2f38, #252a32);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    font-size: 10px; /* Reduced from 12px */
+    display: flex;
+    flex-direction: column;
+}
+.run-stat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+.run-stat h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #4a9df8;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+.run-stat-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    padding: 0 2px;
+    flex-grow: 1;
+}
+.run-stat-item {
+    font-size: 0.85em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
+    padding: 0;
+}
+.run-stat-label {
+    margin-right: 5px;
+}
+.current-run-indicator {
+    font-size: 0.7em;
+    background-color: #4a9df8;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(74, 157, 248, 0.3);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 157, 248, 0.4); }
+    70% { opacity: 0.7; box-shadow: 0 0 0 10px rgba(74, 157, 248, 0); }
+    100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 157, 248, 0); }
+}
+.running-for {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #a0a0a0;
+}
+@keyframes breathe {
+    0%, 100% {
+        opacity: 0.4;
+        transform: scale(0.9);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+.controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.view-toggle {
+    display: flex;
+}
+.view-toggle button, .expand-all-btn {
+    background-color: var(--card-background-color);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+}
+.view-toggle button.active {
+    background-color: var(--primary);
+    color: white;
+}
+.view-toggle button:first-child {
+    border-radius: 4px 0 0 4px;
+}
+.view-toggle button:last-child {
+    border-radius: 0 4px 4px 0;
+}
+.view-toggle button:hover, .expand-all-btn:hover {
+    background-color: var(--primary-hover);
+    color: white;
+}
+.view-toggle button i, .expand-all-btn i {
+    font-size: 1.2em;
+}
+.expand-all-btn {
+    border-radius: 4px;
+}
+.expand-all-btn i {
+    margin-right: 5px;
+    transition: transform 0.3s ease;
+}
+.expand-all-btn.collapsed i {
+    transform: rotate(180deg);
+}
+.character-controls .btn {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 80px;
+    padding: 6px 8px;
+    font-size: 0.9em;
+}
+#characters-container.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(45%, 450px), 1fr));
+    gap: 0px 15px;
+}
+@media (min-width: 768px) {
+    #characters-container.grid-view {
+        grid-template-columns: repeat(auto-fit, minmax(min(45%, 600px), 1fr));
+    }
+}
+@media (min-width: 1200px) {
+    #characters-container.grid-view {
+        grid-template-columns: repeat(auto-fit, minmax(min(45%, 800px), 1fr));
+    }
+    .run-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(30%, 220px), 1fr));
+    }
+}
+</style>
 </head>
 <body>
 <main class="container">
@@ -368,13 +446,32 @@
                 <span id="version" class="version-badge"></span>
             </div>
             <div class="dashboard-controls">
+                <button class="btn btn-outline" onclick="location.href='/drops?supervisor=all'">
+                    <i class="bi bi-gift btn-icon"></i>Total Drops: <span id="totalDropsCount">0</span>
+                </button>
                 <button class="btn btn-outline" onclick="location.href='/config'">
                     <i class="bi bi-gear btn-icon"></i>Settings
                 </button>
                 <button class="btn btn-start" onclick="location.href='/supervisorSettings'">
                     <i class="bi bi-plus btn-icon"></i>Add Character
                 </button>
+                <button id="auto-start-btn" class="btn btn-start" onclick="startAutoStartProcess()">
+                    <i class="bi bi-play-fill btn-icon"></i>Auto-start
+                </button>
             </div>
+        </div>
+        <div class="controls-container">
+            <div class="view-toggle">
+                <button id="list-view-btn" class="active" aria-label="List View">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+                <button id="grid-view-btn" aria-label="Grid View">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </button>
+            </div>
+            <button id="expand-all-btn" class="expand-all-btn" aria-label="Expand All">
+                Expand all&nbsp;<i class="bi bi-chevron-down"></i> 
+            </button>
         </div>
         <div id="characters-container"></div>
     </div>
@@ -397,6 +494,14 @@
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
             updateDashboard(data);
+    
+            // Emit a custom event for each character status update
+            for (const [key, value] of Object.entries(data.Status)) {
+                const customEvent = new CustomEvent('characterStatusUpdate', {
+                    detail: { character: key, status: value.SupervisorStatus }
+                });
+                document.dispatchEvent(customEvent);
+            }
         };
 
         socket.onclose = function() {
@@ -411,7 +516,7 @@
     }
 
     function fetchInitialData() {
-        fetch('/initial-data')
+        return fetch('/initial-data')
             .then(response => response.json())
             .then(data => {
                 updateDashboard(data);
@@ -420,7 +525,64 @@
             })
             .catch(error => console.error('Error fetching initial data:', error));
     }
+    async function startAutoStartProcess() {
+        const autoStartBtn = document.getElementById('auto-start-btn');
+        autoStartBtn.disabled = true;
 
+        const characters = Array.from(document.querySelectorAll('.character-card'))
+            .filter(card => card.querySelector('.auto-start-input').checked)
+            .map(card => card.id.replace('card-', ''));
+
+        for (const character of characters) {
+            await startCharacterAndWaitForInGame(character);
+        }
+
+        autoStartBtn.disabled = false;
+    }
+
+    function startCharacterAndWaitForInGame(character) {
+        return new Promise((resolve) => {
+            const card = document.getElementById(`card-${character}`);
+            const startBtn = card.querySelector('.start-pause');
+            const statusBadge = card.querySelector('.status-badge');
+
+            if (statusBadge.textContent.includes('In game')) {
+                console.log(`${character} is already in game, skipping.`);
+                resolve();
+                return;
+            }
+
+            console.log(`Starting ${character}...`);
+            startBtn.click();
+
+            const statusListener = async (event) => {
+                if (event.detail.character === character) {
+                    console.log(`Status update for ${character}: ${event.detail.status}`);
+                
+                    if (event.detail.status === "In game") {
+                        document.removeEventListener('characterStatusUpdate', statusListener);
+                        console.log(`${character} is in game. Waiting additional 5 seconds...`);
+                        await new Promise(wait => setTimeout(wait, 5000));
+                        console.log(`Finished processing ${character}.`);
+                        resolve();
+                    } else if (event.detail.status === "Not started" || event.detail.status === "Crashed") {
+                        document.removeEventListener('characterStatusUpdate', statusListener);
+                        console.log(`${character} has crashed or stopped, moving to next character.`);
+                        resolve();
+                    }
+                }
+            };
+
+            document.addEventListener('characterStatusUpdate', statusListener);
+
+            // Set a timeout in case the character never reaches the desired state
+            setTimeout(() => {
+                document.removeEventListener('characterStatusUpdate', statusListener);
+                console.log(`Timeout reached for ${character}, moving to next character.`);
+                resolve();
+            }, 120000); // 2 minutes timeout
+        });
+    }
     function updateDashboard(data) {
         const versionElement = document.getElementById('version');
         if (versionElement) {
@@ -430,15 +592,19 @@
                 versionElement.style.backgroundColor = "#dc3545";
             }
         }
+        // Calculate total drops across all characters
+        let totalDrops = Object.values(data.DropCount).reduce((sum, count) => sum + count, 0);
+        document.getElementById('totalDropsCount').textContent = totalDrops;
 
         const container = document.getElementById('characters-container');
         if (!container) return;
 
         if (Object.keys(data.Status).length === 0) {
             container.innerHTML = '<article><p>No characters found, start adding a new character.</p></article>';
+            updateLayoutToggleVisibility();
             return;
         }
-
+        equalizeRunCardHeights();
         for (const [key, value] of Object.entries(data.Status)) {
             let card = document.getElementById(`card-${key}`);
             if (!card) {
@@ -454,8 +620,15 @@
                 container.removeChild(card);
             }
         });
-    }
 
+        updateLayoutToggleVisibility();
+
+        // Use requestAnimationFrame to ensure DOM updates before equalizing
+
+
+
+        // Optional: Add a small delay for additional consistency
+    }    
 
     function createCharacterCard(key) {
         const card = document.createElement('div');
@@ -464,9 +637,11 @@
 
         card.innerHTML = `
             <div class="character-header">
-                <div class="character-name">
-                    <span>${key}</span>
-                     <div class="status-indicator"></div>
+                <div class="character-name-container">
+                    <span class="character-name">${key}</span>
+                </div>
+                <div class="status-indicator-container">
+                    <div class="status-indicator"></div>
                 </div>
                 <div class="character-controls">
                     <button class="btn btn-outline" onclick="location.href='/debug?characterName=${key}'">
@@ -489,6 +664,10 @@
             <div class="character-details">
                 <div class="status-details">
                     <span class="status-badge"></span>
+                    <span class="running-for"></span>
+                    <label class="auto-start-checkbox">
+                        Auto-start: <input type="checkbox" class="auto-start-input" data-character="${key}">
+                    </label>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
@@ -513,13 +692,12 @@
                     </div>
                 </div>
                 <div class="run-stats"></div>
-            </div>
+            </div>    
         `;
 
         setupEventListeners(card, key);
         return card;
     }
-
 
     function setupEventListeners(card, key) {
         if (!card) return;
@@ -533,6 +711,8 @@
                 card.classList.toggle('expanded');
                 this.querySelector('i').style.transform = card.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
                 saveExpandedState();
+                equalizeRunCardHeights();
+
             });
         }
 
@@ -550,23 +730,6 @@
         }
     }
 
-
-    function updateStatusPosition(card, isExpanded) {
-        if (!card) return;
-
-        const statusBadge = card.querySelector('.status-badge');
-        const headerStatusContainer = card.querySelector('.character-name-status');
-        const detailsStatusContainer = card.querySelector('.status-details');
-
-        if (!statusBadge || !headerStatusContainer || !detailsStatusContainer) return;
-
-        if (isExpanded) {
-            detailsStatusContainer.insertBefore(statusBadge, detailsStatusContainer.firstChild);
-        } else {
-            headerStatusContainer.appendChild(statusBadge);
-        }
-    }
-
     function updateCharacterCard(card, key, value, dropCount) {
         if (!card) return;
 
@@ -575,13 +738,20 @@
         const statusDetails = card.querySelector('.status-details');
         const statusBadge = statusDetails.querySelector('.status-badge');
         const statusIndicator = card.querySelector('.status-indicator');
-
+        const autoStartCheckbox = card.querySelector('.auto-start-input');
+        if (!autoStartCheckbox.dataset.initialized) {
+            autoStartCheckbox.checked = localStorage.getItem(`autoStart_${key}`) === 'true';
+            autoStartCheckbox.dataset.initialized = 'true';
+            autoStartCheckbox.addEventListener('change', function() {
+                localStorage.setItem(`autoStart_${key}`, this.checked);
+            });
+        }
         if (statusBadge && statusDetails) {
             updateStatus(statusBadge, statusDetails, value.SupervisorStatus);
         }
         
         if (statusIndicator) {
-                updateStatusIndicator(statusIndicator, value.SupervisorStatus);
+            updateStatusIndicator(statusIndicator, value.SupervisorStatus);
         }
 
         if (startPauseBtn && stopBtn) {
@@ -669,58 +839,81 @@
         card.querySelector('.deaths').textContent = stats.totalDeaths;
         card.querySelector('.errors').textContent = stats.totalErrors;
     }
+    function adjustRunStatFontSizes(runStatsElement) {
+        const runStats = runStatsElement.querySelectorAll('.run-stat');
+        const count = runStats.length;
 
-
+        runStats.forEach(stat => {
+            if (count === 1) {
+                stat.style.fontSize = '18px';
+            } else if (count === 2) {
+                stat.style.fontSize = '16px';
+            } else {
+                stat.style.fontSize = '12px';
+            }
+        });
+    }
     function updateRunStats(card, games) {
-    const runStats = calculateRunStats(games);
-    const runStatsElement = card.querySelector('.run-stats');
-    runStatsElement.innerHTML = '<h3>Run Statistics</h3>';
+        const runStats = calculateRunStats(games);
+        const runStatsElement = card.querySelector('.run-stats');
+        runStatsElement.innerHTML = '<h3>Run Statistics</h3>';
 
-    if (Object.keys(runStats).length === 0) {
-        runStatsElement.innerHTML += '<p>No run data available yet.</p>';
-        return;
-    }
-
-    const runStatsGrid = document.createElement('div');
-    runStatsGrid.className = 'run-stats-grid';
-
-    for (const [runName, stats] of Object.entries(runStats)) {
-        const runElement = document.createElement('div');
-        runElement.className = 'run-stat';
-        if (stats.isCurrentRun) {
-            runElement.classList.add('current-run');
+        if (Object.keys(runStats).length === 0) {
+            runStatsElement.innerHTML += '<p>No run data available yet.</p>';
+            return;
         }
-        runElement.innerHTML = `
-            <h4>${runName}${stats.isCurrentRun ? ' <span class="current-run-indicator">Current</span>' : ''}</h4>
-            <div class="run-stat-content">
-                <div class="run-stat-item" title="Fastest Run">
-                    <span class="stat-label">Fastest:</span> ${formatDuration(stats.shortestTime)}
+
+        const runStatsGrid = document.createElement('div');
+        runStatsGrid.className = 'run-stats-grid';
+
+        for (const [runName, stats] of Object.entries(runStats)) {
+            const runElement = document.createElement('div');
+            runElement.className = 'run-stat';
+            if (stats.isCurrentRun) {
+                runElement.classList.add('current-run');
+            }
+            runElement.innerHTML = `
+                <h4>${runName}${stats.isCurrentRun ? ' <span class="current-run-indicator">Current</span>' : ''}</h4>
+                <div class="run-stat-content">
+                    <div class="run-stat-item" title="Fastest Run">
+                        <span class="run-stat-label">Fastest:</span>
+                        <span>${formatDuration(stats.shortestTime)}</span>
+                    </div>
+                    <div class="run-stat-item" title="Slowest Run">
+                        <span class="run-stat-label">Slowest:</span>
+                        <span>${formatDuration(stats.longestTime)}</span>
+                    </div>
+                    <div class="run-stat-item" title="Average Run">
+                        <span class="run-stat-label">Average:</span>
+                        <span>${formatDuration(stats.averageTime)}</span>
+                    </div>
+                    <div class="run-stat-item" title="Total Runs">
+                        <span class="run-stat-label">Total:</span>
+                        <span>${stats.runCount}</span>
+                    </div>
+                    <div class="run-stat-item" title="Errors">
+                        <span class="run-stat-label">Errors:</span>
+                        <span>${stats.errorCount}</span>
+                    </div>
+                    <div class="run-stat-item" title="Chickens">
+                        <span class="run-stat-label">Chickens:</span>
+                        <span>${stats.runChickens}</span>
+                    </div>
+                    <div class="run-stat-item" title="Deaths">
+                        <span class="run-stat-label">Deaths:</span>
+                        <span>${stats.runDeaths}</span>
+                    </div>
                 </div>
-                <div class="run-stat-item" title="Slowest Run">
-                    <span class="stat-label">Slowest:</span> ${formatDuration(stats.longestTime)}
-                </div>
-                <div class="run-stat-item" title="Average Run">
-                    <span class="stat-label">Average:</span> ${formatDuration(stats.averageTime)}
-                </div>
-                <div class="run-stat-item" title="Total Runs">
-                    <span class="stat-label">Total:</span> ${stats.runCount}
-                </div>
-                <div class="run-stat-item" title="Errors">
-                    <span class="stat-label">Errors:</span> ${stats.errorCount}
-                </div>
-                <div class="run-stat-item" title="Chickens">
-                    <span class="stat-label">Chickens:</span> ${stats.runChickens}
-                </div>
-                <div class="run-stat-item" title="Deaths">
-                    <span class="stat-label">Deaths:</span> ${stats.runDeaths}
-                </div>
-            </div>
-        `;
-        runStatsGrid.appendChild(runElement);
-    }
+            `;
+            runStatsGrid.appendChild(runElement);
+        }
 
         runStatsElement.appendChild(runStatsGrid);
-    }   
+        adjustRunStatFontSizes(runStatsElement);
+        equalizeRunCardHeights();
+
+
+        }
 
 
     function calculateRunStats(games) {
@@ -841,12 +1034,200 @@
             }
         });
     }
+    window.addEventListener('resize', equalizeRunCardHeights);
 
     document.addEventListener('DOMContentLoaded', function() {
         fetchInitialData();
         connectWebSocket();
         restoreExpandedState();
     });
+    function toggleView(view) {
+        const container = document.getElementById('characters-container');
+        const listBtn = document.getElementById('list-view-btn');
+        const gridBtn = document.getElementById('grid-view-btn');
+
+        if (view === 'grid') {
+            container.classList.add('grid-view');
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        } else {
+            container.classList.remove('grid-view');
+            listBtn.classList.add('active');
+            gridBtn.classList.remove('active');
+        }
+
+        // Save the current view preference
+        localStorage.setItem('viewPreference', view);
+        equalizeRunCardHeights;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const listBtn = document.getElementById('list-view-btn');
+        const gridBtn = document.getElementById('grid-view-btn');
+
+        listBtn.addEventListener('click', () => toggleView('list'));
+        gridBtn.addEventListener('click', () => toggleView('grid'));
+
+        // Restore the saved view preference
+        const savedView = localStorage.getItem('viewPreference');
+        if (savedView) {
+            toggleView(savedView);
+        }
+        const expandAllBtn = document.getElementById('expand-all-btn');
+            expandAllBtn.addEventListener('click', function() {
+                toggleAllCards(!this.classList.contains('collapsed'));
+            });
+
+            updateLayoutToggleVisibility();
+    });
+    function toggleAllCards(expand = true) {
+        const cards = document.querySelectorAll('.character-card');
+        const expandAllBtn = document.getElementById('expand-all-btn');
+
+        cards.forEach(card => {
+            const toggleBtn = card.querySelector('.toggle-details');
+            const toggleIcon = toggleBtn.querySelector('i');
+
+            if (expand && !card.classList.contains('expanded')) {
+                card.classList.add('expanded');
+                toggleIcon.style.transform = 'rotate(180deg)';
+            } else if (!expand && card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+                toggleIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        if (expand) {
+            expandAllBtn.innerHTML = 'Collapse all&nbsp;<i class="bi bi-chevron-up"></i>';
+            expandAllBtn.classList.add('collapsed');
+        } else {
+            expandAllBtn.innerHTML = 'Expand all&nbsp;<i class="bi bi-chevron-down"></i>';
+            expandAllBtn.classList.remove('collapsed');
+        }
+
+        saveExpandedState();
+    }
+
+    function updateLayoutToggleVisibility() {
+        const controlsContainer = document.querySelector('.controls-container');
+        const characterCards = document.querySelectorAll('.character-card');
+        controlsContainer.style.display = (characterCards.length > 1) ? 'flex' : 'none';
+    }
+    function equalizeRunCardHeights() {
+        const container = document.getElementById('characters-container');
+        const isGridView = container.classList.contains('grid-view');
+        const characterCards = container.querySelectorAll('.character-card');
+
+        // Reset all run stat card heights
+        characterCards.forEach(card => {
+            if (card.classList.contains('expanded')) {
+                card.querySelectorAll('.run-stat').forEach(runStat => {
+                    runStat.style.height = 'auto';
+                });
+            }
+        });
+
+        if (isGridView) {
+            // Group cards by rows in grid view
+            const rows = [];
+            let currentRow = [];
+            let currentTop = null;
+
+            characterCards.forEach(card => {
+                if (currentTop === null || Math.abs(card.getBoundingClientRect().top - currentTop) > 5) {
+                    if (currentRow.length > 0) {
+                        rows.push(currentRow);
+                    }
+                    currentRow = [card];
+                    currentTop = card.getBoundingClientRect().top;
+                } else {
+                    currentRow.push(card);
+                }
+            });
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+            }
+
+            // Equalize run stat card heights within each row
+            rows.forEach(rowCards => {
+                let minRunStatHeight = Infinity;
+            
+                // Find the minimum run stat card height in the row, only for expanded cards
+                rowCards.forEach(card => {
+                    if (card.classList.contains('expanded')) {
+                        const runStats = card.querySelectorAll('.run-stat');
+                        if (runStats.length > 0) {
+                            runStats.forEach(runStat => {
+                                minRunStatHeight = Math.min(minRunStatHeight, runStat.offsetHeight);
+                            });
+                        }
+                    }
+                });
+
+                // Set all run stat cards in expanded cards in the row to the minimum height
+                if (minRunStatHeight !== Infinity) {
+                    rowCards.forEach(card => {
+                        if (card.classList.contains('expanded')) {
+                            const runStats = card.querySelectorAll('.run-stat');
+                            runStats.forEach(runStat => {
+                                runStat.style.height = `${minRunStatHeight}px`;
+                                adjustRunStatContent(runStat, minRunStatHeight);
+                            });
+                        }
+                    });
+                }
+            });
+        } else {
+            // In list view, treat all expanded cards as one row
+            let minRunStatHeight = Infinity;
+            
+            characterCards.forEach(card => {
+                if (card.classList.contains('expanded')) {
+                    const runStats = card.querySelectorAll('.run-stat');
+                    if (runStats.length > 0) {
+                        runStats.forEach(runStat => {
+                            minRunStatHeight = Math.min(minRunStatHeight, runStat.offsetHeight);
+                        });
+                    }
+                }
+            });
+
+            if (minRunStatHeight !== Infinity) {
+                characterCards.forEach(card => {
+                    if (card.classList.contains('expanded')) {
+                        const runStats = card.querySelectorAll('.run-stat');
+                        runStats.forEach(runStat => {
+                            runStat.style.height = `${minRunStatHeight}px`;
+                            adjustRunStatContent(runStat, minRunStatHeight);
+                        });
+                    }
+                });
+            }
+        }
+    }
+
+    function adjustRunStatContent(runStat, minHeight) {
+        const content = runStat.querySelector('.run-stat-content');
+        const header = runStat.querySelector('h4');
+        const availableHeight = minHeight - header.offsetHeight - 16; // 16px for padding
+
+        content.style.height = `${availableHeight}px`;
+
+        let fontSize = 0.85;
+        let rowGap = 4;
+
+        while (content.scrollHeight > content.offsetHeight && fontSize > 0.6) {
+            rowGap -= 1;
+            fontSize -= 0.02;
+            content.style.fontSize = `${fontSize}em`;
+            content.style.gap = `${Math.max(rowGap, 2)}px`;
+        }
+
+        // If still overflowing, adjust to single column
+        if (content.scrollHeight > content.offsetHeight) {
+            content.style.gridTemplateColumns = '1fr';
+        }
+    }
 </script>
 </body>
 </html>
