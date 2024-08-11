@@ -20,6 +20,12 @@ type SorceressLevelingLightning struct {
 	BaseCharacter
 }
 
+func (s SorceressLevelingLightning) CheckKeyBindings(d game.Data) []skill.ID {
+
+	// Not implemented
+	return []skill.ID{}
+}
+
 func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
 	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 	if lvl.Value >= 25 && d.PlayerUnit.Skills[skill.Nova].Level > 10 {

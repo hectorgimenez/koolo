@@ -19,6 +19,12 @@ type PaladinLeveling struct {
 	BaseCharacter
 }
 
+func (p PaladinLeveling) CheckKeyBindings(d game.Data) []skill.ID {
+
+	// Not implemented
+	return []skill.ID{}
+}
+
 func (p PaladinLeveling) BuffSkills(d game.Data) []skill.ID {
 	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		return []skill.ID{skill.HolyShield}

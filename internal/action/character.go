@@ -9,6 +9,7 @@ import (
 )
 
 type Character interface {
+	CheckKeyBindings(game.Data) []skill.ID
 	BuffSkills(game.Data) []skill.ID
 	PreCTABuffSkills(game.Data) []skill.ID
 	KillCountess() Action

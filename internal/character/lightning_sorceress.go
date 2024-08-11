@@ -1,6 +1,7 @@
 package character
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -22,6 +23,33 @@ const (
 
 type LightningSorceress struct {
 	BaseCharacter
+}
+
+func (s LightningSorceress) CheckKeyBindings(d game.Data) []skill.ID {
+	requireKeybindings := []skill.ID{skill.Nova, skill.Teleport, skill.TomeOfTownPortal, skill.FrozenArmor, skill.StaticField}
+	missingKeybindings := []skill.ID{}
+
+	for _, cskill := range requireKeybindings {
+		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+			switch cskill {
+			// Since we can have one of 3 armors:
+			case skill.FrozenArmor:
+				_, found1 := d.KeyBindings.KeyBindingForSkill(skill.ShiverArmor)
+				_, found2 := d.KeyBindings.KeyBindingForSkill(skill.ChillingArmor)
+				if !found1 && !found2 {
+					missingKeybindings = append(missingKeybindings, skill.FrozenArmor)
+				}
+			default:
+				missingKeybindings = append(missingKeybindings, cskill)
+			}
+		}
+	}
+
+	if len(missingKeybindings) > 0 {
+		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+	}
+
+	return missingKeybindings
 }
 
 func (s LightningSorceress) KillMonsterSequence(

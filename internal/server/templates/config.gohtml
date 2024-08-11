@@ -123,6 +123,10 @@
                         <input type="checkbox" name="enable_run_finish_messages" value="{{ .Discord.EnableRunFinishMessages }}" {{ if .Discord.EnableRunFinishMessages }} checked="checked" {{ end }} />
                         Enable Run Finish Messages
                     </label>
+                    <label>
+                        <input type="checkbox" name="enable_discord_chicken_messages" value="{{ .Discord.EnableDiscordChickenMessages }}" {{ if .Discord.EnableDiscordChickenMessages }} checked="checked" {{ end }} />
+                        Enable Chicken/Death Messages
+                    </label>
                 </fieldset>
                 <h4>Telegram integration</h4>
                 <label>

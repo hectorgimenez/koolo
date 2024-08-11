@@ -1,0 +1,220 @@
+:root {
+    --bg-color: #1e2124;
+    --secondary-bg: #2c2f33;
+    --text-color: #ffffff;
+    --accent-color: #5865F2;
+    --accent-light: #99aab5;
+    --success-color: #57F287;
+    --null-color: #ED4245;
+    --border-color: #424549;
+    --hover-color: #32363a;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--secondary-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+h1 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--accent-color);
+}
+
+.version-tag {
+    background-color: #ED4245;
+    color: var(--text-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#supervisor-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin: 20px 0;
+    text-align: center;
+}
+
+#sticky-controls {
+    position: sticky;
+    top: 0;
+    background-color: var(--secondary-bg);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#left-controls, #right-controls {
+    display: flex;
+    align-items: center;
+}
+
+#left-controls {
+    flex-grow: 1;
+}
+
+#refresh-controls, #search-container {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+#refresh-interval, #search-input {
+    width: 60px;
+    padding: 8px;
+    margin-right: 10px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+}
+
+#search-input {
+    width: 200px;
+}
+
+button {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+button:hover {
+    background-color: #4752c4;
+}
+
+#search-prev-btn, #search-next-btn {
+    margin: 0 5px;
+}
+
+#search-results {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+#right-controls button:last-child {
+    margin-right: 0;
+}
+
+#copy-data-btn svg {
+    margin-right: 5px;
+}
+
+#debug-container {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: auto;
+    max-height: calc(100vh - 200px);
+    padding: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.tree-view {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.tree-node {
+    margin: 5px 0;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-color);
+}
+
+.tree-label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.tree-label:hover {
+    background-color: var(--hover-color);
+}
+
+.tree-key {
+    color: var(--accent-light);
+    margin-right: 5px;
+}
+
+.tree-value {
+    color: var(--success-color);
+}
+
+.tree-value.null {
+    color: var(--null-color);
+}
+
+.tree-toggle {
+    cursor: pointer;
+    color: var(--accent-color);
+    margin-right: 5px;
+    font-size: 12px;
+}
+
+.large-dataset-notice {
+    color: var(--accent-color);
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.copy-btn {
+    background-color: var(--accent-light);
+    color: var(--bg-color);
+    border: none;
+    padding: 2px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tree-node:hover > .tree-label .copy-btn {
+    opacity: 1;
+}
+
+.highlight {
+    background-color: rgba(255, 255, 0, 0.3);
+}
