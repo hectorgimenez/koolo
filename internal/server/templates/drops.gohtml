@@ -7,181 +7,615 @@
     <link rel="stylesheet" href="../assets/css/pico.min.css">
     <link rel="stylesheet" href="../assets/css/custom.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <title>Drops for {{.Character}}</title>
-    <style>
-        .low-quality { color: gray; }
-        .normal-quality, .superior-quality { color: white; }
-        .magic-quality { color: blue; }
-        .set-quality { color: green; }
-        .rare-quality { color: yellow; }
-        .unique-quality { color: darkgoldenrod; }
-        .unknown-quality { color: black; }
+    <title>Koolo Drops</title>
+<style>
+    body {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 5px 20px;
+    }
+    .low-quality { color: gray; }
+    .normal-quality, .superior-quality { color: white; }
+    .magic-quality { color: blue; }
+    .set-quality { color: green; }
+    .rare-quality { color: yellow; }
+    .unique-quality { color: darkgoldenrod; }
+    .unknown-quality { color: black; }
 
-        .details {
-            display: none;
-            padding: 10px;
-            background-color: #2E3A4A;
-            border-left: 3px solid #3E4A61;
-            border-radius: 0 5px 5px 0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: max-height 0.3s ease, padding 0.3s ease;
-            overflow: hidden;
-        }
-        
-        .item {
-            cursor: pointer;
-            padding: 10px 15px;
-            padding-right: 15px;
-            margin-right: 30px; 
-            margin-bottom: 10px;
-            list-style: none;
-            background-color: #2E3A4A;
-            border-radius: 8px;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
+    .details {
+        display: none;
+        padding: 8px;
+        background-color: #2E3A4A;
+        border-top: 1px solid #3E4A61;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .item {
+        cursor: pointer;
+        margin-bottom: 5px;
+        list-style: none;
+        background-color: #2E3A4A;
+        border-radius: 8px;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
 
-        .item:hover {
-            background-color: #3B4A5A;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-        }
+    .item:hover {
+        background-color: #3B4A5A;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
 
-        .item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 18px;
-            background-color: #34495E;
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
+    .item-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        background-color: #34495E;
+        padding: 8px 12px;
+        border-radius: 8px;
+        position: relative;
+    }
 
-        .item-header span {
-            font-weight: bold;
-        }
+    .item-name-wrapper {
+        text-align: center;
+        flex-grow: 1;
+    }
 
-        .toggle-icon {
-            font-size: 14px;
-            margin-left: 10px;
-            transition: transform 0.3s ease;
-        }
+    .item-header span {
+        font-weight: bold;
+    }
 
-        .item.expanded .toggle-icon {
-            transform: rotate(90deg);
-        }
+    .toggle-icon {
+        font-size: 14px;
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+    }
 
-        .details p, .details ul {
-            margin: 5px 0;
-            font-size: 16px;
-            color: #CBD5E0;
-            padding-right: 15px;
-        }
+    .item.expanded .toggle-icon {
+        transform: rotate(90deg);
+    }
 
-        .details ul {
-            padding-left: 20px;
-        }
+    .details p, .details ul {
+        margin: 5px 0;
+        font-size: 16px;
+        color: #CBD5E0;
+    }
 
-        .details li {
-            list-style: none;
-            padding-left: 20px;
-            position: relative;
-        }
+    .details ul {
+        padding-left: 20px;
+    }
 
-        .details li:before {
-            content: '\f054';
-            font-family: "Font Awesome 5 Free";
-            font-weight: 900;
-            position: absolute;
-            left: 0;
-            top: 0;
-            color: #CBD5E0;
-            font-size: 12px;
-        }
+    .details li {
+        list-style: none;
+        padding-left: 20px;
+        position: relative;
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+    .details li:before {
+        content: '\f054';
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: #CBD5E0;
+        font-size: 12px;
+    }
 
-        .header h1 {
-            font-size: 36px;
-            margin: 0;
-        }
+    .header {
+        text-align: center;
+        margin-bottom: 5px;
+    }
 
-        .header p {
-            font-size: 18px;
-            color: #BDC3C7;
-        }
+    .header h1 {
+        font-size: 28px;
+        margin: 0;
+    }
+    main {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .header p {
+        font-size: 16px;
+        color: #BDC3C7;
+        margin: 5px 0;
+    }
 
-        .button.secondary {
-            background-color: #34495E;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
+    .card {
+        background-color: #2E3A4A;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        margin-bottom: 5px;
+        width: 100%;
+    }
 
-        .button.secondary:hover {
-            background-color: #2C3E50;
+    .card-content {
+        padding: 20px;
+        position: relative;
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-group h4 {
+        margin-bottom: 5px;
+        color: #CBD5E0;
+        font-size: 16px;
+    }
+
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 5px;
+    }
+
+    .checkbox-grid label {
+        display: flex;
+        align-items: center;
+        color: #CBD5E0;
+        font-size: 14px;
+    }
+
+    .checkbox-grid input[type="checkbox"] {
+        margin-right: 5px;
+    }
+
+    #searchInput {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #34495E;
+        border: 1px solid #3E4A61;
+        color: #CBD5E0;
+    }
+
+    .filters-footer {
+        position: relative;
+        margin-top: 20px;
+        height: 40px;
+    }
+
+    .drop-counts {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .drop-counts p {
+        margin: 0;
+        line-height: 1.2;
+        font-size: 14px;
+        color: #CBD5E0;
+    }
+
+    #resetFilters {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: #34495E;
+        color: #CBD5E0;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    #resetFilters:hover {
+        background-color: #2C3E50;
+    }
+
+    .item.hidden {
+        display: none;
+    }
+    #dropList {
+        padding: 0;
+        margin: 0;
+        list-style-type: none;
+        margin-top: 10px;
+    }
+    .back-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        background-color: #34495E;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .back-button:hover {
+        background-color: #2C3E50;
+    }
+
+    .hidden {
+        display: none;
+    }
+    .character-select {
+        margin-bottom: 5px;
+    }
+    
+    .character-select select {
+        width: 100%;
+        padding: 10px;
+        background-color: #34495E;
+        border: 1px solid #3E4A61;
+        color: #CBD5E0;
+        border-radius: 5px;
+    }
+
+    .character-tag {
+        font-size: 0.8em;
+        background-color: #4a5568;
+        padding: 2px 6px;
+        border-radius: 4px;
+        position: absolute;
+        left: 12px;
+    }
+    .filters-card {
+        margin-bottom: 10px;
+    }
+
+    @supports (-ms-ime-align:auto) {
+        .drop-counts p {
+            color: #CBD5E0 !important;
         }
-    </style>
-    <script>
-        function toggleDetails(event) {
-            const item = event.currentTarget;
-            const details = item.querySelector('.details');
-            if (details.style.display === "none" || details.style.display === "") {
-                details.style.display = "block";
-                details.style.maxHeight = details.scrollHeight + "px";
-                details.style.padding = "10px";
-                item.classList.add('expanded');
-            } else {
-                details.style.display = "none";
-                details.style.maxHeight = "0";
-                details.style.padding = "0 15px";
-                item.classList.remove('expanded');
-            }
-        }
-    </script>
+    }
+</style>
 </head>
 <body>
     <header class="header">
-        <a href="#" onclick="history.back(); return false;" class="button secondary">← Back</a>
-        <h1>Drops for {{.Character}}</h1>
-        <p>Total Drops: {{.NumberOfDrops}}</p>
+        <h1 id="pageTitle">Drops for All Characters</h1>
     </header>
     <main>
-        <div class="card">
+        <div class="character-select">
+            <select id="characterSelect">
+                <option value="all">All Characters</option>
+            </select>
+        </div>
+        <div class="card filters-card">
             <div class="card-content">
-                <ul>
-                    {{ range .Drops }}
-                    <li class="item" onclick="toggleDetails(event)">
-                        <div class="item-header">
-                            <span class="{{ .Item.Quality.ToString | qualityClass }}">{{ .Item.Name }}</span>
-                            <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
+                <input type="text" id="searchInput" placeholder="Search items...">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <h4>Item Type</h4>
+                        <div class="checkbox-grid" id="qualityFilters">
+                            <!-- Quality filters here -->
                         </div>
-                        <div class="details">
-                            
-                            <p><strong>Quality:</strong> {{ .Item.Quality.ToString }}</p>
-                            <p><strong>Ethereal:</strong> {{ if .Item.Ethereal }}True{{ else }}False{{ end }}</p>
-                            <p><strong>Identified:</strong> {{ if .Item.Identified }}True{{ else }}False{{ end }}</p>
-                            <p><strong>Stats:</strong></p>
-                            <ul>
-                                {{ range .Item.Stats }}
-                                <li>{{ .ID | statIDToText }}: {{ .Value }}</li>
-                                {{ end }}
-                            </ul>
-                            <p><strong>Matched Rule:</strong> {{ .Rule }}</p>
-                            <p><strong>Rule File:</strong> {{ .RuleFile }}</p>
+                    </div>
+                    <div class="filter-group">
+                        <h4>NIP Files</h4>
+                        <div id="nipFilters" class="checkbox-grid">
+                            <!-- NIP filters here -->
                         </div>
-                    </li>
-                    {{ end }}
-                </ul>
+                    </div>
+                </div>
+                <div class="filters-footer">
+                    <div class="drop-counts">
+                        <p id="totalDropsCount"></p>
+                        <p id="matchedItemsCount"></p>
+                    </div>
+                    <button id="resetFilters">Reset Filters</button>
+                </div>
             </div>
         </div>
+        <ul id="dropList">
+            {{ range .Drops }}
+            <li class="item" data-quality="{{ .Item.Quality.ToString }}" data-nipfile="{{ .RuleFile }}">
+                <div class="item-header">
+                    <span class="{{ .Item.Quality.ToString | qualityClass }}">{{ .Item.Name }}</span>
+                    <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
+                </div>
+                <div class="details">
+                    <p><strong>Quality:</strong> {{ .Item.Quality.ToString }}</p>
+                    <p><strong>Ethereal:</strong> {{ if .Item.Ethereal }}True{{ else }}False{{ end }}</p>
+                    <p><strong>Identified:</strong> {{ if .Item.Identified }}True{{ else }}False{{ end }}</p>
+                    <p><strong>Stats:</strong></p>
+                    <ul>
+                        {{ range .Item.Stats }}
+                        <li>{{ .ID | statIDToText }}: {{ .Value }}</li>
+                        {{ end }}
+                    </ul>
+                    <p><strong>Matched Rule:</strong> {{ .Rule }}</p>
+                    <p><strong>Rule File:</strong> {{ .RuleFile }}</p>
+                </div>
+            </li>
+            {{ end }}
+        </ul>
     </main>
+    <a href="#" onclick="history.back(); return false;" class="back-button">← Back</a>
+    <script>
+        const highRunes = ['Gul', 'Vex', 'Ohm', 'Lo', 'Sur', 'Ber', 'Jah', 'Cham', 'Zod'];
+const gems = ['Amethyst', 'Diamond', 'Emerald', 'Ruby', 'Sapphire', 'Topaz', 'Skull'];
+const qualityTypes = ['Normal', 'Magic', 'Rare', 'Set', 'Unique', 'Gem', 'LowRune', 'HighRune'];
+let allDrops = [];
+let filteredDrops = [];
+let characters = [];
+let totalDrops = 0;
+
+async function fetchCharacters() {
+    try {
+        const response = await fetch('/initial-data');
+        const data = await response.json();
+        characters = Object.keys(data.Status);
+    
+        const select = document.getElementById('characterSelect');
+        select.innerHTML = '<option value="all">All Characters</option>';
+        characters.forEach(character => {
+            const option = document.createElement('option');
+            option.value = character;
+            option.textContent = character;
+            select.appendChild(option);
+        });
+
+        // Set initial selection based on URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialCharacter = urlParams.get('supervisor');
+        if (initialCharacter && characters.includes(initialCharacter)) {
+            select.value = initialCharacter;
+        }
+    } catch (error) {
+        console.error('Error fetching characters:', error);
+    }
+}
+
+async function fetchDrops(character) {
+    try {
+        const response = await fetch(`/drops?supervisor=${character}`);
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const drops = Array.from(doc.querySelectorAll('#dropList .item')).map(item => ({
+            html: item.outerHTML,
+            character: character,
+            quality: item.dataset.quality,
+            nipFile: item.dataset.nipfile
+        }));
+        return drops;
+    } catch (error) {
+        console.error(`Error fetching drops for ${character}:`, error);
+        return [];
+    }
+}
+
+async function fetchAllDrops() {
+    allDrops = [];
+    for (const character of characters) {
+        const drops = await fetchDrops(character);
+        allDrops = allDrops.concat(drops);
+    }
+    initializeFilters();
+    updateFilterCounts();
+    filterDrops();
+}
+function updatePageTitle() {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const pageTitle = document.getElementById('pageTitle');
+    if (selectedCharacter === 'all') {
+        pageTitle.textContent = 'Drops for All Characters';
+    } else {
+        pageTitle.textContent = `Drops for ${selectedCharacter}`;
+    }
+}
+function renderDrops() {
+    const dropList = document.getElementById('dropList');
+    dropList.innerHTML = ''; // Clear existing items
+
+    filteredDrops.forEach(drop => {
+        const li = document.createElement('li');
+        li.className = 'item';
+        li.dataset.quality = drop.quality;
+        li.dataset.nipfile = drop.nipFile;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(drop.html, 'text/html');
+        const itemHeader = doc.querySelector('.item-header');
+        const itemNameElement = itemHeader.querySelector('span:not(.character-tag)');
+
+        // Apply spacing to the item name
+        itemNameElement.textContent = insertSpacesIntoItemName(itemNameElement.textContent);
+
+        // Wrap the item name in a new span for centering
+        const itemNameWrapper = document.createElement('span');
+        itemNameWrapper.className = 'item-name-wrapper';
+        itemNameWrapper.appendChild(itemNameElement);
+
+        // Add character tag
+        const characterTag = document.createElement('span');
+        characterTag.className = 'character-tag';
+        characterTag.textContent = drop.character;
+
+        // Clear the item header and add the new elements
+        itemHeader.innerHTML = '';
+        itemHeader.appendChild(characterTag);
+        itemHeader.appendChild(itemNameWrapper);
+
+        li.innerHTML = doc.body.innerHTML;
+        dropList.appendChild(li);
+    });
+}
+function filterDrops() {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const qualityFilters = Array.from(document.querySelectorAll('.quality-filter:checked')).map(el => el.value);
+    const nipFilters = Array.from(document.querySelectorAll('.nip-filter:checked')).map(el => el.value);
+
+    filteredDrops = allDrops.filter(drop => {
+        if (selectedCharacter !== 'all' && drop.character !== selectedCharacter) {
+            return false;
+        }
+
+        const itemNameElement = drop.html.match(/<span class="[^"]*">([^<]+)<\/span>/)[1];
+        const formattedItemName = insertSpacesIntoItemName(itemNameElement);
+        const quality = categorizeItem(formattedItemName, drop.quality);
+        const nipFile = drop.nipFile.split('/').pop().split(':')[0];
+        
+        const matchesSearch = searchTerm ? formattedItemName.toLowerCase().includes(searchTerm) : true;
+        const matchesQuality = qualityFilters.includes(quality);
+        const matchesNip = nipFilters.includes(nipFile);
+
+        return matchesSearch && matchesQuality && matchesNip;
+    });
+
+    renderDrops();
+    updateCounts();
+}
+
+function updateTotalDropsCount(selectedCharacter) {
+    const totalDropsElement = document.getElementById('totalDropsCount');
+    if (selectedCharacter === 'all') {
+        totalDropsElement.textContent = `Total drops for all characters: ${totalDrops}`;
+    } else {
+        totalDropsElement.textContent = `Total drops for ${selectedCharacter}: ${totalDrops}`;
+    }
+}
+
+function toggleDetails(item) {
+    const details = item.querySelector('.details');
+    if (details.style.display === "none" || details.style.display === "") {
+        details.style.display = "block";
+        item.classList.add('expanded');
+    } else {
+        details.style.display = "none";
+        item.classList.remove('expanded');
+    }
+}
+
+function insertSpacesIntoItemName(name) {
+    return name.replace(/([A-Z])/g, ' $1').trim();
+}
+
+function categorizeItem(itemName, quality) {
+    if (gems.some(gem => itemName.toLowerCase().endsWith(gem.toLowerCase()))) return 'Gem';
+    if (itemName.endsWith(' Rune')) {
+        return highRunes.some(rune => itemName.startsWith(rune)) ? 'HighRune' : 'LowRune';
+    }
+    if (quality === 'Superior' || quality === 'Inferior') return 'Normal';
+    return quality;
+}
+
+function initializeFilters() {
+    const qualityFiltersContainer = document.getElementById('qualityFilters');
+    const nipFiltersContainer = document.getElementById('nipFilters');
+    const nipFiles = new Set();
+
+    qualityFiltersContainer.innerHTML = '';
+    nipFiltersContainer.innerHTML = '';
+
+    qualityTypes.forEach(quality => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" class="quality-filter" value="${quality}" checked> ${quality} <span class="count"></span>`;
+        qualityFiltersContainer.appendChild(label);
+    });
+
+    allDrops.forEach(drop => {
+        const nipFile = drop.nipFile.split('/').pop().split(':')[0];
+        nipFiles.add(nipFile);
+
+        const itemNameElement = drop.html.match(/<span class="[^"]*">([^<]+)<\/span>/)[1];
+        const formattedName = insertSpacesIntoItemName(itemNameElement);
+        drop.html = drop.html.replace(itemNameElement, formattedName);
+    });
+
+    nipFiles.forEach(file => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" class="nip-filter" value="${file}" checked> ${file} <span class="count"></span>`;
+        nipFiltersContainer.appendChild(label);
+    });
+
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.quality-filter, .nip-filter').forEach(checkbox => {
+        checkbox.addEventListener('change', filterDrops);
+    });
+}
+function updateCounts() {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const totalDrops = selectedCharacter === 'all' ? 
+        allDrops.length : 
+        allDrops.filter(drop => drop.character === selectedCharacter).length;
+
+    document.getElementById('totalDropsCount').textContent = 
+        `Total drops for ${selectedCharacter === 'all' ? 'all characters' : selectedCharacter}: ${totalDrops}`;
+    document.getElementById('matchedItemsCount').textContent = `Matched filters: ${filteredDrops.length}`;
+}
+function updateFilterCounts() {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const relevantDrops = selectedCharacter === 'all' ? allDrops : allDrops.filter(drop => drop.character === selectedCharacter);
+
+    const qualityCounts = {};
+    const nipCounts = {};
+
+    relevantDrops.forEach(drop => {
+        const itemNameElement = drop.html.match(/<span class="[^"]*">([^<]+)<\/span>/)[1];
+        const quality = categorizeItem(itemNameElement, drop.quality);
+        const nipFile = drop.nipFile.split('/').pop().split(':')[0];
+
+        qualityCounts[quality] = (qualityCounts[quality] || 0) + 1;
+        nipCounts[nipFile] = (nipCounts[nipFile] || 0) + 1;
+    });
+
+    updateFilterGroupCounts('#qualityFilters', qualityCounts);
+    updateFilterGroupCounts('#nipFilters', nipCounts);
+}
+function updateFilterGroupCounts(selector, counts) {
+    document.querySelectorAll(`${selector} label`).forEach(label => {
+        const filterValue = label.querySelector('input').value;
+        const count = counts[filterValue] || 0;
+        label.querySelector('.count').textContent = count > 0 ? `(${count})` : '';
+    });
+}
+
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchCharacters();
+    await fetchAllDrops();
+    updatePageTitle();
+
+    document.getElementById('dropList').addEventListener('click', function(event) {
+        const item = event.target.closest('.item');
+        if (item) {
+            toggleDetails(item);
+        }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', filterDrops);
+
+    document.getElementById('characterSelect').addEventListener('change', () => {
+        updateFilterCounts();
+        filterDrops();
+        updatePageTitle();
+    });
+
+    document.querySelectorAll('.quality-filter, .nip-filter').forEach(checkbox => {
+        checkbox.addEventListener('change', filterDrops);
+    });
+
+    document.getElementById('resetFilters').addEventListener('click', () => {
+        document.querySelectorAll('.quality-filter, .nip-filter').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        document.getElementById('searchInput').value = '';
+        filterDrops();
+    });
+});
+    </script>
 </body>
 </html>
