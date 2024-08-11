@@ -1,6 +1,7 @@
 package character
 
 import (
+	"log/slog"
 	"sort"
 	"time"
 
@@ -21,9 +22,20 @@ type SorceressLevelingLightning struct {
 }
 
 func (s SorceressLevelingLightning) CheckKeyBindings(d game.Data) []skill.ID {
+	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	missingKeybindings := []skill.ID{}
 
-	// Not implemented
-	return []skill.ID{}
+	for _, cskill := range requireKeybindings {
+		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+			missingKeybindings = append(missingKeybindings, cskill)
+		}
+	}
+
+	if len(missingKeybindings) > 0 {
+		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+	}
+
+	return missingKeybindings
 }
 
 func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
