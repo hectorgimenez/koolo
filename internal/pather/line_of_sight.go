@@ -54,3 +54,58 @@ func LineOfSight(d game.Data, origin data.Position, destination data.Position) b
 
 	return true
 }
+
+func ClearLineOfSight(d game.Data, origin data.Position, destination data.Position) bool {
+	// Convert origin and destination coordinates relative to the area's origin
+	x0, y0 := origin.X-d.AreaOrigin.X, origin.Y-d.AreaOrigin.Y
+	x1, y1 := destination.X-d.AreaOrigin.X, destination.Y-d.AreaOrigin.Y
+
+	dx := x1 - x0
+	dy := y1 - y0
+
+	// Determine the direction of the line
+	sx := 1
+	if dx < 0 {
+		sx = -1
+		dx = -dx
+	}
+
+	sy := 1
+	if dy < 0 {
+		sy = -1
+		dy = -dy
+	}
+
+	err := dx - dy
+
+	for {
+		// Check if the current position is within grid boundaries
+		if x0 < 0 || y0 < 0 || y0 >= len(d.CollisionGrid) || x0 >= len(d.CollisionGrid[0]) {
+			return false
+		}
+
+		// If the current position is not walkable, return false
+		if !d.CollisionGrid[y0][x0] {
+			return false
+		}
+
+		// If we reached the destination, return true
+		if x0 == x1 && y0 == y1 {
+			return true
+		}
+
+		e2 := 2 * err
+
+		// Move along the x-axis
+		if e2 > -dy {
+			err -= dy
+			x0 += sx
+		}
+
+		// Move along the y-axis
+		if e2 < dx {
+			err += dx
+			y0 += sy
+		}
+	}
+}

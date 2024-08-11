@@ -1,6 +1,7 @@
 package step
 
 import (
+	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -27,6 +28,7 @@ type AttackStep struct {
 	aura                  skill.ID
 	aoe                   bool
 	shouldStandStill      bool
+	distanceOffset        int
 }
 
 type AttackOption func(step *AttackStep)
@@ -76,6 +78,12 @@ func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts 
 	return s
 }
 
+func WithDistanceOffset(offset int) AttackOption {
+	return func(step *AttackStep) {
+		step.distanceOffset = offset
+	}
+}
+
 func (p *AttackStep) Status(d game.Data, _ container.Container) Status {
 	if p.status == StatusCompleted {
 		return StatusCompleted
@@ -99,7 +107,6 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 
 	if !p.aoe {
 		if !found || monster.Stats[stat.Life] <= 0 {
-			// Monster is dead, let's skip the attack sequence
 			p.tryTransitionStatus(StatusCompleted)
 			return nil
 		}
@@ -136,13 +143,54 @@ func (p *AttackStep) Run(d game.Data, container container.Container) error {
 		if p.shouldStandStill {
 			container.HID.KeyDown(d.KeyBindings.StandStill)
 		}
-		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
 
+		offsetX := monster.Position.X
+		offsetY := monster.Position.Y
+
+		if p.distanceOffset > 0 {
+			bestPosition := data.Position{X: offsetX, Y: offsetY}
+			bestDistance := math.MaxFloat64
+
+			// Loop through angles from 0° to 360° in 5° increments
+			for angle := 0.0; angle < 360.0; angle += 5.0 {
+				// Convert angle to radians
+				rad := angle * (math.Pi / 180)
+
+				// Calculate the position at the given angle and distanceOffset from the player
+				candidateX := d.PlayerUnit.Position.X + int(float64(p.distanceOffset)*math.Cos(rad))
+				candidateY := d.PlayerUnit.Position.Y + int(float64(p.distanceOffset)*math.Sin(rad))
+
+				candidatePos := data.Position{X: candidateX, Y: candidateY}
+
+				// Check if the candidate position has a clear line of sight to the monster
+				if pather.ClearLineOfSight(d, candidatePos, monster.Position) {
+					// Calculate the distance from the candidate position to the monster
+					distanceToMonster := math.Sqrt(float64((candidateX-monster.Position.X)*(candidateX-monster.Position.X) +
+						(candidateY-monster.Position.Y)*(candidateY-monster.Position.Y)))
+
+					// Update the best position if this one is closer
+					if distanceToMonster < bestDistance {
+						bestDistance = distanceToMonster
+						bestPosition = candidatePos
+					}
+				}
+			}
+
+			// Use the best position found
+			offsetX = bestPosition.X
+			offsetY = bestPosition.Y
+		}
+
+		// Convert to screen coordinates
+		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, offsetX, offsetY)
+
+		// Perform the attack
 		if p.primaryAttack {
 			container.HID.Click(game.LeftButton, x, y)
 		} else {
 			container.HID.Click(game.RightButton, x, y)
 		}
+
 		if p.shouldStandStill {
 			container.HID.KeyUp(d.KeyBindings.StandStill)
 		}
