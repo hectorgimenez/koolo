@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type CycloneBarb struct {
+type WhirlwindBarb struct {
 	BaseCharacter
 }
 
@@ -28,7 +28,7 @@ const (
 	maxHorkRange      = 20
 )
 
-func (c CycloneBarb) CheckKeyBindings(d game.Data) []skill.ID {
+func (c WhirlwindBarb) CheckKeyBindings(d game.Data) []skill.ID {
 	requireKeybindings := []skill.ID{skill.Whirlwind, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
@@ -45,7 +45,7 @@ func (c CycloneBarb) CheckKeyBindings(d game.Data) []skill.ID {
 	return missingKeybindings
 }
 
-func (c CycloneBarb) KillMonsterSequence(
+func (c WhirlwindBarb) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 	opts ...step.AttackOption,
@@ -99,7 +99,7 @@ func (c CycloneBarb) KillMonsterSequence(
 	}, action.RepeatUntilNoSteps())
 }
 
-func (c CycloneBarb) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+func (c WhirlwindBarb) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
@@ -119,15 +119,15 @@ func (c CycloneBarb) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	}, action.CanBeSkipped())
 }
 
-func (c CycloneBarb) BuffSkills(d game.Data) []skill.ID {
+func (c WhirlwindBarb) BuffSkills(d game.Data) []skill.ID {
 	return []skill.ID{}
 }
 
-func (c CycloneBarb) PreCTABuffSkills(d game.Data) []skill.ID {
+func (c WhirlwindBarb) PreCTABuffSkills(d game.Data) []skill.ID {
 	return []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout}
 }
 
-func (c CycloneBarb) FindNearbyCorpse(d game.Data, maxRange int, excludedCorpses []data.Monster) *data.Monster {
+func (c WhirlwindBarb) FindNearbyCorpse(d game.Data, maxRange int, excludedCorpses []data.Monster) *data.Monster {
 	playerPos := d.PlayerUnit.Position
 	sort.Slice(d.Corpses, func(i, j int) bool {
 		distI := utils.DistanceFromPoint(playerPos, d.Corpses[i].Position)
@@ -166,7 +166,7 @@ func (c CycloneBarb) FindNearbyCorpse(d game.Data, maxRange int, excludedCorpses
 	return nil
 }
 
-func (c CycloneBarb) FindItem(corpse data.Monster, d game.Data) {
+func (c WhirlwindBarb) FindItem(corpse data.Monster, d game.Data) {
 	playerPos := d.PlayerUnit.Position
 
 	screenX, screenY := c.container.PathFinder.GameCoordsToScreenCords(
@@ -186,35 +186,35 @@ func (c CycloneBarb) FindItem(corpse data.Monster, d game.Data) {
 	time.Sleep(time.Millisecond * 100)
 }
 
-func (c CycloneBarb) KillCountess() action.Action {
+func (c WhirlwindBarb) KillCountess() action.Action {
 	return c.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (c CycloneBarb) KillAndariel() action.Action {
+func (c WhirlwindBarb) KillAndariel() action.Action {
 	return c.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (c CycloneBarb) KillSummoner() action.Action {
+func (c WhirlwindBarb) KillSummoner() action.Action {
 	return c.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (c CycloneBarb) KillDuriel() action.Action {
+func (c WhirlwindBarb) KillDuriel() action.Action {
 	return c.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (c CycloneBarb) KillPindle(_ []stat.Resist) action.Action {
+func (c WhirlwindBarb) KillPindle(_ []stat.Resist) action.Action {
 	return c.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (c CycloneBarb) KillMephisto() action.Action {
+func (c WhirlwindBarb) KillMephisto() action.Action {
 	return c.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (c CycloneBarb) KillNihlathak() action.Action {
+func (c WhirlwindBarb) KillNihlathak() action.Action {
 	return c.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (c CycloneBarb) KillDiablo() action.Action {
+func (c WhirlwindBarb) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
@@ -252,11 +252,11 @@ func (c CycloneBarb) KillDiablo() action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (c CycloneBarb) KillIzual() action.Action {
+func (c WhirlwindBarb) KillIzual() action.Action {
 	return c.killMonster(npc.Izual, data.MonsterTypeNone)
 }
 
-func (c CycloneBarb) KillCouncil() action.Action {
+func (c WhirlwindBarb) KillCouncil() action.Action {
 	return c.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
@@ -281,6 +281,6 @@ func (c CycloneBarb) KillCouncil() action.Action {
 	}, nil)
 }
 
-func (c CycloneBarb) KillBaal() action.Action {
+func (c WhirlwindBarb) KillBaal() action.Action {
 	return c.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }
