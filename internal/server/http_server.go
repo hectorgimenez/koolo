@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"time"
+        "sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -46,6 +47,11 @@ var (
 	}
 )
 
+var (
+    persistentDrops     = make(map[string][]data.Drop)
+    persistentDropsMutex sync.RWMutex
+)
+
 type Client struct {
 	conn *websocket.Conn
 	send chan []byte
@@ -56,6 +62,18 @@ type WebSocketServer struct {
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
+}
+
+func addPersistentDrop(supervisor string, drop data.Drop) {
+    persistentDropsMutex.Lock()
+    defer persistentDropsMutex.Unlock()
+    persistentDrops[supervisor] = append(persistentDrops[supervisor], drop)
+}
+
+func getPersistentDrops(supervisor string) []data.Drop {
+    persistentDropsMutex.RLock()
+    defer persistentDropsMutex.RUnlock()
+    return persistentDrops[supervisor]
 }
 
 func NewWebSocketServer() *WebSocketServer {
@@ -237,23 +255,19 @@ func (s *HttpServer) initialData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) getStatusData() IndexData {
-	status := make(map[string]koolo.Stats)
-	drops := make(map[string]int)
+    status := make(map[string]koolo.Stats)
+    drops := make(map[string]int)
 
-	for _, supervisorName := range s.manager.AvailableSupervisors() {
-		status[supervisorName] = s.manager.Status(supervisorName)
-		if s.manager.GetSupervisorStats(supervisorName).Drops != nil {
-			drops[supervisorName] = len(s.manager.GetSupervisorStats(supervisorName).Drops)
-		} else {
-			drops[supervisorName] = 0
-		}
-	}
+    for _, supervisorName := range s.manager.AvailableSupervisors() {
+        status[supervisorName] = s.manager.Status(supervisorName)
+        drops[supervisorName] = len(s.getUniqueDrops(supervisorName))
+    }
 
-	return IndexData{
-		Version:   config.Version,
-		Status:    status,
-		DropCount: drops,
-	}
+    return IndexData{
+        Version:   config.Version,
+        Status:    status,
+        DropCount: drops,
+    }
 }
 
 func (s *HttpServer) Listen(port int) error {
@@ -404,27 +418,58 @@ func (s *HttpServer) index(w http.ResponseWriter) {
 	})
 }
 
+func (s *HttpServer) getUniqueDrops(supervisorName string) []data.Drop {
+    persistentDrops := getPersistentDrops(supervisorName)
+    currentDrops := s.manager.GetSupervisorStats(supervisorName).Drops
+
+    // Add current drops to persistent drops if they're not already there
+    for _, drop := range currentDrops {
+        if !containsDrop(persistentDrops, drop) {
+            persistentDrops = append(persistentDrops, drop)
+            addPersistentDrop(supervisorName, drop)
+        }
+    }
+
+    return persistentDrops
+}
+
+func containsDrop(drops []data.Drop, newDrop data.Drop) bool {
+    for _, drop := range drops {
+        if drop.Item.Name == newDrop.Item.Name &&
+           drop.Item.Quality == newDrop.Item.Quality &&
+           drop.Item.Ethereal == newDrop.Item.Ethereal {
+            return true
+        }
+    }
+    return false
+}
+
 func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
-	sup := r.URL.Query().Get("supervisor")
-	cfg, found := config.Characters[sup]
-	if !found {
-		http.Error(w, "Can't fetch drop data because the configuration "+sup+" wasn't found", http.StatusNotFound)
-		return
-	}
+    sup := r.URL.Query().Get("supervisor")
+    
+    var uniqueDrops []data.Drop
+    var characterName string
 
-	var Drops []data.Drop
+    if sup == "all" {
+        for _, supervisorName := range s.manager.AvailableSupervisors() {
+            uniqueDrops = append(uniqueDrops, s.getUniqueDrops(supervisorName)...)
+        }
+        characterName = "All Characters"
+    } else {
+        cfg, found := config.Characters[sup]
+        if !found {
+            http.Error(w, "Can't fetch drop data because the configuration "+sup+" wasn't found", http.StatusNotFound)
+            return
+        }
+        uniqueDrops = s.getUniqueDrops(sup)
+        characterName = cfg.CharacterName
+    }
 
-	if s.manager.GetSupervisorStats(sup).Drops == nil {
-		Drops = make([]data.Drop, 0)
-	} else {
-		Drops = s.manager.GetSupervisorStats(sup).Drops
-	}
-
-	s.templates.ExecuteTemplate(w, "drops.gohtml", DropData{
-		NumberOfDrops: len(Drops),
-		Character:     cfg.CharacterName,
-		Drops:         Drops,
-	})
+    s.templates.ExecuteTemplate(w, "drops.gohtml", DropData{
+        NumberOfDrops: len(uniqueDrops),
+        Character:     characterName,
+        Drops:         uniqueDrops,
+    })
 }
 
 func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
