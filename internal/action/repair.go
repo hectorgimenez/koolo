@@ -32,8 +32,7 @@ func (b *Builder) Repair() *Chain {
 
 			// Restructured conditionals for when to attempt repair
 			if 	(maxDurabilityFound && !found) ||
-				(durabilityPercent != -1 && found && durabilityPercent <= 20) ||
-				(found && durability.Value <= 5) {
+				(durabilityPercent != -1 && found && durabilityPercent <= 20) {
 
 				b.Logger.Info(fmt.Sprintf("Repairing %s, item durability is %d percent", i.Name, durabilityPercent))
 
