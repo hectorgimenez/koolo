@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/hectorgimenez/koolo/cmd/koolo/log"
@@ -296,17 +297,41 @@ func (mng *SupervisorManager) GetSupervisorStats(supervisor string) Stats {
 
 func (mng *SupervisorManager) rearrangeWindows() {
 	width := win.GetSystemMetrics(0)
+	height := win.GetSystemMetrics(1)
+	var windowBorderX int32 = 2   // left + right window border is 2px
+	var windowBorderY int32 = 40  // upper window border is usually 40px
+	var windowOffsetX int32 = -10 // offset horizontal window placement by -10 pixel
+	maxColumns := width / (1280 + windowBorderX)
+	maxRows := height / (720 + windowBorderY)
 
-	maxColumns := width / (1280 + 30)
+	mng.logger.Debug(
+		"Arranging windows",
+		slog.String("displaywidth", strconv.FormatInt(int64(width), 10)),
+		slog.String("displayheight", strconv.FormatInt(int64(height), 10)),
+		slog.String("max columns", strconv.FormatInt(int64(maxColumns+1), 10)), // +1 as we are counting from 0
+		slog.String("max rows", strconv.FormatInt(int64(maxRows+1), 10)),
+	)
 
 	var column, row int32
 	for _, sp := range mng.supervisors {
-		if column == maxColumns {
+		// reminder that columns are vertical (they go up and down) and rows are horizontal (they go left and right)
+		if column > maxColumns {
 			column = 0
 			row++
 		}
 
-		sp.SetWindowPosition(int(column*(1280+30)), int(row*(720+50)))
-		column++
+		if row <= maxRows {
+			sp.SetWindowPosition(int(column*(1280+windowBorderX)+windowOffsetX), int(row*(720+windowBorderY)))
+			mng.logger.Debug(
+				"Window Positions",
+				slog.String("supervisor", sp.Name()),
+				slog.String("column", strconv.FormatInt(int64(column), 10)),
+				slog.String("row", strconv.FormatInt(int64(row), 10)),
+				slog.String("position", strconv.FormatInt(int64(column*(1280+windowBorderX)+windowOffsetX), 10)+"x"+strconv.FormatInt(int64(row*(720+windowBorderY)), 10)),
+			)
+			column++
+		} else {
+			mng.logger.Debug("Window position of supervisor " + sp.Name() + " was not changed, no free space for it")
+		}
 	}
 }
