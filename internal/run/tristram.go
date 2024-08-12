@@ -80,6 +80,17 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 			return nil
 		}
 
+		// Sometimes the portal is out of detection range for some reason, this way it moves to the stones and enters the portal.
+		st, stone := d.Objects.FindOne(object.CairnStoneAlpha)
+		if stone {
+			actions = append(actions, a.builder.MoveToCoords(st.Position))
+			actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
+				return d.PlayerUnit.Area == area.Tristram
+			}, step.Wait(time.Second)))
+
+			return actions
+		}
+
 		if !logged {
 			a.logger.Debug("Tristram portal not detected, trying to open it")
 			logged = true
