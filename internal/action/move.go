@@ -177,6 +177,9 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 				return []Action{NewStepChain(func(d game.Data) []step.Step {
 					return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
 						obj, found := d.Objects.FindByID(o.ID)
+						//additional click on barrel to avoid getting stuck
+						x, y := b.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, o.Position.X, o.Position.Y)
+						b.HID.Click(game.LeftButton, x, y)
 						return found && !obj.Selectable
 					})}
 				})}
