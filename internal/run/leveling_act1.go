@@ -27,27 +27,36 @@ func (a Leveling) act1() action.Action {
 
 		running = true
 
-		// clear Bloodmoor until level 3
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 3 {
+		// clear Blood Moor until level 3
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
 			return a.bloodMoor()
 		}
 
-		// do Den of Evil until level 6
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 6 || !d.Quests[quest.Act1DenOfEvil].Completed() {
+		// clear Cold Plains until level 6
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
+			return a.coldPlains()
+		}
+
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !d.Quests[quest.Act1DenOfEvil].Completed() {
 			return a.denOfEvil()
 		}
 
+		// clear Stony Field until level 9
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 9 {
+			return a.stonyField()
+		}
+
 		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
-			return a.deckardCain(d)
+			return a.deckardCain()
 		}
 
 		// do Tristram Runs until level 14
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 14 {
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 14 {
 			return a.tristram()
 		}
 
 		// do Countess Runs until level 17
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value <= 17 {
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 17 {
 			return a.countess()
 		}
 
@@ -64,15 +73,79 @@ func (a Leveling) bloodMoor() []action.Action {
 	}
 }
 
+func (a Leveling) coldPlains() []action.Action {
+	a.logger.Info("Starting Blood Moor run")
+	return []action.Action{
+		a.builder.WayPoint(area.ColdPlains),
+		a.builder.Buff(),
+		a.builder.ClearArea(false, data.MonsterAnyFilter()),
+	}
+}
+
 func (a Leveling) denOfEvil() []action.Action {
-	a.logger.Info("Starting Den of Evil run")
+	a.logger.Info("Starting Den of Evil Quest")
 	return []action.Action{
 		a.builder.MoveToArea(area.BloodMoor),
 		a.builder.Buff(),
 		a.builder.MoveToArea(area.DenOfEvil),
+		a.builder.ClearArea(false, data.MonsterAnyFilter()),
+		a.builder.ReturnTown(),
+		a.builder.InteractNPC(
+			npc.Akara,
+			step.KeySequence(win.VK_ESCAPE),
+		),
+	}
+}
+
+func (a Leveling) stonyField() []action.Action {
+	a.logger.Info("Starting Blood Moor run")
+	return []action.Action{
+		a.builder.WayPoint(area.StonyField),
 		a.builder.Buff(),
 		a.builder.ClearArea(false, data.MonsterAnyFilter()),
 	}
+}
+
+func (a Leveling) isCainInTown(d game.Data) bool {
+	_, found := d.Monsters.FindOne(npc.DeckardCain5, data.MonsterTypeNone)
+
+	return found
+}
+
+func (a Leveling) deckardCain() []action.Action {
+	a.logger.Info("Starting Rescue Cain Quest")
+	var actions []action.Action
+	actions = append(actions,
+		a.builder.WayPoint(area.RogueEncampment),
+		a.builder.WayPoint(area.DarkWood),
+		a.builder.Buff(),
+		a.builder.ClearArea(false, data.MonsterAnyFilter()),
+
+		// after clearing the area, go save Cain
+		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+			for _, o := range d.Objects {
+				if o.Name == object.InifussTree {
+					return o.Position, true
+				}
+			}
+			return data.Position{}, false
+		}),
+		a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+		a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
+			_, found := d.Inventory.Find(scrollOfInifuss)
+			return found
+		}),
+		a.builder.ItemPickup(true, 0),
+		a.builder.ReturnTown(),
+		a.builder.InteractNPC(
+			npc.Akara,
+			step.KeySequence(win.VK_ESCAPE),
+		),
+	)
+	// Reuse Tristram Run actions
+	actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
+
+	return actions
 }
 
 func (a Leveling) tristram() []action.Action {
@@ -83,69 +156,6 @@ func (a Leveling) tristram() []action.Action {
 func (a Leveling) countess() []action.Action {
 	a.logger.Info("Starting Countess run")
 	return Countess{baseRun: a.baseRun}.BuildActions()
-}
-
-func (a Leveling) deckardCain(d game.Data) (actions []action.Action) {
-	a.logger.Info("Rescuing Cain")
-	if _, found := d.Inventory.Find("KeyToTheCairnStones"); !found {
-		actions = []action.Action{
-			a.builder.WayPoint(area.DarkWood),
-			a.builder.Buff(),
-			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-				for _, o := range d.Objects {
-					if o.Name == object.InifussTree {
-						return o.Position, true
-					}
-				}
-
-				return data.Position{}, false
-			}),
-			a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
-				_, found := d.Inventory.Find(scrollOfInifuss)
-				return found
-			}),
-			a.builder.ItemPickup(false, 30),
-			a.builder.ReturnTown(),
-			a.builder.InteractNPC(
-				npc.Akara,
-				step.KeySequence(win.VK_ESCAPE),
-			),
-		}
-
-		// Heal and refill pots
-		actions = append(actions,
-			a.builder.ReturnTown(),
-			a.builder.RecoverCorpse(),
-			a.builder.IdentifyAll(false),
-			a.builder.Stash(false),
-			a.builder.VendorRefill(false, true),
-		)
-
-		if a.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
-			actions = append(actions,
-				a.builder.EnsureStatPoints(),
-				a.builder.EnsureSkillPoints(),
-			)
-		}
-
-		if a.CharacterCfg.Game.Leveling.EnsureKeyBinding {
-			actions = append(actions,
-				a.builder.EnsureSkillBindings(),
-			)
-		}
-
-		actions = append(actions,
-			a.builder.Heal(),
-			a.builder.ReviveMerc(),
-			a.builder.HireMerc(),
-			a.builder.Repair(),
-		)
-	}
-
-	// Reuse Tristram Run actions
-	actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
-
-	return actions
 }
 
 func (a Leveling) andariel(d game.Data) []action.Action {
@@ -218,10 +228,4 @@ func (a Leveling) andariel(d game.Data) []action.Action {
 	)
 
 	return actions
-}
-
-func (a Leveling) isCainInTown(d game.Data) bool {
-	_, found := d.Monsters.FindOne(npc.DeckardCain5, data.MonsterTypeNone)
-
-	return found
 }
