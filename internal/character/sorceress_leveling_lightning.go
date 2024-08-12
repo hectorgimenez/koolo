@@ -202,7 +202,6 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 		mainSkill = skill.GlacialSpike
 	}
 
-	s.logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
 	return mainSkill, skillBindings
 }
 
