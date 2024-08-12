@@ -201,7 +201,7 @@ func (md MapData) LevelDataForCoords(p data.Position, playerArea area.Area) (Lev
 			playerArea.ID == area.OuterCloister || playerArea.ID == area.BlackMarsh ||
 			playerArea.ID == area.TamoeHighland || playerArea.ID == area.OuterSteppes ||
 			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands ||
-			playerArea.ID == area.MonestaryGate || 	playerArea.ID == area.LutGholein ||
+			playerArea.ID == area.MonasteryGate || playerArea.ID == area.LutGholein ||
 			playerArea.ID == area.RockyWaste || playerArea.ID == area.DryHills ||
 			playerArea.ID == area.HallsOfTheDeadLevel1 || playerArea.ID == area.HallsOfTheDeadLevel2 ||
 			playerArea.ID == area.HallsOfTheDeadLevel3 || playerArea.ID == area.FarOasis ||
