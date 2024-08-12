@@ -104,6 +104,7 @@ type CharacterCfg struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
 			OpenChests            bool `yaml:"openChests"`
 			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
+			OnlyClearLevel2       bool `yaml:"onlyClearLevel2"`
 		} `yaml:"pit"`
 		Andariel struct {
 			ClearRoom bool `yaml:"clearRoom"`
