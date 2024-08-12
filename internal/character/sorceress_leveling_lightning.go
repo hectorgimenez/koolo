@@ -57,7 +57,11 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 	if d.PlayerUnit.Skills[skill.GlacialSpike].Level > 0 {
 		mainSkill = skill.GlacialSpike
 	}
-
+	// For a lightsorc, nova is great
+	if d.PlayerUnit.Skills[skill.Nova].Level > 0 &&
+		mainSkill != skill.GlacialSpike{
+		mainSkill = skill.Nova
+	}
 	return mainSkill, skillBindings
 }
 
