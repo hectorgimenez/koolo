@@ -37,6 +37,22 @@ var uiSkillPagePosition = [3]data.Position{
 var uiSkillRowPosition = [6]int{190, 250, 310, 365, 430, 490}
 var uiSkillColumnPosition = [3]int{920, 1010, 1095}
 
+var uiStatButtonPositionLegacy = map[stat.ID]data.Position{
+	stat.Strength:  {X: 430, Y: 180},
+	stat.Dexterity: {X: 430, Y: 250},
+	stat.Vitality:  {X: 430, Y: 360},
+	stat.Energy:    {X: 430, Y: 435},
+}
+
+var uiSkillPagePositionLegacy = [3]data.Position{
+	{X: 970, Y: 510},
+	{X: 970, Y: 390},
+	{X: 970, Y: 260},
+}
+
+var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
+var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
+
 func (b *Builder) EnsureStatPoints() *StepChainAction {
 	return NewStepChain(func(d game.Data) []step.Step {
 		char, isLevelingChar := b.ch.(LevelingCharacter)
@@ -69,7 +85,13 @@ func (b *Builder) EnsureStatPoints() *StepChainAction {
 				}
 			}
 
-			statBtnPosition := uiStatButtonPosition[st]
+			var statBtnPosition data.Position
+			if d.LegacyGraphics {
+				statBtnPosition = uiStatButtonPositionLegacy[st]
+			} else {
+				statBtnPosition = uiStatButtonPosition[st]
+			}
+
 			return []step.Step{
 				step.SyncStep(func(_ game.Data) error {
 					helper.Sleep(100)
@@ -132,9 +154,17 @@ func (b *Builder) EnsureSkillPoints() *StepChainAction {
 					step.SyncStep(func(_ game.Data) error {
 						assignAttempts++
 						helper.Sleep(100)
-						b.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+						if d.LegacyGraphics {
+							b.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+						} else {
+							b.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+						}
 						helper.Sleep(200)
-						b.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+						if d.LegacyGraphics {
+							b.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+						} else {
+							b.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+						}
 						helper.Sleep(500)
 						return nil
 					}),
