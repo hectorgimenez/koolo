@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/hectorgimenez/koolo/cmd/koolo/log"
