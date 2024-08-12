@@ -1,7 +1,6 @@
 package character
 
 import (
-	"log/slog"
 	"sort"
 	"time"
 
@@ -22,20 +21,9 @@ type SorceressLevelingLightning struct {
 }
 
 func (s SorceressLevelingLightning) CheckKeyBindings(d game.Data) []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
-	missingKeybindings := []skill.ID{}
 
-	for _, cskill := range requireKeybindings {
-		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
-			missingKeybindings = append(missingKeybindings, cskill)
-		}
-	}
-
-	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
-	}
-
-	return missingKeybindings
+	// Not implemented
+	return []skill.ID{}
 }
 
 func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
@@ -176,25 +164,37 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 		skill.TomeOfTownPortal,
 	}
 
+	s.logger.Debug("Character level", "level", level.Value)
+	s.logger.Debug("Nova skill level", "level", d.PlayerUnit.Skills[skill.Nova].Level)
+	s.logger.Debug("Charged Bolt skill level", "level", d.PlayerUnit.Skills[skill.ChargedBolt].Level)
+
 	// Add skills only if the character level is high enough
 	if level.Value >= 4 {
 		skillBindings = append(skillBindings, skill.FrozenArmor)
+		s.logger.Debug("Added Frozen Armor", "skillID", skill.FrozenArmor)
 	}
 	if level.Value >= 6 {
 		skillBindings = append(skillBindings, skill.StaticField)
+		s.logger.Debug("Added Static Field", "skillID", skill.StaticField)
 	}
 	if level.Value >= 18 {
 		skillBindings = append(skillBindings, skill.Teleport)
+		s.logger.Debug("Added Teleport", "skillID", skill.Teleport)
 	}
 
-	if d.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
-		skillBindings = append(skillBindings, skill.Blizzard)
-	} else if d.PlayerUnit.Skills[skill.Nova].Level > 1 {
+	// Bind combat skills based on levels and availability
+	if d.PlayerUnit.Skills[skill.Nova].Level > 0 {
 		skillBindings = append(skillBindings, skill.Nova)
+		s.logger.Debug("Added Nova", "skillID", skill.Nova)
 	} else if d.PlayerUnit.Skills[skill.ChargedBolt].Level > 0 {
 		skillBindings = append(skillBindings, skill.ChargedBolt)
+		s.logger.Debug("Added Charged Bolt", "skillID", skill.ChargedBolt)
+	} else if d.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
+		skillBindings = append(skillBindings, skill.Blizzard)
+		s.logger.Debug("Added Blizzard", "skillID", skill.Blizzard)
 	} else if d.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
 		skillBindings = append(skillBindings, skill.FireBolt)
+		s.logger.Debug("Added Fire Bolt", "skillID", skill.FireBolt)
 	}
 
 	mainSkill := skill.AttackSkill
@@ -202,7 +202,7 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 		mainSkill = skill.GlacialSpike
 	}
 
-	s.logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
+	s.logger.Info("Skills to bind", "mainSkill", mainSkill, "skillBindings", skillBindings)
 	return mainSkill, skillBindings
 }
 

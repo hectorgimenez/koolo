@@ -215,12 +215,19 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 		char, _ := b.ch.(LevelingCharacter)
 		mainSkill, skillsToBind := char.SkillsToBind(d)
 		skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+
+		// Add debug logging here
+		b.Logger.Debug("Skills to bind", "mainSkill", mainSkill, "skillsToBind", skillsToBind)
+
 		notBoundSkills := make([]skill.ID, 0)
 		for _, sk := range skillsToBind {
 			if _, found := d.KeyBindings.KeyBindingForSkill(sk); !found && d.PlayerUnit.Skills[sk].Level > 0 {
 				notBoundSkills = append(notBoundSkills, sk)
 			}
 		}
+
+		// Add debug logging for not bound skills
+		b.Logger.Debug("Not bound skills", "skills", notBoundSkills)
 
 		if len(notBoundSkills) > 0 {
 			steps = append(steps, step.SyncStep(func(d game.Data) error {
@@ -230,6 +237,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 				helper.Sleep(300)
 
 				availableKB := b.getAvailableSkillKB(d)
+
+				// Add debug logging for available key bindings
+				b.Logger.Debug("Available key bindings", "count", len(availableKB))
 
 				for i, sk := range notBoundSkills {
 					skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
@@ -241,6 +251,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 					helper.Sleep(100)
 					b.HID.PressKeyBinding(availableKB[i])
 					helper.Sleep(300)
+
+					// Add debug logging for each skill being bound
+					b.Logger.Debug("Binding skill", "skill", sk, "position", skillPosition)
 				}
 
 				return nil
@@ -260,6 +273,9 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 					helper.Sleep(100)
 					b.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
 					helper.Sleep(300)
+
+					// Add debug logging for setting main skill
+					b.Logger.Debug("Setting main skill", "skill", mainSkill, "position", skillPosition)
 				}
 
 				return nil
@@ -269,6 +285,69 @@ func (b *Builder) EnsureSkillBindings() *StepChainAction {
 		return
 	}, RepeatUntilNoSteps())
 }
+
+// func (b *Builder) EnsureSkillBindings() *StepChainAction {
+// 	return NewStepChain(func(d game.Data) (steps []step.Step) {
+// 		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
+// 			return nil
+// 		}
+// 		char, _ := b.ch.(LevelingCharacter)
+// 		mainSkill, skillsToBind := char.SkillsToBind(d)
+// 		skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+// 		notBoundSkills := make([]skill.ID, 0)
+// 		for _, sk := range skillsToBind {
+// 			if _, found := d.KeyBindings.KeyBindingForSkill(sk); !found && d.PlayerUnit.Skills[sk].Level > 0 {
+// 				notBoundSkills = append(notBoundSkills, sk)
+// 			}
+// 		}
+
+// 		if len(notBoundSkills) > 0 {
+// 			steps = append(steps, step.SyncStep(func(d game.Data) error {
+// 				b.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+// 				helper.Sleep(300)
+// 				b.HID.MovePointer(10, 10)
+// 				helper.Sleep(300)
+
+// 				availableKB := b.getAvailableSkillKB(d)
+
+// 				for i, sk := range notBoundSkills {
+// 					skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
+// 					if !found {
+// 						continue
+// 					}
+
+// 					b.HID.MovePointer(skillPosition.X, skillPosition.Y)
+// 					helper.Sleep(100)
+// 					b.HID.PressKeyBinding(availableKB[i])
+// 					helper.Sleep(300)
+// 				}
+
+// 				return nil
+// 			}))
+// 		}
+
+// 		if d.PlayerUnit.LeftSkill != mainSkill {
+// 			steps = append(steps, step.SyncStep(func(d game.Data) error {
+// 				b.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
+// 				helper.Sleep(300)
+// 				b.HID.MovePointer(10, 10)
+// 				helper.Sleep(300)
+
+// 				skillPosition, found := b.calculateSkillPositionInUI(d, true, mainSkill)
+// 				if found {
+// 					b.HID.MovePointer(skillPosition.X, skillPosition.Y)
+// 					helper.Sleep(100)
+// 					b.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
+// 					helper.Sleep(300)
+// 				}
+
+// 				return nil
+// 			}))
+// 		}
+
+// 		return
+// 	}, RepeatUntilNoSteps())
+// }
 
 func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillID skill.ID) (data.Position, bool) {
 	var scrolls = []skill.ID{
@@ -308,9 +387,9 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 		descs[skID] = sk
 
 		if skID != targetSkill.ID && sk.Desc().Page == targetSkill.Desc().Page {
-			if sk.Desc().ListRow > targetSkill.Desc().ListRow {
+			if sk.Desc().Row > targetSkill.Desc().Row {
 				column++
-			} else if sk.Desc().ListRow == targetSkill.Desc().ListRow && sk.Desc().Column > targetSkill.Desc().Column {
+			} else if sk.Desc().Row == targetSkill.Desc().Row && sk.Desc().Column > targetSkill.Desc().Column {
 				column++
 			}
 		}
@@ -353,11 +432,73 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 		skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
 	}
 
+	b.Logger.Debug("Calculated skill position",
+		"skill", skillID,
+		"name", targetSkill.Name,
+		"row", row+1,
+		"column", column+1,
+		"X", skillOffsetX,
+		"Y", ui.SkillListFirstSkillY-ui.SkillListSkillOffset*row)
+
 	return data.Position{
 		X: skillOffsetX,
 		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
 	}, true
 }
+
+// func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillID skill.ID) (data.Position, bool) {
+// 	var scrolls = []skill.ID{
+// 		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
+// 	}
+
+// 	if _, found := d.PlayerUnit.Skills[skillID]; !found {
+// 		return data.Position{}, false
+// 	}
+
+// 	targetSkill := skill.Skills[skillID]
+// 	row := targetSkill.Desc().ListRow
+// 	column := targetSkill.Desc().Column - 1 // Subtract 1 to make column 1 the leftmost column
+// 	skillsWithCharges := 0
+
+// 	for _, points := range d.PlayerUnit.Skills {
+// 		if points.Charges > 0 {
+// 			skillsWithCharges++
+// 		}
+// 	}
+
+// 	// Scrolls and charges are not in the same list
+// 	if slices.Contains(scrolls, skillID) {
+// 		column = skillsWithCharges
+// 		row = len(d.PlayerUnit.Skills) - skillsWithCharges - len(scrolls)
+// 		for _, skID := range scrolls {
+// 			if d.PlayerUnit.Skills[skID].Quantity > 0 {
+// 				if skID == skillID {
+// 					break
+// 				}
+// 				column++
+// 			}
+// 		}
+// 	}
+
+// 	skillOffsetX := ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
+// 	if mainSkill {
+// 		skillOffsetX = ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
+// 	}
+
+// 	position := data.Position{
+// 		X: skillOffsetX,
+// 		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
+// 	}
+
+// 	b.Logger.Debug("Calculated skill position",
+// 		"skill", skillID,
+// 		"name", targetSkill.Name,
+// 		"row", row+1,
+// 		"column", column+1,
+// 		"position", position)
+
+// 	return position, true
+// }
 
 func (b *Builder) HireMerc() *Chain {
 	return NewChain(func(d game.Data) (actions []Action) {
