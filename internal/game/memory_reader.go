@@ -97,7 +97,7 @@ func (gd *MemoryReader) GetData(isNewGame bool) Data {
 	for _, clientObject := range objects {
 		found := false
 		for _, obj := range memObjects {
-			if obj.Name == clientObject.Name {
+			if obj.Name == clientObject.Name && obj.Position == clientObject.Position {
 				found = true
 			}
 		}

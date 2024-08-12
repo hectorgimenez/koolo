@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -38,6 +39,8 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 					bonFirePositions = append(bonFirePositions, o.Position)
 				}
 			}
+
+			a.logger.Info(fmt.Sprintf("Found %d bonfire positions", len(bonFirePositions)))
 
 			var bonfireActions []action.Action
 
