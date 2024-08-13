@@ -599,6 +599,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 		cfg.Game.Leveling.ExtraFarmBloodMoor = r.Form.Has("gameLevelingExtraFarmBloodMoor")
 		cfg.Game.Leveling.ExtraFarmStonyField = r.Form.Has("gameLevelingExtraFarmStonyField")
+		cfg.Game.Leveling.FullClearForgottenTower = r.Form.Has("gameLevelingFullClearForgottenTower")
 
 		// Quests options for Act 1
 		cfg.Game.Quests.ClearDen = r.Form.Has("gameQuestsClearDen")

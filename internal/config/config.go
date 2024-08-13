@@ -158,10 +158,11 @@ type CharacterCfg struct {
 			Areas             []area.ID     `yaml:"areas"`
 		} `yaml:"terror_zone"`
 		Leveling struct {
-			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
-			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
-			ExtraFarmBloodMoor     bool `yaml:"extraFarmBloodMoor"`
-			ExtraFarmStonyField    bool `yaml:"extraFarmStonyField"`
+			EnsurePointsAllocation  bool `yaml:"ensurePointsAllocation"`
+			EnsureKeyBinding        bool `yaml:"ensureKeyBinding"`
+			ExtraFarmBloodMoor      bool `yaml:"extraFarmBloodMoor"`
+			ExtraFarmStonyField     bool `yaml:"extraFarmStonyField"`
+			FullClearForgottenTower bool `yaml:"fullClearForgottenTower"`
 		} `yaml:"leveling"`
 		Quests struct {
 			ClearDen       bool `yaml:"clearDen"`

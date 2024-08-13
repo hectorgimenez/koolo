@@ -20,15 +20,32 @@ func (c Countess) Name() string {
 
 func (c Countess) BuildActions() (actions []action.Action) {
 	// Travel to boss level
-	actions = append(actions,
-		c.builder.WayPoint(area.BlackMarsh), // Moving to starting point (Black Marsh)
-		c.builder.MoveToArea(area.ForgottenTower),
-		c.builder.MoveToArea(area.TowerCellarLevel1),
-		c.builder.MoveToArea(area.TowerCellarLevel2),
-		c.builder.MoveToArea(area.TowerCellarLevel3),
-		c.builder.MoveToArea(area.TowerCellarLevel4),
-		c.builder.MoveToArea(area.TowerCellarLevel5),
-	)
+	if c.CharacterCfg.Game.Leveling.FullClearForgottenTower {
+		actions = append(actions,
+			c.builder.WayPoint(area.BlackMarsh), // Moving to starting point (Black Marsh)
+			c.builder.MoveToArea(area.ForgottenTower),
+			c.builder.MoveToArea(area.TowerCellarLevel1),
+			c.builder.ClearArea(true, data.MonsterAnyFilter()),
+			c.builder.MoveToArea(area.TowerCellarLevel2),
+			c.builder.ClearArea(true, data.MonsterAnyFilter()),
+			c.builder.MoveToArea(area.TowerCellarLevel3),
+			c.builder.ClearArea(true, data.MonsterAnyFilter()),
+			c.builder.MoveToArea(area.TowerCellarLevel4),
+			c.builder.ClearArea(true, data.MonsterAnyFilter()),
+			c.builder.MoveToArea(area.TowerCellarLevel5),
+			c.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
+		)
+	} else {
+		actions = append(actions,
+			c.builder.WayPoint(area.BlackMarsh), // Moving to starting point (Black Marsh)
+			c.builder.MoveToArea(area.ForgottenTower),
+			c.builder.MoveToArea(area.TowerCellarLevel1),
+			c.builder.MoveToArea(area.TowerCellarLevel2),
+			c.builder.MoveToArea(area.TowerCellarLevel3),
+			c.builder.MoveToArea(area.TowerCellarLevel4),
+			c.builder.MoveToArea(area.TowerCellarLevel5),
+		)
+	}
 
 	// Try to move around Countess area
 	actions = append(actions, c.builder.MoveTo(func(d game.Data) (data.Position, bool) {
