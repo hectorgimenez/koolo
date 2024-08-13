@@ -160,8 +160,6 @@ type CharacterCfg struct {
 		Leveling struct {
 			EnsurePointsAllocation  bool `yaml:"ensurePointsAllocation"`
 			EnsureKeyBinding        bool `yaml:"ensureKeyBinding"`
-			ExtraFarmBloodMoor      bool `yaml:"extraFarmBloodMoor"`
-			ExtraFarmStonyField     bool `yaml:"extraFarmStonyField"`
 			FullClearForgottenTower bool `yaml:"fullClearForgottenTower"`
 		} `yaml:"leveling"`
 		Quests struct {
