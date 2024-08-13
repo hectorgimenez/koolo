@@ -75,20 +75,11 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 	logged := false
 
 	return action.NewChain(func(d game.Data) (actions []action.Action) {
+		a.logger.Debug("Checking if Tristram portal is opened")
 		_, found := d.Objects.FindOne(object.PermanentTownPortal)
 		if found {
+			a.logger.Debug("Tristram portal already opened")
 			return nil
-		}
-
-		// Sometimes the portal is out of detection range for some reason, this way it moves to the stones and enters the portal.
-		st, stone := d.Objects.FindOne(object.CairnStoneAlpha)
-		if stone {
-			actions = append(actions, a.builder.MoveToCoords(st.Position))
-			actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
-				return d.PlayerUnit.Area == area.Tristram
-			}, step.Wait(time.Second)))
-
-			return actions
 		}
 
 		if !logged {
@@ -97,7 +88,7 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 		}
 
 		// We don't know which order the stones are, so we activate all of them one by one in sequential order, 5 times
-		//activeStones := 0
+		// activeStones := 0
 		for range 6 {
 			stoneTries := 0
 			activeStones := 0
@@ -134,6 +125,18 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 				}
 			}
 
+		}
+		// Sometimes the portal is out of detection range for some reason, this way it moves to the stones and enters the portal.
+		a.logger.Debug("Tristram portal not detected, trying to open it, moving to alpha stone")
+		st, stone := d.Objects.FindOne(object.CairnStoneAlpha)
+		if stone {
+			a.logger.Debug("Alpha stone found, moving to it")
+			actions = append(actions, a.builder.MoveToCoords(st.Position))
+			actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
+				return d.PlayerUnit.Area == area.Tristram
+			}, step.Wait(time.Second)))
+
+			return actions
 		}
 
 		// Wait until portal is open
