@@ -26,22 +26,23 @@ func (a Leveling) act1() action.Action {
 		}
 
 		running = true
-		if a.CharacterCfg.Game.Leveling.ExtraFarmBloodMoor {
-			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
-				return a.farmBloodMoor()
-			}
-		}
-		if !d.Quests[quest.Act1DenOfEvil].Completed() {
-			return a.denOfEvil()
-		}
-		if a.CharacterCfg.Game.Leveling.ExtraFarmStonyField {
-			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 10 {
-				return a.farmStonyField()
-			}
+		// clear Blood Moor until level 3
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
+			return a.bloodMoor()
 		}
 
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 13 {
-			return a.countess()
+		// clear Cold Plains until level 6
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
+			return a.coldPlains()
+		}
+
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !d.Quests[quest.Act1DenOfEvil].Completed() {
+			return a.denOfEvil()
+		}
+
+		// clear Stony Field until level 9
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 9 {
+			return a.stonyField()
 		}
 
 		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
@@ -62,7 +63,7 @@ func (a Leveling) act1() action.Action {
 	})
 }
 
-func (a Leveling) farmBloodMoor() []action.Action {
+func (a Leveling) bloodMoor() []action.Action {
 	a.logger.Info("Starting Blood Moor Farm-run")
 	return []action.Action{
 		a.builder.MoveToArea(area.BloodMoor),
@@ -79,7 +80,7 @@ func (a Leveling) farmBloodMoor() []action.Action {
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),
 	}
 }
-func (a Leveling) farmStonyField() []action.Action {
+func (a Leveling) stonyField() []action.Action {
 	a.logger.Info("Starting Stony Field Farm-run")
 	return []action.Action{
 		a.builder.WayPoint(area.StonyField),
@@ -87,7 +88,14 @@ func (a Leveling) farmStonyField() []action.Action {
 		a.builder.ClearArea(true, data.MonsterAnyFilter()),
 	}
 }
-
+func (a Leveling) coldPlains() []action.Action {
+	a.logger.Info("Starting Cold Plains Farm-run")
+	return []action.Action{
+		a.builder.WayPoint(area.ColdPlains),
+		a.builder.Buff(),
+		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+	}
+}
 func (a Leveling) denOfEvil() []action.Action {
 	a.logger.Info("Starting Den of Evil Quest")
 	return []action.Action{
