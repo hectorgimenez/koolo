@@ -88,15 +88,6 @@ func (a Leveling) farmStonyField() []action.Action {
 	}
 }
 
-func (a Leveling) coldPlains() []action.Action {
-	a.logger.Info("Starting Blood Moor run")
-	return []action.Action{
-		a.builder.WayPoint(area.ColdPlains),
-		a.builder.Buff(),
-		a.builder.ClearArea(false, data.MonsterAnyFilter()),
-	}
-}
-
 func (a Leveling) denOfEvil() []action.Action {
 	a.logger.Info("Starting Den of Evil Quest")
 	return []action.Action{
@@ -109,15 +100,6 @@ func (a Leveling) denOfEvil() []action.Action {
 			npc.Akara,
 			step.KeySequence(win.VK_ESCAPE),
 		),
-	}
-}
-
-func (a Leveling) stonyField() []action.Action {
-	a.logger.Info("Starting Blood Moor run")
-	return []action.Action{
-		a.builder.WayPoint(area.StonyField),
-		a.builder.Buff(),
-		a.builder.ClearArea(false, data.MonsterAnyFilter()),
 	}
 }
 
