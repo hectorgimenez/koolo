@@ -28,11 +28,20 @@ func (s SorceressLevelingHydraOrb) CheckKeyBindings(d game.Data) []skill.ID {
 
 func (s SorceressLevelingHydraOrb) ShouldResetSkills(d game.Data) bool {
 	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
-	if lvl.Value >= 25 && d.PlayerUnit.Skills[skill.Nova].Level > 10 {
+	if lvl.Value >= 30 {
 		return true
 	}
 
 	return false
+}
+
+func containsSkill(skills []skill.ID, target skill.ID) bool {
+    for _, s := range skills {
+        if s == target {
+            return true
+        }
+    }
+    return false
 }
 
 func (s SorceressLevelingHydraOrb) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
@@ -49,10 +58,17 @@ func (s SorceressLevelingHydraOrb) SkillsToBind(d game.Data) (skill.ID, []skill.
 		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
+	// Failsafe, if we are a lvl 0 sorc, we need to bind a usable skill
+	// which is the FireBolt provided by the starter staff
+	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+
+	if lvl.Value <= 1 && (!containsSkill(skillBindings, skill.FireBolt) &&
+		!containsSkill(skillBindings, skill.ChargedBolt)) {
+			s.logger.Info("We are clearly a level 1 with shit for skills")
+			skillBindings = append(skillBindings, skill.FireBolt)
+	}
+
 	mainSkill := skill.AttackSkill
-//	if d.PlayerUnit.Skills[skill.GlacialSpike].Level > 0 {
-//		mainSkill = skill.GlacialSpike
-//	}
 
 	return mainSkill, skillBindings
 }
@@ -95,7 +111,7 @@ func (s SorceressLevelingHydraOrb) SkillPoints(d game.Data) []skill.ID {
 			skill.ChargedBolt,
 			skill.ChargedBolt,
 			skill.ChargedBolt,
-			skill.ChargedBolt,	// one extra from quest
+			skill.ChargedBolt,	// one extra from quest (12)
 			skill.Nova,
 			skill.Nova,
 			skill.Nova,
@@ -107,7 +123,7 @@ func (s SorceressLevelingHydraOrb) SkillPoints(d game.Data) []skill.ID {
 			skill.Nova,
 			skill.Nova,
 			skill.Nova,
-			skill.Nova,
+			skill.Nova,		// 10th nova
 			skill.Nova,
 			skill.Nova,
 			skill.Nova,
