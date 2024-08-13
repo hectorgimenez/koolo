@@ -36,6 +36,8 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 		})
 	}
 
+	destinationPosition := data.Position{X: 0, Y: 0}
+
 	toFun := func(d game.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
@@ -61,8 +63,16 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 
 				// This means it's a cave, we don't want to load the map, just find the entrance and interact
 				if a.IsEntrance {
+					b.Logger.Warn("Cave detected, moving to entrance: ", slog.String("area", dst.Area().Name))
+					b.Logger.Info("Returning position: ", slog.String("position", fmt.Sprintf("%v", a.Position)))
+					b.Logger.Info("Player position: ", slog.String("position", fmt.Sprintf("%v", d.PlayerUnit.Position)))
+					destinationPosition = a.Position
+					distanceToTarget := pather.DistanceFromMe(d, a.Position)
+					b.Logger.Info("Distance to target: ", slog.Int("distance", distanceToTarget))
 					return a.Position, true
 				}
+
+				b.Logger.Info("Fetching cached map data for area", slog.String("area", dst.Area().Name))
 
 				lvl, _ := b.Reader.GetCachedMapData(false).GetLevelData(a.Area)
 				_, _, objects, _ := b.Reader.GetCachedMapData(false).NPCsExitsAndObjects(lvl.Offset, a.Area)
@@ -82,7 +92,6 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 						return obj.Position, true
 					}
 				}
-
 				return a.Position, true
 			}
 		}
@@ -91,12 +100,14 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 
 		return data.Position{}, false
 	}
-
+	b.Logger.Info("Returning a new chain here")
 	return NewChain(func(d game.Data) []Action {
+		b.Logger.Info("Moving to 'toFun'")
 		return []Action{
 			b.MoveTo(toFun),
 			NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
+					step.MoveTo(destinationPosition),
 					step.InteractEntrance(dst),
 					step.SyncStep(func(d game.Data) error {
 						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(dst), event.InteractionTypeEntrance))
