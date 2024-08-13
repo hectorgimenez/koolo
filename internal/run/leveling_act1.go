@@ -34,9 +34,8 @@ func (a Leveling) act1() action.Action {
 		if !d.Quests[quest.Act1DenOfEvil].Completed() {
 			return a.denOfEvil()
 		}
-
 		if a.CharacterCfg.Game.Leveling.ExtraFarmStonyField {
-			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 7 {
+			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 10 {
 				return a.farmStonyField()
 			}
 		}
