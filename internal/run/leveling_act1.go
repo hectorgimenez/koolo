@@ -17,6 +17,7 @@ import (
 )
 
 const scrollOfInifuss = "ScrollOfInifuss"
+const keyToTheCairnStones = "KeyToTheCairnStones"
 
 func (a Leveling) act1() action.Action {
 	running := false
@@ -46,7 +47,7 @@ func (a Leveling) act1() action.Action {
 		}
 
 		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
-			return a.deckardCain()
+			return a.deckardCain(d)
 		}
 
 		// do Tristram Runs until level 14
@@ -117,36 +118,57 @@ func (a Leveling) isCainInTown(d game.Data) bool {
 	return found
 }
 
-func (a Leveling) deckardCain() []action.Action {
+func (a Leveling) deckardCain(d game.Data) []action.Action {
 	a.logger.Info("Starting Rescue Cain Quest")
 	var actions []action.Action
-	actions = append(actions,
-		a.builder.WayPoint(area.RogueEncampment),
-		a.builder.WayPoint(area.DarkWood),
-		a.builder.Buff(),
-		a.builder.ClearArea(false, data.MonsterAnyFilter()),
 
-		// after clearing the area, go save Cain
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			for _, o := range d.Objects {
-				if o.Name == object.InifussTree {
-					return o.Position, true
+	a.logger.Info("Checking if we might already have the Scroll of Inifuss..")
+
+	_, foundScroll := d.Inventory.Find(scrollOfInifuss)
+	_, foundKey := d.Inventory.Find(keyToTheCairnStones)
+
+	if foundKey {
+		a.logger.Info("Key to the Cairn Stones already in inventory, skipping DarkWood and Akara")
+	} else if foundScroll {
+		a.logger.Info("Scroll of Inifuss already in inventory, skipping DarkWood")
+		actions = append(actions,
+			a.builder.ReturnTown(),
+			a.builder.InteractNPC(
+				npc.Akara,
+				step.KeySequence(win.VK_ESCAPE),
+			),
+		)
+	} else {
+		a.logger.Info("Starting DarkWood run for scroll")
+		actions = append(actions,
+			a.builder.WayPoint(area.RogueEncampment),
+			a.builder.WayPoint(area.DarkWood),
+			a.builder.Buff(),
+			a.builder.ClearArea(false, data.MonsterAnyFilter()),
+
+			// after clearing the area, go save Cain
+			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
+				for _, o := range d.Objects {
+					if o.Name == object.InifussTree {
+						return o.Position, true
+					}
 				}
-			}
-			return data.Position{}, false
-		}),
-		a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
-			_, found := d.Inventory.Find(scrollOfInifuss)
-			return found
-		}),
-		a.builder.ItemPickup(true, 0),
-		a.builder.ReturnTown(),
-		a.builder.InteractNPC(
-			npc.Akara,
-			step.KeySequence(win.VK_ESCAPE),
-		),
-	)
+				return data.Position{}, false
+			}),
+			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+			a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
+				_, found := d.Inventory.Find(scrollOfInifuss)
+				return found
+			}),
+			a.builder.ItemPickup(true, 0),
+			a.builder.ReturnTown(),
+			a.builder.InteractNPC(
+				npc.Akara,
+				step.KeySequence(win.VK_ESCAPE),
+			),
+		)
+	}
+
 	// Reuse Tristram Run actions
 	actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
 
