@@ -104,6 +104,31 @@ func (a Leveling) coldPlains() []action.Action {
 		a.builder.ClearArea(false, data.MonsterAnyFilter()),
 	}
 }
+func (a Leveling) farmBloodMoor() []action.Action {
+	a.logger.Info("Starting Blood Moor Farm-run")
+	return []action.Action{
+		a.builder.MoveToArea(area.BloodMoor),
+		a.builder.Buff(),
+		action.NewStepChain(func(d game.Data) []step.Step {
+			for _, l := range d.AdjacentLevels {
+				if l.Area == area.DenOfEvil {
+					return []step.Step{step.MoveTo(l.Position, step.StopAtDistance(50))}
+				}
+			}
+
+			return []step.Step{}
+		}),
+		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+	}
+}
+func (a Leveling) farmStonyField() []action.Action {
+	a.logger.Info("Starting Stony Field Farm-run")
+	return []action.Action{
+		a.builder.WayPoint(area.StonyField),
+		a.builder.Buff(),
+		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+	}
+}
 
 func (a Leveling) denOfEvil() []action.Action {
 	a.logger.Info("Starting Den of Evil Quest")
