@@ -26,24 +26,23 @@ func (a Leveling) act1() action.Action {
 		}
 
 		running = true
-
-		// clear Blood Moor until level 3
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
-			return a.bloodMoor()
+		if a.CharacterCfg.Game.Leveling.ExtraFarmBloodMoor {
+			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
+				return a.farmBloodMoor()
+			}
 		}
-
-		// clear Cold Plains until level 6
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
-			return a.coldPlains()
-		}
-
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !d.Quests[quest.Act1DenOfEvil].Completed() {
+		if !d.Quests[quest.Act1DenOfEvil].Completed() {
 			return a.denOfEvil()
 		}
 
-		// clear Stony Field until level 9
-		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 9 {
-			return a.stonyField()
+		if a.CharacterCfg.Game.Leveling.ExtraFarmStonyField {
+			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 7 {
+				return a.farmStonyField()
+			}
+		}
+
+		if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 13 {
+			return a.countess()
 		}
 
 		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
@@ -70,6 +69,31 @@ func (a Leveling) bloodMoor() []action.Action {
 		a.builder.MoveToArea(area.BloodMoor),
 		a.builder.Buff(),
 		a.builder.ClearArea(false, data.MonsterAnyFilter()),
+	}
+}
+func (a Leveling) farmBloodMoor() []action.Action {
+	a.logger.Info("Starting Blood Moor Farm-run")
+	return []action.Action{
+		a.builder.MoveToArea(area.BloodMoor),
+		a.builder.Buff(),
+		action.NewStepChain(func(d game.Data) []step.Step {
+			for _, l := range d.AdjacentLevels {
+				if l.Area == area.DenOfEvil {
+					return []step.Step{step.MoveTo(l.Position, step.StopAtDistance(50))}
+				}
+			}
+
+			return []step.Step{}
+		}),
+		a.builder.ClearArea(true, data.MonsterAnyFilter()),
+	}
+}
+func (a Leveling) farmStonyField() []action.Action {
+	a.logger.Info("Starting Stony Field Farm-run")
+	return []action.Action{
+		a.builder.WayPoint(area.StonyField),
+		a.builder.Buff(),
+		a.builder.ClearArea(true, data.MonsterAnyFilter()),
 	}
 }
 
