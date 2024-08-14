@@ -47,8 +47,8 @@ func (a Leveling) act2() action.Action {
 		_, horadricStaffFound := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 
 		// Find Staff of Kings
-		_, found = d.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found || horadricStaffFound {
+		_, staffFound := d.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		if staffFound || horadricStaffFound {
 			a.logger.Info("StaffOfKings found, skipping quest")
 		} else {
 			a.logger.Info("StaffOfKings not found, starting quest")
@@ -56,12 +56,21 @@ func (a Leveling) act2() action.Action {
 		}
 
 		// Find Amulet
-		_, found = d.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found || horadricStaffFound {
+		_, amuletFound := d.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+		if amuletFound || horadricStaffFound {
 			a.logger.Info("Amulet of the Viper found, skipping quest")
 		} else {
 			a.logger.Info("Amulet of the Viper not found, starting quest")
 			return a.findAmulet()
+		}
+
+		// Create the staff and speak with Cain
+		if amuletFound && staffFound && !horadricStaffFound {
+			a.logger.Info("Preparing our staff")
+			var actions []action.Action
+			actions = append(actions, a.prepareStaff())
+			actions = append(actions, a.interactWithCain()...)
+			return actions
 		}
 
 		// Summoner
@@ -70,24 +79,46 @@ func (a Leveling) act2() action.Action {
 	})
 }
 
-//func (a Leveling) radament() action.Action {
-//	return action.NewChain(func(d game.Data) (actions []action.Action) {
-//		actions = append(actions,
-//			a.builder.WayPoint(area.SewersLevel2Act2),
-//			a.builder.MoveToArea(area.SewersLevel3Act2),
-//		)
+//	func (a Leveling) radament() action.Action {
+//		return action.NewChain(func(d game.Data) (actions []action.Action) {
+//			actions = append(actions,
+//				a.builder.WayPoint(area.SewersLevel2Act2),
+//				a.builder.MoveToArea(area.SewersLevel3Act2),
+//			)
 //
-//		// TODO: Find Radament (use 355 object to locate him)
-//		return
-//	})
-//}
+//			// TODO: Find Radament (use 355 object to locate him)
+//			return
+//		})
+//	}
 
+func (a Leveling) interactWithCain() []action.Action {
+	a.logger.Info("Interacting with Cain")
+	// Interacting three times just incase he's blabby
+	var actions []action.Action
+	actions = append(actions,
+		a.builder.ReturnTown(),
+		a.builder.InteractNPC(
+			npc.DeckardCain2,
+			step.KeySequence(win.VK_ESCAPE),
+		),
+		a.builder.InteractNPC(
+			npc.DeckardCain2,
+			step.KeySequence(win.VK_ESCAPE),
+		),
+		a.builder.InteractNPC(
+			npc.DeckardCain2,
+			step.KeySequence(win.VK_ESCAPE),
+		),
+	)
+	return actions
+
+}
 func (a Leveling) findHoradricCube() []action.Action {
 	return []action.Action{
 		a.builder.WayPoint(area.HallsOfTheDeadLevel2),
 		a.builder.MoveToArea(area.HallsOfTheDeadLevel3),
 		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Horadric Cube chest found, moving to that room")
+			a.logger.Debug("Horadric Cube chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.HoradricCubeChest)
 
 			return chest.Position, found
@@ -108,7 +139,7 @@ func (a Leveling) findStaff() []action.Action {
 		a.builder.MoveToArea(area.MaggotLairLevel2),
 		a.builder.MoveToArea(area.MaggotLairLevel3),
 		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Staff Of Kings chest found, moving to that room")
+			a.logger.Debug("Staff Of Kings chest found, moving to that room")
 			chest, found := d.Objects.FindOne(object.StaffOfKingsChest)
 
 			return chest.Position, found
@@ -129,7 +160,7 @@ func (a Leveling) findAmulet() []action.Action {
 		a.builder.MoveToArea(area.ClawViperTempleLevel1),
 		a.builder.MoveToArea(area.ClawViperTempleLevel2),
 		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Altar found, moving closer")
+			a.logger.Debug("Altar found, moving closer")
 			chest, found := d.Objects.FindOne(object.TaintedSunAltar)
 
 			return chest.Position, found
@@ -166,9 +197,9 @@ func (a Leveling) prepareStaff() action.Action {
 	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		horadricStaff, found := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 		if found {
-			a.logger.Info("Horadric Staff found!")
+			a.logger.Debug("Horadric Staff found!")
 			if horadricStaff.Location.LocationType == item.LocationStash {
-				a.logger.Info("It's in the stash, let's pickup it (not done yet)")
+				a.logger.Debug("It's in the stash, let's pickup it (not done yet)")
 
 				return []action.Action{
 					a.builder.InteractObject(object.Bank, func(d game.Data) bool {
