@@ -17,6 +17,7 @@ import (
 )
 
 const scrollOfInifuss = "ScrollOfInifuss"
+const keyToTheCairnStones = "KeyToTheCairnStones"
 
 func (a Leveling) act1() action.Action {
 	running := false
@@ -47,6 +48,12 @@ func (a Leveling) act1() action.Action {
 		}
 
 		if !a.isCainInTown(d) && !d.Quests[quest.Act1TheSearchForCain].Completed() {
+			if a.isCairnKeyInInventory(d) {
+				a.logger.Info("Found Cairn key already, running tristram.")
+				var actions []action.Action
+				actions = append(actions, Tristram{baseRun: a.baseRun}.BuildActions()...)
+				return actions
+			}
 			return a.deckardCain()
 		}
 
@@ -112,9 +119,15 @@ func (a Leveling) isCainInTown(d game.Data) bool {
 	return found
 }
 
+func (a Leveling) isCairnKeyInInventory(d game.Data) bool {
+	_, found := d.Inventory.Find(keyToTheCairnStones)
+	return found
+}
+
 func (a Leveling) deckardCain() []action.Action {
 	a.logger.Info("Starting Rescue Cain Quest")
 	var actions []action.Action
+
 	actions = append(actions,
 		a.builder.WayPoint(area.RogueEncampment),
 		a.builder.WayPoint(area.DarkWood),
