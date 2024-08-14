@@ -36,8 +36,6 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 		})
 	}
 
-	destinationPosition := data.Position{X: 0, Y: 0}
-
 	toFun := func(d game.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
@@ -63,16 +61,15 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 
 				// This means it's a cave, we don't want to load the map, just find the entrance and interact
 				if a.IsEntrance {
-					b.Logger.Warn("Cave detected, moving to entrance: ", slog.String("area", dst.Area().Name))
-					b.Logger.Info("Returning position: ", slog.String("position", fmt.Sprintf("%v", a.Position)))
-					b.Logger.Info("Player position: ", slog.String("position", fmt.Sprintf("%v", d.PlayerUnit.Position)))
-					destinationPosition = a.Position
+					b.Logger.Debug("Cave detected, moving to entrance: ", slog.String("area", dst.Area().Name))
+					b.Logger.Debug("Returning position: ", slog.String("position", fmt.Sprintf("%v", a.Position)))
+					b.Logger.Debug("Player position: ", slog.String("position", fmt.Sprintf("%v", d.PlayerUnit.Position)))
 					distanceToTarget := pather.DistanceFromMe(d, a.Position)
-					b.Logger.Info("Distance to target: ", slog.Int("distance", distanceToTarget))
+					b.Logger.Debug("Distance to target: ", slog.Int("distance", distanceToTarget))
 					return a.Position, true
 				}
 
-				b.Logger.Info("Fetching cached map data for area", slog.String("area", dst.Area().Name))
+				b.Logger.Debug("Fetching cached map data for area", slog.String("area", dst.Area().Name))
 
 				lvl, _ := b.Reader.GetCachedMapData(false).GetLevelData(a.Area)
 				_, _, objects, _ := b.Reader.GetCachedMapData(false).NPCsExitsAndObjects(lvl.Offset, a.Area)
@@ -107,7 +104,6 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 			b.MoveTo(toFun),
 			NewStepChain(func(d game.Data) []step.Step {
 				return []step.Step{
-					step.MoveTo(destinationPosition),
 					step.InteractEntrance(dst),
 					step.SyncStep(func(d game.Data) error {
 						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(dst), event.InteractionTypeEntrance))
@@ -139,21 +135,27 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 	pickupBeforeMoving := false
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
-
 	return NewChain(func(d game.Data) []Action {
 		to, found := toFunc(d)
 		if !found {
 			return nil
 		}
+		b.Logger.Debug("Player Position: ", slog.String("position", fmt.Sprintf("%v", d.PlayerUnit.Position)))
+		b.Logger.Debug("Destination Position: ", slog.String("position", fmt.Sprintf("%v", to)))
 
-		_, distance, _ := b.PathFinder.GetPath(d, to)
+		_, distance, foundpath := b.PathFinder.GetPath(d, to)
 		mvtStep := step.MoveTo(to, opts...)
-		if distance <= mvtStep.GetStopDistance() {
+		if distance <= mvtStep.GetStopDistance() && foundpath {
+			b.Logger.Debug("Already at the destination, distance: ", slog.Int("distance", distance))
+			b.Logger.Debug("Foundpath: ", slog.Bool("foundpath", foundpath))
 			return nil
 		}
 
 		// This prevents we stuck in an infinite loop when we can not get closer to the destination
-		if pather.DistanceFromMe(d, previousIterationPosition) < 5 {
+		// Revised to add the foundpath condition due to crashes that occur if DistanceFromMe
+		// returns 0 eventho there's still ways to go.
+		if pather.DistanceFromMe(d, previousIterationPosition) < 5 && foundpath {
+			b.Logger.Debug("Character is already close to destination")
 			return nil
 		}
 
