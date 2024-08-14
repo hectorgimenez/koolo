@@ -58,6 +58,14 @@ func (d Diablo) BuildActions() []action.Action {
 		actions = append(actions, d.builder.MoveToCoords(diabloSpawnPosition))
 	}
 
+	if d.CharacterCfg.Companion.Enabled && d.CharacterCfg.Companion.Leader {
+		actions = append(actions,
+			d.builder.OpenTPIfLeader(),
+			d.builder.Buff(),
+			d.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
+		)
+	}
+
 	if d.CharacterCfg.Game.Diablo.FullClear {
 		actions = append(actions, d.entranceToStarClear()...)
 	}
