@@ -86,7 +86,7 @@ func (b *Builder) RepairRequired() bool {
 		}
 
 		// Let's check if the item requires repair plus a few fail-safes
-		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 5 {
+		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 2 {
 			return true
 		}
 	}
