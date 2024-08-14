@@ -201,7 +201,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 
 		// Check if there is any object blocking our path
 		for _, o := range d.Objects {
-			if o.Name == object.Barrel && pather.DistanceFromMe(d, o.Position) < 3 {
+			if o.Name == object.Barrel && pather.DistanceFromMe(d, o.Position) < 2 {
 				return []Action{NewStepChain(func(d game.Data) []step.Step {
 					return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
 						obj, found := d.Objects.FindByID(o.ID)

@@ -119,7 +119,6 @@ func (a Leveling) deckardCain() []action.Action {
 		a.builder.WayPoint(area.RogueEncampment),
 		a.builder.WayPoint(area.DarkWood),
 		a.builder.Buff(),
-		a.builder.ClearArea(false, data.MonsterAnyFilter()),
 
 		// after clearing the area, go save Cain
 		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
@@ -130,7 +129,7 @@ func (a Leveling) deckardCain() []action.Action {
 			}
 			return data.Position{}, false
 		}),
-		a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
+		a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
 		a.builder.InteractObject(object.InifussTree, func(d game.Data) bool {
 			_, found := d.Inventory.Find(scrollOfInifuss)
 			return found
