@@ -23,7 +23,7 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 		switch strings.ToLower(container.CharacterCfg.Character.Class) {
 		case "sorceress_leveling_lightning":
 			return SorceressLevelingLightning{BaseCharacter: bc}, nil
-		case "sorceress":
+		case "sorceress_leveling":
 			return SorceressLeveling{BaseCharacter: bc}, nil
 		case "paladin":
 			return PaladinLeveling{BaseCharacter: bc}, nil
