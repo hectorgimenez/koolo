@@ -97,9 +97,8 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 
 		return data.Position{}, false
 	}
-	b.Logger.Info("Returning a new chain here")
+
 	return NewChain(func(d game.Data) []Action {
-		b.Logger.Info("Moving to 'toFun'")
 		return []Action{
 			b.MoveTo(toFun),
 			NewStepChain(func(d game.Data) []step.Step {
