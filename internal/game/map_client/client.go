@@ -200,7 +200,8 @@ func (md MapData) LevelDataForCoords(p data.Position, playerArea area.Area) (Lev
 			playerArea.ID == area.BloodMoor || playerArea.ID == area.ColdPlains ||
 			playerArea.ID == area.OuterCloister || playerArea.ID == area.BlackMarsh ||
 			playerArea.ID == area.TamoeHighland || playerArea.ID == area.OuterSteppes ||
-			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands {
+			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands ||
+			playerArea.ID == area.MonasteryGate {
 			check = area.ID(lvl.ID).Act() == playerArea.Act() && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY
 		} else {
 			check = area.ID(lvl.ID).Act() == playerArea.Act() && lvl.Offset.X <= lvlMaxX && p.X <= lvlMaxX && lvl.Offset.Y <= lvlMaxY && p.Y <= lvlMaxY

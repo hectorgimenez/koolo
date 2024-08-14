@@ -36,16 +36,42 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 		})
 	}
 
+	// Exception for Monastery Gate, we need to open the door and passthrough
+	openedDoors := make(map[object.Name]data.Position)
+	if dst == area.MonasteryGate {
+		return NewChain(func(d game.Data) []Action {
+			b.Logger.Debug("Monastery Gate detected, finding the door")
+
+			// Move to specific coordinates before checking for the door
+			initialMoveAction := b.MoveToCoords(data.Position{X: 15139, Y: 5056})
+
+			return append([]Action{initialMoveAction}, NewChain(func(d game.Data) []Action {
+				for _, o := range d.Objects {
+					if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
+						if o.Selectable {
+							return []Action{
+								NewStepChain(func(d game.Data) []step.Step {
+									b.Logger.Info("Door detected trying to open it...")
+									openedDoors[o.Name] = o.Position
+									return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
+										obj, found := d.Objects.FindByID(o.ID)
+										return found && !obj.Selectable
+									})}
+								}, CanBeSkipped()),
+							}
+						}
+					}
+				}
+				// If no door is found or interacted with, return an empty slice of Actions
+				return []Action{}
+			}))
+		})
+	}
+
 	toFun := func(d game.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
 			return data.Position{}, false
-		}
-
-		switch dst {
-		case area.MonasteryGate:
-			b.Logger.Debug("Monastery Gate detected, moving to static coords")
-			return data.Position{X: 15139, Y: 5056}, true
 		}
 
 		for _, a := range d.AdjacentLevels {
