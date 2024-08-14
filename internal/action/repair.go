@@ -15,43 +15,43 @@ import (
 )
 
 func (b *Builder) Repair() *Chain {
-    return NewChain(func(d game.Data) (actions []Action) {
-        if !b.RepairRequired() {
-            return nil
-        }
-
-        b.Logger.Info("Repair required, interacting with repair NPC")
-
-        // Get the repair NPC for the town
-        repairNPC := town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()
-
-        // Act3 repair NPC handling
-        if repairNPC == npc.Hratli {
-            actions = append(actions, b.MoveToCoords(data.Position{X: 5224, Y: 5045}))
-        }
-
-        keys := make([]byte, 0)
-        keys = append(keys, win.VK_HOME)
-        if repairNPC != npc.Halbu {
-            keys = append(keys, win.VK_DOWN)
-        }
-        keys = append(keys, win.VK_RETURN)
-
-        return append(actions, b.InteractNPC(repairNPC,
-            step.KeySequence(keys...),
-            step.SyncStep(func(_ game.Data) error {
-                helper.Sleep(100)
-                if d.LegacyGraphics {
-                    b.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
-                } else {
-                    b.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)
-                }
-                helper.Sleep(500)
+        return NewChain(func(d game.Data) (actions []Action) {
+            if !b.RepairRequired() {
                 return nil
-            }),
-            step.KeySequence(win.VK_ESCAPE),
-        ))
-    })
+            }
+
+            b.Logger.Info("Repair required, interacting with repair NPC")
+
+            // Get the repair NPC for the town
+            repairNPC := town.GetTownByArea(d.PlayerUnit.Area).RepairNPC()
+
+            // Act3 repair NPC handling
+            if repairNPC == npc.Hratli {
+                actions = append(actions, b.MoveToCoords(data.Position{X: 5224, Y: 5045}))
+            }
+
+            keys := make([]byte, 0)
+            keys = append(keys, win.VK_HOME)
+            if repairNPC != npc.Halbu {
+                keys = append(keys, win.VK_DOWN)
+            }
+            keys = append(keys, win.VK_RETURN)
+
+            return append(actions, b.InteractNPC(repairNPC,
+                step.KeySequence(keys...),
+                step.SyncStep(func(_ game.Data) error {
+                    helper.Sleep(100)
+                    if d.LegacyGraphics {
+                        b.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
+                    } else {
+                        b.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)
+                    }
+                    helper.Sleep(500)
+                    return nil
+                }),
+                step.KeySequence(win.VK_ESCAPE),
+            ))
+        })
 }
 
 func (b *Builder) RepairRequired() bool {
