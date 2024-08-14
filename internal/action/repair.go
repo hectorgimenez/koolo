@@ -58,6 +58,18 @@ func (b *Builder) RepairRequired() bool {
 	gameData := b.Container.Reader.GetData(false)
 
 	for _, i := range gameData.Inventory.ByLocation(item.LocationEquipped) {
+		if i.Ethereal {
+			continue
+		}
+		if game.WeaponUtils.IsItemThrowable(i) {
+			quantity, qtyFound := i.FindStat(stat.Quantity, 0)
+			if qtyFound && quantity.Value <= game.WeaponUtils.GetThrowableMaxQuantity(i)/3 || quantity.Value < 20 {
+				b.Logger.Info(fmt.Sprintf("Repairing %s, item quantity is at %d", i.Name, quantity.Value))
+				return true
+			}
+			continue
+		}
+
 		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
 		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
@@ -73,7 +85,7 @@ func (b *Builder) RepairRequired() bool {
 		}
 
 		// Let's check if the item requires repair plus a few fail-safes
-		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 2 {
+		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 5 {
 			return true
 		}
 	}
