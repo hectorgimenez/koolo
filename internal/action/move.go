@@ -161,11 +161,13 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 					return []Action{NewStepChain(func(d game.Data) []step.Step {
 						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
-							obj, found := d.Objects.FindByID(o.ID)
+						return []step.Step{
+							step.MoveTo(o.Position, step.StopAtDistance(2)),
+							step.InteractObjectByID(o.ID, func(d game.Data) bool {
+								obj, found := d.Objects.FindByID(o.ID)
 
-							return found && !obj.Selectable
-						})}
+								return found && !obj.Selectable
+							})}
 					}, CanBeSkipped())}
 				}
 			}
