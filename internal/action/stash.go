@@ -166,6 +166,11 @@ func (b *Builder) shouldStashIt(d game.Data, i data.Item, firstRun bool) (bool, 
 		return true, "runeword", ""
 	}
 
+	// Don't stash quest items from A2 (for some reason they are not marked as quest items)
+	if i.Name == "StaffOfKings" || i.Name == "AmuletOfTheViper" {
+		return false, "", ""
+	}
+
 	// Don't stash the Tomes, keys and WirtsLeg
 	if i.Name == item.TomeOfTownPortal || i.Name == item.TomeOfIdentify || i.Name == item.Key || i.Name == "WirtsLeg" {
 		return false, "", ""
