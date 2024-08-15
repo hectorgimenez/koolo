@@ -125,16 +125,16 @@ func (a Tristram) openPortalIfNotOpened() action.Action {
 
 		}
 
-		// Sometimes the portal is out of detection range for some reason, this way it moves to the stones and enters the portal.
-		st, stone := d.Objects.FindOne(object.CairnStoneAlpha)
-		if stone {
-			actions = append(actions, a.builder.MoveToCoords(st.Position))
-			actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
-				return d.PlayerUnit.Area == area.Tristram
-			}, step.Wait(time.Second)))
+		// // Sometimes the portal is out of detection range for some reason, this way it moves to the stones and enters the portal.
+		// st, stone := d.Objects.FindOne(object.CairnStoneAlpha)
+		// if stone {
+		// 	actions = append(actions, a.builder.MoveToCoords(st.Position))
+		// 	actions = append(actions, a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
+		// 		return d.PlayerUnit.Area == area.Tristram
+		// 	}, step.Wait(time.Second)))
 
-			return actions
-		}
+		// 	return actions
+		// }
 
 		// Wait until portal is open
 		actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {

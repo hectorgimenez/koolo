@@ -161,14 +161,19 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 			return nil
 		}
 
-		_, distance, _ := b.PathFinder.GetPath(d, to)
+		//_, distance, _ := b.PathFinder.GetPath(d, to)
+		_, distance, foundpath := b.PathFinder.GetPath(d, to)
 		mvtStep := step.MoveTo(to, opts...)
-		if distance <= mvtStep.GetStopDistance() {
+		//if distance <= mvtStep.GetStopDistance() {
+		if distance <= mvtStep.GetStopDistance() && foundpath {
 			return nil
 		}
 
 		// This prevents we stuck in an infinite loop when we can not get closer to the destination
-		if pather.DistanceFromMe(d, previousIterationPosition) < 5 {
+		// if pather.DistanceFromMe(d, previousIterationPosition) < 5 {
+		// Revised to add the foundpath condition due to crashes that occur if DistanceFromMe
+		// returns 0 eventho there's still ways to go.
+		if pather.DistanceFromMe(d, previousIterationPosition) < 5 && foundpath {
 			return nil
 		}
 
