@@ -80,7 +80,7 @@ func (sm ShopManager) BuyConsumables(d game.Data, forceRefill bool) {
 	}
 
 	keyQuantity, shouldBuyKeys := sm.ShouldBuyKeys(d)
-	if (shouldBuyKeys || forceRefill) && d.CharacterCfg.Character.Class != "mosaic" {
+	if d.CharacterCfg.Character.Class != "mosaic" && (shouldBuyKeys || forceRefill) {
 		if itm, found := d.Inventory.Find(item.Key, item.LocationVendor); found {
 			sm.logger.Debug("Vendor with keys detected, provisioning...")
 			qty, _ := itm.FindStat(stat.Quantity, 0)
