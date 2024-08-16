@@ -22,7 +22,7 @@ type Hammerdin struct {
 	BaseCharacter
 }
 
-func (s Hammerdin) CheckKeyBindings(d game.Data) []skill.ID {
+func (s Hammerdin) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.Concentration, skill.HolyShield, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
@@ -106,14 +106,14 @@ func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ 
 	}, nil)
 }
 
-func (s Hammerdin) BuffSkills(d game.Data) []skill.ID {
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+func (s Hammerdin) BuffSkills() []skill.ID {
+	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		return []skill.ID{skill.HolyShield}
 	}
 	return []skill.ID{}
 }
 
-func (s Hammerdin) PreCTABuffSkills(_ game.Data) []skill.ID {
+func (s Hammerdin) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
