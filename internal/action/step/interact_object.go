@@ -94,8 +94,9 @@ func (i *InteractObjectStep) Run(d game.Data, container container.Container) err
 	}
 
 	if found {
-		objectX := o.Position.X - 2
-		objectY := o.Position.Y - 2
+		// Reduced to -1, small/thin doors, were hard to click on with - 2
+		objectX := o.Position.X - 1
+		objectY := o.Position.Y - 1
 		if o.IsHovered {
 			container.HID.Click(game.LeftButton, i.currentMouseCoords.X, i.currentMouseCoords.Y)
 			i.waitingForInteraction = true
