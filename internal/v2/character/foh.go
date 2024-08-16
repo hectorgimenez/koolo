@@ -25,7 +25,7 @@ type Foh struct {
 	*game.HID
 }
 
-func (s Foh) CheckKeyBindings(d game.Data) []skill.ID {
+func (s Foh) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.Conviction, skill.HolyShield, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
@@ -116,7 +116,7 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 			helper.Sleep(50)
 
 			step.PrimaryAttack(
-				m.UnitID,
+				monster.UnitID,
 				1,
 				true,
 				step.Distance(fohMinDistance, fohMaxDistance),
@@ -126,7 +126,7 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 			helper.Sleep(40)
 
 			step.PrimaryAttack(
-				m.,
+				monster.UnitID,
 				3,
 				true,
 				step.Distance(fohMinDistance, fohMaxDistance),
@@ -139,7 +139,7 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 			helper.Sleep(100)
 			// Don't switch because no keybindings found
 			step.PrimaryAttack(
-				id,
+				monster.UnitID,
 				3,
 				true,
 				step.Distance(fohMinDistance, fohMaxDistance),
@@ -149,14 +149,14 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 	}
 }
 
-func (s Foh) BuffSkills(d game.Data) []skill.ID {
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+func (s Foh) BuffSkills() []skill.ID {
+	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		return []skill.ID{skill.HolyShield}
 	}
 	return []skill.ID{}
 }
 
-func (s Foh) PreCTABuffSkills(_ game.Data) []skill.ID {
+func (s Foh) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
@@ -176,16 +176,38 @@ func (s Foh) KillDuriel() error {
 	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (s Foh) KillPindle(_ []stat.Resist) error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, false)
+func (s Foh) KillCouncil() error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		// Exclude monsters that are not council members
+		var councilMembers []data.Monster
+		for _, m := range d.Monsters {
+			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
+				councilMembers = append(councilMembers, m)
+			}
+		}
+
+		// Order council members by distance
+		sort.Slice(councilMembers, func(i, j int) bool {
+			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
+
+			return distanceI < distanceJ
+		})
+
+		for _, m := range councilMembers {
+			return m.UnitID, true
+		}
+
+		return 0, false
+	}, nil)
 }
 
 func (s Foh) KillMephisto() error {
 	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (s Foh) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, false)
+func (s Foh) KillIzual() error {
+	return s.killMonsterByName(npc.Izual, data.MonsterTypeNone, false)
 }
 
 func (s Foh) KillDiablo() error {
@@ -218,34 +240,12 @@ func (s Foh) KillDiablo() error {
 	}
 }
 
-func (s Foh) KillIzual() error {
-	return s.killMonsterByName(npc.Izual, data.MonsterTypeNone, false)
+func (s Foh) KillPindle() error {
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, false)
 }
 
-func (s Foh) KillCouncil() error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
-		var councilMembers []data.Monster
-		for _, m := range d.Monsters {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				councilMembers = append(councilMembers, m)
-			}
-		}
-
-		// Order council members by distance
-		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
-
-			return distanceI < distanceJ
-		})
-
-		for _, m := range councilMembers {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, nil)
+func (s Foh) KillNihlathak() error {
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, false)
 }
 
 func (s Foh) KillBaal() error {
