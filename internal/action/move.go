@@ -36,18 +36,21 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 		})
 	}
 
+	openedDoors := make(map[object.Name]data.Position)
+	monasteryGateLogged := false
 	toFun := func(d game.Data) (data.Position, bool) {
 		if d.PlayerUnit.Area == dst {
 			b.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
 			return data.Position{}, false
 		}
-
 		switch dst {
 		case area.MonasteryGate:
-			b.Logger.Debug("Monastery Gate detected, moving to static coords")
+			if !monasteryGateLogged {
+				b.Logger.Debug("Monastery Gate detected, moving to static coords")
+				monasteryGateLogged = true
+			}
 			return data.Position{X: 15139, Y: 5056}, true
 		}
-
 		for _, a := range d.AdjacentLevels {
 			if a.Area == dst {
 				// To correctly detect the two possible exits from Lut Gholein
@@ -58,23 +61,18 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 						return data.Position{X: 5096, Y: 4997}, true
 					}
 				}
-
 				// This means it's a cave, we don't want to load the map, just find the entrance and interact
 				if a.IsEntrance {
 					return a.Position, true
 				}
-
 				lvl, _ := b.Reader.GetCachedMapData(false).GetLevelData(a.Area)
 				_, _, objects, _ := b.Reader.GetCachedMapData(false).NPCsExitsAndObjects(lvl.Offset, a.Area)
-
 				// Sort objects by the distance from me
 				sort.Slice(objects, func(i, j int) bool {
 					distanceI := pather.DistanceFromMe(d, objects[i].Position)
 					distanceJ := pather.DistanceFromMe(d, objects[j].Position)
-
 					return distanceI < distanceJ
 				})
-
 				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 				for _, obj := range objects {
 					_, _, found := b.PathFinder.GetPath(d, obj.Position)
@@ -82,29 +80,50 @@ func (b *Builder) MoveToArea(dst area.ID) *Chain {
 						return obj.Position, true
 					}
 				}
-
 				return a.Position, true
 			}
 		}
-
 		b.Logger.Debug("Destination area not found", slog.String("area", dst.Area().Name))
-
 		return data.Position{}, false
 	}
 
 	return NewChain(func(d game.Data) []Action {
-		return []Action{
-			b.MoveTo(toFun),
-			NewStepChain(func(d game.Data) []step.Step {
-				return []step.Step{
-					step.InteractEntrance(dst),
-					step.SyncStep(func(d game.Data) error {
-						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(dst), event.InteractionTypeEntrance))
-						return nil
-					}),
+		actions := []Action{b.MoveTo(toFun)}
+
+		// Add door opening logic for Monastery Gate
+		if dst == area.MonasteryGate {
+			actions = append(actions, NewChain(func(d game.Data) []Action {
+				for _, o := range d.Objects {
+					if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
+						if o.Selectable {
+							return []Action{
+								NewStepChain(func(d game.Data) []step.Step {
+									b.Logger.Info("Door detected, attempting to open")
+									openedDoors[o.Name] = o.Position
+									return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
+										obj, found := d.Objects.FindByID(o.ID)
+										return found && !obj.Selectable
+									})}
+								}, CanBeSkipped()),
+							}
+						}
+					}
 				}
-			}),
+				return []Action{}
+			}))
 		}
+
+		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
+			return []step.Step{
+				step.InteractEntrance(dst),
+				step.SyncStep(func(d game.Data) error {
+					event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(dst), event.InteractionTypeEntrance))
+					return nil
+				}),
+			}
+		}))
+
+		return actions
 	}, Resettable())
 }
 
@@ -135,14 +154,17 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 			return nil
 		}
 
-		_, distance, _ := b.PathFinder.GetPath(d, to)
+		_, distance, foundpath := b.PathFinder.GetPath(d, to)
 		mvtStep := step.MoveTo(to, opts...)
-		if distance <= mvtStep.GetStopDistance() {
+		if distance <= mvtStep.GetStopDistance() && foundpath {
 			return nil
 		}
 
 		// This prevents we stuck in an infinite loop when we can not get closer to the destination
-		if pather.DistanceFromMe(d, previousIterationPosition) < 5 {
+		// if pather.DistanceFromMe(d, previousIterationPosition) < 5 {
+		// Revised to add the foundpath condition due to crashes that occur if DistanceFromMe
+		// returns 0 eventho there's still ways to go.
+		if pather.DistanceFromMe(d, previousIterationPosition) < 5 && foundpath {
 			return nil
 		}
 
@@ -161,11 +183,14 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 					return []Action{NewStepChain(func(d game.Data) []step.Step {
 						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
 						openedDoors[o.Name] = o.Position
-						return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
-							obj, found := d.Objects.FindByID(o.ID)
+						return []step.Step{
+							// added extra step to first move to the door before interacting with it
+							step.MoveTo(o.Position, step.StopAtDistance(2)),
+							step.InteractObjectByID(o.ID, func(d game.Data) bool {
+								obj, found := d.Objects.FindByID(o.ID)
 
-							return found && !obj.Selectable
-						})}
+								return found && !obj.Selectable
+							})}
 					}, CanBeSkipped())}
 				}
 			}
@@ -173,7 +198,7 @@ func (b *Builder) MoveTo(toFunc func(d game.Data) (data.Position, bool), opts ..
 
 		// Check if there is any object blocking our path
 		for _, o := range d.Objects {
-			if o.Name == object.Barrel && pather.DistanceFromMe(d, o.Position) < 3 {
+			if o.Name == object.Barrel && pather.DistanceFromMe(d, o.Position) < 2 {
 				return []Action{NewStepChain(func(d game.Data) []step.Step {
 					return []step.Step{step.InteractObjectByID(o.ID, func(d game.Data) bool {
 						obj, found := d.Objects.FindByID(o.ID)
