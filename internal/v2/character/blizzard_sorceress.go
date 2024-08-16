@@ -99,6 +99,27 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	}
 }
 
+func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		if m, found := d.Monsters.FindOne(id, monsterType); found {
+			return m.UnitID, true
+		}
+
+		return 0, false
+	}, skipOnImmunities)
+}
+
+func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found {
+			return 0, false
+		}
+
+		return m.UnitID, true
+	}, nil)
+}
+
 func (s BlizzardSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
 	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
@@ -136,15 +157,46 @@ func (s BlizzardSorceress) KillDuriel() error {
 	return s.killMonsterByName(npc.Duriel, data.MonsterTypeNone, sorceressMaxDistance, true, nil)
 }
 
-func (s BlizzardSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.cfg.Game.Pindleskin.SkipOnImmunities)
+func (s BlizzardSorceress) KillCouncil() error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		// Exclude monsters that are not council members
+		var councilMembers []data.Monster
+		var coldImmunes []data.Monster
+		for _, m := range d.Monsters.Enemies() {
+			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
+				if m.IsImmune(stat.ColdImmune) {
+					coldImmunes = append(coldImmunes, m)
+				} else {
+					councilMembers = append(councilMembers, m)
+				}
+			}
+		}
+
+		councilMembers = append(councilMembers, coldImmunes...)
+
+		for _, m := range councilMembers {
+			return m.UnitID, true
+		}
+
+		return 0, false
+	}, nil)
 }
+
 func (s BlizzardSorceress) KillMephisto() error {
 	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeNone, sorceressMaxDistance, true, nil)
 }
 
-func (s BlizzardSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil)
+func (s BlizzardSorceress) KillIzual() error {
+	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(5, 8))
+	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	s.killMonster(npc.Izual, data.MonsterTypeNone)
+
+	return s.killMonster(npc.Izual, data.MonsterTypeNone)
 }
 
 func (s BlizzardSorceress) KillDiablo() error {
@@ -179,17 +231,12 @@ func (s BlizzardSorceress) KillDiablo() error {
 	}
 }
 
-func (s BlizzardSorceress) KillIzual() error {
-	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(5, 8))
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
+func (s BlizzardSorceress) KillPindle() error {
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.cfg.Game.Pindleskin.SkipOnImmunities)
+}
 
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+func (s BlizzardSorceress) KillNihlathak() error {
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil)
 }
 
 func (s BlizzardSorceress) KillBaal() error {
@@ -200,50 +247,4 @@ func (s BlizzardSorceress) KillBaal() error {
 	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 
 	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-}
-
-func (s BlizzardSorceress) KillCouncil() error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
-		var councilMembers []data.Monster
-		var coldImmunes []data.Monster
-		for _, m := range d.Monsters.Enemies() {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				if m.IsImmune(stat.ColdImmune) {
-					coldImmunes = append(coldImmunes, m)
-				} else {
-					councilMembers = append(councilMembers, m)
-				}
-			}
-		}
-
-		councilMembers = append(councilMembers, coldImmunes...)
-
-		for _, m := range councilMembers {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, nil)
-}
-
-func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		if m, found := d.Monsters.FindOne(id, monsterType); found {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, skipOnImmunities)
-}
-
-func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return 0, false
-		}
-
-		return m.UnitID, true
-	}, nil)
 }
