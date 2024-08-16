@@ -200,7 +200,14 @@ func (md MapData) LevelDataForCoords(p data.Position, playerArea area.Area) (Lev
 			playerArea.ID == area.BloodMoor || playerArea.ID == area.ColdPlains ||
 			playerArea.ID == area.OuterCloister || playerArea.ID == area.BlackMarsh ||
 			playerArea.ID == area.TamoeHighland || playerArea.ID == area.OuterSteppes ||
-			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands {
+			playerArea.ID == area.BloodyFoothills || playerArea.ID == area.FrigidHighlands ||
+			playerArea.ID == area.MonasteryGate || playerArea.ID == area.LutGholein ||
+			playerArea.ID == area.RockyWaste || playerArea.ID == area.DryHills ||
+			playerArea.ID == area.HallsOfTheDeadLevel1 || playerArea.ID == area.HallsOfTheDeadLevel2 ||
+			playerArea.ID == area.HallsOfTheDeadLevel3 || playerArea.ID == area.FarOasis ||
+			playerArea.ID == area.LostCity || playerArea.ID == area.ClawViperTempleLevel1 ||
+			playerArea.ID == area.ClawViperTempleLevel2 || playerArea.ID == area.KurastDocks ||
+			playerArea.ID == area.KurastCauseway {
 			check = area.ID(lvl.ID).Act() == playerArea.Act() && lvl.Offset.X <= p.X && p.X <= lvlMaxX && lvl.Offset.Y <= p.Y && p.Y <= lvlMaxY
 		} else {
 			check = area.ID(lvl.ID).Act() == playerArea.Act() && lvl.Offset.X <= lvlMaxX && p.X <= lvlMaxX && lvl.Offset.Y <= lvlMaxY && p.Y <= lvlMaxY
