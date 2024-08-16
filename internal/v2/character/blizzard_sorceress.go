@@ -99,16 +99,6 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	}
 }
 
-func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		if m, found := d.Monsters.FindOne(id, monsterType); found {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, skipOnImmunities)
-}
-
 func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
@@ -118,6 +108,16 @@ func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 
 		return m.UnitID, true
 	}, nil)
+}
+
+func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		if m, found := d.Monsters.FindOne(id, monsterType); found {
+			return m.UnitID, true
+		}
+
+		return 0, false
+	}, skipOnImmunities)
 }
 
 func (s BlizzardSorceress) BuffSkills() []skill.ID {
