@@ -308,9 +308,9 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 		descs[skID] = sk
 
 		if skID != targetSkill.ID && sk.Desc().Page == targetSkill.Desc().Page {
-			if sk.Desc().ListRow > targetSkill.Desc().ListRow {
+			if sk.Desc().Row > targetSkill.Desc().Row {
 				column++
-			} else if sk.Desc().ListRow == targetSkill.Desc().ListRow && sk.Desc().Column > targetSkill.Desc().Column {
+			} else if sk.Desc().Row == targetSkill.Desc().Row && sk.Desc().Column > targetSkill.Desc().Column {
 				column++
 			}
 		}
