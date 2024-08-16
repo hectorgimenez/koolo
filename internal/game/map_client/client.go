@@ -20,7 +20,7 @@ func GetMapData(seed string, difficulty difficulty.Difficulty) (MapData, error) 
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	stdout, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("error fetching Map Data from Diablo II: LoD 1.13c game: %w", err)
+		return nil, fmt.Errorf("error fetching Map data from Diablo II: LoD 1.13c game: %w", err)
 	}
 
 	stdoutLines := strings.Split(string(stdout), "\r\n")
