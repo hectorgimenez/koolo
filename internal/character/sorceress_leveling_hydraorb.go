@@ -17,11 +17,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-type SorceressLevelingLightning struct {
+type SorceressLevelingHydraOrb struct {
 	BaseCharacter
 }
 
-func (s SorceressLevelingLightning) CheckKeyBindings(d game.Data) []skill.ID {
+func (s SorceressLevelingHydraOrb) CheckKeyBindings(d game.Data) []skill.ID {
 	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
@@ -38,7 +38,7 @@ func (s SorceressLevelingLightning) CheckKeyBindings(d game.Data) []skill.ID {
 	return missingKeybindings
 }
 
-func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
+func (s SorceressLevelingHydraOrb) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
@@ -113,7 +113,7 @@ func (s SorceressLevelingLightning) KillMonsterSequence(monsterSelector func(d g
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s SorceressLevelingLightning) killMonster(npc npc.ID, t data.MonsterType) action.Action {
+func (s SorceressLevelingHydraOrb) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	s.logger.Info("Killing monster", "npc", npc, "type", t)
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
@@ -125,7 +125,7 @@ func (s SorceressLevelingLightning) killMonster(npc npc.ID, t data.MonsterType) 
 	}, nil)
 }
 
-func (s SorceressLevelingLightning) BuffSkills(d game.Data) []skill.ID {
+func (s SorceressLevelingHydraOrb) BuffSkills(d game.Data) []skill.ID {
 	skillsList := make([]skill.ID, 0)
 	if _, found := d.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
@@ -146,11 +146,11 @@ func (s SorceressLevelingLightning) BuffSkills(d game.Data) []skill.ID {
 	return skillsList
 }
 
-func (s SorceressLevelingLightning) PreCTABuffSkills(_ game.Data) []skill.ID {
+func (s SorceressLevelingHydraOrb) PreCTABuffSkills(_ game.Data) []skill.ID {
 	return []skill.ID{}
 }
 
-func (s SorceressLevelingLightning) staticFieldCasts() int {
+func (s SorceressLevelingHydraOrb) staticFieldCasts() int {
 	casts := 6
 	switch s.container.CharacterCfg.Game.Difficulty {
 	case difficulty.Normal:
@@ -160,7 +160,7 @@ func (s SorceressLevelingLightning) staticFieldCasts() int {
 	return casts
 }
 
-func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
+func (s SorceressLevelingHydraOrb) ShouldResetSkills(d game.Data) bool {
 	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 	if lvl.Value >= 25 && d.PlayerUnit.Skills[skill.Nova].Level > 10 {
 		s.logger.Info("Resetting skills: Level 25+ and Nova level > 10")
@@ -170,7 +170,7 @@ func (s SorceressLevelingLightning) ShouldResetSkills(d game.Data) bool {
 	return false
 }
 
-func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
+func (s SorceressLevelingHydraOrb) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
 	level, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 	skillBindings := []skill.ID{
 		skill.TomeOfTownPortal,
@@ -206,7 +206,7 @@ func (s SorceressLevelingLightning) SkillsToBind(d game.Data) (skill.ID, []skill
 	return mainSkill, skillBindings
 }
 
-func (s SorceressLevelingLightning) StatPoints(d game.Data) map[stat.ID]int {
+func (s SorceressLevelingHydraOrb) StatPoints(d game.Data) map[stat.ID]int {
 	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
@@ -226,7 +226,7 @@ func (s SorceressLevelingLightning) StatPoints(d game.Data) map[stat.ID]int {
 	return statPoints
 }
 
-func (s SorceressLevelingLightning) SkillPoints(d game.Data) []skill.ID {
+func (s SorceressLevelingHydraOrb) SkillPoints(d game.Data) []skill.ID {
 	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
 	var skillPoints []skill.ID
 
@@ -356,12 +356,12 @@ func (s SorceressLevelingLightning) SkillPoints(d game.Data) []skill.ID {
 	return skillPoints
 }
 
-func (s SorceressLevelingLightning) KillCountess() action.Action {
+func (s SorceressLevelingHydraOrb) KillCountess() action.Action {
 	s.logger.Info("Starting Countess kill sequence")
 	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (s SorceressLevelingLightning) KillAndariel() action.Action {
+func (s SorceressLevelingHydraOrb) KillAndariel() action.Action {
 	s.logger.Info("Starting Andariel kill sequence")
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
@@ -377,12 +377,12 @@ func (s SorceressLevelingLightning) KillAndariel() action.Action {
 	})
 }
 
-func (s SorceressLevelingLightning) KillSummoner() action.Action {
+func (s SorceressLevelingHydraOrb) KillSummoner() action.Action {
 	s.logger.Info("Starting Summoner kill sequence")
 	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (s SorceressLevelingLightning) KillDuriel() action.Action {
+func (s SorceressLevelingHydraOrb) KillDuriel() action.Action {
 	s.logger.Info("Starting Duriel kill sequence")
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
@@ -398,7 +398,7 @@ func (s SorceressLevelingLightning) KillDuriel() action.Action {
 	})
 }
 
-func (s SorceressLevelingLightning) KillCouncil() action.Action {
+func (s SorceressLevelingHydraOrb) KillCouncil() action.Action {
 	s.logger.Info("Starting Council kill sequence")
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
@@ -425,7 +425,7 @@ func (s SorceressLevelingLightning) KillCouncil() action.Action {
 	}, nil)
 }
 
-func (s SorceressLevelingLightning) KillMephisto() action.Action {
+func (s SorceressLevelingHydraOrb) KillMephisto() action.Action {
 	return action.NewChain(func(d game.Data) []action.Action {
 		s.logger.Info("Starting Mephisto kill sequence")
 		return []action.Action{
@@ -441,7 +441,7 @@ func (s SorceressLevelingLightning) KillMephisto() action.Action {
 	})
 }
 
-func (s SorceressLevelingLightning) KillIzual() action.Action {
+func (s SorceressLevelingHydraOrb) KillIzual() action.Action {
 	s.logger.Info("Starting Izual kill sequence")
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
@@ -463,7 +463,7 @@ func (s SorceressLevelingLightning) KillIzual() action.Action {
 	})
 }
 
-func (s SorceressLevelingLightning) KillDiablo() action.Action {
+func (s SorceressLevelingHydraOrb) KillDiablo() action.Action {
 	timeout := time.Second * 20
 	startTime := time.Time{}
 	diabloFound := false
@@ -504,17 +504,17 @@ func (s SorceressLevelingLightning) KillDiablo() action.Action {
 	}, action.RepeatUntilNoSteps())
 }
 
-func (s SorceressLevelingLightning) KillPindle(skipOnImmunities []stat.Resist) action.Action {
+func (s SorceressLevelingHydraOrb) KillPindle(skipOnImmunities []stat.Resist) action.Action {
 	s.logger.Info("Starting Pindleskin kill sequence")
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (s SorceressLevelingLightning) KillNihlathak() action.Action {
+func (s SorceressLevelingHydraOrb) KillNihlathak() action.Action {
 	s.logger.Info("Starting Nihlathak kill sequence")
 	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (s SorceressLevelingLightning) KillAncients() action.Action {
+func (s SorceressLevelingHydraOrb) KillAncients() action.Action {
 	s.logger.Info("Starting Ancients kill sequence")
 	return action.NewChain(func(d game.Data) (actions []action.Action) {
 		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
@@ -537,7 +537,7 @@ func (s SorceressLevelingLightning) KillAncients() action.Action {
 	})
 }
 
-func (s SorceressLevelingLightning) KillBaal() action.Action {
+func (s SorceressLevelingHydraOrb) KillBaal() action.Action {
 	s.logger.Info("Starting Baal kill sequence")
 	return action.NewChain(func(d game.Data) []action.Action {
 		return []action.Action{
