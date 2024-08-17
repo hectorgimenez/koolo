@@ -29,8 +29,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 
 	for _, run := range cfg.Game.Runs {
 		switch run {
-		//case config.CountessRun:
-		//runs = append(runs, Countess{baseRun})
+		case config.CountessRun:
+			runs = append(runs, NewCountess())
 		case config.AndarielRun:
 			runs = append(runs, NewAndariel())
 		//case config.SummonerRun:
@@ -52,26 +52,26 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		//})
 		case config.PindleskinRun:
 			runs = append(runs, NewPindleskin())
-			//case config.NihlathakRun:
-			//runs = append(runs, Nihlathak{baseRun})
-			//case config.AncientTunnelsRun:
-			//	runs = append(runs, AncientTunnels{baseRun})
-			//case config.MausoleumRun:
-			//	runs = append(runs, Mausoleum{baseRun})
-			//case config.PitRun:
-			//	runs = append(runs, Pit{baseRun})
-			//case config.StonyTombRun:
-			//	runs = append(runs, StonyTomb{baseRun})
-			//case config.ArachnidLairRun:
-			//	runs = append(runs, ArachnidLair{baseRun})
-			//case config.TristramRun:
-			//	runs = append(runs, Tristram{baseRun})
-			//case config.LowerKurastRun:
-			//	runs = append(runs, LowerKurast{baseRun})
-			//case config.LowerKurastChestRun:
-			//	runs = append(runs, LowerKurastChest{baseRun})
-			//case config.BaalRun:
-			//	runs = append(runs, Baal{baseRun})
+		//case config.NihlathakRun:
+		//runs = append(runs, Nihlathak{baseRun})
+		case config.AncientTunnelsRun:
+			runs = append(runs, NewAncientTunnels())
+		//case config.MausoleumRun:
+		//	runs = append(runs, Mausoleum{baseRun})
+		//case config.PitRun:
+		//	runs = append(runs, Pit{baseRun})
+		//case config.StonyTombRun:
+		//	runs = append(runs, StonyTomb{baseRun})
+		case config.ArachnidLairRun:
+			runs = append(runs, NewArachnidLair())
+		//case config.TristramRun:
+		//	runs = append(runs, Tristram{baseRun})
+		//case config.LowerKurastRun:
+		//	runs = append(runs, LowerKurast{baseRun})
+		//case config.LowerKurastChestRun:
+		//	runs = append(runs, LowerKurastChest{baseRun})
+		case config.BaalRun:
+			runs = append(runs, NewBaal())
 			//case config.TalRashaTombsRun:
 			//	runs = append(runs, TalRashaTombs{baseRun})
 			//case config.LevelingRun:

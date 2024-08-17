@@ -3,10 +3,11 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/context"
 )
 
 func PreRun(firstRun bool) error {
-	//ctx := context.Get()
+	ctx := context.Get()
 
 	DropMouseItem()
 	step.SetSkill(skill.Vigor)
@@ -16,7 +17,7 @@ func PreRun(firstRun bool) error {
 		Stash(firstRun)
 	}
 
-	//UpdateQuestLog()
+	UpdateQuestLog()
 	IdentifyAll(firstRun)
 	VendorRefill(false, true)
 	Stash(firstRun)
@@ -24,25 +25,25 @@ func PreRun(firstRun bool) error {
 	Stash(false)
 	CubeRecipes()
 
-	//if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
-	//	ResetStats()
-	//	EnsureStatPoints()
-	//	EnsureSkillPoints()
-	//}
-	//
-	//if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
-	//	EnsureSkillBindings()
-	//}
+	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+		ResetStats()
+		EnsureStatPoints()
+		EnsureSkillPoints()
+	}
+
+	if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+		EnsureSkillBindings()
+	}
 
 	HealAtNPC()
 	ReviveMerc()
-	//HireMerc()
+	HireMerc()
 
 	return Repair()
 }
 
 func InRunReturnTownRoutine() error {
-	//ctx := context.Get()
+	ctx := context.Get()
 
 	ReturnTown()
 	step.SetSkill(skill.Vigor)
@@ -54,18 +55,18 @@ func InRunReturnTownRoutine() error {
 	Stash(false)
 	CubeRecipes()
 
-	//if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
-	//	EnsureStatPoints()
-	//	EnsureSkillPoints()
-	//}
-	//
-	//if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
-	//	EnsureSkillBindings()
-	//}
+	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+		EnsureStatPoints()
+		EnsureSkillPoints()
+	}
+
+	if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+		EnsureSkillBindings()
+	}
 
 	HealAtNPC()
 	ReviveMerc()
-	//HireMerc()
+	HireMerc()
 	Repair()
 
 	return UsePortalInTown()

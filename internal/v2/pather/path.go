@@ -39,3 +39,11 @@ func (p Pather) Intersects(d game.Data, position data.Position, padding int) boo
 
 	return false
 }
+
+func (p Pather) To() data.Position {
+	if len(p) == 0 {
+		return data.Position{}
+	}
+
+	return data.Position{X: p[len(p)-1].(*Tile).X, Y: p[len(p)-1].(*Tile).Y}
+}

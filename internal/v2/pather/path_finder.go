@@ -26,8 +26,7 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 	return &PathFinder{gr: gr, hid: hid, cfg: cfg, data: data}
 }
 
-// The GetPath method definition, combined and corrected
-func (pf *PathFinder) GetPath(to data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
+func (pf *PathFinder) GetPathFrom(from, to data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
 	outsideCurrentLevel := outsideBoundary(pf.data, to)
 	collisionGrid := pf.data.CollisionGrid
 
@@ -98,7 +97,7 @@ func (pf *PathFinder) GetPath(to data.Position, blacklistedCoords ...[2]int) (pa
 	}
 
 	// Convert to relative coordinates (Current player position)
-	fromX, fromY := relativePosition(pf.data, pf.data.PlayerUnit.Position, collisionGridOffset)
+	fromX, fromY := relativePosition(pf.data, from, collisionGridOffset)
 
 	// Convert to relative coordinates (Target position)
 	toX, toY := relativePosition(pf.data, to, collisionGridOffset)
@@ -162,6 +161,10 @@ func (pf *PathFinder) GetPath(to data.Position, blacklistedCoords ...[2]int) (pa
 	return p, len(p), found
 }
 
+func (pf *PathFinder) GetPath(to data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
+	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to, blacklistedCoords...)
+}
+
 func ensureValueInCG(val, cgSize int) int {
 	if val < 0 {
 		return 0
@@ -175,6 +178,10 @@ func ensureValueInCG(val, cgSize int) int {
 }
 
 func (pf *PathFinder) GetClosestWalkablePath(dest data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
+	return pf.GetClosestWalkablePathFrom(pf.data.PlayerUnit.Position, dest, blacklistedCoords...)
+}
+
+func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position, blacklistedCoords ...[2]int) (path Pather, distance int, found bool) {
 	if IsWalkable(dest, pf.data.AreaOrigin, pf.data.CollisionGrid) || outsideBoundary(pf.data, dest) {
 		path, distance, found = pf.GetPath(dest, blacklistedCoords...)
 		if found {
@@ -193,7 +200,7 @@ func (pf *PathFinder) GetClosestWalkablePath(dest data.Position, blacklistedCoor
 					cgY := dest.Y - pf.data.AreaOrigin.Y + j
 					cgX := dest.X - pf.data.AreaOrigin.X + i
 					if cgX > 0 && cgY > 0 && len(pf.data.CollisionGrid) > cgY && len(pf.data.CollisionGrid[cgY]) > cgX && pf.data.CollisionGrid[cgY][cgX] {
-						return pf.GetPath(data.Position{
+						return pf.GetPathFrom(from, data.Position{
 							X: dest.X + i,
 							Y: dest.Y + j,
 						}, blacklistedCoords...)
@@ -235,16 +242,7 @@ func (pf *PathFinder) MoveCharacter(x, y int) {
 }
 
 func (pf *PathFinder) GameCoordsToScreenCords(destinationX, destinationY int) (int, int) {
-	// Calculate diff between current player position and destination
-	diffX := destinationX - pf.data.PlayerUnit.Position.X
-	diffY := destinationY - pf.data.PlayerUnit.Position.Y
-
-	// Transform cartesian movement (World) to isometric (screen)
-	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	screenX := int((float32(diffX-diffY) * 19.8) + float32(pf.gr.GameAreaSizeX/2))
-	screenY := int((float32(diffX+diffY) * 9.9) + float32(pf.gr.GameAreaSizeY/2))
-
-	return screenX, screenY
+	return pf.gameCoordsToScreenCords(pf.data.PlayerUnit.Position.X, pf.data.PlayerUnit.Position.Y, destinationX, destinationY)
 }
 
 func (pf *PathFinder) gameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (int, int) {
@@ -272,6 +270,57 @@ func (pf *PathFinder) RandomMovement(d game.Data) {
 
 func (pf *PathFinder) DistanceFromMe(p data.Position) int {
 	return DistanceFromPoint(pf.data.PlayerUnit.Position, p)
+}
+
+func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
+	distanceMatrix := make(map[data.Room]map[data.Room]int)
+
+	for _, room1 := range pf.data.Rooms {
+		distanceMatrix[room1] = make(map[data.Room]int)
+		for _, room2 := range pf.data.Rooms {
+			if room1 != room2 {
+				_, distance, found := pf.GetClosestWalkablePathFrom(room1.GetCenter(), room2.GetCenter())
+				if found {
+					distanceMatrix[room1][room2] = distance
+				} else {
+					distanceMatrix[room1][room2] = math.MaxInt
+				}
+			} else {
+				distanceMatrix[room1][room2] = 0
+			}
+		}
+	}
+
+	currentRoom := data.Room{}
+	for _, r := range pf.data.Rooms {
+		if r.IsInside(pf.data.PlayerUnit.Position) {
+			currentRoom = r
+		}
+	}
+
+	visited := make(map[data.Room]bool)
+	order := []data.Room{currentRoom}
+	visited[currentRoom] = true
+
+	for len(order) < len(pf.data.Rooms) {
+		nextRoom := data.Room{}
+		minDistance := math.MaxInt
+
+		// Find the nearest unvisited room
+		for _, room := range pf.data.Rooms {
+			if !visited[room] && distanceMatrix[currentRoom][room] < minDistance {
+				nextRoom = room
+				minDistance = distanceMatrix[currentRoom][room]
+			}
+		}
+
+		// Add the next room to the order of visit
+		order = append(order, nextRoom)
+		visited[nextRoom] = true
+		currentRoom = nextRoom
+	}
+
+	return order
 }
 
 func relativePosition(d *game.Data, p data.Position, cgOffset data.Position) (int, int) {
