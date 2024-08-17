@@ -2,7 +2,8 @@ window.onload = function () {
     let enabled_runs_ul = document.getElementById('enabled_runs')
     let disabled_runs_ul = document.getElementById('disabled_runs')
     let searchInput = document.getElementById('search-disabled-runs');
-
+    let clearButton = document.getElementById('clear-enabled-runs');
+    
     new Sortable(enabled_runs_ul, {
         group: 'runs',
         animation: 150,
