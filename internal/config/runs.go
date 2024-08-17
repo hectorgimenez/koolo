@@ -10,7 +10,7 @@ const (
 	SummonerRun         Run = "summoner"
 	DurielRun           Run = "duriel"
 	MephistoRun         Run = "mephisto"
-	TravincalRun        Run = "travincal"
+	CouncilRun          Run = "council"
 	EldritchRun         Run = "eldritch"
 	PindleskinRun       Run = "pindleskin"
 	NihlathakRun        Run = "nihlathak"
@@ -40,7 +40,7 @@ var AvailableRuns = map[Run]interface{}{
 	SummonerRun:         nil,
 	DurielRun:           nil,
 	MephistoRun:         nil,
-	TravincalRun:        nil,
+	CouncilRun:          nil,
 	EldritchRun:         nil,
 	PindleskinRun:       nil,
 	NihlathakRun:        nil,
