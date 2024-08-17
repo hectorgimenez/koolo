@@ -47,6 +47,12 @@ type Context struct {
 	HealthManager     *health.Manager
 	Char              Character
 	LastBuffAt        time.Time
+	ContextDebug      *ContextDebug
+}
+
+type ContextDebug struct {
+	LastAction string
+	LastStep   string
 }
 
 func NewContext(name string) *Status {
@@ -54,6 +60,7 @@ func NewContext(name string) *Status {
 		Name:              name,
 		Data:              &game.Data{},
 		ExecutionPriority: PriorityNormal,
+		ContextDebug:      &ContextDebug{},
 	}
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 

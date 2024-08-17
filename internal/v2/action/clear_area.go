@@ -11,6 +11,7 @@ import (
 
 func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "ClearAreaAroundPlayer"
 
 	originalPosition := data.Position{}
 	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {

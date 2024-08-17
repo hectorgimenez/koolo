@@ -70,6 +70,7 @@ func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts 
 
 func attack(settings attackSettings) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "Attack"
 
 	numOfAttacksRemaining := settings.numOfAttacks
 	aoe := settings.target == 0
@@ -135,6 +136,7 @@ func attack(settings attackSettings) error {
 }
 func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) bool {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "ensureEnemyIsInRange"
 
 	path, distance, found := ctx.PathFinder.GetPath(monster.Position)
 

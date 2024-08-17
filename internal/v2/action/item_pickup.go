@@ -18,6 +18,8 @@ import (
 
 func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "ItemPickup"
+
 	var itemBeingPickedUp data.UnitID
 
 	for itemsToPickup := GetItemsToPickup(maxDistance); len(itemsToPickup) > 0; itemsToPickup = GetItemsToPickup(maxDistance) {
@@ -68,6 +70,7 @@ func ItemPickup(maxDistance int) error {
 
 func GetItemsToPickup(maxDistance int) []data.Item {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "GetItemsToPickup"
 
 	missingHealingPotions := ctx.BeltManager.GetMissingCount(data.HealingPotion)
 	missingManaPotions := ctx.BeltManager.GetMissingCount(data.ManaPotion)
@@ -118,6 +121,8 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 
 func shouldBePickedUp(i data.Item) bool {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "shouldBePickedUp"
+
 	if i.IsRuneword {
 		return true
 	}

@@ -10,6 +10,8 @@ import (
 
 func CloseAllMenus() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "CloseAllMenus"
+
 	attempts := 0
 	for ctx.Data.OpenMenus.IsMenuOpen() {
 		// Pause the execution if the priority is not the same as the execution priority

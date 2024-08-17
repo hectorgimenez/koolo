@@ -21,6 +21,7 @@ import (
 
 func Gamble() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "Gamble"
 
 	stashedGold, _ := ctx.Data.PlayerUnit.FindStat(stat.StashGold, 0)
 	if ctx.CharacterCfg.Gambling.Enabled && stashedGold.Value >= 2500000 {
@@ -56,6 +57,7 @@ func Gamble() error {
 
 func gambleItems() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "gambleItems"
 
 	var itemBought data.Item
 	currentIdx := 0

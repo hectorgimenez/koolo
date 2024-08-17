@@ -7,6 +7,8 @@ import (
 
 func SetSkill(id skill.ID) {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "SetSkill"
+
 	if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(id); found {
 		if ctx.Data.PlayerUnit.RightSkill != id {
 			ctx.HID.PressKeyBinding(kb)
