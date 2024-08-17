@@ -48,12 +48,12 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		return Trapsin{BaseCharacter: bc}, nil
 	case "mosaic":
 		return MosaicSin{BaseCharacter: bc}, nil
-		//case "winddruid":
-		//	return WindDruid{BaseCharacter: bc}, nil
+	case "winddruid":
+		return WindDruid{BaseCharacter: bc}, nil
 		//case "javazon":
 		//	return Javazon{BaseCharacter: bc}, nil
-		//case "berserker":
-		//	return Berserker{BaseCharacter: bc}, nil
+	case "berserker":
+		return Berserker{BaseCharacter: bc}, nil
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", cfg.Character.Class)
