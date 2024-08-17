@@ -59,3 +59,21 @@ function clearEnabledRuns() {
     enabledRunsUl.innerHTML = '';
     updateEnabledRunsHiddenField();
 }
+
+function checkLevelingProfile() {
+    const levelingProfiles = [
+        "sorceress_leveling_hydraorb",
+        "sorceress_leveling_lightning",
+        "sorceress_leveling",
+        "paladin_leveling"
+    ];
+    const characterClass = document.getElementById('characterClass').value;
+
+    if (levelingProfiles.includes(characterClass)) {
+        const confirmation = confirm("This profile requires the leveling run profile, would you like to clear enabled run profiles and select the leveling profile?");
+        if (confirmation) {
+            clearEnabledRuns();
+            selectLevelingProfile();
+        }
+    }
+}

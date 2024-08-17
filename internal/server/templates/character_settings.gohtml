@@ -164,7 +164,7 @@
             <fieldset class="grid">
                 <label>
                     Class
-                    <select name="characterClass">
+                    <select name="characterClass" onchange="checkLevelingProfile()">
                         <option value="sorceress" {{ if eq .Config.Character.Class
                         "sorceress" }}selected{{ end }}>Sorc (Blizzard)
                         </option>
