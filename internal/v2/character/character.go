@@ -50,8 +50,8 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		return MosaicSin{BaseCharacter: bc}, nil
 	case "winddruid":
 		return WindDruid{BaseCharacter: bc}, nil
-		//case "javazon":
-		//	return Javazon{BaseCharacter: bc}, nil
+	case "javazon":
+		return Javazon{BaseCharacter: bc}, nil
 	case "berserker":
 		return Berserker{BaseCharacter: bc}, nil
 	}
