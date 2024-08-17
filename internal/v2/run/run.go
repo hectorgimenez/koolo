@@ -72,14 +72,14 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		//	runs = append(runs, LowerKurastChest{baseRun})
 		case config.BaalRun:
 			runs = append(runs, NewBaal())
-			//case config.TalRashaTombsRun:
-			//	runs = append(runs, TalRashaTombs{baseRun})
-			//case config.LevelingRun:
-			//	runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
-			//case config.QuestsRun:
-			//	runs = append(runs, Quests{baseRun})
-			//case config.CowsRun:
-			//	runs = append(runs, Cows{baseRun})
+		//case config.TalRashaTombsRun:
+		//	runs = append(runs, TalRashaTombs{baseRun})
+		//case config.LevelingRun:
+		//	runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
+		//case config.QuestsRun:
+		//	runs = append(runs, Quests{baseRun})
+		case config.CowsRun:
+			runs = append(runs, NewCows())
 			//case config.ThreshsocketRun:
 			//	runs = append(runs, Threshsocket{baseRun})
 			//case config.DrifterCavernRun:
