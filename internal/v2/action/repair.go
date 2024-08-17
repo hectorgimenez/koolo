@@ -18,6 +18,7 @@ import (
 
 func Repair() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "Repair"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
 		// Get the durability stats
@@ -69,6 +70,7 @@ func Repair() error {
 
 func RepairRequired() bool {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "RepairRequired"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
 		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)

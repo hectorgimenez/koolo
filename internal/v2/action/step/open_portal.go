@@ -13,6 +13,8 @@ import (
 
 func OpenPortal() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "OpenPortal"
+
 	lastRun := time.Time{}
 	for {
 		// Pause the execution if the priority is not the same as the execution priority

@@ -8,6 +8,7 @@ import (
 
 func RecoverCorpse() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "RecoverCorpse"
 
 	if ctx.Data.Corpse.Found {
 		ctx.Logger.Info("Corpse found, let's recover our stuff...")

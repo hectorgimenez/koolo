@@ -24,6 +24,7 @@ const (
 
 func Stash(forceStash bool) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "Stash"
 
 	ctx.Logger.Debug("Checking for items to stash...")
 	if !isStashingRequired(forceStash) {
@@ -56,6 +57,7 @@ func Stash(forceStash bool) error {
 
 func orderInventoryPotions() {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "orderInventoryPotions"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
@@ -73,6 +75,7 @@ func orderInventoryPotions() {
 
 func isStashingRequired(firstRun bool) bool {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "isStashingRequired"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		stashIt, _, _ := shouldStashIt(i, firstRun)
@@ -97,6 +100,7 @@ func isStashingRequired(firstRun bool) bool {
 
 func stashGold() {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "stashGold"
 
 	if ctx.Data.Inventory.Gold == 0 {
 		return
@@ -122,6 +126,7 @@ func stashGold() {
 
 func stashInventory(firstRun bool) {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "stashInventory"
 
 	currentTab := 1
 	if ctx.CharacterCfg.Character.StashToShared {
@@ -165,6 +170,7 @@ func stashInventory(firstRun bool) {
 
 func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "shouldStashIt"
 
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); isLevelingChar && i.IsFromQuest() {
@@ -203,6 +209,7 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 
 func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) bool {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "stashItemAction"
 
 	screenPos := ui.GetScreenCoordsForItem(i)
 	ctx.HID.MovePointer(screenPos.X, screenPos.Y)
@@ -222,6 +229,7 @@ func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) b
 
 func clickStashGoldBtn() {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "clickStashGoldBtn"
 
 	helper.Sleep(170)
 	if ctx.GameReader.LegacyGraphics() {
@@ -237,6 +245,7 @@ func clickStashGoldBtn() {
 
 func SwitchTab(tab int) {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "SwitchTab"
 
 	if ctx.GameReader.LegacyGraphics() {
 		x := ui.SwitchStashTabBtnXClassic
