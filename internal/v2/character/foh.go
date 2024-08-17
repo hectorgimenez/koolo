@@ -27,6 +27,7 @@ type Foh struct {
 }
 
 func (s Foh) CheckKeyBindings() []skill.ID {
+
 	requireKeybindings := []skill.ID{skill.Conviction, skill.HolyShield, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
@@ -236,7 +237,7 @@ func (s Foh) KillDiablo() error {
 			}
 
 			// Keep waiting...
-			time.Sleep(100)
+			time.Sleep(200)
 			continue
 		}
 

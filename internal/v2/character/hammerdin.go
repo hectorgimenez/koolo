@@ -192,7 +192,7 @@ func (s Hammerdin) KillDiablo() error {
 			}
 
 			// Keep waiting...
-			time.Sleep(100)
+			time.Sleep(200)
 			continue
 		}
 
