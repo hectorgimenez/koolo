@@ -11,7 +11,7 @@ import (
 
 func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ClearLevel"
+	ctx.ContextDebug.LastAction = "ClearCurrentLevel"
 
 	for _, r := range ctx.PathFinder.OptimizeRoomsTraverseOrder() {
 		err := clearRoom(r, filter)
@@ -46,6 +46,7 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 
 func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "clearRoom"
 
 	path, _, found := ctx.PathFinder.GetClosestWalkablePath(room.GetCenter())
 	if !found {
@@ -92,6 +93,7 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 
 func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "getMonstersInRoom"
 
 	monstersInRoom := make([]data.Monster, 0)
 	for _, m := range ctx.Data.Monsters.Enemies(filter) {
