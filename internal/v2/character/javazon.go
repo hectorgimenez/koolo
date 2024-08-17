@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -68,6 +69,7 @@ func (s Javazon) KillMonsterSequence(
 
 		monster, found := s.data.Monsters.FindByID(id)
 		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
@@ -84,14 +86,14 @@ func (s Javazon) KillMonsterSequence(
 			}
 		}
 
-		completedAttackLoops++
-		previousUnitID = int(id)
-
 		if closeMonsters >= 3 {
 			step.SecondaryAttack(skill.LightningFury, id, numOfAttacks, step.Distance(minJavazonDistance, maxJavazonDistance))
 		} else {
 			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1))
 		}
+
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 

@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -71,17 +72,19 @@ func (s WindDruid) KillMonsterSequence(
 			return nil
 		}
 
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		// Add a random movement, maybe tornado is not hitting the target
 		if previousUnitID == int(id) {
-			monster, found := s.data.Monsters.FindByID(id)
-			if found && monster.Stats[stat.Life] > 0 {
+			if monster.Stats[stat.Life] > 0 {
 				s.pf.RandomMovement(*s.data)
 			}
 			return nil
 		}
-
-		completedAttackLoops++
-		previousUnitID = int(id)
 
 		step.PrimaryAttack(
 			id,
@@ -89,6 +92,9 @@ func (s WindDruid) KillMonsterSequence(
 			true,
 			step.Distance(druMinDistance, druMaxDistance),
 		)
+
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 

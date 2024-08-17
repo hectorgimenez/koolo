@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -65,15 +66,21 @@ func (s Trapsin) KillMonsterSequence(
 			return nil
 		}
 
-		opts := step.Distance(minDistance, maxDistance)
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
 
-		completedAttackLoops++
-		previousUnitID = int(id)
+		opts := step.Distance(minDistance, maxDistance)
 
 		helper.Sleep(100)
 		step.SecondaryAttack(skill.LightningSentry, id, 3, opts)
 		step.SecondaryAttack(skill.DeathSentry, id, 2, opts)
 		step.PrimaryAttack(id, 2, true, opts)
+
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 

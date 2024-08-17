@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -75,6 +76,12 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		opts := step.Distance(sorceressMinDistance, sorceressMaxDistance)
 
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
@@ -88,14 +95,14 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			}
 		}
 
-		completedAttackLoops++
-		previousUnitID = int(id)
-
 		if s.data.PlayerUnit.States.HasState(state.Cooldown) {
 			step.PrimaryAttack(id, 2, true, opts)
 		}
 
 		step.SecondaryAttack(skill.Blizzard, id, 1, opts)
+
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 

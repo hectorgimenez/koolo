@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -74,6 +75,12 @@ func (s LightningSorceress) KillMonsterSequence(
 			return nil
 		}
 
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		opts := step.Distance(lightningSorceressMinDistance, lightningSorceressMaxDistance)
 
 		if s.shouldCastStatic() {
@@ -98,10 +105,10 @@ func (s LightningSorceress) KillMonsterSequence(
 			opts = step.Distance(0, 1)
 		}
 
+		step.SecondaryAttack(skill.Nova, id, 5, opts)
+
 		completedAttackLoops++
 		previousUnitID = int(id)
-
-		step.SecondaryAttack(skill.Nova, id, 5, opts)
 	}
 }
 

@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -63,17 +64,19 @@ func (s Hammerdin) KillMonsterSequence(
 			return nil
 		}
 
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		// Add a random movement, maybe hammer is not hitting the target
 		if previousUnitID == int(id) {
-			monster, found := s.data.Monsters.FindByID(id)
-			if found && monster.Stats[stat.Life] > 0 {
+			if monster.Stats[stat.Life] > 0 {
 				s.pf.RandomMovement(*s.data)
 			}
 			return nil
 		}
-
-		completedAttackLoops++
-		previousUnitID = int(id)
 
 		step.PrimaryAttack(
 			id,
@@ -82,6 +85,9 @@ func (s Hammerdin) KillMonsterSequence(
 			step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 			step.EnsureAura(skill.Concentration),
 		)
+
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 

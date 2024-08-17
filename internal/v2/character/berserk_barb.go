@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -80,13 +81,17 @@ func (s Berserker) KillMonsterSequence(
 			return nil
 		}
 
-		completedAttackLoops++
-		previousUnitID = int(id)
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
 
-		monster, _ := s.data.Monsters.FindByID(id)
 		step.MoveTo(monster.Position)
 		step.PrimaryAttack(id, 1, false, step.Distance(1, maxRange))
 
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 

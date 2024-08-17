@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -43,6 +44,16 @@ func (s MosaicSin) KillMonsterSequence(
 	for {
 		id, found := monsterSelector(*s.data)
 		if !found {
+			return nil
+		}
+
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
+		if !s.preBattleChecks(id, skipOnImmunities) {
 			return nil
 		}
 
@@ -108,8 +119,8 @@ func (s MosaicSin) KillMonsterSequence(
 }
 
 func (s MosaicSin) MobAlive(mob data.UnitID, d game.Data) bool {
-	_, mFround := s.data.Monsters.FindByID(mob)
-	return mFround
+	monster, found := s.data.Monsters.FindByID(mob)
+	return found && monster.Stats[stat.Life] > 0
 }
 
 func (s MosaicSin) BuffSkills() []skill.ID {

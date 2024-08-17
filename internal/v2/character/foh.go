@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -66,6 +67,12 @@ func (s Foh) KillMonsterSequence(
 			return nil
 		}
 
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		if s.data.PlayerUnit.LeftSkill != skill.FistOfTheHeavens {
 			fohKey, fohFound := s.data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 			if fohFound {
@@ -77,9 +84,6 @@ func (s Foh) KillMonsterSequence(
 			}
 		}
 
-		completedAttackLoops++
-		previousUnitID = int(id)
-
 		step.PrimaryAttack(
 			id,
 			3,
@@ -87,6 +91,9 @@ func (s Foh) KillMonsterSequence(
 			step.Distance(fohMinDistance, fohMaxDistance),
 			step.EnsureAura(skill.Conviction),
 		)
+
+		completedAttackLoops++
+		previousUnitID = int(id)
 	}
 }
 
