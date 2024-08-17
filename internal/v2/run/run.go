@@ -35,8 +35,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewAndariel())
 		//case config.SummonerRun:
 		//runs = append(runs, Summoner{baseRun})
-		//case config.DurielRun:
-		//runs = append(runs, Duriel{baseRun})
+		case config.DurielRun:
+			runs = append(runs, NewDuriel())
 		//case config.MephistoRun:
 		//runs = append(runs, Mephisto{baseRun})
 		case config.TravincalRun:
@@ -46,10 +46,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		//	baseRun: baseRun,
 		//	bm:      f.bm,
 		//})
-		//case config.EldritchRun:
-		//runs = append(runs, Eldritch{
-		//	baseRun: baseRun,
-		//})
+		case config.EldritchRun:
+			runs = append(runs, NewEldritch())
 		case config.PindleskinRun:
 			runs = append(runs, NewPindleskin())
 		//case config.NihlathakRun:
@@ -82,8 +80,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewCows())
 			//case config.ThreshsocketRun:
 			//	runs = append(runs, Threshsocket{baseRun})
-			//case config.DrifterCavernRun:
-			//	runs = append(runs, DrifterCavern{baseRun})
+		case config.DrifterCavernRun:
+			runs = append(runs, NewDriverCavern())
 			//case config.EnduguRun:
 			//	runs = append(runs, Endugu{baseRun})
 		}
