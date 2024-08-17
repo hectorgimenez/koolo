@@ -13,6 +13,7 @@ import (
 
 func SwitchToLegacyMode() {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "SwitchToLegacyMode"
 
 	if ctx.CharacterCfg.ClassicMode && !ctx.Data.LegacyGraphics {
 		ctx.Logger.Debug("Switching to legacy mode...")

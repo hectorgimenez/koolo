@@ -16,6 +16,8 @@ import (
 
 func IdentifyAll(skipIdentify bool) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "IdentifyAll"
+
 	items := itemsToIdentify()
 
 	ctx.Logger.Debug("Checking for items to identify...")
@@ -51,6 +53,7 @@ func IdentifyAll(skipIdentify bool) error {
 
 func itemsToIdentify() (items []data.Item) {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "itemsToIdentify"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {

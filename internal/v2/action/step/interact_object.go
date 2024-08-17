@@ -27,6 +27,8 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	}
 
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "InteractObject"
+
 	for !isCompletedFn() {
 		ctx.RefreshGameData()
 

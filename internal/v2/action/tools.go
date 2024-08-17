@@ -9,6 +9,8 @@ import (
 
 func OpenTPIfLeader() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "OpenTPIfLeader"
+
 	isLeader := ctx.CharacterCfg.Companion.Enabled && ctx.CharacterCfg.Companion.Leader
 
 	if isLeader {
@@ -28,6 +30,7 @@ func isMonsterSealElite(monster data.Monster) bool {
 
 func PostRun(isLastRun bool) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "PostRun"
 
 	// For companions, we don't need them to do anything, just follow the leader
 	if ctx.CharacterCfg.Companion.Enabled && !ctx.CharacterCfg.Companion.Leader {

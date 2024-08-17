@@ -158,6 +158,7 @@ func EnsureSkillPoints() error {
 
 func UpdateQuestLog() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "UpdateQuestLog"
 
 	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); !isLevelingChar {
 		return nil
@@ -170,8 +171,10 @@ func UpdateQuestLog() error {
 }
 func getAvailableSkillKB() []data.KeyBinding {
 	availableSkillKB := make([]data.KeyBinding, 0)
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "getAvailableSkillKB"
 
-	for _, sb := range context.Get().Data.KeyBindings.Skills {
+	for _, sb := range ctx.Data.KeyBindings.Skills {
 		if sb.SkillID == -1 && (sb.Key1[0] != 0 && sb.Key1[0] != 255) || (sb.Key2[0] != 0 && sb.Key2[0] != 255) {
 			availableSkillKB = append(availableSkillKB, sb.KeyBinding)
 		}
@@ -182,6 +185,7 @@ func getAvailableSkillKB() []data.KeyBinding {
 
 func EnsureSkillBindings() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "EnsureSkillBindings"
 
 	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if !isLevelingChar {
@@ -239,6 +243,7 @@ func EnsureSkillBindings() error {
 
 func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position, bool) {
 	d := context.Get().Data
+
 	var scrolls = []skill.ID{
 		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
 	}
@@ -329,6 +334,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 
 func HireMerc() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "HireMerc"
 
 	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ctx.CharacterCfg.Character.UseMerc {
@@ -353,6 +359,7 @@ func HireMerc() error {
 
 func ResetStats() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "ResetStats"
 
 	ch, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ch.ShouldResetSkills() {
@@ -378,6 +385,7 @@ func ResetStats() error {
 
 func WaitForAllMembersWhenLeveling() error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "WaitForAllMembersWhenLeveling"
 
 	for {
 		_, isLeveling := ctx.Char.(context.LevelingCharacter)

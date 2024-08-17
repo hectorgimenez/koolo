@@ -18,6 +18,8 @@ import (
 
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "MoveToArea"
+
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
 		ctx.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
@@ -104,6 +106,7 @@ func MoveToCoords(to data.Position) error {
 
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "MoveTo"
 
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}

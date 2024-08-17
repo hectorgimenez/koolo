@@ -13,6 +13,8 @@ import (
 
 func MoveTo(dest data.Position) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "MoveTo"
+
 	timeout := time.Second * 30
 	stopAtDistance := 7
 

@@ -14,6 +14,8 @@ import (
 
 func InteractNPC(npc npc.ID) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "InteractNPC"
+
 	pos, found := getNPCPosition(npc, ctx.Data)
 	if !found {
 		return fmt.Errorf("npc with ID %d not found", npc)
@@ -36,6 +38,7 @@ func InteractNPC(npc npc.ID) error {
 
 func InteractObject(o data.Object, isCompletedFn func() bool) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "InteractObject"
 
 	pos := o.Position
 	if ctx.Data.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
@@ -52,6 +55,8 @@ func InteractObject(o data.Object, isCompletedFn func() bool) error {
 
 func InteractObjectByID(id data.UnitID, isCompletedFn func() bool) error {
 	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "InteractObjectByID"
+
 	o, found := ctx.Data.Objects.FindByID(id)
 	if !found {
 		return fmt.Errorf("object with ID %d not found", id)
