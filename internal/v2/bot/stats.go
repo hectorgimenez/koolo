@@ -1,11 +1,8 @@
 package bot
 
 import (
-	"bufio"
 	"context"
-	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 	"time"
 
@@ -88,67 +85,6 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 	}
 
 	return nil
-}
-
-func (h *StatsHandler) updateGameStatsFile() {
-	if _, err := os.Stat("stats"); os.IsNotExist(err) {
-		err = os.MkdirAll("stats", os.ModePerm)
-		if err != nil {
-			h.logger.Error("Error creating stats directory", slog.Any("error", err))
-			return
-		}
-	}
-
-	fileName := fmt.Sprintf("stats/stats_%s_%s.txt", h.name, h.stats.StartedAt.Format("2006-02-01-15_04_05"))
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		h.logger.Error("Error writing game stats", slog.Any("error", err))
-		return
-	}
-	w := bufio.NewWriter(f)
-
-	//for _, game := range h.stats.Games {
-	//	var items = ""
-	//	for _, item := range rs.ItemsFound {
-	//		items += fmt.Sprintf("%s [%d]\n", item.Name, item.Quality)
-	//	}
-	//	avgRunTime := rs.RunningTime.Seconds() / float64(rs.Errors+rs.Kills+rs.Deaths+rs.Chickens+rs.MerChicken)
-	//	statsRun := fmt.Sprintf("Stats for: %s\n"+
-	//		"    Run time: %0.2fs (Total) %0.2fs (Average)\n"+
-	//		"    Kills: %d\n"+
-	//		"    Deaths: %d\n"+
-	//		"    Chickens: %d\n"+
-	//		"    Merc Chickens: %d\n"+
-	//		"    Errors: %d\n"+
-	//		"    Used HP Potions: %d\n"+
-	//		"    Used MP Potions: %d\n"+
-	//		"    Used Rejuv Potions: %d\n"+
-	//		"    Used Merc HP Potions: %d\n"+
-	//		"    Used Merc Rejuv Potions: %d\n"+
-	//		"    Items: \n"+
-	//		"    %s",
-	//		runName,
-	//		rs.RunningTime.Seconds(), avgRunTime,
-	//		rs.Kills,
-	//		rs.Deaths,
-	//		rs.Chickens,
-	//		rs.MerChicken,
-	//		rs.Errors,
-	//		rs.HealingPotionsUsed,
-	//		rs.ManaPotionsUsed,
-	//		rs.RejuvPotionsUsed,
-	//		rs.MercHealingPotionsUsed,
-	//		rs.MercRejuvPotionsUsed,
-	//		items,
-	//	)
-	//	_, err = w.WriteString(statsRun + "\n")
-	//	if err != nil {
-	//		s.logger.Error("Error writing stats file", slog.Any("error", err))
-	//	}
-	//}
-
-	w.Flush()
-	f.Close()
 }
 
 func (h *StatsHandler) Stats() Stats {
