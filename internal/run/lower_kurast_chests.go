@@ -58,7 +58,22 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 
 						var subActions []action.Action
 
-						for _, chest := range chests {
+						idx := 0
+						position := d.PlayerUnit.Position
+						ct := len(chests)
+						for idx < ct {
+							chest := chests[0]
+							closestIdx := 0
+							for i, chest2 := range chests {
+								if pather.DistanceFromPoint(position, chest2.Position) < pather.DistanceFromPoint(position, chest.Position) {
+									chest = chest2
+									closestIdx = i
+								}
+							}
+							//put the front chest where the closest was so we visit it later, then drop front
+							chests[closestIdx] = chests[0]
+							chests = chests[1:]
+
 							subActions = append(subActions,
 								a.builder.InteractObjectByID(chest.ID, func(d game.Data) bool {
 									for _, obj := range d.Objects {
@@ -74,6 +89,9 @@ func (a LowerKurastChest) BuildActions() []action.Action {
 								a.builder.Wait(200),
 								a.builder.ItemPickup(false, 15),
 							)
+							idx = idx + 1
+							//next position will be at this chest
+							position = chest.Position
 						}
 
 						return subActions
