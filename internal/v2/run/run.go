@@ -41,11 +41,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		//runs = append(runs, Mephisto{baseRun})
 		case config.TravincalRun:
 			runs = append(runs, NewTravincal())
-		//case config.DiabloRun:
-		//runs = append(runs, Diablo{
-		//	baseRun: baseRun,
-		//	bm:      f.bm,
-		//})
+		case config.DiabloRun:
+			runs = append(runs, NewDiablo())
 		case config.EldritchRun:
 			runs = append(runs, NewEldritch())
 		case config.PindleskinRun:
