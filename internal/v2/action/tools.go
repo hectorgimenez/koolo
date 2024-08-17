@@ -20,7 +20,7 @@ func OpenTPIfLeader() error {
 	return nil
 }
 
-func isMonsterSealElite(monster data.Monster) bool {
+func IsMonsterSealElite(monster data.Monster) bool {
 	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
 		return true
 	}

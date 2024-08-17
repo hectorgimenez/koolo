@@ -12,11 +12,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/pather"
-	"github.com/hectorgimenez/koolo/internal/v2/tools"
 )
 
 var diabloSpawnPosition = data.Position{X: 7792, Y: 5294}
@@ -24,7 +22,6 @@ var chaosSanctuaryEntrancePosition = data.Position{X: 7790, Y: 5544}
 
 type Diablo struct {
 	ctx            *context.Status
-	bm             health.BeltManager
 	vizLayout      int
 	seisLayout     int
 	infLayout      int
@@ -223,7 +220,7 @@ func (d Diablo) killInfector() error {
 	action.ItemPickup(30)
 	d.activateSeal(object.DiabloSeal2)
 
-	d.moveToVizierSpawn()
+	d.moveToInfectorSpawn()
 	time.Sleep(500)
 	d.killSealElite()
 	action.ItemPickup(40)
@@ -236,7 +233,7 @@ func (d Diablo) killSealElite() error {
 	startTime := time.Now()
 
 	for _, m := range d.ctx.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
-		if tools.IsMonsterSealElite(m) {
+		if action.IsMonsterSealElite(m) {
 			d.ctx.Logger.Debug("Seal defender found!")
 			return nil // Exit the step chain when elite is found
 		}
@@ -250,19 +247,19 @@ func (d Diablo) killSealElite() error {
 
 	// After the wait, attempt to clear and kill
 	for _, m := range d.ctx.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
-		if tools.IsMonsterSealElite(m) {
+		if action.IsMonsterSealElite(m) {
 			// Clear normal monsters around the elite
 			action.ClearAreaAroundPlayer(20, func(m data.Monsters) []data.Monster {
 				return m.Enemies(func(m data.Monsters) []data.Monster {
 					return slices.DeleteFunc(m, func(monster data.Monster) bool {
-						return tools.IsMonsterSealElite(monster)
+						return action.IsMonsterSealElite(monster)
 					})
 				})
 			})
 			// Kill the seal elite
 			d.ctx.Char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
 				for _, m := range dat.Monsters.Enemies(data.MonsterEliteFilter()) {
-					if tools.IsMonsterSealElite(m) {
+					if action.IsMonsterSealElite(m) {
 						_, _, found := d.ctx.PathFinder.GetPath(m.Position)
 						if found {
 							d.ctx.Logger.Debug(fmt.Sprintf("Attempting to kill seal elite: %v", m.Name))
