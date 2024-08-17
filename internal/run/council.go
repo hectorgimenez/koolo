@@ -13,7 +13,7 @@ type Council struct {
 }
 
 func (s Council) Name() string {
-	return string(config.CouncilRun)
+	return string(config.TravincalRun)
 }
 
 func (s Council) BuildActions() []action.Action {

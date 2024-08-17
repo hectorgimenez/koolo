@@ -12,14 +12,14 @@ type Council struct {
 	ctx *context.Status
 }
 
-func NewCouncil() *Council {
+func NewTravincal() *Council {
 	return &Council{
 		ctx: context.Get(),
 	}
 }
 
 func (s Council) Name() string {
-	return string(config.CouncilRun)
+	return string(config.TravincalRun)
 }
 
 func (s Council) Run() error {
