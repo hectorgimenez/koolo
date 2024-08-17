@@ -39,8 +39,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		//runs = append(runs, Duriel{baseRun})
 		//case config.MephistoRun:
 		//runs = append(runs, Mephisto{baseRun})
-		case config.CouncilRun:
-			runs = append(runs, NewCouncil())
+		case config.TravincalRun:
+			runs = append(runs, NewTravincal())
 		//case config.DiabloRun:
 		//runs = append(runs, Diablo{
 		//	baseRun: baseRun,
