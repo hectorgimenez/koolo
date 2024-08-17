@@ -33,8 +33,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewCountess())
 		case config.AndarielRun:
 			runs = append(runs, NewAndariel())
-		//case config.SummonerRun:
-		//runs = append(runs, Summoner{baseRun})
+		case config.SummonerRun:
+			runs = append(runs, NewSummoner())
 		case config.DurielRun:
 			runs = append(runs, NewDuriel())
 		//case config.MephistoRun:
@@ -50,22 +50,22 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewEldritch())
 		case config.PindleskinRun:
 			runs = append(runs, NewPindleskin())
-		//case config.NihlathakRun:
-		//runs = append(runs, Nihlathak{baseRun})
+		case config.NihlathakRun:
+			runs = append(runs, NewNihlathak())
 		case config.AncientTunnelsRun:
 			runs = append(runs, NewAncientTunnels())
-		//case config.MausoleumRun:
-		//	runs = append(runs, Mausoleum{baseRun})
-		//case config.PitRun:
-		//	runs = append(runs, Pit{baseRun})
-		//case config.StonyTombRun:
-		//	runs = append(runs, StonyTomb{baseRun})
+		case config.MausoleumRun:
+			runs = append(runs, NewMausoleum())
+		case config.PitRun:
+			runs = append(runs, NewPit())
+		case config.StonyTombRun:
+			runs = append(runs, NewStonyTomb())
 		case config.ArachnidLairRun:
 			runs = append(runs, NewArachnidLair())
 		//case config.TristramRun:
 		//	runs = append(runs, Tristram{baseRun})
-		//case config.LowerKurastRun:
-		//	runs = append(runs, LowerKurast{baseRun})
+		case config.LowerKurastRun:
+			runs = append(runs, NewLowerKurast())
 		//case config.LowerKurastChestRun:
 		//	runs = append(runs, LowerKurastChest{baseRun})
 		case config.BaalRun:
@@ -78,12 +78,12 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		//	runs = append(runs, Quests{baseRun})
 		case config.CowsRun:
 			runs = append(runs, NewCows())
-			//case config.ThreshsocketRun:
-			//	runs = append(runs, Threshsocket{baseRun})
+		case config.ThreshsocketRun:
+			runs = append(runs, NewThreshsocket())
 		case config.DrifterCavernRun:
 			runs = append(runs, NewDriverCavern())
-			//case config.EnduguRun:
-			//	runs = append(runs, Endugu{baseRun})
+		case config.EnduguRun:
+			runs = append(runs, NewEndugu())
 		}
 	}
 
