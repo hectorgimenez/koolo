@@ -2,14 +2,14 @@ package server
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
-	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/v2/bot"
 )
 
 type IndexData struct {
 	ErrorMessage string
 	Version      string
-	Status       map[string]koolo.Stats
+	Status       map[string]bot.Stats
 	DropCount    map[string]int
 }
 

@@ -1,9 +1,10 @@
 package helper
 
 import (
-	"golang.org/x/sys/windows"
 	"os"
 	"syscall"
+
+	"golang.org/x/sys/windows"
 )
 
 func HasAdminPermission() bool {

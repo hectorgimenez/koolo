@@ -23,6 +23,13 @@ func (hid *HID) PressKey(key byte) {
 	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, uintptr(key), hid.calculatelParam(key, false))
 }
 
+func (hid *HID) KeySequence(keysToPress ...byte) {
+	for _, key := range keysToPress {
+		hid.PressKey(key)
+		time.Sleep(200 * time.Millisecond)
+	}
+}
+
 // PressKeyWithModifier works the same as PressKey but with a modifier key (shift, ctrl, alt)
 func (hid *HID) PressKeyWithModifier(key byte, modifier ModifierKey) {
 	hid.gi.OverrideGetKeyState(byte(modifier))
