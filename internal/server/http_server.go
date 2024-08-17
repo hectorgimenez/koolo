@@ -20,15 +20,15 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	koolo "github.com/hectorgimenez/koolo/internal"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/v2/bot"
 )
 
 type HttpServer struct {
 	logger    *slog.Logger
 	server    *http.Server
-	manager   *bot.SupervisorManager
+	manager   *koolo.SupervisorManager
 	templates *template.Template
 	wsServer  *WebSocketServer
 }
@@ -161,7 +161,7 @@ func (s *HttpServer) BroadcastStatus() {
 	}
 }
 
-func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, error) {
+func New(logger *slog.Logger, manager *koolo.SupervisorManager) (*HttpServer, error) {
 	var templates *template.Template
 	helperFuncs := template.FuncMap{
 		"isInSlice": func(slice []stat.Resist, value string) bool {
@@ -237,7 +237,7 @@ func (s *HttpServer) initialData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) getStatusData() IndexData {
-	status := make(map[string]bot.Stats)
+	status := make(map[string]koolo.Stats)
 	drops := make(map[string]int)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
@@ -347,7 +347,7 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if s.manager.GetSupervisorStats(sup).SupervisorStatus == bot.Starting {
+		if s.manager.GetSupervisorStats(sup).SupervisorStatus == koolo.Starting {
 
 			// Prevent launching if we're using token auth & another client is starting (no matter what auth method)
 			if supCfg.AuthMethod == "TokenAuth" {
@@ -379,12 +379,12 @@ func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
-	status := make(map[string]bot.Stats)
+	status := make(map[string]koolo.Stats)
 	drops := make(map[string]int)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
-		status[supervisorName] = bot.Stats{
-			SupervisorStatus: bot.NotStarted,
+		status[supervisorName] = koolo.Stats{
+			SupervisorStatus: koolo.NotStarted,
 		}
 
 		status[supervisorName] = s.manager.Status(supervisorName)

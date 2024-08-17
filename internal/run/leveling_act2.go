@@ -71,7 +71,7 @@ func (a Leveling) act2() action.Action {
 }
 
 //func (a Leveling) radament() action.Action {
-//	return action.NewChain(func(d game.data) (actions []action.Action) {
+//	return action.NewChain(func(d game.Data) (actions []action.Action) {
 //		actions = append(actions,
 //			a.builder.WayPoint(area.SewersLevel2Act2),
 //			a.builder.MoveToArea(area.SewersLevel3Act2),
