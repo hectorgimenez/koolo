@@ -22,18 +22,20 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		pf:     pf,
 	}
 
-	//if container.CharacterCfg.Game.Runs[0] == "leveling" {
-	//	switch strings.ToLower(container.CharacterCfg.Character.Class) {
-	//	case "sorceress_leveling_lightning":
-	//		return SorceressLevelingLightning{BaseCharacter: bc}, nil
-	//	case "sorceress":
-	//		return SorceressLeveling{BaseCharacter: bc}, nil
-	//	case "paladin":
-	//		return PaladinLeveling{BaseCharacter: bc}, nil
-	//	}
-	//
-	//	return nil, fmt.Errorf("leveling only available for sorceress and paladin")
-	//}
+	ctx := context.Get()
+
+	if ctx.CharacterCfg.Game.Runs[0] == "leveling" {
+		switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
+		case "sorceress_leveling_lightning":
+			return SorceressLevelingLightning{BaseCharacter: bc}, nil
+		case "sorceress_leveling":
+			return SorceressLeveling{BaseCharacter: bc}, nil
+		case "paladin":
+			return PaladinLeveling{BaseCharacter: bc}, nil
+		}
+
+		return nil, fmt.Errorf("leveling only available for sorceress and paladin")
+	}
 
 	switch strings.ToLower(cfg.Character.Class) {
 	case "sorceress":
