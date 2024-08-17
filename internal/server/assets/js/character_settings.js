@@ -21,7 +21,7 @@ window.onload = function () {
     });
     
     clearButton.addEventListener('click', function() {
-        clearEnabledRuns();
+        confirmClearEnabledRuns();
     });
 
     updateEnabledRunsHiddenField();
@@ -46,6 +46,12 @@ function filterDisabledRuns(searchTerm) {
             item.style.display = 'none';
         }
     });
+}
+
+function confirmClearEnabledRuns() {
+    if (confirm("Are you sure you want to clear all enabled runs?")) {
+        clearEnabledRuns();
+    }
 }
 
 function clearEnabledRuns() {
