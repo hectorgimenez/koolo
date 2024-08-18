@@ -75,8 +75,8 @@ func (lkc LowerKurastChests) Run() error {
 			}
 		}
 	}
-	// Clear Lower Kurast
-	return action.ClearCurrentLevel(true, data.MonsterAnyFilter())
+	// Done
+	return nil
 
 }
 
