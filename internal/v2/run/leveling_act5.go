@@ -149,7 +149,6 @@ func (a Leveling) anya() error {
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
 	return nil
-
 }
 
 func (a Leveling) ancients() error {
@@ -176,7 +175,7 @@ func (a Leveling) ancients() error {
 
 	ancientsaltar, found := a.ctx.Data.Objects.FindOne(object.AncientsAltar)
 	if !found {
-		a.ctx.Logger.Debug("Frozen Anya not found")
+		a.ctx.Logger.Debug("Ancients Altar not found")
 	}
 
 	err = action.InteractObject(ancientsaltar, func() bool {
@@ -198,7 +197,7 @@ func (a Leveling) ancients() error {
 
 	summitdoor, found := a.ctx.Data.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
 	if !found {
-		a.ctx.Logger.Debug("Frozen Anya not found")
+		a.ctx.Logger.Debug("Worldstone Door not found")
 	}
 
 	err = action.InteractObject(summitdoor, func() bool {
