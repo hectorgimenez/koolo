@@ -225,7 +225,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 		return nil, nil, fmt.Errorf("character %s not found", supervisorName)
 	}
 
-	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.AuthMethod, cfg.AuthToken, cfg.Realm, cfg.CommandLineArgs, config.Koolo.UseCustomSettings)
+	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.AuthMethod, cfg.AuthToken, cfg.Realm, cfg.CommandLineArgs, config.Koolo.UseCustomSettings, supervisorName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error starting game: %w", err)
 	}

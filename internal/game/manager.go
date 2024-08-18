@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -254,7 +255,7 @@ func terminateProcessByName(name string) error {
 	return nil
 }
 
-func StartGame(username string, password string, authmethod string, authToken string, realm string, arguments string, useCustomSettings bool) (uint32, win.HWND, error) {
+func StartGame(username string, password string, authmethod string, authToken string, realm string, arguments string, useCustomSettings bool, supervisorName string) (uint32, win.HWND, error) {
 	// First check for other instances of the game and kill the handles, otherwise we will not be able to start the game
 	err := KillAllClientHandles()
 	if err != nil {
@@ -346,6 +347,10 @@ func StartGame(username string, password string, authmethod string, authToken st
 		windows.GetWindowThreadProcessId(hwnd, &pid)
 		if pid == uint32(cmd.Process.Pid) {
 			foundHwnd = hwnd
+			// Change the window title to match the supervisor name
+			title := "Diablo II: Resurrected => " + supervisorName
+			titlePtr, _ := windows.UTF16PtrFromString(title)
+			winproc.SetWindowText.Call(uintptr(foundHwnd), uintptr(unsafe.Pointer(titlePtr)))
 			return 0
 		}
 		return 1
