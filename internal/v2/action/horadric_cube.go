@@ -8,10 +8,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func CubeAddItems(items ...data.Item) error {
@@ -56,7 +56,7 @@ func CubeAddItems(items ...data.Item) error {
 		screenPos := ui.GetScreenCoordsForItem(nwIt)
 
 		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-		helper.Sleep(300)
+		utils.Sleep(300)
 	}
 
 	err := ensureCubeIsOpen(cube)
@@ -72,7 +72,7 @@ func CubeAddItems(items ...data.Item) error {
 				screenPos := ui.GetScreenCoordsForItem(updatedItem)
 
 				ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-				helper.Sleep(300)
+				utils.Sleep(300)
 			}
 		}
 	}
@@ -95,7 +95,7 @@ func CubeTransmute() error {
 	}
 
 	ctx.Logger.Debug("Transmuting items in the Horadric Cube")
-	helper.Sleep(150)
+	utils.Sleep(150)
 
 	if ctx.Data.LegacyGraphics {
 		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic)
@@ -103,7 +103,7 @@ func CubeTransmute() error {
 		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 	}
 
-	helper.Sleep(2000)
+	utils.Sleep(2000)
 
 	if ctx.Data.LegacyGraphics {
 		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
@@ -111,7 +111,7 @@ func CubeTransmute() error {
 		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
 	}
 
-	helper.Sleep(300)
+	utils.Sleep(300)
 
 	return step.CloseAllMenus()
 }
@@ -125,9 +125,9 @@ func ensureCubeIsOpen(cube data.Item) error {
 
 	screenPos := ui.GetScreenCoordsForItem(cube)
 
-	helper.Sleep(300)
+	utils.Sleep(300)
 	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	if ctx.Data.OpenMenus.Cube {
 		ctx.Logger.Debug("Horadric Cube window detected")

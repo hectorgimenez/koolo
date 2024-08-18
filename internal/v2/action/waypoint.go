@@ -7,8 +7,8 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
 	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
@@ -87,6 +87,7 @@ func useWP(dest area.ID) error {
 
 	// We have the WP discovered, just use it
 	if len(traverseAreas) == 0 {
+		Buff()
 		return nil
 	}
 

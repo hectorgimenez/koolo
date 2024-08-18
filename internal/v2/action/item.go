@@ -7,8 +7,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func doesExceedQuantity(i data.Item, rule nip.Rule) bool {
@@ -46,8 +46,8 @@ func DropMouseItem() {
 	ctx.ContextDebug.LastStep = "DropMouseItem"
 
 	if len(ctx.Data.Inventory.ByLocation(item.LocationCursor)) > 0 {
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 		ctx.HID.Click(game.LeftButton, 500, 500)
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 }

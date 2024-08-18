@@ -1,9 +1,9 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/town"
 )
 
 func HealAtNPC() error {

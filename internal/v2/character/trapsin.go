@@ -10,9 +10,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 const (
@@ -74,7 +74,7 @@ func (s Trapsin) KillMonsterSequence(
 
 		opts := step.Distance(minDistance, maxDistance)
 
-		helper.Sleep(100)
+		utils.Sleep(100)
 		step.SecondaryAttack(skill.LightningSentry, id, 3, opts)
 		step.SecondaryAttack(skill.DeathSentry, id, 2, opts)
 		step.PrimaryAttack(id, 2, true, opts)

@@ -6,13 +6,13 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
 )
@@ -310,12 +310,12 @@ func (a Leveling) openMephistoStairs() error {
 
 	// Swap weapons, equip Khalim's Will
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.SwapWeapons)
-	helper.Sleep(1000)
+	utils.Sleep(1000)
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 
 	screenPos := ui.GetScreenCoordsForItem(khalimsWill)
 	a.ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
-	helper.Sleep(300)
+	utils.Sleep(300)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
 	// Interact with the Compelling Orb to open the stairs
@@ -332,7 +332,7 @@ func (a Leveling) openMephistoStairs() error {
 		return err
 	}
 
-	helper.Sleep(1000)
+	utils.Sleep(1000)
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.SwapWeapons)
 
 	time.Sleep(12000)

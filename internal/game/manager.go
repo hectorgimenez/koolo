@@ -12,7 +12,7 @@ import (
 	"github.com/billgraziano/dpapi"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -44,7 +44,7 @@ func (gm *Manager) ExitGame() error {
 		if !gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	// If we are still in game, probably character is dead, so let's do it nicely.
@@ -57,11 +57,11 @@ func (gm *Manager) ExitGame() error {
 				if !gm.gr.InGame() {
 					return nil
 				}
-				helper.Sleep(1000)
+				utils.Sleep(1000)
 			}
 		}
 		gm.hid.PressKey(win.VK_ESCAPE)
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	return errors.New("error exiting game! Timeout")
@@ -74,10 +74,10 @@ func (gm *Manager) NewGame() error {
 
 	for range 30 {
 		if gm.gr.InCharacterSelectionScreen() {
-			helper.Sleep(2000) // Wait for character selection screen to load
+			utils.Sleep(2000) // Wait for character selection screen to load
 			break
 		}
-		helper.Sleep(500)
+		utils.Sleep(500)
 	}
 
 	difficultyPosition := map[difficulty.Difficulty]struct {
@@ -91,14 +91,14 @@ func (gm *Manager) NewGame() error {
 	createX := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty].X
 	createY := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty].Y
 	gm.hid.Click(LeftButton, 600, 650)
-	helper.Sleep(250)
+	utils.Sleep(250)
 	gm.hid.Click(LeftButton, createX, createY)
 
 	for range 12 {
 		if gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(500)
+		utils.Sleep(500)
 	}
 
 	return errors.New("timeout")
@@ -113,11 +113,11 @@ func (gm *Manager) clearGameNameOrPasswordField() {
 func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	// Enter bnet lobby
 	gm.hid.Click(LeftButton, 744, 650)
-	helper.Sleep(1200)
+	utils.Sleep(1200)
 
 	// Click "Create game" tab
 	gm.hid.Click(LeftButton, 845, 54)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	difficultyPosition := map[difficulty.Difficulty]struct {
 		X, Y int
@@ -129,7 +129,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 
 	difficultyPos := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty]
 	gm.hid.Click(LeftButton, difficultyPos.X, difficultyPos.Y)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 1000, 116)
@@ -141,7 +141,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 
 	// Same for password
 	gm.hid.Click(LeftButton, 1000, 161)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	gamePassword := config.Characters[gm.supervisorName].Companion.GamePassword
 	if gamePassword != "" {
 		gm.clearGameNameOrPasswordField()
@@ -155,7 +155,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 		if gm.gr.InGame() {
 			return gameName, nil
 		}
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	return gameName, errors.New("error creating game! Timeout")
@@ -164,26 +164,26 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	// Enter bnet lobby
 	gm.hid.Click(LeftButton, 744, 650)
-	helper.Sleep(1200)
+	utils.Sleep(1200)
 
 	// Click "Join game" tab
 	gm.hid.Click(LeftButton, 977, 54)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 950, 100)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	gm.clearGameNameOrPasswordField()
-	helper.Sleep(200)
+	utils.Sleep(200)
 	for _, ch := range gameName {
 		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
 
 	// Same for password
 	gm.hid.Click(LeftButton, 1130, 100)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	gm.clearGameNameOrPasswordField()
-	helper.Sleep(200)
+	utils.Sleep(200)
 	for _, ch := range password {
 		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
@@ -193,7 +193,7 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 		if gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	return errors.New("error joining game! Timeout")

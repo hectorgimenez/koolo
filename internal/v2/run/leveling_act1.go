@@ -9,9 +9,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
@@ -208,11 +208,11 @@ func (a Leveling) andariel() error {
 			continue
 		}
 		pos := ui.GetScreenCoordsForItem(itm)
-		helper.Sleep(500)
+		utils.Sleep(500)
 
 		if x > 3 {
 			a.ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
-			helper.Sleep(300)
+			utils.Sleep(300)
 			if a.ctx.Data.LegacyGraphics {
 				a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
 			} else {

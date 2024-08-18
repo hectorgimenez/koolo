@@ -7,8 +7,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func MoveTo(dest data.Position) error {
@@ -54,7 +54,7 @@ func MoveTo(dest data.Position) error {
 		}
 
 		// Add some delay between clicks to let the character move to destination
-		walkDuration := helper.RandomDurationMs(600, 1200)
+		walkDuration := utils.RandomDurationMs(600, 1200)
 		if !ctx.Data.CanTeleport() && time.Since(lastRun) < walkDuration {
 			continue
 		}

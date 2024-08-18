@@ -11,10 +11,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
@@ -144,7 +144,7 @@ func (a Leveling) anya() error {
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 	itm, _ := a.ctx.Data.Inventory.Find("ScrollOfResistance")
 	screenPos := ui.GetScreenCoordsForItem(itm)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
@@ -183,7 +183,7 @@ func (a Leveling) ancients() error {
 			return true
 		}
 		a.ctx.HID.Click(game.LeftButton, 300, 300)
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 		return false
 	})
 	if err != nil {

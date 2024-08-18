@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
-	"github.com/hectorgimenez/koolo/internal/v2/utils"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
 )
 
 func InteractNPC(npcID npc.ID) error {
@@ -58,7 +58,7 @@ func InteractNPC(npcID npc.ID) error {
 				return fmt.Errorf("NPC is too far away: %d. Current distance: %d", npcID, distance)
 			}
 
-			x, y := utils.GameCoordsToScreenCords(m.Position.X, m.Position.Y)
+			x, y := ui.GameCoordsToScreenCords(m.Position.X, m.Position.Y)
 			// Act 4 Tyrael has a super weird hitbox
 			if npcID == npc.Tyrael2 {
 				y = y - 40

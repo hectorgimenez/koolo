@@ -7,8 +7,8 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 )
@@ -57,7 +57,7 @@ func InteractEntrance(area area.ID) error {
 						waitingForInteraction = true
 					}
 
-					x, y := helper.Spiral(interactionAttempts)
+					x, y := utils.Spiral(interactionAttempts)
 					currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
 					ctx.HID.MovePointer(lx+x, ly+y)
 					interactionAttempts++

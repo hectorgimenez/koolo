@@ -21,8 +21,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/bot"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 type HttpServer struct {
@@ -295,7 +295,7 @@ func (s *HttpServer) Stop() error {
 }
 
 func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {
-	if !helper.HasAdminPermission() {
+	if !utils.HasAdminPermission() {
 		s.templates.ExecuteTemplate(w, "templates/admin_required.gohtml", nil)
 		return
 	}

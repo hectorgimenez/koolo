@@ -1,4 +1,4 @@
-package utils
+package ui
 
 import (
 	"github.com/hectorgimenez/koolo/internal/v2/context"

@@ -7,11 +7,11 @@ import (
 
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
 	"github.com/hectorgimenez/koolo/internal/v2/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
 const maxInteractions = 45
@@ -58,7 +58,7 @@ func PickupItem(it data.Item) error {
 		lastRun = time.Now()
 		objectX := it.Position.X - 1
 		objectY := it.Position.Y - 1
-		mX, mY := utils.GameCoordsToScreenCords(objectX, objectY)
+		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 
 		if it.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
@@ -79,7 +79,7 @@ func PickupItem(it data.Item) error {
 				return fmt.Errorf("item is too far away: %s", it.Desc().Name)
 			}
 
-			x, y := helper.Spiral(mouseOverAttempts)
+			x, y := utils.Spiral(mouseOverAttempts)
 			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 			ctx.HID.MovePointer(mX+x, mY+y)
 			mouseOverAttempts++

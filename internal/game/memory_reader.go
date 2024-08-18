@@ -13,7 +13,7 @@ import (
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/map_client"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	kooloUtils "github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
@@ -65,7 +65,7 @@ func (gd *MemoryReader) GetCachedMapData(isNewGame bool) map_client.MapData {
 			// TODO: Refactor this crap with proper error handling
 			gd.logger.Error(fmt.Sprintf("Error fetching map data: %s", err.Error()))
 			sloggger.FlushLog()
-			helper.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
+			kooloUtils.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
 			panic(fmt.Sprintf("Error fetching map data: %s", err.Error()))
 		}
 		gd.cachedMapData = mapData

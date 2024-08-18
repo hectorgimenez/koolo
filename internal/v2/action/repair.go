@@ -8,11 +8,11 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/town"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
@@ -53,13 +53,13 @@ func Repair() error {
 				ctx.HID.KeySequence(win.VK_HOME, win.VK_RETURN)
 			}
 
-			helper.Sleep(100)
+			utils.Sleep(100)
 			if ctx.Data.LegacyGraphics {
 				ctx.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
 			} else {
 				ctx.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)
 			}
-			helper.Sleep(500)
+			utils.Sleep(500)
 
 			return step.CloseAllMenus()
 		}

@@ -14,10 +14,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/town"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
 )
 
 var uiStatButtonPosition = map[stat.ID]data.Position{
@@ -95,9 +94,9 @@ func EnsureStatPoints() error {
 	//
 	//		return []step.Step{
 	//			step.SyncStep(func(_ game.Data) error {
-	//				helper.Sleep(100)
+	//				utils.Sleep(100)
 	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				helper.Sleep(500)
+	//				utils.Sleep(500)
 	//				return nil
 	//			}),
 	//		}
@@ -136,19 +135,19 @@ func EnsureSkillPoints() error {
 	//			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
 	//		}
 	//
-	//		helper.Sleep(100)
+	//		utils.Sleep(100)
 	//		if ctx.Data.LegacyGraphics {
 	//			ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
 	//		} else {
 	//			ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
 	//		}
-	//		helper.Sleep(200)
+	//		utils.Sleep(200)
 	//		if ctx.Data.LegacyGraphics {
 	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
 	//		} else {
 	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
 	//		}
-	//		helper.Sleep(500)
+	//		utils.Sleep(500)
 	//		return nil
 	//	}
 	//}
@@ -225,16 +224,16 @@ func EnsureSkillBindings() error {
 
 	if ctx.Data.PlayerUnit.LeftSkill != mainSkill {
 		ctx.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
-		helper.Sleep(300)
+		utils.Sleep(300)
 		ctx.HID.MovePointer(10, 10)
-		helper.Sleep(300)
+		utils.Sleep(300)
 
 		skillPosition, found := calculateSkillPositionInUI(true, mainSkill)
 		if found {
 			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
-			helper.Sleep(100)
+			utils.Sleep(100)
 			ctx.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
-			helper.Sleep(300)
+			utils.Sleep(300)
 		}
 	}
 

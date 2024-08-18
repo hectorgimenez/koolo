@@ -11,10 +11,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
@@ -315,7 +315,7 @@ func (a Quests) killRadamentQuest() error {
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 	itm, _ := a.ctx.Data.Inventory.Find("BookofSkill")
 	screenPos := ui.GetScreenCoordsForItem(itm)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
@@ -626,7 +626,7 @@ func (a Quests) rescueAnyaQuest() error {
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 	itm, _ := a.ctx.Data.Inventory.Find("ScrollOfResistance")
 	screenPos := ui.GetScreenCoordsForItem(itm)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
@@ -664,11 +664,11 @@ func (a Quests) killAncientsQuest() error {
 
 	action.MoveToCoords(ancientsAltar)
 
-	helper.Sleep(1000)
+	utils.Sleep(1000)
 	a.ctx.HID.Click(game.LeftButton, 720, 260)
-	helper.Sleep(1000)
+	utils.Sleep(1000)
 	a.ctx.HID.PressKey(win.VK_RETURN)
-	helper.Sleep(2000)
+	utils.Sleep(2000)
 
 	action.ClearAreaAroundPlayer(50, data.MonsterEliteFilter())
 

@@ -9,12 +9,16 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
 	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
-	maxInteractionAttempts := 5
+	//time.Sleep(time.Second * 2)
+	maxInteractionAttempts := 10
 	interactionAttempts := 0
+	maxMouseOverAttempts := 20
+	mouseOverAttempts := 0
 	waitingForInteraction := false
 	currentMouseCoords := data.Position{}
 	lastRun := time.Time{}
@@ -30,15 +34,19 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	ctx.ContextDebug.LastStep = "InteractObject"
 
 	for !isCompletedFn() {
+		if time.Since(lastRun) < time.Millisecond*50 {
+			continue
+		}
+
+		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= maxMouseOverAttempts {
+			return errors.New("failed interacting with object")
+		}
+
 		ctx.RefreshGameData()
 
 		// Pause the execution if the priority is not the same as the execution priority
 		if ctx.ExecutionPriority != ctx.Priority {
 			continue
-		}
-
-		if interactionAttempts >= maxInteractionAttempts {
-			return errors.New("failed interacting with object")
 		}
 
 		// Give some time before retrying the interaction
@@ -74,16 +82,16 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 				return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
 			}
 
-			mX, mY := utils.GameCoordsToScreenCords(objectX, objectY)
+			mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
-			if interactionAttempts == 2 && o.Name == object.TownPortal {
-				mX, mY = utils.GameCoordsToScreenCords(objectX-4, objectY-4)
+			if mouseOverAttempts == 2 && o.Name == object.TownPortal {
+				mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
 			}
 
-			x, y := utils.Spiral(interactionAttempts)
+			x, y := utils.Spiral(mouseOverAttempts)
 			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 			ctx.HID.MovePointer(mX+x, mY+y)
-			interactionAttempts++
+			mouseOverAttempts++
 		}
 	}
 
