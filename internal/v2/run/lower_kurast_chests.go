@@ -2,6 +2,7 @@ package run
 
 import (
 	"slices"
+	"sort"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -64,15 +65,29 @@ func (run LowerKurastChests) Run() error {
 			}
 		}
 
-		// Open the chests
-		for _, chest := range chests {
-			err = action.InteractObject(chest, func() bool {
-				chest, _ := run.ctx.Data.Objects.FindByID(chest.ID)
+		// Interact with chests in the order of shortest travel
+		for len(chests) > 0 {
+			// Get the player's current position
+			playerPos := run.ctx.Data.PlayerUnit.Position
+
+			// Sort chests by distance from the player
+			sort.Slice(chests, func(i, j int) bool {
+				return pather.DistanceFromPoint(chests[i].Position, playerPos) <
+					pather.DistanceFromPoint(chests[j].Position, playerPos)
+			})
+
+			// Interact with the closest chest
+			closestChest := chests[0]
+			err = action.InteractObject(closestChest, func() bool {
+				chest, _ := run.ctx.Data.Objects.FindByID(closestChest.ID)
 				return !chest.Selectable
 			})
 			if err != nil {
 				run.ctx.Logger.Warn("Failed interacting with chest: %v", err)
 			}
+
+			// Remove the interacted chest from the list
+			chests = chests[1:]
 		}
 	}
 
