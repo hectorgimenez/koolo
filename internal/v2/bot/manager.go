@@ -210,7 +210,17 @@ func (mng *SupervisorManager) GetData(characterName string) *game.Data {
 		}
 	}
 
-	return &game.Data{}
+	return nil
+}
+
+func (mng *SupervisorManager) GetContext(characterName string) *context.Context {
+	for name, supervisor := range mng.supervisors {
+		if name == characterName {
+			return supervisor.GetContext()
+		}
+	}
+
+	return nil
 }
 
 func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger, restartFunc func()) (Supervisor, *game.CrashDetector, error) {
