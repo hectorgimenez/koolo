@@ -77,6 +77,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewCows())
 		case config.ThreshsocketRun:
 			runs = append(runs, NewThreshsocket())
+		case config.SpiderCavernRun:
+			runs = append(runs, NewSpiderCavern())
 		case config.DrifterCavernRun:
 			runs = append(runs, NewDriverCavern())
 		case config.EnduguRun:
