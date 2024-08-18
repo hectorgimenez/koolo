@@ -12,8 +12,8 @@ type SpiderCavern struct {
 	ctx *context.Status
 }
 
-func NewSpiderCavern() *Tristram {
-	return &Tristram{
+func NewSpiderCavern() *SpiderCavern {
+	return &SpiderCavern{
 		ctx: context.Get(),
 	}
 }
