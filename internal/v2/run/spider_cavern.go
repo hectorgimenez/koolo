@@ -19,7 +19,7 @@ func NewSpiderCavern() *SpiderCavern {
 }
 
 func (run SpiderCavern) Name() string {
-	return string(config.TristramRun)
+	return string(config.SpiderCavernRun)
 }
 
 func (run SpiderCavern) Run() error {
