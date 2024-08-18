@@ -25,12 +25,12 @@ func NewLowerKurastChest() *LowerKurastChests {
 	}
 }
 
-func (lkc LowerKurastChests) Name() string {
+func (run LowerKurastChests) Name() string {
 	return string(config.LowerKurastRun)
 }
 
-func (lkc LowerKurastChests) Run() error {
-	lkc.ctx.Logger.Debug("Running an LKC")
+func (run LowerKurastChests) Run() error {
+	run.ctx.Logger.Debug("Running a Lower Kurast Chest run")
 	var bonFirePositions []data.Position
 	// Use Waypoint to Lower Kurast
 	err := action.WayPoint(area.LowerKurast)
@@ -39,13 +39,13 @@ func (lkc LowerKurastChests) Run() error {
 	}
 
 	// Find the bonfires
-	for _, o := range lkc.ctx.Data.Objects {
+	for _, o := range run.ctx.Data.Objects {
 		if o.Name == object.SmallFire {
 			bonFirePositions = append(bonFirePositions, o.Position)
 		}
 	}
 
-	lkc.ctx.Logger.Debug("Found bonfires", "bonfires", bonFirePositions)
+	run.ctx.Logger.Debug("Found bonfires", "bonfires", bonFirePositions)
 
 	var chestsIds = []object.Name{object.JungleMediumChestLeft, object.JungleChest}
 
@@ -58,7 +58,7 @@ func (lkc LowerKurastChests) Run() error {
 		}
 		// Find the chests
 		var chests []data.Object
-		for _, o := range lkc.ctx.Data.Objects {
+		for _, o := range run.ctx.Data.Objects {
 			if slices.Contains(chestsIds, o.Name) && isChestWithinBonfireRange(o, bonfirePos) {
 				chests = append(chests, o)
 			}
@@ -67,17 +67,28 @@ func (lkc LowerKurastChests) Run() error {
 		// Open the chests
 		for _, chest := range chests {
 			err = action.InteractObject(chest, func() bool {
-				chest, _ := lkc.ctx.Data.Objects.FindByID(chest.ID)
+				chest, _ := run.ctx.Data.Objects.FindByID(chest.ID)
 				return !chest.Selectable
 			})
 			if err != nil {
-				lkc.ctx.Logger.Warn("Failed interacting with chest: %v", err)
+				run.ctx.Logger.Warn("Failed interacting with chest: %v", err)
 			}
 		}
 	}
+
+	// Return to town
+	if err = action.ReturnTown(); err != nil {
+		return err
+	}
+
+	// Move to A4 if possible to shorten the run time
+	err = action.WayPoint(area.ThePandemoniumFortress)
+	if err != nil {
+		return err
+	}
+
 	// Done
 	return nil
-
 }
 
 func isChestWithinBonfireRange(chest data.Object, bonfirePosition data.Position) bool {
