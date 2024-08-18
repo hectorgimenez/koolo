@@ -42,6 +42,8 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		return BlizzardSorceress{BaseCharacter: bc}, nil
 	case "lightning":
 		return LightningSorceress{BaseCharacter: bc}, nil
+	case "hydraorb":
+		return HydraOrbSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":
 		return Hammerdin{BaseCharacter: bc}, nil
 	case "foh":
