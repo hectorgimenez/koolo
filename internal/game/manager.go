@@ -347,10 +347,12 @@ func StartGame(username string, password string, authmethod string, authToken st
 		windows.GetWindowThreadProcessId(hwnd, &pid)
 		if pid == uint32(cmd.Process.Pid) {
 			foundHwnd = hwnd
-			// Change the window title to match the supervisor name
-			title := "Diablo II: Resurrected => " + supervisorName
-			titlePtr, _ := windows.UTF16PtrFromString(title)
-			winproc.SetWindowText.Call(uintptr(foundHwnd), uintptr(unsafe.Pointer(titlePtr)))
+			if len(supervisorName) > 0 {
+				// Change the window title to match the supervisor name
+				title := "Diablo II: Resurrected => " + supervisorName
+				titlePtr, _ := windows.UTF16PtrFromString(title)
+				winproc.SetWindowText.Call(uintptr(foundHwnd), uintptr(unsafe.Pointer(titlePtr)))
+			}
 			return 0
 		}
 		return 1
