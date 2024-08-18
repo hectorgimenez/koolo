@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/town"
@@ -115,7 +114,7 @@ func gambleItems() error {
 					ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
 				}
 
-				helper.Sleep(500)
+				utils.Sleep(500)
 				continue
 			}
 

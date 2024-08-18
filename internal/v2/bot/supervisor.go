@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/v2/run"
+	"github.com/hectorgimenez/koolo/internal/v2/utils/winproc"
 	"github.com/lxn/win"
 )
 

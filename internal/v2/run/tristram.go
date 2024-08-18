@@ -9,9 +9,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 type Tristram struct {
@@ -122,7 +122,7 @@ func (t Tristram) openPortalIfNotOpened() error {
 
 					if stoneTries < 5 {
 						stoneTries++
-						helper.Sleep(200)
+						utils.Sleep(200)
 						x, y := t.ctx.PathFinder.GameCoordsToScreenCords(stone.Position.X, stone.Position.Y)
 						t.ctx.HID.Click(game.LeftButton, x+3*stoneTries, y)
 						t.ctx.Logger.Debug(fmt.Sprintf("Tried to click %s at screen pos %vx%v", stone.Desc().Name, x, y))
@@ -133,7 +133,7 @@ func (t Tristram) openPortalIfNotOpened() error {
 				})
 
 			} else {
-				helper.Sleep(200)
+				utils.Sleep(200)
 				activeStones++
 			}
 			_, tristPortal := t.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
@@ -146,9 +146,8 @@ func (t Tristram) openPortalIfNotOpened() error {
 
 	// Wait upto 15 seconds for the portal to open, checking every second if its up
 	for range 15 {
-
 		// Wait a second
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 
 		if _, portalFound := t.ctx.Data.Objects.FindOne(object.PermanentTownPortal); portalFound {
 			return nil

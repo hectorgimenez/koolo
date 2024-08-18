@@ -10,9 +10,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/pather"
 )
 
 const (
@@ -163,20 +163,20 @@ func (s Javazon) BuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
-func (a Javazon) KillCountess() error {
-	return a.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+func (s Javazon) KillCountess() error {
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (a Javazon) KillAndariel() error {
-	return a.killBoss(npc.Andariel, data.MonsterTypeNone)
+func (s Javazon) KillAndariel() error {
+	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (a Javazon) KillSummoner() error {
-	return a.killMonster(npc.Summoner, data.MonsterTypeNone)
+func (s Javazon) KillSummoner() error {
+	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (a Javazon) KillDuriel() error {
-	return a.killBoss(npc.Duriel, data.MonsterTypeNone)
+func (s Javazon) KillDuriel() error {
+	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
 }
 
 func (s Javazon) KillCouncil() error {
@@ -205,12 +205,12 @@ func (s Javazon) KillCouncil() error {
 	}, nil)
 }
 
-func (a Javazon) KillMephisto() error {
-	return a.killBoss(npc.Mephisto, data.MonsterTypeNone)
+func (s Javazon) KillMephisto() error {
+	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (a Javazon) KillIzual() error {
-	return a.killBoss(npc.Izual, data.MonsterTypeNone)
+func (s Javazon) KillIzual() error {
+	return s.killBoss(npc.Izual, data.MonsterTypeNone)
 }
 
 func (s Javazon) KillDiablo() error {
@@ -243,14 +243,14 @@ func (s Javazon) KillDiablo() error {
 	}
 }
 
-func (a Javazon) KillPindle() error {
-	return a.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+func (s Javazon) KillPindle() error {
+	return s.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (a Javazon) KillNihlathak() error {
-	return a.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
+func (s Javazon) KillNihlathak() error {
+	return s.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (a Javazon) KillBaal() error {
-	return a.killBoss(npc.BaalCrab, data.MonsterTypeNone)
+func (s Javazon) KillBaal() error {
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
 }

@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/town"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func ReturnTown() error {
@@ -51,7 +51,7 @@ func UsePortalFrom(owner string) error {
 		if obj.IsPortal() && obj.Owner == owner {
 			return InteractObjectByID(obj.ID, func() bool {
 				if !ctx.Data.PlayerUnit.Area.IsTown() {
-					helper.Sleep(500)
+					utils.Sleep(500)
 					return true
 				}
 

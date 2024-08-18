@@ -5,8 +5,8 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/pather"
 )
 
 func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {

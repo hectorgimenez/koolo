@@ -11,9 +11,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/pather"
 )
 
 func MoveToArea(dst area.ID) error {

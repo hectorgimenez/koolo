@@ -11,8 +11,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
+	"github.com/hectorgimenez/koolo/internal/v2/pather"
 )
 
 var baalThronePosition = data.Position{

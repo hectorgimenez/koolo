@@ -3,7 +3,7 @@ package action
 import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
-	"github.com/hectorgimenez/koolo/internal/v2/utils"
+	"github.com/hectorgimenez/koolo/internal/v2/ui"
 )
 
 func RecoverCorpse() error {
@@ -12,7 +12,7 @@ func RecoverCorpse() error {
 
 	if ctx.Data.Corpse.Found {
 		ctx.Logger.Info("Corpse found, let's recover our stuff...")
-		x, y := utils.GameCoordsToScreenCords(
+		x, y := ui.GameCoordsToScreenCords(
 			ctx.Data.Corpse.Position.X,
 			ctx.Data.Corpse.Position.Y,
 		)

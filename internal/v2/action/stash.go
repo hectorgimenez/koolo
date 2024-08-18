@@ -12,10 +12,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 const (
@@ -66,9 +66,9 @@ func orderInventoryPotions() {
 			}
 
 			screenPos := ui.GetScreenCoordsForItem(i)
-			helper.Sleep(100)
+			utils.Sleep(100)
 			ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-			helper.Sleep(200)
+			utils.Sleep(200)
 		}
 	}
 }
@@ -117,7 +117,7 @@ func stashGold() {
 		if goldInStash < maxGoldPerStashTab {
 			SwitchTab(tab + 1)
 			clickStashGoldBtn()
-			helper.Sleep(500)
+			utils.Sleep(500)
 		}
 	}
 
@@ -213,11 +213,11 @@ func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) b
 
 	screenPos := ui.GetScreenCoordsForItem(i)
 	ctx.HID.MovePointer(screenPos.X, screenPos.Y)
-	helper.Sleep(170)
+	utils.Sleep(170)
 	screenshot := ctx.GameReader.Screenshot()
-	helper.Sleep(150)
+	utils.Sleep(150)
 	ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-	helper.Sleep(500)
+	utils.Sleep(500)
 
 	// Don't log items that we already have in inventory during first run
 	if !firstRun {
@@ -231,14 +231,14 @@ func clickStashGoldBtn() {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "clickStashGoldBtn"
 
-	helper.Sleep(170)
+	utils.Sleep(170)
 	if ctx.GameReader.LegacyGraphics() {
 		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnXClassic, ui.StashGoldBtnYClassic)
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmXClassic, ui.StashGoldBtnConfirmYClassic)
 	} else {
 		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnX, ui.StashGoldBtnY)
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmX, ui.StashGoldBtnConfirmY)
 	}
 }
@@ -254,7 +254,7 @@ func SwitchTab(tab int) {
 		tabSize := ui.SwitchStashTabBtnTabSizeClassic
 		x = x + tabSize*tab - tabSize/2
 		ctx.HID.Click(game.LeftButton, x, y)
-		helper.Sleep(500)
+		utils.Sleep(500)
 	} else {
 		x := ui.SwitchStashTabBtnX
 		y := ui.SwitchStashTabBtnY
@@ -262,6 +262,6 @@ func SwitchTab(tab int) {
 		tabSize := ui.SwitchStashTabBtnTabSize
 		x = x + tabSize*tab - tabSize/2
 		ctx.HID.Click(game.LeftButton, x, y)
-		helper.Sleep(500)
+		utils.Sleep(500)
 	}
 }

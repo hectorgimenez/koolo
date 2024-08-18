@@ -9,9 +9,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
@@ -301,7 +301,7 @@ func (a Leveling) prepareStaff() error {
 
 			screenPos := ui.GetScreenCoordsForItem(horadricStaff)
 			a.ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-			helper.Sleep(300)
+			utils.Sleep(300)
 			a.ctx.HID.PressKey(win.VK_ESCAPE)
 
 			return nil
@@ -386,11 +386,11 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 		screenPos := ui.GetScreenCoordsForItem(staff)
 
 		a.ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
-		helper.Sleep(300)
+		utils.Sleep(300)
 		a.ctx.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
-		helper.Sleep(500)
+		utils.Sleep(500)
 		a.ctx.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
-		helper.Sleep(20000)
+		utils.Sleep(20000)
 	}
 
 	potsToBuy := 4
@@ -416,11 +416,11 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 		}
 
 		pos := ui.GetScreenCoordsForItem(itm)
-		helper.Sleep(500)
+		utils.Sleep(500)
 
 		if x > 3 {
 			a.ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
-			helper.Sleep(300)
+			utils.Sleep(300)
 			if d.LegacyGraphics {
 				a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
 			} else {

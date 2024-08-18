@@ -8,10 +8,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/ui"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func IdentifyAll(skipIdentify bool) error {
@@ -41,7 +41,7 @@ func IdentifyAll(skipIdentify bool) error {
 	step.CloseAllMenus()
 	for !ctx.Data.OpenMenus.Inventory {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
-		helper.Sleep(300)
+		utils.Sleep(300)
 	}
 	for _, i := range items {
 		identifyItem(idTome, i)
@@ -75,12 +75,12 @@ func identifyItem(idTome data.Item, i data.Item) {
 	ctx := context.Get()
 	screenPos := ui.GetScreenCoordsForItem(idTome)
 
-	helper.Sleep(500)
+	utils.Sleep(500)
 	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-	helper.Sleep(1000)
+	utils.Sleep(1000)
 
 	screenPos = ui.GetScreenCoordsForItem(i)
 
 	ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
-	helper.Sleep(350)
+	utils.Sleep(350)
 }

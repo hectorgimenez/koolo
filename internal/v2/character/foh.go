@@ -10,9 +10,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 const (
@@ -77,11 +77,8 @@ func (s Foh) KillMonsterSequence(
 		if s.data.PlayerUnit.LeftSkill != skill.FistOfTheHeavens {
 			fohKey, fohFound := s.data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 			if fohFound {
-				step.SyncStep(func(_ game.Data) error {
-					helper.Sleep(40)
-					s.HID.PressKeyBinding(fohKey)
-					return nil
-				})
+				utils.Sleep(40)
+				s.HID.PressKeyBinding(fohKey)
 			}
 		}
 
@@ -112,7 +109,7 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 	for {
 		monster, found := s.data.Monsters.FindOne(id, monsterType)
 		if !found || monster.Stats[stat.Life] <= 0 {
-			helper.Sleep(100)
+			utils.Sleep(100)
 			return nil
 		}
 
@@ -121,7 +118,7 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 
 		// Switch between foh and holy bolt while attacking
 		if holyBoltFound && fohFound {
-			helper.Sleep(50)
+			utils.Sleep(50)
 
 			step.PrimaryAttack(
 				monster.UnitID,
@@ -131,7 +128,7 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 				step.EnsureAura(skill.Conviction),
 			)
 			s.HID.PressKeyBinding(hbKey)
-			helper.Sleep(40)
+			utils.Sleep(40)
 
 			step.PrimaryAttack(
 				monster.UnitID,
@@ -141,10 +138,10 @@ func (s Foh) killBoss(id npc.ID, monsterType data.MonsterType) error {
 				step.EnsureAura(skill.Conviction),
 			)
 
-			helper.Sleep(40)
+			utils.Sleep(40)
 			s.HID.PressKeyBinding(fohKey)
 		} else {
-			helper.Sleep(100)
+			utils.Sleep(100)
 			// Don't switch because no keybindings found
 			step.PrimaryAttack(
 				monster.UnitID,

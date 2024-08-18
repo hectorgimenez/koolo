@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 type PathFinder struct {
@@ -237,7 +237,7 @@ func (pf *PathFinder) MoveCharacter(x, y int) {
 	} else {
 		pf.hid.MovePointer(x, y)
 		pf.hid.PressKeyBinding(pf.data.KeyBindings.ForceMove)
-		helper.Sleep(50)
+		utils.Sleep(50)
 	}
 }
 
@@ -265,7 +265,7 @@ func (pf *PathFinder) RandomMovement(d game.Data) {
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
 	pf.hid.MovePointer(x, y)
 	pf.hid.PressKeyBinding(d.KeyBindings.ForceMove)
-	helper.Sleep(50)
+	utils.Sleep(50)
 }
 
 func (pf *PathFinder) DistanceFromMe(p data.Position) int {

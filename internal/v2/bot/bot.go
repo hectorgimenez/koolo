@@ -100,6 +100,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			if err != nil {
 				return err
 			}
+			err = action.ItemPickup(30)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})

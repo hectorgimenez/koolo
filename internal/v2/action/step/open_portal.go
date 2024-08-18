@@ -7,8 +7,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
-
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func OpenPortal() error {
@@ -33,7 +32,7 @@ func OpenPortal() error {
 		}
 
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
-		helper.Sleep(250)
+		utils.Sleep(250)
 		ctx.HID.Click(game.RightButton, 300, 300)
 		lastRun = time.Now()
 	}

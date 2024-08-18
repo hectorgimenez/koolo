@@ -11,9 +11,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 const (
@@ -117,9 +117,9 @@ func (s WindDruid) RecastBuffs() {
 		if kb, found := s.data.KeyBindings.KeyBindingForSkill(druSkill); found {
 			if !s.data.PlayerUnit.States.HasState(states[i]) {
 				s.HID.PressKeyBinding(kb)
-				helper.Sleep(180)
+				utils.Sleep(180)
 				s.HID.Click(game.RightButton, 640, 340)
-				helper.Sleep(100)
+				utils.Sleep(100)
 			}
 		}
 	}

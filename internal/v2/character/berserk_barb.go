@@ -11,9 +11,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
-	"github.com/hectorgimenez/d2go/pkg/utils"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/v2/action/step"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 type Berserker struct {
@@ -57,7 +57,7 @@ func (s Berserker) KillMonsterSequence(
 				foundCorpse := s.FindItemOnNearbyCorpses(*s.data, maxRange, time.Millisecond*100)
 				if foundCorpse {
 					findItemAttempts++
-					step.Wait(time.Millisecond * 100)
+					utils.Sleep(1000)
 				} else {
 					findItemAttempts = maxFindItemAttempts
 				}
@@ -116,20 +116,19 @@ func (s *Berserker) FindItemOnNearbyCorpses(d game.Data, maxRange int, waitTime 
 	}
 
 	playerPos := d.PlayerUnit.Position
-	originalPosition := playerPos
 	corpseFound := false
 	successfulFindItems := 0
 	checkedCorpses := make(map[data.UnitID]bool)
 
 	// Sort corpses by distance from the player
 	sort.Slice(d.Corpses, func(i, j int) bool {
-		distI := utils.DistanceFromPoint(playerPos, d.Corpses[i].Position)
-		distJ := utils.DistanceFromPoint(playerPos, d.Corpses[j].Position)
+		distI := s.pf.DistanceFromMe(d.Corpses[i].Position)
+		distJ := s.pf.DistanceFromMe(d.Corpses[j].Position)
 		return distI < distJ
 	})
 
 	for _, corpse := range d.Corpses {
-		distance := utils.DistanceFromPoint(playerPos, corpse.Position)
+		distance := s.pf.DistanceFromMe(corpse.Position)
 
 		if distance > maxRange {
 			break
@@ -173,7 +172,7 @@ func (s *Berserker) FindItemOnNearbyCorpses(d game.Data, maxRange int, waitTime 
 
 		playerPos = d.PlayerUnit.Position
 
-		if utils.DistanceFromPoint(originalPosition, playerPos) > maxRange {
+		if s.pf.DistanceFromMe(playerPos) > maxRange {
 			break
 		}
 	}

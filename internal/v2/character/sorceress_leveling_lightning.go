@@ -14,8 +14,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 )
 
 const (
@@ -81,7 +80,7 @@ func (s SorceressLevelingLightning) KillMonsterSequence(
 			if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
 				if completedAttackLoops%2 == 0 {
 					for _, m := range s.data.Monsters.Enemies() {
-						if d := pather.DistanceFromMe(*s.data, m.Position); d < 4 {
+						if d := s.pf.DistanceFromMe(m.Position); d < 4 {
 							s.logger.Debug("Monster close, casting Blizzard")
 							step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, step.Distance(25, 30))
 							break

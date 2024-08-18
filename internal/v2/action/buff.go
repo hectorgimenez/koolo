@@ -6,7 +6,6 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/utils"
 
@@ -14,11 +13,12 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 )
 
 func BuffIfRequired(d game.Data) {
+	ctx := context.Get()
+
 	if !IsRebuffRequired() {
 		return
 	}
@@ -27,7 +27,7 @@ func BuffIfRequired(d game.Data) {
 	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
 	closeMonsters := 0
 	for _, m := range d.Monsters {
-		if pather.DistanceFromMe(d, m.Position) < 15 {
+		if ctx.PathFinder.DistanceFromMe(m.Position) < 15 {
 			closeMonsters++
 		}
 	}
@@ -59,11 +59,11 @@ func Buff() {
 	if len(preKeys) > 0 {
 		ctx.Logger.Debug("PRE CTA Buffing...")
 		for _, kb := range preKeys {
-			helper.Sleep(100)
+			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(kb)
-			helper.Sleep(180)
+			utils.Sleep(180)
 			ctx.HID.Click(game.RightButton, 640, 340)
-			helper.Sleep(100)
+			utils.Sleep(100)
 		}
 	}
 
@@ -83,11 +83,11 @@ func Buff() {
 		ctx.Logger.Debug("Post CTA Buffing...")
 
 		for _, kb := range postKeys {
-			helper.Sleep(100)
+			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(kb)
-			helper.Sleep(180)
+			utils.Sleep(180)
 			ctx.HID.Click(game.RightButton, 640, 340)
-			helper.Sleep(100)
+			utils.Sleep(100)
 		}
 		ctx.LastBuffAt = time.Now()
 	}
