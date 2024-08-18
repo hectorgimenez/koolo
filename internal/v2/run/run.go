@@ -37,8 +37,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewSummoner())
 		case config.DurielRun:
 			runs = append(runs, NewDuriel())
-		//case config.MephistoRun:
-		//runs = append(runs, Mephisto{baseRun})
+		case config.MephistoRun:
+			runs = append(runs, NewMephisto())
 		case config.TravincalRun:
 			runs = append(runs, NewTravincal())
 		//case config.DiabloRun:
@@ -62,16 +62,16 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewStonyTomb())
 		case config.ArachnidLairRun:
 			runs = append(runs, NewArachnidLair())
-		//case config.TristramRun:
-		//	runs = append(runs, Tristram{baseRun})
+		case config.TristramRun:
+			runs = append(runs, NewTristram())
 		case config.LowerKurastRun:
 			runs = append(runs, NewLowerKurast())
 		//case config.LowerKurastChestRun:
 		//	runs = append(runs, LowerKurastChest{baseRun})
 		case config.BaalRun:
 			runs = append(runs, NewBaal())
-		//case config.TalRashaTombsRun:
-		//	runs = append(runs, TalRashaTombs{baseRun})
+		case config.TalRashaTombsRun:
+			runs = append(runs, NewTalRashaTombs())
 		//case config.LevelingRun:
 		//	runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
 		//case config.QuestsRun:
