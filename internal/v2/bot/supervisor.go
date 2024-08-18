@@ -88,10 +88,15 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) e
 
 func (s *baseSupervisor) logGameStart(runs []run.Run) {
 	runNames := ""
+	s.bot.ctx.Logger.Info(fmt.Sprintf("Runs in array: %d", len(runs)))
 	for _, r := range runs {
 		runNames += r.Name() + ", "
 	}
-	s.bot.ctx.Logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
+	if len(runs) > 0 {
+		s.bot.ctx.Logger.Info(fmt.Sprintf("Starting Game #%d. Run list: %s", s.statsHandler.Stats().TotalGames(), runNames[:len(runNames)-2]))
+	} else {
+		s.bot.ctx.Logger.Info(fmt.Sprintf("Starting Game #%d. No runs selected", s.statsHandler.Stats().TotalGames()))
+	}
 }
 
 func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
