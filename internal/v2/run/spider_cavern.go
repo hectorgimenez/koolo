@@ -56,4 +56,6 @@ func (run SpiderCavern) Run() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
 }
