@@ -44,5 +44,16 @@ func (run SpiderCavern) Run() error {
 	}
 
 	// Clear the area
-	return action.ClearCurrentLevel(run.ctx.CharacterCfg.Game.SpiderCavern.OpenChests, monsterFilter)
+	action.ClearCurrentLevel(run.ctx.CharacterCfg.Game.SpiderCavern.OpenChests, monsterFilter)
+
+	// Return to town
+	if err = action.ReturnTown(); err != nil {
+		return err
+	}
+
+	// Move to A4 if possible to shorten the run time
+	err = action.WayPoint(area.ThePandemoniumFortress)
+	if err != nil {
+		return err
+	}
 }
