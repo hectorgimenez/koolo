@@ -18,17 +18,17 @@ func NewSpiderCavern() *Tristram {
 	}
 }
 
-func (sc SpiderCavern) Name() string {
+func (run SpiderCavern) Name() string {
 	return string(config.TristramRun)
 }
 
-func (sc SpiderCavern) Run() error {
+func (run SpiderCavern) Run() error {
 
 	// Define a default monster filter
 	monsterFilter := data.MonsterAnyFilter()
 
 	// Update filter if we selected to clear only elites
-	if sc.ctx.CharacterCfg.Game.DrifterCavern.FocusOnElitePacks {
+	if run.ctx.CharacterCfg.Game.DrifterCavern.FocusOnElitePacks {
 		monsterFilter = data.MonsterEliteFilter()
 	}
 
@@ -44,5 +44,5 @@ func (sc SpiderCavern) Run() error {
 	}
 
 	// Clear the area
-	return action.ClearCurrentLevel(sc.ctx.CharacterCfg.Game.DrifterCavern.OpenChests, monsterFilter)
+	return action.ClearCurrentLevel(run.ctx.CharacterCfg.Game.SpiderCavern.OpenChests, monsterFilter)
 }
