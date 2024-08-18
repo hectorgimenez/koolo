@@ -21,7 +21,7 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 
 		for _, m := range d.Monsters.Enemies(filter) {
 			monsterDist := pather.DistanceFromPoint(originalPosition, m.Position)
-			shouldEngage := isMonsterSealElite(m) || pather.IsWalkable(m.Position, d.AreaOrigin, d.CollisionGrid)
+			shouldEngage := IsMonsterSealElite(m) || pather.IsWalkable(m.Position, d.AreaOrigin, d.CollisionGrid)
 
 			if monsterDist <= distance && shouldEngage {
 				ctx.Logger.Debug("Clearing area...", slog.Int("monsterID", int(m.Name)))
