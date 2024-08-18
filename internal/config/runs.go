@@ -29,6 +29,7 @@ const (
 	TerrorZoneRun       Run = "terror_zone"
 	ThreshsocketRun     Run = "threshsocket"
 	DrifterCavernRun    Run = "drifter_cavern"
+	SpiderCavernRun     Run = "spider_cavern"
 	EnduguRun           Run = "endugu"
 )
 
