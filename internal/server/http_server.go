@@ -21,7 +21,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/bot"
+	ctx "github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
@@ -314,8 +316,20 @@ func (s *HttpServer) debugData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Character name is required", http.StatusBadRequest)
 		return
 	}
-	gameData := s.manager.GetData(characterName)
-	jsonData, err := json.Marshal(gameData)
+
+	type DebugData struct {
+		DebugData *ctx.ContextDebug
+		GameData  *game.Data
+	}
+
+	context := s.manager.GetContext(characterName)
+
+	debugData := DebugData{
+		DebugData: context.ContextDebug,
+		GameData:  context.Data,
+	}
+
+	jsonData, err := json.Marshal(debugData)
 	if err != nil {
 		http.Error(w, "Failed to serialize game data", http.StatusInternalServerError)
 		return

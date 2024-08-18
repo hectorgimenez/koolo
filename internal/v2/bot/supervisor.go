@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/game"
+	ct "github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/run"
 	"github.com/hectorgimenez/koolo/internal/v2/utils/winproc"
 	"github.com/lxn/win"
@@ -22,6 +23,7 @@ type Supervisor interface {
 	TogglePause()
 	SetWindowPosition(x, y int)
 	GetData() *game.Data
+	GetContext() *ct.Context
 }
 
 type baseSupervisor struct {
