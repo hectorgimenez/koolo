@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/v2/run"
-
+	ct "github.com/hectorgimenez/koolo/internal/v2/context"
 	"github.com/hectorgimenez/koolo/internal/v2/health"
+	"github.com/hectorgimenez/koolo/internal/v2/run"
 
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -23,6 +23,10 @@ type SinglePlayerSupervisor struct {
 
 func (s *SinglePlayerSupervisor) GetData() *game.Data {
 	return s.bot.ctx.Data
+}
+
+func (s *SinglePlayerSupervisor) GetContext() *ct.Context {
+	return s.bot.ctx
 }
 
 func NewSinglePlayerSupervisor(name string, bot *Bot, statsHandler *StatsHandler) (*SinglePlayerSupervisor, error) {
