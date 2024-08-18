@@ -60,5 +60,6 @@ var AvailableRuns = map[Run]interface{}{
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
 	DrifterCavernRun:    nil,
+	SpiderCavernRun:     nil,
 	EnduguRun:           nil,
 }
