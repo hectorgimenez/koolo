@@ -92,7 +92,7 @@ func (d Diablo) Run() error {
 		d.ctx.Char.KillDiablo()
 	}
 
-	return action.ItemPickup(40)
+	return nil
 }
 
 func (d Diablo) initLayout() Diablo {
@@ -147,7 +147,6 @@ func (d Diablo) killVizier() error {
 	bestCorner := d.getLessConcurredCornerAroundSeal(seal4.Position)
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
-	action.ItemPickup(30)
 	d.activateSeal(object.DiabloSeal4)
 
 	action.MoveTo(func() (data.Position, bool) {
@@ -159,13 +158,11 @@ func (d Diablo) killVizier() error {
 	bestCorner = d.getLessConcurredCornerAroundSeal(seal5.Position)
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
-	action.ItemPickup(30)
 	d.activateSeal(object.DiabloSeal5)
 
 	d.moveToVizierSpawn()
 	time.Sleep(500)
 	d.killSealElite()
-	action.ItemPickup(40)
 
 	return nil
 }
@@ -182,13 +179,11 @@ func (d Diablo) killSeis() error {
 	bestCorner := d.getLessConcurredCornerAroundSeal(seal3.Position)
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
-	action.ItemPickup(30)
 
 	d.activateSeal(object.DiabloSeal3)
 	d.moveToSeisSpawn()
 	time.Sleep(500)
 	d.killSealElite()
-	action.ItemPickup(40)
 
 	return nil
 }
@@ -205,7 +200,6 @@ func (d Diablo) killInfector() error {
 	bestCorner := d.getLessConcurredCornerAroundSeal(seal1.Position)
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
-	action.ItemPickup(30)
 	d.activateSeal(object.DiabloSeal1)
 
 	action.MoveTo(func() (data.Position, bool) {
@@ -217,13 +211,11 @@ func (d Diablo) killInfector() error {
 	bestCorner = d.getLessConcurredCornerAroundSeal(seal2.Position)
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
-	action.ItemPickup(30)
 	d.activateSeal(object.DiabloSeal2)
 
 	d.moveToInfectorSpawn()
 	time.Sleep(500)
 	d.killSealElite()
-	action.ItemPickup(40)
 
 	return nil
 }
@@ -274,9 +266,6 @@ func (d Diablo) killSealElite() error {
 	}
 
 	d.ctx.Logger.Debug("No seal elite found after waiting")
-
-	// Always perform item pickup at the end
-	action.ItemPickup(40)
 
 	return nil
 }
@@ -468,7 +457,6 @@ func (d Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters
 			monsters := monsterFilter(m)
 			return skipStormCasterFilter(monsters)
 		})
-		action.ItemPickup(35)
 
 		d.cleared = append(d.cleared, pos)
 	}
