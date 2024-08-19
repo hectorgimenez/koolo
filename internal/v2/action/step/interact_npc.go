@@ -26,9 +26,7 @@ func InteractNPC(npcID npc.ID) error {
 		ctx.RefreshGameData()
 
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
+		ctx.PauseIfNotPriority()
 
 		if ctx.Data.OpenMenus.NPCInteract {
 			return nil
@@ -39,7 +37,7 @@ func InteractNPC(npcID npc.ID) error {
 		}
 
 		// Give some time before retrying the interaction
-		if waitingForInteraction && time.Since(lastRun) < time.Second {
+		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
 			continue
 		}
 

@@ -15,9 +15,7 @@ func CloseAllMenus() error {
 	attempts := 0
 	for ctx.Data.OpenMenus.IsMenuOpen() {
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
+		ctx.PauseIfNotPriority()
 
 		ctx.RefreshGameData()
 		if attempts > 10 {

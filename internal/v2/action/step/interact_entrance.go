@@ -25,9 +25,7 @@ func InteractEntrance(area area.ID) error {
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
+		ctx.PauseIfNotPriority()
 
 		// Give some extra time to render the UI
 		if ctx.Data.PlayerUnit.Area == area && time.Since(lastRun) > time.Millisecond*500 {

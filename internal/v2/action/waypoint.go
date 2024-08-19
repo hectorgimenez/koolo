@@ -87,7 +87,6 @@ func useWP(dest area.ID) error {
 
 	// We have the WP discovered, just use it
 	if len(traverseAreas) == 0 {
-		Buff()
 		return nil
 	}
 
@@ -97,10 +96,6 @@ func useWP(dest area.ID) error {
 	ctx.Logger.Info("Traversing areas to reach destination", slog.Any("areas", traverseAreas))
 
 	for i, dst := range traverseAreas {
-		if !dst.IsTown() {
-			Buff()
-		}
-
 		if i > 0 {
 			err := MoveToArea(dst)
 			if err != nil {

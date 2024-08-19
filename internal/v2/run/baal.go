@@ -143,5 +143,11 @@ func (s Baal) checkForSoulsOrDolls() bool {
 		npcIds = append(npcIds, npc.BlackSoul2, npc.BurningSoul2)
 	}
 
-	return len(npcIds) != 0
+	for _, id := range npcIds {
+		if _, found := s.ctx.Data.Monsters.FindOne(id, data.MonsterTypeNone); found {
+			return true
+		}
+	}
+
+	return true
 }

@@ -29,9 +29,7 @@ func PickupItem(it data.Item) error {
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
+		ctx.PauseIfNotPriority()
 
 		for _, i := range ctx.Data.Inventory.AllItems {
 			if i.UnitID == it.UnitID {

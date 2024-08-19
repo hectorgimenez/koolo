@@ -68,6 +68,8 @@ func NewContext(name string) *Status {
 }
 
 func Get() *Status {
+	mu.Lock()
+	defer mu.Unlock()
 	return botContexts[getGoroutineID()]
 }
 
@@ -97,4 +99,10 @@ func (ctx *Context) AttachRoutine(priority Priority) {
 
 func (ctx *Context) SwitchPriority(priority Priority) {
 	ctx.ExecutionPriority = priority
+}
+
+func (s *Status) PauseIfNotPriority() {
+	for s.Priority != s.ExecutionPriority {
+		time.Sleep(time.Millisecond * 10)
+	}
 }

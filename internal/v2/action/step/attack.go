@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
-	"github.com/hectorgimenez/koolo/internal/v2/pather"
 )
 
 const attackCycleDuration = 120 * time.Millisecond
@@ -78,9 +77,7 @@ func attack(settings attackSettings) error {
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
+		ctx.PauseIfNotPriority()
 
 		monster, found := ctx.Data.Monsters.FindByID(settings.target)
 		if !found || monster.Stats[stat.Life] <= 0 || numOfAttacksRemaining <= 0 {
@@ -138,7 +135,7 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) bo
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "ensureEnemyIsInRange"
 
-	path, distance, found := ctx.PathFinder.GetPath(monster.Position)
+	_, distance, found := ctx.PathFinder.GetPath(monster.Position)
 
 	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
@@ -149,24 +146,26 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) bo
 
 	if distance > maxDistance || !hasLoS {
 		if distance > minDistance && minDistance > 0 {
-			moveTo := minDistance - 1
-			if len(path) < minDistance {
-				moveTo = len(path) - 1 // Ensure moveTo is within path bounds
-			}
+			// TODO tweak this crap
+			//moveTo := minDistance - 1
+			//if len(path) < minDistance {
+			//	moveTo = len(path) - 1 // Ensure moveTo is within path bounds
+			//}
 
-			for i := moveTo; i > 0; i-- {
-				posTile := path[i].(*pather.Tile)
-				pos := data.Position{
-					X: posTile.X + ctx.Data.AreaOrigin.X,
-					Y: posTile.Y + ctx.Data.AreaOrigin.Y,
-				}
-
-				hasLoS = ctx.PathFinder.LineOfSight(pos, monster.Position)
-				if hasLoS {
-					path, distance, _ = ctx.PathFinder.GetPath(pos)
-					_ = MoveTo(pos)
-				}
-			}
+			MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
+			//for i := moveTo; i > 0; i-- {
+			//	posTile := path[i].(*pather.Tile)
+			//	pos := data.Position{
+			//		X: posTile.X + ctx.Data.AreaOrigin.X,
+			//		Y: posTile.Y + ctx.Data.AreaOrigin.Y,
+			//	}
+			//
+			//	hasLoS = ctx.PathFinder.LineOfSight(pos, monster.Position)
+			//	if hasLoS {
+			//		path, distance, _ = ctx.PathFinder.GetPath(pos)
+			//		_ = MoveTo(pos)
+			//	}
+			//}
 		}
 	}
 

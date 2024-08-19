@@ -73,11 +73,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			case <-ctx.Done():
 				return nil
 			case <-ticker.C:
-				if len(action.GetItemsToPickup(30)) > 0 {
-					b.ctx.ExecutionPriority = botCtx.PriorityHigh
-					_ = action.ItemPickup(30)
-					b.ctx.ExecutionPriority = botCtx.PriorityNormal
-				}
+				b.ctx.SwitchPriority(botCtx.PriorityHigh)
+				action.ItemPickup(30)
+				action.BuffIfRequired()
+				b.ctx.SwitchPriority(botCtx.PriorityNormal)
 			}
 		}
 	})
@@ -97,10 +96,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				return err
 			}
 			err = action.PostRun(false)
-			if err != nil {
-				return err
-			}
-			err = action.ItemPickup(30)
 			if err != nil {
 				return err
 			}

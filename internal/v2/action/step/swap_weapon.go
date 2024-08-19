@@ -24,11 +24,9 @@ func swapWeapon(toCTA bool) error {
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
+		ctx.PauseIfNotPriority()
 
-		if time.Since(lastRun) < time.Second {
+		if time.Since(lastRun) < time.Millisecond*500 {
 			continue
 		}
 

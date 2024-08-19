@@ -14,7 +14,7 @@ import (
 )
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
-	//time.Sleep(time.Second * 2)
+	utils.Sleep(500)
 	maxInteractionAttempts := 10
 	interactionAttempts := 0
 	maxMouseOverAttempts := 20
@@ -34,7 +34,10 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	ctx.ContextDebug.LastStep = "InteractObject"
 
 	for !isCompletedFn() {
-		if time.Since(lastRun) < time.Millisecond*50 {
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
+
+		if time.Since(lastRun) < time.Millisecond*100 {
 			continue
 		}
 
@@ -43,11 +46,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		}
 
 		ctx.RefreshGameData()
-
-		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
-		}
 
 		// Give some time before retrying the interaction
 		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
