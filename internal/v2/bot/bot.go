@@ -39,6 +39,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				b.Stop()
 				return nil
 			case <-ticker.C:
+				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
+					continue
+				}
 				b.ctx.RefreshGameData()
 			}
 		}
@@ -54,6 +57,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			case <-ctx.Done():
 				return nil
 			case <-ticker.C:
+				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
+					continue
+				}
 				err := b.ctx.HealthManager.HandleHealthAndMana()
 				if err != nil {
 					cancel()
@@ -73,6 +79,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			case <-ctx.Done():
 				return nil
 			case <-ticker.C:
+				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
+					continue
+				}
+
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 				action.ItemPickup(30)
 				action.BuffIfRequired()
