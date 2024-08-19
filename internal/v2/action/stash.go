@@ -115,7 +115,7 @@ func stashGold() {
 		}
 
 		if goldInStash < maxGoldPerStashTab {
-			SwitchTab(tab + 1)
+			switchTab(tab + 1)
 			clickStashGoldBtn()
 			utils.Sleep(500)
 		}
@@ -132,7 +132,7 @@ func stashInventory(firstRun bool) {
 	if ctx.CharacterCfg.Character.StashToShared {
 		currentTab = 2
 	}
-	SwitchTab(currentTab)
+	switchTab(currentTab)
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		stashIt, matchedRule, ruleFile := shouldStashIt(i, firstRun)
@@ -163,7 +163,7 @@ func stashInventory(firstRun bool) {
 			}
 			ctx.Logger.Debug(fmt.Sprintf("Tab %d is full, switching to next one", currentTab))
 			currentTab++
-			SwitchTab(currentTab)
+			switchTab(currentTab)
 		}
 	}
 }
@@ -219,6 +219,12 @@ func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) b
 	ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 	utils.Sleep(500)
 
+	for _, it := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
+		if it.UnitID == i.UnitID {
+			return false
+		}
+	}
+
 	// Don't log items that we already have in inventory during first run
 	if !firstRun {
 		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
@@ -243,9 +249,9 @@ func clickStashGoldBtn() {
 	}
 }
 
-func SwitchTab(tab int) {
+func switchTab(tab int) {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "SwitchTab"
+	ctx.ContextDebug.LastStep = "switchTab"
 
 	if ctx.GameReader.LegacyGraphics() {
 		x := ui.SwitchStashTabBtnXClassic
