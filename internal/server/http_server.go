@@ -318,7 +318,7 @@ func (s *HttpServer) debugData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type DebugData struct {
-		DebugData *ctx.ContextDebug
+		DebugData *ctx.Debug
 		GameData  *game.Data
 	}
 
