@@ -22,7 +22,12 @@ func ItemPickup(maxDistance int) error {
 
 	var itemBeingPickedUp data.UnitID
 
-	for itemsToPickup := GetItemsToPickup(maxDistance); len(itemsToPickup) > 0; itemsToPickup = GetItemsToPickup(maxDistance) {
+	for {
+		itemsToPickup := GetItemsToPickup(maxDistance)
+		if len(itemsToPickup) == 0 {
+			return nil
+		}
+
 		for _, m := range ctx.Data.Monsters.Enemies() {
 			if dist := ctx.PathFinder.DistanceFromMe(m.Position); dist < 7 {
 				ctx.Logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
@@ -64,8 +69,6 @@ func ItemPickup(maxDistance int) error {
 			ctx.Logger.Warn("Failed picking up item, skipping", err)
 		}
 	}
-
-	return nil
 }
 
 func GetItemsToPickup(maxDistance int) []data.Item {

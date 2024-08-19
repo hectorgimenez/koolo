@@ -401,6 +401,8 @@ func WaitForAllMembersWhenLeveling() error {
 			}
 
 			ClearAreaAroundPlayer(5, data.MonsterAnyFilter())
+		} else {
+			return nil
 		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 	"github.com/hectorgimenez/koolo/internal/v2/context"
+	"github.com/hectorgimenez/koolo/internal/v2/utils"
 )
 
 func OpenTPIfLeader() error {
@@ -37,6 +38,8 @@ func PostRun(isLastRun bool) error {
 		return nil
 	}
 
+	// Allow some time for items drop to the ground, otherwise we might miss some
+	utils.Sleep(200)
 	ClearAreaAroundPlayer(5, data.MonsterAnyFilter())
 	ItemPickup(-1)
 

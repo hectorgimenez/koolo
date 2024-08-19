@@ -18,17 +18,6 @@ func MoveTo(dest data.Position) error {
 	timeout := time.Second * 30
 	stopAtDistance := 7
 
-	// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
-	if ctx.Data.CanTeleport() {
-		if ctx.Data.PlayerUnit.RightSkill != skill.Teleport {
-			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.Teleport))
-		}
-	} else if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Vigor); found {
-		if ctx.Data.PlayerUnit.RightSkill != skill.Vigor {
-			ctx.HID.PressKeyBinding(kb)
-		}
-	}
-
 	startedAt := time.Now()
 	lastRun := time.Time{}
 
@@ -36,8 +25,17 @@ func MoveTo(dest data.Position) error {
 		ctx.RefreshGameData()
 
 		// Pause the execution if the priority is not the same as the execution priority
-		if ctx.ExecutionPriority != ctx.Priority {
-			continue
+		ctx.PauseIfNotPriority()
+
+		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
+		if ctx.Data.CanTeleport() {
+			if ctx.Data.PlayerUnit.RightSkill != skill.Teleport {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.Teleport))
+			}
+		} else if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Vigor); found {
+			if ctx.Data.PlayerUnit.RightSkill != skill.Vigor {
+				ctx.HID.PressKeyBinding(kb)
+			}
 		}
 
 		distance := ctx.PathFinder.DistanceFromMe(dest)

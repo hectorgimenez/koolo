@@ -58,7 +58,12 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 		ctx.Logger.Warn("Failed moving to room center: %v", err)
 	}
 
-	for monsters := getMonstersInRoom(room, filter); len(monsters) > 0; {
+	for {
+		monsters := getMonstersInRoom(room, filter)
+		if len(monsters) == 0 {
+			return nil
+		}
+
 		// Check if there are monsters that can summon new monsters, and kill them first
 		targetMonster := monsters[0]
 		for _, m := range monsters {
@@ -97,7 +102,7 @@ func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster
 
 	monstersInRoom := make([]data.Monster, 0)
 	for _, m := range ctx.Data.Monsters.Enemies(filter) {
-		if room.IsInside(m.Position) || ctx.PathFinder.DistanceFromMe(m.Position) < 30 {
+		if m.Stats[stat.Life] > 0 && room.IsInside(m.Position) || ctx.PathFinder.DistanceFromMe(m.Position) < 30 {
 			monstersInRoom = append(monstersInRoom, m)
 		}
 	}

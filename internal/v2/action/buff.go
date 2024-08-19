@@ -16,7 +16,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/v2/action/step"
 )
 
-func BuffIfRequired(d game.Data) {
+func BuffIfRequired() {
 	ctx := context.Get()
 
 	if !IsRebuffRequired() {
@@ -26,7 +26,7 @@ func BuffIfRequired(d game.Data) {
 	// Don't buff if we have 2 or more monsters close to the character.
 	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
 	closeMonsters := 0
-	for _, m := range d.Monsters {
+	for _, m := range ctx.Data.Monsters {
 		if ctx.PathFinder.DistanceFromMe(m.Position) < 15 {
 			closeMonsters++
 		}

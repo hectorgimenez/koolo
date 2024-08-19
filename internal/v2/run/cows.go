@@ -103,8 +103,6 @@ func (a Cows) getWirtsLeg() error {
 		return found
 	})
 
-	action.ItemPickup(30)
-
 	return action.ReturnTown()
 }
 
