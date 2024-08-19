@@ -63,8 +63,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewTristram())
 		case config.LowerKurastRun:
 			runs = append(runs, NewLowerKurast())
-		//case config.LowerKurastChestRun:
-		//	runs = append(runs, LowerKurastChest{baseRun})
+		case config.LowerKurastChestRun:
+			runs = append(runs, NewLowerKurastChest())
 		case config.BaalRun:
 			runs = append(runs, NewBaal())
 		case config.TalRashaTombsRun:
