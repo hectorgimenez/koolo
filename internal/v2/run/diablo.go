@@ -3,6 +3,7 @@ package run
 import (
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"slices"
 	"time"
 
@@ -49,13 +50,22 @@ func (d Diablo) Run() error {
 	d = d.initLayout()
 	d = d.initPaths()
 
-	action.WayPoint(area.RiverOfFlame)
+	err := action.WayPoint(area.RiverOfFlame)
+	if err != nil {
+		return err
+	}
 	action.Buff()
 
 	if d.ctx.CharacterCfg.Game.Diablo.FullClear {
-		action.MoveToCoords(chaosSanctuaryEntrancePosition)
+		err = action.MoveToCoords(chaosSanctuaryEntrancePosition)
+		if err != nil {
+			return err
+		}
 	} else {
-		action.MoveToCoords(diabloSpawnPosition)
+		err = action.MoveToCoords(diabloSpawnPosition)
+		if err != nil {
+			return err
+		}
 	}
 
 	if d.ctx.CharacterCfg.Companion.Enabled && d.ctx.CharacterCfg.Companion.Leader {
@@ -72,24 +82,36 @@ func (d Diablo) Run() error {
 		d.starToVizClear()
 	}
 
-	d.killVizier()
+	err = d.killVizier()
+	if err != nil {
+		return err
+	}
 
 	if d.ctx.CharacterCfg.Game.Diablo.FullClear {
 		d.starToSeisClear()
 	}
 
-	d.killSeis()
+	err = d.killSeis()
+	if err != nil {
+		return err
+	}
 
 	if d.ctx.CharacterCfg.Game.Diablo.FullClear {
 		d.starToInfClear()
 	}
 
-	d.killInfector()
+	err = d.killInfector()
+	if err != nil {
+		return err
+	}
 
 	if d.ctx.CharacterCfg.Game.Diablo.KillDiablo {
 		action.Buff()
 		action.MoveToCoords(diabloSpawnPosition)
-		d.ctx.Char.KillDiablo()
+		err = d.ctx.Char.KillDiablo()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -138,31 +160,43 @@ func (d Diablo) initPaths() Diablo {
 func (d Diablo) killVizier() error {
 	d.ctx.Logger.Debug("Moving to Vizier seal")
 
-	action.MoveTo(func() (data.Position, bool) {
+	err := action.MoveTo(func() (data.Position, bool) {
 		seal4, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal4)
 		return seal4.Position, true
 	})
+	if err != nil {
+		return err
+	}
 
 	seal4, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal4)
 	bestCorner := d.getLessConcurredCornerAroundSeal(seal4.Position)
+
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
 	d.activateSeal(object.DiabloSeal4)
 
-	action.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		seal5, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal5)
 		return seal5.Position, true
 	})
+	if err != nil {
+		return err
+	}
 
 	seal5, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal5)
 	bestCorner = d.getLessConcurredCornerAroundSeal(seal5.Position)
+
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
 	d.activateSeal(object.DiabloSeal5)
 
 	d.moveToVizierSpawn()
 	time.Sleep(500)
-	d.killSealElite()
+
+	err = d.killSealElite()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -170,20 +204,28 @@ func (d Diablo) killVizier() error {
 func (d Diablo) killSeis() error {
 	d.ctx.Logger.Debug("Moving to Seis seal")
 
-	action.MoveTo(func() (data.Position, bool) {
+	err := action.MoveTo(func() (data.Position, bool) {
 		seal3, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal3)
 		return seal3.Position, true
 	})
+	if err != nil {
+		return err
+	}
 
 	seal3, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal3)
 	bestCorner := d.getLessConcurredCornerAroundSeal(seal3.Position)
+
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
-
 	d.activateSeal(object.DiabloSeal3)
+
 	d.moveToSeisSpawn()
 	time.Sleep(500)
-	d.killSealElite()
+
+	err = d.killSealElite()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -191,31 +233,43 @@ func (d Diablo) killSeis() error {
 func (d Diablo) killInfector() error {
 	d.ctx.Logger.Debug("Moving to Infector seal")
 
-	action.MoveTo(func() (data.Position, bool) {
+	err := action.MoveTo(func() (data.Position, bool) {
 		seal1, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal1)
 		return seal1.Position, true
 	})
+	if err != nil {
+		return err
+	}
 
 	seal1, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal1)
 	bestCorner := d.getLessConcurredCornerAroundSeal(seal1.Position)
+
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
 	d.activateSeal(object.DiabloSeal1)
 
-	action.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		seal2, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal2)
 		return seal2.Position, true
 	})
+	if err != nil {
+		return err
+	}
 
 	seal2, _ := d.ctx.Data.Objects.FindOne(object.DiabloSeal2)
 	bestCorner = d.getLessConcurredCornerAroundSeal(seal2.Position)
+
 	action.MoveToCoords(bestCorner)
 	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
 	d.activateSeal(object.DiabloSeal2)
 
 	d.moveToInfectorSpawn()
 	time.Sleep(500)
-	d.killSealElite()
+
+	err = d.killSealElite()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -248,6 +302,7 @@ func (d Diablo) killSealElite() error {
 					})
 				})
 			})
+
 			// Kill the seal elite
 			d.ctx.Char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
 				for _, m := range dat.Monsters.Enemies(data.MonsterEliteFilter()) {
@@ -433,30 +488,40 @@ func (d Diablo) starToInfClear() error {
 }
 
 func (d Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters) []data.Monster) error {
-	var maxPosDiff = 20
+	maxPosDiff := 20 // Keep this as a constant for now
 
-	action.Buff()
+	// Create a local random number generator
+	localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for _, pos := range path {
-		multiplier := 1
 		if pather.IsWalkable(pos, d.ctx.Data.AreaOrigin, d.ctx.Data.CollisionGrid) {
 			action.MoveToCoords(pos)
 		}
-		for range 2 {
-			for i := 1; i < maxPosDiff; i++ {
-				newPos := data.Position{X: pos.X + (i * multiplier), Y: pos.Y + (i * multiplier)}
-				if pather.IsWalkable(newPos, d.ctx.Data.AreaOrigin, d.ctx.Data.CollisionGrid) {
-					action.MoveToCoords(newPos)
-				}
-			}
-			multiplier *= -1
-		}
-		action.MoveToCoords(pos)
 
-		action.ClearAreaAroundPlayer(35, func(m data.Monsters) []data.Monster {
-			monsters := monsterFilter(m)
-			return skipStormCasterFilter(monsters)
-		})
+		// Directional zigzag: alternate between diagonal, horizontal, and vertical
+		directions := []struct{ dx, dy int }{{1, 1}, {1, 0}, {0, 1}}
+
+		for _, dir := range directions {
+			multiplier := 1
+			for range 2 {
+				for i := 1; i < maxPosDiff; i++ {
+					// Random offset: add a small random variation to each point
+					offsetX := localRand.Intn(3) - 1 // Random offset of -1, 0, or 1
+					offsetY := localRand.Intn(3) - 1 // Random offset of -1, 0, or 1
+
+					newPos := data.Position{
+						X: pos.X + (i * multiplier * dir.dx) + offsetX,
+						Y: pos.Y + (i * multiplier * dir.dy) + offsetY,
+					}
+
+					if pather.IsWalkable(newPos, d.ctx.Data.AreaOrigin, d.ctx.Data.CollisionGrid) {
+						action.MoveToCoords(newPos)
+						action.ClearAreaAroundPlayer(35, monsterFilter)
+					}
+				}
+				multiplier *= -1
+			}
+		}
 
 		d.cleared = append(d.cleared, pos)
 	}
@@ -470,17 +535,20 @@ func (d Diablo) clearStrays(monsterFilter data.MonsterFilter) error {
 	d.ctx.Logger.Debug("Clearing potential stray monsters")
 	oldPos := d.ctx.Data.PlayerUnit.Position
 
-	monsters := monsterFilter(d.ctx.Data.Monsters)
-	monsters = skipStormCasterFilter(monsters)
+	// Apply both filters at once
+	monsterfilter := func(m data.Monsters) []data.Monster {
+		return skipStormCasterFilter(monsterFilter(m))
+	}
+
+	monsters := monsterfilter(d.ctx.Data.Monsters)
+	d.ctx.Logger.Debug(fmt.Sprintf("Stray monsters to clear after filtering: %d", len(monsters)))
 
 	actionPerformed := false
 	for _, monster := range monsters {
 		for _, clearedPos := range d.cleared {
 			if pather.DistanceFromPoint(monster.Position, clearedPos) < 30 {
 				action.MoveToCoords(monster.Position)
-				action.ClearAreaAroundPlayer(15, func(m data.Monsters) []data.Monster {
-					return skipStormCasterFilter(monsterFilter(m))
-				})
+				action.ClearAreaAroundPlayer(15, monsterfilter)
 				actionPerformed = true
 				break
 			}
