@@ -69,11 +69,27 @@ func (a Leveling) bloodMoor() error {
 }
 
 func (a Leveling) coldPlains() error {
-	err := action.MoveToArea(area.ColdPlains)
+	a.ctx.Logger.Debug("Clearing Cold Plains called in V2")
+	err := action.WayPoint(area.ColdPlains)
 	if err != nil {
-		return err
+		// We couldn't move to ColdPlains, which means we dont have CP WP
+		err2 := action.MoveToArea(area.BloodMoor)
+		if err2 != nil {
+			// We couldn't move to Blood Moor either, well shucks..
+			return err2
+		} else {
+			err3 := action.MoveToArea(area.ColdPlains)
+			if err3 != nil {
+				return err3
+			} else {
+				// Get the WP
+				wperr := action.WayPoint(area.ColdPlains)
+				if wperr != nil {
+					return wperr
+				}
+			}
+		}
 	}
-
 	return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 }
 
