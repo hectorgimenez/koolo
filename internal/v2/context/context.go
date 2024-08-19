@@ -89,7 +89,14 @@ func (ctx *Context) RefreshGameData() {
 }
 
 func (ctx *Context) Cancel() {
-
+	mu.Lock()
+	defer mu.Unlock()
+	for idx, c := range botContexts {
+		if c.Name == ctx.Name {
+			delete(botContexts, idx)
+		}
+	}
+	return
 }
 
 func (ctx *Context) AttachRoutine(priority Priority) {
