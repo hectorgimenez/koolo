@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -55,7 +56,7 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 
 	err := MoveToCoords(path.To())
 	if err != nil {
-		ctx.Logger.Warn("Failed moving to room center: %v", err)
+		return fmt.Errorf("failed moving to room center: %w", err)
 	}
 
 	for {
@@ -92,8 +93,6 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 			}, nil)
 		}
 	}
-
-	return nil
 }
 
 func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster {

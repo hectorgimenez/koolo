@@ -28,9 +28,8 @@ func (e Eldritch) Name() string {
 }
 
 func (e Eldritch) Run() error {
-
 	// Travel to FrigidHighlands
-	err := action.MoveToArea(area.FrigidHighlands)
+	err := action.WayPoint(area.FrigidHighlands)
 	if err != nil {
 		return err
 	}
