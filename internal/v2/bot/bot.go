@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -24,6 +25,8 @@ func NewBot(ctx *botCtx.Context) *Bot {
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	ctx, cancel := context.WithCancel(ctx)
 	g, ctx := errgroup.WithContext(ctx)
+
+	gameStartedAt := time.Now()
 
 	// Let's make sure we have updated game data before we start the runs
 	b.ctx.RefreshGameData()
@@ -55,6 +58,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		for {
 			select {
 			case <-ctx.Done():
+				b.Stop()
 				return nil
 			case <-ticker.C:
 				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
@@ -65,6 +69,12 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					cancel()
 					b.Stop()
 					return err
+				}
+				if time.Since(gameStartedAt).Seconds() > float64(b.ctx.CharacterCfg.MaxGameLength) {
+					return fmt.Errorf(
+						"max game length reached, try to exit game: %0.2f",
+						time.Since(gameStartedAt).Seconds(),
+					)
 				}
 			}
 		}
@@ -77,6 +87,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		for {
 			select {
 			case <-ctx.Done():
+				b.Stop()
 				return nil
 			case <-ticker.C:
 				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
@@ -94,22 +105,25 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	// Low priority loop, this will keep executing main run scripts
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
-		for _, r := range runs {
+		for k, r := range runs {
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
 			err := action.PreRun(firstRun)
 			if err != nil {
 				return err
 			}
 
+			firstRun = false
 			err = r.Run()
 			if err != nil {
 				return err
 			}
-			err = action.PostRun(false)
+			err = action.PostRun(k == len(runs)-1)
 			if err != nil {
 				return err
 			}
 		}
+		cancel()
+		b.Stop()
 		return nil
 	})
 
@@ -117,5 +131,5 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 }
 
 func (b *Bot) Stop() {
-	b.ctx.Cancel()
+	b.ctx.Detach()
 }

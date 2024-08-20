@@ -88,15 +88,10 @@ func (ctx *Context) RefreshGameData() {
 	*ctx.Data = ctx.GameReader.GetData(false)
 }
 
-func (ctx *Context) Cancel() {
+func (ctx *Context) Detach() {
 	mu.Lock()
 	defer mu.Unlock()
-	for idx, c := range botContexts {
-		if c.Name == ctx.Name {
-			delete(botContexts, idx)
-		}
-	}
-	return
+	delete(botContexts, getGoroutineID())
 }
 
 func (ctx *Context) AttachRoutine(priority Priority) {

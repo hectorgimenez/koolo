@@ -149,5 +149,5 @@ func (s Baal) checkForSoulsOrDolls() bool {
 		}
 	}
 
-	return true
+	return false
 }
