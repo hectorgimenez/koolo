@@ -131,7 +131,7 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 			}
 
 			s.bot.ctx.HID.PressKey(win.VK_DOWN)
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 150)
 			previousSelection = characterName
 		}
 	}
