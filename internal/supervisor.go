@@ -105,7 +105,10 @@ func (s *baseSupervisor) logGameStart(runs []run.Run) {
 
 func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	s.c.Logger.Info("Waiting for character selection screen...")
-
+	for !s.c.Reader.GameReader.InCharacterSelectionScreen() {
+		s.c.HID.Click(game.LeftButton, 100, 100)
+		time.Sleep(time.Second)
+	}
 	for s.c.Reader.GameReader.GetSelectedCharacterName() == "" {
 		s.c.HID.Click(game.LeftButton, 100, 100)
 		time.Sleep(time.Second)
