@@ -47,8 +47,12 @@ func (m Mephisto) Run() error {
 		return err
 	}
 
-	// Clear the area with the selected options
-	return action.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.CouncilMemberFilter())
+	if m.ctx.CharacterCfg.Game.Mephisto.OpenChests || m.ctx.CharacterCfg.Game.Mephisto.KillCouncilMembers {
+		// Clear the area with the selected options
+		return action.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.CouncilMemberFilter())
+	}
+
+	return nil
 }
 
 func (m Mephisto) CouncilMemberFilter() data.MonsterFilter {
