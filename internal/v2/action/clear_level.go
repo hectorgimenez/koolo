@@ -54,7 +54,11 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 		return errors.New("failed to find a path to the room center")
 	}
 
-	err := MoveToCoords(path.To())
+	to := data.Position{
+		X: path.To().X + ctx.Data.AreaOrigin.X,
+		Y: path.To().Y + ctx.Data.AreaOrigin.Y,
+	}
+	err := MoveToCoords(to)
 	if err != nil {
 		return fmt.Errorf("failed moving to room center: %w", err)
 	}
