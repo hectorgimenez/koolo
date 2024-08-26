@@ -31,66 +31,76 @@ func MoveToArea(dst area.ID) error {
 		})
 	}
 
+	lvl := data.Level{}
+	for _, a := range ctx.Data.AdjacentLevels {
+		if a.Area == dst {
+			lvl = a
+			break
+		}
+	}
+
+	if lvl.Position.X == 0 && lvl.Position.Y == 0 {
+		return fmt.Errorf("destination area not found: %s", dst.Area().Name)
+	}
+
 	toFun := func() (data.Position, bool) {
 		if ctx.Data.PlayerUnit.Area == dst {
 			ctx.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
 			return data.Position{}, false
 		}
 
-		switch dst {
-		case area.MonasteryGate:
+		if ctx.Data.PlayerUnit.Area == area.TamoeHighland && dst == area.MonasteryGate {
 			ctx.Logger.Debug("Monastery Gate detected, moving to static coords")
 			return data.Position{X: 15139, Y: 5056}, true
 		}
 
-		for _, a := range ctx.Data.AdjacentLevels {
-			if a.Area == dst {
-				// To correctly detect the two possible exits from Lut Gholein
-				if dst == area.RockyWaste && ctx.Data.PlayerUnit.Area == area.LutGholein {
-					if _, _, found := ctx.PathFinder.GetPath(data.Position{X: 5004, Y: 5065}); found {
-						return data.Position{X: 4989, Y: 5063}, true
-					} else {
-						return data.Position{X: 5096, Y: 4997}, true
-					}
-				}
+		if ctx.Data.PlayerUnit.Area == area.MonasteryGate && dst == area.TamoeHighland {
+			ctx.Logger.Debug("Monastery Gate detected, moving to static coords")
+			return data.Position{X: 15148, Y: 5099}, true
+		}
 
-				// This means it's a cave, we don't want to load the map, just find the entrance and interact
-				if a.IsEntrance {
-					return a.Position, true
-				}
-
-				lvl, _ := ctx.GameReader.GetCachedMapData(false).GetLevelData(a.Area)
-				_, _, objects, _ := ctx.GameReader.GetCachedMapData(false).NPCsExitsAndObjects(lvl.Offset, a.Area)
-
-				// Sort objects by the distance from me
-				sort.Slice(objects, func(i, j int) bool {
-					distanceI := ctx.PathFinder.DistanceFromMe(objects[i].Position)
-					distanceJ := ctx.PathFinder.DistanceFromMe(objects[j].Position)
-
-					return distanceI < distanceJ
-				})
-
-				// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
-				for _, obj := range objects {
-					_, _, found := ctx.PathFinder.GetPath(obj.Position)
-					if found {
-						return obj.Position, true
-					}
-				}
-
-				return a.Position, true
+		// To correctly detect the two possible exits from Lut Gholein
+		if dst == area.RockyWaste && ctx.Data.PlayerUnit.Area == area.LutGholein {
+			if _, _, found := ctx.PathFinder.GetPath(data.Position{X: 5004, Y: 5065}); found {
+				return data.Position{X: 4989, Y: 5063}, true
+			} else {
+				return data.Position{X: 5096, Y: 4997}, true
 			}
 		}
 
-		ctx.Logger.Debug("Destination area not found", slog.String("area", dst.Area().Name))
+		// This means it's a cave, we don't want to load the map, just find the entrance and interact
+		if lvl.IsEntrance {
+			return lvl.Position, true
+		}
 
-		return data.Position{}, false
+		lvlData, _ := ctx.GameReader.GetCachedMapData(false).GetLevelData(lvl.Area)
+		_, _, objects, _ := ctx.GameReader.GetCachedMapData(false).NPCsExitsAndObjects(lvlData.Offset, lvlData.Area)
+
+		// Sort objects by the distance from me
+		sort.Slice(objects, func(i, j int) bool {
+			distanceI := ctx.PathFinder.DistanceFromMe(objects[i].Position)
+			distanceJ := ctx.PathFinder.DistanceFromMe(objects[j].Position)
+
+			return distanceI < distanceJ
+		})
+
+		// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
+		for _, obj := range objects {
+			_, _, found := ctx.PathFinder.GetPath(obj.Position)
+			if found {
+				return obj.Position, true
+			}
+		}
+
+		return lvl.Position, true
 	}
 
 	MoveTo(toFun)
-	err := step.InteractEntrance(dst)
-	if err != nil {
-		return err
+	if lvl.IsEntrance {
+		err := step.InteractEntrance(dst)
+		if err != nil {
+			return err
+		}
 	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
