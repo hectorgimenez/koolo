@@ -73,11 +73,11 @@ func (gm *Manager) NewGame() error {
 	}
 
 	for range 30 {
-		if gm.gr.InCharacterSelectionScreen() {
-			utils.Sleep(2000) // Wait for character selection screen to load
+		if gm.gr.IsInCharacterSelectionScreen() {
 			break
+		} else {
+			utils.Sleep(500)
 		}
-		utils.Sleep(500)
 	}
 
 	difficultyPosition := map[difficulty.Difficulty]struct {
@@ -111,9 +111,6 @@ func (gm *Manager) clearGameNameOrPasswordField() {
 }
 
 func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
-	// Enter bnet lobby
-	gm.hid.Click(LeftButton, 744, 650)
-	utils.Sleep(1200)
 
 	// Click "Create game" tab
 	gm.hid.Click(LeftButton, 845, 54)
@@ -162,9 +159,6 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 }
 
 func (gm *Manager) JoinOnlineGame(gameName, password string) error {
-	// Enter bnet lobby
-	gm.hid.Click(LeftButton, 744, 650)
-	utils.Sleep(1200)
 
 	// Click "Join game" tab
 	gm.hid.Click(LeftButton, 977, 54)
