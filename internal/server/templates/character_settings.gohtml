@@ -87,7 +87,17 @@
                     Use teleport when available
                     <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
                 </label>
+                <label>
+                    <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
+                    Always stash to shared tab
+            </label>
             </fieldset>
+                        <label>
+                Minimum Gold (will pick up Magic+ to sell for gold if below)
+                <input min="0" type="number" name="gameMinGoldPickupThreshold"
+                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
+                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
+            </label>
             <h3>Client Settings</h3></br>
             <fieldset class="grid">
                 <label>
@@ -240,10 +250,22 @@
             </table>
             <h3>Game Settings</h3></br>
             <label>
-                Max game length (seconds)
-                <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
-                    value="{{ .Config.MaxGameLength }}"/>
+                <input type="checkbox" name="createLobbyGames" {{ if .Config.Game.CreateLobbyGames }}checked{{ end }}/>
+                Create Lobby Games
+            </label></br>
+            <fieldset class="grid">
+                <label>
+                    Game name pattern
+                    <input name="companionGameNameTemplate" placeholder="{{ .Config.Companion.GameNameTemplate }}"
+                           value="{{ .Config.Companion.GameNameTemplate }}"/>
                 </label>
+                <label>
+                    Game password (leave blank for public games)
+                    <input name="companionGamePassword" placeholder="{{ .Config.Companion.GamePassword }}"
+                           value="{{ .Config.Companion.GamePassword }}"/>
+                </label>
+            </fieldset>
+            <fieldset class="grid">
             <label>
                 Game Difficulty
                 <select name="gameDifficulty">
@@ -258,7 +280,12 @@
                     </option>
                 </select>
             </label>
-
+            <label>
+                Max game length (seconds)
+                <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
+                    value="{{ .Config.MaxGameLength }}"/>
+                </label>
+            </fieldset>
             <h4>Runs</h4></br>
             <label>
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
@@ -293,16 +320,6 @@
                     </ul>
                 </div>
             </div>
-            <label>
-                Minimum Gold (will pick up Magic+ to sell for gold if below)
-                <input min="0" type="number" name="gameMinGoldPickupThreshold"
-                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
-                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
-            </label>
-            <label>
-                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
-                Always stash to shared tab
-            </label>
             <h3>Gambling</h3>
             <label>
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
@@ -321,39 +338,14 @@
             {{ end }}
             <h3>Leader mode</h3>
             <label>
-                <input type="checkbox" name="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>
-                Enabled
-            </label>
-            <label>
                 <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
                 Leader
             </label>
             <label>
-                <input type="checkbox" name="companionAttack" {{ if .Config.Companion.Attack }}checked{{ end }}/>
-                Attack
-            </label>
-            <label>
-                <input type="checkbox" name="companionFollowLeader" {{ if .Config.Companion.FollowLeader }}checked{{ end }}/>
-                Follow Leader
-            </label>
-            <fieldset class="grid">
-                <label>
                     Leader Name
                     <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
                            value="{{ .Config.Companion.LeaderName }}"/>
                 </label>
-                <label>
-                    Game name pattern
-                    <input name="companionGameNameTemplate" placeholder="{{ .Config.Companion.GameNameTemplate }}"
-                           value="{{ .Config.Companion.GameNameTemplate }}"/>
-                </label>
-                <label>
-                    Game password
-                    <input name="companionGamePassword" placeholder="{{ .Config.Companion.GamePassword }}"
-                           value="{{ .Config.Companion.GamePassword }}"/>
-                </label>
-            </fieldset>
-
             <h3>Back to Town Settings:</h3>
             <fieldset class="grid">    
                 <label>

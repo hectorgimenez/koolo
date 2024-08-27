@@ -560,6 +560,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Game
+		cfg.Game.CreateLobbyGames = r.Form.Has("createLobbyGames")
 		cfg.Game.MinGoldPickupThreshold, _ = strconv.Atoi(r.Form.Get("gameMinGoldPickupThreshold"))
 		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))
 		cfg.Game.RandomizeRuns = r.Form.Has("gameRandomizeRuns")
@@ -655,10 +656,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		// Companion
 
 		// Companion config
-		cfg.Companion.Enabled = r.Form.Has("companionEnabled")
 		cfg.Companion.Leader = r.Form.Has("companionLeader")
-		cfg.Companion.Attack = r.Form.Has("companionAttack")
-		cfg.Companion.FollowLeader = r.Form.Has("companionFollowLeader")
 		cfg.Companion.LeaderName = r.Form.Get("companionLeaderName")
 		cfg.Companion.GameNameTemplate = r.Form.Get("companionGameNameTemplate")
 		cfg.Companion.GamePassword = r.Form.Get("companionGamePassword")

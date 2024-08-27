@@ -274,11 +274,8 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	mng.eventListener.Register(statsHandler.Handle)
 
 	var supervisor Supervisor
-	if config.Characters[supervisorName].Companion.Enabled {
-		//supervisor, err = NewCompanionSupervisor(supervisorName, bot, runFactory, statsHandler, c, pid, uintptr(hwnd))
-	} else {
-		supervisor, err = NewSinglePlayerSupervisor(supervisorName, bot, statsHandler)
-	}
+
+	supervisor, err = NewSinglePlayerSupervisor(supervisorName, bot, statsHandler)
 
 	if err != nil {
 		return nil, nil, err

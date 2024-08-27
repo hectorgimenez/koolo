@@ -72,7 +72,7 @@ func (s Baal) Run() error {
 	}
 
 	// Let's move to a safe area and open the portal in companion mode
-	if s.ctx.CharacterCfg.Companion.Enabled && s.ctx.CharacterCfg.Companion.Leader {
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.MoveToCoords(data.Position{
 			X: 15116,
 			Y: 5071,
