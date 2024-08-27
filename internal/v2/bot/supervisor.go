@@ -78,19 +78,27 @@ func (s *baseSupervisor) Stop() {
 	s.bot.ctx.GameReader.Close()
 
 	if s.bot.ctx.CharacterCfg.KillD2OnStop {
-		process, err := os.FindProcess(int(s.bot.ctx.GameReader.Process.GetPID()))
-		if err != nil {
-			s.bot.ctx.Logger.Info("Failed to find process", slog.String("configuration", s.name))
-		}
-		err = process.Kill()
-		if err != nil {
-			s.bot.ctx.Logger.Info("Failed to kill process", slog.String("configuration", s.name))
-		}
+		s.KillClient()
 	}
 	s.bot.ctx.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 
-func (s *baseSupervisor) ensureProcessIsRunningAndPrepare(ctx context.Context) error {
+func (s *baseSupervisor) KillClient() error {
+
+	process, err := os.FindProcess(int(s.bot.ctx.GameReader.Process.GetPID()))
+	if err != nil {
+		s.bot.ctx.Logger.Info("Failed to find process", slog.String("configuration", s.name))
+		return err
+	}
+	err = process.Kill()
+	if err != nil {
+		s.bot.ctx.Logger.Info("Failed to kill process", slog.String("configuration", s.name))
+		return err
+	}
+	return nil
+}
+
+func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 	// Prevent screen from turning off
 	winproc.SetThreadExecutionState.Call(winproc.EXECUTION_STATE_ES_DISPLAY_REQUIRED | winproc.EXECUTION_STATE_ES_CONTINUOUS)
 
@@ -108,12 +116,11 @@ func (s *baseSupervisor) logGameStart(runs []run.Run) {
 func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	s.bot.ctx.Logger.Info("Waiting for character selection screen...")
 
-	for s.bot.ctx.GameReader.GameReader.GetSelectedCharacterName() == "" {
+	for !s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
+		// Spam left click to skip to the char select screen
 		s.bot.ctx.HID.Click(game.LeftButton, 100, 100)
-		time.Sleep(time.Second)
+		time.Sleep(250 * time.Millisecond)
 	}
-
-	time.Sleep(time.Second) // Add an extra second to allow UI to properly render on slow computers
 
 	s.bot.ctx.Logger.Info("Character selection screen found")
 

@@ -94,6 +94,8 @@ type CharacterCfg struct {
 		Difficulty             difficulty.Difficulty `yaml:"difficulty"`
 		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
 		Runs                   []Run                 `yaml:"runs"`
+		CreateLobbyGames       bool                  `yaml:"createLobbyGames"`
+		PublicGameCounter      int                   `yaml:"-"`
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
