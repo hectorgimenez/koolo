@@ -68,7 +68,7 @@ func (d Diablo) Run() error {
 		}
 	}
 
-	if d.ctx.CharacterCfg.Companion.Enabled && d.ctx.CharacterCfg.Companion.Leader {
+	if d.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
 		action.Buff()
 		action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())

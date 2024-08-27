@@ -388,7 +388,7 @@ func WaitForAllMembersWhenLeveling() error {
 
 	for {
 		_, isLeveling := ctx.Char.(context.LevelingCharacter)
-		if ctx.CharacterCfg.Companion.Enabled && ctx.CharacterCfg.Companion.Leader && !ctx.Data.PlayerUnit.Area.IsTown() && isLeveling {
+		if ctx.CharacterCfg.Companion.Leader && !ctx.Data.PlayerUnit.Area.IsTown() && isLeveling {
 			allMembersAreaCloseToMe := true
 			for _, member := range ctx.Data.Roster {
 				if member.Name != ctx.Data.PlayerUnit.Name && ctx.PathFinder.DistanceFromMe(member.Position) > 20 {

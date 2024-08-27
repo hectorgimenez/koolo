@@ -12,7 +12,7 @@ func OpenTPIfLeader() error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "OpenTPIfLeader"
 
-	isLeader := ctx.CharacterCfg.Companion.Enabled && ctx.CharacterCfg.Companion.Leader
+	isLeader := ctx.CharacterCfg.Companion.Leader
 
 	if isLeader {
 		return step.OpenPortal()
@@ -34,7 +34,7 @@ func PostRun(isLastRun bool) error {
 	ctx.ContextDebug.LastAction = "PostRun"
 
 	// For companions, we don't need them to do anything, just follow the leader
-	if ctx.CharacterCfg.Companion.Enabled && !ctx.CharacterCfg.Companion.Leader {
+	if !ctx.CharacterCfg.Companion.Leader {
 		return nil
 	}
 
