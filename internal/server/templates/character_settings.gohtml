@@ -164,7 +164,7 @@
             <fieldset class="grid">
                 <label>
                     Class
-                    <select name="characterClass">
+                    <select id="characterClass" name="characterClass" onchange="checkLevelingProfile()">
                         <option value="sorceress" {{ if eq .Config.Character.Class
                         "sorceress" }}selected{{ end }}>Sorc (Blizzard)
                         </option>
@@ -269,6 +269,8 @@
             <div class="grid">
                 <div>
                     <h6>Enabled runs (drag & drop)</h6>
+                    <button type="button" id="clear-enabled-runs">Clear All</button>
+
                     <ul class="run-list" id="enabled_runs">
                         {{ range $index, $run := .EnabledRuns }}
                             <li value="{{ $run }}">
@@ -282,6 +284,7 @@
                 </div>
                 <div>
                     <h6>Disabled runs</h6>
+                    <input type="text" id="search-disabled-runs" placeholder="Search runs...">
                     <ul class="run-list" id="disabled_runs">
                         {{ range $index, $run := .DisabledRuns }}
                             <li value="{{ $run }}">
