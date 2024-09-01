@@ -63,6 +63,8 @@ func (s *SinglePlayerSupervisor) Start() error {
 					return fmt.Errorf("error waiting for character selection screen: %w", err)
 				}
 			}
+
+			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
 
 				// Create the game
@@ -142,6 +144,8 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 // This function is responsible for handling all interactions with joining/creating games
 func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
+	// Refresh the data
+	s.bot.ctx.RefreshGameData()
 
 	// Catch-all
 	if s.bot.ctx.CharacterCfg.AuthMethod != "None" && s.bot.ctx.GameReader.IsInCharacterSelectionScreen() && !s.bot.ctx.GameReader.IsOnline() {
