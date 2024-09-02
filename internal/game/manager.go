@@ -18,10 +18,6 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-var (
-	user32 = windows.NewLazySystemDLL("user32.dll")
-)
-
 type Manager struct {
 	gr             *MemoryReader
 	hid            *HID
@@ -195,57 +191,6 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 
 func (gm *Manager) InGame() bool {
 	return gm.gr.InGame()
-}
-
-func terminateProcessByName(name string) error {
-	const (
-		PROCESS_TERMINATE  = 0x0001
-		MAX_PATH           = 260
-		TH32CS_SNAPPROCESS = 0x00000002
-	)
-	hSnapshot, err := windows.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-	if err != nil {
-		return fmt.Errorf("failed to create process snapshot")
-	}
-	defer windows.CloseHandle(hSnapshot)
-
-	var pe32 windows.ProcessEntry32
-	pe32.Size = uint32(unsafe.Sizeof(pe32))
-
-	if err := windows.Process32First(hSnapshot, &pe32); err != nil {
-		return fmt.Errorf("error during process list")
-	}
-
-	var pid uint32
-	for {
-		processName := windows.UTF16ToString(pe32.ExeFile[:])
-		if processName == name {
-			pid = pe32.ProcessID
-			break
-		}
-		if err := windows.Process32Next(hSnapshot, &pe32); err != nil {
-			if err == syscall.ERROR_NO_MORE_FILES {
-				break
-			}
-		}
-	}
-
-	if pid == 0 {
-		return nil
-	}
-
-	hProcess, err := windows.OpenProcess(PROCESS_TERMINATE, false, pid)
-	if err != nil {
-		return err
-	}
-
-	defer windows.CloseHandle(hProcess)
-
-	if err := windows.TerminateProcess(hProcess, 0); err != nil {
-		return fmt.Errorf("failed to terminate process")
-	}
-
-	return nil
 }
 
 func StartGame(username string, password string, authmethod string, authToken string, realm string, arguments string, useCustomSettings bool) (uint32, win.HWND, error) {
