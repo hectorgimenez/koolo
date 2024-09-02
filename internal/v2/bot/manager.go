@@ -140,17 +140,6 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		}()
 	}
 
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		mng.logger.Error(
-	//			"fatal error detected, forcing shutdown",
-	//			slog.String("supervisor", supervisorName),
-	//			slog.Any("error", r),
-	//			slog.String("Stacktrace", string(debug.Stack())),
-	//		)
-	//	}
-	//}()
-
 	// Start the Crash Detector in a thread to avoid blocking and speed up start
 	go crashDetector.Start()
 
