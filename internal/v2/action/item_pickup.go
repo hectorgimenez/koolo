@@ -28,9 +28,11 @@ func ItemPickup(maxDistance int) error {
 			return nil
 		}
 
+		i := itemsToPickup[0]
+
 		for _, m := range ctx.Data.Monsters.Enemies() {
-			if dist := ctx.PathFinder.DistanceFromMe(m.Position); dist < 7 {
-				ctx.Logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
+			if _, dist, _ := ctx.PathFinder.GetPathFrom(i.Position, m.Position); dist < 7 {
+				ctx.Logger.Debug("Monsters detected close to the item being picked up, killing them...", slog.Any("monster", m))
 				itemBeingPickedUp = -1
 				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 					return m.UnitID, true
@@ -38,8 +40,6 @@ func ItemPickup(maxDistance int) error {
 				continue
 			}
 		}
-
-		i := itemsToPickup[0]
 
 		// Error picking up Item, go back to town, sell junk, stash and try again.
 		if itemBeingPickedUp == i.UnitID {
@@ -66,7 +66,12 @@ func ItemPickup(maxDistance int) error {
 		// TODO Handle proper error & multiple items and blacklist
 		err = step.PickupItem(i)
 		if err != nil {
-			ctx.Logger.Warn("Failed picking up item, skipping", err)
+			ctx.Logger.Warn(
+				"Failed picking up item, skipping",
+				err,
+				slog.String("itemName", i.Desc().Name),
+				slog.Int("unitID", int(i.UnitID)),
+			)
 		}
 	}
 }

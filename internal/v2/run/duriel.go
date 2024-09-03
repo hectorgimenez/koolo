@@ -67,8 +67,7 @@ func (d Duriel) findRealTomb() (area.ID, error) {
 	var realTomb area.ID
 
 	for _, tomb := range talTombs {
-		_, _, objects, _ := d.ctx.GameReader.GetCachedMapData(false).NPCsExitsAndObjects(data.Position{}, tomb)
-		for _, obj := range objects {
+		for _, obj := range d.ctx.Data.Areas[tomb].Objects {
 			if obj.Name == object.HoradricOrifice {
 				realTomb = tomb
 				break

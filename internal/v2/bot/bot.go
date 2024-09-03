@@ -24,11 +24,17 @@ func NewBot(ctx *botCtx.Context) *Bot {
 
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
 
 	// Let's make sure we have updated game data before we start the runs
+	err := b.ctx.GameReader.FetchMapData()
+	if err != nil {
+		return err
+	}
+
 	b.ctx.RefreshGameData()
 
 	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution

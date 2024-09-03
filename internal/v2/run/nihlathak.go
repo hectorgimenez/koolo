@@ -79,7 +79,7 @@ func (n Nihlathak) Run() error {
 		bestCorner := 0
 		bestCornerDistance := 0
 		for i, c := range corners {
-			if pather.IsWalkable(c, n.ctx.Data.PlayerUnit.Position, n.ctx.Data.CollisionGrid) {
+			if n.ctx.Data.AreaData.IsWalkable(c) {
 				averageDistance := 0
 				for _, m := range n.ctx.Data.Monsters.Enemies() {
 					averageDistance += pather.DistanceFromPoint(c, m.Position)

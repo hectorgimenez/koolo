@@ -11,6 +11,8 @@ import (
 )
 
 type Data struct {
+	Areas    map[area.ID]AreaData
+	AreaData AreaData
 	data.Data
 	CharacterCfg config.CharacterCfg
 }

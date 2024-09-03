@@ -56,7 +56,7 @@ func MoveToArea(dst area.ID) error {
 
 		if ctx.Data.PlayerUnit.Area == area.MonasteryGate && dst == area.TamoeHighland {
 			ctx.Logger.Debug("Monastery Gate detected, moving to static coords")
-			return data.Position{X: 15148, Y: 5099}, true
+			return data.Position{X: 15142, Y: 5118}, true
 		}
 
 		// To correctly detect the two possible exits from Lut Gholein
@@ -73,9 +73,7 @@ func MoveToArea(dst area.ID) error {
 			return lvl.Position, true
 		}
 
-		lvlData, _ := ctx.GameReader.GetCachedMapData(false).GetLevelData(lvl.Area)
-		_, _, objects, _ := ctx.GameReader.GetCachedMapData(false).NPCsExitsAndObjects(lvlData.Offset, lvlData.Area)
-
+		objects := ctx.Data.Areas[lvl.Area].Objects
 		// Sort objects by the distance from me
 		sort.Slice(objects, func(i, j int) bool {
 			distanceI := ctx.PathFinder.DistanceFromMe(objects[i].Position)
@@ -95,7 +93,11 @@ func MoveToArea(dst area.ID) error {
 		return lvl.Position, true
 	}
 
-	MoveTo(toFun)
+	err := MoveTo(toFun)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	if lvl.IsEntrance {
 		err := step.InteractEntrance(dst)
 		if err != nil {

@@ -5,31 +5,29 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-	"sync"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/memory"
 	"github.com/hectorgimenez/d2go/pkg/utils"
-	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/map_client"
-	kooloUtils "github.com/hectorgimenez/koolo/internal/v2/utils"
 	"github.com/lxn/win"
 )
 
 type MemoryReader struct {
 	cfg *config.CharacterCfg
 	*memory.GameReader
-	CachedMapSeed  uint
+	mapSeed        uint
 	HWND           win.HWND
 	WindowLeftX    int
 	WindowTopY     int
 	GameAreaSizeX  int
 	GameAreaSizeY  int
 	supervisorName string
-	cachedMapData  map_client.MapData
+	cachedMapData  map[area.ID]AreaData
 	logger         *slog.Logger
-	mu             sync.Mutex // Mutex to ensure only one instance runs the GetCachedMapData method at a time
 }
 
 func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, window win.HWND, logger *slog.Logger) (*MemoryReader, error) {
@@ -51,28 +49,39 @@ func NewGameReader(cfg *config.CharacterCfg, supervisorName string, pid uint32, 
 	return gr, nil
 }
 
-func (gd *MemoryReader) GetCachedMapData(isNewGame bool) map_client.MapData {
-	gd.mu.Lock()
-	defer gd.mu.Unlock()
-	if isNewGame || gd.cachedMapData == nil {
-		d := gd.GameReader.GetData()
-		gd.CachedMapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
-		t := time.Now()
-		gd.logger.Debug("Fetching map data...", slog.Uint64("seed", uint64(gd.CachedMapSeed)), slog.String("difficulty", string(config.Characters[gd.supervisorName].Game.Difficulty)))
+func (gd *MemoryReader) MapSeed() uint {
+	return gd.mapSeed
+}
 
-		mapData, err := map_client.GetMapData(strconv.Itoa(int(gd.CachedMapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
-		if err != nil {
-			// TODO: Refactor this crap with proper error handling
-			gd.logger.Error(fmt.Sprintf("Error fetching map data: %s", err.Error()))
-			sloggger.FlushLog()
-			kooloUtils.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
-			panic(fmt.Sprintf("Error fetching map data: %s", err.Error()))
-		}
-		gd.cachedMapData = mapData
-		gd.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
+func (gd *MemoryReader) FetchMapData() error {
+	d := gd.GameReader.GetData()
+	gd.mapSeed, _ = gd.getMapSeed(d.PlayerUnit.Address)
+	t := time.Now()
+	gd.logger.Debug("Fetching map data...", slog.Uint64("seed", uint64(gd.mapSeed)), slog.String("difficulty", string(config.Characters[gd.supervisorName].Game.Difficulty)))
+
+	mapData, err := map_client.GetMapData(strconv.Itoa(int(gd.mapSeed)), config.Characters[gd.supervisorName].Game.Difficulty)
+	if err != nil {
+		return fmt.Errorf("error fetching map data: %w", err)
 	}
 
-	return gd.cachedMapData
+	areas := make(map[area.ID]AreaData)
+	for _, lvl := range mapData {
+		npcs, exits, objects, rooms := lvl.NPCsExitsAndObjects()
+		areas[area.ID(lvl.ID)] = AreaData{
+			Area:           area.ID(lvl.ID),
+			Name:           lvl.Name,
+			NPCs:           npcs,
+			AdjacentLevels: exits,
+			Objects:        objects,
+			Rooms:          rooms,
+			Grid:           NewGrid(lvl.CollisionGrid(), lvl.Offset.X, lvl.Offset.Y),
+		}
+	}
+
+	gd.cachedMapData = areas
+	gd.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))
+
+	return nil
 }
 
 func (gd *MemoryReader) updateWindowPositionData() {
@@ -87,33 +96,32 @@ func (gd *MemoryReader) updateWindowPositionData() {
 	gd.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - gd.WindowTopY - 9
 }
 
-func (gd *MemoryReader) GetData(isNewGame bool) Data {
-
+func (gd *MemoryReader) GetData() Data {
 	d := gd.GameReader.GetData()
-	origin := gd.GetCachedMapData(isNewGame).Origin(d.PlayerUnit.Area)
-	npcs, exits, objects, rooms := gd.GetCachedMapData(isNewGame).NPCsExitsAndObjects(origin, d.PlayerUnit.Area)
-	// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
-	memObjects := gd.Objects(d.PlayerUnit.Position, d.HoverData)
-	for _, clientObject := range objects {
-		found := false
-		for _, obj := range memObjects {
-			if obj.Name == clientObject.Name {
-				found = true
+	currentArea, ok := gd.cachedMapData[d.PlayerUnit.Area]
+	if ok {
+		// This hacky thing is because sometimes if the objects are far away we can not fetch them, basically WP.
+		memObjects := gd.Objects(d.PlayerUnit.Position, d.HoverData)
+		for _, clientObject := range currentArea.Objects {
+			found := false
+			for _, obj := range memObjects {
+				if obj.Name == clientObject.Name {
+					found = true
+				}
+			}
+			if !found {
+				memObjects = append(memObjects, clientObject)
 			}
 		}
-		if !found {
-			memObjects = append(memObjects, clientObject)
-		}
+
+		d.AreaOrigin = data.Position{X: currentArea.OffsetX, Y: currentArea.OffsetY}
+		d.NPCs = currentArea.NPCs
+		d.AdjacentLevels = currentArea.AdjacentLevels
+		d.Rooms = currentArea.Rooms
+		d.Objects = memObjects
 	}
 
-	d.AreaOrigin = origin
-	d.NPCs = npcs
-	d.AdjacentLevels = exits
-	d.Rooms = rooms
-	d.Objects = memObjects
-	d.CollisionGrid = gd.GetCachedMapData(isNewGame).CollisionGrid(d.PlayerUnit.Area)
-
-	return Data{Data: d, CharacterCfg: *gd.cfg}
+	return Data{Data: d, CharacterCfg: *gd.cfg, AreaData: currentArea, Areas: gd.cachedMapData}
 }
 
 func (gd *MemoryReader) getMapSeed(playerUnit uintptr) (uint, error) {

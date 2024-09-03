@@ -42,14 +42,11 @@ func NewDiablo() *Diablo {
 	}
 }
 
-func (d Diablo) Name() string {
+func (d *Diablo) Name() string {
 	return string(config.DiabloRun)
 }
 
-func (d Diablo) Run() error {
-	d = d.initLayout()
-	d = d.initPaths()
-
+func (d *Diablo) Run() error {
 	err := action.WayPoint(area.RiverOfFlame)
 	if err != nil {
 		return err
@@ -67,6 +64,9 @@ func (d Diablo) Run() error {
 			return err
 		}
 	}
+
+	d.initLayout()
+	d.initPaths()
 
 	if d.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
@@ -117,21 +117,16 @@ func (d Diablo) Run() error {
 	return nil
 }
 
-func (d Diablo) initLayout() Diablo {
+func (d *Diablo) initLayout() {
 	d.vizLayout = d.getLayout(object.DiabloSeal4, 5275)
 	d.seisLayout = d.getLayout(object.DiabloSeal3, 7773)
 	d.infLayout = d.getLayout(object.DiabloSeal1, 7893)
 
 	d.ctx.Logger.Debug(fmt.Sprintf("Layouts initialized - Vizier: %d, Seis: %d, Infector: %d", d.vizLayout, d.seisLayout, d.infLayout))
-	return d
 }
 
-func (d Diablo) getLayout(seal object.Name, value int) int {
-	mapData := d.ctx.GameReader.GetCachedMapData(false)
-	origin := mapData.Origin(area.ChaosSanctuary)
-	_, _, objects, _ := mapData.NPCsExitsAndObjects(origin, area.ChaosSanctuary)
-
-	for _, obj := range objects {
+func (d *Diablo) getLayout(seal object.Name, value int) int {
+	for _, obj := range d.ctx.Data.AreaData.Objects {
 		if obj.Name == seal {
 			if obj.Position.Y == value || obj.Position.X == value {
 				d.ctx.Logger.Debug(fmt.Sprintf("Layout 1 detected for seal %v: position matches value %d", seal, value))
@@ -146,7 +141,7 @@ func (d Diablo) getLayout(seal object.Name, value int) int {
 	return 1 // Default to 1 if we can't determine the layout
 }
 
-func (d Diablo) initPaths() Diablo {
+func (d *Diablo) initPaths() {
 	d.entranceToStar = []data.Position{{X: 7794, Y: 5517}, {X: 7791, Y: 5491}, {X: 7768, Y: 5459}, {X: 7775, Y: 5424}, {X: 7817, Y: 5458}, {X: 7777, Y: 5408}, {X: 7769, Y: 5379}, {X: 7777, Y: 5357}, {X: 7809, Y: 5359}, {X: 7805, Y: 5330}, {X: 7780, Y: 5317}, {X: 7791, Y: 5293}}
 	d.starToVizA = []data.Position{{X: 7759, Y: 5295}, {X: 7734, Y: 5295}, {X: 7716, Y: 5295}, {X: 7718, Y: 5276}, {X: 7697, Y: 5292}, {X: 7678, Y: 5293}, {X: 7665, Y: 5276}, {X: 7662, Y: 5314}}
 	d.starToVizB = []data.Position{{X: 7759, Y: 5295}, {X: 7734, Y: 5295}, {X: 7716, Y: 5295}, {X: 7701, Y: 5315}, {X: 7666, Y: 5313}, {X: 7653, Y: 5284}}
@@ -154,10 +149,9 @@ func (d Diablo) initPaths() Diablo {
 	d.starToSeisB = []data.Position{{X: 7781, Y: 5259}, {X: 7805, Y: 5258}, {X: 7802, Y: 5237}, {X: 7776, Y: 5228}, {X: 7811, Y: 5218}, {X: 7807, Y: 5194}, {X: 7779, Y: 5193}, {X: 7774, Y: 5160}, {X: 7803, Y: 5154}}
 	d.starToInfA = []data.Position{{X: 7809, Y: 5268}, {X: 7834, Y: 5306}, {X: 7852, Y: 5280}, {X: 7852, Y: 5310}, {X: 7869, Y: 5294}, {X: 7895, Y: 5295}, {X: 7919, Y: 5290}}
 	d.starToInfB = []data.Position{{X: 7809, Y: 5268}, {X: 7834, Y: 5306}, {X: 7852, Y: 5280}, {X: 7852, Y: 5310}, {X: 7869, Y: 5294}, {X: 7895, Y: 5274}, {X: 7927, Y: 5275}, {X: 7932, Y: 5297}, {X: 7923, Y: 5313}}
-	return d
 }
 
-func (d Diablo) killVizier() error {
+func (d *Diablo) killVizier() error {
 	d.ctx.Logger.Debug("Moving to Vizier seal")
 
 	err := action.MoveTo(func() (data.Position, bool) {
@@ -201,7 +195,7 @@ func (d Diablo) killVizier() error {
 	return nil
 }
 
-func (d Diablo) killSeis() error {
+func (d *Diablo) killSeis() error {
 	d.ctx.Logger.Debug("Moving to Seis seal")
 
 	err := action.MoveTo(func() (data.Position, bool) {
@@ -230,7 +224,7 @@ func (d Diablo) killSeis() error {
 	return nil
 }
 
-func (d Diablo) killInfector() error {
+func (d *Diablo) killInfector() error {
 	d.ctx.Logger.Debug("Moving to Infector seal")
 
 	err := action.MoveTo(func() (data.Position, bool) {
@@ -274,7 +268,7 @@ func (d Diablo) killInfector() error {
 	return nil
 }
 
-func (d Diablo) killSealElite() error {
+func (d *Diablo) killSealElite() error {
 	d.ctx.Logger.Debug("Waiting for and killing seal elite")
 	startTime := time.Now()
 
@@ -325,7 +319,7 @@ func (d Diablo) killSealElite() error {
 	return nil
 }
 
-func (d Diablo) activateSeal(seal object.Name) error {
+func (d *Diablo) activateSeal(seal object.Name) error {
 	obj, found := d.ctx.Data.Objects.FindOne(seal)
 	if !found {
 		return fmt.Errorf("seal %v not found", seal)
@@ -355,7 +349,7 @@ func (d Diablo) activateSeal(seal object.Name) error {
 	return nil
 }
 
-func (d Diablo) moveToVizierSpawn() error {
+func (d *Diablo) moveToVizierSpawn() error {
 	if d.vizLayout == 1 {
 		d.ctx.Logger.Debug("Moving to X: 7664, Y: 5305 - vizLayout 1")
 		action.MoveToCoords(data.Position{X: 7664, Y: 5305})
@@ -375,7 +369,7 @@ func (d Diablo) moveToVizierSpawn() error {
 	return nil
 }
 
-func (d Diablo) moveToSeisSpawn() error {
+func (d *Diablo) moveToSeisSpawn() error {
 	if d.seisLayout == 1 {
 		d.ctx.Logger.Debug("Moving to X: 7795, Y: 5195 - seisLayout 1")
 		action.MoveToCoords(data.Position{X: 7795, Y: 5195})
@@ -395,7 +389,7 @@ func (d Diablo) moveToSeisSpawn() error {
 	return nil
 }
 
-func (d Diablo) moveToInfectorSpawn() error {
+func (d *Diablo) moveToInfectorSpawn() error {
 	if d.infLayout == 1 {
 		d.ctx.Logger.Debug("Moving to X: 7894, Y: 5294 - infLayout 1")
 		action.MoveToCoords(data.Position{X: 7894, Y: 5294})
@@ -415,7 +409,7 @@ func (d Diablo) moveToInfectorSpawn() error {
 	return nil
 }
 
-func (d Diablo) entranceToStarClear() error {
+func (d *Diablo) entranceToStarClear() error {
 	onlyElites := d.ctx.CharacterCfg.Game.Diablo.FocusOnElitePacks
 
 	monsterFilter := func(monsters data.Monsters) []data.Monster {
@@ -430,7 +424,7 @@ func (d Diablo) entranceToStarClear() error {
 	return d.clearPath(d.entranceToStar, monsterFilter)
 }
 
-func (d Diablo) starToVizClear() error {
+func (d *Diablo) starToVizClear() error {
 	onlyElites := d.ctx.CharacterCfg.Game.Diablo.FocusOnElitePacks
 
 	monsterFilter := func(monsters data.Monsters) []data.Monster {
@@ -449,7 +443,7 @@ func (d Diablo) starToVizClear() error {
 	return d.clearPath(path, monsterFilter)
 }
 
-func (d Diablo) starToSeisClear() error {
+func (d *Diablo) starToSeisClear() error {
 	onlyElites := d.ctx.CharacterCfg.Game.Diablo.FocusOnElitePacks
 
 	monsterFilter := func(monsters data.Monsters) []data.Monster {
@@ -468,7 +462,7 @@ func (d Diablo) starToSeisClear() error {
 	return d.clearPath(path, monsterFilter)
 }
 
-func (d Diablo) starToInfClear() error {
+func (d *Diablo) starToInfClear() error {
 	onlyElites := d.ctx.CharacterCfg.Game.Diablo.FocusOnElitePacks
 
 	monsterFilter := func(monsters data.Monsters) []data.Monster {
@@ -487,14 +481,14 @@ func (d Diablo) starToInfClear() error {
 	return d.clearPath(path, monsterFilter)
 }
 
-func (d Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters) []data.Monster) error {
+func (d *Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters) []data.Monster) error {
 	maxPosDiff := 20 // Keep this as a constant for now
 
 	// Create a local random number generator
 	localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for _, pos := range path {
-		if pather.IsWalkable(pos, d.ctx.Data.AreaOrigin, d.ctx.Data.CollisionGrid) {
+		if d.ctx.Data.AreaData.IsWalkable(pos) {
 			action.MoveToCoords(pos)
 		}
 
@@ -514,7 +508,7 @@ func (d Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters
 						Y: pos.Y + (i * multiplier * dir.dy) + offsetY,
 					}
 
-					if pather.IsWalkable(newPos, d.ctx.Data.AreaOrigin, d.ctx.Data.CollisionGrid) {
+					if d.ctx.Data.AreaData.IsWalkable(newPos) {
 						action.MoveToCoords(newPos)
 						action.ClearAreaAroundPlayer(35, monsterFilter)
 					}
@@ -531,7 +525,7 @@ func (d Diablo) clearPath(path []data.Position, monsterFilter func(data.Monsters
 	return nil
 }
 
-func (d Diablo) clearStrays(monsterFilter data.MonsterFilter) error {
+func (d *Diablo) clearStrays(monsterFilter data.MonsterFilter) error {
 	d.ctx.Logger.Debug("Clearing potential stray monsters")
 	oldPos := d.ctx.Data.PlayerUnit.Position
 
@@ -578,7 +572,7 @@ func skipStormCasterFilter(monsters data.Monsters) []data.Monster {
 	return filteredMonsters
 }
 
-func (d Diablo) getLessConcurredCornerAroundSeal(sealPosition data.Position) data.Position {
+func (d *Diablo) getLessConcurredCornerAroundSeal(sealPosition data.Position) data.Position {
 	corners := [4]data.Position{
 		{X: sealPosition.X + 7, Y: sealPosition.Y + 7},
 		{X: sealPosition.X - 7, Y: sealPosition.Y + 7},

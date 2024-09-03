@@ -85,7 +85,7 @@ func getGoroutineID() uint64 {
 }
 
 func (ctx *Context) RefreshGameData() {
-	*ctx.Data = ctx.GameReader.GetData(false)
+	*ctx.Data = ctx.GameReader.GetData()
 }
 
 func (ctx *Context) Detach() {

@@ -20,7 +20,8 @@ func (a Leveling) act4() error {
 		a.izual()
 	}
 
-	err := Diablo{}.Run()
+	diabloRun := NewDiablo()
+	err := diabloRun.Run()
 	if err != nil {
 		return err
 	}

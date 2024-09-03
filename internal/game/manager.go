@@ -46,7 +46,7 @@ func (gm *Manager) ExitGame() error {
 	// If we are still in game, probably character is dead, so let's do it nicely.
 	// Probably closing the socket is more reliable, but was not working properly for me on singleplayer.
 	for range 10 {
-		if gm.gr.GetData(false).OpenMenus.QuitMenu {
+		if gm.gr.GetData().OpenMenus.QuitMenu {
 			gm.hid.Click(LeftButton, gm.gr.GameAreaSizeX/2, int(float64(gm.gr.GameAreaSizeY)/2.2))
 
 			for range 5 {

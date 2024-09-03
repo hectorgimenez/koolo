@@ -1,8 +1,6 @@
 git.wow.st/gmp/jni v0.0.0-20200827154156-014cd5c7c4c0/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
 git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 h1:bGG/g4ypjrCJoSvFrP5hafr9PPB5aw8SjcOWWila7ZI=
 git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
-github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482 h1:p4g4uok3+r6Tg6fxXEQUAcMAX/WdK6WhkQW9s0jaT7k=
-github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482/go.mod h1:Cu3t5VeqE8kXjUBeNXWQprfuaP5UCIc5ggGjgMx9KFc=
 github.com/billgraziano/dpapi v0.5.0 h1:pcxA17vyjbDqYuxCFZbgL9tYIk2xgbRZjRaIbATwh+8=
 github.com/billgraziano/dpapi v0.5.0/go.mod h1:lmEcZjRfLCSbUTsRu8V2ti6Q17MvnKn3N9gQqzDdTh0=
 github.com/bwmarrin/discordgo v0.28.1 h1:gXsuo2GBO7NbR6uqmrrBDplPUx2T3nzu775q/Rd1aG4=
@@ -17,8 +15,8 @@ github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/hectorgimenez/d2go v0.0.0-20240826123800-7ec2f584f590 h1:+7VZZ6/zRPPGzzdavSqzHdaMD1xjbH0OuhgstTVeGcc=
-github.com/hectorgimenez/d2go v0.0.0-20240826123800-7ec2f584f590/go.mod h1:EOVayMaK8D13wsZiZ6n8AK3+Qflm1wHZsCqnzlVIci0=
+github.com/hectorgimenez/d2go v0.0.0-20240903113932-9842199c1556 h1:d2Ap7UqimyX03ds1RXs8AyQtBpb3EC5eiZH8YrCiaUw=
+github.com/hectorgimenez/d2go v0.0.0-20240903113932-9842199c1556/go.mod h1:EOVayMaK8D13wsZiZ6n8AK3+Qflm1wHZsCqnzlVIci0=
 github.com/inkeliz/gowebview v1.0.1 h1:4gpLE2qt4kV3DB+xHkHKUeLLiGPN5Xw3or9A3hVqYyA=
 github.com/inkeliz/gowebview v1.0.1/go.mod h1:4SNjXp/fogE11MwvJD67kMBmSObY2BBqinEgH8+8eM8=
 github.com/inkeliz/w32 v1.0.2 h1:Es8Bmw9ApOY0PVRpGs7wsqIKdK5C3xBkP5TOATfVmtU=
@@ -38,8 +36,8 @@ github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
-golang.org/x/crypto v0.25.0 h1:ypSNr+bnYL2YhwoMt2zPxHFmbAN1KZs/njMG3hxUp30=
-golang.org/x/crypto v0.25.0/go.mod h1:T+wALwcMOSE0kXgUAnPAHqTLW+XHgcELELW8VaDgm/M=
+golang.org/x/crypto v0.26.0 h1:RrRspgV4mU+YwB4FYnuBoKsUapNIL5cohGAmSH3azsw=
+golang.org/x/crypto v0.26.0/go.mod h1:GY7jblb9wI+FOo5y8/S2oY4zWP07AkOJ4+jxCqdqn54=
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20210226172049-e18ecbb05110/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
 golang.org/x/sync v0.8.0 h1:3NFvSEYkUoMifnESzZl15y791HH1qU2xm6eCJU5ZPXQ=

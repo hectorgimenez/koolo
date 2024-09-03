@@ -92,8 +92,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
-			// Refresh the Game data for a new game
-			s.bot.ctx.GameReader.GetData(true)
 			err = s.bot.Run(ctx, firstRun, runs)
 			if err != nil {
 				if errors.Is(context.Canceled, ctx.Err()) {
@@ -127,7 +125,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 					s.bot.ctx.Logger.Warn(
 						fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
 						slog.String("supervisor", s.name),
-						slog.Uint64("mapSeed", uint64(s.bot.ctx.GameReader.CachedMapSeed)),
+						slog.Uint64("mapSeed", uint64(s.bot.ctx.GameReader.MapSeed())),
 					)
 				}
 			}

@@ -338,8 +338,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 
 	var realTomb area.ID
 	for _, tomb := range talRashaTombs {
-		_, _, objects, _ := a.ctx.GameReader.GetCachedMapData(false).NPCsExitsAndObjects(data.Position{}, tomb)
-		for _, obj := range objects {
+		for _, obj := range a.ctx.Data.Areas[tomb].Objects {
 			if obj.Name == object.HoradricOrifice {
 				realTomb = tomb
 				break

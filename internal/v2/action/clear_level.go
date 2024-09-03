@@ -14,7 +14,8 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ClearCurrentLevel"
 
-	for _, r := range ctx.PathFinder.OptimizeRoomsTraverseOrder() {
+	rooms := ctx.PathFinder.OptimizeRoomsTraverseOrder()
+	for _, r := range rooms {
 		err := clearRoom(r, filter)
 		if err != nil {
 			ctx.Logger.Warn("Failed to clear room: %v", err)
