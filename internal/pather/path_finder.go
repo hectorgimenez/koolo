@@ -86,7 +86,7 @@ func (pf *PathFinder) mergeGrids(to data.Position) (*game.Grid, error) {
 
 			// Let's copy both grids into the result grid
 			copyGrid(resultGrid, origin.CollisionGrid, origin.OffsetX-minX, origin.OffsetY-minY)
-			copyGrid(resultGrid, destination.CollisionGrid, origin.OffsetX-minX, destination.OffsetY-minY)
+			copyGrid(resultGrid, destination.CollisionGrid, destination.OffsetX-minX, destination.OffsetY-minY)
 
 			grid := game.NewGrid(resultGrid, minX, minY)
 

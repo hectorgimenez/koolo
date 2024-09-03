@@ -61,7 +61,16 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, fl
 // Get walkable neighbors of a given node
 func getNeighbors(grid *game.Grid, node *Node) []*Node {
 	var neighbors []*Node
-	directions := []data.Position{{0, 1}, {1, 0}, {0, -1}, {-1, 0}} // 4 directions
+	directions := []data.Position{
+		{0, 1},   // Down
+		{1, 0},   // Right
+		{0, -1},  // Up
+		{-1, 0},  // Left
+		{1, 1},   // Down-Right (Southeast)
+		{-1, 1},  // Down-Left (Southwest)
+		{1, -1},  // Up-Right (Northeast)
+		{-1, -1}, // Up-Left (Northwest)
+	}
 
 	for _, d := range directions {
 		newPosition := data.Position{X: node.X + d.X, Y: node.Y + d.Y}
@@ -74,7 +83,9 @@ func getNeighbors(grid *game.Grid, node *Node) []*Node {
 }
 
 func heuristic(p1, p2 data.Position) float64 {
-	return math.Abs(float64(p1.X-p2.X)) + math.Abs(float64(p1.Y-p2.Y))
+	dx := math.Abs(float64(p1.X - p2.X))
+	dy := math.Abs(float64(p1.Y - p2.Y))
+	return math.Max(dx, dy)
 }
 
 func reconstructPath(node *Node) []data.Position {
