@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/v2/bot"
 )
 
 type IndexData struct {

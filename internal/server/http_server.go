@@ -20,17 +20,17 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	bot2 "github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
+	ctx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/v2/bot"
-	ctx "github.com/hectorgimenez/koolo/internal/v2/context"
-	"github.com/hectorgimenez/koolo/internal/v2/utils"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 type HttpServer struct {
 	logger    *slog.Logger
 	server    *http.Server
-	manager   *bot.SupervisorManager
+	manager   *bot2.SupervisorManager
 	templates *template.Template
 	wsServer  *WebSocketServer
 }
@@ -163,7 +163,7 @@ func (s *HttpServer) BroadcastStatus() {
 	}
 }
 
-func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, error) {
+func New(logger *slog.Logger, manager *bot2.SupervisorManager) (*HttpServer, error) {
 	var templates *template.Template
 	helperFuncs := template.FuncMap{
 		"isInSlice": func(slice []stat.Resist, value string) bool {
@@ -239,7 +239,7 @@ func (s *HttpServer) initialData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) getStatusData() IndexData {
-	status := make(map[string]bot.Stats)
+	status := make(map[string]bot2.Stats)
 	drops := make(map[string]int)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
@@ -361,7 +361,7 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if s.manager.GetSupervisorStats(sup).SupervisorStatus == bot.Starting {
+		if s.manager.GetSupervisorStats(sup).SupervisorStatus == bot2.Starting {
 
 			// Prevent launching if we're using token auth & another client is starting (no matter what auth method)
 			if supCfg.AuthMethod == "TokenAuth" {
@@ -393,12 +393,12 @@ func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
-	status := make(map[string]bot.Stats)
+	status := make(map[string]bot2.Stats)
 	drops := make(map[string]int)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
-		status[supervisorName] = bot.Stats{
-			SupervisorStatus: bot.NotStarted,
+		status[supervisorName] = bot2.Stats{
+			SupervisorStatus: bot2.NotStarted,
 		}
 
 		status[supervisorName] = s.manager.Status(supervisorName)

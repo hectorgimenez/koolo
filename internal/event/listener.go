@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/v2/utils"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 var events = make(chan Event)

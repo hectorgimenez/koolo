@@ -9,14 +9,14 @@ import (
 	"runtime/debug"
 
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
+	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/server"
-	"github.com/hectorgimenez/koolo/internal/v2/bot"
-	"github.com/hectorgimenez/koolo/internal/v2/utils"
-	"github.com/hectorgimenez/koolo/internal/v2/utils/winproc"
+	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/inkeliz/gowebview"
 	"golang.org/x/sync/errgroup"
 )
