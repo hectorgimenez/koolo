@@ -211,7 +211,7 @@ func (d Diablo) killSeis() action.Action {
 func (d Diablo) killInfector() action.Action {
 	return action.NewChain(func(gameData game.Data) []action.Action {
 		d.logger.Debug("Moving to Infector seal")
-		return []action.Action{
+		actions := []action.Action{
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal1, _ := gameData.Objects.FindOne(object.DiabloSeal1)
 				return seal1.Position, true
@@ -247,25 +247,40 @@ func (d Diablo) killInfector() action.Action {
 			}),
 			d.activateSeal(object.DiabloSeal2),
 			d.builder.ItemPickup(false, 30),
-
-			// Immediately move to Diablo's spawn after activating the last seal
-			action.NewStepChain(func(gameData game.Data) []step.Step {
-				d.logger.Debug("Moving to Diablo's spawn position", slog.Any("position", diabloSpawnPosition))
-				return []step.Step{
-					step.MoveTo(diabloSpawnPosition, step.StopAtDistance(10)),
-				}
-			}),
-
-			// Log that we've reached Diablo's position
-			action.NewStepChain(func(gameData game.Data) []step.Step {
-				return []step.Step{
-					step.SyncStep(func(gameData game.Data) error {
-						d.logger.Debug("Reached Diablo's spawn position")
-						return nil
-					}),
-				}
-			}),
 		}
+
+		// Only move to Diablo's spawn if KillDiablo is true
+		if d.CharacterCfg.Game.Diablo.KillDiablo {
+			actions = append(actions,
+				action.NewStepChain(func(gameData game.Data) []step.Step {
+					d.logger.Debug("Moving to Diablo's spawn position", slog.Any("position", diabloSpawnPosition))
+					return []step.Step{
+						step.MoveTo(diabloSpawnPosition, step.StopAtDistance(10)),
+					}
+				}),
+				action.NewStepChain(func(gameData game.Data) []step.Step {
+					return []step.Step{
+						step.SyncStep(func(gameData game.Data) error {
+							d.logger.Debug("Reached Diablo's spawn position")
+							return nil
+						}),
+					}
+				}),
+			)
+		} else {
+			actions = append(actions,
+				action.NewStepChain(func(gameData game.Data) []step.Step {
+					return []step.Step{
+						step.SyncStep(func(gameData game.Data) error {
+							d.logger.Debug("KillDiablo is false, finishing Diablo run without moving to spawn")
+							return nil
+						}),
+					}
+				}),
+			)
+		}
+
+		return actions
 	})
 }
 
