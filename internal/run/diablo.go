@@ -23,18 +23,19 @@ var chaosSanctuaryEntrancePosition = data.Position{X: 7790, Y: 5544}
 
 type Diablo struct {
 	baseRun
-	bm             health.BeltManager
-	vizLayout      int
-	seisLayout     int
-	infLayout      int
-	cleared        []data.Position
-	entranceToStar []data.Position
-	starToVizA     []data.Position
-	starToVizB     []data.Position
-	starToSeisA    []data.Position
-	starToSeisB    []data.Position
-	starToInfA     []data.Position
-	starToInfB     []data.Position
+	bm               health.BeltManager
+	vizLayout        int
+	seisLayout       int
+	infLayout        int
+	cleared          []data.Position
+	entranceToStar   []data.Position
+	starToVizA       []data.Position
+	starToVizB       []data.Position
+	starToSeisA      []data.Position
+	starToSeisB      []data.Position
+	starToInfA       []data.Position
+	starToInfB       []data.Position
+	lastSealPosition data.Position
 }
 
 func (d Diablo) Name() string {
@@ -91,7 +92,6 @@ func (d Diablo) BuildActions() []action.Action {
 	if d.CharacterCfg.Game.Diablo.KillDiablo {
 		actions = append(actions,
 			d.builder.Buff(),
-			d.builder.MoveToCoords(diabloSpawnPosition),
 			d.char.KillDiablo(),
 		)
 	}
@@ -231,6 +231,7 @@ func (d Diablo) killInfector() action.Action {
 			d.killSealElite(),
 			d.builder.ItemPickup(false, 40),
 
+			// Actions for Seal2 (the last seal)
 			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
 				seal2, _ := gameData.Objects.FindOne(object.DiabloSeal2)
 				return seal2.Position, true
@@ -246,6 +247,24 @@ func (d Diablo) killInfector() action.Action {
 			}),
 			d.activateSeal(object.DiabloSeal2),
 			d.builder.ItemPickup(false, 30),
+
+			// Immediately move to Diablo's spawn after activating the last seal
+			action.NewStepChain(func(gameData game.Data) []step.Step {
+				d.logger.Debug("Moving to Diablo's spawn position", slog.Any("position", diabloSpawnPosition))
+				return []step.Step{
+					step.MoveTo(diabloSpawnPosition, step.StopAtDistance(10)),
+				}
+			}),
+
+			// Log that we've reached Diablo's position
+			action.NewStepChain(func(gameData game.Data) []step.Step {
+				return []step.Step{
+					step.SyncStep(func(gameData game.Data) error {
+						d.logger.Debug("Reached Diablo's spawn position")
+						return nil
+					}),
+				}
+			}),
 		}
 	})
 }
@@ -311,9 +330,12 @@ func (d Diablo) killSealElite() action.Action {
 	})
 }
 
-func (d Diablo) activateSeal(seal object.Name) action.Action {
+func (d *Diablo) activateSeal(seal object.Name) action.Action {
 	return action.NewChain(func(gameData game.Data) []action.Action {
 		obj, _ := gameData.Objects.FindOne(seal)
+
+		// Store the position of the last activated seal
+		d.lastSealPosition = obj.Position
 
 		// Check for the bugged seal
 		if seal == object.DiabloSeal3 && obj.Position.X == 7773 && obj.Position.Y == 5155 {
@@ -432,6 +454,16 @@ func (d Diablo) moveToInfectorSpawn() action.Action {
 		}))
 
 		return actions
+	})
+}
+
+func (d Diablo) moveToDialoSpawn() action.Action {
+	return action.NewChain(func(gameData game.Data) []action.Action {
+		return []action.Action{
+			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
+				return diabloSpawnPosition, true
+			}, step.StopAtDistance(10)),
+		}
 	})
 }
 
