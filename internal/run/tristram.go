@@ -7,7 +7,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -31,7 +31,7 @@ func (t Tristram) Name() string {
 func (t Tristram) Run() error {
 
 	// Use waypoint to StonyField
-	err := action2.WayPoint(area.StonyField)
+	err := action.WayPoint(area.StonyField)
 	if err != nil {
 		return err
 	}
@@ -45,11 +45,11 @@ func (t Tristram) Run() error {
 	}
 
 	// Move to the cairnStone
-	action2.MoveToCoords(cairnStone.Position)
+	action.MoveToCoords(cairnStone.Position)
 
 	// Clear area around the portal
 	if t.ctx.CharacterCfg.Game.Tristram.ClearPortal || t.ctx.CharacterCfg.Game.Runs[0] == "leveling" {
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 	}
 
 	// Handle opening Tristram Portal, will be skipped if its already opened
@@ -63,22 +63,22 @@ func (t Tristram) Run() error {
 	tristPortal, _ := t.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 
 	// Interact with the portal
-	if err = action2.InteractObject(tristPortal, func() bool {
+	if err = action.InteractObject(tristPortal, func() bool {
 		return t.ctx.Data.PlayerUnit.Area == area.Tristram
 	}); err != nil {
 		return err
 	}
 
 	// Open a TP if we're the leader
-	action2.OpenTPIfLeader()
+	action.OpenTPIfLeader()
 
 	// Check if Cain is rescued
 	if o, found := t.ctx.Data.Objects.FindOne(object.CainGibbet); found && o.Selectable {
 
 		// Move to cain
-		action2.MoveToCoords(o.Position)
+		action.MoveToCoords(o.Position)
 
-		action2.InteractObject(o, func() bool {
+		action.InteractObject(o, func() bool {
 			obj, _ := t.ctx.Data.Objects.FindOne(object.CainGibbet)
 
 			return !obj.Selectable
@@ -89,7 +89,7 @@ func (t Tristram) Run() error {
 			filter = data.MonsterEliteFilter()
 		}
 
-		return action2.ClearCurrentLevel(false, filter)
+		return action.ClearCurrentLevel(false, filter)
 	}
 
 	return nil
@@ -118,7 +118,7 @@ func (t Tristram) openPortalIfNotOpened() error {
 			stone, _ := t.ctx.Data.Objects.FindOne(st)
 			if stone.Selectable {
 
-				action2.InteractObject(stone, func() bool {
+				action.InteractObject(stone, func() bool {
 
 					if stoneTries < 5 {
 						stoneTries++

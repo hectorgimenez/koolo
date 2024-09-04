@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -33,24 +33,24 @@ func (a Mausoleum) Run() error {
 	}
 
 	// Use the waypoint
-	err := action2.WayPoint(area.ColdPlains)
+	err := action.WayPoint(area.ColdPlains)
 	if err != nil {
 		return err
 	}
 
 	// Move to the BurialGrounds
-	if err = action2.MoveToArea(area.BurialGrounds); err != nil {
+	if err = action.MoveToArea(area.BurialGrounds); err != nil {
 		return err
 	}
 
 	// Move to the Mausoleum
-	if err = action2.MoveToArea(area.Mausoleum); err != nil {
+	if err = action.MoveToArea(area.Mausoleum); err != nil {
 		return err
 	}
 
 	// Open a TP If we're the leader
-	action2.OpenTPIfLeader()
+	action.OpenTPIfLeader()
 
 	// Clear the area
-	return action2.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Mausoleum.OpenChests, monsterFilter)
+	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Mausoleum.OpenChests, monsterFilter)
 }

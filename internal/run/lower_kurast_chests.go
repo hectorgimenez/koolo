@@ -7,7 +7,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -34,7 +34,7 @@ func (run LowerKurastChests) Run() error {
 	run.ctx.Logger.Debug("Running a Lower Kurast Chest run")
 	var bonFirePositions []data.Position
 	// Use Waypoint to Lower Kurast
-	err := action2.WayPoint(area.LowerKurast)
+	err := action.WayPoint(area.LowerKurast)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (run LowerKurastChests) Run() error {
 	// Move to each of the bonfires one by one
 	for _, bonfirePos := range bonFirePositions {
 		// Move to the bonfire
-		err = action2.MoveToCoords(bonfirePos)
+		err = action.MoveToCoords(bonfirePos)
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func (run LowerKurastChests) Run() error {
 
 			// Interact with the closest chest
 			closestChest := chests[0]
-			err = action2.InteractObject(closestChest, func() bool {
+			err = action.InteractObject(closestChest, func() bool {
 				chest, _ := run.ctx.Data.Objects.FindByID(closestChest.ID)
 				return !chest.Selectable
 			})
@@ -92,12 +92,12 @@ func (run LowerKurastChests) Run() error {
 	}
 
 	// Return to town
-	if err = action2.ReturnTown(); err != nil {
+	if err = action.ReturnTown(); err != nil {
 		return err
 	}
 
 	// Move to A4 if possible to shorten the run time
-	err = action2.WayPoint(area.ThePandemoniumFortress)
+	err = action.WayPoint(area.ThePandemoniumFortress)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
@@ -45,7 +45,7 @@ func (a Leveling) act5() error {
 	}
 
 	wp, _ := a.ctx.Data.Objects.FindOne(object.ExpansionWaypoint)
-	action2.MoveToCoords(wp.Position)
+	action.MoveToCoords(wp.Position)
 
 	if _, found := a.ctx.Data.Monsters.FindOne(npc.Drehya, data.MonsterTypeNone); !found {
 		a.anya()
@@ -62,19 +62,19 @@ func (a Leveling) act5() error {
 func (a Leveling) anya() error {
 	a.ctx.Logger.Info("Rescuing Anya...")
 
-	err := action2.WayPoint(area.CrystallinePassage)
+	err := action.WayPoint(area.CrystallinePassage)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.FrozenRiver)
+	err = action.MoveToArea(area.FrozenRiver)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		anya, found := a.ctx.Data.NPCs.FindOne(793)
 		return anya.Positions[0], found
 	})
@@ -82,7 +82,7 @@ func (a Leveling) anya() error {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		anya, found := a.ctx.Data.Objects.FindOne(object.FrozenAnya)
 		return anya.Position, found
 	})
@@ -90,52 +90,52 @@ func (a Leveling) anya() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	anya, found := a.ctx.Data.Objects.FindOne(object.FrozenAnya)
 	if !found {
 		a.ctx.Logger.Debug("Frozen Anya not found")
 	}
 
-	err = action2.InteractObject(anya, nil)
+	err = action.InteractObject(anya, nil)
 	if err != nil {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	action2.IdentifyAll(false)
-	action2.Stash(false)
-	action2.ReviveMerc()
-	action2.Repair()
-	action2.VendorRefill(false, true)
+	action.IdentifyAll(false)
+	action.Stash(false)
+	action.ReviveMerc()
+	action.Repair()
+	action.VendorRefill(false, true)
 
-	err = action2.InteractNPC(npc.Malah)
+	err = action.InteractNPC(npc.Malah)
 	if err != nil {
 		return err
 	}
 
-	err = action2.UsePortalInTown()
+	err = action.UsePortalInTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractObject(anya, nil)
+	err = action.InteractObject(anya, nil)
 	if err != nil {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(8000)
 
-	err = action2.InteractNPC(npc.Malah)
+	err = action.InteractNPC(npc.Malah)
 	if err != nil {
 		return err
 	}
@@ -156,29 +156,29 @@ func (a Leveling) ancients() error {
 
 	a.ctx.Logger.Info("Kill the Ancients...")
 
-	err := action2.WayPoint(area.TheAncientsWay)
+	err := action.WayPoint(area.TheAncientsWay)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.ArreatSummit)
+	err = action.MoveToArea(area.ArreatSummit)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	action2.ReturnTown()
-	action2.InRunReturnTownRoutine()
-	action2.UsePortalInTown()
-	action2.Buff()
+	action.ReturnTown()
+	action.InRunReturnTownRoutine()
+	action.UsePortalInTown()
+	action.Buff()
 
 	ancientsaltar, found := a.ctx.Data.Objects.FindOne(object.AncientsAltar)
 	if !found {
 		a.ctx.Logger.Debug("Ancients Altar not found")
 	}
 
-	err = action2.InteractObject(ancientsaltar, func() bool {
+	err = action.InteractObject(ancientsaltar, func() bool {
 		if len(a.ctx.Data.Monsters.Enemies()) > 0 {
 			return true
 		}
@@ -200,7 +200,7 @@ func (a Leveling) ancients() error {
 		a.ctx.Logger.Debug("Worldstone Door not found")
 	}
 
-	err = action2.InteractObject(summitdoor, func() bool {
+	err = action.InteractObject(summitdoor, func() bool {
 		obj, _ := a.ctx.Data.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
 		return !obj.Selectable
 	})
@@ -210,17 +210,17 @@ func (a Leveling) ancients() error {
 
 	time.Sleep(5000)
 
-	err = action2.MoveToArea(area.TheWorldStoneKeepLevel1)
+	err = action.MoveToArea(area.TheWorldStoneKeepLevel1)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.TheWorldStoneKeepLevel2)
+	err = action.MoveToArea(area.TheWorldStoneKeepLevel2)
 	if err != nil {
 		return err
 	}
 
-	action2.DiscoverWaypoint()
+	action.DiscoverWaypoint()
 
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -36,26 +36,26 @@ func (p Pindleskin) Name() string {
 }
 
 func (p Pindleskin) Run() error {
-	err := action2.WayPoint(area.Harrogath)
+	err := action.WayPoint(area.Harrogath)
 	if err != nil {
 		return err
 	}
 
-	_ = action2.MoveToCoords(fixedPlaceNearRedPortal)
+	_ = action.MoveToCoords(fixedPlaceNearRedPortal)
 
 	redPortal, found := p.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
 		return errors.New("red portal not found")
 	}
 
-	err = action2.InteractObject(redPortal, func() bool {
+	err = action.InteractObject(redPortal, func() bool {
 		return p.ctx.Data.PlayerUnit.Area == area.NihlathaksTemple
 	})
 	if err != nil {
 		return err
 	}
 
-	_ = action2.MoveToCoords(pindleSafePosition)
+	_ = action.MoveToCoords(pindleSafePosition)
 
 	return p.ctx.Char.KillPindle()
 }

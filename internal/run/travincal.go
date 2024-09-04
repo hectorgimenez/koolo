@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -23,14 +23,14 @@ func (s Council) Name() string {
 }
 
 func (s Council) Run() error {
-	err := action2.WayPoint(area.Travincal) // Moving to starting point (Travincal)
+	err := action.WayPoint(area.Travincal) // Moving to starting point (Travincal)
 	if err != nil {
 		return err
 	}
 
 	for _, al := range s.ctx.Data.AdjacentLevels {
 		if al.Area == area.DuranceOfHateLevel1 {
-			err = action2.MoveToCoords(data.Position{
+			err = action.MoveToCoords(data.Position{
 				X: al.Position.X - 1,
 				Y: al.Position.Y + 3,
 			})

@@ -4,7 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -27,13 +27,13 @@ func (t Threshsocket) Name() string {
 func (t Threshsocket) Run() error {
 
 	// Use waypoint to crystalinepassage
-	err := action2.WayPoint(area.CrystallinePassage)
+	err := action.WayPoint(area.CrystallinePassage)
 	if err != nil {
 		return err
 	}
 
 	// Move to ArreatPlateau
-	if err = action2.MoveToArea(area.ArreatPlateau); err != nil {
+	if err = action.MoveToArea(area.ArreatPlateau); err != nil {
 		return err
 	}
 

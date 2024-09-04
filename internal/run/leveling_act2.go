@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
 	ui2 "github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -69,17 +69,17 @@ func (a Leveling) act2() error {
 }
 
 func (a Leveling) findHoradricCube() error {
-	err := action2.WayPoint(area.HallsOfTheDeadLevel2)
+	err := action.WayPoint(area.HallsOfTheDeadLevel2)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.HallsOfTheDeadLevel3)
+	err = action.MoveToArea(area.HallsOfTheDeadLevel3)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		chest, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 		if found {
 			a.ctx.Logger.Info("Horadric Cube chest found, moving to that room")
@@ -91,14 +91,14 @@ func (a Leveling) findHoradricCube() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 	if !found {
 		return err
 	}
 
-	err = action2.InteractObject(obj, func() bool {
+	err = action.InteractObject(obj, func() bool {
 		updatedObj, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 		if found {
 			if !updatedObj.Selectable {
@@ -116,26 +116,26 @@ func (a Leveling) findHoradricCube() error {
 }
 
 func (a Leveling) findStaff() error {
-	err := action2.WayPoint(area.FarOasis)
+	err := action.WayPoint(area.FarOasis)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.MaggotLairLevel1)
+	err = action.MoveToArea(area.MaggotLairLevel1)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.MaggotLairLevel2)
+	err = action.MoveToArea(area.MaggotLairLevel2)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.MaggotLairLevel3)
+	err = action.MoveToArea(area.MaggotLairLevel3)
 	if err != nil {
 		return err
 	}
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		chest, found := a.ctx.Data.Objects.FindOne(object.StaffOfKingsChest)
 		if found {
 			a.ctx.Logger.Info("Staff Of Kings chest found, moving to that room")
@@ -147,14 +147,14 @@ func (a Leveling) findStaff() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.StaffOfKingsChest)
 	if !found {
 		return err
 	}
 
-	err = action2.InteractObject(obj, func() bool {
+	err = action.InteractObject(obj, func() bool {
 		updatedObj, found := a.ctx.Data.Objects.FindOne(object.StaffOfKingsChest)
 		if found {
 			if !updatedObj.Selectable {
@@ -172,26 +172,26 @@ func (a Leveling) findStaff() error {
 }
 
 func (a Leveling) findAmulet() error {
-	err := action2.WayPoint(area.LostCity)
+	err := action.WayPoint(area.LostCity)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.ValleyOfSnakes)
+	err = action.MoveToArea(area.ValleyOfSnakes)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.ClawViperTempleLevel1)
+	err = action.MoveToArea(area.ClawViperTempleLevel1)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.ClawViperTempleLevel2)
+	err = action.MoveToArea(area.ClawViperTempleLevel2)
 	if err != nil {
 		return err
 	}
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		chest, found := a.ctx.Data.Objects.FindOne(object.TaintedSunAltar)
 		if found {
 			a.ctx.Logger.Info("Tainted Sun Altar found, moving to that room")
@@ -203,14 +203,14 @@ func (a Leveling) findAmulet() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.TaintedSunAltar)
 	if !found {
 		return err
 	}
 
-	err = action2.InteractObject(obj, func() bool {
+	err = action.InteractObject(obj, func() bool {
 		updatedObj, found := a.ctx.Data.Objects.FindOne(object.TaintedSunAltar)
 		if found {
 			if !updatedObj.Selectable {
@@ -240,7 +240,7 @@ func (a Leveling) summoner() error {
 	}
 
 	// Try to use the portal and discover the waypoint
-	err = action2.InteractObject(tome, func() bool {
+	err = action.InteractObject(tome, func() bool {
 		_, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 		return found
 	})
@@ -253,24 +253,24 @@ func (a Leveling) summoner() error {
 		return err
 	}
 
-	err = action2.InteractObject(portal, func() bool {
+	err = action.InteractObject(portal, func() bool {
 		return a.ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi
 	})
 	if err != nil {
 		return err
 	}
 
-	err = action2.DiscoverWaypoint()
+	err = action.DiscoverWaypoint()
 	if err != nil {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Atma)
+	err = action.InteractNPC(npc.Atma)
 	if err != nil {
 		return err
 	}
@@ -292,7 +292,7 @@ func (a Leveling) prepareStaff() error {
 				a.ctx.Logger.Info("bank object not found")
 			}
 
-			err := action2.InteractObject(bank, func() bool {
+			err := action.InteractObject(bank, func() bool {
 				return a.ctx.Data.OpenMenus.Stash
 			})
 			if err != nil {
@@ -320,12 +320,12 @@ func (a Leveling) prepareStaff() error {
 		return nil
 	}
 
-	err := action2.CubeAddItems(staff, amulet)
+	err := action.CubeAddItems(staff, amulet)
 	if err != nil {
 		return err
 	}
 
-	err = action2.CubeTransmute()
+	err = action.CubeTransmute()
 	if err != nil {
 		return err
 	}
@@ -356,10 +356,10 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 	}
 
 	// Move close to the Horadric Orifice
-	action2.WayPoint(area.CanyonOfTheMagi)
-	action2.Buff()
-	action2.MoveToArea(realTomb)
-	action2.MoveTo(func() (data.Position, bool) {
+	action.WayPoint(area.CanyonOfTheMagi)
+	action.Buff()
+	action.MoveToArea(realTomb)
+	action.MoveTo(func() (data.Position, bool) {
 		orifice, found := d.Objects.FindOne(object.HoradricOrifice)
 		if !found {
 			return data.Position{}, false
@@ -369,7 +369,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 
 	// If staff has not been used, then put it in the orifice and wait for the entrance to open
 	if !staffAlreadyUsed {
-		action2.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+		action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
 
 		orifice, found := a.ctx.Data.Objects.FindOne(object.HoradricOrifice)
 		if !found {
@@ -377,7 +377,7 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 			return nil
 		}
 
-		action2.InteractObject(orifice, func() bool {
+		action.InteractObject(orifice, func() bool {
 			return d.OpenMenus.Anvil
 		})
 
@@ -398,10 +398,10 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 	}
 
 	// Return to the city, ensure we have pots and everything, and get some thawing potions
-	action2.ReturnTown()
-	action2.ReviveMerc()
-	action2.VendorRefill(false, true)
-	action2.BuyAtVendor(npc.Lysander, action2.VendorItemRequest{
+	action.ReturnTown()
+	action.ReviveMerc()
+	action.VendorRefill(false, true)
+	action.BuyAtVendor(npc.Lysander, action.VendorItemRequest{
 		Item:     "ThawingPotion",
 		Quantity: potsToBuy,
 		Tab:      4,
@@ -433,40 +433,40 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
 
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
-	action2.UsePortalInTown()
-	action2.Buff()
+	action.UsePortalInTown()
+	action.Buff()
 
 	duriellair, found := d.Objects.FindOne(object.DurielsLairPortal)
 	if found {
-		action2.InteractObject(duriellair, func() bool {
+		action.InteractObject(duriellair, func() bool {
 			return d.PlayerUnit.Area == area.DurielsLair
 		})
 	}
 
 	a.ctx.Char.KillDuriel()
 
-	action2.MoveToCoords(data.Position{
+	action.MoveToCoords(data.Position{
 		X: 22577,
 		Y: 15613,
 	})
 
-	action2.InteractNPC(npc.Tyrael)
+	action.InteractNPC(npc.Tyrael)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
-	action2.ReturnTown()
-	action2.MoveToCoords(data.Position{
+	action.ReturnTown()
+	action.MoveToCoords(data.Position{
 		X: 5092,
 		Y: 5144,
 	})
 
-	action2.InteractNPC(npc.Jerhyn)
+	action.InteractNPC(npc.Jerhyn)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
-	action2.MoveToCoords(data.Position{
+	action.MoveToCoords(data.Position{
 		X: 5195,
 		Y: 5060,
 	})
-	action2.InteractNPC(npc.Meshif)
+	action.InteractNPC(npc.Meshif)
 	a.ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 
 	return nil

@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -30,29 +30,29 @@ func (a TalRashaTombs) Run() error {
 	for _, tomb := range talRashaTombs {
 
 		// Use the waypoint to travel to Canyon Of The Magi
-		err := action2.WayPoint(area.CanyonOfTheMagi)
+		err := action.WayPoint(area.CanyonOfTheMagi)
 		if err != nil {
 			return err
 		}
 
 		// Move to the next Tomb
-		if err = action2.MoveToArea(tomb); err != nil {
+		if err = action.MoveToArea(tomb); err != nil {
 			return err
 		}
 
 		// Open a TP if we're the leader
-		action2.OpenTPIfLeader()
+		action.OpenTPIfLeader()
 
 		// Buff before we start
-		action2.Buff()
+		action.Buff()
 
 		// Clear the Tomb
-		if err = action2.ClearCurrentLevel(true, data.MonsterAnyFilter()); err != nil {
+		if err = action.ClearCurrentLevel(true, data.MonsterAnyFilter()); err != nil {
 			return err
 		}
 
 		// Return to town
-		if err = action2.ReturnTown(); err != nil {
+		if err = action.ReturnTown(); err != nil {
 			return err
 		}
 	}

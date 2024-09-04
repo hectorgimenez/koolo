@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/run"
@@ -101,8 +101,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
-				action2.ItemPickup(30)
-				action2.BuffIfRequired()
+				action.ItemPickup(30)
+				action.BuffIfRequired()
 				b.ctx.SwitchPriority(botCtx.PriorityNormal)
 			}
 		}
@@ -113,7 +113,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for k, r := range runs {
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
-			err := action2.PreRun(firstRun)
+			err := action.PreRun(firstRun)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			if err != nil {
 				return err
 			}
-			err = action2.PostRun(k == len(runs)-1)
+			err = action.PostRun(k == len(runs)-1)
 			if err != nil {
 				return err
 			}

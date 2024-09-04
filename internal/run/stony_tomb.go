@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -33,34 +33,34 @@ func (s StonyTomb) Run() error {
 	}
 
 	// Use the waypoint
-	err := action2.WayPoint(area.DryHills)
+	err := action.WayPoint(area.DryHills)
 	if err != nil {
 		return err
 	}
 
 	// Move to the correct area
-	if err = action2.MoveToArea(area.RockyWaste); err != nil {
+	if err = action.MoveToArea(area.RockyWaste); err != nil {
 		return err
 	}
 
 	// Move to the correct area
-	if err = action2.MoveToArea(area.StonyTombLevel1); err != nil {
+	if err = action.MoveToArea(area.StonyTombLevel1); err != nil {
 		return err
 	}
 
 	// Open a TP If we're the leader
-	action2.OpenTPIfLeader()
+	action.OpenTPIfLeader()
 
 	// Clear the area
-	if err = action2.ClearCurrentLevel(s.ctx.CharacterCfg.Game.StonyTomb.OpenChests, monsterFilter); err != nil {
+	if err = action.ClearCurrentLevel(s.ctx.CharacterCfg.Game.StonyTomb.OpenChests, monsterFilter); err != nil {
 		return err
 	}
 
 	// Move to lvl2
-	if err = action2.MoveToArea(area.StonyTombLevel2); err != nil {
+	if err = action.MoveToArea(area.StonyTombLevel2); err != nil {
 		return err
 	}
 
 	// Clear the area
-	return action2.ClearCurrentLevel(s.ctx.CharacterCfg.Game.StonyTomb.OpenChests, monsterFilter)
+	return action.ClearCurrentLevel(s.ctx.CharacterCfg.Game.StonyTomb.OpenChests, monsterFilter)
 }

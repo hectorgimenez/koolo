@@ -6,7 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -30,20 +30,20 @@ func (n Nihlathak) Name() string {
 func (n Nihlathak) Run() error {
 
 	// Use the waypoint to HallsOfPain
-	err := action2.WayPoint(area.HallsOfPain)
+	err := action.WayPoint(area.HallsOfPain)
 	if err != nil {
 		return err
 	}
 
 	// Move to Halls Of Vaught
-	if err = action2.MoveToArea(area.HallsOfVaught); err != nil {
+	if err = action.MoveToArea(area.HallsOfVaught); err != nil {
 		return err
 	}
 
 	var nihlaObject data.Object
 
 	// Move to Nihlathak
-	action2.MoveTo(func() (data.Position, bool) {
+	action.MoveTo(func() (data.Position, bool) {
 
 		for _, o := range n.ctx.Data.Objects {
 			if o.Name == object.NihlathakWildernessStartPositionName {
@@ -56,7 +56,7 @@ func (n Nihlathak) Run() error {
 	})
 
 	// Try to find the safest place to move
-	action2.MoveTo(func() (data.Position, bool) {
+	action.MoveTo(func() (data.Position, bool) {
 		corners := [4]data.Position{
 			{
 				X: nihlaObject.Position.X + 20,

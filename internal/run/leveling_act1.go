@@ -8,7 +8,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
 	ui2 "github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -60,49 +60,49 @@ func (a Leveling) act1() error {
 }
 
 func (a Leveling) bloodMoor() error {
-	err := action2.MoveToArea(area.BloodMoor)
+	err := action.MoveToArea(area.BloodMoor)
 	if err != nil {
 		return err
 	}
 
-	return action2.ClearCurrentLevel(false, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 }
 
 func (a Leveling) coldPlains() error {
-	err := action2.MoveToArea(area.ColdPlains)
+	err := action.MoveToArea(area.ColdPlains)
 	if err != nil {
 		return err
 	}
 
-	return action2.ClearCurrentLevel(false, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 }
 
 func (a Leveling) denOfEvil() error {
-	err := action2.MoveToArea(area.BloodMoor)
+	err := action.MoveToArea(area.BloodMoor)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.DenOfEvil)
+	err = action.MoveToArea(area.DenOfEvil)
 	if err != nil {
 		return err
 	}
 
-	action2.ClearCurrentLevel(false, data.MonsterAnyFilter())
-	action2.ReturnTown()
-	action2.InteractNPC(npc.Akara)
+	action.ClearCurrentLevel(false, data.MonsterAnyFilter())
+	action.ReturnTown()
+	action.InteractNPC(npc.Akara)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
 	return nil
 }
 
 func (a Leveling) stonyField() error {
-	err := action2.WayPoint(area.StonyField)
+	err := action.WayPoint(area.StonyField)
 	if err != nil {
 		return err
 	}
 
-	return action2.ClearCurrentLevel(false, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 }
 
 func (a Leveling) isCainInTown() bool {
@@ -112,13 +112,13 @@ func (a Leveling) isCainInTown() bool {
 }
 
 func (a Leveling) deckardCain() error {
-	action2.WayPoint(area.RogueEncampment)
-	err := action2.WayPoint(area.DarkWood)
+	action.WayPoint(area.RogueEncampment)
+	err := action.WayPoint(area.DarkWood)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.InifussTree {
 				return o.Position, true
@@ -130,14 +130,14 @@ func (a Leveling) deckardCain() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.InifussTree)
 	if !found {
 		a.ctx.Logger.Debug("InifussTree not found")
 	}
 
-	err = action2.InteractObject(obj, func() bool {
+	err = action.InteractObject(obj, func() bool {
 		updatedObj, found := a.ctx.Data.Objects.FindOne(object.InifussTree)
 		if found {
 			if !updatedObj.Selectable {
@@ -151,9 +151,9 @@ func (a Leveling) deckardCain() error {
 		return err
 	}
 
-	action2.ItemPickup(0)
-	action2.ReturnTown()
-	action2.InteractNPC(npc.Akara)
+	action.ItemPickup(0)
+	action.ReturnTown()
+	action.InteractNPC(npc.Akara)
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
 	//Reuse Tristram Run actions
@@ -174,27 +174,27 @@ func (a Leveling) countess() error {
 }
 
 func (a Leveling) andariel() error {
-	err := action2.WayPoint(area.CatacombsLevel2)
+	err := action.WayPoint(area.CatacombsLevel2)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.CatacombsLevel3)
-	action2.MoveToArea(area.CatacombsLevel4)
+	err = action.MoveToArea(area.CatacombsLevel3)
+	action.MoveToArea(area.CatacombsLevel4)
 	if err != nil {
 		return err
 	}
 
 	// Return to the city, ensure we have pots and everything, and get some antidote potions
-	action2.ReturnTown()
+	action.ReturnTown()
 
 	potsToBuy := 4
 	if a.ctx.Data.MercHPPercent() > 0 {
 		potsToBuy = 8
 	}
 
-	action2.VendorRefill(false, true)
-	action2.BuyAtVendor(npc.Akara, action2.VendorItemRequest{
+	action.VendorRefill(false, true)
+	action.BuyAtVendor(npc.Akara, action.VendorItemRequest{
 		Item:     "AntidotePotion",
 		Quantity: potsToBuy,
 		Tab:      4,
@@ -226,15 +226,15 @@ func (a Leveling) andariel() error {
 
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
-	action2.UsePortalInTown()
-	action2.Buff()
+	action.UsePortalInTown()
+	action.Buff()
 
-	action2.MoveTo(func() (data.Position, bool) {
+	action.MoveTo(func() (data.Position, bool) {
 		return andarielAttackPos1, true
 	})
 	a.ctx.Char.KillAndariel()
-	action2.ReturnTown()
-	action2.InteractNPC(npc.Warriv)
+	action.ReturnTown()
+	action.InteractNPC(npc.Warriv)
 	a.ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 
 	return nil

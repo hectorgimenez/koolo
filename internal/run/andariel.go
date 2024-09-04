@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -66,13 +66,13 @@ func (a Andariel) Name() string {
 func (a Andariel) Run() error {
 	// Moving to Catacombs Level 4
 	a.ctx.Logger.Info("Moving to Catacombs 4")
-	err := action2.WayPoint(area.CatacombsLevel2)
+	err := action.WayPoint(area.CatacombsLevel2)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.CatacombsLevel3)
-	action2.MoveToArea(area.CatacombsLevel4)
+	err = action.MoveToArea(area.CatacombsLevel3)
+	action.MoveToArea(area.CatacombsLevel4)
 	if err != nil {
 		return err
 	}
@@ -81,21 +81,21 @@ func (a Andariel) Run() error {
 	a.ctx.Logger.Info("Clearing inside room")
 
 	if a.ctx.CharacterCfg.Game.Andariel.ClearRoom {
-		action2.MoveToCoords(andarielClearPos1)
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-		action2.MoveToCoords(andarielClearPos2)
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-		action2.MoveToCoords(andarielClearPos3)
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-		action2.MoveToCoords(andarielClearPos4)
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-		action2.MoveToCoords(andarielClearPos5)
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-		action2.MoveToCoords(andarielAttackPos1)
-		action2.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos1)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos2)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos3)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos4)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos5)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielAttackPos1)
+		action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
 
 	} else {
-		action2.MoveToCoords(andarielStartingPosition)
+		action.MoveToCoords(andarielStartingPosition)
 	}
 
 	// Attacking Andariel

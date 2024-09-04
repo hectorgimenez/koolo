@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -33,26 +33,26 @@ func (run SpiderCavern) Run() error {
 	}
 
 	// Use waypoint to Spider Forest
-	err := action2.WayPoint(area.SpiderForest)
+	err := action.WayPoint(area.SpiderForest)
 	if err != nil {
 		return err
 	}
 
 	// Move to the correct area
-	if err = action2.MoveToArea(area.SpiderCavern); err != nil {
+	if err = action.MoveToArea(area.SpiderCavern); err != nil {
 		return err
 	}
 
 	// Clear the area
-	action2.ClearCurrentLevel(run.ctx.CharacterCfg.Game.SpiderCavern.OpenChests, monsterFilter)
+	action.ClearCurrentLevel(run.ctx.CharacterCfg.Game.SpiderCavern.OpenChests, monsterFilter)
 
 	// Return to town
-	if err = action2.ReturnTown(); err != nil {
+	if err = action.ReturnTown(); err != nil {
 		return err
 	}
 
 	// Move to A4 if possible to shorten the run time
-	err = action2.WayPoint(area.ThePandemoniumFortress)
+	err = action.WayPoint(area.ThePandemoniumFortress)
 	if err != nil {
 		return err
 	}

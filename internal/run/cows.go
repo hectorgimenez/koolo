@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -36,7 +36,7 @@ func (a Cows) Run() error {
 	}
 
 	// Sell junk, refill potions, etc. (basically ensure space for getting the TP tome)
-	action2.PreRun(true)
+	action.PreRun(true)
 
 	err = a.preparePortal()
 	if err != nil {
@@ -48,16 +48,16 @@ func (a Cows) Run() error {
 		return errors.New("cow portal not found")
 	}
 
-	err = action2.InteractObject(townPortal, func() bool {
+	err = action.InteractObject(townPortal, func() bool {
 		return a.ctx.Data.PlayerUnit.Area == area.MooMooFarm
 	})
 	if err != nil {
 		return err
 	}
 
-	action2.Buff()
+	action.Buff()
 
-	return action2.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter())
 }
 
 func (a Cows) getWirtsLeg() error {
@@ -66,7 +66,7 @@ func (a Cows) getWirtsLeg() error {
 		return nil
 	}
 
-	err := action2.WayPoint(area.StonyField) // Moving to starting point (Stony Field)
+	err := action.WayPoint(area.StonyField) // Moving to starting point (Stony Field)
 	if err != nil {
 		return err
 	}
@@ -75,17 +75,17 @@ func (a Cows) getWirtsLeg() error {
 	if !found {
 		return errors.New("cain stones not found")
 	}
-	err = action2.MoveToCoords(cainStone.Position)
+	err = action.MoveToCoords(cainStone.Position)
 	if err != nil {
 		return err
 	}
-	action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
 		return errors.New("tristram not found")
 	}
-	err = action2.InteractObject(portal, func() bool {
+	err = action.InteractObject(portal, func() bool {
 		return a.ctx.Data.PlayerUnit.Area == area.Tristram
 	})
 	if err != nil {
@@ -96,17 +96,17 @@ func (a Cows) getWirtsLeg() error {
 	if !found {
 		return errors.New("wirt corpse not found")
 	}
-	err = action2.InteractObject(wirtCorpse, func() bool {
+	err = action.InteractObject(wirtCorpse, func() bool {
 		_, found := a.ctx.Data.Inventory.Find("WirtsLeg")
 
 		return found
 	})
 
-	return action2.ReturnTown()
+	return action.ReturnTown()
 }
 
 func (a Cows) preparePortal() error {
-	err := action2.WayPoint(area.RogueEncampment)
+	err := action.WayPoint(area.RogueEncampment)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (a Cows) preparePortal() error {
 		}
 	}
 
-	err = action2.BuyAtVendor(npc.Akara, action2.VendorItemRequest{
+	err = action.BuyAtVendor(npc.Akara, action.VendorItemRequest{
 		Item:     item.TomeOfTownPortal,
 		Quantity: 1,
 		Tab:      4,
@@ -145,10 +145,10 @@ func (a Cows) preparePortal() error {
 		return errors.New("TomeOfTownPortal could not be found, portal cannot be opened")
 	}
 
-	err = action2.CubeAddItems(leg, newWPTome)
+	err = action.CubeAddItems(leg, newWPTome)
 	if err != nil {
 		return err
 	}
 
-	return action2.CubeTransmute()
+	return action.CubeTransmute()
 }

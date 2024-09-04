@@ -5,7 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 )
 
 func (a Leveling) act4() error {
@@ -30,19 +30,19 @@ func (a Leveling) act4() error {
 }
 
 func (a Leveling) izual() error {
-	err := action2.MoveToArea(area.OuterSteppes)
+	err := action.MoveToArea(area.OuterSteppes)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.PlainsOfDespair)
+	err = action.MoveToArea(area.PlainsOfDespair)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		izual, found := a.ctx.Data.NPCs.FindOne(npc.Izual)
 		if !found {
 			return data.Position{}, false
@@ -59,12 +59,12 @@ func (a Leveling) izual() error {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Tyrael2)
+	err = action.InteractNPC(npc.Tyrael2)
 	if err != nil {
 		return err
 	}

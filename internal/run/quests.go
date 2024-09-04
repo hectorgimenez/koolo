@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -81,24 +81,24 @@ func (a Quests) Run() error {
 func (a Quests) clearDenQuest() error {
 	a.ctx.Logger.Info("Starting Den of Evil Quest...")
 
-	err := action2.MoveToArea(area.BloodMoor)
+	err := action.MoveToArea(area.BloodMoor)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.DenOfEvil)
+	err = action.MoveToArea(area.DenOfEvil)
 	if err != nil {
 		return err
 	}
 
-	action2.ClearCurrentLevel(false, data.MonsterAnyFilter())
+	action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Akara)
+	err = action.InteractNPC(npc.Akara)
 	if err != nil {
 		return err
 	}
@@ -111,17 +111,17 @@ func (a Quests) clearDenQuest() error {
 func (a Quests) rescueCainQuest() error {
 	a.ctx.Logger.Info("Starting Rescue Cain Quest...")
 
-	err := action2.WayPoint(area.RogueEncampment)
+	err := action.WayPoint(area.RogueEncampment)
 	if err != nil {
 		return err
 	}
 
-	err = action2.WayPoint(area.DarkWood)
+	err = action.WayPoint(area.DarkWood)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.InifussTree {
 				return o.Position, true
@@ -133,14 +133,14 @@ func (a Quests) rescueCainQuest() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.InifussTree)
 	if !found {
 		a.ctx.Logger.Debug("InifussTree not found")
 	}
 
-	err = action2.InteractObject(obj, func() bool {
+	err = action.InteractObject(obj, func() bool {
 		updatedObj, found := a.ctx.Data.Objects.FindOne(object.InifussTree)
 		if found {
 			if !updatedObj.Selectable {
@@ -154,13 +154,13 @@ func (a Quests) rescueCainQuest() error {
 		return err
 	}
 
-	action2.ItemPickup(0)
-	err = action2.ReturnTown()
+	action.ItemPickup(0)
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Akara)
+	err = action.InteractNPC(npc.Akara)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (a Quests) rescueCainQuest() error {
 		return err
 	}
 
-	action2.ReturnTown()
+	action.ReturnTown()
 
 	return nil
 }
@@ -181,23 +181,23 @@ func (a Quests) rescueCainQuest() error {
 func (a Quests) retrieveHammerQuest() error {
 	a.ctx.Logger.Info("Starting Retrieve Hammer Quest...")
 
-	err := action2.WayPoint(area.RogueEncampment)
+	err := action.WayPoint(area.RogueEncampment)
 	if err != nil {
 		return err
 	}
 
-	err = action2.WayPoint(area.OuterCloister)
+	err = action.WayPoint(area.OuterCloister)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.Barracks)
+	err = action.MoveToArea(area.Barracks)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.Malus {
 				return o.Position, true
@@ -209,26 +209,26 @@ func (a Quests) retrieveHammerQuest() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
 
 	malus, found := a.ctx.Data.Objects.FindOne(object.Malus)
 	if !found {
 		a.ctx.Logger.Debug("Malus not found")
 	}
 
-	err = action2.InteractObject(malus, nil)
+	err = action.InteractObject(malus, nil)
 	if err != nil {
 		return err
 	}
 
-	action2.ItemPickup(0)
+	action.ItemPickup(0)
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Charsi)
+	err = action.InteractNPC(npc.Charsi)
 	if err != nil {
 		return err
 	}
@@ -246,25 +246,25 @@ func (a Quests) killRadamentQuest() error {
 
 	a.ctx.Logger.Info("Starting Kill Radament Quest...")
 
-	err := action2.WayPoint(area.LutGholein)
+	err := action.WayPoint(area.LutGholein)
 	if err != nil {
 		return err
 	}
 
-	err = action2.WayPoint(area.SewersLevel2Act2)
+	err = action.WayPoint(area.SewersLevel2Act2)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.SewersLevel3Act2)
+	err = action.MoveToArea(area.SewersLevel3Act2)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
 	// cant find npc.Radament for some reason, using the sparkly chest with ID 355 next him to find him
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.Name(355) {
 				return o.Position, true
@@ -277,10 +277,10 @@ func (a Quests) killRadamentQuest() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
 
 	// Sometimes it moves too far away from the book to pick it up, making sure it moves back to the chest
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.Name(355) {
 				return o.Position, true
@@ -294,19 +294,19 @@ func (a Quests) killRadamentQuest() error {
 	}
 
 	// If its still too far away, we're making sure it detects it
-	action2.ItemPickup(50)
+	action.ItemPickup(50)
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToCoords(startingPositionAtma)
+	err = action.MoveToCoords(startingPositionAtma)
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Atma)
+	err = action.InteractNPC(npc.Atma)
 	if err != nil {
 		return err
 	}
@@ -325,24 +325,24 @@ func (a Quests) killRadamentQuest() error {
 func (a Quests) getHoradricCube() error {
 	a.ctx.Logger.Info("Starting Retrieve the Cube Quest...")
 
-	err := action2.WayPoint(area.LutGholein)
+	err := action.WayPoint(area.LutGholein)
 	if err != nil {
 		return err
 	}
 
-	err = action2.WayPoint(area.HallsOfTheDeadLevel2)
+	err = action.WayPoint(area.HallsOfTheDeadLevel2)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.HallsOfTheDeadLevel3)
+	err = action.MoveToArea(area.HallsOfTheDeadLevel3)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		chest, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 		if found {
 			a.ctx.Logger.Info("Horadric Cube chest found, moving to that room")
@@ -354,14 +354,14 @@ func (a Quests) getHoradricCube() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 	if !found {
 		return err
 	}
 
-	err = action2.InteractObject(obj, func() bool {
+	err = action.InteractObject(obj, func() bool {
 		updatedObj, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 		if found {
 			if !updatedObj.Selectable {
@@ -376,9 +376,9 @@ func (a Quests) getHoradricCube() error {
 	}
 
 	// Making sure we pick up the cube
-	action2.ItemPickup(10)
+	action.ItemPickup(10)
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
@@ -389,24 +389,24 @@ func (a Quests) getHoradricCube() error {
 func (a Quests) retrieveBookQuest() error {
 	a.ctx.Logger.Info("Starting Retrieve Book Quest...")
 
-	err := action2.WayPoint(area.KurastDocks)
+	err := action.WayPoint(area.KurastDocks)
 	if err != nil {
 		return err
 	}
 
-	err = action2.WayPoint(area.KurastBazaar)
+	err = action.WayPoint(area.KurastBazaar)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.RuinedTemple)
+	err = action.MoveToArea(area.RuinedTemple)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.LamEsensTome {
 				return o.Position, true
@@ -419,27 +419,27 @@ func (a Quests) retrieveBookQuest() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
 
 	tome, found := a.ctx.Data.Objects.FindOne(object.LamEsensTome)
 	if !found {
 		return err
 	}
 
-	err = action2.InteractObject(tome, nil)
+	err = action.InteractObject(tome, nil)
 	if err != nil {
 		return err
 	}
 
 	// Making sure we pick up the tome
-	action2.ItemPickup(10)
+	action.ItemPickup(10)
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Alkor)
+	err = action.InteractNPC(npc.Alkor)
 	if err != nil {
 		return err
 	}
@@ -452,19 +452,19 @@ func (a Quests) retrieveBookQuest() error {
 func (a Quests) killIzualQuest() error {
 	a.ctx.Logger.Info("Starting Kill Izual Quest...")
 
-	err := action2.MoveToArea(area.OuterSteppes)
+	err := action.MoveToArea(area.OuterSteppes)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.PlainsOfDespair)
+	err = action.MoveToArea(area.PlainsOfDespair)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		izual, found := a.ctx.Data.NPCs.FindOne(npc.Izual)
 		if !found {
 			return data.Position{}, false
@@ -481,12 +481,12 @@ func (a Quests) killIzualQuest() error {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Tyrael2)
+	err = action.InteractNPC(npc.Tyrael2)
 	if err != nil {
 		return err
 	}
@@ -502,36 +502,36 @@ func (a Quests) killShenkQuest() error {
 
 	a.ctx.Logger.Info("Starting Kill Shenk Quest...")
 
-	err := action2.WayPoint(area.Harrogath)
+	err := action.WayPoint(area.Harrogath)
 	if err != nil {
 		return err
 	}
 
-	err = action2.WayPoint(area.FrigidHighlands)
+	err = action.WayPoint(area.FrigidHighlands)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.BloodyFoothills)
+	err = action.MoveToArea(area.BloodyFoothills)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToCoords(shenkPosition)
-	if err != nil {
-		return err
-	}
-
-	action2.ClearAreaAroundPlayer(25, data.MonsterAnyFilter())
-
-	err = action2.ReturnTown()
+	err = action.MoveToCoords(shenkPosition)
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractNPC(npc.Larzuk)
+	action.ClearAreaAroundPlayer(25, data.MonsterAnyFilter())
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	err = action.InteractNPC(npc.Larzuk)
 	if err != nil {
 		return err
 	}
@@ -544,19 +544,19 @@ func (a Quests) killShenkQuest() error {
 func (a Quests) rescueAnyaQuest() error {
 	a.ctx.Logger.Info("Starting Rescuing Anya Quest...")
 
-	err := action2.WayPoint(area.CrystallinePassage)
+	err := action.WayPoint(area.CrystallinePassage)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.FrozenRiver)
+	err = action.MoveToArea(area.FrozenRiver)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		anya, found := a.ctx.Data.NPCs.FindOne(793)
 		return anya.Positions[0], found
 	})
@@ -564,7 +564,7 @@ func (a Quests) rescueAnyaQuest() error {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		anya, found := a.ctx.Data.Objects.FindOne(object.FrozenAnya)
 		return anya.Position, found
 	})
@@ -572,52 +572,52 @@ func (a Quests) rescueAnyaQuest() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	anya, found := a.ctx.Data.Objects.FindOne(object.FrozenAnya)
 	if !found {
 		a.ctx.Logger.Debug("Frozen Anya not found")
 	}
 
-	err = action2.InteractObject(anya, nil)
+	err = action.InteractObject(anya, nil)
 	if err != nil {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
-	action2.IdentifyAll(false)
-	action2.Stash(false)
-	action2.ReviveMerc()
-	action2.Repair()
-	action2.VendorRefill(false, true)
+	action.IdentifyAll(false)
+	action.Stash(false)
+	action.ReviveMerc()
+	action.Repair()
+	action.VendorRefill(false, true)
 
-	err = action2.InteractNPC(npc.Malah)
+	err = action.InteractNPC(npc.Malah)
 	if err != nil {
 		return err
 	}
 
-	err = action2.UsePortalInTown()
+	err = action.UsePortalInTown()
 	if err != nil {
 		return err
 	}
 
-	err = action2.InteractObject(anya, nil)
+	err = action.InteractObject(anya, nil)
 	if err != nil {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(8000)
 
-	err = action2.InteractNPC(npc.Malah)
+	err = action.InteractNPC(npc.Malah)
 	if err != nil {
 		return err
 	}
@@ -639,30 +639,30 @@ func (a Quests) killAncientsQuest() error {
 		Y: 12623,
 	}
 
-	err := action2.WayPoint(area.Harrogath)
+	err := action.WayPoint(area.Harrogath)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.WayPoint(area.TheAncientsWay)
+	err = action.WayPoint(area.TheAncientsWay)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.ArreatSummit)
+	err = action.MoveToArea(area.ArreatSummit)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	action2.ReturnTown()
-	action2.InRunReturnTownRoutine()
-	action2.UsePortalInTown()
-	action2.Buff()
+	action.ReturnTown()
+	action.InRunReturnTownRoutine()
+	action.UsePortalInTown()
+	action.Buff()
 
-	action2.MoveToCoords(ancientsAltar)
+	action.MoveToCoords(ancientsAltar)
 
 	utils.Sleep(1000)
 	a.ctx.HID.Click(game.LeftButton, 720, 260)
@@ -670,9 +670,9 @@ func (a Quests) killAncientsQuest() error {
 	a.ctx.HID.PressKey(win.VK_RETURN)
 	utils.Sleep(2000)
 
-	action2.ClearAreaAroundPlayer(50, data.MonsterEliteFilter())
+	action.ClearAreaAroundPlayer(50, data.MonsterEliteFilter())
 
-	action2.ReturnTown()
+	action.ReturnTown()
 
 	return nil
 }

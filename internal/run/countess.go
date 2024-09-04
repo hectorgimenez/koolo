@@ -5,7 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -26,7 +26,7 @@ func (c Countess) Name() string {
 
 func (c Countess) Run() error {
 	// Travel to boss level
-	err := action2.WayPoint(area.BlackMarsh)
+	err := action.WayPoint(area.BlackMarsh)
 	if err != nil {
 		return err
 	}
@@ -41,14 +41,14 @@ func (c Countess) Run() error {
 	}
 
 	for _, a := range areas {
-		err = action2.MoveToArea(a)
+		err = action.MoveToArea(a)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Try to move around Countess area
-	action2.MoveTo(func() (data.Position, bool) {
+	action.MoveTo(func() (data.Position, bool) {
 		for _, o := range c.ctx.Data.Objects {
 			if o.Name == object.GoodChest {
 				return o.Position, true

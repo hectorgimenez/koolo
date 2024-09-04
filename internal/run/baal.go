@@ -7,7 +7,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	context2 "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -40,29 +40,29 @@ func (s Baal) Run() error {
 		filter = data.MonsterEliteFilter()
 	}
 
-	err := action2.WayPoint(area.TheWorldStoneKeepLevel2)
+	err := action.WayPoint(area.TheWorldStoneKeepLevel2)
 	if err != nil {
 		return err
 	}
 
 	if s.ctx.CharacterCfg.Game.Baal.ClearFloors {
-		action2.ClearCurrentLevel(false, filter)
+		action.ClearCurrentLevel(false, filter)
 	}
 
-	err = action2.MoveToArea(area.TheWorldStoneKeepLevel3)
+	err = action.MoveToArea(area.TheWorldStoneKeepLevel3)
 	if err != nil {
 		return err
 	}
 
 	if s.ctx.CharacterCfg.Game.Baal.ClearFloors {
-		action2.ClearCurrentLevel(false, filter)
+		action.ClearCurrentLevel(false, filter)
 	}
 
-	err = action2.MoveToArea(area.ThroneOfDestruction)
+	err = action.MoveToArea(area.ThroneOfDestruction)
 	if err != nil {
 		return err
 	}
-	err = action2.MoveToCoords(baalThronePosition)
+	err = action.MoveToCoords(baalThronePosition)
 	if err != nil {
 		return err
 	}
@@ -72,23 +72,23 @@ func (s Baal) Run() error {
 
 	// Let's move to a safe area and open the portal in companion mode
 	if s.ctx.CharacterCfg.Companion.Leader {
-		action2.MoveToCoords(data.Position{
+		action.MoveToCoords(data.Position{
 			X: 15116,
 			Y: 5071,
 		})
-		action2.OpenTPIfLeader()
+		action.OpenTPIfLeader()
 	}
 
-	err = action2.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
+	err = action.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
 	if err != nil {
 		return err
 	}
 
 	// Force rebuff before waves
-	action2.Buff()
+	action.Buff()
 
 	// Come back to previous position
-	err = action2.MoveToCoords(baalThronePosition)
+	err = action.MoveToCoords(baalThronePosition)
 	if err != nil {
 		return err
 	}
@@ -107,20 +107,20 @@ func (s Baal) Run() error {
 			}
 		}
 		if enemies {
-			err = action2.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
+			err = action.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
 			if err != nil {
 				return err
 			}
 		}
-		action2.MoveToCoords(baalThronePosition)
+		action.MoveToCoords(baalThronePosition)
 	}
 
 	_, isLevelingChar := s.ctx.Char.(context2.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		utils.Sleep(10000)
-		action2.Buff()
+		action.Buff()
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		err = action2.InteractObjectByID(baalPortal.ID, func() bool {
+		err = action.InteractObjectByID(baalPortal.ID, func() bool {
 			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
 		})
 		if err != nil {

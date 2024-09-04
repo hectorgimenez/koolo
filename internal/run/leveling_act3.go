@@ -5,7 +5,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -27,7 +27,7 @@ func (a Leveling) act3() error {
 	// Try to find Hratli at pier, if he's there, talk to him, so he will move to the normal position later
 	hratli, found := a.ctx.Data.Monsters.FindOne(npc.Hratli, data.MonsterTypeNone)
 	if found {
-		action2.InteractNPC(hratli.Name)
+		action.InteractNPC(hratli.Name)
 	}
 
 	running = true
@@ -43,7 +43,7 @@ func (a Leveling) act3() error {
 
 	if a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
 		//Mephisto{}.Run()
-		action2.InteractObject(hellgate, func() bool {
+		action.InteractObject(hellgate, func() bool {
 			return a.ctx.Data.PlayerUnit.Area == area.ThePandemoniumFortress
 		})
 	}
@@ -82,19 +82,19 @@ func (a Leveling) act3() error {
 }
 
 func (a Leveling) findKhalimsEye() error {
-	err := action2.WayPoint(area.SpiderForest)
+	err := action.WayPoint(area.SpiderForest)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.SpiderCavern)
+	err = action.MoveToArea(area.SpiderCavern)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, o := range a.ctx.Data.Objects {
 			if o.Name == object.InifussTree {
 				return o.Position, true
@@ -106,7 +106,7 @@ func (a Leveling) findKhalimsEye() error {
 		return err
 	}
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		chest, found := a.ctx.Data.Objects.FindOne(object.KhalimChest3)
 		if found {
 			a.ctx.Logger.Info("Khalm Chest found, moving to that room")
@@ -118,14 +118,14 @@ func (a Leveling) findKhalimsEye() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	kalimchest3, found := a.ctx.Data.Objects.FindOne(object.KhalimChest3)
 	if !found {
 		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
 
-	err = action2.InteractObject(kalimchest3, func() bool {
+	err = action.InteractObject(kalimchest3, func() bool {
 		chest, _ := a.ctx.Data.Objects.FindOne(object.KhalimChest3)
 		return !chest.Selectable
 	})
@@ -137,31 +137,31 @@ func (a Leveling) findKhalimsEye() error {
 }
 
 func (a Leveling) findKhalimsBrain() error {
-	err := action2.WayPoint(area.FlayerJungle)
+	err := action.WayPoint(area.FlayerJungle)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.FlayerDungeonLevel1)
+	err = action.MoveToArea(area.FlayerDungeonLevel1)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.FlayerDungeonLevel2)
+	err = action.MoveToArea(area.FlayerDungeonLevel2)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.FlayerDungeonLevel3)
+	err = action.MoveToArea(area.FlayerDungeonLevel3)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		a.ctx.Logger.Info("Khalm Chest found, moving to that room")
 		chest, found := a.ctx.Data.Objects.FindOne(object.KhalimChest2)
 
@@ -171,14 +171,14 @@ func (a Leveling) findKhalimsBrain() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	kalimchest2, found := a.ctx.Data.Objects.FindOne(object.KhalimChest2)
 	if !found {
 		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
 
-	err = action2.InteractObject(kalimchest2, func() bool {
+	err = action.InteractObject(kalimchest2, func() bool {
 		chest, _ := a.ctx.Data.Objects.FindOne(object.KhalimChest2)
 		return !chest.Selectable
 	})
@@ -190,19 +190,19 @@ func (a Leveling) findKhalimsBrain() error {
 }
 
 func (a Leveling) findKhalimsHeart() error {
-	err := action2.WayPoint(area.KurastBazaar)
+	err := action.WayPoint(area.KurastBazaar)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveToArea(area.SewersLevel1Act3)
+	err = action.MoveToArea(area.SewersLevel1Act3)
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		for _, l := range a.ctx.Data.AdjacentLevels {
 			if l.Area == area.SewersLevel2Act3 {
 				return l.Position, true
@@ -214,14 +214,14 @@ func (a Leveling) findKhalimsHeart() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
 	stairs, found := a.ctx.Data.Objects.FindOne(object.Act3SewerStairsToLevel3)
 	if !found {
 		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
 
-	err = action2.InteractObject(stairs, func() bool {
+	err = action.InteractObject(stairs, func() bool {
 		o, _ := a.ctx.Data.Objects.FindOne(object.Act3SewerStairsToLevel3)
 
 		return !o.Selectable
@@ -232,15 +232,15 @@ func (a Leveling) findKhalimsHeart() error {
 
 	time.Sleep(3000)
 
-	err = action2.InteractObject(stairs, func() bool {
+	err = action.InteractObject(stairs, func() bool {
 		return a.ctx.Data.PlayerUnit.Area == area.SewersLevel2Act3
 	})
 	if err != nil {
 		return err
 	}
-	action2.Buff()
+	action.Buff()
 
-	err = action2.MoveTo(func() (data.Position, bool) {
+	err = action.MoveTo(func() (data.Position, bool) {
 		a.ctx.Logger.Info("Khalm Chest found, moving to that room")
 		chest, found := a.ctx.Data.Objects.FindOne(object.KhalimChest1)
 
@@ -250,14 +250,14 @@ func (a Leveling) findKhalimsHeart() error {
 		return err
 	}
 
-	action2.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
 	kalimchest1, found := a.ctx.Data.Objects.FindOne(object.KhalimChest1)
 	if !found {
 		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
 
-	err = action2.InteractObject(kalimchest1, func() bool {
+	err = action.InteractObject(kalimchest1, func() bool {
 		chest, _ := a.ctx.Data.Objects.FindOne(object.KhalimChest1)
 		return !chest.Selectable
 	})
@@ -275,7 +275,7 @@ func (a Leveling) openMephistoStairs() error {
 		return err
 	}
 
-	err = action2.ReturnTown()
+	err = action.ReturnTown()
 	if err != nil {
 		return err
 	}
@@ -286,17 +286,17 @@ func (a Leveling) openMephistoStairs() error {
 	flail, _ := a.ctx.Data.Inventory.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
 
 	// Combine Khalim's items in the Horadric Cube to create Khalim's Will
-	err = action2.CubeAddItems(eye, brain, heart, flail)
+	err = action.CubeAddItems(eye, brain, heart, flail)
 	if err != nil {
 		return err
 	}
 
-	err = action2.CubeTransmute()
+	err = action.CubeTransmute()
 	if err != nil {
 		return err
 	}
 
-	err = action2.UsePortalInTown()
+	err = action.UsePortalInTown()
 	if err != nil {
 		return err
 	}
@@ -324,7 +324,7 @@ func (a Leveling) openMephistoStairs() error {
 		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
 
-	err = action2.InteractObject(compellingorb, func() bool {
+	err = action.InteractObject(compellingorb, func() bool {
 		o, _ := a.ctx.Data.Objects.FindOne(object.CompellingOrb)
 		return !o.Selectable
 	})
@@ -343,7 +343,7 @@ func (a Leveling) openMephistoStairs() error {
 		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
 
-	err = action2.InteractObject(stairsr, func() bool {
+	err = action.InteractObject(stairsr, func() bool {
 		return a.ctx.Data.PlayerUnit.Area == area.DuranceOfHateLevel1
 	})
 	if err != nil {
@@ -351,8 +351,8 @@ func (a Leveling) openMephistoStairs() error {
 	}
 
 	// Move to Durance of Hate Level 2 and discover the waypoint
-	action2.MoveToArea(area.DuranceOfHateLevel2)
-	action2.DiscoverWaypoint()
+	action.MoveToArea(area.DuranceOfHateLevel2)
+	action.DiscoverWaypoint()
 
 	return nil
 }

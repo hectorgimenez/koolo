@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -31,18 +31,18 @@ func (a AncientTunnels) Run() error {
 		filter = data.MonsterEliteFilter()
 	}
 
-	err := action2.WayPoint(area.LostCity) // Moving to starting point (Lost City)
+	err := action.WayPoint(area.LostCity) // Moving to starting point (Lost City)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.AncientTunnels) // Travel to ancient tunnels
+	err = action.MoveToArea(area.AncientTunnels) // Travel to ancient tunnels
 	if err != nil {
 		return err
 	}
-	action2.OpenTPIfLeader()
+	action.OpenTPIfLeader()
 
 	// Clear Ancient Tunnels
 
-	return action2.ClearCurrentLevel(openChests, filter)
+	return action.ClearCurrentLevel(openChests, filter)
 }

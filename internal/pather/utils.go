@@ -3,6 +3,7 @@ package pather
 import (
 	"math"
 	"math/rand"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -75,21 +76,33 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 	return order
 }
 
-func (pf *PathFinder) MoveThroughPath(p Path, distance int) {
-	moveTo := p[len(p)-1]
-	if distance > 0 && len(p) > distance {
-		moveTo = p[distance]
+func (pf *PathFinder) MoveThroughPath(p Path, walkDuration time.Duration) {
+	// Calculate the max distance we can walk in the given duration
+	maxDistance := int(float64(25) * walkDuration.Seconds())
+
+	// Let's try to calculate how close to the window border we can go
+	screenCords := data.Position{}
+	for distance, pos := range p {
+		screenX, screenY := pf.gameCoordsToScreenCords(p.From().X, p.From().Y, pos.X, pos.Y)
+
+		// We reached max distance, let's stop (if we are not teleporting)
+		if !pf.data.CanTeleport() && maxDistance > 0 && distance > maxDistance {
+			break
+		}
+
+		// Prevent mouse overlap the HUD
+		if screenY > int(float32(pf.gr.GameAreaSizeY)/1.21) {
+			break
+		}
+
+		// We are getting out of the window, let's stop
+		if screenX < 0 || screenY < 0 || screenX > pf.gr.GameAreaSizeX || screenY > pf.gr.GameAreaSizeY {
+			break
+		}
+		screenCords = data.Position{X: screenX, Y: screenY}
 	}
 
-	screenX, screenY := pf.gameCoordsToScreenCords(p.From().X, p.From().Y, moveTo.X, moveTo.Y)
-	// Prevent mouse overlap the HUD
-	if screenY > int(float32(pf.gr.GameAreaSizeY)/1.21) {
-		screenY = int(float32(pf.gr.GameAreaSizeY) / 1.21)
-	}
-
-	if distance > 0 {
-		pf.MoveCharacter(screenX, screenY)
-	}
+	pf.MoveCharacter(screenCords.X, screenCords.Y)
 }
 
 func (pf *PathFinder) MoveCharacter(x, y int) {

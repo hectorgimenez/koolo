@@ -4,7 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -26,18 +26,18 @@ func (m Mephisto) Name() string {
 func (m Mephisto) Run() error {
 
 	// Use waypoint to DuranceOfHateLevel2
-	err := action2.WayPoint(area.DuranceOfHateLevel2)
+	err := action.WayPoint(area.DuranceOfHateLevel2)
 	if err != nil {
 		return err
 	}
 
 	// Move to DuranceOfHateLevel3
-	if err = action2.MoveToArea(area.DuranceOfHateLevel3); err != nil {
+	if err = action.MoveToArea(area.DuranceOfHateLevel3); err != nil {
 		return err
 	}
 
 	// Move to the Safe position
-	action2.MoveToCoords(data.Position{
+	action.MoveToCoords(data.Position{
 		X: 17568,
 		Y: 8069,
 	})
@@ -49,7 +49,7 @@ func (m Mephisto) Run() error {
 
 	if m.ctx.CharacterCfg.Game.Mephisto.OpenChests || m.ctx.CharacterCfg.Game.Mephisto.KillCouncilMembers {
 		// Clear the area with the selected options
-		return action2.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.CouncilMemberFilter())
+		return action.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.CouncilMemberFilter())
 	}
 
 	return nil

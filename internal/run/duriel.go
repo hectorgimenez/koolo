@@ -6,7 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -30,7 +30,7 @@ func (d Duriel) Name() string {
 func (d Duriel) Run() error {
 
 	// Use the waypoint
-	err := action2.WayPoint(area.CanyonOfTheMagi)
+	err := action.WayPoint(area.CanyonOfTheMagi)
 	if err != nil {
 		return err
 	}
@@ -39,23 +39,23 @@ func (d Duriel) Run() error {
 	if realTalRashaTomb, err := d.findRealTomb(); err != nil {
 		return err
 	} else {
-		action2.MoveToArea(realTalRashaTomb)
+		action.MoveToArea(realTalRashaTomb)
 	}
 
 	// Get Orifice position and move to it, clear surrounding area
 	if orifice, found := d.ctx.Data.Objects.FindOne(object.HoradricOrifice); found {
-		action2.MoveToCoords(orifice.Position)
-		action2.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(orifice.Position)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 	} else {
 		return errors.New("failed to find Duriel's Lair entrance")
 	}
 
 	// Buff before we enter :)
-	action2.Buff()
+	action.Buff()
 
 	// Find Duriel's entrance and enter
 	if portal, found := d.ctx.Data.Objects.FindOne(object.DurielsLairPortal); found {
-		action2.InteractObject(portal, func() bool {
+		action.InteractObject(portal, func() bool {
 			return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
 		})
 	}

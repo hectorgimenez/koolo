@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -25,12 +25,12 @@ func (a LowerKurast) Name() string {
 func (a LowerKurast) Run() error {
 
 	// Use Waypoint to Lower Kurast
-	err := action2.WayPoint(area.LowerKurast)
+	err := action.WayPoint(area.LowerKurast)
 	if err != nil {
 		return err
 	}
 
 	// Clear Lower Kurast
-	return action2.ClearCurrentLevel(true, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(true, data.MonsterAnyFilter())
 
 }

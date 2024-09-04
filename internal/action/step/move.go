@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -47,6 +46,15 @@ func MoveTo(dest data.Position) error {
 			}
 		}
 
+		path, _, found := ctx.PathFinder.GetClosestWalkablePath(dest)
+		if !found {
+			if ctx.PathFinder.DistanceFromMe(dest) < stopAtDistance+5 {
+				return nil
+			}
+
+			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+		}
+
 		if timeout > 0 && time.Since(startedAt) > timeout {
 			return nil
 		}
@@ -61,34 +69,11 @@ func MoveTo(dest data.Position) error {
 			continue
 		}
 
-		// TODO Implement stuck & cache?
-
-		path, _, found := ctx.PathFinder.GetClosestWalkablePath(dest)
-		if !found {
-			if ctx.PathFinder.DistanceFromMe(dest) < stopAtDistance+5 {
-				return nil
-			}
-
-			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
-		}
 		lastRun = time.Now()
 		if len(path) == 0 {
 			return nil
 		}
-		//lastRunPositions = append(m.lastRunPositions, d.PlayerUnit.Position)
-		ctx.PathFinder.MoveThroughPath(path, calculateMaxDistance(ctx.Data, walkDuration))
+
+		ctx.PathFinder.MoveThroughPath(path, walkDuration)
 	}
-}
-
-func calculateMaxDistance(d *game.Data, duration time.Duration) int {
-	// We don't care too much if teleport is available, we can ignore corners, 90 degrees turns, etc
-	if d.CanTeleport() {
-		return 25
-	}
-
-	// Calculate the distance we can walk in the given duration, based on the randomized time
-	proposedDistance := int(float64(25) * duration.Seconds())
-	realDistance := proposedDistance
-
-	return realDistance
 }

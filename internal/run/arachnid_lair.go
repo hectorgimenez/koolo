@@ -3,7 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -23,18 +23,18 @@ func (a ArachnidLair) Name() string {
 }
 
 func (a ArachnidLair) Run() error {
-	err := action2.WayPoint(area.SpiderForest)
+	err := action.WayPoint(area.SpiderForest)
 	if err != nil {
 		return err
 	}
 
-	err = action2.MoveToArea(area.SpiderCave)
+	err = action.MoveToArea(area.SpiderCave)
 	if err != nil {
 		return err
 	}
 
-	action2.OpenTPIfLeader()
+	action.OpenTPIfLeader()
 
 	// Clear ArachnidLair
-	return action2.ClearCurrentLevel(true, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(true, data.MonsterAnyFilter())
 }

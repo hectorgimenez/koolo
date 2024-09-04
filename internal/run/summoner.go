@@ -4,7 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	action2 "github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -26,13 +26,13 @@ func (s Summoner) Name() string {
 func (s Summoner) Run() error {
 
 	// Use the waypoint
-	err := action2.WayPoint(area.ArcaneSanctuary)
+	err := action.WayPoint(area.ArcaneSanctuary)
 	if err != nil {
 		return err
 	}
 
 	// Move to boss position
-	if err = action2.MoveTo(func() (data.Position, bool) {
+	if err = action.MoveTo(func() (data.Position, bool) {
 		m, found := s.ctx.Data.NPCs.FindOne(npc.Summoner)
 		return m.Positions[0], found
 	}); err != nil {
