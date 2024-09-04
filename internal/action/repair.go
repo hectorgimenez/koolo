@@ -47,6 +47,11 @@ func Repair() error {
 				MoveToCoords(data.Position{X: 5224, Y: 5045})
 			}
 
+			err := InteractNPC(repairNPC)
+			if err != nil {
+				return err
+			}
+
 			if repairNPC != npc.Halbu {
 				ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 			} else {
