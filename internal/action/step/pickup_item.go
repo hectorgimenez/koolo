@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	utils2 "github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const maxInteractions = 45
@@ -44,7 +44,7 @@ func PickupItem(it data.Item) error {
 			return fmt.Errorf("item %s [%s] could not be picked up", it.Desc().Name, it.Quality.ToString())
 		}
 
-		if time.Since(lastRun) < utils2.RandomDurationMs(120, 320) {
+		if time.Since(lastRun) < utils.RandomDurationMs(120, 320) {
 			continue
 		}
 
@@ -76,7 +76,7 @@ func PickupItem(it data.Item) error {
 				return fmt.Errorf("item is too far away: %s", it.Desc().Name)
 			}
 
-			x, y := utils2.Spiral(mouseOverAttempts)
+			x, y := utils.Spiral(mouseOverAttempts)
 			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 			ctx.HID.MovePointer(mX+x, mY+y)
 			mouseOverAttempts++

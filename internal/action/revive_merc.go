@@ -4,16 +4,16 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	context2 "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
 )
 
 func ReviveMerc() {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ReviveMerc"
 
-	_, isLevelingChar := ctx.Char.(context2.LevelingCharacter)
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if ctx.CharacterCfg.Character.UseMerc && ctx.Data.MercHPPercent() <= 0 {
 		if isLevelingChar && ctx.Data.PlayerUnit.Area == area.RogueEncampment && ctx.CharacterCfg.Game.Difficulty == difficulty.Normal {
 			// Ignoring because merc is not hired yet

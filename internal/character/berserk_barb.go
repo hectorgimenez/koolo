@@ -11,7 +11,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
-	step2 "github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
@@ -87,8 +87,8 @@ func (s Berserker) KillMonsterSequence(
 			return nil
 		}
 
-		step2.MoveTo(monster.Position)
-		step2.PrimaryAttack(id, 1, false, step2.Distance(1, maxRange))
+		step.MoveTo(monster.Position)
+		step.PrimaryAttack(id, 1, false, step.Distance(1, maxRange))
 
 		completedAttackLoops++
 		previousUnitID = int(id)

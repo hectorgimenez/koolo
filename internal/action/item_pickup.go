@@ -11,12 +11,12 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	context2 "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func ItemPickup(maxDistance int) error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ItemPickup"
 
 	var itemBeingPickedUp data.UnitID
@@ -76,14 +76,14 @@ func ItemPickup(maxDistance int) error {
 }
 
 func GetItemsToPickup(maxDistance int) []data.Item {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "GetItemsToPickup"
 
 	missingHealingPotions := ctx.BeltManager.GetMissingCount(data.HealingPotion)
 	missingManaPotions := ctx.BeltManager.GetMissingCount(data.ManaPotion)
 	missingRejuvenationPotions := ctx.BeltManager.GetMissingCount(data.RejuvenationPotion)
 	var itemsToPickup []data.Item
-	_, isLevelingChar := ctx.Char.(context2.LevelingCharacter)
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
 		if isLevelingChar && !itm.IsFromQuest() && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 || ctx.Data.PlayerUnit.Area == area.MaggotLairLevel2 || ctx.Data.PlayerUnit.Area == area.MaggotLairLevel3 || ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary) {
@@ -127,7 +127,7 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 }
 
 func shouldBePickedUp(i data.Item) bool {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "shouldBePickedUp"
 
 	if i.IsRuneword {
@@ -161,7 +161,7 @@ func shouldBePickedUp(i data.Item) bool {
 	}
 
 	// Only during leveling if gold amount is low pickup items to sell as junk
-	_, isLevelingChar := ctx.Char.(context2.LevelingCharacter)
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that

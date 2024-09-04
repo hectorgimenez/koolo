@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
-	ui2 "github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 )
@@ -207,16 +207,16 @@ func (a Leveling) andariel() error {
 		if itm.Name != "AntidotePotion" {
 			continue
 		}
-		pos := ui2.GetScreenCoordsForItem(itm)
+		pos := ui.GetScreenCoordsForItem(itm)
 		utils.Sleep(500)
 
 		if x > 3 {
 			a.ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
 			utils.Sleep(300)
 			if a.ctx.Data.LegacyGraphics {
-				a.ctx.HID.Click(game.LeftButton, ui2.MercAvatarPositionXClassic, ui2.MercAvatarPositionYClassic)
+				a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
 			} else {
-				a.ctx.HID.Click(game.LeftButton, ui2.MercAvatarPositionX, ui2.MercAvatarPositionY)
+				a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 			}
 		} else {
 			a.ctx.HID.Click(game.RightButton, pos.X, pos.Y)

@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	step2 "github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -26,7 +26,7 @@ func MoveToArea(dst area.ID) error {
 		portal, _ := ctx.Data.Objects.FindOne(object.ArcaneSanctuaryPortal)
 		MoveToCoords(portal.Position)
 
-		return step2.InteractObject(portal, func() bool {
+		return step.InteractObject(portal, func() bool {
 			return ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary
 		})
 	}
@@ -99,7 +99,7 @@ func MoveToArea(dst area.ID) error {
 	}
 
 	if lvl.IsEntrance {
-		err := step2.InteractEntrance(dst)
+		err := step.InteractEntrance(dst)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 
 		// If we can teleport, don't bother with the rest, stop here
 		if ctx.Data.CanTeleport() {
-			return step2.MoveTo(to)
+			return step.MoveTo(to)
 		}
 
 		_, distance, _ := ctx.PathFinder.GetPath(to)
@@ -145,7 +145,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 				if o.Selectable {
 					ctx.Logger.Info("Door detected and teleport is not available, trying to open it...")
 					openedDoors[o.Name] = o.Position
-					err := step2.InteractObject(o, func() bool {
+					err := step.InteractObject(o, func() bool {
 						obj, found := ctx.Data.Objects.FindByID(o.ID)
 
 						return found && !obj.Selectable
@@ -160,7 +160,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		// Check if there is any object blocking our path
 		for _, o := range ctx.Data.Objects {
 			if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
-				err := step2.InteractObject(o, func() bool {
+				err := step.InteractObject(o, func() bool {
 					obj, found := ctx.Data.Objects.FindByID(o.ID)
 					//additional click on barrel to avoid getting stuck
 					x, y := ctx.PathFinder.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
@@ -235,7 +235,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		// Continue moving
 		WaitForAllMembersWhenLeveling()
 		previousIterationPosition = ctx.Data.PlayerUnit.Position
-		err := step2.MoveTo(to)
+		err := step.MoveTo(to)
 		if err != nil {
 			return err
 		}

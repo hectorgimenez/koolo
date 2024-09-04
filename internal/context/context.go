@@ -11,7 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	health2 "github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
@@ -44,8 +44,8 @@ type Context struct {
 	GameReader        *game.MemoryReader
 	MemoryInjector    *game.MemoryInjector
 	PathFinder        *pather.PathFinder
-	BeltManager       *health2.BeltManager
-	HealthManager     *health2.Manager
+	BeltManager       *health.BeltManager
+	HealthManager     *health.Manager
 	Char              Character
 	LastBuffAt        time.Time
 	ContextDebug      *Debug

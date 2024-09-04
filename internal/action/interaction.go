@@ -6,7 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	step2 "github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -21,12 +21,12 @@ func InteractNPC(npc npc.ID) error {
 		return fmt.Errorf("npc with ID %d not found", npc)
 	}
 
-	err := step2.MoveTo(pos)
+	err := step.MoveTo(pos)
 	if err != nil {
 		return err
 	}
 
-	err = step2.InteractNPC(npc)
+	err = step.InteractNPC(npc)
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,12 @@ func InteractObject(o data.Object, isCompletedFn func() bool) error {
 		pos = data.Position{X: 7800, Y: 5919}
 	}
 
-	err := step2.MoveTo(pos)
+	err := step.MoveTo(pos)
 	if err != nil {
 		return err
 	}
 
-	return step2.InteractObject(o, isCompletedFn)
+	return step.InteractObject(o, isCompletedFn)
 }
 
 func InteractObjectByID(id data.UnitID, isCompletedFn func() bool) error {

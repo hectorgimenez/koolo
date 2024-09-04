@@ -11,10 +11,10 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	context2 "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	ui2 "github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -23,7 +23,7 @@ const (
 )
 
 func Stash(forceStash bool) error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "Stash"
 
 	ctx.Logger.Debug("Checking for items to stash...")
@@ -56,7 +56,7 @@ func Stash(forceStash bool) error {
 }
 
 func orderInventoryPotions() {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "orderInventoryPotions"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
@@ -65,7 +65,7 @@ func orderInventoryPotions() {
 				continue
 			}
 
-			screenPos := ui2.GetScreenCoordsForItem(i)
+			screenPos := ui.GetScreenCoordsForItem(i)
 			utils.Sleep(100)
 			ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 			utils.Sleep(200)
@@ -74,7 +74,7 @@ func orderInventoryPotions() {
 }
 
 func isStashingRequired(firstRun bool) bool {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "isStashingRequired"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
@@ -99,7 +99,7 @@ func isStashingRequired(firstRun bool) bool {
 }
 
 func stashGold() {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "stashGold"
 
 	if ctx.Data.Inventory.Gold == 0 {
@@ -125,7 +125,7 @@ func stashGold() {
 }
 
 func stashInventory(firstRun bool) {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "stashInventory"
 
 	currentTab := 1
@@ -169,11 +169,11 @@ func stashInventory(firstRun bool) {
 }
 
 func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "shouldStashIt"
 
 	// Don't stash items from quests during leveling process, it makes things easier to track
-	if _, isLevelingChar := ctx.Char.(context2.LevelingCharacter); isLevelingChar && i.IsFromQuest() {
+	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); isLevelingChar && i.IsFromQuest() {
 		return false, "", ""
 	}
 
@@ -208,10 +208,10 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 }
 
 func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) bool {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "stashItemAction"
 
-	screenPos := ui2.GetScreenCoordsForItem(i)
+	screenPos := ui.GetScreenCoordsForItem(i)
 	ctx.HID.MovePointer(screenPos.X, screenPos.Y)
 	utils.Sleep(170)
 	screenshot := ctx.GameReader.Screenshot()
@@ -234,38 +234,38 @@ func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) b
 }
 
 func clickStashGoldBtn() {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "clickStashGoldBtn"
 
 	utils.Sleep(170)
 	if ctx.GameReader.LegacyGraphics() {
-		ctx.HID.Click(game.LeftButton, ui2.StashGoldBtnXClassic, ui2.StashGoldBtnYClassic)
+		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnXClassic, ui.StashGoldBtnYClassic)
 		utils.Sleep(1000)
-		ctx.HID.Click(game.LeftButton, ui2.StashGoldBtnConfirmXClassic, ui2.StashGoldBtnConfirmYClassic)
+		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmXClassic, ui.StashGoldBtnConfirmYClassic)
 	} else {
-		ctx.HID.Click(game.LeftButton, ui2.StashGoldBtnX, ui2.StashGoldBtnY)
+		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnX, ui.StashGoldBtnY)
 		utils.Sleep(1000)
-		ctx.HID.Click(game.LeftButton, ui2.StashGoldBtnConfirmX, ui2.StashGoldBtnConfirmY)
+		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmX, ui.StashGoldBtnConfirmY)
 	}
 }
 
 func switchTab(tab int) {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "switchTab"
 
 	if ctx.GameReader.LegacyGraphics() {
-		x := ui2.SwitchStashTabBtnXClassic
-		y := ui2.SwitchStashTabBtnYClassic
+		x := ui.SwitchStashTabBtnXClassic
+		y := ui.SwitchStashTabBtnYClassic
 
-		tabSize := ui2.SwitchStashTabBtnTabSizeClassic
+		tabSize := ui.SwitchStashTabBtnTabSizeClassic
 		x = x + tabSize*tab - tabSize/2
 		ctx.HID.Click(game.LeftButton, x, y)
 		utils.Sleep(500)
 	} else {
-		x := ui2.SwitchStashTabBtnX
-		y := ui2.SwitchStashTabBtnY
+		x := ui.SwitchStashTabBtnX
+		y := ui.SwitchStashTabBtnY
 
-		tabSize := ui2.SwitchStashTabBtnTabSize
+		tabSize := ui.SwitchStashTabBtnTabSize
 		x = x + tabSize*tab - tabSize/2
 		ctx.HID.Click(game.LeftButton, x, y)
 		utils.Sleep(500)

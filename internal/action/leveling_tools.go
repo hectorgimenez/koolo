@@ -4,7 +4,7 @@ import (
 	"slices"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	context2 "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
@@ -156,10 +156,10 @@ func EnsureSkillPoints() error {
 }
 
 func UpdateQuestLog() error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "UpdateQuestLog"
 
-	if _, isLevelingChar := ctx.Char.(context2.LevelingCharacter); !isLevelingChar {
+	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); !isLevelingChar {
 		return nil
 	}
 
@@ -170,7 +170,7 @@ func UpdateQuestLog() error {
 }
 func getAvailableSkillKB() []data.KeyBinding {
 	availableSkillKB := make([]data.KeyBinding, 0)
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "getAvailableSkillKB"
 
 	for _, sb := range ctx.Data.KeyBindings.Skills {
@@ -183,10 +183,10 @@ func getAvailableSkillKB() []data.KeyBinding {
 }
 
 func EnsureSkillBindings() error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "EnsureSkillBindings"
 
-	char, isLevelingChar := ctx.Char.(context2.LevelingCharacter)
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if !isLevelingChar {
 		return nil
 	}
@@ -241,7 +241,7 @@ func EnsureSkillBindings() error {
 }
 
 func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position, bool) {
-	d := context2.Get().Data
+	d := context.Get().Data
 
 	var scrolls = []skill.ID{
 		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
@@ -332,10 +332,10 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 }
 
 func HireMerc() error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "HireMerc"
 
-	_, isLevelingChar := ctx.Char.(context2.LevelingCharacter)
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ctx.CharacterCfg.Character.UseMerc {
 		// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
 		if ctx.CharacterCfg.Game.Difficulty == difficulty.Normal && ctx.Data.MercHPPercent() <= 0 && ctx.Data.PlayerUnit.TotalPlayerGold() > 30000 && ctx.Data.PlayerUnit.Area == area.LutGholein {
@@ -357,10 +357,10 @@ func HireMerc() error {
 }
 
 func ResetStats() error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ResetStats"
 
-	ch, isLevelingChar := ctx.Char.(context2.LevelingCharacter)
+	ch, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ch.ShouldResetSkills() {
 		currentArea := ctx.Data.PlayerUnit.Area
 		if ctx.Data.PlayerUnit.Area != area.RogueEncampment {
@@ -383,11 +383,11 @@ func ResetStats() error {
 }
 
 func WaitForAllMembersWhenLeveling() error {
-	ctx := context2.Get()
+	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "WaitForAllMembersWhenLeveling"
 
 	for {
-		_, isLeveling := ctx.Char.(context2.LevelingCharacter)
+		_, isLeveling := ctx.Char.(context.LevelingCharacter)
 		if ctx.CharacterCfg.Companion.Leader && !ctx.Data.PlayerUnit.Area.IsTown() && isLeveling {
 			allMembersAreaCloseToMe := true
 			for _, member := range ctx.Data.Roster {

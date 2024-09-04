@@ -12,7 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	town2 "github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
@@ -26,7 +26,7 @@ func Gamble() error {
 	if ctx.CharacterCfg.Gambling.Enabled && stashedGold.Value >= 2500000 {
 		ctx.Logger.Info("Time to gamble! Visiting vendor...")
 
-		vendorNPC := town2.GetTownByArea(ctx.Data.PlayerUnit.Area).GamblingNPC()
+		vendorNPC := town.GetTownByArea(ctx.Data.PlayerUnit.Area).GamblingNPC()
 
 		// Fix for Anya position
 		if vendorNPC == npc.Drehya {
@@ -83,7 +83,7 @@ func gambleItems() error {
 
 			} else {
 				// Filter not pass, selling the item
-				town2.SellItem(itemBought)
+				town.SellItem(itemBought)
 				itemBought = data.Item{}
 			}
 			continue
@@ -118,7 +118,7 @@ func gambleItems() error {
 				continue
 			}
 
-			town2.BuyItem(itm, 1)
+			town.BuyItem(itm, 1)
 			itemBought = itm
 			currentIdx++
 		}

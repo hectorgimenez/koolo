@@ -5,7 +5,7 @@ import (
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
-	town2 "github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -22,9 +22,9 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 
 	ctx.Logger.Info("Visiting vendor...", slog.Bool("forceRefill", forceRefill))
 
-	vendorNPC := town2.GetTownByArea(ctx.Data.PlayerUnit.Area).RefillNPC()
+	vendorNPC := town.GetTownByArea(ctx.Data.PlayerUnit.Area).RefillNPC()
 	if vendorNPC == npc.Drognan {
-		_, needsBuy := town2.ShouldBuyKeys()
+		_, needsBuy := town.ShouldBuyKeys()
 		if needsBuy {
 			vendorNPC = npc.Lysander
 		}
@@ -43,10 +43,10 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 
 	switchTab(4)
 	ctx.RefreshGameData()
-	town2.BuyConsumables(forceRefill)
+	town.BuyConsumables(forceRefill)
 
 	if sellJunk {
-		town2.SellJunk()
+		town.SellJunk()
 	}
 
 	return step.CloseAllMenus()
@@ -72,7 +72,7 @@ func BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) error {
 		switchTab(i.Tab)
 		itm, found := ctx.Data.Inventory.Find(i.Item, item.LocationVendor)
 		if found {
-			town2.BuyItem(itm, i.Quantity)
+			town.BuyItem(itm, i.Quantity)
 		} else {
 			ctx.Logger.Warn("Item not found in vendor", slog.String("Item", string(i.Item)))
 		}
@@ -92,7 +92,7 @@ func shouldVisitVendor() bool {
 	ctx.ContextDebug.LastStep = "shouldVisitVendor"
 
 	// Check if we should sell junk
-	if len(town2.ItemsToBeSold()) > 0 {
+	if len(town.ItemsToBeSold()) > 0 {
 		return true
 	}
 
@@ -102,5 +102,5 @@ func shouldVisitVendor() bool {
 		return false
 	}
 
-	return ctx.BeltManager.ShouldBuyPotions() || town2.ShouldBuyTPs() || town2.ShouldBuyIDs()
+	return ctx.BeltManager.ShouldBuyPotions() || town.ShouldBuyTPs() || town.ShouldBuyIDs()
 }

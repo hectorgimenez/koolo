@@ -12,7 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	health2 "github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
@@ -238,8 +238,8 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	hidM := game.NewHID(gr, gi)
 	pf := pather.NewPathFinder(gr, ctx.Data, hidM, cfg)
 
-	bm := health2.NewBeltManager(ctx.Data, hidM, logger, supervisorName)
-	hm := health2.NewHealthManager(bm, ctx.Data)
+	bm := health.NewBeltManager(ctx.Data, hidM, logger, supervisorName)
+	hm := health.NewHealthManager(bm, ctx.Data)
 
 	ctx.CharacterCfg = cfg
 	ctx.EventListener = mng.eventListener

@@ -10,11 +10,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
-	utils2 "github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
-	utils2.Sleep(500)
+	utils.Sleep(500)
 	maxInteractionAttempts := 10
 	interactionAttempts := 0
 	maxMouseOverAttempts := 20
@@ -86,7 +86,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 				mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
 			}
 
-			x, y := utils2.Spiral(mouseOverAttempts)
+			x, y := utils.Spiral(mouseOverAttempts)
 			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 			ctx.HID.MovePointer(mX+x, mY+y)
 			mouseOverAttempts++

@@ -10,7 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	ui2 "github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -53,7 +53,7 @@ func CubeAddItems(items ...data.Item) error {
 		}
 
 		ctx.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
-		screenPos := ui2.GetScreenCoordsForItem(nwIt)
+		screenPos := ui.GetScreenCoordsForItem(nwIt)
 
 		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 		utils.Sleep(300)
@@ -69,7 +69,7 @@ func CubeAddItems(items ...data.Item) error {
 			if itm.UnitID == updatedItem.UnitID {
 				ctx.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(itm.Name)))
 
-				screenPos := ui2.GetScreenCoordsForItem(updatedItem)
+				screenPos := ui.GetScreenCoordsForItem(updatedItem)
 
 				ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 				utils.Sleep(300)
@@ -98,17 +98,17 @@ func CubeTransmute() error {
 	utils.Sleep(150)
 
 	if ctx.Data.LegacyGraphics {
-		ctx.HID.Click(game.LeftButton, ui2.CubeTransmuteBtnXClassic, ui2.CubeTransmuteBtnYClassic)
+		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic)
 	} else {
-		ctx.HID.Click(game.LeftButton, ui2.CubeTransmuteBtnX, ui2.CubeTransmuteBtnY)
+		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
 	}
 
 	utils.Sleep(2000)
 
 	if ctx.Data.LegacyGraphics {
-		ctx.HID.ClickWithModifier(game.LeftButton, ui2.CubeTakeItemXClassic, ui2.CubeTakeItemYClassic, game.CtrlKey)
+		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
 	} else {
-		ctx.HID.ClickWithModifier(game.LeftButton, ui2.CubeTakeItemX, ui2.CubeTakeItemY, game.CtrlKey)
+		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
 	}
 
 	utils.Sleep(300)
@@ -123,7 +123,7 @@ func ensureCubeIsOpen(cube data.Item) error {
 	// Switch to the tab
 	switchTab(cube.Location.Page + 1)
 
-	screenPos := ui2.GetScreenCoordsForItem(cube)
+	screenPos := ui.GetScreenCoordsForItem(cube)
 
 	utils.Sleep(300)
 	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
