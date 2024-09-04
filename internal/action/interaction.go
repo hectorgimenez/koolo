@@ -21,12 +21,19 @@ func InteractNPC(npc npc.ID) error {
 		return fmt.Errorf("npc with ID %d not found", npc)
 	}
 
-	err := step.MoveTo(pos)
-	if err != nil {
-		return err
-	}
+	var err error
+	for range 5 {
+		err = step.MoveTo(pos)
+		if err != nil {
+			continue
+		}
 
-	err = step.InteractNPC(npc)
+		err = step.InteractNPC(npc)
+		if err != nil {
+			continue
+		}
+		break
+	}
 	if err != nil {
 		return err
 	}
@@ -45,12 +52,21 @@ func InteractObject(o data.Object, isCompletedFn func() bool) error {
 		pos = data.Position{X: 7800, Y: 5919}
 	}
 
-	err := step.MoveTo(pos)
-	if err != nil {
-		return err
+	var err error
+	for range 5 {
+		err = step.MoveTo(pos)
+		if err != nil {
+			continue
+		}
+
+		err = step.InteractObject(o, isCompletedFn)
+		if err != nil {
+			continue
+		}
+		break
 	}
 
-	return step.InteractObject(o, isCompletedFn)
+	return err
 }
 
 func InteractObjectByID(id data.UnitID, isCompletedFn func() bool) error {
