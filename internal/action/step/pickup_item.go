@@ -37,6 +37,7 @@ func PickupItem(it data.Item) error {
 		}
 
 		if it.Location.LocationType != item.LocationGround {
+			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
 			return nil
 		}
 
