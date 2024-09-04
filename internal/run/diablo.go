@@ -472,16 +472,6 @@ func (d Diablo) moveToInfectorSpawn() action.Action {
 	})
 }
 
-func (d Diablo) moveToDialoSpawn() action.Action {
-	return action.NewChain(func(gameData game.Data) []action.Action {
-		return []action.Action{
-			d.builder.MoveTo(func(gameData game.Data) (data.Position, bool) {
-				return diabloSpawnPosition, true
-			}, step.StopAtDistance(10)),
-		}
-	})
-}
-
 func (d Diablo) entranceToStarClear() []action.Action {
 	onlyElites := d.CharacterCfg.Game.Diablo.FocusOnElitePacks
 
