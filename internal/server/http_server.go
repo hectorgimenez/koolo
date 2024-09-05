@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -464,6 +465,16 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.Discord.EnableNewRunMessages = r.Form.Has("enable_new_run_messages")
 		newConfig.Discord.EnableRunFinishMessages = r.Form.Has("enable_run_finish_messages")
 		newConfig.Discord.EnableDiscordChickenMessages = r.Form.Has("enable_discord_chicken_messages")
+
+		// Discord admins who can use bot commands
+		discordAdmins := r.Form.Get("discord_admins")
+		cleanedAdmins := strings.Map(func(r rune) rune {
+			if (r >= '0' && r <= '9') || r == ',' {
+				return r
+			}
+			return -1
+		}, discordAdmins)
+		newConfig.Discord.BotAdmins = strings.Split(cleanedAdmins, ",")
 		newConfig.Discord.Token = r.Form.Get("discord_token")
 		newConfig.Discord.ChannelID = r.Form.Get("discord_channel_id")
 		// Telegram
