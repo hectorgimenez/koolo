@@ -30,7 +30,7 @@ func ItemPickup(maxDistance int) error {
 		i := itemsToPickup[0]
 
 		for _, m := range ctx.Data.Monsters.Enemies() {
-			if _, dist, _ := ctx.PathFinder.GetPathFrom(i.Position, m.Position); dist < 7 {
+			if _, dist, _ := ctx.PathFinder.GetPathFrom(i.Position, m.Position); dist <= 3 {
 				ctx.Logger.Debug("Monsters detected close to the item being picked up, killing them...", slog.Any("monster", m))
 				itemBeingPickedUp = -1
 				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
