@@ -3,16 +3,21 @@ package discord
 import (
 	"context"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
+	"slices"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/hectorgimenez/koolo/internal/bot"
+	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type Bot struct {
 	discordSession *discordgo.Session
 	channelID      string
+	manager        *bot.SupervisorManager
 }
 
-func NewBot(token, channelID string) (*Bot, error) {
+func NewBot(token, channelID string, manager *bot.SupervisorManager) (*Bot, error) {
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Discord session: %w", err)
@@ -21,10 +26,12 @@ func NewBot(token, channelID string) (*Bot, error) {
 	return &Bot{
 		discordSession: dg,
 		channelID:      channelID,
+		manager:        manager,
 	}, nil
 }
 
 func (b *Bot) Start(ctx context.Context) error {
+	//b.discordSession.Debug = true
 	b.discordSession.AddHandler(b.onMessageCreated)
 	b.discordSession.Identify.Intents = discordgo.IntentsGuildMessages
 	err := b.discordSession.Open()
@@ -43,34 +50,21 @@ func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate)
 		return
 	}
 
-	switch strings.ToLower(m.Content) {
-	case "stats":
-		b.publishStats()
-	case "start":
-		// TODO: Implement
-	case "stop":
-		//b.supervisor.Stop()
+	// Check if the message is from a bot admin
+	if !slices.Contains(config.Koolo.Discord.BotAdmins, m.Author.ID) {
+		return
 	}
-}
 
-func (b *Bot) publishStats() {
-	//msg := "Run | Items | Deaths | Chickens | Merc Chickens | Errors | Healing Pots | Mana Pots | Reju Pots | Merc Pots \n"
-	//for run, st := range stat.Status.RunStats {
-	//	msg += fmt.Sprintf(
-	//		"%s | %d | %d | %d | %d | %d | %d | %d| %d | %d | %d \n",
-	//		run,
-	//		len(st.ItemsFound),
-	//		st.Kills,
-	//		st.Deaths,
-	//		st.Chickens,
-	//		st.MerChicken,
-	//		st.Errors,
-	//		st.HealingPotionsUsed,
-	//		st.ManaPotionsUsed,
-	//		st.RejuvPotionsUsed,
-	//		st.MercHealingPotionsUsed,
-	//	)
-	//}
-	//
-	//b.discordSession.ChannelMessageSend(b.channelID, msg)
+	prefix := strings.Split(m.Content, " ")[0]
+	switch prefix {
+	case "!start":
+		b.handleStartRequest(s, m)
+	case "!stop":
+		b.handleStopRequest(s, m)
+	case "!stats":
+		b.handleStatsRequest(s, m)
+	case "!status":
+		b.handleStatusRequest(s, m)
+	}
+
 }
