@@ -51,6 +51,15 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	from = grid.RelativePosition(from)
 	to = grid.RelativePosition(to)
 
+	// Add objects to the collision grid as obstacles
+	for _, o := range pf.data.AreaData.Objects {
+		objectPos := grid.RelativePosition(o.Position)
+		if objectPos.Y < 0 || objectPos.X < 0 || len(grid.CollisionGrid) <= objectPos.Y || len(grid.CollisionGrid[0]) <= objectPos.X {
+			continue
+		}
+		grid.CollisionGrid[objectPos.Y][objectPos.X] = false
+	}
+
 	path, distance, found := astar.CalculatePath(grid, from, to)
 
 	if config.Koolo.Debug.RenderMap {

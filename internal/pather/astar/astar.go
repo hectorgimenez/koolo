@@ -19,7 +19,7 @@ var directions = []data.Position{
 	{-1, -1}, // Up-Left (Northwest)
 }
 
-const obstacleRadius = 5
+const obstacleRadius = 2
 
 type Node struct {
 	data.Position
@@ -90,33 +90,26 @@ func heuristic(p1, p2 data.Position, grid [][]bool) float64 {
 	dy := math.Abs(float64(p1.Y - p2.Y))
 	baseHeuristic := math.Sqrt(dx*dx + dy*dy)
 
-	// Distance penalty, this avoids getting very close to the walls
-	penalty := penaltyFromObstacle(grid, p1)
+	penalty := 0.0
+	if isNextToObstacle(grid, p1, obstacleRadius) {
+		penalty = float64(obstacleRadius) * 5.0
+	}
 
 	return baseHeuristic + penalty
 }
 
-func penaltyFromObstacle(grid [][]bool, point data.Position) float64 {
-	minDistance := float64(obstacleRadius + 1)
-
-	for dx := -obstacleRadius; dx <= obstacleRadius; dx++ {
-		for dy := -obstacleRadius; dy <= obstacleRadius; dy++ {
+func isNextToObstacle(grid [][]bool, point data.Position, radius int) bool {
+	for dx := -radius; dx <= radius; dx++ {
+		for dy := -radius; dy <= radius; dy++ {
 			newX, newY := point.X+dx, point.Y+dy
 			if newX >= 0 && newX < len(grid[0]) && newY >= 0 && newY < len(grid) {
 				if !grid[newY][newX] {
-					dist := math.Sqrt(float64(dx*dx + dy*dy))
-					if dist < minDistance {
-						minDistance = dist
-					}
+					return true
 				}
 			}
 		}
 	}
-
-	if minDistance <= float64(obstacleRadius) {
-		return float64(obstacleRadius) - minDistance
-	}
-	return 0.0
+	return false
 }
 
 func reconstructPath(node *Node) []data.Position {

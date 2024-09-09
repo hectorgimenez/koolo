@@ -70,13 +70,15 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
 					continue
 				}
-				err := b.ctx.HealthManager.HandleHealthAndMana()
+				err = b.ctx.HealthManager.HandleHealthAndMana()
 				if err != nil {
 					cancel()
 					b.Stop()
 					return err
 				}
 				if time.Since(gameStartedAt).Seconds() > float64(b.ctx.CharacterCfg.MaxGameLength) {
+					cancel()
+					b.Stop()
 					return fmt.Errorf(
 						"max game length reached, try to exit game: %0.2f",
 						time.Since(gameStartedAt).Seconds(),
@@ -113,7 +115,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for k, r := range runs {
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
-			err := action.PreRun(firstRun)
+			err = action.PreRun(firstRun)
 			if err != nil {
 				return err
 			}
@@ -123,6 +125,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			if err != nil {
 				return err
 			}
+
 			err = action.PostRun(k == len(runs)-1)
 			if err != nil {
 				return err

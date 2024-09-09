@@ -83,11 +83,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
-			if config.Koolo.Discord.EnableGameCreatedMessages {
-				event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
-			} else {
-				event.Send(event.GameCreated(event.Text(s.name, ""), "", ""))
-			}
+			event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
@@ -99,25 +95,13 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 				switch {
 				case errors.Is(err, health.ErrChicken):
-					if config.Koolo.Discord.EnableDiscordChickenMessages {
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedChicken))
-					} else {
-						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedChicken))
-					}
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedChicken))
 					s.bot.ctx.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 				case errors.Is(err, health.ErrMercChicken):
-					if config.Koolo.Discord.EnableDiscordChickenMessages {
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedMercChicken))
-					} else {
-						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedMercChicken))
-					}
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedMercChicken))
 					s.bot.ctx.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 				case errors.Is(err, health.ErrDied):
-					if config.Koolo.Discord.EnableDiscordChickenMessages {
-						event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedDied))
-					} else {
-						event.Send(event.GameFinished(event.Text(s.name, ""), event.FinishedDied))
-					}
+					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedDied))
 					s.bot.ctx.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
 				default:
 					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedError))

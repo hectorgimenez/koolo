@@ -27,8 +27,8 @@ type Manager struct {
 	lastHeal      time.Time
 	lastMana      time.Time
 	lastMercHeal  time.Time
-	beltManager *BeltManager
-	data        *game.Data
+	beltManager   *BeltManager
+	data          *game.Data
 }
 
 func NewHealthManager(bm *BeltManager, data *game.Data) *Manager {
