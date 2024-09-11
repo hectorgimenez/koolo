@@ -54,8 +54,8 @@ func PickupItem(it data.Item) error {
 		}
 
 		lastRun = time.Now()
-		objectX := it.Position.X - 1
-		objectY := it.Position.Y - 1
+		objectX := it.Position.X
+		objectY := it.Position.Y
 		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 
 		if it.IsHovered {

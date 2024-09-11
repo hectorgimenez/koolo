@@ -65,11 +65,12 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
-
 				// Create the game
 				if err = s.HandleOutOfGameFlow(); err != nil {
-					// Ignore loading screen errors
-					if err.Error() == "loading screen" {
+
+					// Ignore loading screen errors or unhandled errors (for now) and try again
+					if err.Error() == "loading screen" || err.Error() == "" {
+						utils.Sleep(100)
 						continue
 					}
 
@@ -262,7 +263,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 		utils.Sleep(250)
 		return fmt.Errorf("loading screen")
 	} else {
-		return fmt.Errorf("unhandled menu scenario")
+		return fmt.Errorf("")
 	}
 
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)

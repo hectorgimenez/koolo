@@ -93,7 +93,7 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 		// Skip items that are outside pickup radius, this is useful when clearing big areas to prevent
 		// character going back to pickup potions all the time after using them
 		itemDistance := ctx.PathFinder.DistanceFromMe(itm.Position)
-		if maxDistance > 0 && itemDistance > maxDistance {
+		if maxDistance > 0 && itemDistance > maxDistance && itm.IsPotion() {
 			continue
 		}
 

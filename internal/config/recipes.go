@@ -42,4 +42,7 @@ var AvailableRecipes = []string{
 	"Upgrade Ber",
 	"Upgrade Jah",
 	"Upgrade Cham",
+	"Reroll GrandCharms",
+	"Caster Amulet",
+	"Caster Ring",
 }

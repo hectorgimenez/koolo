@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -159,7 +160,8 @@ func stashInventory(firstRun bool) {
 				break
 			}
 			if currentTab == 5 {
-				// TODO: Stop the bot, stash is full
+				ctx.Logger.Info("Stash is full ...")
+				//TODO: Stash is full stop the bot
 			}
 			ctx.Logger.Debug(fmt.Sprintf("Tab %d is full, switching to next one", currentTab))
 			currentTab++
@@ -179,6 +181,11 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 
 	if i.IsRuneword {
 		return true, "runeword", ""
+	}
+
+	// Stash items that are part of a recipe which are not covered by the NIP rules
+	if shouldKeepRecipeItem(i) {
+		return true, "Item is part of a enabled recipe", ""
 	}
 
 	// Don't stash the Tomes, keys and WirtsLeg
@@ -205,6 +212,44 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	}
 
 	return true, rule.RawLine, rule.Filename + ":" + strconv.Itoa(rule.LineNumber)
+}
+
+func shouldKeepRecipeItem(i data.Item) bool {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "shouldKeepRecipeItem"
+
+	// No items with quality higher than magic can be part of a recipe
+	if i.Quality > item.QualityMagic {
+		return false
+	}
+
+	itemInStashNotMatchingRule := false
+
+	// Check if we already have the item in our stash and if it doesn't match any of our pickit rules
+	for _, it := range ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash) {
+		if it.Name == i.Name {
+			_, res := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(it)
+			if res != nip.RuleResultFullMatch {
+				itemInStashNotMatchingRule = true
+			}
+		}
+	}
+
+	recipeMatch := false
+
+	// Check if the item is part of a recipe and if that recipe is enabled
+	for _, recipe := range Recipes {
+		if slices.Contains(recipe.Items, string(i.Name)) && slices.Contains(ctx.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
+			recipeMatch = true
+			break
+		}
+	}
+
+	if recipeMatch && !itemInStashNotMatchingRule {
+		return true
+	}
+
+	return false
 }
 
 func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) bool {
