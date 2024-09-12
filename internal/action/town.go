@@ -48,7 +48,18 @@ func InRunReturnTownRoutine() error {
 	ReturnTown()
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
+
+	/*
+		This will be added when option for cain Identify is added
+
+		// Let's stash items that need to be left unidentified
+		if HaveItemsToStashUnidentified() {
+			Stash(false)
+		}
+	*/
+
 	IdentifyAll(false)
+
 	VendorRefill(false, true)
 	Stash(false)
 	Gamble()

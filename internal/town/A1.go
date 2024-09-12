@@ -31,6 +31,10 @@ func (a A1) RepairNPC() npc.ID {
 	return npc.Charsi
 }
 
+func (a A1) IdentifyNPC() npc.ID {
+	return npc.DeckardCain5
+}
+
 func (a A1) TPWaitingArea(d game.Data) data.Position {
 	rogueBonfire, found := d.Objects.FindOne(object.RogueBonfire)
 	if found {
