@@ -10,8 +10,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/lxn/win"
 )
 
 func IdentifyAll(skipIdentify bool) error {
@@ -51,6 +53,35 @@ func IdentifyAll(skipIdentify bool) error {
 	return nil
 }
 
+func CainIdentify() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "CainIdentify"
+
+	stayAwhileAndListen := town.GetTownByArea(ctx.Data.PlayerUnit.Area).IdentifyNPC()
+
+	err := InteractNPC(stayAwhileAndListen)
+	if err != nil {
+		ctx.Logger.Error("Error interacting with Cain: ", "error", err.Error())
+		return err
+	}
+
+	// Select the identify option
+	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+	if len(itemsToIdentify()) > 0 {
+
+		// Close the NPC interact menu if it's open
+		if ctx.Data.OpenMenus.NPCInteract {
+			ctx.HID.KeySequence(win.VK_ESCAPE)
+		}
+
+		return fmt.Errorf("failed to identify items")
+	}
+
+	utils.Sleep(500)
+
+	return step.CloseAllMenus()
+}
+
 func itemsToIdentify() (items []data.Item) {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "itemsToIdentify"
@@ -69,6 +100,22 @@ func itemsToIdentify() (items []data.Item) {
 	}
 
 	return
+}
+
+func HaveItemsToStashUnidentified() bool {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "HaveItemsToStashUnidentified"
+
+	items := ctx.Data.Inventory.ByLocation(item.LocationInventory)
+	for _, i := range items {
+		if !i.Identified {
+			if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i); result == nip.RuleResultFullMatch {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func identifyItem(idTome data.Item, i data.Item) {

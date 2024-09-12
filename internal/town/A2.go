@@ -37,6 +37,10 @@ func (a A2) TPWaitingArea(_ game.Data) data.Position {
 	}
 }
 
+func (a A2) IdentifyNPC() npc.ID {
+	return npc.DeckardCain2
+}
+
 func (a A2) TownArea() area.ID {
 	return area.LutGholein
 }
