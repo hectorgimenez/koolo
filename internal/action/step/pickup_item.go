@@ -25,19 +25,24 @@ func PickupItem(it data.Item) error {
 	mouseOverAttempts := 0
 	currentMouseCoords := data.Position{}
 	lastRun := time.Now()
+	itemToPickup := it
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
+		ctx.RefreshGameData()
 
-		for _, i := range ctx.Data.Inventory.AllItems {
-			if i.UnitID == it.UnitID {
+		// Reset item to empty
+		it = data.Item{}
+
+		for _, i := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
+			if i.UnitID == itemToPickup.UnitID {
 				it = i
 			}
 		}
 
-		if it.Location.LocationType != item.LocationGround {
-			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
+		if it.UnitID != itemToPickup.UnitID {
+			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", itemToPickup.Desc().Name, itemToPickup.Quality.ToString()))
 			return nil
 		}
 
@@ -54,9 +59,18 @@ func PickupItem(it data.Item) error {
 		}
 
 		lastRun = time.Now()
-		objectX := it.Position.X
-		objectY := it.Position.Y
+		objectX := it.Position.X - 1
+		objectY := it.Position.Y - 1
+
 		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
+
+		// Move the mouse to the coords
+		ctx.HID.MovePointer(mX, mY)
+
+		// Refresh game data to update the item hover status
+		ctx.RefreshGameData()
+		mouseOverAttempts++
+		time.Sleep(time.Millisecond * 100)
 
 		if it.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)

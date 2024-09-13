@@ -67,7 +67,7 @@ func ItemPickup(maxDistance int) error {
 		if err != nil {
 			ctx.Logger.Warn(
 				"Failed picking up item, skipping",
-				err,
+				err.Error(),
 				slog.String("itemName", i.Desc().Name),
 				slog.Int("unitID", int(i.UnitID)),
 			)
