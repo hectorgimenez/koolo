@@ -25,7 +25,7 @@
         </div>
     {{ end }}
     <div class="notification">
-        <h3>General Settings</h3></br>
+        <h3>General Settings</h3><br>
         <form method="post" autocomplete="off" class="compact-form">
             <label {{ if ne .Supervisor "" }}hidden="hidden" {{ end }}>
                 <span>Supervisor name</span>
@@ -90,15 +90,15 @@
                 <label>
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
-            </label>
+                </label>
             </fieldset>
-                        <label>
+            <label>
                 Minimum Gold (will pick up Magic+ to sell for gold if below)
                 <input min="0" type="number" name="gameMinGoldPickupThreshold"
                        placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
                        value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
             </label>
-            <h3>Client Settings</h3></br>
+            <h3>Client Settings</h3><br>
             <fieldset class="grid">
                 <label>
                     Client launch options (arguments)
@@ -111,7 +111,7 @@
                     <input id="kill_d2_process" type="checkbox" name="kill_d2_process" {{ if .Config.KillD2OnStop }}checked{{ end }}/>
                     Kill D2 process on bot stop
                 </label>
-                                <label>
+                <label>
                     <input id="classic_mode" type="checkbox" name="classic_mode" {{ if .Config.ClassicMode }}checked{{ end }}/>
                     Use Classic Mode (Legacy Graphics)
                 </label>
@@ -120,7 +120,7 @@
                     Close the mini panel at game start (Legacy Graphics)
                 </label>
             </fieldset>
-            <h3>Battle.net settings</h3></br>
+            <h3>Battle.net settings</h3><br>
             <fieldset class="grid">
                 <label>
                     Username
@@ -166,7 +166,7 @@
                     <input type="password" name="AuthToken" placeholder="{{ .Config.AuthToken }}" value="{{ .Config.AuthToken }}"/>
                 </label>
             </fieldset>
-            <h3>Health settings</h3></br>
+            <h3>Health settings</h3><br>
             <fieldset class="grid">
                 <label>
                     Healing at (%)
@@ -194,7 +194,7 @@
                            value="{{ .Config.Health.ChickenAt }}"/>
                 </label>
             </fieldset>
-            <h4>Belt Layout</h4></br>
+            <h4>Belt Layout</h4><br>
             <fieldset class="grid">
                 {{ range $index, $potionType := .Config.Inventory.BeltColumns }}
                     <label>
@@ -213,7 +213,7 @@
                     </label>
                 {{ end }}
             </fieldset>
-            <h3>Merc Settings</h3></br>
+            <h3>Merc Settings</h3><br>
             <label>
                 <input id="use_merc" type="checkbox" name="useMerc" {{ if .Config.Character.UseMerc }}checked{{ end }}/>
                 Use merc
@@ -244,15 +244,16 @@
                         <td>
                             <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
                                    {{ if not $unlocked }}checked{{ end }}/>
-                            {{ end }}
+                        </td>
+                        {{ end }}
                     </tr>
                 {{ end }}
             </table>
-            <h3>Game Settings</h3></br>
+            <h3>Game Settings</h3><br>
             <label>
                 <input type="checkbox" name="createLobbyGames" {{ if .Config.Game.CreateLobbyGames }}checked{{ end }}/>
                 Create Lobby Games
-            </label></br>
+            </label><br>
             <fieldset class="grid">
                 <label>
                     Game name pattern
@@ -286,7 +287,7 @@
                     value="{{ .Config.MaxGameLength }}"/>
                 </label>
             </fieldset>
-            <h4>Runs</h4></br>
+            <h4>Runs</h4><br>
             <label>
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
                 Randomize runs
