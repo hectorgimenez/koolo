@@ -66,6 +66,9 @@ func PickupItem(it data.Item) error {
 
 		// Move the mouse to the coords
 		ctx.HID.MovePointer(mX, mY)
+
+		// Refresh game data to update the item hover status
+		ctx.RefreshGameData()
 		mouseOverAttempts++
 		time.Sleep(time.Millisecond * 100)
 
