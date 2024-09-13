@@ -2,7 +2,6 @@ package town
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -96,7 +95,7 @@ func ShouldBuyTPs() bool {
 
 	qty, found := portalTome.FindStat(stat.Quantity, 0)
 
-	return qty.Value <= rand.Intn(5-1)+1 || !found
+	return qty.Value < 20 || !found
 }
 
 func ShouldBuyIDs() bool {
@@ -107,7 +106,7 @@ func ShouldBuyIDs() bool {
 
 	qty, found := idTome.FindStat(stat.Quantity, 0)
 
-	return qty.Value <= rand.Intn(7-3)+1 || !found
+	return qty.Value < 20 || !found
 }
 
 func ShouldBuyKeys() (int, bool) {
