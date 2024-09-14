@@ -25,6 +25,7 @@ const (
 	PriorityNormal     = 1
 	PriorityBackground = 5
 	PriorityPause      = 10
+	PriorityStop       = 100
 )
 
 type Status struct {
@@ -106,6 +107,10 @@ func (ctx *Context) SwitchPriority(priority Priority) {
 
 func (s *Status) PauseIfNotPriority() {
 	for s.Priority != s.ExecutionPriority {
+		if s.ExecutionPriority == PriorityStop {
+			panic("Bot is stopped")
+		}
+
 		time.Sleep(time.Millisecond * 10)
 	}
 }

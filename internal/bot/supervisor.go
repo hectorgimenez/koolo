@@ -74,6 +74,8 @@ func (s *baseSupervisor) Stop() {
 		s.cancelFn()
 	}
 
+	s.bot.ctx.SwitchPriority(ct.PriorityStop)
+
 	s.bot.ctx.MemoryInjector.Unload()
 	s.bot.ctx.GameReader.Close()
 

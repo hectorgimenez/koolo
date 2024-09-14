@@ -28,6 +28,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
+	b.ctx.SwitchPriority(botCtx.PriorityNormal) // Restore priority to normal, in case it was stopped in previous game
 
 	// Let's make sure we have updated game data before we start the runs
 	err := b.ctx.GameReader.FetchMapData()
@@ -90,12 +91,17 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	// High priority loop, this will interrupt (pause) low priority loop
 	g.Go(func() error {
+		defer func() {
+			cancel()
+			b.Stop()
+			recover()
+		}()
+
 		b.ctx.AttachRoutine(botCtx.PriorityHigh)
 		ticker := time.NewTicker(time.Second)
 		for {
 			select {
 			case <-ctx.Done():
-				b.Stop()
 				return nil
 			case <-ticker.C:
 				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
@@ -112,6 +118,12 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	// Low priority loop, this will keep executing main run scripts
 	g.Go(func() error {
+		defer func() {
+			cancel()
+			b.Stop()
+			recover()
+		}()
+
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for k, r := range runs {
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
@@ -131,8 +143,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				return err
 			}
 		}
-		cancel()
-		b.Stop()
 		return nil
 	})
 
@@ -140,5 +150,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 }
 
 func (b *Bot) Stop() {
+	b.ctx.SwitchPriority(botCtx.PriorityStop)
 	b.ctx.Detach()
 }
