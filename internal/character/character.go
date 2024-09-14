@@ -8,12 +8,12 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/config"
-	context2 "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Data, pf *pather.PathFinder) (context2.Character, error) {
+func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Data, pf *pather.PathFinder) (context.Character, error) {
 	bc := BaseCharacter{
 		logger: logger,
 		data:   data,
@@ -21,9 +21,9 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		pf:     pf,
 	}
 
-	ctx := context2.Get()
+	ctx := context.Get()
 
-	if ctx.CharacterCfg.Game.Runs[0] == "leveling" {
+	if len(ctx.CharacterCfg.Game.Runs) > 0 && ctx.CharacterCfg.Game.Runs[0] == "leveling" {
 		switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
 		case "sorceress_leveling_lightning":
 			return SorceressLevelingLightning{BaseCharacter: bc}, nil
