@@ -180,7 +180,7 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	}
 
 	if i.IsRuneword {
-		return true, "runeword", ""
+		return true, "Runeword", ""
 	}
 
 	// Stash items that are part of a recipe which are not covered by the NIP rules
@@ -211,7 +211,11 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 		return false, "", ""
 	}
 
-	return true, rule.RawLine, rule.Filename + ":" + strconv.Itoa(rule.LineNumber)
+	// Full rule match
+	if res == nip.RuleResultFullMatch {
+		return true, rule.RawLine, rule.Filename + ":" + strconv.Itoa(rule.LineNumber)
+	}
+	return false, "", ""
 }
 
 func shouldKeepRecipeItem(i data.Item) bool {
