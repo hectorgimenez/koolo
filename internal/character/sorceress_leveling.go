@@ -57,7 +57,7 @@ func (s SorceressLeveling) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= lightningSorceressMaxAttacksLoop {
+		if completedAttackLoops >= NovaSorceressMaxAttacksLoop {
 			return nil
 		}
 
