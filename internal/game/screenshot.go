@@ -4,18 +4,18 @@ import (
 	"image"
 	"unsafe"
 
-	winproc2 "github.com/hectorgimenez/koolo/internal/utils/winproc"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 )
 
 func (gd *MemoryReader) Screenshot() image.Image {
 	// Create a device context compatible with the window
-	hdcWindow, _, _ := winproc2.GetWindowDC.Call(uintptr(gd.HWND))
-	hdcMem, _, _ := winproc2.CreateCompatibleDC.Call(hdcWindow)
-	hbmMem, _, _ := winproc2.CreateCompatibleBitmap.Call(hdcWindow, uintptr(gd.GameAreaSizeX), uintptr(gd.GameAreaSizeY))
-	_, _, _ = winproc2.SelectObject.Call(hdcMem, hbmMem)
+	hdcWindow, _, _ := winproc.GetWindowDC.Call(uintptr(gd.HWND))
+	hdcMem, _, _ := winproc.CreateCompatibleDC.Call(hdcWindow)
+	hbmMem, _, _ := winproc.CreateCompatibleBitmap.Call(hdcWindow, uintptr(gd.GameAreaSizeX), uintptr(gd.GameAreaSizeY))
+	_, _, _ = winproc.SelectObject.Call(hdcMem, hbmMem)
 
 	// Use PrintWindow to copy the window into the bitmap
-	winproc2.PrintWindow.Call(uintptr(gd.HWND), hdcMem, 3) // use 3 to get window content only
+	winproc.PrintWindow.Call(uintptr(gd.HWND), hdcMem, 3) // use 3 to get window content only
 
 	// map the bitmap structure
 	bmpInfo := struct {
@@ -41,7 +41,7 @@ func (gd *MemoryReader) Screenshot() image.Image {
 
 	bufSize := gd.GameAreaSizeX * gd.GameAreaSizeY * 4
 	buf := make([]byte, bufSize)
-	winproc2.GetDIBits.Call(
+	winproc.GetDIBits.Call(
 		hdcMem,
 		hbmMem,
 		0,
@@ -65,8 +65,8 @@ func (gd *MemoryReader) Screenshot() image.Image {
 	}
 
 	// Cleanup
-	_, _, _ = winproc2.DeleteObject.Call(hbmMem)
-	_, _, _ = winproc2.DeleteDC.Call(hdcMem)
+	_, _, _ = winproc.DeleteObject.Call(hbmMem)
+	_, _, _ = winproc.DeleteDC.Call(hdcMem)
 
 	return img
 }
