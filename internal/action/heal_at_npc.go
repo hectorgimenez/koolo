@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/town"
@@ -12,7 +14,7 @@ func HealAtNPC() error {
 
 	shouldHeal := false
 	if ctx.Data.PlayerUnit.HPPercent() < 80 {
-		ctx.Logger.Info("Current life is %d%%, healing on NPC", ctx.Data.PlayerUnit.HPPercent())
+		ctx.Logger.Info(fmt.Sprintf("Current life is %d, healing on NPC", ctx.Data.PlayerUnit.HPPercent()))
 		shouldHeal = true
 	}
 
