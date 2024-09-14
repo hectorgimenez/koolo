@@ -14,6 +14,15 @@ func MoveTo(dest data.Position) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "MoveTo"
 
+	// This is to ensure we finished moving before returning
+	defer func() {
+		if ctx.Data.CanTeleport() {
+			utils.Sleep(250)
+		} else {
+			utils.Sleep(500)
+		}
+	}()
+
 	timeout := time.Second * 30
 	stopAtDistance := 7
 
