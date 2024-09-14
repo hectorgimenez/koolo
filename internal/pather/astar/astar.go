@@ -48,12 +48,12 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 
 		// Let's build the path if we reached the goal
 		if current.Position == goal {
-			path := []data.Position{}
+			var path []data.Position
 			for p := goal; p != start; p = cameFrom[p] {
 				path = append([]data.Position{p}, path...)
 			}
 			path = append([]data.Position{start}, path...)
-			return path, current.Cost, true
+			return path, len(path), true
 		}
 
 		for _, neighbor := range getNeighbors(g, current) {
