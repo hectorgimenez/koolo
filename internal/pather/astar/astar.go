@@ -19,51 +19,58 @@ var directions = []data.Position{
 	{-1, -1}, // Up-Left (Northwest)
 }
 
-const obstacleRadius = 2
-
 type Node struct {
 	data.Position
-	G, H, F float64
-	Parent  *Node
+	Cost     int
+	Priority int
+	Index    int
 }
 
-func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, float64, bool) {
-	openList := &PriorityQueue{}
-	heap.Init(openList)
+func direction(from, to data.Position) (dx, dy int) {
+	dx = to.X - from.X
+	dy = to.Y - from.Y
+	return
+}
 
-	startNode := &Node{Position: start, G: 0, H: heuristic(start, goal, g.CollisionGrid)}
-	startNode.F = startNode.G + startNode.H
-	heap.Push(openList, startNode)
+func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, int, bool) {
+	pq := make(PriorityQueue, 0)
+	heap.Init(&pq)
 
-	closedSet := make(map[data.Position]bool)
-	openListMap := make(map[data.Position]bool)
-	openListMap[start] = true
+	costSoFar := make(map[data.Position]int)
+	cameFrom := make(map[data.Position]data.Position)
 
-	for openList.Len() > 0 {
-		currentNode := heap.Pop(openList).(*Node)
-		delete(openListMap, currentNode.Position)
-		closedSet[currentNode.Position] = true
+	startNode := &Node{Position: start, Cost: 0, Priority: heuristic(start, goal)}
+	heap.Push(&pq, startNode)
+	costSoFar[start] = 0
 
-		if currentNode.Position == goal {
-			return reconstructPath(currentNode), currentNode.G, true
+	for pq.Len() > 0 {
+		current := heap.Pop(&pq).(*Node)
+
+		// Let's build the path if we reached the goal
+		if current.Position == goal {
+			path := []data.Position{}
+			for p := goal; p != start; p = cameFrom[p] {
+				path = append([]data.Position{p}, path...)
+			}
+			path = append([]data.Position{start}, path...)
+			return path, current.Cost, true
 		}
 
-		for _, neighbor := range getNeighbors(g, currentNode) {
-			if closedSet[neighbor.Position] {
-				continue
+		for _, neighbor := range getNeighbors(g, current) {
+			newCost := costSoFar[current.Position] + getCost(g.CollisionGrid[neighbor.Y][neighbor.X])
+
+			// Handicap for changing direction, this prevents zig-zagging around obstacles
+			curDirX, curDirY := direction(cameFrom[current.Position], current.Position)
+			newDirX, newDirY := direction(current.Position, neighbor)
+			if curDirX != newDirX || curDirY != newDirY {
+				newCost += 2 // I found this value to be the acceptable
 			}
 
-			tentativeG := currentNode.G + 1
-			if tentativeG < neighbor.G || neighbor.G == 0 {
-				neighbor.G = tentativeG
-				neighbor.H = heuristic(neighbor.Position, goal, g.CollisionGrid)
-				neighbor.F = neighbor.G + neighbor.H
-				neighbor.Parent = currentNode
-
-				if _, inOpenList := openListMap[neighbor.Position]; !inOpenList {
-					heap.Push(openList, neighbor)
-					openListMap[neighbor.Position] = true
-				}
+			if _, ok := costSoFar[neighbor]; !ok || newCost < costSoFar[neighbor] {
+				costSoFar[neighbor] = newCost
+				priority := newCost + heuristic(neighbor, goal)
+				heap.Push(&pq, &Node{Position: neighbor, Cost: newCost, Priority: priority})
+				cameFrom[neighbor] = current.Position
 			}
 		}
 	}
@@ -72,51 +79,30 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, fl
 }
 
 // Get walkable neighbors of a given node
-func getNeighbors(grid *game.Grid, node *Node) []*Node {
-	var neighbors []*Node
+func getNeighbors(grid *game.Grid, node *Node) []data.Position {
+	var neighbors []data.Position
 
 	for _, d := range directions {
 		newPosition := data.Position{X: node.X + d.X, Y: node.Y + d.Y}
-		if newPosition.X >= 0 && newPosition.X < grid.Width && newPosition.Y >= 0 && newPosition.Y < grid.Height && grid.CollisionGrid[newPosition.Y][newPosition.X] {
-			neighbors = append(neighbors, &Node{Position: newPosition})
+		if newPosition.X >= 0 && newPosition.X < grid.Width && newPosition.Y >= 0 && newPosition.Y < grid.Height {
+			neighbors = append(neighbors, newPosition)
 		}
 	}
 
 	return neighbors
 }
 
-func heuristic(p1, p2 data.Position, grid [][]bool) float64 {
-	dx := math.Abs(float64(p1.X - p2.X))
-	dy := math.Abs(float64(p1.Y - p2.Y))
-	baseHeuristic := math.Sqrt(dx*dx + dy*dy)
-
-	penalty := 0.0
-	if isNextToObstacle(grid, p1, obstacleRadius) {
-		penalty = float64(obstacleRadius) * 5.0
+func getCost(tileType game.CollisionType) int {
+	switch tileType {
+	case game.CollisionTypeWalkable:
+		return 1 // Walkable
+	case game.CollisionTypeMonster, game.CollisionTypeLowPriority:
+		return 100 // Soft blocker
+	default:
+		return math.MaxInt32
 	}
-
-	return baseHeuristic + penalty
 }
 
-func isNextToObstacle(grid [][]bool, point data.Position, radius int) bool {
-	for dx := -radius; dx <= radius; dx++ {
-		for dy := -radius; dy <= radius; dy++ {
-			newX, newY := point.X+dx, point.Y+dy
-			if newX >= 0 && newX < len(grid[0]) && newY >= 0 && newY < len(grid) {
-				if !grid[newY][newX] {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-func reconstructPath(node *Node) []data.Position {
-	var path []data.Position
-	for node != nil {
-		path = append([]data.Position{node.Position}, path...)
-		node = node.Parent
-	}
-	return path
+func heuristic(a, b data.Position) int {
+	return int(math.Abs(float64(a.X-b.X)) + math.Abs(float64(a.Y-b.Y)))
 }

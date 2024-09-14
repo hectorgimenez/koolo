@@ -66,6 +66,22 @@ func (gd *MemoryReader) FetchMapData() error {
 
 	areas := make(map[area.ID]AreaData)
 	for _, lvl := range mapData {
+		cg := lvl.CollisionGrid()
+		resultGrid := make([][]CollisionType, lvl.Size.Height)
+		for i := range resultGrid {
+			resultGrid[i] = make([]CollisionType, lvl.Size.Width)
+		}
+
+		for y := 0; y < lvl.Size.Height; y++ {
+			for x := 0; x < lvl.Size.Width; x++ {
+				if cg[y][x] {
+					resultGrid[y][x] = CollisionTypeWalkable
+				} else {
+					resultGrid[y][x] = CollisionTypeNoneWalkable
+				}
+			}
+		}
+
 		npcs, exits, objects, rooms := lvl.NPCsExitsAndObjects()
 		areas[area.ID(lvl.ID)] = AreaData{
 			Area:           area.ID(lvl.ID),
@@ -74,7 +90,7 @@ func (gd *MemoryReader) FetchMapData() error {
 			AdjacentLevels: exits,
 			Objects:        objects,
 			Rooms:          rooms,
-			Grid:           NewGrid(lvl.CollisionGrid(), lvl.Offset.X, lvl.Offset.Y),
+			Grid:           NewGrid(resultGrid, lvl.Offset.X, lvl.Offset.Y),
 		}
 	}
 

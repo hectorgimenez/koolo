@@ -29,7 +29,7 @@ func TestAstar(t *testing.T) {
 
 	p, dist, found := CalculatePath(grid, start, goal)
 	if int(dist) != 509 {
-		t.Errorf("Expected distance to be 509, got %f", dist)
+		t.Errorf("Expected distance to be 509, got %d", dist)
 	}
 	if len(p) != 510 {
 		t.Errorf("Expected path length to be 510, got %d", len(p))

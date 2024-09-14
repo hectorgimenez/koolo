@@ -32,7 +32,10 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 		distanceMatrix[room1] = make(map[data.Room]int)
 		for _, room2 := range pf.data.Rooms {
 			if room1 != room2 {
-				distance := DistanceFromPoint(room1.GetCenter(), room2.GetCenter())
+				_, distance, found := pf.GetClosestWalkablePathFrom(room1.GetCenter(), room2.GetCenter())
+				if !found {
+					continue
+				}
 				distanceMatrix[room1][room2] = distance
 			} else {
 				distanceMatrix[room1][room2] = 0
@@ -163,13 +166,7 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 	err := dx - dy
 
 	for {
-		// Boundary check for x0, y0
-		if x0 < 0 || y0 < 0 || x0 >= len(pf.data.AreaData.Grid.CollisionGrid[0]) || y0 >= len(pf.data.AreaData.Grid.CollisionGrid) {
-			return false
-		}
-
-		// Check if the current position is not walkable
-		if !pf.data.AreaData.Grid.CollisionGrid[y0][x0] {
+		if !pf.data.AreaData.Grid.IsWalkable(data.Position{X: x0, Y: y0}) {
 			return false
 		}
 

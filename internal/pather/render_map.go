@@ -26,10 +26,15 @@ func (pf *PathFinder) renderMap(grid *game.Grid, from, to data.Position, path Pa
 			if pathLocs[fmt.Sprintf("%d,%d", x, y)] {
 				img.Set(x, y, color.RGBA{R: 36, G: 255, B: 0, A: 255})
 			} else {
-				if grid.CollisionGrid[y][x] {
-					img.Set(x, y, color.White)
-				} else {
+				switch grid.CollisionGrid[y][x] {
+				case game.CollisionTypeNoneWalkable:
 					img.Set(x, y, color.Black)
+				case game.CollisionTypeWalkable:
+					img.Set(x, y, color.White)
+				case game.CollisionTypeLowPriority:
+					img.Set(x, y, color.RGBA{R: 200, G: 200, B: 200, A: 255})
+				case game.CollisionTypeMonster:
+					img.Set(x, y, color.RGBA{R: 255, G: 255, A: 255})
 				}
 			}
 		}
@@ -47,11 +52,6 @@ func (pf *PathFinder) renderMap(grid *game.Grid, from, to data.Position, path Pa
 		} else {
 			img.Set(pos.X, pos.Y, color.RGBA{R: 255, G: 165, A: 255})
 		}
-	}
-
-	for _, m := range pf.data.Monsters {
-		pos := grid.RelativePosition(m.Position)
-		img.Set(pos.X, pos.Y, color.RGBA{R: 255, B: 255, A: 255})
 	}
 
 	img.Set(from.X, from.Y, color.RGBA{R: 255, G: 0, B: 0, A: 255})
