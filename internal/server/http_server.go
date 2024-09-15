@@ -276,11 +276,14 @@ func getRunningProcesses() ([]Process, error) {
 
 	for {
 		windowTitle, _ := getWindowTitle(entry.ProcessID)
-		processes = append(processes, Process{
-			WindowTitle: windowTitle,
-			ProcessName: syscall.UTF16ToString(entry.ExeFile[:]),
-			PID:         entry.ProcessID,
-		})
+
+		if strings.ToLower(syscall.UTF16ToString(entry.ExeFile[:])) == "d2r.exe" {
+			processes = append(processes, Process{
+				WindowTitle: windowTitle,
+				ProcessName: syscall.UTF16ToString(entry.ExeFile[:]),
+				PID:         entry.ProcessID,
+			})
+		}
 
 		err = windows.Process32Next(snapshot, &entry)
 		if err != nil {

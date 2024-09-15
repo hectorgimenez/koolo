@@ -462,64 +462,85 @@ let socket;
     }
 
     function showAttachPopup(characterName) {
-    const popup = document.createElement('div');
-    popup.className = 'attach-popup';
-    popup.innerHTML = `
-        <h3>Attach to Process</h3>
-        <input type="text" id="process-search" placeholder="Search processes..." class="process-search">
-        <div class="process-list">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Window Title</th>
-                        <th>Process Name</th>
-                        <th>PID</th>
-                    </tr>
-                </thead>
-                <tbody id="process-list-body">
-                    <!-- Process list will be populated here -->
-                </tbody>
-            </table>
-        </div>
-        <div class="selected-process">
-            <span>Selected Process: </span>
-            <span id="selected-pid">None</span>
-        </div>
-        <div class="popup-buttons">
-            <button id="choose-process" class="btn btn-primary" disabled>Attach</button>
-            <button id="cancel-attach" class="btn">Cancel</button>
-        </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Fetch and populate the process list
-    fetchProcessList(characterName);
-
-    // Add event listeners for the buttons and search
-    document.getElementById('choose-process').addEventListener('click', () => chooseProcess(characterName));
-    document.getElementById('cancel-attach').addEventListener('click', closeAttachPopup);
-    document.getElementById('process-search').addEventListener('input', filterProcessList);
-}
+        const popup = document.createElement('div');
+        popup.className = 'attach-popup';
+        popup.innerHTML = `
+            <h3>Attach to Process</h3>
+            <div id="popup-content">
+                <div class="loading-spinner"></div>
+                <p>Loading processes...</p>
+            </div>
+        `;
+    
+        document.body.appendChild(popup);
+    
+        // Fetch and populate the process list
+        fetchProcessList(characterName);
+    }
 
     function fetchProcessList(characterName) {
         fetch('/process-list')
             .then(response => response.json())
             .then(processes => {
-                const tbody = document.getElementById('process-list-body');
-                tbody.innerHTML = '';
-                processes.forEach(process => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${process.windowTitle}</td>
-                        <td>${process.processName}</td>
-                        <td>${process.pid}</td>
+                const popup = document.querySelector('.attach-popup');
+                
+                if (!processes || processes.length === 0) {
+                    popup.innerHTML = `
+                        <h3>No D2R Processes Found</h3>
+                        <p>There are no Diablo II: Resurrected processes currently running.</p>
+                        <button onclick="closeAttachPopup()" class="btn btn-primary">Close</button>
                     `;
-                    row.addEventListener('click', () => selectProcess(row, process.pid));
-                    tbody.appendChild(row);
-                });
+                } else {
+                    popup.innerHTML = `
+                        <h3>Attach to Process</h3>
+                        <input type="text" id="process-search" placeholder="Search processes...">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Window Title</th>
+                                    <th>Process Name</th>
+                                    <th>PID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="process-list-body"></tbody>
+                        </table>
+                        <div class="selected-process">
+                            <span>Selected Process: </span>
+                            <span id="selected-pid">None</span>
+                        </div>
+                        <div class="popup-buttons">
+                            <button id="choose-process" class="btn btn-primary" disabled>Attach</button>
+                            <button id="cancel-attach" class="btn">Cancel</button>
+                        </div>
+                    `;
+    
+                    const tbody = document.getElementById('process-list-body');
+                    processes.forEach(process => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${process.windowTitle}</td>
+                            <td>${process.processName}</td>
+                            <td>${process.pid}</td>
+                        `;
+                        row.addEventListener('click', () => selectProcess(row, process.pid));
+                        tbody.appendChild(row);
+                    });
+    
+                    // Add event listeners
+                    document.getElementById('choose-process').addEventListener('click', () => chooseProcess(characterName));
+                    document.getElementById('cancel-attach').addEventListener('click', closeAttachPopup);
+                    document.getElementById('process-search').addEventListener('input', filterProcessList);
+                }
             })
-            .catch(error => console.error('Error fetching process list:', error));
+            .catch(error => {
+                console.error('Error fetching process list:', error);
+                const popup = document.querySelector('.attach-popup');
+                popup.innerHTML = `
+                    <h3>Error</h3>
+                    <p>An error occurred while fetching the process list.</p>
+                    <button onclick="closeAttachPopup()" class="btn btn-primary">Close</button>
+                `;
+            });
     }
 
     function selectProcess(row, pid) {
