@@ -486,7 +486,7 @@ let socket;
             <span id="selected-pid">None</span>
         </div>
         <div class="popup-buttons">
-            <button id="choose-process" class="btn btn-primary" disabled>Choose</button>
+            <button id="choose-process" class="btn btn-primary" disabled>Attach</button>
             <button id="cancel-attach" class="btn">Cancel</button>
         </div>
     `;
