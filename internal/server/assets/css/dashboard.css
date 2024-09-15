@@ -346,3 +346,170 @@ stat-value {
         transform: scale(1.1);
     }
 }
+
+.attach-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--card-background-color);
+    color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    width: 80%;
+    max-width: 800px;
+}
+
+.attach-popup h3 {
+    color: var(--primary);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.process-search {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: var(--background-color);
+    color: #ffffff;
+}
+
+.process-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+.process-list table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff;
+    table-layout: fixed; /* Add this line */
+}
+
+.process-list th, .process-list td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+    overflow: hidden; /* Add this line */
+    text-overflow: ellipsis; /* Add this line */
+    white-space: nowrap; /* Add this line */
+}
+
+/* Add these new rules */
+.process-list th:first-child,
+.process-list td:first-child {
+    width: 40%; /* Adjust this value as needed */
+}
+
+.process-list th:nth-child(2),
+.process-list td:nth-child(2) {
+    width: 40%; /* Adjust this value as needed */
+}
+
+.process-list th:last-child,
+.process-list td:last-child {
+    width: 20%; /* Adjust this value as needed */
+}
+
+.process-list th {
+    background-color: var(--card-hover-background-color);
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.process-list tr:hover {
+    background-color: var(--card-hover-background-color);
+    cursor: pointer;
+}
+
+.process-list tr.selected {
+    background-color: rgba(74, 157, 248, 0.2);
+}
+
+.selected-process {
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+    background-color: #555;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Scrollbar styling */
+.process-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.process-list::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+.process-list::-webkit-scrollbar-thumb {
+    background-color: var(--primary);
+    border-radius: 4px;
+}
+
+.process-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-hover);
+}
+
+.loading-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid var(--primary);
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

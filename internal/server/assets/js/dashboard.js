@@ -98,6 +98,9 @@ let socket;
                     <button class="stop btn btn-stop" data-character="${key}" style="display:none;">
                         <i class="bi bi-stop-fill btn-icon"></i>Stop
                     </button>
+                    <button class="btn btn-outline attach-btn" onclick="showAttachPopup('${key}')" style="display:none;">
+                        <i class="bi bi-link-45deg btn-icon"></i>Attach
+                    </button>
                     <button class="toggle-details">
                         <i class="bi bi-chevron-down"></i>
                     </button>
@@ -189,6 +192,7 @@ let socket;
 
         const startPauseBtn = card.querySelector('.start-pause');
         const stopBtn = card.querySelector('.stop');
+        const attachBtn = card.querySelector('.attach-btn');
         const statusDetails = card.querySelector('.status-details');
         const statusBadge = statusDetails.querySelector('.status-badge');
         const statusIndicator = card.querySelector('.status-indicator');
@@ -201,8 +205,8 @@ let socket;
                 updateStatusIndicator(statusIndicator, value.SupervisorStatus);
         }
 
-        if (startPauseBtn && stopBtn) {
-            updateButtons(startPauseBtn, stopBtn, value.SupervisorStatus);
+        if (startPauseBtn && stopBtn && attachBtn) {
+            updateButtons(startPauseBtn, stopBtn, attachBtn, value.SupervisorStatus);
         }
         
         updateStats(card, key, value.Games, dropCount);
@@ -260,19 +264,17 @@ let socket;
         runningForElement.textContent = `Running for: ${duration}`;
     }
 
-    function updateButtons(startPauseBtn, stopBtn, status) {
-        if (status === "Paused") {
-            startPauseBtn.innerHTML = '<i class="bi bi-play-fill btn-icon"></i>Resume';
-            startPauseBtn.className = 'start-pause btn btn-pause';
-            stopBtn.style.display = 'inline-block';
-        } else if (status === "In game" || status === "Starting") {
+    function updateButtons(startPauseBtn, stopBtn, attachBtn, status) {
+        if (status === "Paused" || status === "In game" || status === "Starting") {
             startPauseBtn.innerHTML = '<i class="bi bi-pause-fill btn-icon"></i>Pause';
             startPauseBtn.className = 'start-pause btn btn-pause';
             stopBtn.style.display = 'inline-block';
+            attachBtn.style.display = 'none';
         } else {
             startPauseBtn.innerHTML = '<i class="bi bi-play-fill btn-icon"></i>Start';
             startPauseBtn.className = 'start-pause btn btn-start';
             stopBtn.style.display = 'none';
+            attachBtn.style.display = 'inline-block';
         }
     }
 
@@ -455,6 +457,144 @@ let socket;
                 if (toggleBtn) {
                     toggleBtn.style.transform = 'rotate(180deg)';
                 }
+            }
+        });
+    }
+
+    function showAttachPopup(characterName) {
+    const popup = document.createElement('div');
+    popup.className = 'attach-popup';
+    popup.innerHTML = `
+        <h3>Attach to Process</h3>
+        <input type="text" id="process-search" placeholder="Search processes..." class="process-search">
+        <div class="process-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Window Title</th>
+                        <th>Process Name</th>
+                        <th>PID</th>
+                    </tr>
+                </thead>
+                <tbody id="process-list-body">
+                    <!-- Process list will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="selected-process">
+            <span>Selected Process: </span>
+            <span id="selected-pid">None</span>
+        </div>
+        <div class="popup-buttons">
+            <button id="choose-process" class="btn btn-primary" disabled>Choose</button>
+            <button id="cancel-attach" class="btn">Cancel</button>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    // Fetch and populate the process list
+    fetchProcessList(characterName);
+
+    // Add event listeners for the buttons and search
+    document.getElementById('choose-process').addEventListener('click', () => chooseProcess(characterName));
+    document.getElementById('cancel-attach').addEventListener('click', closeAttachPopup);
+    document.getElementById('process-search').addEventListener('input', filterProcessList);
+}
+
+    function fetchProcessList(characterName) {
+        fetch('/process-list')
+            .then(response => response.json())
+            .then(processes => {
+                const tbody = document.getElementById('process-list-body');
+                tbody.innerHTML = '';
+                processes.forEach(process => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${process.windowTitle}</td>
+                        <td>${process.processName}</td>
+                        <td>${process.pid}</td>
+                    `;
+                    row.addEventListener('click', () => selectProcess(row, process.pid));
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching process list:', error));
+    }
+
+    function selectProcess(row, pid) {
+        const allRows = document.querySelectorAll('#process-list-body tr');
+        allRows.forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+        document.getElementById('choose-process').disabled = false;
+        document.getElementById('choose-process').dataset.pid = pid;
+        document.getElementById('selected-pid').textContent = pid;
+    }
+
+    function chooseProcess(characterName) {
+        const pid = document.getElementById('choose-process').dataset.pid;
+        if (pid) {
+            // Show loading animation
+            const popup = document.querySelector('.attach-popup');
+            popup.innerHTML = `
+                <h3>Attaching to Process</h3>
+                <div class="loading-spinner"></div>
+                <p>Please wait...</p>
+            `;
+    
+            fetch(`/attach-process?characterName=${characterName}&pid=${pid}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        popup.innerHTML = `
+                            <h3>Success</h3>
+                            <p>Successfully attached to process ${pid} for character ${characterName}</p>
+                        `;
+                        // Close popup after 2 seconds
+                        setTimeout(() => {
+                            closeAttachPopup();
+                            fetchInitialData(); // Refresh the dashboard
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        popup.innerHTML = `
+                            <h3>Error</h3>
+                            <p>Failed to attach to process: ${data.error}</p>
+                            <button onclick="closeAttachPopup()" class="btn btn-primary">Close</button>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error attaching to process:', error);
+                    // Show error message
+                    popup.innerHTML = `
+                        <h3>Error</h3>
+                        <p>An error occurred while attaching to the process.</p>
+                        <button onclick="closeAttachPopup()" class="btn btn-primary">Close</button>
+                    `;
+                });
+        }
+    }
+
+    function closeAttachPopup() {
+        const popup = document.querySelector('.attach-popup');
+        if (popup) {
+            popup.remove();
+        }
+    }
+
+    function filterProcessList() {
+        const searchTerm = document.getElementById('process-search').value.toLowerCase();
+        const rows = document.querySelectorAll('#process-list-body tr');
+
+        rows.forEach(row => {
+            const windowTitle = row.cells[0].textContent.toLowerCase();
+            const processName = row.cells[1].textContent.toLowerCase();
+            if (windowTitle.includes(searchTerm) || processName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
         });
     }

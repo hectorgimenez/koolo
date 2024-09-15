@@ -45,7 +45,7 @@ func (mng *SupervisorManager) AvailableSupervisors() []string {
 	return availableSupervisors
 }
 
-func (mng *SupervisorManager) Start(supervisorName string) error {
+func (mng *SupervisorManager) Start(supervisorName string, attachToExisting bool, pidHwnd ...uint32) error {
 	// Avoid multiple instances of the supervisor - shitstorm prevention
 	if _, exists := mng.supervisors[supervisorName]; exists {
 		return fmt.Errorf("supervisor %s is already running", supervisorName)
@@ -62,64 +62,20 @@ func (mng *SupervisorManager) Start(supervisorName string) error {
 		return err
 	}
 
-	// This function will be used to restart the client - passed to the crashDetector
-	restartFunc := func() {
-		mng.logger.Info("Restarting supervisor after crash", slog.String("supervisor", supervisorName))
-		mng.Stop(supervisorName)
-		time.Sleep(5 * time.Second) // Wait a bit before restarting
+	var optionalPID uint32
+	var optionalHWND win.HWND
 
-		// Get a list of all available Supervisors
-		supervisorList := mng.AvailableSupervisors()
-
-		for {
-
-			// Set the default state
-			tokenAuthStarting := false
-
-			// Get the current supervisor's config
-			supCfg := config.Characters[supervisorName]
-
-			for _, sup := range supervisorList {
-
-				// If the current don't check against the one we're trying to launch
-				if sup == supervisorName {
-					continue
-				}
-
-				if mng.GetSupervisorStats(sup).SupervisorStatus == Starting {
-					if supCfg.AuthMethod == "TokenAuth" {
-						tokenAuthStarting = true
-						mng.logger.Info("Waiting before restart as another client is already starting and we're using token auth", slog.String("supervisor", sup))
-						break
-					}
-
-					sCfg, found := config.Characters[sup]
-					if found {
-						if sCfg.AuthMethod == "TokenAuth" {
-							// A client that uses token auth is currently starting, hold off restart
-							tokenAuthStarting = true
-							mng.logger.Info("Waiting before restart as a client that's using token auth is already starting", slog.String("supervisor", sup))
-							break
-						}
-					}
-				}
-			}
-
-			if !tokenAuthStarting {
-				break
-			}
-
-			// Wait 5 seconds before checking again
-			utils.Sleep(5000)
-		}
-
-		err := mng.Start(supervisorName)
-		if err != nil {
-			mng.logger.Error("Failed to restart supervisor", slog.String("supervisor", supervisorName), slog.String("Error: ", err.Error()))
+	if attachToExisting {
+		if len(pidHwnd) == 2 {
+			mng.logger.Info("Attaching to existing game", "pid", pidHwnd[0], "hwnd", pidHwnd[1])
+			optionalPID = pidHwnd[0]
+			optionalHWND = win.HWND(pidHwnd[1])
+		} else {
+			return fmt.Errorf("pid and hwnd are required when attaching to an existing game")
 		}
 	}
 
-	supervisor, crashDetector, err := mng.buildSupervisor(supervisorName, supervisorLogger, restartFunc)
+	supervisor, crashDetector, err := mng.buildSupervisor(supervisorName, supervisorLogger, attachToExisting, optionalPID, optionalHWND)
 	if err != nil {
 		return err
 	}
@@ -212,15 +168,28 @@ func (mng *SupervisorManager) GetContext(characterName string) *context.Context 
 	return nil
 }
 
-func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger, restartFunc func()) (Supervisor, *game.CrashDetector, error) {
+func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slog.Logger, attach bool, optionalPID uint32, optionalHWND win.HWND) (Supervisor, *game.CrashDetector, error) {
 	cfg, found := config.Characters[supervisorName]
 	if !found {
 		return nil, nil, fmt.Errorf("character %s not found", supervisorName)
 	}
 
-	pid, hwnd, err := game.StartGame(cfg.Username, cfg.Password, cfg.AuthMethod, cfg.AuthToken, cfg.Realm, cfg.CommandLineArgs, config.Koolo.UseCustomSettings)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error starting game: %w", err)
+	var pid uint32
+	var hwnd win.HWND
+
+	if attach {
+		if optionalPID != 0 && optionalHWND != 0 {
+			pid = optionalPID
+			hwnd = optionalHWND
+		} else {
+			return nil, nil, fmt.Errorf("pid and hwnd are required when attaching to an existing game")
+		}
+	} else {
+		var err error
+		pid, hwnd, err = game.StartGame(cfg.Username, cfg.Password, cfg.AuthMethod, cfg.AuthToken, cfg.Realm, cfg.CommandLineArgs, config.Koolo.UseCustomSettings)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error starting game: %w", err)
+		}
 	}
 
 	gr, err := game.NewGameReader(cfg, supervisorName, pid, hwnd, logger)
@@ -268,6 +237,63 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// This function will be used to restart the client - passed to the crashDetector
+	restartFunc := func() {
+		mng.logger.Info("Restarting supervisor after crash", slog.String("supervisor", supervisorName))
+		mng.Stop(supervisorName)
+		time.Sleep(5 * time.Second) // Wait a bit before restarting
+
+		// Get a list of all available Supervisors
+		supervisorList := mng.AvailableSupervisors()
+
+		for {
+
+			// Set the default state
+			tokenAuthStarting := false
+
+			// Get the current supervisor's config
+			supCfg := config.Characters[supervisorName]
+
+			for _, sup := range supervisorList {
+
+				// If the current don't check against the one we're trying to launch
+				if sup == supervisorName {
+					continue
+				}
+
+				if mng.GetSupervisorStats(sup).SupervisorStatus == Starting {
+					if supCfg.AuthMethod == "TokenAuth" {
+						tokenAuthStarting = true
+						mng.logger.Info("Waiting before restart as another client is already starting and we're using token auth", slog.String("supervisor", sup))
+						break
+					}
+
+					sCfg, found := config.Characters[sup]
+					if found {
+						if sCfg.AuthMethod == "TokenAuth" {
+							// A client that uses token auth is currently starting, hold off restart
+							tokenAuthStarting = true
+							mng.logger.Info("Waiting before restart as a client that's using token auth is already starting", slog.String("supervisor", sup))
+							break
+						}
+					}
+				}
+			}
+
+			if !tokenAuthStarting {
+				break
+			}
+
+			// Wait 5 seconds before checking again
+			utils.Sleep(5000)
+		}
+
+		err := mng.Start(supervisorName, false)
+		if err != nil {
+			mng.logger.Error("Failed to restart supervisor", slog.String("supervisor", supervisorName), slog.String("Error: ", err.Error()))
+		}
 	}
 
 	crashDetector := game.NewCrashDetector(supervisorName, int32(pid), uintptr(hwnd), mng.logger, restartFunc)

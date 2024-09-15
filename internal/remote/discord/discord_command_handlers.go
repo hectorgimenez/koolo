@@ -30,7 +30,7 @@ func (b *Bot) handleStartRequest(s *discordgo.Session, m *discordgo.MessageCreat
 			}
 
 			// Attempt to start the specified supervisor
-			b.manager.Start(supervisor)
+			b.manager.Start(supervisor, false)
 
 			// Wait for the supervisor to start
 			time.Sleep(1 * time.Second)
