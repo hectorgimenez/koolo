@@ -79,7 +79,7 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 		pf.renderMap(grid, from, to, path)
 	}
 
-	return path, int(distance), found
+	return path, distance, found
 }
 
 func (pf *PathFinder) mergeGrids(to data.Position) (*game.Grid, error) {
