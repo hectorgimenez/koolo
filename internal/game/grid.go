@@ -32,8 +32,8 @@ func NewGrid(rawCollisionGrid [][]CollisionType, offsetX, offsetY int) *Grid {
 	for y := 0; y < len(rawCollisionGrid); y++ {
 		for x := 0; x < len(rawCollisionGrid[y]); x++ {
 			if rawCollisionGrid[y][x] == CollisionTypeNoneWalkable {
-				for i := -1; i <= 1; i++ {
-					for j := -1; j <= 1; j++ {
+				for i := -2; i <= 2; i++ {
+					for j := -2; j <= 2; j++ {
 						if i == 0 && j == 0 {
 							continue
 						}

@@ -58,8 +58,8 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 		}
 		relativePos := grid.RelativePosition(o.Position)
 		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
-		for i := -1; i <= 1; i++ {
-			for j := -1; j <= 1; j++ {
+		for i := -2; i <= 2; i++ {
+			for j := -2; j <= 2; j++ {
 				if i == 0 && j == 0 {
 					continue
 				}
