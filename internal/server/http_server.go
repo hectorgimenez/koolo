@@ -14,24 +14,28 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/gorilla/websocket"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	bot2 "github.com/hectorgimenez/koolo/internal/bot"
+	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
 	ctx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/lxn/win"
+	"golang.org/x/sys/windows"
 )
 
 type HttpServer struct {
 	logger    *slog.Logger
 	server    *http.Server
-	manager   *bot2.SupervisorManager
+	manager   *bot.SupervisorManager
 	templates *template.Template
 	wsServer  *WebSocketServer
 }
@@ -68,6 +72,12 @@ func NewWebSocketServer() *WebSocketServer {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
+}
+
+type Process struct {
+	WindowTitle string `json:"windowTitle"`
+	ProcessName string `json:"processName"`
+	PID         uint32 `json:"pid"`
 }
 
 func (s *WebSocketServer) Run() {
@@ -164,7 +174,7 @@ func (s *HttpServer) BroadcastStatus() {
 	}
 }
 
-func New(logger *slog.Logger, manager *bot2.SupervisorManager) (*HttpServer, error) {
+func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, error) {
 	var templates *template.Template
 	helperFuncs := template.FuncMap{
 		"isInSlice": func(slice []stat.Resist, value string) bool {
@@ -197,6 +207,134 @@ func New(logger *slog.Logger, manager *bot2.SupervisorManager) (*HttpServer, err
 		manager:   manager,
 		templates: templates,
 	}, nil
+}
+
+func (s *HttpServer) getProcessList(w http.ResponseWriter, r *http.Request) {
+	processes, err := getRunningProcesses()
+	if err != nil {
+		http.Error(w, "Failed to get process list", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(processes)
+}
+
+func (s *HttpServer) attachProcess(w http.ResponseWriter, r *http.Request) {
+	characterName := r.URL.Query().Get("characterName")
+	pidStr := r.URL.Query().Get("pid")
+
+	pid, err := strconv.ParseUint(pidStr, 10, 32)
+	if err != nil {
+		s.logger.Error("Invalid PID", "error", err)
+		return
+	}
+
+	// Find the main window handle (HWND) for the process
+	var hwnd win.HWND
+	enumWindowsCallback := func(h win.HWND, param uintptr) uintptr {
+		var processID uint32
+		win.GetWindowThreadProcessId(h, &processID)
+		if processID == uint32(pid) {
+			hwnd = h
+			return 0 // Stop enumeration
+		}
+		return 1 // Continue enumeration
+	}
+
+	windows.EnumWindows(syscall.NewCallback(enumWindowsCallback), nil)
+
+	if hwnd == 0 {
+		s.logger.Error("Failed to find window handle for process", "pid", pid)
+		return
+	}
+
+	// Call manager.Start with the correct arguments, including the HWND
+	go s.manager.Start(characterName, true, uint32(pid), uint32(hwnd))
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+}
+
+// Add this helper function
+func getRunningProcesses() ([]Process, error) {
+	var processes []Process
+
+	snapshot, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer windows.CloseHandle(snapshot)
+
+	var entry windows.ProcessEntry32
+	entry.Size = uint32(unsafe.Sizeof(entry))
+
+	err = windows.Process32First(snapshot, &entry)
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		windowTitle, _ := getWindowTitle(entry.ProcessID)
+
+		if strings.ToLower(syscall.UTF16ToString(entry.ExeFile[:])) == "d2r.exe" {
+			processes = append(processes, Process{
+				WindowTitle: windowTitle,
+				ProcessName: syscall.UTF16ToString(entry.ExeFile[:]),
+				PID:         entry.ProcessID,
+			})
+		}
+
+		err = windows.Process32Next(snapshot, &entry)
+		if err != nil {
+			if err == windows.ERROR_NO_MORE_FILES {
+				break
+			}
+			return nil, err
+		}
+	}
+
+	return processes, nil
+}
+
+var (
+	user32             = windows.NewLazySystemDLL("user32.dll")
+	procGetWindowTextW = user32.NewProc("GetWindowTextW")
+)
+
+func getWindowTitle(pid uint32) (string, error) {
+	var windowTitle string
+	var hwnd windows.HWND
+
+	cb := syscall.NewCallback(func(h win.HWND, param uintptr) uintptr {
+		var currentPID uint32
+		_ = win.GetWindowThreadProcessId(h, &currentPID)
+
+		if currentPID == pid {
+			hwnd = windows.HWND(h)
+			return 0 // stop enumeration
+		}
+		return 1 // continue enumeration
+	})
+
+	// Enumerate all windows
+	windows.EnumWindows(cb, nil)
+
+	if hwnd == 0 {
+		return "", fmt.Errorf("no window found for process ID %d", pid)
+	}
+
+	// Get window title
+	var title [256]uint16
+	_, _, _ = procGetWindowTextW.Call(
+		uintptr(hwnd),
+		uintptr(unsafe.Pointer(&title[0])),
+		uintptr(len(title)),
+	)
+
+	windowTitle = syscall.UTF16ToString(title[:])
+	return windowTitle, nil
+
 }
 
 func qualityClass(quality string) string {
@@ -240,7 +378,7 @@ func (s *HttpServer) initialData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) getStatusData() IndexData {
-	status := make(map[string]bot2.Stats)
+	status := make(map[string]bot.Stats)
 	drops := make(map[string]int)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
@@ -273,6 +411,8 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/debug", s.debugHandler)
 	http.HandleFunc("/debug-data", s.debugData)
 	http.HandleFunc("/drops", s.drops)
+	http.HandleFunc("/process-list", s.getProcessList)
+	http.HandleFunc("/attach-process", s.attachProcess)
 	http.HandleFunc("/ws", s.wsServer.HandleWebSocket) // Web socket
 	http.HandleFunc("/initial-data", s.initialData)    // Web socket data
 
@@ -362,7 +502,7 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if s.manager.GetSupervisorStats(sup).SupervisorStatus == bot2.Starting {
+		if s.manager.GetSupervisorStats(sup).SupervisorStatus == bot.Starting {
 
 			// Prevent launching if we're using token auth & another client is starting (no matter what auth method)
 			if supCfg.AuthMethod == "TokenAuth" {
@@ -379,7 +519,7 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	s.manager.Start(Supervisor)
+	s.manager.Start(Supervisor, false)
 	s.initialData(w, r)
 }
 
@@ -394,12 +534,12 @@ func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
-	status := make(map[string]bot2.Stats)
+	status := make(map[string]bot.Stats)
 	drops := make(map[string]int)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
-		status[supervisorName] = bot2.Stats{
-			SupervisorStatus: bot2.NotStarted,
+		status[supervisorName] = bot.Stats{
+			SupervisorStatus: bot.NotStarted,
 		}
 
 		status[supervisorName] = s.manager.Status(supervisorName)
