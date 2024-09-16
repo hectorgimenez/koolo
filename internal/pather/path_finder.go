@@ -34,12 +34,14 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
 
+	// We don't want to modify the original grid
+	grid := a.Grid.Copy()
+
 	// Lut Gholein map is a bit bugged, we should close this fake path to avoid pathing issues
 	if a.Area == area.LutGholein {
-		a.CollisionGrid[13][210] = game.CollisionTypeNoneWalkable
+		a.CollisionGrid[13][210] = game.CollisionTypeNonWalkable
 	}
 
-	grid := a.Grid
 	if !a.IsInside(to) {
 		expandedGrid, err := pf.mergeGrids(to)
 		if err != nil {
@@ -57,7 +59,7 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 			continue
 		}
 		relativePos := grid.RelativePosition(o.Position)
-		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
+		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeObject
 		for i := -2; i <= 2; i++ {
 			for j := -2; j <= 2; j++ {
 				if i == 0 && j == 0 {
@@ -71,6 +73,15 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 				}
 			}
 		}
+	}
+
+	// Add monsters to the collision grid as obstacles
+	for _, m := range pf.data.Monsters {
+		if !grid.IsWalkable(m.Position) {
+			continue
+		}
+		relativePos := grid.RelativePosition(m.Position)
+		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
 	}
 
 	path, distance, found := astar.CalculatePath(grid, from, to)

@@ -75,7 +75,7 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 			curDirX, curDirY := direction(cameFrom[current.X][current.Y], current.Position)
 			newDirX, newDirY := direction(current.Position, neighbor)
 			if curDirX != newDirX || curDirY != newDirY {
-				newCost += 2
+				newCost++
 			}
 
 			if newCost < costSoFar[neighbor.X][neighbor.Y] {
@@ -110,13 +110,13 @@ func getCost(tileType game.CollisionType) int {
 	switch tileType {
 	case game.CollisionTypeWalkable:
 		return 1 // Walkable
-	case game.CollisionTypeMonster, game.CollisionTypeLowPriority:
-		return 3 // Soft blocker
+	case game.CollisionTypeMonster, game.CollisionTypeLowPriority, game.CollisionTypeObject:
+		return 4 // Soft blocker
 	default:
 		return math.MaxInt32
 	}
 }
 
 func heuristic(a, b data.Position) int {
-	return int(math.Abs(float64(a.X-b.X)) + math.Abs(float64(a.Y-b.Y)))
+	return int(math.Max(math.Abs(float64(a.X-b.X)), math.Abs(float64(a.Y-b.Y))))
 }

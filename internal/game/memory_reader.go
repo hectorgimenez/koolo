@@ -77,7 +77,7 @@ func (gd *MemoryReader) FetchMapData() error {
 				if cg[y][x] {
 					resultGrid[y][x] = CollisionTypeWalkable
 				} else {
-					resultGrid[y][x] = CollisionTypeNoneWalkable
+					resultGrid[y][x] = CollisionTypeNonWalkable
 				}
 			}
 		}
