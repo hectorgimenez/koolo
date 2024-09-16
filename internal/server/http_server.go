@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -582,6 +583,35 @@ func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func validateSchedulerData(cfg *config.CharacterCfg) error {
+	for day := 0; day < 7; day++ {
+
+		cfg.Scheduler.Days[day].DayOfWeek = day
+
+		// Sort time ranges
+		sort.Slice(cfg.Scheduler.Days[day].TimeRanges, func(i, j int) bool {
+			return cfg.Scheduler.Days[day].TimeRanges[i].Start.Before(cfg.Scheduler.Days[day].TimeRanges[j].Start)
+		})
+
+		daysOfWeek := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+
+		// Check for overlapping time ranges
+		for i := 0; i < len(cfg.Scheduler.Days[day].TimeRanges); i++ {
+			if !cfg.Scheduler.Days[day].TimeRanges[i].End.After(cfg.Scheduler.Days[day].TimeRanges[i].Start) {
+				return fmt.Errorf("end time must be after start time for day %s", daysOfWeek[day])
+			}
+
+			if i > 0 {
+				if !cfg.Scheduler.Days[day].TimeRanges[i].Start.After(cfg.Scheduler.Days[day].TimeRanges[i-1].End) {
+					return fmt.Errorf("overlapping time ranges for day %s", daysOfWeek[day])
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
@@ -680,6 +710,55 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Realm = r.Form.Get("realm")
 		cfg.AuthMethod = r.Form.Get("authmethod")
 		cfg.AuthToken = r.Form.Get("AuthToken")
+
+		// Scheduler config
+		cfg.Scheduler.Enabled = r.Form.Has("schedulerEnabled")
+
+		for day := 0; day < 7; day++ {
+
+			starts := r.Form[fmt.Sprintf("scheduler[%d][start][]", day)]
+			ends := r.Form[fmt.Sprintf("scheduler[%d][end][]", day)]
+
+			cfg.Scheduler.Days[day].DayOfWeek = day
+			cfg.Scheduler.Days[day].TimeRanges = make([]config.TimeRange, 0)
+
+			for i := 0; i < len(starts); i++ {
+				start, err := time.Parse("15:04", starts[i])
+				if err != nil {
+					s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+						ErrorMessage: fmt.Sprintf("Invalid start time format for day %d: %s", day, starts[i]),
+						// ... (other fields)
+					})
+					return
+				}
+
+				end, err := time.Parse("15:04", ends[i])
+				if err != nil {
+					s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+						ErrorMessage: fmt.Sprintf("Invalid end time format for day %d: %s", day, ends[i]),
+					})
+					return
+				}
+
+				cfg.Scheduler.Days[day].TimeRanges = append(cfg.Scheduler.Days[day].TimeRanges, struct {
+					Start time.Time "yaml:\"start\""
+					End   time.Time "yaml:\"end\""
+				}{
+					Start: start,
+					End:   end,
+				})
+			}
+		}
+
+		// Validate scheduler data
+		err := validateSchedulerData(cfg)
+		if err != nil {
+			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+				ErrorMessage: err.Error(),
+				// ... (other fields)
+			})
+			return
+		}
 
 		// Health config
 		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))
@@ -848,9 +927,12 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	dayNames := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+
 	s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
 		Supervisor:   supervisor,
 		Config:       cfg,
+		DayNames:     dayNames,
 		EnabledRuns:  enabledRuns,
 		DisabledRuns: disabledRuns,
 		AvailableTZs: availableTZs,

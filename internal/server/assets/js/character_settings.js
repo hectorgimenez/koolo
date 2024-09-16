@@ -78,3 +78,41 @@ function checkLevelingProfile() {
         }
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const schedulerEnabled = document.querySelector('input[name="schedulerEnabled"]');
+    const schedulerSettings = document.getElementById('scheduler-settings');
+
+    function toggleSchedulerVisibility() {
+        schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
+    }
+
+    // Set initial state
+    toggleSchedulerVisibility();
+
+    schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
+
+    document.querySelectorAll('.add-time-range').forEach(button => {
+        button.addEventListener('click', function() {
+            const day = this.dataset.day;
+            const timeRangesDiv = this.previousElementSibling;
+            if (timeRangesDiv) {
+                const newTimeRange = document.createElement('div');
+                newTimeRange.className = 'time-range';
+                newTimeRange.innerHTML = `
+                    <input type="time" name="scheduler[${day}][start][]" required>
+                    <span>to</span>
+                    <input type="time" name="scheduler[${day}][end][]" required>
+                    <button type="button" class="remove-time-range"><i class="bi bi-trash"></i></button>
+                `;
+                timeRangesDiv.appendChild(newTimeRange);
+            }
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-time-range')) {
+            e.target.closest('.time-range').remove();
+        }
+    });
+});

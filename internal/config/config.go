@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 
@@ -56,6 +57,21 @@ type KooloCfg struct {
 	}
 }
 
+type Day struct {
+	DayOfWeek  int         `yaml:"dayOfWeek"`
+	TimeRanges []TimeRange `yaml:"timeRange"`
+}
+
+type Scheduler struct {
+	Enabled bool  `yaml:"enabled"`
+	Days    []Day `yaml:"days"`
+}
+
+type TimeRange struct {
+	Start time.Time `yaml:"start"`
+	End   time.Time `yaml:"end"`
+}
+
 type CharacterCfg struct {
 	MaxGameLength   int    `yaml:"maxGameLength"`
 	Username        string `yaml:"username"`
@@ -69,7 +85,8 @@ type CharacterCfg struct {
 	ClassicMode     bool   `yaml:"classicMode"`
 	CloseMiniPanel  bool   `yaml:"closeMiniPanel"`
 
-	Health struct {
+	Scheduler Scheduler `yaml:"scheduler"`
+	Health    struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`
