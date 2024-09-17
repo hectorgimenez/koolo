@@ -12,6 +12,7 @@ func PreRun(firstRun bool) error {
 	DropMouseItem()
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
+	ManageBelt()
 
 	if firstRun {
 		Stash(firstRun)
@@ -48,6 +49,7 @@ func InRunReturnTownRoutine() error {
 	ReturnTown()
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
+	ManageBelt()
 
 	/*
 		This will be added when option for cain Identify is added
