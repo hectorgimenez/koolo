@@ -14,6 +14,9 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 	ctx.ContextDebug.LastAction = "ClearAreaAroundPlayer"
 
 	originalPosition := data.Position{}
+
+	ctx.Logger.Debug("Clearing area around character...", slog.Int("distance", distance))
+
 	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if originalPosition.X == 0 && originalPosition.Y == 0 {
 			originalPosition = d.PlayerUnit.Position
@@ -24,7 +27,6 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 			shouldEngage := IsMonsterSealElite(m) || d.AreaData.IsWalkable(m.Position)
 
 			if monsterDist <= distance && shouldEngage {
-				ctx.Logger.Debug("Clearing area...", slog.Int("monsterID", int(m.Name)))
 				return m.UnitID, true
 			}
 		}

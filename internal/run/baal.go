@@ -126,6 +126,9 @@ func (s Baal) Run() error {
 		if err != nil {
 			return err
 		}
+
+		_ = action.MoveToCoords(data.Position{X: 15136, Y: 5943})
+
 		return s.ctx.Char.KillBaal()
 	}
 
