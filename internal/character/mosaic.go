@@ -12,6 +12,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -40,8 +41,24 @@ func (s MosaicSin) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
+	ctx := context.Get()
+	ctx.RefreshGameData()
+	lastRefresh := time.Now()
 
 	for {
+		// Limit refresh rate to 10 times per second to avoid excessive CPU usage
+		if time.Since(lastRefresh) > time.Millisecond*100 {
+			ctx.RefreshGameData()
+			lastRefresh = time.Now()
+		}
+
+		// Get the charges for each skill we're using
+		tigerCharges, foundTiger := ctx.Data.PlayerUnit.Stats.FindStat(stat.ProgressiveDamage, 0)
+		cobraCharges, foundCobra := ctx.Data.PlayerUnit.Stats.FindStat(stat.ProgressiveSteal, 0)
+		phoenixCharges, foundPhoenix := ctx.Data.PlayerUnit.Stats.FindStat(stat.ProgressiveOther, 0)
+		clawsCharges, foundClaws := ctx.Data.PlayerUnit.Stats.FindStat(stat.ProgressiveLightning, 0)
+		bladesCharges, foundBlades := ctx.Data.PlayerUnit.Stats.FindStat(stat.ProgressiveCold, 0)
+
 		id, found := monsterSelector(*s.data)
 		if !found {
 			return nil
@@ -63,55 +80,65 @@ func (s MosaicSin) KillMonsterSequence(
 			return nil
 		}
 
-		// Tiger Strike
-		if !s.data.PlayerUnit.States.HasState(state.Tigerstrike) {
-			step.SecondaryAttack(skill.TigerStrike, id, 4, opts)
+		// Number of charges display as stats
+		/*
+			318 = Tiger Strike
+			319 = Cobra Strike
+			320 = Phoenix Strike
+			321 = Fists of Fire
+			322 = Blades of Ice
+			323 = Claws of Thunder
+		*/
+
+		// Tiger Strike - 3 charges
+		if !s.data.PlayerUnit.States.HasState(state.Tigerstrike) || (foundTiger && tigerCharges.Value < 3) {
+			step.SecondaryAttack(skill.TigerStrike, id, 1, opts)
+			continue
 		}
 
 		if !s.MobAlive(id, *s.data) { // Check if the mob is still alive
 			return nil
 		}
 
-		// Cobra Strike
-		if !s.data.PlayerUnit.States.HasState(state.Cobrastrike) {
-			step.SecondaryAttack(skill.CobraStrike, id, 4, opts)
+		// Cobra Strike - 3 charges
+		if !s.data.PlayerUnit.States.HasState(state.Cobrastrike) || (foundCobra && cobraCharges.Value < 3) {
+			step.SecondaryAttack(skill.CobraStrike, id, 1, opts)
+			continue
 		}
 
 		if !s.MobAlive(id, *s.data) { // Check if the mob is still alive
 			return nil
 		}
 
-		// Phoenix Strike
-		if !s.data.PlayerUnit.States.HasState(state.Phoenixstrike) {
-			step.SecondaryAttack(skill.PhoenixStrike, id, 4, opts)
+		// Phoenix Strike - 2 charges
+		if !s.data.PlayerUnit.States.HasState(state.Phoenixstrike) || (foundPhoenix && phoenixCharges.Value < 2) {
+			step.SecondaryAttack(skill.PhoenixStrike, id, 1, opts)
+			continue
 		}
 
 		if !s.MobAlive(id, *s.data) { // Check if the mob is still alive
 			return nil
 		}
 
-		// Claws of Thunder
-		if !s.data.PlayerUnit.States.HasState(state.Clawsofthunder) {
-			step.SecondaryAttack(skill.ClawsOfThunder, id, 4, opts)
+		// Claws of Thunder - 3 charges
+		if !s.data.PlayerUnit.States.HasState(state.Clawsofthunder) || (foundClaws && clawsCharges.Value < 3) {
+			step.SecondaryAttack(skill.ClawsOfThunder, id, 1, opts)
+			continue
 		}
 
 		if !s.MobAlive(id, *s.data) { // Check if the mob is still alive
 			return nil
 		}
 
-		// Blades of Ice
-		if !s.data.PlayerUnit.States.HasState(state.Bladesofice) {
-			step.SecondaryAttack(skill.BladesOfIce, id, 4, opts)
+		// Blades of Ice - 3 charges
+		if !s.data.PlayerUnit.States.HasState(state.Bladesofice) || (foundBlades && bladesCharges.Value < 3) {
+			step.SecondaryAttack(skill.BladesOfIce, id, 1, opts)
+			continue
 		}
 
 		if !s.MobAlive(id, *s.data) { // Check if the mob is still alive
 			return nil
 		}
-
-		// Fists of Fire
-		//if !s.data.PlayerUnit.States.HasState(state.Fistsoffire) {
-		//	step.SecondaryAttack(skill.FistsOfFire, id, 4, opts)
-		//}
 
 		// Finish it off with primary attack
 		step.PrimaryAttack(id, 1, false, opts)
