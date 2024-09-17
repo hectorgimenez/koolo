@@ -197,6 +197,13 @@ func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, erro
 		"qualityClass": qualityClass,
 		"statIDToText": statIDToText,
 		"contains":     containss,
+		"seq": func(start, end int) []int {
+			var result []int
+			for i := start; i <= end; i++ {
+				result = append(result, i)
+			}
+			return result
+		},
 	}
 	templates, err := template.New("").Funcs(helperFuncs).ParseFS(templatesFS, "templates/*.gohtml")
 	if err != nil {
@@ -924,6 +931,13 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 	for _, tz := range area.Areas {
 		if tz.CanBeTerrorized() {
 			availableTZs[int(tz.ID)] = tz.Name
+		}
+	}
+
+	if cfg.Scheduler.Days == nil || len(cfg.Scheduler.Days) == 0 {
+		cfg.Scheduler.Days = make([]config.Day, 7)
+		for i := 0; i < 7; i++ {
+			cfg.Scheduler.Days[i] = config.Day{DayOfWeek: i}
 		}
 	}
 
