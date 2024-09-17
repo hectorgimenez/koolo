@@ -173,30 +173,31 @@
             <fieldset class="grid">
                 <label>
                     Enabled
-        <input type="checkbox" name="schedulerEnabled" {{ if .Config.Scheduler.Enabled }}checked{{ end }}/>
+                    <input type="checkbox" name="schedulerEnabled" {{ if .Config.Scheduler.Enabled }}checked{{ end }}/>
                 </label>
             </fieldset>
 
             <div id="scheduler-settings" {{ if not .Config.Scheduler.Enabled }}style="display: none;"{{ end }}>
-                {{ range $dayIndex, $day := .Config.Scheduler.Days }}
+                {{ range $dayIndex := seq 0 6 }}
                     <div class="scheduler-day">
                         <h4>{{ index $.DayNames $dayIndex }}</h4>
-                        <div class="time-ranges" data-day="{{ $day.DayOfWeek }}">
+                        <div class="time-ranges" data-day="{{ $dayIndex }}">
+                            {{ $day := index $.Config.Scheduler.Days $dayIndex }}
                             {{ range $timeRange := $day.TimeRanges }}
                                 <div class="time-range">
-                                    <input type="time" name="scheduler[{{ $day.DayOfWeek }}][start][]" value="{{ $timeRange.Start.Format "15:04" }}" required>
+                                    <input type="time" name="scheduler[{{ $dayIndex }}][start][]" value="{{ $timeRange.Start.Format "15:04" }}" required>
                                     <span>to</span>
-                                    <input type="time" name="scheduler[{{ $day.DayOfWeek }}][end][]" value="{{ $timeRange.End.Format "15:04" }}" required>
+                                    <input type="time" name="scheduler[{{ $dayIndex }}][end][]" value="{{ $timeRange.End.Format "15:04" }}" required>
                                     <button type="button" class="remove-time-range"><i class="bi bi-trash"></i></button>
                                 </div>
                             {{ end }}
                         </div>
-                        <button type="button" class="add-time-range" data-day="{{ $day.DayOfWeek }}">
+                        <button type="button" class="add-time-range" data-day="{{ $dayIndex }}">
                             <i class="bi bi-plus-circle"></i> Add Time Range
                         </button>
                     </div>
                 {{ end }}
-            </div>  
+            </div>
 
             <br><h3>Health settings</h3><br>
             <fieldset class="grid">
