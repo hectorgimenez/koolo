@@ -32,11 +32,7 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 		distanceMatrix[room1] = make(map[data.Room]int)
 		for _, room2 := range pf.data.Rooms {
 			if room1 != room2 {
-				_, distance, found := pf.GetClosestWalkablePathFrom(room1.GetCenter(), room2.GetCenter())
-				if !found {
-					distanceMatrix[room1][room2] = math.MaxInt
-					continue
-				}
+				distance := DistanceFromPoint(room1.GetCenter(), room2.GetCenter())
 				distanceMatrix[room1][room2] = distance
 			} else {
 				distanceMatrix[room1][room2] = 0
