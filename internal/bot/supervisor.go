@@ -79,9 +79,10 @@ func (s *baseSupervisor) Stop() {
 	s.bot.ctx.MemoryInjector.Unload()
 	s.bot.ctx.GameReader.Close()
 
-	if s.bot.ctx.CharacterCfg.KillD2OnStop {
+	if s.bot.ctx.CharacterCfg.KillD2OnStop || s.bot.ctx.CharacterCfg.Scheduler.Enabled {
 		s.KillClient()
 	}
+
 	s.bot.ctx.Logger.Info("Finished stopping", slog.String("configuration", s.name))
 }
 

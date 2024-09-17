@@ -38,3 +38,102 @@
     padding-left: 0;
     margin-left: 0;
 }
+
+#scheduler-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Add this new rule */
+#scheduler-settings[style*="display: none"] {
+    display: none !important;
+}
+
+.scheduler-day {
+    background-color: #1c212c;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #2a3140;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.scheduler-day:hover {
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+.scheduler-day h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.time-range {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.time-range input[type="time"] {
+    width: 15rem;
+    margin-right: 0.1rem;
+    padding: 0.15rem;
+    border: 1px solid #2a3140;
+    border-radius: 3px;
+    font-size: 0.90rem;
+}
+
+.time-range span {
+    margin: 0 0.5rem;
+    margin-bottom: 5%;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.remove-time-range {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.remove-time-range:hover {
+    background-color: #c82333;
+}
+
+.add-time-range {
+    margin-top: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+.add-time-range:hover {
+    background-color: #0056b3;
+}
+
+.add-time-range i {
+    margin-right: 0.5rem;
+}

@@ -4,9 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark"/>
+    <meta name="color-scheme" content="dark"/>
     <link rel="stylesheet" href="../assets/css/pico.min.css">
     <link rel="stylesheet" href="../assets/css/custom.css">
+    <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
     <script src="../assets/js/Sortable.min.js"></script>
     <script src="../assets/js/character_settings.js"></script>
     <title>Koolo Settings</title>
@@ -166,7 +167,38 @@
                     <input type="password" name="AuthToken" placeholder="{{ .Config.AuthToken }}" value="{{ .Config.AuthToken }}"/>
                 </label>
             </fieldset>
-            <h3>Health settings</h3><br>
+            
+            <h3>Scheduler</h3><br>
+            <label>Set the time ranges when the bot should Start and Stop automatically. Multiple time ranges can be set for the same day if you want to simulate breaks. This will enforce killing of the game client on Stop.</label><br>
+            <fieldset class="grid">
+                <label>
+                    Enabled
+        <input type="checkbox" name="schedulerEnabled" {{ if .Config.Scheduler.Enabled }}checked{{ end }}/>
+                </label>
+            </fieldset>
+
+            <div id="scheduler-settings" {{ if not .Config.Scheduler.Enabled }}style="display: none;"{{ end }}>
+                {{ range $dayIndex, $day := .Config.Scheduler.Days }}
+                    <div class="scheduler-day">
+                        <h4>{{ index $.DayNames $dayIndex }}</h4>
+                        <div class="time-ranges" data-day="{{ $day.DayOfWeek }}">
+                            {{ range $timeRange := $day.TimeRanges }}
+                                <div class="time-range">
+                                    <input type="time" name="scheduler[{{ $day.DayOfWeek }}][start][]" value="{{ $timeRange.Start.Format "15:04" }}" required>
+                                    <span>to</span>
+                                    <input type="time" name="scheduler[{{ $day.DayOfWeek }}][end][]" value="{{ $timeRange.End.Format "15:04" }}" required>
+                                    <button type="button" class="remove-time-range"><i class="bi bi-trash"></i></button>
+                                </div>
+                            {{ end }}
+                        </div>
+                        <button type="button" class="add-time-range" data-day="{{ $day.DayOfWeek }}">
+                            <i class="bi bi-plus-circle"></i> Add Time Range
+                        </button>
+                    </div>
+                {{ end }}
+            </div>  
+
+            <br><h3>Health settings</h3><br>
             <fieldset class="grid">
                 <label>
                     Healing at (%)
@@ -296,6 +328,7 @@
             <div class="grid">
                 <div>
                     <h6>Enabled (drag & drop below to enable)</h6>
+                    <button type="button" id="clear-enabled-runs">Clear All</button>
                     <ul class="run-list" id="enabled_runs">
                         {{ range $index, $run := .EnabledRuns }}
                             <li value="{{ $run }}">
@@ -309,6 +342,7 @@
                 </div>
                 <div>
                     <h6>Disabled runs</h6>
+                    <input type="text" id="search-disabled-runs" placeholder="Search runs...">
                     <ul class="run-list" id="disabled_runs">
                         {{ range $index, $run := .DisabledRuns }}
                             <li value="{{ $run }}">

@@ -52,8 +52,9 @@ func main() {
 	winproc.SetProcessDpiAware.Call() // Set DPI awareness to be able to read the correct scale and show the window correctly
 
 	eventListener := event.NewListener(logger)
-	//manager := koolo.NewSupervisorManager(logger, eventListener)
 	manager := bot.NewSupervisorManager(logger, eventListener)
+	scheduler := bot.NewScheduler(manager, logger)
+	go scheduler.Start()
 	srv, err := server.New(logger, manager)
 	if err != nil {
 		log.Fatalf("Error starting local server: %s", err.Error())
@@ -128,6 +129,7 @@ func main() {
 		logger.Info("Koolo shutting down...")
 		cancel()
 		manager.StopAll()
+		scheduler.Stop()
 		err = srv.Stop()
 		if err != nil {
 			logger.Error("error stopping local server", slog.Any("error", err))
