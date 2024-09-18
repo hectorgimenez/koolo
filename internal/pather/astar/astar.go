@@ -72,11 +72,11 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 			newCost := costSoFar[current.X][current.Y] + getCost(g.CollisionGrid[neighbor.Y][neighbor.X])
 
 			// Handicap for changing direction, this prevents zig-zagging around obstacles
-			curDirX, curDirY := direction(cameFrom[current.X][current.Y], current.Position)
-			newDirX, newDirY := direction(current.Position, neighbor)
-			if curDirX != newDirX || curDirY != newDirY {
-				newCost++
-			}
+			//curDirX, curDirY := direction(cameFrom[current.X][current.Y], current.Position)
+			//newDirX, newDirY := direction(current.Position, neighbor)
+			//if curDirX != newDirX || curDirY != newDirY {
+			//	newCost++
+			//}
 
 			if newCost < costSoFar[neighbor.X][neighbor.Y] {
 				costSoFar[neighbor.X][neighbor.Y] = newCost

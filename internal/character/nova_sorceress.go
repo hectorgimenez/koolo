@@ -87,16 +87,6 @@ func (s NovaSorceress) KillMonsterSequence(
 			step.SecondaryAttack(skill.StaticField, id, 1, opts)
 		}
 
-		if completedAttackLoops%2 == 0 {
-			for _, m := range s.data.Monsters.Enemies() {
-				if dist := s.pf.DistanceFromMe(m.Position); dist < 5 {
-					s.logger.Debug("Monster detected close to the player, casting Nova")
-					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, opts)
-					break
-				}
-			}
-		}
-
 		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
 		if completedAttackLoops > 5 {
 			if completedAttackLoops == 6 {
