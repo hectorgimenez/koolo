@@ -23,7 +23,6 @@ func (run SpiderCavern) Name() string {
 }
 
 func (run SpiderCavern) Run() error {
-
 	// Define a default monster filter
 	monsterFilter := data.MonsterAnyFilter()
 

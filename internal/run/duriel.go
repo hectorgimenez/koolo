@@ -17,8 +17,8 @@ type Duriel struct {
 	ctx *context.Status
 }
 
-func NewDuriel() *DrifterCavern {
-	return &DrifterCavern{
+func NewDuriel() *Duriel {
+	return &Duriel{
 		ctx: context.Get(),
 	}
 }
@@ -28,8 +28,6 @@ func (d Duriel) Name() string {
 }
 
 func (d Duriel) Run() error {
-
-	// Use the waypoint
 	err := action.WayPoint(area.CanyonOfTheMagi)
 	if err != nil {
 		return err
@@ -59,6 +57,8 @@ func (d Duriel) Run() error {
 			return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
 		})
 	}
+
+	d.ctx.RefreshGameData()
 
 	return d.ctx.Char.KillDuriel()
 }

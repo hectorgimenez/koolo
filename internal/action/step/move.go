@@ -64,6 +64,10 @@ func MoveTo(dest data.Position) error {
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
 
+		if found && len(path) <= stopAtDistance {
+			return nil
+		}
+
 		if timeout > 0 && time.Since(startedAt) > timeout {
 			return nil
 		}

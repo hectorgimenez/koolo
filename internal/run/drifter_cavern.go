@@ -23,7 +23,6 @@ func (s DrifterCavern) Name() string {
 }
 
 func (s DrifterCavern) Run() error {
-
 	// Define a default monster filter
 	monsterFilter := data.MonsterAnyFilter()
 
