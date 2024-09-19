@@ -81,7 +81,7 @@ func (s WindDruid) KillMonsterSequence(
 		// Add a random movement, maybe tornado is not hitting the target
 		if previousUnitID == int(id) {
 			if monster.Stats[stat.Life] > 0 {
-				s.pf.RandomMovement(*s.data)
+				s.pf.RandomMovement()
 			}
 			return nil
 		}

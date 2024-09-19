@@ -11,13 +11,13 @@ import (
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-func (pf *PathFinder) RandomMovement(d game.Data) {
+func (pf *PathFinder) RandomMovement() {
 	midGameX := pf.gr.GameAreaSizeX / 2
 	midGameY := pf.gr.GameAreaSizeY / 2
 	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
 	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
 	pf.hid.MovePointer(x, y)
-	pf.hid.PressKeyBinding(d.KeyBindings.ForceMove)
+	pf.hid.PressKeyBinding(pf.data.KeyBindings.ForceMove)
 	utils.Sleep(50)
 }
 

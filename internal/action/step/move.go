@@ -28,6 +28,7 @@ func MoveTo(dest data.Position) error {
 
 	startedAt := time.Now()
 	lastRun := time.Time{}
+	previousPosition := data.Position{}
 
 	for {
 		ctx.RefreshGameData()
@@ -87,6 +88,13 @@ func MoveTo(dest data.Position) error {
 			return nil
 		}
 
+		// If we are stuck in the same position, make a random movement and cross fingers
+		if previousPosition == ctx.Data.PlayerUnit.Position && !ctx.Data.CanTeleport() {
+			ctx.PathFinder.RandomMovement()
+			continue
+		}
+
+		previousPosition = ctx.Data.PlayerUnit.Position
 		ctx.PathFinder.MoveThroughPath(path, walkDuration)
 	}
 }
