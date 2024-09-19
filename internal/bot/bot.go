@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -111,6 +112,17 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 				action.ItemPickup(30)
 				action.BuffIfRequired()
+
+				_, healingPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.HealingPotion)
+				_, manaPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.ManaPotion)
+				// Check if we need to go back to town (no pots or merc died)
+				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
+					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
+					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
+					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
+					!b.ctx.Data.PlayerUnit.Area.IsTown() {
+					action.InRunReturnTownRoutine()
+				}
 				b.ctx.SwitchPriority(botCtx.PriorityNormal)
 			}
 		}
