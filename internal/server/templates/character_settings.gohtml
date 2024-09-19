@@ -320,36 +320,44 @@
                     value="{{ .Config.MaxGameLength }}"/>
                 </label>
             </fieldset>
-            <h4>Runs</h4><br>
+            <h4>Run Settings</h4><br>
+            <label>
+                Choose the runs that you want the bot to run. You can either drag & drop runs below to enable or disable them, or use the + - buttons. Click on any of the runs to expand them and see more details and options.
+            </label><br>
             <label>
                 <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
-                Randomize runs
-            </label>
+                Randomize run order
+            </label><br>
             <input type="hidden" id="gameRuns" name="gameRuns" value="">
             <div class="grid">
                 <div>
-                    <h6>Enabled (drag & drop below to enable)</h6>
-                    <button type="button" id="clear-enabled-runs">Clear All</button>
-                    <ul class="run-list" id="enabled_runs">
+                    <h6>Enabled Runs:</h6>                    
+                    <ul style="padding-top: 52px" class="run-list" id="enabled_runs">
                         {{ range $index, $run := .EnabledRuns }}
                             <li value="{{ $run }}">
                                 <details>
-                                    <summary role="button" class="outline secondary">{{ $run }}</summary>
-                                    <p>{{ executeTemplateByName $run $topLevelContext }}</p>
+                                    <summary role="button" class="outline secondary">
+                                        <span>{{ $run }}</span>
+                                        <button type="button" class="remove-run" title="Remove run"><i class="bi bi-dash"></i></button>
+                                    </summary>
+                                    {{ executeTemplateByName $run $topLevelContext }}
                                 </details>
                             </li>
                         {{ end }}
                     </ul>
                 </div>
                 <div>
-                    <h6>Disabled runs</h6>
+                    <h6>Disabled Runs:</h6>
                     <input type="text" id="search-disabled-runs" placeholder="Search runs...">
                     <ul class="run-list" id="disabled_runs">
                         {{ range $index, $run := .DisabledRuns }}
                             <li value="{{ $run }}">
                                 <details>
-                                    <summary role="button" class="outline secondary">{{ $run }}</summary>
-                                    <p>{{ executeTemplateByName $run $topLevelContext }}</p>
+                                    <summary role="button" class="outline secondary">
+                                        <span>{{ $run }}</span>
+                                        <button type="button" class="add-run" title="Add run"><i class="bi bi-plus"></i></button>
+                                    </summary>
+                                    {{ executeTemplateByName $run $topLevelContext }}
                                 </details>
                             </li>
                         {{ end }}

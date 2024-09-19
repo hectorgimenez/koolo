@@ -37,6 +37,7 @@
     list-style: none;
     padding-left: 0;
     margin-left: 0;
+    margin-bottom: 0.5rem; /* Add some space between items */
 }
 
 #scheduler-settings {
@@ -166,4 +167,97 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Add these styles to your existing CSS file */
+
+.run-list li summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1c212c;
+    transition: background-color 0.2s;
+    border: none; /* Remove border from summary */
+}
+
+.run-list li summary:hover {
+    background-color: #2a3140;
+}
+
+.run-list li summary:focus {
+    outline: none; /* Remove the annoying outline */
+}
+
+.run-list li summary span {
+    flex-grow: 1;
+}
+
+.run-list li summary button {
+    border: none;
+    cursor: pointer;
+    padding: 2.5px 5px; /* 50% smaller padding */
+    margin-left: 10px;
+    font-size: 0.8rem; /* 50% smaller font size */
+    color: #ffffff;
+    border-radius: 1px solid #2a3140;
+    transition: background-color 0.2s, transform 0.1s;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+}
+
+.run-list li summary button.remove-run {
+    margin-top: 15px;
+    background-color: #dc3545; /* Red for remove button */
+}
+
+.run-list li summary button.add-run {
+    margin-top: 15px;
+    background-color: #28a745; /* Green for add button */
+}
+
+.run-list li summary button:hover {
+    transform: scale(1.05);
+}
+
+.run-list li summary span {
+    padding-left: 10px;
+}
+
+.run-list li summary button.remove-run:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+.run-list li summary button.add-run:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.run-list li summary button i {
+    font-size: 0.9rem; /* 50% smaller icon size */
+}
+
+.run-list li details[open] summary {
+    border-bottom: 1px solid #2a3140;
+}
+
+.run-list li details p {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    background-color: #1c212c;
+}
+
+/* New styles for the summary content */
+.summary-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.summary-text {
+    flex-grow: 1;
+}
+
+.summary-icons {
+    display: flex;
+    align-items: center;
 }
