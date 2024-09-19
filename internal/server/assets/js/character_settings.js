@@ -1,28 +1,42 @@
 window.onload = function () {
-    let enabled_runs_ul = document.getElementById('enabled_runs')
-    let disabled_runs_ul = document.getElementById('disabled_runs')
+    let enabled_runs_ul = document.getElementById('enabled_runs');
+    let disabled_runs_ul = document.getElementById('disabled_runs');
     let searchInput = document.getElementById('search-disabled-runs');
-    let clearButton = document.getElementById('clear-enabled-runs');
     
     new Sortable(enabled_runs_ul, {
         group: 'runs',
         animation: 150,
         onSort: function (evt) {
             updateEnabledRunsHiddenField();
+        },
+        onAdd: function (evt) {
+            updateButtonForEnabledRun(evt.item);
         }
     });
 
     new Sortable(disabled_runs_ul, {
         group: 'runs',
-        animation: 150
+        animation: 150,
+        onAdd: function (evt) {
+            updateButtonForDisabledRun(evt.item);
+        }
     });
 
     searchInput.addEventListener('input', function() {
         filterDisabledRuns(searchInput.value);
     });
-    
-    clearButton.addEventListener('click', function() {
-        confirmClearEnabledRuns();
+
+    // Add event listeners for add and remove buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-run')) {
+            e.preventDefault();
+            const runElement = e.target.closest('li');
+            moveRunToDisabled(runElement);
+        } else if (e.target.closest('.add-run')) {
+            e.preventDefault();
+            const runElement = e.target.closest('li');
+            moveRunToEnabled(runElement);
+        }
     });
 
     updateEnabledRunsHiddenField();
@@ -49,18 +63,6 @@ function filterDisabledRuns(searchTerm) {
     });
 }
 
-function confirmClearEnabledRuns() {
-    if (confirm("Are you sure you want to clear all enabled runs?")) {
-        clearEnabledRuns();
-    }
-}
-
-function clearEnabledRuns() {
-    let enabledRunsUl = document.getElementById('enabled_runs');
-    enabledRunsUl.innerHTML = '';
-    updateEnabledRunsHiddenField();
-}
-
 function checkLevelingProfile() {
     const levelingProfiles = [
         "sorceress_leveling_hydraorb",
@@ -77,6 +79,36 @@ function checkLevelingProfile() {
             selectLevelingProfile();
         }
     }
+}
+
+function moveRunToDisabled(runElement) {
+    const disabledRunsUl = document.getElementById('disabled_runs');
+    updateButtonForDisabledRun(runElement);
+    disabledRunsUl.appendChild(runElement);
+    updateEnabledRunsHiddenField();
+}
+
+function moveRunToEnabled(runElement) {
+    const enabledRunsUl = document.getElementById('enabled_runs');
+    updateButtonForEnabledRun(runElement);
+    enabledRunsUl.appendChild(runElement);
+    updateEnabledRunsHiddenField();
+}
+
+function updateButtonForEnabledRun(runElement) {
+    const button = runElement.querySelector('button');
+    button.classList.remove('add-run');
+    button.classList.add('remove-run');
+    button.title = "Remove run";
+    button.innerHTML = '<i class="bi bi-dash"></i>';
+}
+
+function updateButtonForDisabledRun(runElement) {
+    const button = runElement.querySelector('button');
+    button.classList.remove('remove-run');
+    button.classList.add('add-run');
+    button.title = "Add run";
+    button.innerHTML = '<i class="bi bi-plus"></i>';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
