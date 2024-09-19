@@ -364,14 +364,17 @@
             <h3>Cube Recipes</h3>
             <label>
                 <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
-                Enabled
-            </label>
-            {{ range $index, $recipe := .RecipeList }}
-                <label>
-                <input type="checkbox" name="enabledRecipes" value="{{ $recipe }}" {{ if contains $.Config.CubeRecipes.EnabledRecipes $recipe }}checked{{ end }}>
-                {{ $recipe }}
-                </label>
-            {{ end }}
+                Enable the bot to automatically cube item recipes.
+            </label><br>
+
+            <div class="recipe-grid">
+                {{ range $index, $recipe := .RecipeList }}
+                    <label>
+                        <input type="checkbox" name="enabledRecipes" value="{{ $recipe }}" {{ if contains $.Config.CubeRecipes.EnabledRecipes $recipe }}checked{{ end }}>
+                        {{ $recipe }}
+                    </label>
+                {{ end }}
+            </div>
             <h3>Leader mode</h3>
             <label>
                 <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>

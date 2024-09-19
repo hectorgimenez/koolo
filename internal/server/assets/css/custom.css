@@ -137,3 +137,33 @@
 .add-time-range i {
     margin-right: 0.5rem;
 }
+
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.recipe-item {
+    display: flex;
+    align-items: center;
+    background-color: #1c212c;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.recipe-item:hover {
+    background-color: #2a3140;
+}
+
+.recipe-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.recipe-item span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
