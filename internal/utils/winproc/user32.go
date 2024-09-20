@@ -7,4 +7,5 @@ var (
 	PrintWindow        = USER32.NewProc("PrintWindow")
 	GetWindowDC        = USER32.NewProc("GetWindowDC")
 	SetProcessDpiAware = USER32.NewProc("SetProcessDPIAware")
+	SetWindowText      = USER32.NewProc("SetWindowTextW")
 )
