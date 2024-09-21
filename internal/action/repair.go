@@ -21,7 +21,15 @@ func Repair() error {
 	ctx.ContextDebug.LastAction = "Repair"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+
+		_, indestructible := i.FindStat(stat.Indestructible, 0)
+
+		if i.Ethereal || indestructible {
+			continue
+		}
+
 		// Get the durability stats
+
 		durability, found := i.FindStat(stat.Durability, 0)
 		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
@@ -78,6 +86,13 @@ func RepairRequired() bool {
 	ctx.ContextDebug.LastStep = "RepairRequired"
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+
+		_, indestructible := i.FindStat(stat.Indestructible, 0)
+
+		if i.Ethereal || indestructible {
+			continue
+		}
+
 		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
 		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
