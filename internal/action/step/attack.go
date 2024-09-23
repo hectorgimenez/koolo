@@ -19,6 +19,7 @@ type attackSettings struct {
 	followEnemy      bool
 	minDistance      int
 	maxDistance      int
+	telestomp        bool
 	aura             skill.ID
 	target           data.UnitID
 	shouldStandStill bool
@@ -37,6 +38,12 @@ func Distance(minimum, maximum int) AttackOption {
 func EnsureAura(aura skill.ID) AttackOption {
 	return func(step *attackSettings) {
 		step.aura = aura
+	}
+}
+
+func Telestomp() AttackOption {
+	return func(step *attackSettings) {
+		step.telestomp = true
 	}
 }
 
@@ -82,6 +89,17 @@ func attack(settings attackSettings) error {
 		monster, found := ctx.Data.Monsters.FindByID(settings.target)
 		if !found || monster.Stats[stat.Life] <= 0 || numOfAttacksRemaining <= 0 {
 			return nil
+		}
+
+		// TeleStomp
+		if settings.telestomp && ctx.Data.CanTeleport() {
+			if !ensureEnemyIsInRange(monster, 2, 1) {
+				path, _, _ := ctx.PathFinder.GetClosestWalkablePath(monster.Position)
+				if len(path) > 0 {
+					// Move to the closest tile to the monster
+					MoveTo(path[len(path)-1])
+				}
+			}
 		}
 
 		if !aoe {
