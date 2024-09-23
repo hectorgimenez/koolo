@@ -151,9 +151,9 @@
             <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="light" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "light" }}checked{{ end }}> Light</label>
             <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="poison" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "poison" }}checked{{ end }}> Poison</label>
         </fieldset>
-        <label>Tracked areas</label>
+        <label>Tracked areas <input type="checkbox" name="tzTrackAll" id="tzTrackAll"></label>
         {{ range $id, $name := .AvailableTZs }}
-            <label><input type="checkbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" {{ if isTZSelected $topLevelContext.Config.Game.TerrorZone.Areas $id }}checked{{ end }}>{{ $name }}</label>
+            <label><input type="checkbox" class="tzTrackCheckbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" {{ if isTZSelected $topLevelContext.Config.Game.TerrorZone.Areas $id }}checked{{ end }}>{{ $name }}</label>
         {{ end }}
     </fieldset>
 {{ end }}

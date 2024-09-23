@@ -9,7 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	context2 "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
@@ -20,12 +20,14 @@ var baalThronePosition = data.Position{
 }
 
 type Baal struct {
-	ctx *context2.Status
+	ctx                *context.Status
+	clearMonsterFilter data.MonsterFilter // Used to clear area (basically TZ)
 }
 
-func NewBaal() *Baal {
+func NewBaal(clearMonsterFilter data.MonsterFilter) *Baal {
 	return &Baal{
-		ctx: context2.Get(),
+		ctx:                context.Get(),
+		clearMonsterFilter: clearMonsterFilter,
 	}
 }
 
@@ -39,13 +41,16 @@ func (s Baal) Run() error {
 	if s.ctx.CharacterCfg.Game.Baal.OnlyElites {
 		filter = data.MonsterEliteFilter()
 	}
+	if s.clearMonsterFilter != nil {
+		filter = s.clearMonsterFilter
+	}
 
 	err := action.WayPoint(area.TheWorldStoneKeepLevel2)
 	if err != nil {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+	if s.ctx.CharacterCfg.Game.Baal.ClearFloors || s.clearMonsterFilter != nil {
 		action.ClearCurrentLevel(false, filter)
 	}
 
@@ -54,7 +59,7 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+	if s.ctx.CharacterCfg.Game.Baal.ClearFloors || s.clearMonsterFilter != nil {
 		action.ClearCurrentLevel(false, filter)
 	}
 
@@ -115,7 +120,7 @@ func (s Baal) Run() error {
 		action.MoveToCoords(baalThronePosition)
 	}
 
-	_, isLevelingChar := s.ctx.Char.(context2.LevelingCharacter)
+	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		utils.Sleep(10000)
 		action.Buff()

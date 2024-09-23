@@ -10,12 +10,14 @@ import (
 )
 
 type Mephisto struct {
-	ctx *context.Status
+	ctx                *context.Status
+	clearMonsterFilter data.MonsterFilter // Used to clear area (basically TZ)
 }
 
-func NewMephisto() *Mephisto {
+func NewMephisto(tzClearFilter data.MonsterFilter) *Mephisto {
 	return &Mephisto{
-		ctx: context.Get(),
+		ctx:                context.Get(),
+		clearMonsterFilter: tzClearFilter,
 	}
 }
 
@@ -29,6 +31,12 @@ func (m Mephisto) Run() error {
 	err := action.WayPoint(area.DuranceOfHateLevel2)
 	if err != nil {
 		return err
+	}
+
+	if m.clearMonsterFilter != nil {
+		if err = action.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.clearMonsterFilter); err != nil {
+			return err
+		}
 	}
 
 	// Move to DuranceOfHateLevel3

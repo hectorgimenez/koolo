@@ -16,7 +16,11 @@ func WayPoint(dest area.ID) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "WayPoint"
 
-	// TODO Check if we are in town, otherwise go back town
+	if !ctx.Data.PlayerUnit.Area.IsTown() {
+		if err := ReturnTown(); err != nil {
+			return err
+		}
+	}
 
 	if ctx.Data.PlayerUnit.Area == dest {
 		return nil

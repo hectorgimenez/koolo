@@ -11,21 +11,21 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 	//if cfg.Companion.Enabled && !cfg.Companion.Leader {
 	//	return []Run{Companion{baseRun: baseRun}}
 	//}
-	//
-	//for _, run := range f.container.CharacterCfg.Game.Runs {
-	//	// Prepend terror zone runs, we want to run it always first
-	//	if run == config.TerrorZoneRun {
-	//		tz := TerrorZone{baseRun: baseRun}
-	//
-	//		if len(tz.AvailableTZs(d)) > 0 {
-	//			runs = append(runs, tz)
-	//			// If we are skipping other runs, we can return here
-	//			if f.container.CharacterCfg.Game.TerrorZone.SkipOtherRuns {
-	//				return runs
-	//			}
-	//		}
-	//	}
-	//}
+
+	for _, run := range cfg.Game.Runs {
+		// Prepend terror zone runs, we want to run it always first
+		if run == config.TerrorZoneRun {
+			tz := NewTerrorZone()
+
+			if len(tz.AvailableTZs()) > 0 {
+				runs = append(runs, tz)
+				// If we are skipping other runs, we can return here
+				if cfg.Game.TerrorZone.SkipOtherRuns {
+					return runs
+				}
+			}
+		}
+	}
 
 	for _, run := range cfg.Game.Runs {
 		switch run {
@@ -38,7 +38,7 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		case config.DurielRun:
 			runs = append(runs, NewDuriel())
 		case config.MephistoRun:
-			runs = append(runs, NewMephisto())
+			runs = append(runs, NewMephisto(nil))
 		case config.TravincalRun:
 			runs = append(runs, NewTravincal())
 		case config.DiabloRun:
@@ -66,7 +66,7 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 		case config.LowerKurastChestRun:
 			runs = append(runs, NewLowerKurastChest())
 		case config.BaalRun:
-			runs = append(runs, NewBaal())
+			runs = append(runs, NewBaal(nil))
 		case config.TalRashaTombsRun:
 			runs = append(runs, NewTalRashaTombs())
 		case config.LevelingRun:

@@ -2,7 +2,7 @@ window.onload = function () {
     let enabled_runs_ul = document.getElementById('enabled_runs');
     let disabled_runs_ul = document.getElementById('disabled_runs');
     let searchInput = document.getElementById('search-disabled-runs');
-    
+
     new Sortable(enabled_runs_ul, {
         group: 'runs',
         animation: 150,
@@ -22,12 +22,12 @@ window.onload = function () {
         }
     });
 
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
         filterDisabledRuns(searchInput.value);
     });
 
     // Add event listeners for add and remove buttons
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.remove-run')) {
             e.preventDefault();
             const runElement = e.target.closest('li');
@@ -44,7 +44,7 @@ window.onload = function () {
 
 function updateEnabledRunsHiddenField() {
     let listItems = document.querySelectorAll('#enabled_runs li');
-    let values = Array.from(listItems).map(function(item) {
+    let values = Array.from(listItems).map(function (item) {
         return item.getAttribute("value");
     });
     document.getElementById('gameRuns').value = JSON.stringify(values);
@@ -53,7 +53,7 @@ function updateEnabledRunsHiddenField() {
 function filterDisabledRuns(searchTerm) {
     let listItems = document.querySelectorAll('#disabled_runs li');
     searchTerm = searchTerm.toLowerCase();
-    listItems.forEach(function(item) {
+    listItems.forEach(function (item) {
         let runName = item.getAttribute("value").toLowerCase();
         if (runName.includes(searchTerm)) {
             item.style.display = '';
@@ -111,7 +111,7 @@ function updateButtonForDisabledRun(runElement) {
     button.innerHTML = '<i class="bi bi-plus"></i>';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const schedulerEnabled = document.querySelector('input[name="schedulerEnabled"]');
     const schedulerSettings = document.getElementById('scheduler-settings');
 
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
     schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
 
     document.querySelectorAll('.add-time-range').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const day = this.dataset.day;
             const timeRangesDiv = this.previousElementSibling;
             if (timeRangesDiv) {
@@ -142,9 +142,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.remove-time-range')) {
             e.target.closest('.time-range').remove();
         }
+    });
+
+    document.getElementById('tzTrackAll').addEventListener('change', function (e) {
+        document.querySelectorAll('.tzTrackCheckbox').forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+        });
     });
 });

@@ -926,6 +926,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			disabledRuns = append(disabledRuns, string(run))
 		}
 	}
+	sort.Strings(disabledRuns)
 
 	availableTZs := make(map[int]string)
 	for _, tz := range area.Areas {
