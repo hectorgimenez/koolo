@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	ct "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -88,9 +89,25 @@ func (s *SinglePlayerSupervisor) Start() error {
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
+			// Perform keybindings check on the first run only
+			if firstRun {
+
+				missingKeybindings := s.bot.ctx.Char.CheckKeyBindings()
+				if len(missingKeybindings) > 0 {
+					var missingKeybindingsText = "Missing key binding for skill(s):"
+					for _, v := range missingKeybindings {
+						missingKeybindingsText += fmt.Sprintf("\n%s", skill.SkillNames[v])
+					}
+					missingKeybindingsText += "\nPlease bind the skills. Pausing bot..."
+
+					utils.ShowDialog("Missing keybindings for "+s.bot.ctx.Name, missingKeybindingsText)
+					s.TogglePause()
+				}
+			}
+
 			err = s.bot.Run(ctx, firstRun, runs)
 			if err != nil {
-				if errors.Is(context.Canceled, ctx.Err()) {
+				if errors.Is(ctx.Err(), context.Canceled) {
 					continue
 				}
 
@@ -113,6 +130,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 					)
 				}
 			}
+
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
 				errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
