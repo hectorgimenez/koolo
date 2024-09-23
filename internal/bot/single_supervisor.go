@@ -89,6 +89,9 @@ func (s *SinglePlayerSupervisor) Start() error {
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
+			// Refresh game data to make sure we have the latest information
+			s.bot.ctx.RefreshGameData()
+
 			// Perform keybindings check on the first run only
 			if firstRun {
 
