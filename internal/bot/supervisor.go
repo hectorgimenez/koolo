@@ -56,8 +56,8 @@ func (s *baseSupervisor) Stats() Stats {
 
 func (s *baseSupervisor) TogglePause() {
 	if s.bot.ctx.ExecutionPriority == ct.PriorityPause {
-		s.bot.ctx.SwitchPriority(ct.PriorityNormal)
 		s.bot.ctx.MemoryInjector.Load()
+		s.bot.ctx.SwitchPriority(ct.PriorityNormal)
 		s.bot.ctx.Logger.Info("Resuming...", slog.String("configuration", s.name))
 		event.Send(event.GamePaused(event.Text(s.name, "Game resumed"), false))
 		return

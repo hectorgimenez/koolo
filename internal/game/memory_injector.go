@@ -16,6 +16,7 @@ import (
 const fullAccess = windows.PROCESS_VM_OPERATION | windows.PROCESS_VM_WRITE | windows.PROCESS_VM_READ
 
 type MemoryInjector struct {
+	isLoaded              bool
 	pid                   uint32
 	handle                windows.Handle
 	getCursorPosAddr      uintptr
@@ -40,6 +41,10 @@ func InjectorInit(logger *slog.Logger, pid uint32) (*MemoryInjector, error) {
 }
 
 func (i *MemoryInjector) Load() error {
+	if i.isLoaded {
+		return nil
+	}
+
 	modules, err := memory.GetProcessModules(i.pid)
 	if err != nil {
 		return fmt.Errorf("error getting process modules: %w", err)
@@ -80,6 +85,7 @@ func (i *MemoryInjector) Load() error {
 		return errors.New("could not find GetCursorPos address")
 	}
 
+	i.isLoaded = true
 	return nil
 }
 
@@ -92,15 +98,24 @@ func (i *MemoryInjector) Unload() error {
 }
 
 func (i *MemoryInjector) RestoreMemory() error {
+	if !i.isLoaded {
+		return nil
+	}
+
+	i.isLoaded = false
 	err := i.RestoreGetCursorPosAddr()
 	if err != nil {
-		i.logger.Error("error restoring memory", err)
+		return fmt.Errorf("error restoring memory: %v", err)
 	}
 
 	return i.RestoreGetKeyState()
 }
 
 func (i *MemoryInjector) CursorPos(x, y int) error {
+	if !i.isLoaded {
+		return nil
+	}
+
 	/*
 		push rax
 		mov rax, rcx
@@ -123,6 +138,10 @@ func (i *MemoryInjector) CursorPos(x, y int) error {
 }
 
 func (i *MemoryInjector) OverrideGetKeyState(key byte) error {
+	if !i.isLoaded {
+		return nil
+	}
+
 	/*
 		cmp rcx, 0x12
 		mov rax, 0x8000
