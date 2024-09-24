@@ -106,6 +106,11 @@ func (ctx *Context) SwitchPriority(priority Priority) {
 }
 
 func (s *Status) PauseIfNotPriority() {
+	// This prevents bot from trying to move when loading screen is shown.
+	if s.Data.OpenMenus.LoadingScreen {
+		time.Sleep(time.Millisecond * 5)
+	}
+
 	for s.Priority != s.ExecutionPriority {
 		if s.ExecutionPriority == PriorityStop {
 			panic("Bot is stopped")
