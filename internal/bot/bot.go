@@ -110,6 +110,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
+				action.SwitchToLegacyMode()
 				action.ItemPickup(30)
 				action.BuffIfRequired()
 
