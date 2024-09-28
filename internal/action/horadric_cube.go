@@ -47,9 +47,9 @@ func CubeAddItems(items ...data.Item) error {
 		// Check in which tab the item is and switch to it
 		switch nwIt.Location.LocationType {
 		case item.LocationStash:
-			switchTab(1)
+			SwitchStashTab(1)
 		case item.LocationSharedStash:
-			switchTab(nwIt.Location.Page + 1)
+			SwitchStashTab(nwIt.Location.Page + 1)
 		}
 
 		ctx.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
@@ -121,7 +121,7 @@ func ensureCubeIsOpen(cube data.Item) error {
 	ctx.Logger.Debug("Opening Horadric Cube...")
 
 	// Switch to the tab
-	switchTab(cube.Location.Page + 1)
+	SwitchStashTab(cube.Location.Page + 1)
 
 	screenPos := ui.GetScreenCoordsForItem(cube)
 

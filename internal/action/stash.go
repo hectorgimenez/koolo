@@ -1,6 +1,7 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -17,6 +18,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/lxn/win"
 )
 
 const (
@@ -116,7 +118,7 @@ func stashGold() {
 		}
 
 		if goldInStash < maxGoldPerStashTab {
-			switchTab(tab + 1)
+			SwitchStashTab(tab + 1)
 			clickStashGoldBtn()
 			utils.Sleep(500)
 		}
@@ -133,7 +135,7 @@ func stashInventory(firstRun bool) {
 	if ctx.CharacterCfg.Character.StashToShared {
 		currentTab = 2
 	}
-	switchTab(currentTab)
+	SwitchStashTab(currentTab)
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		stashIt, matchedRule, ruleFile := shouldStashIt(i, firstRun)
@@ -165,7 +167,7 @@ func stashInventory(firstRun bool) {
 			}
 			ctx.Logger.Debug(fmt.Sprintf("Tab %d is full, switching to next one", currentTab))
 			currentTab++
-			switchTab(currentTab)
+			SwitchStashTab(currentTab)
 		}
 	}
 }
@@ -298,7 +300,7 @@ func clickStashGoldBtn() {
 	}
 }
 
-func switchTab(tab int) {
+func SwitchStashTab(tab int) {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "switchTab"
 
@@ -319,4 +321,66 @@ func switchTab(tab int) {
 		ctx.HID.Click(game.LeftButton, x, y)
 		utils.Sleep(500)
 	}
+}
+
+func OpenStash() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "OpenStash"
+
+	bank, found := ctx.Data.Objects.FindOne(object.Bank)
+	if !found {
+		return errors.New("stash not found")
+	}
+	InteractObject(bank,
+		func() bool {
+			return ctx.Data.OpenMenus.Stash
+		},
+	)
+
+	return nil
+}
+
+func CloseStash() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "CloseStash"
+
+	if ctx.Data.OpenMenus.Stash {
+		ctx.HID.PressKey(win.VK_ESCAPE)
+	} else {
+		return errors.New("stash is not open")
+	}
+
+	return nil
+}
+
+func TakeItemsFromStash(stashedItems []data.Item) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "TakeItemsFromStash"
+
+	if ctx.Data.OpenMenus.Stash {
+		err := OpenStash()
+		if err != nil {
+			return err
+		}
+	}
+
+	utils.Sleep(250)
+
+	for _, i := range stashedItems {
+
+		if i.Location.LocationType != item.LocationStash && i.Location.LocationType != item.LocationSharedStash {
+			continue
+		}
+
+		// Make sure we're on the correct tab
+		SwitchStashTab(i.Location.Page + 1)
+
+		// Move the item to the inventory
+		screenPos := ui.GetScreenCoordsForItem(i)
+		ctx.HID.MovePointer(screenPos.X, screenPos.Y)
+		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		utils.Sleep(500)
+	}
+
+	return nil
 }
