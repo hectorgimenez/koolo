@@ -41,7 +41,7 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 	}
 
-	switchTab(4)
+	SwitchStashTab(4)
 	ctx.RefreshGameData()
 	town.BuyConsumables(forceRefill)
 
@@ -69,7 +69,7 @@ func BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) error {
 	}
 
 	for _, i := range items {
-		switchTab(i.Tab)
+		SwitchStashTab(i.Tab)
 		itm, found := ctx.Data.Inventory.Find(i.Item, item.LocationVendor)
 		if found {
 			town.BuyItem(itm, i.Quantity)
