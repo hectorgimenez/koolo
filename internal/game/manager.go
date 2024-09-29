@@ -217,11 +217,40 @@ func StartGame(username string, password string, authmethod string, authToken st
 	// Parse the provided additional arguments
 	additionalArguments := strings.Fields(arguments)
 
+	// Let's use the mod directory for storing the settings, so we stop overwriting the default config
+	if useCustomSettings {
+		modName := "koolo"
+		found := false
+		for i, arg := range additionalArguments {
+			if arg == "-mod" {
+				modName = additionalArguments[i+1]
+				found = true
+				break
+			}
+		}
+		if !found {
+			additionalArguments = append(additionalArguments, "-mod", modName)
+		}
+
+		// If there is no real mod, let's create a fake mod called "koolo" so we can store our own config
+		if modName == "koolo" {
+			err = config.InstallMod()
+			if err != nil {
+				return 0, 0, err
+			}
+		}
+
+		// Replace game mod settings with the custom ones
+		err = config.ReplaceGameSettings(modName)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
 	// Add them to the full argument list
 	fullArgs := append(baseArgs, additionalArguments...)
 
 	if authmethod == "TokenAuth" {
-
 		// Entropy buffer
 		entropy := []byte{0xc8, 0x76, 0xf4, 0xae, 0x4c, 0x95, 0x2e, 0xfe, 0xf2, 0xfa, 0x0f, 0x54, 0x19, 0xc0, 0x9c, 0x43}
 		tokenBytes := []byte(authToken)
@@ -266,14 +295,6 @@ func StartGame(username string, password string, authmethod string, authToken st
 
 	// Start the game
 	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", fullArgs...)
-
-	if useCustomSettings {
-		err = config.ReplaceGameSettings()
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-
 	err = cmd.Start()
 	if err != nil {
 		return 0, 0, err
