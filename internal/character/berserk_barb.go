@@ -22,8 +22,13 @@ type Berserker struct {
 	isKillingCouncil atomic.Bool
 }
 
+const (
+	maxHorkRange = 40
+	meleeRange   = 5
+)
+
 func (s *Berserker) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem, skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -47,16 +52,13 @@ func (s *Berserker) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
-	attackAttempts := 0
-	maxAttackAttempts := 5
-	const maxRange = 30
+	const maxAttackAttempts = 20
 
-	for {
+	for attackAttempts := 0; attackAttempts < maxAttackAttempts; attackAttempts++ {
 		id, found := monsterSelector(*s.data)
 		if !found {
-			// If no monsters are found and we're not killing council, attempt to hork
 			if !s.isKillingCouncil.Load() {
-				s.FindItemOnNearbyCorpses(maxRange)
+				s.FindItemOnNearbyCorpses(maxHorkRange)
 			}
 			return nil
 		}
@@ -66,43 +68,42 @@ func (s *Berserker) KillMonsterSequence(
 		}
 
 		monster, monsterFound := s.data.Monsters.FindByID(id)
-		if !monsterFound {
-			return nil
-		}
-
-		opts := []step.AttackOption{step.Distance(1, maxRange)}
-
-		if attackAttempts >= maxAttackAttempts {
-			return nil
-		}
-
-		err := step.MoveTo(monster.Position)
-		if err != nil {
-			s.logger.Warn("Failed to move to monster", slog.String("error", err.Error()))
+		if !monsterFound || monster.Stats[stat.Life] <= 0 {
 			continue
 		}
 
-		err = step.PrimaryAttack(id, 1, false, opts...)
-		if err != nil {
-			s.logger.Warn("Failed to attack monster", slog.String("error", err.Error()))
+		distance := s.pf.DistanceFromMe(monster.Position)
+		if distance > meleeRange {
+			err := step.MoveTo(monster.Position)
+			if err != nil {
+				s.logger.Warn("Failed to move to monster", slog.String("error", err.Error()))
+				continue
+			}
 		}
 
-		attackAttempts++
+		s.PerformBerserkAttack(monster.UnitID)
+		time.Sleep(50 * time.Millisecond) // Small delay between attacks
 	}
+
+	return nil
 }
 
-/*  killAndHork  for later use  like
-func (s *Berserker) KillPindle() error {
-    return s.killAndHork(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}*/
-
-func (s *Berserker) killAndHork(npc npc.ID, t data.MonsterType) error {
-	err := s.killMonster(npc, t)
-	if err != nil {
-		return err
+func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
+	ctx := context.Get()
+	monster, found := s.data.Monsters.FindByID(monsterID)
+	if !found {
+		return
 	}
-	s.FindItemOnNearbyCorpses(30)
-	return action.ItemPickup(30)
+
+	// Ensure Berserk skill is active
+	berserkKey, found := s.data.KeyBindings.KeyBindingForSkill(skill.Berserk)
+	if found && s.data.PlayerUnit.RightSkill != skill.Berserk {
+		ctx.HID.PressKeyBinding(berserkKey)
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
+	ctx.HID.Click(game.LeftButton, screenX, screenY)
 }
 
 func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
@@ -134,8 +135,10 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 		ctx.HID.Click(game.RightButton, screenX, screenY)
 		s.logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
 
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 300)
 	}
+
+	//action.ItemPickup(maxRange)
 }
 
 func (s *Berserker) getSortedHorkableCorpses(corpses data.Monsters, playerPos data.Position, maxRange int) []data.Monster {
@@ -268,8 +271,8 @@ func (s *Berserker) KillCouncil() error {
 	}
 
 	// Then, hork corpses and pickup items
-	s.FindItemOnNearbyCorpses(30)
-	return action.ItemPickup(30)
+	s.FindItemOnNearbyCorpses(maxHorkRange)
+	return action.ItemPickup(maxHorkRange)
 
 }
 

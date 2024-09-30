@@ -48,6 +48,16 @@ func Telestomp() AttackOption {
 }
 
 func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts ...AttackOption) error {
+	ctx := context.Get()
+
+	// Special case for Berserker
+	if berserker, ok := ctx.Char.(interface{ PerformBerserkAttack(data.UnitID) }); ok {
+		for i := 0; i < numOfAttacks; i++ {
+			berserker.PerformBerserkAttack(target)
+		}
+		return nil
+	}
+
 	settings := attackSettings{
 		target:           target,
 		numOfAttacks:     numOfAttacks,
