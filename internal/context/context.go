@@ -119,3 +119,9 @@ func (s *Status) PauseIfNotPriority() {
 		time.Sleep(time.Millisecond * 10)
 	}
 }
+func (ctx *Context) WaitForGameToLoad() {
+	for ctx.Data.OpenMenus.LoadingScreen {
+		ctx.RefreshGameData()
+		time.Sleep(100 * time.Millisecond)
+	}
+}
