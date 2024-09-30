@@ -28,7 +28,7 @@ const (
 )
 
 func (s *Berserker) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem}
+	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem, skill.Berserk}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
