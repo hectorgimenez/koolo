@@ -1,6 +1,8 @@
 package character
 
 import (
+	"errors"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"sort"
@@ -26,6 +28,8 @@ const (
 	maxHorkRange = 40
 	meleeRange   = 5
 )
+
+var ErrNotInTravincal = errors.New("not in Travincal")
 
 func (s *Berserker) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem, skill.Berserk}
@@ -264,10 +268,19 @@ func (s *Berserker) KillCouncil() error {
 	s.isKillingCouncil.Store(true)
 	defer s.isKillingCouncil.Store(false)
 
-	// First, kill all council members
-	err := s.killAllCouncilMembers()
-	if err != nil {
-		return err
+	for {
+		err := s.killAllCouncilMembers()
+		if err != nil {
+			if err == ErrNotInTravincal {
+				s.logger.Info("Not in Travincal during Council kill, moving back")
+				if moveErr := action.MoveToArea(area.Travincal); moveErr != nil {
+					return moveErr
+				}
+				continue // Retry the Council kill after moving back to Travincal
+			}
+			return err
+		}
+		break // Exit the loop if killAllCouncilMembers completes without error
 	}
 
 	// Wait for corpses to settle
@@ -275,6 +288,10 @@ func (s *Berserker) KillCouncil() error {
 
 	// Perform horking in two passes
 	for i := 0; i < 2; i++ {
+		if err := s.ensureInTravincal(); err != nil {
+			return err
+		}
+
 		s.FindItemOnNearbyCorpses(maxHorkRange)
 
 		// Wait between passes
@@ -288,7 +305,7 @@ func (s *Berserker) KillCouncil() error {
 	time.Sleep(500 * time.Millisecond)
 
 	// Final item pickup
-	err = action.ItemPickup(maxHorkRange)
+	err := action.ItemPickup(maxHorkRange)
 	if err != nil {
 		s.logger.Warn("Error during final item pickup after horking", "error", err)
 		return err
@@ -302,6 +319,10 @@ func (s *Berserker) KillCouncil() error {
 
 func (s *Berserker) killAllCouncilMembers() error {
 	for {
+		if err := s.ensureInTravincal(); err != nil {
+			return ErrNotInTravincal
+		}
+
 		if !s.anyCouncilMemberAlive() {
 			return nil
 		}
@@ -316,6 +337,11 @@ func (s *Berserker) killAllCouncilMembers() error {
 		}, nil)
 
 		if err != nil {
+			// Check if we're still in Travincal after the attack sequence
+			if checkErr := s.ensureInTravincal(); checkErr != nil {
+				return ErrNotInTravincal
+			}
+			// If we're still in Travincal, return the original error
 			return err
 		}
 	}
@@ -328,6 +354,13 @@ func (s *Berserker) anyCouncilMemberAlive() bool {
 		}
 	}
 	return false
+}
+func (s *Berserker) ensureInTravincal() error {
+	ctx := context.Get()
+	if ctx.Data.PlayerUnit.Area != area.Travincal {
+		return ErrNotInTravincal
+	}
+	return nil
 }
 
 func (s *Berserker) KillIzual() error {
