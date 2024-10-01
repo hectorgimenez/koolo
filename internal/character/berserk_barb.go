@@ -1,6 +1,8 @@
 package character
 
 import (
+	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"sort"
@@ -135,10 +137,10 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 		ctx.HID.Click(game.RightButton, screenX, screenY)
 		s.logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
 
+		// Wait a moment after each hork
 		time.Sleep(time.Millisecond * 300)
 	}
 
-	//action.ItemPickup(maxRange)
 }
 
 func (s *Berserker) getSortedHorkableCorpses(corpses data.Monsters, playerPos data.Position, maxRange int) []data.Monster {
@@ -265,15 +267,47 @@ func (s *Berserker) KillCouncil() error {
 	defer s.isKillingCouncil.Store(false)
 
 	// First, kill all council members
-	err := s.killAllCouncilMembers()
+	err := s.ensureInTravincal(s.killAllCouncilMembers)
 	if err != nil {
 		return err
 	}
 
-	// Then, hork corpses and pickup items
-	s.FindItemOnNearbyCorpses(maxHorkRange)
-	return action.ItemPickup(maxHorkRange)
+	// Wait for corpses to settle
+	time.Sleep(500 * time.Millisecond)
 
+	// Perform horking in two passes
+	for i := 0; i < 2; i++ {
+		err := s.ensureInTravincal(func() error {
+			s.FindItemOnNearbyCorpses(maxHorkRange)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		// Wait between passes
+		time.Sleep(300 * time.Millisecond)
+
+		// Refresh game data to catch any new corpses
+		context.Get().RefreshGameData()
+	}
+
+	// Final wait for items to drop
+	time.Sleep(500 * time.Millisecond)
+
+	// Final item pickup
+	err = s.ensureInTravincal(func() error {
+		return action.ItemPickup(maxHorkRange)
+	})
+	if err != nil {
+		s.logger.Warn("Error during final item pickup after horking", "error", err)
+		return err
+	}
+
+	// Wait a moment to ensure all items are picked up
+	time.Sleep(300 * time.Millisecond)
+
+	return nil
 }
 
 func (s *Berserker) killAllCouncilMembers() error {
@@ -304,6 +338,33 @@ func (s *Berserker) anyCouncilMemberAlive() bool {
 		}
 	}
 	return false
+}
+func (s *Berserker) ensureInTravincal(action func() error) error {
+	ctx := context.Get()
+
+	err := action()
+
+	if ctx.Data.PlayerUnit.Area == area.DuranceOfHateLevel1 {
+		s.logger.Warn("Accidentally entered Durance of Hate, returning to Travincal")
+		return s.returnToTravincal()
+	}
+
+	return err
+}
+func (s *Berserker) returnToTravincal() error {
+	ctx := context.Get()
+
+	if ctx.Data.PlayerUnit.Area != area.DuranceOfHateLevel1 {
+		return fmt.Errorf("not in Durance of Hate Level 1, current area: %s", ctx.Data.PlayerUnit.Area)
+	}
+
+	err := action.MoveToArea(area.Travincal)
+	if err != nil {
+		return fmt.Errorf("failed to move to Travincal: %w", err)
+	}
+
+	s.logger.Info("Successfully returned to Travincal")
+	return nil
 }
 
 func (s *Berserker) KillIzual() error {

@@ -124,4 +124,6 @@ func (ctx *Context) WaitForGameToLoad() {
 		ctx.RefreshGameData()
 		time.Sleep(100 * time.Millisecond)
 	}
+	// Add a small buffer to ensure everything is fully loaded
+	time.Sleep(300 * time.Millisecond)
 }

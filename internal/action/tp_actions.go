@@ -49,16 +49,23 @@ func UsePortalFrom(owner string) error {
 
 	for _, obj := range ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == owner {
-			return InteractObjectByID(obj.ID, func() bool {
+			err := InteractObjectByID(obj.ID, func() bool {
 				if !ctx.Data.PlayerUnit.Area.IsTown() {
 					utils.Sleep(500)
 					return true
 				}
-
 				return false
 			})
+
+			if err == nil {
+				// Perform actions after re-entering the game area
+				ItemPickup(30)   // Pick up items in the immediate area
+				BuffIfRequired() // Reapply buffs if needed
+			}
+
+			return err
 		}
 	}
 
-	return nil
+	return errors.New("portal not found")
 }
