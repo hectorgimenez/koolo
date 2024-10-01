@@ -3,7 +3,6 @@ package bot
 import (
 	"context"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/character"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
