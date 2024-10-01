@@ -168,8 +168,7 @@ func gambleItems() error {
 				}
 			}
 
-			_, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought)
-			if result == nip.RuleResultFullMatch {
+			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought); result == nip.RuleResultFullMatch {
 				ctx.Logger.Info("Found item matching NIP rules, keeping", slog.Any("item", itemBought))
 				lastStep = true
 			} else {
@@ -198,7 +197,7 @@ func gambleItems() error {
 			itm, found := ctx.Data.Inventory.Find(itmName, item.LocationVendor)
 			if !found {
 				ctx.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
-				refreshGamblingWindow(ctx)
+				RefreshGamblingWindow(ctx)
 				utils.Sleep(500)
 				break // Exit the inner loop to re-check inventory after refresh
 			}
@@ -210,7 +209,8 @@ func gambleItems() error {
 		}
 	}
 }
-func refreshGamblingWindow(ctx *context.Status) {
+
+func RefreshGamblingWindow(ctx *context.Status) {
 	if ctx.Data.LegacyGraphics {
 		ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
 	} else {
