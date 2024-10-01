@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/character"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -37,6 +38,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		return err
 	}
 
+	b.ctx.WaitForGameToLoad()
+
+	// Switch to legacy mode if configured
+	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
 
 	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
@@ -109,8 +114,13 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					continue
 				}
 
+				if b.ctx.CharacterCfg.ClassicMode && !b.ctx.Data.LegacyGraphics {
+					action.SwitchToLegacyMode()
+					b.ctx.RefreshGameData()
+				}
+
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
-				action.SwitchToLegacyMode()
+			
 				action.ItemPickup(30)
 				action.BuffIfRequired()
 
