@@ -156,7 +156,6 @@ func gambleItems() error {
 		if lastStep {
 			utils.Sleep(200)
 			ctx.Logger.Info("Finished gambling", slog.Int("currentGold", ctx.Data.PlayerUnit.TotalPlayerGold()))
-
 			return step.CloseAllMenus()
 		}
 
@@ -169,14 +168,16 @@ func gambleItems() error {
 				}
 			}
 
-			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought); result == nip.RuleResultFullMatch {
+			_, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought)
+			if result == nip.RuleResultFullMatch {
+				ctx.Logger.Info("Found item matching NIP rules, keeping", slog.Any("item", itemBought))
 				lastStep = true
-
 			} else {
 				// Filter not pass, selling the item
+				ctx.Logger.Debug("Item doesn't match NIP rules, selling", slog.Any("item", itemBought))
 				town.SellItem(itemBought)
-				itemBought = data.Item{}
 			}
+			itemBought = data.Item{} // Reset itemBought after processing
 			continue
 		}
 
@@ -186,7 +187,6 @@ func gambleItems() error {
 		}
 
 		for idx, itmName := range ctx.Data.CharacterCfg.Gambling.Items {
-			// Let's try to get one of each every time
 			if currentIdx == len(ctx.CharacterCfg.Gambling.Items) {
 				currentIdx = 0
 			}
@@ -198,20 +198,22 @@ func gambleItems() error {
 			itm, found := ctx.Data.Inventory.Find(itmName, item.LocationVendor)
 			if !found {
 				ctx.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
-
-				if ctx.Data.LegacyGraphics {
-					ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
-				} else {
-					ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
-				}
-
+				refreshGamblingWindow(ctx)
 				utils.Sleep(500)
-				continue
+				break // Exit the inner loop to re-check inventory after refresh
 			}
 
 			town.BuyItem(itm, 1)
 			itemBought = itm
 			currentIdx++
+			break // Exit the inner loop after buying an item
 		}
+	}
+}
+func refreshGamblingWindow(ctx *context.Status) {
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
+	} else {
+		ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
 	}
 }
