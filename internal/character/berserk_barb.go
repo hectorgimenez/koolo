@@ -1,8 +1,6 @@
 package character
 
 import (
-	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"sort"
@@ -267,7 +265,7 @@ func (s *Berserker) KillCouncil() error {
 	defer s.isKillingCouncil.Store(false)
 
 	// First, kill all council members
-	err := s.ensureInTravincal(s.killAllCouncilMembers)
+	err := s.killAllCouncilMembers()
 	if err != nil {
 		return err
 	}
@@ -277,13 +275,7 @@ func (s *Berserker) KillCouncil() error {
 
 	// Perform horking in two passes
 	for i := 0; i < 2; i++ {
-		err := s.ensureInTravincal(func() error {
-			s.FindItemOnNearbyCorpses(maxHorkRange)
-			return nil
-		})
-		if err != nil {
-			return err
-		}
+		s.FindItemOnNearbyCorpses(maxHorkRange)
 
 		// Wait between passes
 		time.Sleep(300 * time.Millisecond)
@@ -296,9 +288,7 @@ func (s *Berserker) KillCouncil() error {
 	time.Sleep(500 * time.Millisecond)
 
 	// Final item pickup
-	err = s.ensureInTravincal(func() error {
-		return action.ItemPickup(maxHorkRange)
-	})
+	err = action.ItemPickup(maxHorkRange)
 	if err != nil {
 		s.logger.Warn("Error during final item pickup after horking", "error", err)
 		return err
@@ -338,33 +328,6 @@ func (s *Berserker) anyCouncilMemberAlive() bool {
 		}
 	}
 	return false
-}
-func (s *Berserker) ensureInTravincal(action func() error) error {
-	ctx := context.Get()
-
-	err := action()
-
-	if ctx.Data.PlayerUnit.Area == area.DuranceOfHateLevel1 {
-		s.logger.Warn("Accidentally entered Durance of Hate, returning to Travincal")
-		return s.returnToTravincal()
-	}
-
-	return err
-}
-func (s *Berserker) returnToTravincal() error {
-	ctx := context.Get()
-
-	if ctx.Data.PlayerUnit.Area != area.DuranceOfHateLevel1 {
-		return fmt.Errorf("not in Durance of Hate Level 1, current area: %s", ctx.Data.PlayerUnit.Area)
-	}
-
-	err := action.MoveToArea(area.Travincal)
-	if err != nil {
-		return fmt.Errorf("failed to move to Travincal: %w", err)
-	}
-
-	s.logger.Info("Successfully returned to Travincal")
-	return nil
 }
 
 func (s *Berserker) KillIzual() error {

@@ -59,8 +59,7 @@ func UsePortalFrom(owner string) error {
 
 			if err == nil {
 				// Perform actions after re-entering the game area
-				ItemPickup(30)   // Pick up items in the immediate area
-				BuffIfRequired() // Reapply buffs if needed
+
 			}
 
 			return err
