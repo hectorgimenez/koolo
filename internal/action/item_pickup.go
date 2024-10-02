@@ -15,11 +15,36 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
+func itemFitsInventory(i data.Item) bool {
+	invMatrix := context.Get().Data.Inventory.Matrix()
+
+	for y := 0; y <= len(invMatrix)-i.Desc().InventoryHeight; y++ {
+		for x := 0; x <= len(invMatrix[0])-i.Desc().InventoryWidth; x++ {
+			freeSpace := true
+			for dy := 0; dy < i.Desc().InventoryHeight; dy++ {
+				for dx := 0; dx < i.Desc().InventoryWidth; dx++ {
+					if invMatrix[y+dy][x+dx] {
+						freeSpace = false
+						break
+					}
+				}
+				if !freeSpace {
+					break
+				}
+			}
+
+			if freeSpace {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ItemPickup"
-
-	var itemBeingPickedUp data.UnitID
 
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
@@ -27,12 +52,23 @@ func ItemPickup(maxDistance int) error {
 			return nil
 		}
 
-		i := itemsToPickup[0]
+		itemToPickup := data.Item{}
+		for _, i := range itemsToPickup {
+			if itemFitsInventory(i) {
+				itemToPickup = i
+				break
+			}
+		}
+
+		if itemToPickup.UnitID == 0 {
+			ctx.Logger.Debug("Inventory is full, returning to town to sell junk and stash items")
+			InRunReturnTownRoutine()
+			continue
+		}
 
 		for _, m := range ctx.Data.Monsters.Enemies() {
-			if _, dist, _ := ctx.PathFinder.GetPathFrom(i.Position, m.Position); dist <= 3 {
+			if _, dist, _ := ctx.PathFinder.GetPathFrom(itemToPickup.Position, m.Position); dist <= 3 {
 				ctx.Logger.Debug("Monsters detected close to the item being picked up, killing them...", slog.Any("monster", m))
-				itemBeingPickedUp = -1
 				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 					return m.UnitID, true
 				}, nil)
@@ -40,36 +76,27 @@ func ItemPickup(maxDistance int) error {
 			}
 		}
 
-		// Error picking up Item, go back to town, sell junk, stash and try again.
-		if itemBeingPickedUp == i.UnitID {
-			ctx.Logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
-			itemBeingPickedUp = -1
-			InRunReturnTownRoutine()
-			continue
-		}
-
 		ctx.Logger.Debug(fmt.Sprintf(
 			"Item Detected: %s [%d] at X:%d Y:%d",
-			i.Name,
-			i.Quality,
-			i.Position.X,
-			i.Position.Y,
+			itemToPickup.Name,
+			itemToPickup.Quality,
+			itemToPickup.Position.X,
+			itemToPickup.Position.Y,
 		))
 
-		itemBeingPickedUp = i.UnitID
-		err := MoveToCoords(i.Position)
+		err := MoveToCoords(itemToPickup.Position)
 		if err != nil {
 			ctx.Logger.Warn("Failed moving closer to item, trying to pickup it anyway", err)
 		}
 
-		// TODO Handle proper error & multiple items and blacklist
-		err = step.PickupItem(i)
+		err = step.PickupItem(itemToPickup)
 		if err != nil {
+			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
 			ctx.Logger.Warn(
-				"Failed picking up item, skipping",
+				"Failed picking up item, blacklisting it",
 				err.Error(),
-				slog.String("itemName", i.Desc().Name),
-				slog.Int("unitID", int(i.UnitID)),
+				slog.String("itemName", itemToPickup.Desc().Name),
+				slog.Int("unitID", int(itemToPickup.UnitID)),
 			)
 		}
 	}
@@ -120,6 +147,15 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 
 		if !itm.IsPotion() {
 			itemsToPickup = append(itemsToPickup, itm)
+		}
+	}
+
+	// Remove blacklisted items from the list, we don't want to pick them up
+	for i, itm := range itemsToPickup {
+		for _, k := range ctx.CurrentGame.BlacklistedItems {
+			if itm.UnitID == k.UnitID {
+				itemsToPickup = append(itemsToPickup[:i], itemsToPickup[i+1:]...)
+			}
 		}
 	}
 

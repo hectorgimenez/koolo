@@ -7,7 +7,7 @@ require (
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/hectorgimenez/d2go v0.0.0-20240914141007-8239f1bbe464
+	github.com/hectorgimenez/d2go v0.0.0-20241002141317-ab7163d11146
 	github.com/inkeliz/gowebview v1.0.1
 	github.com/inkeliz/w32 v1.0.2
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e

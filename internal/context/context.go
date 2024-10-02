@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -50,11 +51,16 @@ type Context struct {
 	Char              Character
 	LastBuffAt        time.Time
 	ContextDebug      *Debug
+	CurrentGame       *CurrentGameHelper
 }
 
 type Debug struct {
 	LastAction string
 	LastStep   string
+}
+
+type CurrentGameHelper struct {
+	BlacklistedItems []data.Item
 }
 
 func NewContext(name string) *Status {
@@ -63,6 +69,7 @@ func NewContext(name string) *Status {
 		Data:              &game.Data{},
 		ExecutionPriority: PriorityNormal,
 		ContextDebug:      &Debug{},
+		CurrentGame:       &CurrentGameHelper{},
 	}
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 

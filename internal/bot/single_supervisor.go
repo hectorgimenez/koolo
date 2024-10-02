@@ -109,6 +109,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 
 			err = s.bot.Run(ctx, firstRun, runs)
+			firstRun = false
 			if err != nil {
 				if errors.Is(ctx.Err(), context.Canceled) {
 					continue
@@ -140,7 +141,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 				return errors.New(errMsg)
 			}
-			firstRun = false
 		}
 	}
 }

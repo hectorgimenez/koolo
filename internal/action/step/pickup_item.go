@@ -47,7 +47,7 @@ func PickupItem(it data.Item) error {
 		}
 
 		if mouseOverAttempts > maxInteractions || !waitingForInteraction.IsZero() && time.Since(waitingForInteraction) > time.Second*3 {
-			return fmt.Errorf("item %s [%s] could not be picked up", it.Desc().Name, it.Quality.ToString())
+			return fmt.Errorf("item %s [%s] could not be picked up: mouseover attempts limit reached", it.Desc().Name, it.Quality.ToString())
 		}
 
 		if time.Since(lastRun) < utils.RandomDurationMs(120, 320) {
@@ -68,9 +68,9 @@ func PickupItem(it data.Item) error {
 		ctx.HID.MovePointer(mX, mY)
 
 		// Refresh game data to update the item hover status
-		ctx.RefreshGameData()
 		mouseOverAttempts++
 		time.Sleep(time.Millisecond * 100)
+		ctx.RefreshGameData()
 
 		if it.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
@@ -88,7 +88,7 @@ func PickupItem(it data.Item) error {
 			distance := ctx.PathFinder.DistanceFromMe(it.Position)
 			if distance > 10 {
 				ctx.Logger.Info("item is too far away", slog.String("item", it.Desc().Name))
-				return fmt.Errorf("item is too far away: %s", it.Desc().Name)
+				return fmt.Errorf("item is too far away (%d): %s", distance, it.Desc().Name)
 			}
 
 			x, y := utils.Spiral(mouseOverAttempts)
