@@ -30,7 +30,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
-	b.ctx.SwitchPriority(botCtx.PriorityNormal) // Restore priority to normal, in case it was stopped in previous game
+	b.ctx.SwitchPriority(botCtx.PriorityNormal)     // Restore priority to normal, in case it was stopped in previous game
+	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{} // Reset current game helper structure
 
 	// Let's make sure we have updated game data before we start the runs
 	err := b.ctx.GameReader.FetchMapData()
@@ -38,11 +39,13 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		return err
 	}
 
+
 	b.ctx.WaitForGameToLoad()
 
 	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
+
 
 	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
 	g.Go(func() error {
