@@ -56,7 +56,7 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 	case "javazon":
 		return Javazon{BaseCharacter: bc}, nil
 	case "berserker":
-		return Berserker{BaseCharacter: bc}, nil
+		return &Berserker{BaseCharacter: bc}, nil // Return a pointer to Berserker
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", cfg.Character.Class)

@@ -23,10 +23,16 @@ func (s Council) Name() string {
 }
 
 func (s Council) Run() error {
-	err := action.WayPoint(area.Travincal) // Moving to starting point (Travincal)
+	err := action.WayPoint(area.Travincal)
 	if err != nil {
 		return err
 	}
+
+	// Wait for the game to fully load
+	s.ctx.WaitForGameToLoad()
+
+	// Buff after ensuring we're in Travincal
+	action.Buff()
 
 	for _, al := range s.ctx.Data.AdjacentLevels {
 		if al.Area == area.DuranceOfHateLevel1 {
