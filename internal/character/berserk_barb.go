@@ -25,8 +25,9 @@ type Berserker struct {
 }
 
 const (
-	maxHorkRange = 40
-	meleeRange   = 5
+	maxHorkRange      = 40
+	meleeRange        = 5
+	maxAttackAttempts = 20
 )
 
 var ErrNotInTravincal = errors.New("not in Travincal")
@@ -56,7 +57,6 @@ func (s *Berserker) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
-	const maxAttackAttempts = 20
 
 	for attackAttempts := 0; attackAttempts < maxAttackAttempts; attackAttempts++ {
 		id, found := monsterSelector(*s.data)
@@ -86,7 +86,7 @@ func (s *Berserker) KillMonsterSequence(
 		}
 
 		s.PerformBerserkAttack(monster.UnitID)
-		time.Sleep(50 * time.Millisecond) // Small delay between attacks
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	return nil
@@ -139,7 +139,6 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 		ctx.HID.Click(game.RightButton, screenX, screenY)
 		s.logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
 
-		// Wait a moment after each hork
 		time.Sleep(time.Millisecond * 300)
 	}
 
@@ -189,7 +188,39 @@ func (s *Berserker) getOptimalClickPosition(corpse data.Monster) data.Position {
 	return data.Position{X: corpse.Position.X, Y: corpse.Position.Y + 1}
 }
 
+/*
+todo need to define wich weapon slot I/II is primary/secondary before using that function
+func (s *Berserker) swapToWeaponSlot(slot int) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "swapToWeaponSlot"
+
+	currentSlot := "primary"
+	if !s.isOnWeaponSlotOne() {
+		currentSlot = "secondary"
+	}
+
+	ctx.Logger.Debug("Attempting weapon swap",
+		slog.Int("targetSlot", slot),
+		slog.String("currentSlot", currentSlot))
+
+	if (slot == 1 && s.isOnWeaponSlotOne()) || (slot == 2 && !s.isOnWeaponSlotOne()) {
+		ctx.Logger.Debug("Already on correct weapon slot", slog.Int("slot", slot))
+		return nil
+	}
+
+	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+	time.Sleep(100 * time.Millisecond)
+
+	ctx.Logger.Debug("Weapon swap performed", slog.Int("toSlot", slot))
+	return nil
+}
+func (s *Berserker) isOnWeaponSlotOne() bool {
+
+
+}*/
+
 func (s *Berserker) BuffSkills() []skill.ID {
+
 	skillsList := make([]skill.ID, 0)
 	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.BattleCommand); found {
 		skillsList = append(skillsList, skill.BattleCommand)
@@ -267,7 +298,6 @@ func (s *Berserker) KillDiablo() error {
 func (s *Berserker) KillCouncil() error {
 	s.isKillingCouncil.Store(true)
 	defer s.isKillingCouncil.Store(false)
-
 	for {
 		err := s.killAllCouncilMembers()
 		if err != nil {
@@ -355,6 +385,8 @@ func (s *Berserker) anyCouncilMemberAlive() bool {
 	}
 	return false
 }
+
+// could be optimized it takes up to 15 second to get back in
 func (s *Berserker) ensureInTravincal() error {
 	ctx := context.Get()
 	if ctx.Data.PlayerUnit.Area != area.Travincal {

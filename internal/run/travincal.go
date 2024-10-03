@@ -29,7 +29,7 @@ func (s Council) Run() error {
 	}
 
 	// Wait for the game to fully load
-	s.waitForGameToLoad()
+	s.ctx.WaitForGameToLoad()
 
 	// Buff after ensuring we're in Travincal
 	action.Buff()
@@ -47,10 +47,4 @@ func (s Council) Run() error {
 	}
 
 	return s.ctx.Char.KillCouncil()
-}
-
-func (s Council) waitForGameToLoad() {
-	for s.ctx.Data.OpenMenus.LoadingScreen {
-		s.ctx.RefreshGameData()
-	}
 }
