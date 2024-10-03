@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -18,8 +19,18 @@ func MoveTo(dest data.Position) error {
 	defer func() {
 		if ctx.Data.CanTeleport() {
 			utils.Sleep(250)
-		} else {
-			utils.Sleep(500)
+			return
+		}
+
+		for {
+			switch ctx.Data.PlayerUnit.Mode {
+			case mode.Walking, mode.WalkingInTown:
+				utils.Sleep(100)
+				ctx.RefreshGameData()
+				continue
+			default:
+				return
+			}
 		}
 	}()
 
@@ -47,16 +58,7 @@ func MoveTo(dest data.Position) error {
 			}
 		}
 
-		distance := ctx.PathFinder.DistanceFromMe(dest)
-		if distance <= stopAtDistance {
-			// In case distance is lower, we double-check with the pathfinder and the full path instead of euclidean distance
-			_, distance, found := ctx.PathFinder.GetPath(dest)
-			if !found || distance <= stopAtDistance {
-				return nil
-			}
-		}
-
-		path, _, found := ctx.PathFinder.GetClosestWalkablePath(dest)
+		path, distance, found := ctx.PathFinder.GetPath(dest)
 		if !found {
 			if ctx.PathFinder.DistanceFromMe(dest) < stopAtDistance+5 {
 				return nil
@@ -65,10 +67,11 @@ func MoveTo(dest data.Position) error {
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
 
-		if found && len(path) <= stopAtDistance {
+		if distance <= stopAtDistance || len(path) <= stopAtDistance || len(path) == 0 {
 			return nil
 		}
 
+		// Exit on timeout
 		if timeout > 0 && time.Since(startedAt) > timeout {
 			return nil
 		}
@@ -79,14 +82,12 @@ func MoveTo(dest data.Position) error {
 			continue
 		}
 
+		// We skip the movement if we can teleport and the last movement time was less than the player cast duration
 		if ctx.Data.CanTeleport() && time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
 			continue
 		}
 
 		lastRun = time.Now()
-		if len(path) == 0 {
-			return nil
-		}
 
 		// If we are stuck in the same position, make a random movement and cross fingers
 		if previousPosition == ctx.Data.PlayerUnit.Position && !ctx.Data.CanTeleport() {

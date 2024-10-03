@@ -23,6 +23,7 @@ func WayPoint(dest area.ID) error {
 	}
 
 	if ctx.Data.PlayerUnit.Area == dest {
+		ctx.WaitForGameToLoad()
 		return nil
 	}
 

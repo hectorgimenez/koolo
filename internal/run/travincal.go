@@ -28,9 +28,6 @@ func (s Council) Run() error {
 		return err
 	}
 
-	// Wait for the game to fully load
-	s.ctx.WaitForGameToLoad()
-
 	// Buff after ensuring we're in Travincal
 	action.Buff()
 

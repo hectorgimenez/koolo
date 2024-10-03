@@ -128,8 +128,8 @@ func (s *Status) PauseIfNotPriority() {
 }
 func (ctx *Context) WaitForGameToLoad() {
 	for ctx.Data.OpenMenus.LoadingScreen {
-		ctx.RefreshGameData()
 		time.Sleep(100 * time.Millisecond)
+		ctx.RefreshGameData()
 	}
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)
