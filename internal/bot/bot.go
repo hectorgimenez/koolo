@@ -3,8 +3,9 @@ package bot
 import (
 	"context"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/character"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/character"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -39,13 +40,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		return err
 	}
 
-
 	b.ctx.WaitForGameToLoad()
 
 	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
-
 
 	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
 	g.Go(func() error {
@@ -107,7 +106,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		}()
 
 		b.ctx.AttachRoutine(botCtx.PriorityHigh)
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(time.Millisecond * 100)
 		for {
 			select {
 			case <-ctx.Done():
