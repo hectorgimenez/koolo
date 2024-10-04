@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -14,6 +15,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game/map_client"
 	"github.com/lxn/win"
+	"golang.org/x/sync/errgroup"
 )
 
 type MemoryReader struct {
@@ -65,34 +67,45 @@ func (gd *MemoryReader) FetchMapData() error {
 	}
 
 	areas := make(map[area.ID]AreaData)
+	var mu sync.Mutex
+	g := errgroup.Group{}
 	for _, lvl := range mapData {
-		cg := lvl.CollisionGrid()
-		resultGrid := make([][]CollisionType, lvl.Size.Height)
-		for i := range resultGrid {
-			resultGrid[i] = make([]CollisionType, lvl.Size.Width)
-		}
+		g.Go(func() error {
+			cg := lvl.CollisionGrid()
+			resultGrid := make([][]CollisionType, lvl.Size.Height)
+			for i := range resultGrid {
+				resultGrid[i] = make([]CollisionType, lvl.Size.Width)
+			}
 
-		for y := 0; y < lvl.Size.Height; y++ {
-			for x := 0; x < lvl.Size.Width; x++ {
-				if cg[y][x] {
-					resultGrid[y][x] = CollisionTypeWalkable
-				} else {
-					resultGrid[y][x] = CollisionTypeNonWalkable
+			for y := 0; y < lvl.Size.Height; y++ {
+				for x := 0; x < lvl.Size.Width; x++ {
+					if cg[y][x] {
+						resultGrid[y][x] = CollisionTypeWalkable
+					} else {
+						resultGrid[y][x] = CollisionTypeNonWalkable
+					}
 				}
 			}
-		}
 
-		npcs, exits, objects, rooms := lvl.NPCsExitsAndObjects()
-		areas[area.ID(lvl.ID)] = AreaData{
-			Area:           area.ID(lvl.ID),
-			Name:           lvl.Name,
-			NPCs:           npcs,
-			AdjacentLevels: exits,
-			Objects:        objects,
-			Rooms:          rooms,
-			Grid:           NewGrid(resultGrid, lvl.Offset.X, lvl.Offset.Y),
-		}
+			npcs, exits, objects, rooms := lvl.NPCsExitsAndObjects()
+			grid := NewGrid(resultGrid, lvl.Offset.X, lvl.Offset.Y)
+			mu.Lock()
+			areas[area.ID(lvl.ID)] = AreaData{
+				Area:           area.ID(lvl.ID),
+				Name:           lvl.Name,
+				NPCs:           npcs,
+				AdjacentLevels: exits,
+				Objects:        objects,
+				Rooms:          rooms,
+				Grid:           grid,
+			}
+			mu.Unlock()
+
+			return nil
+		})
 	}
+
+	_ = g.Wait()
 
 	gd.cachedMapData = areas
 	gd.logger.Debug("Fetch completed", slog.Int64("ms", time.Since(t).Milliseconds()))

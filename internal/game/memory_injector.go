@@ -91,7 +91,7 @@ func (i *MemoryInjector) Load() error {
 
 func (i *MemoryInjector) Unload() error {
 	if err := i.RestoreMemory(); err != nil {
-		i.logger.Error("error restoring memory", err)
+		i.logger.Error(fmt.Sprintf("error restoring memory: %v", err))
 	}
 
 	return windows.CloseHandle(i.handle)
