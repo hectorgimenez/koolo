@@ -17,14 +17,9 @@ func MoveTo(dest data.Position) error {
 
 	// This is to ensure we finished moving before returning
 	defer func() {
-		if ctx.Data.CanTeleport() {
-			utils.Sleep(250)
-			return
-		}
-
 		for {
 			switch ctx.Data.PlayerUnit.Mode {
-			case mode.Walking, mode.WalkingInTown:
+			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
 				utils.Sleep(100)
 				ctx.RefreshGameData()
 				continue

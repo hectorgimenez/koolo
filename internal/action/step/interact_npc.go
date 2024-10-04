@@ -37,7 +37,7 @@ func InteractNPC(npcID npc.ID) error {
 		}
 
 		// Give some time before retrying the interaction
-		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
+		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
 			continue
 		}
 

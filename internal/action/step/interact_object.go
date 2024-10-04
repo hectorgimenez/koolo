@@ -14,7 +14,6 @@ import (
 )
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
-	utils.Sleep(500)
 	maxInteractionAttempts := 10
 	interactionAttempts := 0
 	maxMouseOverAttempts := 20
@@ -48,7 +47,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.RefreshGameData()
 
 		// Give some time before retrying the interaction
-		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
+		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
 			continue
 		}
 

@@ -123,6 +123,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
 	for {
+		ctx.RefreshGameData()
 		to, found := toFunc()
 		if !found {
 			return nil

@@ -3,6 +3,7 @@ package action
 import (
 	"errors"
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"

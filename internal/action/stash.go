@@ -209,7 +209,7 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	}
 
 	rule, res := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i)
-	if res == nip.RuleResultFullMatch && doesExceedQuantity(i, rule) {
+	if res == nip.RuleResultFullMatch && doesExceedQuantity(rule) {
 		return false, "", ""
 	}
 

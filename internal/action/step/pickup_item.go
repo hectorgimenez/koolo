@@ -1,8 +1,8 @@
 package step
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -14,6 +14,8 @@ import (
 )
 
 const maxInteractions = 45
+
+var ErrItemTooFar = errors.New("item is too far away")
 
 func PickupItem(it data.Item) error {
 	ctx := context.Get()
@@ -87,8 +89,7 @@ func PickupItem(it data.Item) error {
 
 			distance := ctx.PathFinder.DistanceFromMe(it.Position)
 			if distance > 10 {
-				ctx.Logger.Info("item is too far away", slog.String("item", it.Desc().Name))
-				return fmt.Errorf("item is too far away (%d): %s", distance, it.Desc().Name)
+				return fmt.Errorf("%v (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
 			}
 
 			x, y := utils.Spiral(mouseOverAttempts)

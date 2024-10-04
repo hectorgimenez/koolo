@@ -1,6 +1,7 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -90,6 +91,10 @@ func ItemPickup(maxDistance int) error {
 		}
 
 		err = step.PickupItem(itemToPickup)
+		if errors.Is(err, step.ErrItemTooFar) {
+			ctx.Logger.Debug("Item is too far away, retrying...")
+			continue
+		}
 		if err != nil {
 			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
 			ctx.Logger.Warn(
@@ -220,7 +225,7 @@ func shouldBePickedUp(i data.Item) bool {
 		return true
 	}
 
-	exceedQuantity := doesExceedQuantity(i, matchedRule)
+	exceedQuantity := doesExceedQuantity(matchedRule)
 
 	return !exceedQuantity
 }

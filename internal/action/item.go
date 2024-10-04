@@ -12,7 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-func doesExceedQuantity(i data.Item, rule nip.Rule) bool {
+func doesExceedQuantity(rule nip.Rule) bool {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "doesExceedQuantity"
 
@@ -24,7 +24,6 @@ func doesExceedQuantity(i data.Item, rule nip.Rule) bool {
 	}
 
 	if maxQuantity == 0 {
-		ctx.Logger.Debug(fmt.Sprintf("Max quantity for %s item is 0, skipping further logic", i.Name))
 		return false
 	}
 
@@ -36,8 +35,6 @@ func doesExceedQuantity(i data.Item, rule nip.Rule) bool {
 			matchedItemsInStash += 1
 		}
 	}
-
-	ctx.Logger.Debug(fmt.Sprintf("For item %s found %d max quantity from pickit rule, number of items in the stash tabs %d", i.Name, maxQuantity, matchedItemsInStash))
 
 	return matchedItemsInStash >= maxQuantity
 }
