@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 var minChestDistanceFromBonfire = 25
@@ -85,6 +86,7 @@ func (run LowerKurastChests) Run() error {
 			if err != nil {
 				run.ctx.Logger.Warn("Failed interacting with chest: %v", err)
 			}
+			utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
 
 			// Remove the interacted chest from the list
 			chests = chests[1:]

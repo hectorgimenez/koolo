@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
@@ -39,6 +40,7 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 				if err != nil {
 					ctx.Logger.Warn("Failed interacting with chest: %v", err)
 				}
+				utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
 			}
 		}
 	}
