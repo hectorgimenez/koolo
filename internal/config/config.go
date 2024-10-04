@@ -101,11 +101,13 @@ type CharacterCfg struct {
 		BeltColumns   BeltColumns `yaml:"beltColumns"`
 	} `yaml:"inventory"`
 	Character struct {
-		Class         string `yaml:"class"`
-		UseMerc       bool   `yaml:"useMerc"`
-		StashToShared bool   `yaml:"stashToShared"`
-		UseTeleport   bool   `yaml:"useTeleport"`
+		Class          string `yaml:"class"`
+		UseMerc        bool   `yaml:"useMerc"`
+		StashToShared  bool   `yaml:"stashToShared"`
+		UseTeleport    bool   `yaml:"useTeleport"`
+		FindItemSwitch bool   `yaml:"find_item_switch"`
 	} `yaml:"character"`
+
 	Game struct {
 		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
 		ClearTPArea            bool                  `yaml:"clearTPArea"`

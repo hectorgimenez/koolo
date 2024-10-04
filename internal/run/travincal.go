@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/character"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -23,6 +24,11 @@ func (s Council) Name() string {
 }
 
 func (s Council) Run() error {
+	// Check if the character is a Berserker and swap to combat gear
+	if berserker, ok := s.ctx.Char.(*character.Berserker); ok {
+		berserker.SwapToSlot(0) // Swap to combat gear (lowest Gold Find)
+	}
+
 	err := action.WayPoint(area.Travincal)
 	if err != nil {
 		return err

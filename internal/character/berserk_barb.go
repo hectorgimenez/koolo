@@ -113,6 +113,8 @@ func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
 func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 	ctx := context.Get()
 
+	s.SwapToSlot(1)
+
 	findItemKey, found := s.data.KeyBindings.KeyBindingForSkill(skill.FindItem)
 	if !found {
 		s.logger.Debug("Find Item skill not found in key bindings")
@@ -188,36 +190,26 @@ func (s *Berserker) getOptimalClickPosition(corpse data.Monster) data.Position {
 	return data.Position{X: corpse.Position.X, Y: corpse.Position.Y + 1}
 }
 
-/*
-todo need to define wich weapon slot I/II is primary/secondary before using that function
-func (s *Berserker) swapToWeaponSlot(slot int) error {
+// slot 0 means lowest Gold Find, slot 1 means highest Gold Find
+// Presuming attack items will be on slot 0 and Goldfind items on slot 1
+// TODO find a way to get active inventory slot from memory.
+func (s *Berserker) SwapToSlot(slot int) {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "swapToWeaponSlot"
-
-	currentSlot := "primary"
-	if !s.isOnWeaponSlotOne() {
-		currentSlot = "secondary"
+	if !ctx.CharacterCfg.Character.FindItemSwitch {
+		return // Do nothing if FindItemSwitch is disabled
 	}
 
-	ctx.Logger.Debug("Attempting weapon swap",
-		slog.Int("targetSlot", slot),
-		slog.String("currentSlot", currentSlot))
-
-	if (slot == 1 && s.isOnWeaponSlotOne()) || (slot == 2 && !s.isOnWeaponSlotOne()) {
-		ctx.Logger.Debug("Already on correct weapon slot", slog.Int("slot", slot))
-		return nil
-	}
-
-	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+	initialGF, _ := s.data.PlayerUnit.FindStat(stat.GoldFind, 0)
+	ctx.HID.PressKey('W')
 	time.Sleep(100 * time.Millisecond)
+	ctx.RefreshGameData()
+	swappedGF, _ := s.data.PlayerUnit.FindStat(stat.GoldFind, 0)
 
-	ctx.Logger.Debug("Weapon swap performed", slog.Int("toSlot", slot))
-	return nil
+	if (slot == 0 && swappedGF.Value > initialGF.Value) ||
+		(slot == 1 && swappedGF.Value < initialGF.Value) {
+		ctx.HID.PressKey('W') // Swap back if not in desired slot
+	}
 }
-func (s *Berserker) isOnWeaponSlotOne() bool {
-
-
-}*/
 
 func (s *Berserker) BuffSkills() []skill.ID {
 
