@@ -89,7 +89,7 @@ func PickupItem(it data.Item) error {
 
 			distance := ctx.PathFinder.DistanceFromMe(it.Position)
 			if distance > 10 {
-				return fmt.Errorf("%v (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
+				return fmt.Errorf("%w (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
 			}
 
 			x, y := utils.Spiral(mouseOverAttempts)
