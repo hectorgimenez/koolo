@@ -92,6 +92,10 @@
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
                 </label>
+                <label>
+                    <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.FindItemSwitch }}checked{{ end }}/>
+                    Find Item Switch (Barb Only)
+                </label>
             </fieldset>
             <label>
                 Minimum Gold (will pick up Magic+ to sell for gold if below)
