@@ -1,9 +1,10 @@
 package game
 
 import (
-	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"image"
 	"unsafe"
+
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 )
 
 func (gd *MemoryReader) Screenshot() image.Image {

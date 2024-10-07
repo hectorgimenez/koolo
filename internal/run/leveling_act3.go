@@ -5,220 +5,354 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
 )
 
-func (a Leveling) act3() action.Action {
+func (a Leveling) act3() error {
 	running := false
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		if running || d.PlayerUnit.Area != area.KurastDocks {
-			return nil
-		}
 
-		// Try to find Hratli at pier, if he's there, talk to him, so he will move to the normal position later
-		hratli, found := d.Monsters.FindOne(npc.Hratli, data.MonsterTypeNone)
-		if found {
-			actions = append(actions, a.builder.InteractNPC(hratli.Name))
-		}
+	if running || a.ctx.Data.PlayerUnit.Area != area.KurastDocks {
+		return nil
+	}
 
-		running = true
-		_, willFound := d.Inventory.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
-		if willFound {
-			return append(actions, a.openMephistoStairs()...)
-		}
+	// Try to find Hratli at pier, if he's there, talk to him, so he will move to the normal position later
+	hratli, found := a.ctx.Data.Monsters.FindOne(npc.Hratli, data.MonsterTypeNone)
+	if found {
+		action.InteractNPC(hratli.Name)
+	}
 
-		if d.Quests[quest.Act3KhalimsWill].Completed() {
-			actions = append(actions, Mephisto{baseRun: a.baseRun}.BuildActions()...)
-			return append(actions, a.builder.ItemPickup(true, 25),
-				a.builder.InteractObject(object.HellGate, func(d game.Data) bool {
-					return d.PlayerUnit.Area == area.ThePandemoniumFortress
-				}),
-			)
-		}
+	running = true
+	_, willFound := a.ctx.Data.Inventory.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
+	if willFound {
+		a.openMephistoStairs()
+	}
 
-		// Find KhalimsEye
-		_, found = d.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
-		if found {
-			a.logger.Info("KhalimsEye found, skipping quest")
-		} else {
-			a.logger.Info("KhalimsEye not found, starting quest")
-			return append(actions, a.findKhalimsEye()...)
-		}
+	hellgate, found := a.ctx.Data.Objects.FindOne(object.HellGate)
+	if !found {
+		a.ctx.Logger.Info("Gate to Pandemonium Fortress not found")
+	}
 
-		// Find KhalimsBrain
-		_, found = d.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
-		if found {
-			a.logger.Info("KhalimsBrain found, skipping quest")
-		} else {
-			a.logger.Info("KhalimsBrain not found, starting quest")
-			return append(actions, a.findKhalimsBrain()...)
-		}
+	if a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
+		//Mephisto{}.Run()
+		action.InteractObject(hellgate, func() bool {
+			return a.ctx.Data.PlayerUnit.Area == area.ThePandemoniumFortress
+		})
+	}
 
-		// Find KhalimsHeart
-		_, found = d.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
-		if found {
-			a.logger.Info("KhalimsHeart found, skipping quest")
-		} else {
-			a.logger.Info("KhalimsHeart not found, starting quest")
-			return append(actions, a.findKhalimsHeart()...)
-		}
+	// Find KhalimsEye
+	_, found = a.ctx.Data.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
+	if found {
+		a.ctx.Logger.Info("KhalimsEye found, skipping quest")
+	} else {
+		a.ctx.Logger.Info("KhalimsEye not found, starting quest")
+		a.findKhalimsEye()
+	}
 
-		// Trav
-		return append(actions, a.openMephistoStairs()...)
+	// Find KhalimsBrain
+	_, found = a.ctx.Data.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
+	if found {
+		a.ctx.Logger.Info("KhalimsBrain found, skipping quest")
+	} else {
+		a.ctx.Logger.Info("KhalimsBrain not found, starting quest")
+		a.findKhalimsBrain()
+	}
+
+	// Find KhalimsHeart
+	_, found = a.ctx.Data.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
+	if found {
+		a.ctx.Logger.Info("KhalimsHeart found, skipping quest")
+	} else {
+		a.ctx.Logger.Info("KhalimsHeart not found, starting quest")
+		a.findKhalimsHeart()
+	}
+
+	// Trav
+	a.openMephistoStairs()
+
+	return a.ctx.Char.KillMephisto()
+}
+
+func (a Leveling) findKhalimsEye() error {
+	err := action.WayPoint(area.SpiderForest)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveToArea(area.SpiderCavern)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		for _, o := range a.ctx.Data.Objects {
+			if o.Name == object.InifussTree {
+				return o.Position, true
+			}
+		}
+		return data.Position{}, false
 	})
-}
-
-func (a Leveling) findKhalimsEye() []action.Action {
-	return []action.Action{
-		a.builder.WayPoint(area.SpiderForest),
-		a.builder.Buff(),
-		a.builder.MoveToArea(area.SpiderCavern),
-		a.builder.Buff(),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Khalm Chest found, moving to that room")
-			chest, found := d.Objects.FindOne(object.KhalimChest3)
-
-			return chest.Position, found
-		}),
-		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.KhalimChest3, func(d game.Data) bool {
-			chest, _ := d.Objects.FindOne(object.KhalimChest3)
-			return !chest.Selectable
-		}),
-		a.builder.ItemPickup(true, 10),
+	if err != nil {
+		return err
 	}
-}
 
-func (a Leveling) findKhalimsBrain() []action.Action {
-	return []action.Action{
-		a.builder.WayPoint(area.FlayerJungle),
-		a.builder.Buff(),
-		a.builder.MoveToArea(area.FlayerDungeonLevel1),
-		a.builder.Buff(),
-		a.builder.MoveToArea(area.FlayerDungeonLevel2),
-		a.builder.Buff(),
-		a.builder.MoveToArea(area.FlayerDungeonLevel3),
-		a.builder.Buff(),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Khalm Chest found, moving to that room")
-			chest, found := d.Objects.FindOne(object.KhalimChest2)
-
-			return chest.Position, found
-		}),
-		//a.builder.ClearAreaAroundPlayer(15),
-		a.builder.InteractObject(object.KhalimChest2, func(d game.Data) bool {
-			chest, _ := d.Objects.FindOne(object.KhalimChest2)
-			return !chest.Selectable
-		}),
-		a.builder.ItemPickup(true, 10),
+	err = action.MoveTo(func() (data.Position, bool) {
+		chest, found := a.ctx.Data.Objects.FindOne(object.KhalimChest3)
+		if found {
+			a.ctx.Logger.Info("Khalm Chest found, moving to that room")
+			return chest.Position, true
+		}
+		return data.Position{}, false
+	})
+	if err != nil {
+		return err
 	}
-}
 
-func (a Leveling) findKhalimsHeart() []action.Action {
-	return []action.Action{
-		a.builder.WayPoint(area.KurastBazaar),
-		a.builder.Buff(),
-		a.builder.MoveToArea(area.SewersLevel1Act3),
-		a.builder.Buff(),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			for _, l := range d.AdjacentLevels {
-				if l.Area == area.SewersLevel2Act3 {
-					return l.Position, true
-				}
-			}
-			return data.Position{}, false
-		}),
-		a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.Act3SewerStairsToLevel3, func(d game.Data) bool {
-			o, _ := d.Objects.FindOne(object.Act3SewerStairsToLevel3)
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
-			return !o.Selectable
-		}),
-		a.builder.Wait(time.Second * 3),
-		a.builder.InteractObject(object.Act3SewerStairs, func(d game.Data) bool {
-			return d.PlayerUnit.Area == area.SewersLevel2Act3
-		}),
-		a.builder.Buff(),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Khalm Chest found, moving to that room")
-			chest, found := d.Objects.FindOne(object.KhalimChest1)
-
-			return chest.Position, found
-		}),
-		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.KhalimChest1, func(d game.Data) bool {
-			chest, _ := d.Objects.FindOne(object.KhalimChest1)
-			return !chest.Selectable
-		}),
-		a.builder.ItemPickup(true, 10),
+	kalimchest3, found := a.ctx.Data.Objects.FindOne(object.KhalimChest3)
+	if !found {
+		a.ctx.Logger.Debug("Khalim Chest not found")
 	}
+
+	err = action.InteractObject(kalimchest3, func() bool {
+		chest, _ := a.ctx.Data.Objects.FindOne(object.KhalimChest3)
+		return !chest.Selectable
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (a Leveling) openMephistoStairs() []action.Action {
-	actions := Council{baseRun: a.baseRun}.BuildActions()
+func (a Leveling) findKhalimsBrain() error {
+	err := action.WayPoint(area.FlayerJungle)
+	if err != nil {
+		return err
+	}
+	action.Buff()
 
-	return append(actions,
-		a.builder.ItemPickup(true, 40),
-		a.builder.ReturnTown(),
-		action.NewChain(func(d game.Data) []action.Action {
-			eye, _ := d.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
-			brain, _ := d.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
-			heart, _ := d.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
-			flail, _ := d.Inventory.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
+	err = action.MoveToArea(area.FlayerDungeonLevel1)
+	if err != nil {
+		return err
+	}
+	action.Buff()
 
-			return []action.Action{
-				a.builder.CubeAddItems(eye, brain, heart, flail),
-				a.builder.CubeTransmute(),
+	err = action.MoveToArea(area.FlayerDungeonLevel2)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveToArea(area.FlayerDungeonLevel3)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		a.ctx.Logger.Info("Khalm Chest found, moving to that room")
+		chest, found := a.ctx.Data.Objects.FindOne(object.KhalimChest2)
+
+		return chest.Position, found
+	})
+	if err != nil {
+		return err
+	}
+
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+
+	kalimchest2, found := a.ctx.Data.Objects.FindOne(object.KhalimChest2)
+	if !found {
+		a.ctx.Logger.Debug("Khalim Chest not found")
+	}
+
+	err = action.InteractObject(kalimchest2, func() bool {
+		chest, _ := a.ctx.Data.Objects.FindOne(object.KhalimChest2)
+		return !chest.Selectable
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a Leveling) findKhalimsHeart() error {
+	err := action.WayPoint(area.KurastBazaar)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveToArea(area.SewersLevel1Act3)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		for _, l := range a.ctx.Data.AdjacentLevels {
+			if l.Area == area.SewersLevel2Act3 {
+				return l.Position, true
 			}
-		}),
+		}
+		return data.Position{}, false
+	})
+	if err != nil {
+		return err
+	}
 
-		a.builder.UsePortalInTown(),
-		action.NewStepChain(func(d game.Data) []step.Step {
-			return []step.Step{
-				// Let's asume we don't have secondary weapon, so we swap to it and equip Khalim's Will
-				step.SyncStep(func(d game.Data) error {
-					khalimsWill, found := d.Inventory.Find("KhalimsWill")
-					if !found {
-						return nil
-					}
+	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
-					a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
-					helper.Sleep(1000)
-					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
-					screenPos := a.UIManager.GetScreenCoordsForItem(khalimsWill)
+	stairs, found := a.ctx.Data.Objects.FindOne(object.Act3SewerStairsToLevel3)
+	if !found {
+		a.ctx.Logger.Debug("Khalim Chest not found")
+	}
 
-					a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
-					helper.Sleep(300)
-					a.HID.PressKey(win.VK_ESCAPE)
-					return nil
-				}),
-			}
-		}),
-		a.builder.InteractObject(object.CompellingOrb,
-			func(d game.Data) bool {
-				o, _ := d.Objects.FindOne(object.CompellingOrb)
+	err = action.InteractObject(stairs, func() bool {
+		o, _ := a.ctx.Data.Objects.FindOne(object.Act3SewerStairsToLevel3)
 
-				return !o.Selectable
-			},
-			step.SyncStep(func(d game.Data) error {
-				helper.Sleep(1000)
-				a.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
-				return nil
-			})),
-		a.builder.Wait(time.Second*12),
-		a.builder.InteractObject(object.StairSR, func(d game.Data) bool {
-			return d.PlayerUnit.Area == area.DuranceOfHateLevel1
-		}),
-		a.builder.MoveToArea(area.DuranceOfHateLevel2),
-		a.builder.DiscoverWaypoint(),
-	)
+		return !o.Selectable
+	})
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(3000)
+
+	err = action.InteractObject(stairs, func() bool {
+		return a.ctx.Data.PlayerUnit.Area == area.SewersLevel2Act3
+	})
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		a.ctx.Logger.Info("Khalm Chest found, moving to that room")
+		chest, found := a.ctx.Data.Objects.FindOne(object.KhalimChest1)
+
+		return chest.Position, found
+	})
+	if err != nil {
+		return err
+	}
+
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+
+	kalimchest1, found := a.ctx.Data.Objects.FindOne(object.KhalimChest1)
+	if !found {
+		a.ctx.Logger.Debug("Khalim Chest not found")
+	}
+
+	err = action.InteractObject(kalimchest1, func() bool {
+		chest, _ := a.ctx.Data.Objects.FindOne(object.KhalimChest1)
+		return !chest.Selectable
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a Leveling) openMephistoStairs() error {
+	// Use Travincal/Council run to kill the council
+	err := Council{}.Run()
+	if err != nil {
+		return err
+	}
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	eye, _ := a.ctx.Data.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
+	brain, _ := a.ctx.Data.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
+	heart, _ := a.ctx.Data.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
+	flail, _ := a.ctx.Data.Inventory.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
+
+	// Combine Khalim's items in the Horadric Cube to create Khalim's Will
+	err = action.CubeAddItems(eye, brain, heart, flail)
+	if err != nil {
+		return err
+	}
+
+	err = action.CubeTransmute()
+	if err != nil {
+		return err
+	}
+
+	err = action.UsePortalInTown()
+	if err != nil {
+		return err
+	}
+
+	// Assume we don't have a secondary weapon equipped, so swap to it and equip Khalim's Will
+	khalimsWill, found := a.ctx.Data.Inventory.Find("KhalimsWill", item.LocationInventory, item.LocationStash)
+	if !found {
+		a.ctx.Logger.Info("Khalim's Will not found, aborting mission.")
+		return nil
+	}
+
+	// Swap weapons, equip Khalim's Will
+	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.SwapWeapons)
+	utils.Sleep(1000)
+	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
+
+	screenPos := ui.GetScreenCoordsForItem(khalimsWill)
+	a.ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
+	utils.Sleep(300)
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
+
+	// Interact with the Compelling Orb to open the stairs
+	compellingorb, found := a.ctx.Data.Objects.FindOne(object.CompellingOrb)
+	if !found {
+		a.ctx.Logger.Debug("Khalim Chest not found")
+	}
+
+	err = action.InteractObject(compellingorb, func() bool {
+		o, _ := a.ctx.Data.Objects.FindOne(object.CompellingOrb)
+		return !o.Selectable
+	})
+	if err != nil {
+		return err
+	}
+
+	utils.Sleep(1000)
+	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.SwapWeapons)
+
+	time.Sleep(12000)
+
+	// Interact with the stairs to go to Durance of Hate Level 1
+	stairsr, found := a.ctx.Data.Objects.FindOne(object.StairSR)
+	if !found {
+		a.ctx.Logger.Debug("Khalim Chest not found")
+	}
+
+	err = action.InteractObject(stairsr, func() bool {
+		return a.ctx.Data.PlayerUnit.Area == area.DuranceOfHateLevel1
+	})
+	if err != nil {
+		return err
+	}
+
+	// Move to Durance of Hate Level 2 and discover the waypoint
+	action.MoveToArea(area.DuranceOfHateLevel2)
+	action.DiscoverWaypoint()
+
+	return nil
 }

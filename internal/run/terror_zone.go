@@ -1,88 +1,112 @@
 package run
 
 import (
-	"log/slog"
-	"strings"
+	"fmt"
+	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type TerrorZone struct {
-	baseRun
+	ctx *context.Status
 }
 
-func (a TerrorZone) Name() string {
-	d := a.Reader.GetData(false)
-	if len(d.TerrorZones) == 0 {
-		return "TerrorZone Run: no TerrorZones detected"
+func NewTerrorZone() *TerrorZone {
+	return &TerrorZone{
+		ctx: context.Get(),
 	}
-	tzs := make([]string, 0)
-	for _, tz := range d.TerrorZones {
-		tzs = append(tzs, tz.Area().Name)
-	}
-
-	return "TerrorZone Run: " + strings.Join(tzs, ", ")
 }
 
-func (a TerrorZone) BuildActions() (actions []action.Action) {
-	act := action.NewChain(func(d game.Data) (actions []action.Action) {
-		if len(d.TerrorZones) == 0 {
-			a.logger.Info("No TerrorZones detected, skipping TerrorZone run")
-			return
-		}
+func (tz TerrorZone) Name() string {
+	tzNames := make([]string, 0)
+	for _, tzArea := range tz.AvailableTZs() {
+		tzNames = append(tzNames, tzArea.Area().Name)
+	}
 
-		// Try to match terror zones with an existing predefined run
-		for _, tz := range d.TerrorZones {
-			switch tz {
-			case area.PitLevel1:
-				return Pit{baseRun: a.baseRun}.BuildActions()
-			case area.Tristram:
-				return Tristram{baseRun: a.baseRun}.BuildActions()
-			case area.MooMooFarm:
-				return Cows{baseRun: a.baseRun}.BuildActions()
-			case area.TalRashasTomb1:
-				return TalRashaTombs{baseRun: a.baseRun}.BuildActions()
-			case area.AncientTunnels:
-				return AncientTunnels{baseRun: a.baseRun}.BuildActions()
-			case area.RockyWaste:
-				return StonyTomb{baseRun: a.baseRun}.BuildActions()
-			case area.Travincal:
-				return Council{baseRun: a.baseRun}.BuildActions()
-			case area.DuranceOfHateLevel1:
-				return Mephisto{baseRun: a.baseRun}.BuildActions()
-			case area.ChaosSanctuary:
-				return Diablo{baseRun: a.baseRun}.BuildActions()
-			case area.NihlathaksTemple:
-				return Nihlathak{baseRun: a.baseRun}.BuildActions()
-			case area.TheWorldStoneKeepLevel1:
-				return Baal{baseRun: a.baseRun}.BuildActions()
+	return fmt.Sprintf("TerrorZone Run: %v", tzNames)
+}
+
+func (tz TerrorZone) Run() error {
+	availableTzs := tz.AvailableTZs()
+	if len(availableTzs) == 0 {
+		return nil
+	}
+
+	switch tz.ctx.Data.TerrorZones[0] {
+	case area.PitLevel1:
+		return NewPit().Run()
+	case area.Tristram:
+		return NewTristram().Run()
+	case area.MooMooFarm:
+		return NewCows().Run()
+	case area.TalRashasTomb1:
+		return NewTalRashaTombs().Run()
+	case area.AncientTunnels:
+		return NewAncientTunnels().Run()
+	case area.RockyWaste:
+		return NewStonyTomb().Run()
+	case area.Travincal:
+		return NewTravincal().Run()
+	case area.DuranceOfHateLevel1:
+		return NewMephisto(tz.customTZEnemyFilter()).Run()
+	case area.ChaosSanctuary:
+		return NewDiablo().Run()
+	case area.NihlathaksTemple:
+		return NewNihlathak().Run()
+	case area.TheWorldStoneKeepLevel1:
+		return NewBaal(tz.customTZEnemyFilter()).Run()
+	}
+
+	tzAreaGroups := tz.tzAreaGroups(tz.ctx.Data.TerrorZones[0])
+	if len(tzAreaGroups) == 0 {
+		return nil
+	}
+
+	for _, tzAreaGroup := range tzAreaGroups {
+		matchingTzInGroup := false
+		for _, tzArea := range tzAreaGroup {
+			if slices.Contains(availableTzs, tzArea) {
+				matchingTzInGroup = true
+				break
 			}
 		}
 
-		// If no predefined run is found, we build a custom one
-		areasGroups := a.tzAreaChain(d.TerrorZones[0])
-		for _, areaGroup := range areasGroups {
-			for _, ar := range areaGroup {
-				actions = append(actions, a.buildTZAction(ar))
-			}
+		if !matchingTzInGroup {
+			continue
 		}
 
-		return
-	})
+		for k, tzArea := range tzAreaGroup {
+			if k == 0 {
+				err := action.WayPoint(tzArea)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := action.MoveToArea(tzArea)
+				if err != nil {
+					return err
+				}
+			}
+			if slices.Contains(availableTzs, tzArea) {
+				action.ClearCurrentLevel(false, tz.customTZEnemyFilter())
+			} else {
+				tz.ctx.Logger.Debug("Skipping area %v", tzArea.Area().Name)
+			}
+		}
+	}
 
-	return []action.Action{act}
+	return nil
 }
 
-func (a TerrorZone) AvailableTZs(d game.Data) []area.ID {
+func (tz TerrorZone) AvailableTZs() []area.ID {
 	var availableTZs []area.ID
-	for _, tz := range d.TerrorZones {
-		for _, tzArea := range a.CharacterCfg.Game.TerrorZone.Areas {
-			if tz == tzArea {
-				availableTZs = append(availableTZs, tz)
+	for _, tzone := range tz.ctx.Data.TerrorZones {
+		for _, tzArea := range tz.ctx.CharacterCfg.Game.TerrorZone.Areas {
+			if tzone == tzArea {
+				availableTZs = append(availableTZs, tzone)
 			}
 		}
 	}
@@ -90,41 +114,7 @@ func (a TerrorZone) AvailableTZs(d game.Data) []area.ID {
 	return availableTZs
 }
 
-func (a TerrorZone) buildTZAction(dstArea area.ID) action.Action {
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		if d.PlayerUnit.Area != dstArea && d.PlayerUnit.Area.IsTown() {
-			actions = append(actions, a.builder.WayPoint(dstArea))
-		}
-
-		actions = append(actions,
-			a.builder.MoveToArea(dstArea),
-		)
-
-		// Clear only TZ areas, skip traversing areas
-		clearArea := false
-		for _, terrorizedArea := range d.TerrorZones {
-			if terrorizedArea == dstArea {
-				// Skip areas that are not selected in the configuration
-				for _, tz := range a.CharacterCfg.Game.TerrorZone.Areas {
-					if tz == dstArea {
-						clearArea = true
-					}
-				}
-			}
-		}
-
-		if clearArea {
-			a.logger.Debug("Clearing TZ area", slog.String("area", dstArea.Area().Name))
-			actions = append(actions, a.builder.ClearArea(true, a.customTZEnemyFilter(a.CharacterCfg.Game.TerrorZone.SkipOnImmunities...)))
-		} else {
-			a.logger.Debug("TZ area skipped", slog.String("area", dstArea.Area().Name))
-		}
-
-		return actions
-	})
-}
-
-func (a TerrorZone) tzAreaChain(firstTZ area.ID) [][]area.ID {
+func (tz TerrorZone) tzAreaGroups(firstTZ area.ID) [][]area.ID {
 	switch firstTZ {
 	// Act 1
 	case area.BloodMoor:
@@ -142,7 +132,7 @@ func (a TerrorZone) tzAreaChain(firstTZ area.ID) [][]area.ID {
 	case area.ForgottenTower:
 		return [][]area.ID{{area.BlackMarsh, area.ForgottenTower, area.TowerCellarLevel1, area.TowerCellarLevel2, area.TowerCellarLevel3, area.TowerCellarLevel4, area.TowerCellarLevel5}}
 	case area.Barracks:
-		return [][]area.ID{{area.JailLevel1, area.JailLevel2, area.JailLevel3}}
+		return [][]area.ID{{area.JailLevel1, area.Barracks}, {area.JailLevel1, area.JailLevel2, area.JailLevel3}}
 	case area.Cathedral:
 		return [][]area.ID{{area.InnerCloister, area.Cathedral, area.CatacombsLevel1, area.CatacombsLevel2, area.CatacombsLevel3}}
 	// Act 2
@@ -169,7 +159,7 @@ func (a TerrorZone) tzAreaChain(firstTZ area.ID) [][]area.ID {
 	case area.OuterSteppes:
 		return [][]area.ID{{area.ThePandemoniumFortress, area.OuterSteppes, area.PlainsOfDespair}}
 	case area.RiverOfFlame:
-		return [][]area.ID{{area.CityOfTheDamned, area.RiverOfFlame}}
+		return [][]area.ID{{area.CityOfTheDamned, area.RiverOfFlame}, {area.RiverOfFlame}}
 	// Act 5
 	case area.BloodyFoothills:
 		return [][]area.ID{{area.Harrogath, area.BloodyFoothills, area.FrigidHighlands, area.Abaddon}}
@@ -186,17 +176,17 @@ func (a TerrorZone) tzAreaChain(firstTZ area.ID) [][]area.ID {
 	return [][]area.ID{}
 }
 
-func (a TerrorZone) customTZEnemyFilter(resists ...stat.Resist) data.MonsterFilter {
+func (tz TerrorZone) customTZEnemyFilter() data.MonsterFilter {
 	return func(m data.Monsters) []data.Monster {
 		var filteredMonsters []data.Monster
 		monsterFilter := data.MonsterAnyFilter()
-		if a.CharacterCfg.Game.TerrorZone.FocusOnElitePacks {
+		if tz.ctx.CharacterCfg.Game.TerrorZone.FocusOnElitePacks {
 			monsterFilter = data.MonsterEliteFilter()
 		}
 
 		for _, mo := range m.Enemies(monsterFilter) {
 			isImmune := false
-			for _, resist := range resists {
+			for _, resist := range tz.ctx.CharacterCfg.Game.TerrorZone.SkipOnImmunities {
 				if mo.IsImmune(resist) {
 					isImmune = true
 				}

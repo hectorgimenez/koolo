@@ -1,17 +1,17 @@
 package run
 
 import (
-	"time"
-
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"errors"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 var baalThronePosition = data.Position{
@@ -20,140 +20,141 @@ var baalThronePosition = data.Position{
 }
 
 type Baal struct {
-	baseRun
+	ctx                *context.Status
+	clearMonsterFilter data.MonsterFilter // Used to clear area (basically TZ)
+}
+
+func NewBaal(clearMonsterFilter data.MonsterFilter) *Baal {
+	return &Baal{
+		ctx:                context.Get(),
+		clearMonsterFilter: clearMonsterFilter,
+	}
 }
 
 func (s Baal) Name() string {
 	return string(config.BaalRun)
 }
 
-func (s Baal) BuildActions() (actions []action.Action) {
-	if s.CharacterCfg.Game.Baal.ClearFloors {
-		// Set filter
-		filter := data.MonsterAnyFilter()
-		if s.CharacterCfg.Game.Baal.OnlyElites {
-			filter = data.MonsterEliteFilter()
-		}
-		actions = append(actions,
-			// Moving to starting point (The World StoneKeep Level 2)
-			s.builder.WayPoint(area.TheWorldStoneKeepLevel2),
-			s.builder.ClearArea(false, filter),
-			// Travel to boss position
-			s.builder.MoveToArea(area.TheWorldStoneKeepLevel3),
-			s.builder.ClearArea(false, filter),
-			s.builder.MoveToArea(area.ThroneOfDestruction),
-			s.builder.MoveToCoords(baalThronePosition),
-			// Kill monsters inside Baal throne
-			s.checkForSoulsOrDolls(),
-		)
-		// Let's move to a safe area and open the portal in companion mode
-		if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
-			actions = append(actions,
-				s.builder.MoveToCoords(data.Position{
-					X: 15116,
-					Y: 5071,
-				}),
-				s.builder.OpenTPIfLeader(),
-			)
-		}
-		actions = append(actions,
-			s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
-			s.builder.ItemPickup(false, 50),
-			s.builder.Buff(),
-		)
-	} else {
-		actions = append(actions,
-			// Moving to starting point (The World StoneKeep Level 2)
-			s.builder.WayPoint(area.TheWorldStoneKeepLevel2),
-			// Travel to boss position
-			s.builder.MoveToArea(area.TheWorldStoneKeepLevel3),
-			s.builder.MoveToArea(area.ThroneOfDestruction),
-			s.builder.MoveToCoords(baalThronePosition),
-			// Kill monsters inside Baal throne
-			s.checkForSoulsOrDolls(),
-		)
-		// Let's move to a safe area and open the portal in companion mode
-		if s.CharacterCfg.Companion.Enabled && s.CharacterCfg.Companion.Leader {
-			actions = append(actions,
-				s.builder.MoveToCoords(data.Position{
-					X: 15116,
-					Y: 5071,
-				}),
-				s.builder.OpenTPIfLeader(),
-			)
-		}
-		actions = append(actions,
-			s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter()),
-			s.builder.ItemPickup(false, 50),
-			s.builder.Buff(),
-		)
+func (s Baal) Run() error {
+	// Set filter
+	filter := data.MonsterAnyFilter()
+	if s.ctx.CharacterCfg.Game.Baal.OnlyElites {
+		filter = data.MonsterEliteFilter()
 	}
+	if s.clearMonsterFilter != nil {
+		filter = s.clearMonsterFilter
+	}
+
+	err := action.WayPoint(area.TheWorldStoneKeepLevel2)
+	if err != nil {
+		return err
+	}
+
+	if s.ctx.CharacterCfg.Game.Baal.ClearFloors || s.clearMonsterFilter != nil {
+		action.ClearCurrentLevel(false, filter)
+	}
+
+	err = action.MoveToArea(area.TheWorldStoneKeepLevel3)
+	if err != nil {
+		return err
+	}
+
+	if s.ctx.CharacterCfg.Game.Baal.ClearFloors || s.clearMonsterFilter != nil {
+		action.ClearCurrentLevel(false, filter)
+	}
+
+	err = action.MoveToArea(area.ThroneOfDestruction)
+	if err != nil {
+		return err
+	}
+	err = action.MoveToCoords(baalThronePosition)
+	if err != nil {
+		return err
+	}
+	if s.checkForSoulsOrDolls() {
+		return errors.New("souls or dolls detected, skipping")
+	}
+
+	// Let's move to a safe area and open the portal in companion mode
+	if s.ctx.CharacterCfg.Companion.Leader {
+		action.MoveToCoords(data.Position{
+			X: 15116,
+			Y: 5071,
+		})
+		action.OpenTPIfLeader()
+	}
+
+	err = action.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
+	if err != nil {
+		return err
+	}
+
+	// Force rebuff before waves
+	action.Buff()
 
 	// Come back to previous position
-	actions = append(actions, s.builder.MoveToCoords(baalThronePosition))
-
-	lastWave := false
-	actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
-		if !lastWave {
-			if _, found := d.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
-				lastWave = true
-			}
-
-			enemies := false
-			for _, e := range d.Monsters.Enemies() {
-				dist := pather.DistanceFromPoint(baalThronePosition, e.Position)
-				if dist < 50 {
-					enemies = true
-				}
-			}
-			if !enemies {
-				return []action.Action{
-					s.builder.ItemPickup(false, 50),
-					s.builder.MoveToCoords(baalThronePosition),
-				}
-			}
-
-			return []action.Action{s.builder.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())}
-		}
-
-		return nil
-	}, action.RepeatUntilNoSteps()))
-
-	actions = append(actions, s.builder.ItemPickup(false, 30))
-
-	_, isLevelingChar := s.char.(action.LevelingCharacter)
-	if s.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
-		actions = append(actions,
-			s.builder.Wait(time.Second*10),
-			s.builder.Buff(),
-			s.builder.InteractObject(object.BaalsPortal, func(d game.Data) bool {
-				return d.PlayerUnit.Area == area.TheWorldstoneChamber
-			}),
-			s.char.KillBaal(),
-			s.builder.ItemPickup(true, 50),
-		)
+	err = action.MoveToCoords(baalThronePosition)
+	if err != nil {
+		return err
 	}
 
-	return
-}
-
-func (s Baal) checkForSoulsOrDolls() *action.Chain {
-	return action.NewChain(func(d game.Data) []action.Action {
-		var npcIds []npc.ID
-
-		if s.CharacterCfg.Game.Baal.DollQuit {
-			npcIds = append(npcIds, npc.UndeadStygianDoll2, npc.UndeadSoulKiller2)
-		}
-		if s.CharacterCfg.Game.Baal.SoulQuit {
-			npcIds = append(npcIds, npc.BlackSoul2, npc.BurningSoul2)
+	lastWave := false
+	for !lastWave {
+		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
+			lastWave = true
 		}
 
-		if len(npcIds) != 0 {
-			return []action.Action{
-				s.builder.ChickenOnMonsters(60, npcIds),
+		enemies := false
+		for _, e := range s.ctx.Data.Monsters.Enemies() {
+			dist := pather.DistanceFromPoint(baalThronePosition, e.Position)
+			if dist < 50 {
+				enemies = true
 			}
 		}
+		if enemies {
+			err = action.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
+			if err != nil {
+				return err
+			}
+		}
+		action.MoveToCoords(baalThronePosition)
+	}
 
-		return []action.Action{}
-	})
+	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
+	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
+		utils.Sleep(10000)
+		action.Buff()
+		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
+		err = action.InteractObjectByID(baalPortal.ID, func() bool {
+			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
+		})
+		if err != nil {
+			return err
+		}
+
+		_ = action.MoveToCoords(data.Position{X: 15136, Y: 5943})
+
+		return s.ctx.Char.KillBaal()
+	}
+
+	return nil
+}
+
+func (s Baal) checkForSoulsOrDolls() bool {
+	var npcIds []npc.ID
+
+	if s.ctx.CharacterCfg.Game.Baal.DollQuit {
+		npcIds = append(npcIds, npc.UndeadStygianDoll2, npc.UndeadSoulKiller2)
+	}
+	if s.ctx.CharacterCfg.Game.Baal.SoulQuit {
+		npcIds = append(npcIds, npc.BlackSoul2, npc.BurningSoul2)
+	}
+
+	for _, id := range npcIds {
+		if _, found := s.ctx.Data.Monsters.FindOne(id, data.MonsterTypeNone); found {
+			return true
+		}
+	}
+
+	return false
 }

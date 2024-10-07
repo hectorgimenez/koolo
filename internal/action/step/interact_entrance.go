@@ -6,78 +6,63 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
-
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-type InteractEntranceStep struct {
-	basicStep
-	area                  area.ID
-	waitingForInteraction bool
-	mouseOverAttempts     int
-	currentMouseCoords    data.Position
-}
+func InteractEntrance(area area.ID) error {
+	maxInteractionAttempts := 5
+	interactionAttempts := 0
+	waitingForInteraction := false
+	currentMouseCoords := data.Position{}
+	lastRun := time.Time{}
 
-func InteractEntrance(area area.ID) *InteractEntranceStep {
-	return &InteractEntranceStep{
-		basicStep: newBasicStep(),
-		area:      area,
-	}
-}
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "InteractEntrance"
 
-func (m *InteractEntranceStep) Status(d game.Data, _ container.Container) Status {
-	if m.status == StatusCompleted {
-		return StatusCompleted
-	}
+	for {
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
 
-	// Give some extra time to render the UI
-	if d.PlayerUnit.Area == m.area && time.Since(m.lastRun) > time.Second*1 {
-		return m.tryTransitionStatus(StatusCompleted)
-	}
+		// Give some extra time to render the UI
+		if ctx.Data.PlayerUnit.Area == area && time.Since(lastRun) > time.Millisecond*500 {
+			return nil
+		}
 
-	return m.status
-}
+		if interactionAttempts > maxInteractionAttempts {
+			return fmt.Errorf("area %s [%d] could not be interacted", area.Area().Name, area)
+		}
 
-func (m *InteractEntranceStep) Run(d game.Data, container container.Container) error {
-	m.tryTransitionStatus(StatusInProgress)
+		if (waitingForInteraction && time.Since(lastRun) < time.Millisecond*500) || ctx.Data.PlayerUnit.Area == area {
+			continue
+		}
 
-	if m.mouseOverAttempts > maxInteractions {
-		return fmt.Errorf("area %s [%d] could not be interacted", m.area.Area().Name, m.area)
-	}
-
-	if (m.waitingForInteraction && time.Since(m.lastRun) < time.Second*1) || d.PlayerUnit.Area == m.area {
-		return nil
-	}
-
-	m.lastRun = time.Now()
-	for _, l := range d.AdjacentLevels {
-		if l.Area == m.area {
-			distance := pather.DistanceFromMe(d, l.Position)
-			if distance > 10 {
-				return errors.New("entrance too far away")
-			}
-
-			if l.IsEntrance {
-				lx, ly := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, l.Position.X-2, l.Position.Y-2)
-				if d.HoverData.UnitType == 5 || d.HoverData.UnitType == 2 && d.HoverData.IsHovered {
-					container.HID.Click(game.LeftButton, m.currentMouseCoords.X, m.currentMouseCoords.Y)
-					m.waitingForInteraction = true
+		lastRun = time.Now()
+		for _, l := range ctx.Data.AdjacentLevels {
+			if l.Area == area {
+				distance := ctx.PathFinder.DistanceFromMe(l.Position)
+				if distance > 10 {
+					return errors.New("entrance too far away")
 				}
 
-				x, y := helper.Spiral(m.mouseOverAttempts)
-				m.currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
-				container.HID.MovePointer(lx+x, ly+y)
-				m.mouseOverAttempts++
-				return nil
-			}
+				if l.IsEntrance {
+					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-2, l.Position.Y-2)
+					if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
+						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+						waitingForInteraction = true
+					}
 
-			return fmt.Errorf("area %s [%d]  is not an entrance", m.area.Area().Name, m.area)
+					x, y := utils.Spiral(interactionAttempts)
+					currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
+					ctx.HID.MovePointer(lx+x, ly+y)
+					interactionAttempts++
+					continue
+				}
+
+				return fmt.Errorf("area %s [%d]  is not an entrance", area.Area().Name, area)
+			}
 		}
 	}
-
-	return fmt.Errorf("area %s [%d]  not found", m.area.Area().Name, m.area)
 }

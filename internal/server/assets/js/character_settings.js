@@ -1,28 +1,42 @@
 window.onload = function () {
-    let enabled_runs_ul = document.getElementById('enabled_runs')
-    let disabled_runs_ul = document.getElementById('disabled_runs')
+    let enabled_runs_ul = document.getElementById('enabled_runs');
+    let disabled_runs_ul = document.getElementById('disabled_runs');
     let searchInput = document.getElementById('search-disabled-runs');
-    let clearButton = document.getElementById('clear-enabled-runs');
-    
+
     new Sortable(enabled_runs_ul, {
         group: 'runs',
         animation: 150,
         onSort: function (evt) {
             updateEnabledRunsHiddenField();
+        },
+        onAdd: function (evt) {
+            updateButtonForEnabledRun(evt.item);
         }
     });
 
     new Sortable(disabled_runs_ul, {
         group: 'runs',
-        animation: 150
+        animation: 150,
+        onAdd: function (evt) {
+            updateButtonForDisabledRun(evt.item);
+        }
     });
 
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
         filterDisabledRuns(searchInput.value);
     });
-    
-    clearButton.addEventListener('click', function() {
-        confirmClearEnabledRuns();
+
+    // Add event listeners for add and remove buttons
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-run')) {
+            e.preventDefault();
+            const runElement = e.target.closest('li');
+            moveRunToDisabled(runElement);
+        } else if (e.target.closest('.add-run')) {
+            e.preventDefault();
+            const runElement = e.target.closest('li');
+            moveRunToEnabled(runElement);
+        }
     });
 
     updateEnabledRunsHiddenField();
@@ -30,7 +44,7 @@ window.onload = function () {
 
 function updateEnabledRunsHiddenField() {
     let listItems = document.querySelectorAll('#enabled_runs li');
-    let values = Array.from(listItems).map(function(item) {
+    let values = Array.from(listItems).map(function (item) {
         return item.getAttribute("value");
     });
     document.getElementById('gameRuns').value = JSON.stringify(values);
@@ -39,7 +53,7 @@ function updateEnabledRunsHiddenField() {
 function filterDisabledRuns(searchTerm) {
     let listItems = document.querySelectorAll('#disabled_runs li');
     searchTerm = searchTerm.toLowerCase();
-    listItems.forEach(function(item) {
+    listItems.forEach(function (item) {
         let runName = item.getAttribute("value").toLowerCase();
         if (runName.includes(searchTerm)) {
             item.style.display = '';
@@ -47,18 +61,6 @@ function filterDisabledRuns(searchTerm) {
             item.style.display = 'none';
         }
     });
-}
-
-function confirmClearEnabledRuns() {
-    if (confirm("Are you sure you want to clear all enabled runs?")) {
-        clearEnabledRuns();
-    }
-}
-
-function clearEnabledRuns() {
-    let enabledRunsUl = document.getElementById('enabled_runs');
-    enabledRunsUl.innerHTML = '';
-    updateEnabledRunsHiddenField();
 }
 
 function checkLevelingProfile() {
@@ -78,3 +80,77 @@ function checkLevelingProfile() {
         }
     }
 }
+
+function moveRunToDisabled(runElement) {
+    const disabledRunsUl = document.getElementById('disabled_runs');
+    updateButtonForDisabledRun(runElement);
+    disabledRunsUl.appendChild(runElement);
+    updateEnabledRunsHiddenField();
+}
+
+function moveRunToEnabled(runElement) {
+    const enabledRunsUl = document.getElementById('enabled_runs');
+    updateButtonForEnabledRun(runElement);
+    enabledRunsUl.appendChild(runElement);
+    updateEnabledRunsHiddenField();
+}
+
+function updateButtonForEnabledRun(runElement) {
+    const button = runElement.querySelector('button');
+    button.classList.remove('add-run');
+    button.classList.add('remove-run');
+    button.title = "Remove run";
+    button.innerHTML = '<i class="bi bi-dash"></i>';
+}
+
+function updateButtonForDisabledRun(runElement) {
+    const button = runElement.querySelector('button');
+    button.classList.remove('remove-run');
+    button.classList.add('add-run');
+    button.title = "Add run";
+    button.innerHTML = '<i class="bi bi-plus"></i>';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const schedulerEnabled = document.querySelector('input[name="schedulerEnabled"]');
+    const schedulerSettings = document.getElementById('scheduler-settings');
+
+    function toggleSchedulerVisibility() {
+        schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
+    }
+
+    // Set initial state
+    toggleSchedulerVisibility();
+
+    schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
+
+    document.querySelectorAll('.add-time-range').forEach(button => {
+        button.addEventListener('click', function () {
+            const day = this.dataset.day;
+            const timeRangesDiv = this.previousElementSibling;
+            if (timeRangesDiv) {
+                const newTimeRange = document.createElement('div');
+                newTimeRange.className = 'time-range';
+                newTimeRange.innerHTML = `
+                    <input type="time" name="scheduler[${day}][start][]" required>
+                    <span>to</span>
+                    <input type="time" name="scheduler[${day}][end][]" required>
+                    <button type="button" class="remove-time-range"><i class="bi bi-trash"></i></button>
+                `;
+                timeRangesDiv.appendChild(newTimeRange);
+            }
+        });
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-time-range')) {
+            e.target.closest('.time-range').remove();
+        }
+    });
+
+    document.getElementById('tzTrackAll').addEventListener('change', function (e) {
+        document.querySelectorAll('.tzTrackCheckbox').forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+        });
+    });
+});

@@ -1,31 +1,34 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
 
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/pather"
+)
+
+const (
+	paladinLevelingMaxAttacksLoop = 10
 )
 
 type PaladinLeveling struct {
 	BaseCharacter
 }
 
-func (s PaladinLeveling) CheckKeyBindings(d game.Data) []skill.ID {
+func (s PaladinLeveling) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
@@ -37,71 +40,65 @@ func (s PaladinLeveling) CheckKeyBindings(d game.Data) []skill.ID {
 	return missingKeybindings
 }
 
-func (p PaladinLeveling) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
+func (s PaladinLeveling) KillMonsterSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
 	completedAttackLoops := 0
-	var previousUnitID data.UnitID = 0
+	previousUnitID := 0
 
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		id, found := monsterSelector(d)
+	for {
+		id, found := monsterSelector(*s.data)
 		if !found {
-			p.logger.Debug("No monster found to attack")
-			return []step.Step{}
+			return nil
 		}
-		if previousUnitID != id {
-			p.logger.Info("New monster targeted", "id", id)
+		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
-		if !p.preBattleChecks(d, id, skipOnImmunities) {
-			p.logger.Debug("Pre-battle checks failed")
-			return []step.Step{}
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
 		}
 
-		if completedAttackLoops >= 10 {
-			p.logger.Info("Max attack loops reached", "loops", completedAttackLoops)
-			return []step.Step{}
+		if completedAttackLoops >= paladinLevelingMaxAttacksLoop {
+			return nil
 		}
 
-		steps := make([]step.Step, 0)
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
 
 		numOfAttacks := 5
 
-		if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 {
-			p.logger.Debug("Using Blessed Hammer")
+		if s.data.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 {
+			s.logger.Debug("Using Blessed Hammer")
 			// Add a random movement, maybe hammer is not hitting the target
-			if previousUnitID == id {
-				steps = append(steps,
-					step.SyncStep(func(_ game.Data) error {
-						p.container.PathFinder.RandomMovement(d)
-						return nil
-					}),
-				)
+			if previousUnitID == int(id) {
+				if monster.Stats[stat.Life] > 0 {
+					s.pf.RandomMovement()
+				}
+				return nil
 			}
-			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, false, step.Distance(2, 7), step.EnsureAura(skill.Concentration)),
-			)
+			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(2, 7), step.EnsureAura(skill.Concentration))
+
 		} else {
-			if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
-				p.logger.Debug("Using Zeal")
+			if s.data.PlayerUnit.Skills[skill.Zeal].Level > 0 {
+				s.logger.Debug("Using Zeal")
 				numOfAttacks = 1
 			}
-
-			p.logger.Debug("Using primary attack with Holy Fire aura")
-			steps = append(steps,
-				step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.HolyFire)),
-			)
+			s.logger.Debug("Using primary attack with Holy Fire aura")
+			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.HolyFire))
 		}
 
 		completedAttackLoops++
-		previousUnitID = id
-		p.logger.Debug("Attack sequence completed", "steps", len(steps), "loops", completedAttackLoops)
-		return steps
-	}, action.RepeatUntilNoSteps())
+		previousUnitID = int(id)
+	}
 }
 
-func (p PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	p.logger.Info("Killing monster", "npc", npc, "type", t)
-	return p.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+func (s PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false
@@ -111,31 +108,31 @@ func (p PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) action.Acti
 	}, nil)
 }
 
-func (p PaladinLeveling) BuffSkills(d game.Data) []skill.ID {
+func (s PaladinLeveling) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		skillsList = append(skillsList, skill.HolyShield)
 	}
-	p.logger.Info("Buff skills", "skills", skillsList)
+	s.logger.Info("Buff skills", "skills", skillsList)
 	return skillsList
 }
 
-func (p PaladinLeveling) PreCTABuffSkills(_ game.Data) []skill.ID {
+func (s PaladinLeveling) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
-func (p PaladinLeveling) ShouldResetSkills(d game.Data) bool {
-	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
-	if lvl.Value >= 21 && d.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
-		p.logger.Info("Resetting skills: Level 21+ and Holy Fire level > 10")
+func (s PaladinLeveling) ShouldResetSkills() bool {
+	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value >= 21 && s.data.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
+		s.logger.Info("Resetting skills: Level 21+ and Holy Fire level > 10")
 		return true
 	}
 
 	return false
 }
 
-func (p PaladinLeveling) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
-	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+func (s PaladinLeveling) SkillsToBind() (skill.ID, []skill.ID) {
+	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
 	mainSkill := skill.AttackSkill
 	skillBindings := []skill.ID{}
 
@@ -147,28 +144,28 @@ func (p PaladinLeveling) SkillsToBind(d game.Data) (skill.ID, []skill.ID) {
 		skillBindings = append(skillBindings, skill.HolyShield)
 	}
 
-	if d.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && lvl.Value >= 18 {
+	if s.data.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && lvl.Value >= 18 {
 		mainSkill = skill.BlessedHammer
-	} else if d.PlayerUnit.Skills[skill.Zeal].Level > 0 {
+	} else if s.data.PlayerUnit.Skills[skill.Zeal].Level > 0 {
 		mainSkill = skill.Zeal
 	}
 
-	if d.PlayerUnit.Skills[skill.Concentration].Level > 0 && lvl.Value >= 18 {
+	if s.data.PlayerUnit.Skills[skill.Concentration].Level > 0 && lvl.Value >= 18 {
 		skillBindings = append(skillBindings, skill.Concentration)
 	} else {
-		if _, found := d.PlayerUnit.Skills[skill.HolyFire]; found {
+		if _, found := s.data.PlayerUnit.Skills[skill.HolyFire]; found {
 			skillBindings = append(skillBindings, skill.HolyFire)
-		} else if _, found := d.PlayerUnit.Skills[skill.Might]; found {
+		} else if _, found := s.data.PlayerUnit.Skills[skill.Might]; found {
 			skillBindings = append(skillBindings, skill.Might)
 		}
 	}
 
-	p.logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
+	s.logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
 	return mainSkill, skillBindings
 }
 
-func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
-	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+func (s PaladinLeveling) StatPoints() map[stat.ID]int {
+	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
 	if lvl.Value < 21 {
@@ -192,12 +189,12 @@ func (p PaladinLeveling) StatPoints(d game.Data) map[stat.ID]int {
 		statPoints[stat.Energy] = 0
 	}
 
-	p.logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
+	s.logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
 	return statPoints
 }
 
-func (p PaladinLeveling) SkillPoints(d game.Data) []skill.ID {
-	lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
+func (s PaladinLeveling) SkillPoints() []skill.ID {
+	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
 	var skillPoints []skill.ID
 
 	if lvl.Value < 21 {
@@ -318,33 +315,28 @@ func (p PaladinLeveling) SkillPoints(d game.Data) []skill.ID {
 		}
 	}
 
-	p.logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
+	s.logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
 	return skillPoints
 }
 
-func (p PaladinLeveling) KillCountess() action.Action {
-	p.logger.Info("Starting Countess kill sequence")
-	return p.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+func (s PaladinLeveling) KillCountess() error {
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (p PaladinLeveling) KillAndariel() action.Action {
-	p.logger.Info("Starting Andariel kill sequence")
-	return p.killMonster(npc.Andariel, data.MonsterTypeNone)
+func (s PaladinLeveling) KillAndariel() error {
+	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillSummoner() action.Action {
-	p.logger.Info("Starting Summoner kill sequence")
-	return p.killMonster(npc.Summoner, data.MonsterTypeNone)
+func (s PaladinLeveling) KillSummoner() error {
+	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillDuriel() action.Action {
-	p.logger.Info("Starting Duriel kill sequence")
-	return p.killMonster(npc.Duriel, data.MonsterTypeNone)
+func (s PaladinLeveling) KillDuriel() error {
+	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillCouncil() action.Action {
-	p.logger.Info("Starting Council kill sequence")
-	return p.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+func (s PaladinLeveling) KillCouncil() error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
@@ -354,98 +346,80 @@ func (p PaladinLeveling) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(d, councilMembers[i].Position)
-			distanceJ := pather.DistanceFromMe(d, councilMembers[j].Position)
+			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
 
 		if len(councilMembers) > 0 {
-			p.logger.Debug("Targeting Council member", "id", councilMembers[0].UnitID)
+			s.logger.Debug("Targeting Council member", "id", councilMembers[0].UnitID)
 			return councilMembers[0].UnitID, true
 		}
 
-		p.logger.Debug("No Council members found")
+		s.logger.Debug("No Council members found")
 		return 0, false
 	}, nil)
 }
 
-func (p PaladinLeveling) KillMephisto() action.Action {
-	p.logger.Info("Starting Mephisto kill sequence")
-	return p.killMonster(npc.Mephisto, data.MonsterTypeNone)
+func (s PaladinLeveling) KillMephisto() error {
+	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillIzual() action.Action {
-	p.logger.Info("Starting Izual kill sequence")
-	return p.killMonster(npc.Izual, data.MonsterTypeNone)
+func (s PaladinLeveling) KillIzual() error {
+	return s.killMonster(npc.Izual, data.MonsterTypeNone)
 }
 
-func (p PaladinLeveling) KillDiablo() action.Action {
+func (s PaladinLeveling) KillDiablo() error {
 	timeout := time.Second * 20
-	startTime := time.Time{}
+	startTime := time.Now()
 	diabloFound := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if startTime.IsZero() {
-			startTime = time.Now()
-			p.logger.Info("Starting Diablo kill sequence")
-		}
 
+	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			p.logger.Error("Diablo was not found, timeout reached")
+			s.logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 		if !found || diablo.Stats[stat.Life] <= 0 {
+			// Already dead
 			if diabloFound {
-				p.logger.Info("Diablo killed or not found")
 				return nil
 			}
 
-			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
-				return []step.Step{step.Wait(time.Millisecond * 100)}
-			})}
+			// Keep waiting...
+			time.Sleep(200)
+			continue
 		}
 
 		diabloFound = true
-		p.logger.Info("Diablo detected, attacking")
+		s.logger.Info("Diablo detected, attacking")
 
-		return []action.Action{
-			p.killMonster(npc.Diablo, data.MonsterTypeNone),
-			p.killMonster(npc.Diablo, data.MonsterTypeNone),
-			p.killMonster(npc.Diablo, data.MonsterTypeNone),
-		}
-	}, action.RepeatUntilNoSteps())
+		s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		s.killMonster(npc.Diablo, data.MonsterTypeNone)
+
+		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+	}
 }
 
-func (p PaladinLeveling) KillPindle(_ []stat.Resist) action.Action {
-	p.logger.Info("Starting Pindleskin kill sequence")
-	return p.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+func (s PaladinLeveling) KillPindle() error {
+	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (p PaladinLeveling) KillNihlathak() action.Action {
-	p.logger.Info("Starting Nihlathak kill sequence")
-	return p.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+func (s PaladinLeveling) KillNihlathak() error {
+	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (p PaladinLeveling) KillAncients() action.Action {
-	p.logger.Info("Starting Ancients kill sequence")
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		for _, m := range d.Monsters.Enemies(data.MonsterEliteFilter()) {
-			actions = append(actions,
-				action.NewStepChain(func(d game.Data) []step.Step {
-					m, _ := d.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
-					p.logger.Info("Targeting Ancient", "name", m.Name)
-					return []step.Step{}
-				}),
-				p.killMonster(m.Name, data.MonsterTypeSuperUnique),
-			)
-		}
-		return actions
-	})
+func (s PaladinLeveling) KillAncients() error {
+	for _, m := range s.data.Monsters.Enemies(data.MonsterEliteFilter()) {
+		m, _ := s.data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
+
+		s.killMonster(m.Name, data.MonsterTypeSuperUnique)
+	}
+	return nil
 }
 
-func (p PaladinLeveling) KillBaal() action.Action {
-	p.logger.Info("Starting Baal kill sequence")
-	return p.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+func (s PaladinLeveling) KillBaal() error {
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }

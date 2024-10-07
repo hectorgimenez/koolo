@@ -7,45 +7,62 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type Countess struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewCountess() *Countess {
+	return &Countess{
+		ctx: context.Get(),
+	}
 }
 
 func (c Countess) Name() string {
 	return string(config.CountessRun)
 }
 
-func (c Countess) BuildActions() (actions []action.Action) {
+func (c Countess) Run() error {
 	// Travel to boss level
-	actions = append(actions,
-		c.builder.WayPoint(area.BlackMarsh), // Moving to starting point (Black Marsh)
-		c.builder.MoveToArea(area.ForgottenTower),
-		c.builder.MoveToArea(area.TowerCellarLevel1),
-		c.builder.MoveToArea(area.TowerCellarLevel2),
-		c.builder.MoveToArea(area.TowerCellarLevel3),
-		c.builder.MoveToArea(area.TowerCellarLevel4),
-		c.builder.MoveToArea(area.TowerCellarLevel5),
-	)
+	err := action.WayPoint(area.BlackMarsh)
+	if err != nil {
+		return err
+	}
+
+	areas := []area.ID{
+		area.ForgottenTower,
+		area.TowerCellarLevel1,
+		area.TowerCellarLevel2,
+		area.TowerCellarLevel3,
+		area.TowerCellarLevel4,
+		area.TowerCellarLevel5,
+	}
+
+	for _, a := range areas {
+		err = action.MoveToArea(a)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Try to move around Countess area
-	actions = append(actions, c.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-		for _, o := range d.Objects {
+	action.MoveTo(func() (data.Position, bool) {
+		for _, o := range c.ctx.Data.Objects {
 			if o.Name == object.GoodChest {
 				return o.Position, true
 			}
 		}
 
 		// Try to teleport over Countess in case we are not able to find the chest position, a bit more risky
-		if countess, found := d.Monsters.FindOne(npc.DarkStalker, data.MonsterTypeSuperUnique); found {
+		if countess, found := c.ctx.Data.Monsters.FindOne(npc.DarkStalker, data.MonsterTypeSuperUnique); found {
 			return countess.Position, true
 		}
 
 		return data.Position{}, false
-	}))
+	})
 
 	// Kill Countess
-	return append(actions, c.char.KillCountess())
+	return c.ctx.Char.KillCountess()
 }

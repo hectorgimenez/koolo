@@ -6,25 +6,39 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type Summoner struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewSummoner() *Summoner {
+	return &Summoner{
+		ctx: context.Get(),
+	}
 }
 
 func (s Summoner) Name() string {
 	return string(config.SummonerRun)
 }
 
-func (s Summoner) BuildActions() (actions []action.Action) {
-	return []action.Action{
-		s.builder.WayPoint(area.ArcaneSanctuary), // Moving to starting point (Arcane Sanctuary)
-		s.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			m, found := d.NPCs.FindOne(npc.Summoner)
+func (s Summoner) Run() error {
 
-			return m.Positions[0], found
-		}), // Travel to boss position
-		s.char.KillSummoner(), // Kill Summoner
+	// Use the waypoint
+	err := action.WayPoint(area.ArcaneSanctuary)
+	if err != nil {
+		return err
 	}
+
+	// Move to boss position
+	if err = action.MoveTo(func() (data.Position, bool) {
+		m, found := s.ctx.Data.NPCs.FindOne(npc.Summoner)
+		return m.Positions[0], found
+	}); err != nil {
+		return err
+	}
+
+	// Kill Summoner
+	return s.ctx.Char.KillSummoner()
 }

@@ -1,138 +1,90 @@
 package run
 
-import (
-	"log/slog"
-
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/container"
-
-	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/health"
-)
+import "github.com/hectorgimenez/koolo/internal/config"
 
 type Run interface {
 	Name() string
-	BuildActions() []action.Action
+	Run() error
 }
 
-type baseRun struct {
-	builder *action.Builder
-	char    action.Character
-	logger  *slog.Logger
-	container.Container
-}
+func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
+	//if cfg.Companion.Enabled && !cfg.Companion.Leader {
+	//	return []Run{Companion{baseRun: baseRun}}
+	//}
 
-type Factory struct {
-	logger    *slog.Logger
-	builder   *action.Builder
-	char      action.Character
-	container container.Container
-	bm        health.BeltManager
-}
-
-func NewFactory(logger *slog.Logger, builder *action.Builder, char action.Character, bm health.BeltManager, container container.Container) *Factory {
-	return &Factory{
-		logger:    logger,
-		builder:   builder,
-		char:      char,
-		bm:        bm,
-		container: container,
-	}
-}
-
-func (f *Factory) BuildRuns() (runs []Run) {
-	d := f.container.Reader.GetData(true)
-
-	baseRun := baseRun{
-		builder:   f.builder,
-		char:      f.char,
-		logger:    f.logger,
-		Container: f.container,
-	}
-
-	if f.container.CharacterCfg.Companion.Enabled && !f.container.CharacterCfg.Companion.Leader {
-		return []Run{Companion{baseRun: baseRun}}
-	}
-
-	for _, run := range f.container.CharacterCfg.Game.Runs {
+	for _, run := range cfg.Game.Runs {
 		// Prepend terror zone runs, we want to run it always first
 		if run == config.TerrorZoneRun {
-			tz := TerrorZone{baseRun: baseRun}
+			tz := NewTerrorZone()
 
-			if len(tz.AvailableTZs(d)) > 0 {
+			if len(tz.AvailableTZs()) > 0 {
 				runs = append(runs, tz)
 				// If we are skipping other runs, we can return here
-				if f.container.CharacterCfg.Game.TerrorZone.SkipOtherRuns {
+				if cfg.Game.TerrorZone.SkipOtherRuns {
 					return runs
 				}
 			}
 		}
 	}
 
-	for _, run := range f.container.CharacterCfg.Game.Runs {
+	for _, run := range cfg.Game.Runs {
 		switch run {
 		case config.CountessRun:
-			runs = append(runs, Countess{baseRun})
+			runs = append(runs, NewCountess())
 		case config.AndarielRun:
-			runs = append(runs, Andariel{baseRun})
+			runs = append(runs, NewAndariel())
 		case config.SummonerRun:
-			runs = append(runs, Summoner{baseRun})
+			runs = append(runs, NewSummoner())
 		case config.DurielRun:
-			runs = append(runs, Duriel{baseRun})
+			runs = append(runs, NewDuriel())
 		case config.MephistoRun:
-			runs = append(runs, Mephisto{baseRun})
-		case config.CouncilRun:
-			runs = append(runs, Council{baseRun})
+			runs = append(runs, NewMephisto(nil))
+		case config.TravincalRun:
+			runs = append(runs, NewTravincal())
 		case config.DiabloRun:
-			runs = append(runs, Diablo{
-				baseRun: baseRun,
-				bm:      f.bm,
-			})
+			runs = append(runs, NewDiablo())
 		case config.EldritchRun:
-			runs = append(runs, Eldritch{
-				baseRun: baseRun,
-			})
+			runs = append(runs, NewEldritch())
 		case config.PindleskinRun:
-			runs = append(runs, Pindleskin{
-				SkipOnImmunities: f.container.CharacterCfg.Game.Pindleskin.SkipOnImmunities,
-				baseRun:          baseRun,
-			})
+			runs = append(runs, NewPindleskin())
 		case config.NihlathakRun:
-			runs = append(runs, Nihlathak{baseRun})
+			runs = append(runs, NewNihlathak())
 		case config.AncientTunnelsRun:
-			runs = append(runs, AncientTunnels{baseRun})
+			runs = append(runs, NewAncientTunnels())
 		case config.MausoleumRun:
-			runs = append(runs, Mausoleum{baseRun})
+			runs = append(runs, NewMausoleum())
 		case config.PitRun:
-			runs = append(runs, Pit{baseRun})
+			runs = append(runs, NewPit())
 		case config.StonyTombRun:
-			runs = append(runs, StonyTomb{baseRun})
+			runs = append(runs, NewStonyTomb())
 		case config.ArachnidLairRun:
-			runs = append(runs, ArachnidLair{baseRun})
+			runs = append(runs, NewArachnidLair())
 		case config.TristramRun:
-			runs = append(runs, Tristram{baseRun})
+			runs = append(runs, NewTristram())
 		case config.LowerKurastRun:
-			runs = append(runs, LowerKurast{baseRun})
+			runs = append(runs, NewLowerKurast())
 		case config.LowerKurastChestRun:
-			runs = append(runs, LowerKurastChest{baseRun})
+			runs = append(runs, NewLowerKurastChest())
 		case config.BaalRun:
-			runs = append(runs, Baal{baseRun})
+			runs = append(runs, NewBaal(nil))
 		case config.TalRashaTombsRun:
-			runs = append(runs, TalRashaTombs{baseRun})
+			runs = append(runs, NewTalRashaTombs())
 		case config.LevelingRun:
-			runs = append(runs, Leveling{baseRun: baseRun, bm: f.bm})
+			runs = append(runs, NewLeveling())
 		case config.QuestsRun:
-			runs = append(runs, Quests{baseRun})
+			runs = append(runs, NewQuests())
 		case config.CowsRun:
-			runs = append(runs, Cows{baseRun})
+			runs = append(runs, NewCows())
 		case config.ThreshsocketRun:
-			runs = append(runs, Threshsocket{baseRun})
+			runs = append(runs, NewThreshsocket())
+		case config.SpiderCavernRun:
+			runs = append(runs, NewSpiderCavern())
 		case config.DrifterCavernRun:
-			runs = append(runs, DrifterCavern{baseRun})
+			runs = append(runs, NewDriverCavern())
 		case config.EnduguRun:
-			runs = append(runs, Endugu{baseRun})
+			runs = append(runs, NewEndugu())
 		}
 	}
 
-	return
+	return runs
 }

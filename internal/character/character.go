@@ -5,25 +5,29 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func BuildCharacter(logger *slog.Logger, container container.Container) (action.Character, error) {
+func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Data, pf *pather.PathFinder) (context.Character, error) {
 	bc := BaseCharacter{
-		logger:    logger,
-		container: container,
+		logger: logger,
+		data:   data,
+		cfg:    cfg,
+		pf:     pf,
 	}
 
-	if container.CharacterCfg.Game.Runs[0] == "leveling" {
-		switch strings.ToLower(container.CharacterCfg.Character.Class) {
+	ctx := context.Get()
+
+	if len(ctx.CharacterCfg.Game.Runs) > 0 && ctx.CharacterCfg.Game.Runs[0] == "leveling" {
+		switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
 		case "sorceress_leveling_lightning":
 			return SorceressLevelingLightning{BaseCharacter: bc}, nil
-		case "sorceress":
+		case "sorceress_leveling":
 			return SorceressLeveling{BaseCharacter: bc}, nil
 		case "paladin":
 			return PaladinLeveling{BaseCharacter: bc}, nil
@@ -32,11 +36,13 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 		return nil, fmt.Errorf("leveling only available for sorceress and paladin")
 	}
 
-	switch strings.ToLower(container.CharacterCfg.Character.Class) {
+	switch strings.ToLower(cfg.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
-	case "lightning":
-		return LightningSorceress{BaseCharacter: bc}, nil
+	case "nova":
+		return NovaSorceress{BaseCharacter: bc}, nil
+	case "hydraorb":
+		return HydraOrbSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":
 		return Hammerdin{BaseCharacter: bc}, nil
 	case "foh":
@@ -50,19 +56,21 @@ func BuildCharacter(logger *slog.Logger, container container.Container) (action.
 	case "javazon":
 		return Javazon{BaseCharacter: bc}, nil
 	case "berserker":
-		return Berserker{BaseCharacter: bc}, nil
+		return &Berserker{BaseCharacter: bc}, nil // Return a pointer to Berserker
 	}
 
-	return nil, fmt.Errorf("class %s not implemented", container.CharacterCfg.Character.Class)
+	return nil, fmt.Errorf("class %s not implemented", cfg.Character.Class)
 }
 
 type BaseCharacter struct {
-	logger    *slog.Logger
-	container container.Container
+	logger *slog.Logger
+	data   *game.Data
+	cfg    *config.CharacterCfg
+	pf     *pather.PathFinder
 }
 
-func (bc BaseCharacter) preBattleChecks(d game.Data, id data.UnitID, skipOnImmunities []stat.Resist) bool {
-	monster, found := d.Monsters.FindByID(id)
+func (bc BaseCharacter) preBattleChecks(id data.UnitID, skipOnImmunities []stat.Resist) bool {
+	monster, found := bc.data.Monsters.FindByID(id)
 	if !found {
 		return false
 	}

@@ -5,52 +5,82 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type Pit struct {
-	baseRun
+	ctx *context.Status
 }
 
-func (a Pit) Name() string {
+func NewPit() *Pit {
+	return &Pit{
+		ctx: context.Get(),
+	}
+}
+
+func (p Pit) Name() string {
 	return string(config.PitRun)
 }
 
-func (a Pit) BuildActions() (actions []action.Action) {
-	openChests := a.CharacterCfg.Game.Pit.OpenChests
-	onlyElites := a.CharacterCfg.Game.Pit.FocusOnElitePacks
-	filter := data.MonsterAnyFilter()
+func (p Pit) Run() error {
 
-	if onlyElites {
-		filter = data.MonsterEliteFilter()
+	// Define a default filter
+	monsterFilter := data.MonsterAnyFilter()
+
+	// Update filter if we selected to clear only elites
+	if p.ctx.CharacterCfg.Game.Pit.FocusOnElitePacks {
+		monsterFilter = data.MonsterEliteFilter()
 	}
 
-	actions = append(actions,
-		a.builder.WayPoint(area.OuterCloister),
-		a.builder.MoveToArea(area.MonasteryGate),
-		a.builder.MoveToArea(area.TamoeHighland),
-	)
+	if !p.ctx.CharacterCfg.Game.Pit.MoveThroughBlackMarsh {
+		// Use the waypoint to travel to the OuterCloister
+		err := action.WayPoint(area.OuterCloister)
+		if err != nil {
+			return err
+		}
 
-	if a.CharacterCfg.Game.Pit.MoveThroughBlackMarsh {
-		actions = []action.Action{
-			a.builder.WayPoint(area.BlackMarsh),
-			a.builder.MoveToArea(area.TamoeHighland),
+		// Move to the Monastery Gate
+		if err = action.MoveToArea(area.MonasteryGate); err != nil {
+			return err
+		}
+
+		// Move to the Tamoe Highland
+		if err = action.MoveToArea(area.TamoeHighland); err != nil {
+			return err
+		}
+	} else {
+		// Use the waypoint to travel to the BlackMarsh
+		err := action.WayPoint(area.BlackMarsh)
+		if err != nil {
+			return err
+		}
+
+		// Move to the TamoeHighland
+		if err = action.MoveToArea(area.TamoeHighland); err != nil {
+			return err
 		}
 	}
 
-	a.logger.Info("Travel to pit level 1")
-	actions = append(actions, a.builder.MoveToArea(area.PitLevel1))
-
-	actions = append(actions,
-		a.builder.OpenTPIfLeader(),
-	)
-
-	if !a.CharacterCfg.Game.Pit.OnlyClearLevel2 {
-		actions = append(actions,
-			a.builder.ClearArea(openChests, filter),) // Clear pit level 1
+	// Travel to pit level 1
+	if err := action.MoveToArea(area.PitLevel1); err != nil {
+		return err
 	}
 
-	return append(actions,
-		a.builder.MoveToArea(area.PitLevel2),    // Travel to pit level 2
-		a.builder.ClearArea(openChests, filter), // Clear pit level 2
-	)
+	// Open a TP If we're the leader
+	action.OpenTPIfLeader()
+
+	// Clear the area if we don't have only clear lvl2 selected
+	if !p.ctx.CharacterCfg.Game.Pit.OnlyClearLevel2 {
+		if err := action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter); err != nil {
+			return err
+		}
+	}
+
+	// Move to PitLvl2
+	if err := action.MoveToArea(area.PitLevel2); err != nil {
+		return err
+	}
+
+	// Clear it
+	return action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter)
 }

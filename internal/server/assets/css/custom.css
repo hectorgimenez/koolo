@@ -37,4 +37,227 @@
     list-style: none;
     padding-left: 0;
     margin-left: 0;
+    margin-bottom: 0.5rem; /* Add some space between items */
+}
+
+#scheduler-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Add this new rule */
+#scheduler-settings[style*="display: none"] {
+    display: none !important;
+}
+
+.scheduler-day {
+    background-color: #1c212c;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #2a3140;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.scheduler-day:hover {
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+.scheduler-day h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.time-range {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.time-range input[type="time"] {
+    width: 15rem;
+    margin-right: 0.1rem;
+    padding: 0.15rem;
+    border: 1px solid #2a3140;
+    border-radius: 3px;
+    font-size: 0.90rem;
+}
+
+.time-range span {
+    margin: 0 0.5rem;
+    margin-bottom: 5%;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.remove-time-range {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.remove-time-range:hover {
+    background-color: #c82333;
+}
+
+.add-time-range {
+    margin-top: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+.add-time-range:hover {
+    background-color: #0056b3;
+}
+
+.add-time-range i {
+    margin-right: 0.5rem;
+}
+
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.recipe-item {
+    display: flex;
+    align-items: center;
+    background-color: #1c212c;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.recipe-item:hover {
+    background-color: #2a3140;
+}
+
+.recipe-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.recipe-item span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Add these styles to your existing CSS file */
+
+.run-list li summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1c212c;
+    transition: background-color 0.2s;
+    border: none; /* Remove border from summary */
+}
+
+.run-list li summary:hover {
+    background-color: #2a3140;
+}
+
+.run-list li summary:focus {
+    outline: none; /* Remove the annoying outline */
+}
+
+.run-list li summary span {
+    flex-grow: 1;
+}
+
+.run-list li summary button {
+    border: none;
+    cursor: pointer;
+    padding: 2.5px 5px; /* 50% smaller padding */
+    margin-left: 10px;
+    font-size: 0.8rem; /* 50% smaller font size */
+    color: #ffffff;
+    border-radius: 1px solid #2a3140;
+    transition: background-color 0.2s, transform 0.1s;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+}
+
+.run-list li summary button.remove-run {
+    margin-top: 15px;
+    background-color: #dc3545; /* Red for remove button */
+}
+
+.run-list li summary button.add-run {
+    margin-top: 15px;
+    background-color: #28a745; /* Green for add button */
+}
+
+.run-list li summary button:hover {
+    transform: scale(1.05);
+}
+
+.run-list li summary span {
+    padding-left: 10px;
+}
+
+.run-list li summary button.remove-run:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+.run-list li summary button.add-run:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.run-list li summary button i {
+    font-size: 0.9rem; /* 50% smaller icon size */
+}
+
+.run-list li details[open] summary {
+    border-bottom: 1px solid #2a3140;
+}
+
+.run-list li details p {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    background-color: #1c212c;
+}
+
+/* New styles for the summary content */
+.summary-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.summary-text {
+    flex-grow: 1;
+}
+
+.summary-icons {
+    display: flex;
+    align-items: center;
 }

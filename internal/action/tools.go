@@ -3,24 +3,25 @@ package action
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-func (b *Builder) OpenTPIfLeader() *StepChainAction {
-	isLeader := b.CharacterCfg.Companion.Enabled && b.CharacterCfg.Companion.Leader
+func OpenTPIfLeader() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "OpenTPIfLeader"
 
-	return NewStepChain(func(d game.Data) []step.Step {
-		if isLeader {
-			return []step.Step{step.OpenPortal()}
-		}
+	isLeader := ctx.CharacterCfg.Companion.Leader
 
-		return []step.Step{step.Wait(50)}
-	})
+	if isLeader {
+		return step.OpenPortal()
+	}
+
+	return nil
 }
 
-func (b *Builder) IsMonsterSealElite(monster data.Monster) bool {
+func IsMonsterSealElite(monster data.Monster) bool {
 	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
 		return true
 	}
@@ -28,14 +29,19 @@ func (b *Builder) IsMonsterSealElite(monster data.Monster) bool {
 	return false
 }
 
-func (b *Builder) UseSkillIfBind(id skill.ID) *Chain {
-	return NewChain(func(d game.Data) []Action {
-		if kb, found := d.KeyBindings.KeyBindingForSkill(id); found {
-			if d.PlayerUnit.RightSkill != id {
-				b.Container.HID.PressKeyBinding(kb)
-			}
-		}
+func PostRun(isLastRun bool) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "PostRun"
 
-		return []Action{}
-	})
+	// Allow some time for items drop to the ground, otherwise we might miss some
+	utils.Sleep(200)
+	ClearAreaAroundPlayer(5, data.MonsterAnyFilter())
+	ItemPickup(-1)
+
+	// Don't return town on last run
+	if !isLastRun {
+		return ReturnTown()
+	}
+
+	return nil
 }

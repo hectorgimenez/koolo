@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -25,12 +25,12 @@ type Javazon struct {
 	BaseCharacter
 }
 
-func (s Javazon) CheckKeyBindings(d game.Data) []skill.ID {
+func (s Javazon) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.LightningFury, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
@@ -42,86 +42,39 @@ func (s Javazon) CheckKeyBindings(d game.Data) []skill.ID {
 	return missingKeybindings
 }
 
-func (s Javazon) PreCTABuffSkills(d game.Data) []skill.ID {
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.Valkyrie); found {
-		return []skill.ID{skill.Valkyrie}
-	} else {
-		return []skill.ID{}
-	}
-}
-
-func (s Javazon) BuffSkills(d game.Data) []skill.ID {
-	return []skill.ID{}
-}
-
-func (a Javazon) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
+func (s Javazon) KillMonsterSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
 	completedAttackLoops := 0
-	var previousUnitID data.UnitID = 0
-	skipOnImmunities = append(skipOnImmunities, stat.LightImmune)
+	previousUnitID := 0
+	const numOfAttacks = 5
 
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		id, found := monsterSelector(d)
+	for {
+		id, found := monsterSelector(*s.data)
 		if !found {
-			return []step.Step{}
+			return nil
 		}
-		if previousUnitID != id {
+		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
-		if !a.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
 		}
 
 		if completedAttackLoops >= maxJavazonAttackLoops {
-			return []step.Step{}
+			return nil
 		}
 
-		steps := make([]step.Step, 0)
-
-		numOfAttacks := 5
-
-		steps = append(steps, step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1)))
-
-		completedAttackLoops++
-		previousUnitID = id
-		return steps
-	}, action.RepeatUntilNoSteps())
-}
-
-func (a Javazon) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist, opts ...step.AttackOption) action.Action {
-	completedAttackLoops := 0
-	var previousUnitID data.UnitID = 0
-
-	//skipOnImmunities = append(skipOnImmunities, stat.LightImmune)
-
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		id, found := monsterSelector(d)
+		monster, found := s.data.Monsters.FindByID(id)
 		if !found {
-			return []step.Step{}
-		}
-		if previousUnitID != id {
-			completedAttackLoops = 0
-		}
-
-		if !a.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}
-		}
-
-		if completedAttackLoops >= 10 {
-			return []step.Step{}
-		}
-
-		steps := make([]step.Step, 0)
-
-		numOfAttacks := 5
-
-		monster, found := d.Monsters.FindByID(id)
-		if !found {
-			return []step.Step{}
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
 		}
 
 		closeMonsters := 0
-		for _, mob := range d.Monsters {
+		for _, mob := range s.data.Monsters {
 			if mob.IsPet() || mob.IsMerc() || mob.IsGoodNPC() || mob.IsSkip() || monster.Stats[stat.Life] <= 0 && mob.UnitID != monster.UnitID {
 				continue
 			}
@@ -134,21 +87,51 @@ func (a Javazon) KillMonsterSequence(monsterSelector func(d game.Data) (data.Uni
 		}
 
 		if closeMonsters >= 3 {
-			steps = append(steps, step.SecondaryAttack(skill.LightningFury, id, numOfAttacks, step.Distance(minJavazonDistance, maxJavazonDistance)))
+			step.SecondaryAttack(skill.LightningFury, id, numOfAttacks, step.Distance(minJavazonDistance, maxJavazonDistance))
 		} else {
-			steps = append(steps, step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1)))
+			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1))
 		}
 
 		completedAttackLoops++
-		previousUnitID = id
-		return steps
-	}, action.RepeatUntilNoSteps())
+		previousUnitID = int(id)
+	}
 }
 
-func (a Javazon) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return a.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
+func (s Javazon) KillBossSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
+	completedAttackLoops := 0
+	previousUnitID := 0
+	const numOfAttacks = 5
 
+	for {
+		id, found := monsterSelector(*s.data)
+		if !found {
+			return nil
+		}
+		if previousUnitID != int(id) {
+			completedAttackLoops = 0
+		}
+
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+
+		if completedAttackLoops >= maxJavazonAttackLoops {
+			return nil
+		}
+
+		completedAttackLoops++
+		previousUnitID = int(id)
+
+		step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 1))
+	}
+}
+
+func (s Javazon) killMonster(npc npc.ID, t data.MonsterType) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false
 		}
@@ -157,10 +140,9 @@ func (a Javazon) killMonster(npc npc.ID, t data.MonsterType) action.Action {
 	}, nil)
 }
 
-func (a Javazon) killBoss(npc npc.ID, t data.MonsterType) action.Action {
-	return a.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
+func (s Javazon) killBoss(npc npc.ID, t data.MonsterType) error {
+	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
-
 		if !found {
 			return 0, false
 		}
@@ -169,36 +151,37 @@ func (a Javazon) killBoss(npc npc.ID, t data.MonsterType) action.Action {
 	}, nil)
 }
 
-func (a Javazon) KillCountess() action.Action {
-	return a.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+func (s Javazon) PreCTABuffSkills() []skill.ID {
+	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.Valkyrie); found {
+		return []skill.ID{skill.Valkyrie}
+	} else {
+		return []skill.ID{}
+	}
 }
 
-func (a Javazon) KillAndariel() action.Action {
-	return a.killBoss(npc.Andariel, data.MonsterTypeNone)
+func (s Javazon) BuffSkills() []skill.ID {
+	return []skill.ID{}
 }
 
-func (a Javazon) KillSummoner() action.Action {
-	return a.killMonster(npc.Summoner, data.MonsterTypeNone)
+func (s Javazon) KillCountess() error {
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (a Javazon) KillDuriel() action.Action {
-	return a.killBoss(npc.Duriel, data.MonsterTypeNone)
+func (s Javazon) KillAndariel() error {
+	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (a Javazon) KillMephisto() action.Action {
-	return a.killBoss(npc.Mephisto, data.MonsterTypeNone)
+func (s Javazon) KillSummoner() error {
+	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (a Javazon) KillPindle(_ []stat.Resist) action.Action {
-	return a.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+func (s Javazon) KillDuriel() error {
+	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (a Javazon) KillNihlathak() action.Action {
-	return a.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (a Javazon) KillCouncil() action.Action {
-	return a.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+func (s Javazon) KillCouncil() error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
@@ -208,35 +191,40 @@ func (a Javazon) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(d, councilMembers[i].Position)
-			distanceJ := pather.DistanceFromMe(d, councilMembers[j].Position)
+			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
 
-		if len(councilMembers) > 0 {
-			return councilMembers[0].UnitID, true
+		for _, m := range councilMembers {
+			return m.UnitID, true
 		}
 
 		return 0, false
 	}, nil)
 }
 
-func (a Javazon) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startTime := time.Time{}
-	diabloFound := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if startTime.IsZero() {
-			startTime = time.Now()
-		}
+func (s Javazon) KillMephisto() error {
+	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
+}
 
+func (s Javazon) KillIzual() error {
+	return s.killBoss(npc.Izual, data.MonsterTypeNone)
+}
+
+func (s Javazon) KillDiablo() error {
+	timeout := time.Second * 20
+	startTime := time.Now()
+	diabloFound := false
+
+	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			a.logger.Error("Diablo was not found, timeout reached")
+			s.logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -244,26 +232,25 @@ func (a Javazon) KillDiablo() action.Action {
 			}
 
 			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
-				return []step.Step{step.Wait(time.Millisecond * 100)}
-			})}
+			time.Sleep(200)
+			continue
 		}
 
 		diabloFound = true
-		a.logger.Info("Diablo detected, attacking")
+		s.logger.Info("Diablo detected, attacking")
 
-		return []action.Action{
-			a.killBoss(npc.Diablo, data.MonsterTypeNone),
-			a.killBoss(npc.Diablo, data.MonsterTypeNone),
-			a.killBoss(npc.Diablo, data.MonsterTypeNone),
-		}
-	}, action.RepeatUntilNoSteps())
+		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+	}
 }
 
-func (a Javazon) KillIzual() action.Action {
-	return a.killBoss(npc.Izual, data.MonsterTypeNone)
+func (s Javazon) KillPindle() error {
+	return s.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (a Javazon) KillBaal() action.Action {
-	return a.killBoss(npc.BaalCrab, data.MonsterTypeNone)
+func (s Javazon) KillNihlathak() error {
+	return s.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
+}
+
+func (s Javazon) KillBaal() error {
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
 }

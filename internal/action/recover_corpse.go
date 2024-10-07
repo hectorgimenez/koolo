@@ -1,38 +1,35 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/action/step"
+	"errors"
+
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-func (b *Builder) RecoverCorpse() *StepChainAction {
-	return NewStepChain(func(d game.Data) (steps []step.Step) {
-		b.Logger.Debug("Checking for character corpse...")
-		if d.Corpse.Found {
-			b.Logger.Info("Corpse found, let's recover our stuff...")
-			steps = append(steps,
-				step.SyncStepWithCheck(func(d game.Data) error {
-					x, y := b.PathFinder.GameCoordsToScreenCords(
-						d.PlayerUnit.Position.X,
-						d.PlayerUnit.Position.Y,
-						d.Corpse.Position.X,
-						d.Corpse.Position.Y,
-					)
-					b.HID.Click(game.LeftButton, x, y)
+func RecoverCorpse() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "RecoverCorpse"
 
-					return nil
-				}, func(d game.Data) step.Status {
-					if d.Corpse.Found {
-						return step.StatusInProgress
-					}
+	if ctx.Data.Corpse.Found {
+		ctx.Logger.Info("Corpse found, let's recover our stuff...")
 
-					return step.StatusCompleted
-				}),
+		attempts := 0
+		for ctx.Data.Corpse.Found && attempts < 15 {
+			utils.Sleep(500)
+			x, y := ui.GameCoordsToScreenCords(
+				ctx.Data.Corpse.Position.X,
+				ctx.Data.Corpse.Position.Y,
 			)
-		} else {
-			b.Logger.Debug("Character corpse not found :D")
+			ctx.HID.Click(game.LeftButton, x, y)
+			attempts++
 		}
+		if ctx.Data.Corpse.Found {
+			return errors.New("could not recover corpse")
+		}
+	}
 
-		return
-	}, Resettable())
+	return nil
 }

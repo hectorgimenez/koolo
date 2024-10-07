@@ -3,9 +3,9 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 var andarielStartingPosition = data.Position{
@@ -50,50 +50,56 @@ var andarielAttackPos1 = data.Position{
 //}
 
 type Andariel struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewAndariel() *Andariel {
+	return &Andariel{
+		ctx: context.Get(),
+	}
 }
 
 func (a Andariel) Name() string {
 	return string(config.AndarielRun)
 }
 
-func (a Andariel) BuildActions() (actions []action.Action) {
+func (a Andariel) Run() error {
 	// Moving to Catacombs Level 4
-	a.logger.Info("Moving to Catacombs 4")
-	actions = append(actions,
-		a.builder.WayPoint(area.CatacombsLevel2),
-		a.builder.MoveToArea(area.CatacombsLevel3),
-		a.builder.MoveToArea(area.CatacombsLevel4),
-	)
+	a.ctx.Logger.Info("Moving to Catacombs 4")
+	err := action.WayPoint(area.CatacombsLevel2)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.CatacombsLevel3)
+	action.MoveToArea(area.CatacombsLevel4)
+	if err != nil {
+		return err
+	}
 
 	// Clearing inside room
-	a.logger.Info("Clearing inside room")
+	a.ctx.Logger.Info("Clearing inside room")
 
-	if a.CharacterCfg.Game.Andariel.ClearRoom {
-		actions = append(actions,
-			a.builder.MoveToCoords(andarielClearPos1),
-			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-			a.builder.MoveToCoords(andarielClearPos2),
-			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-			a.builder.MoveToCoords(andarielClearPos3),
-			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-			a.builder.MoveToCoords(andarielClearPos4),
-			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-			a.builder.MoveToCoords(andarielClearPos5),
-			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-			a.builder.MoveToCoords(andarielAttackPos1),
-			a.builder.ClearAreaAroundPlayer(20, data.MonsterAnyFilter()),
-		)
+	if a.ctx.CharacterCfg.Game.Andariel.ClearRoom {
+		action.MoveToCoords(andarielClearPos1)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos2)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos3)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos4)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielClearPos5)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		action.MoveToCoords(andarielAttackPos1)
+		action.ClearAreaAroundPlayer(20, data.MonsterAnyFilter())
+
 	} else {
-		actions = append(actions,
-			a.builder.MoveToCoords(andarielStartingPosition),
-		)
+		action.MoveToCoords(andarielStartingPosition)
 	}
 
 	// Attacking Andariel
-	a.logger.Info("Killing Andariel")
-	actions = append(actions,
-		a.char.KillAndariel(),
-	)
-	return actions
+	a.ctx.Logger.Info("Killing Andariel")
+
+	return a.ctx.Char.KillAndariel()
 }

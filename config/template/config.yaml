@@ -61,6 +61,9 @@ game:
   drifter_cavern:
     openChests: true
     focusOnElitePacks: false
+  spider_cavern:
+    openChests: true
+    focusOnElitePacks: false    
   pit:
     # default - Outer Cloister -> Monastery Gates -> Tamoe Highland
     moveThroughBlackMarsh: false # Use Black Marsh -> Tamoe Highland route

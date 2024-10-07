@@ -1,103 +1,135 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
-	"time"
-
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/nip"
-	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-func (b *Builder) ItemPickup(waitForDrop bool, maxDistance int) *Chain {
-	firstCallTime := time.Time{}
-	var itemBeingPickedUp data.UnitID
+func itemFitsInventory(i data.Item) bool {
+	invMatrix := context.Get().Data.Inventory.Matrix()
 
-	return NewChain(func(d game.Data) []Action {
-		if firstCallTime.IsZero() {
-			firstCallTime = time.Now()
-		}
-
-		itemsToPickup := b.getItemsToPickup(d, maxDistance)
-		if len(itemsToPickup) > 0 {
-			for _, m := range d.Monsters.Enemies() {
-				if dist := pather.DistanceFromMe(d, m.Position); dist < 7 {
-					b.Logger.Debug("Aborting item pickup, monster nearby", slog.Any("monster", m))
-					itemBeingPickedUp = -1
-					return []Action{b.ch.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-						return m.UnitID, true
-					}, nil)}
+	for y := 0; y <= len(invMatrix)-i.Desc().InventoryHeight; y++ {
+		for x := 0; x <= len(invMatrix[0])-i.Desc().InventoryWidth; x++ {
+			freeSpace := true
+			for dy := 0; dy < i.Desc().InventoryHeight; dy++ {
+				for dx := 0; dx < i.Desc().InventoryWidth; dx++ {
+					if invMatrix[y+dy][x+dx] {
+						freeSpace = false
+						break
+					}
+				}
+				if !freeSpace {
+					break
 				}
 			}
 
-			i := itemsToPickup[0]
-
-			// Error picking up Item, go back to town, sell junk, stash and try again.
-			if itemBeingPickedUp == i.UnitID {
-				b.Logger.Debug("Item could not be picked up, going back to town to sell junk and stash")
-				return []Action{NewChain(func(d game.Data) []Action {
-					itemBeingPickedUp = -1
-					return b.InRunReturnTownRoutine()
-				})}
-			}
-
-			b.Logger.Debug(fmt.Sprintf(
-				"Item Detected: %s [%d] at X:%d Y:%d",
-				i.Name,
-				i.Quality,
-				i.Position.X,
-				i.Position.Y,
-			))
-
-			itemBeingPickedUp = i.UnitID
-			return []Action{
-				b.MoveToCoords(i.Position),
-				NewStepChain(func(d game.Data) []step.Step {
-					return []step.Step{step.PickupItem(b.Logger, i)}
-				}, IgnoreErrors()),
+			if freeSpace {
+				return true
 			}
 		}
+	}
 
-		// Add small delay, drop is not instant
-		if waitForDrop && time.Since(firstCallTime) < time.Second {
-			msToWait := time.Second - time.Since(firstCallTime)
-			b.Logger.Debug("No items detected, waiting a bit and will try again", slog.Int("waitMs", int(msToWait.Milliseconds())))
-
-			return []Action{b.Wait(msToWait)}
-		}
-
-		return nil
-	}, RepeatUntilNoSteps())
+	return false
 }
 
-func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
-	missingHealingPotions := b.bm.GetMissingCount(d, data.HealingPotion)
-	missingManaPotions := b.bm.GetMissingCount(d, data.ManaPotion)
-	missingRejuvenationPotions := b.bm.GetMissingCount(d, data.RejuvenationPotion)
+func ItemPickup(maxDistance int) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "ItemPickup"
+
+	for {
+		itemsToPickup := GetItemsToPickup(maxDistance)
+		if len(itemsToPickup) == 0 {
+			return nil
+		}
+
+		itemToPickup := data.Item{}
+		for _, i := range itemsToPickup {
+			if itemFitsInventory(i) {
+				itemToPickup = i
+				break
+			}
+		}
+
+		if itemToPickup.UnitID == 0 {
+			ctx.Logger.Debug("Inventory is full, returning to town to sell junk and stash items")
+			InRunReturnTownRoutine()
+			continue
+		}
+
+		for _, m := range ctx.Data.Monsters.Enemies() {
+			if _, dist, _ := ctx.PathFinder.GetPathFrom(itemToPickup.Position, m.Position); dist <= 3 {
+				ctx.Logger.Debug("Monsters detected close to the item being picked up, killing them...", slog.Any("monster", m))
+				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+					return m.UnitID, true
+				}, nil)
+				continue
+			}
+		}
+
+		ctx.Logger.Debug(fmt.Sprintf(
+			"Item Detected: %s [%d] at X:%d Y:%d",
+			itemToPickup.Name,
+			itemToPickup.Quality,
+			itemToPickup.Position.X,
+			itemToPickup.Position.Y,
+		))
+
+		err := MoveToCoords(itemToPickup.Position)
+		if err != nil {
+			ctx.Logger.Warn("Failed moving closer to item, trying to pickup it anyway", err)
+		}
+
+		err = step.PickupItem(itemToPickup)
+		if errors.Is(err, step.ErrItemTooFar) {
+			ctx.Logger.Debug("Item is too far away, retrying...")
+			continue
+		}
+		if err != nil {
+			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
+			ctx.Logger.Warn(
+				"Failed picking up item, blacklisting it",
+				err.Error(),
+				slog.String("itemName", itemToPickup.Desc().Name),
+				slog.Int("unitID", int(itemToPickup.UnitID)),
+			)
+		}
+	}
+}
+
+func GetItemsToPickup(maxDistance int) []data.Item {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "GetItemsToPickup"
+
+	missingHealingPotions := ctx.BeltManager.GetMissingCount(data.HealingPotion)
+	missingManaPotions := ctx.BeltManager.GetMissingCount(data.ManaPotion)
+	missingRejuvenationPotions := ctx.BeltManager.GetMissingCount(data.RejuvenationPotion)
 	var itemsToPickup []data.Item
-	_, isLevelingChar := b.ch.(LevelingCharacter)
-	for _, itm := range d.Inventory.ByLocation(item.LocationGround) {
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
-		if d.CharacterCfg.Companion.Enabled && isLevelingChar && !itm.IsFromQuest() && (d.PlayerUnit.Area == area.MaggotLairLevel1 || d.PlayerUnit.Area == area.MaggotLairLevel2 || d.PlayerUnit.Area == area.MaggotLairLevel3 || d.PlayerUnit.Area == area.ArcaneSanctuary) {
+		if isLevelingChar && !itm.IsFromQuest() && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 || ctx.Data.PlayerUnit.Area == area.MaggotLairLevel2 || ctx.Data.PlayerUnit.Area == area.MaggotLairLevel3 || ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary) {
 			continue
 		}
 
 		// Skip items that are outside pickup radius, this is useful when clearing big areas to prevent
 		// character going back to pickup potions all the time after using them
-		itemDistance := pather.DistanceFromMe(d, itm.Position)
-		if maxDistance > 0 && itemDistance > maxDistance {
+		itemDistance := ctx.PathFinder.DistanceFromMe(itm.Position)
+		if maxDistance > 0 && itemDistance > maxDistance && itm.IsPotion() {
 			continue
 		}
 
-		if !b.shouldBePickedUp(d, itm) {
+		if !shouldBePickedUp(itm) {
 			continue
 		}
 
@@ -123,18 +155,30 @@ func (b *Builder) getItemsToPickup(d game.Data, maxDistance int) []data.Item {
 		}
 	}
 
+	// Remove blacklisted items from the list, we don't want to pick them up
+	for i, itm := range itemsToPickup {
+		for _, k := range ctx.CurrentGame.BlacklistedItems {
+			if itm.UnitID == k.UnitID {
+				itemsToPickup = append(itemsToPickup[:i], itemsToPickup[i+1:]...)
+			}
+		}
+	}
+
 	return itemsToPickup
 }
 
-func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
+func shouldBePickedUp(i data.Item) bool {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "shouldBePickedUp"
+
 	if i.IsRuneword {
 		return true
 	}
 
 	// Skip picking up gold if we can not carry more
-	gold, _ := d.PlayerUnit.FindStat(stat.Gold, 0)
-	if gold.Value >= d.PlayerUnit.MaxGold() && i.Name == "Gold" {
-		b.Logger.Debug("Skipping gold pickup, inventory full")
+	gold, _ := ctx.Data.PlayerUnit.FindStat(stat.Gold, 0)
+	if gold.Value >= ctx.Data.PlayerUnit.MaxGold() && i.Name == "Gold" {
+		ctx.Logger.Debug("Skipping gold pickup, inventory full")
 		return false
 	}
 
@@ -144,7 +188,7 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 	}
 
 	// Pick up quest items if we're in leveling or questing run
-	specialRuns := slices.Contains(b.CharacterCfg.Game.Runs, "quests") || slices.Contains(b.CharacterCfg.Game.Runs, "leveling")
+	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
 	switch i.Name {
 	case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
 		if specialRuns {
@@ -158,21 +202,21 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 	}
 
 	// Only during leveling if gold amount is low pickup items to sell as junk
-	_, isLevelingChar := b.ch.(LevelingCharacter)
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that
-	if isLevelingChar && d.PlayerUnit.TotalPlayerGold() < 50000 && i.Name != "Gold" {
+	if isLevelingChar && ctx.Data.PlayerUnit.TotalPlayerGold() < 50000 && i.Name != "Gold" {
 		return true
 	}
 
-	minGoldPickupThreshold := b.Container.CharacterCfg.Game.MinGoldPickupThreshold
+	minGoldPickupThreshold := ctx.CharacterCfg.Game.MinGoldPickupThreshold
 	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
-	if d.PlayerUnit.TotalPlayerGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
+	if ctx.Data.PlayerUnit.TotalPlayerGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
 	}
 
-	matchedRule, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(i)
+	matchedRule, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 	if result == nip.RuleResultNoMatch {
 		return false
 	}
@@ -181,7 +225,7 @@ func (b *Builder) shouldBePickedUp(d game.Data, i data.Item) bool {
 		return true
 	}
 
-	exceedQuantity := b.doesExceedQuantity(i, matchedRule, d)
+	exceedQuantity := doesExceedQuantity(matchedRule)
 
 	return !exceedQuantity
 }

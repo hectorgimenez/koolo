@@ -5,16 +5,20 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/d2go/pkg/nip"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 type CubeRecipe struct {
-	Name  string
-	Items []string
+	Name             string
+	Items            []string
+	PurchaseRequired bool
+	PurchaseItems    []string
 }
 
 var (
-	recipes = []CubeRecipe{
+	Recipes = []CubeRecipe{
 
 		// Perfects
 		{
@@ -181,47 +185,297 @@ var (
 			Name:  "Upgrade Cham",
 			Items: []string{"ChamRune", "ChamRune", "FlawlessEmerald"},
 		},
+
+		// Crafting
+		{
+			Name:  "Reroll GrandCharms",
+			Items: []string{"GrandCharm", "Perfect", "Perfect", "Perfect"}, // Special handling in hasItemsForRecipe
+		},
+
+		// Caster Amulet
+		{
+			Name:             "Caster Amulet",
+			Items:            []string{"RalRune", "PerfectAmethyst", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Amulet"},
+		},
+
+		// Caster Ring
+		{
+			Name:             "Caster Ring",
+			Items:            []string{"AmnRune", "PerfectAmethyst", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Ring"},
+		},
+
+		// Blood Gloves
+		{
+			Name:             "Blood Gloves",
+			Items:            []string{"NefRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"HeavyGloves", "SharkskinGloves", "VampireboneGloves"},
+		},
+
+		// Blood Boots
+		{
+			Name:             "Blood Boots",
+			Items:            []string{"EthRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"LightPlatedBoots", "BattleBoots", "MirroredBoots"},
+		},
+
+		// Blood Belt
+		{
+			Name:             "Blood Belt",
+			Items:            []string{"TalRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Belt", "MeshBelt", "MithrilCoil"},
+		},
+
+		// Blood Helm
+		{
+			Name:             "Blood Helm",
+			Items:            []string{"RalRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Helm", "Casque", "Armet"},
+		},
+
+		// Blood Armor
+		{
+			Name:             "Blood Armor",
+			Items:            []string{"ThulRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"PlateMail", "TemplarPlate", "HellforgePlate"},
+		},
+
+		// Blood Weapon
+		{
+			Name:             "Blood Weapon",
+			Items:            []string{"OrtRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Axe"},
+		},
+
+		// Safety Shield
+		{
+			Name:             "Safety Shield",
+			Items:            []string{"EthRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"KiteShield", "DragonShield", "Monarch"},
+		},
+
+		// Safety Armor
+		{
+			Name:             "Safety Armor",
+			Items:            []string{"NefRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"BreastPlate", "Curiass", "GreatHauberk"},
+		},
+
+		// Safety Boots
+		{
+			Name:             "Safety Boots",
+			Items:            []string{"OrtRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Greaves", "WarBoots", "MyrmidonBoots"},
+		},
+
+		// Safety Gloves
+		{
+			Name:             "Safety Gloves",
+			Items:            []string{"RalRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Gauntlets", "WarGauntlets", "OgreGauntlets"},
+		},
+
+		// Safety Belt
+		{
+			Name:             "Safety Belt",
+			Items:            []string{"TalRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Sash", "DemonhideSash", "SpiderwebSash"},
+		},
+
+		// Safety Helm
+		{
+			Name:             "Safety Helm",
+			Items:            []string{"IthRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Crown", "GrandCrown", "Corona"},
+		},
+
+		// Hitpower Gloves
+		{
+			Name:             "Hitpower Gloves",
+			Items:            []string{"OrtRune", "PerfectSapphire", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"ChainGloves", "HeavyBracers", "Vambraces"},
+		},
+
+		// Hitpower Boots
+		{
+			Name:             "Hitpower Boots",
+			Items:            []string{"RalRune", "PerfectSapphire", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"ChainBoots", "MeshBoots", "Boneweave"},
+		},
+
+		// Hitpower Belt
+		{
+			Name:             "Hitpower Belt",
+			Items:            []string{"TalRune", "PerfectSapphire", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"HeavyBelt", "BattleBelt", "TrollBelt"},
+		},
+
+		// Hitpower Helm
+		{
+			Name:             "Hitpower Helm",
+			Items:            []string{"NefRune", "PerfectSapphire", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"FullHelm", "Basinet", "GiantConch"},
+		},
+
+		// Hitpower Armor
+		{
+			Name:             "Hitpower Armor",
+			Items:            []string{"EthRune", "PerfectSapphire", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"FieldPlate", "Sharktooth", "KrakenShell"},
+		},
+
+		// Hitpower Shield
+		{
+			Name:             "Hitpower Shield",
+			Items:            []string{"IthRune", "PerfectSapphire", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"GothicShield", "AncientShield", "Ward"},
+		},
 	}
 )
 
-func (b *Builder) CubeRecipes() *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		// If cubing is disabled from settings just return nil
-		if !b.CharacterCfg.CubeRecipes.Enabled {
-			return nil
+func CubeRecipes() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "CubeRecipes"
+
+	// If cubing is disabled from settings just return nil
+	if !ctx.CharacterCfg.CubeRecipes.Enabled {
+		ctx.Logger.Debug("Cube recipes are disabled, skipping")
+		return nil
+	}
+
+	itemsInStash := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
+	for _, recipe := range Recipes {
+		// Check if the current recipe is Enabled
+		if !slices.Contains(ctx.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
+			ctx.Logger.Debug("Cube recipe is not enabled, skipping", "recipe", recipe.Name)
+			continue
 		}
 
-		itemsInStash := d.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
-		for _, recipe := range recipes {
+		ctx.Logger.Debug("Cube recipe is enabled, processing", "recipe", recipe.Name)
 
-			// Check if the current recipe is Enabled
-			if !slices.Contains(b.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
-				continue
-			}
+		continueProcessing := true
+		for continueProcessing {
+			if items, hasItems := hasItemsForRecipe(ctx, itemsInStash, recipe); hasItems {
 
-			continueProcessing := true
-			for continueProcessing {
-				if items, hasItems := b.hasItemsForRecipe(itemsInStash, recipe); hasItems {
-					// Add items to the cube and perform the transmutation
-					actions = append(actions, b.CubeAddItems(items...))
-					actions = append(actions, b.CubeTransmute())
+				// TODO: Check if we have the items in our storage and if not, purchase them, else take the item from the storage
+				if recipe.PurchaseRequired {
+					err := GambleSingleItem(recipe.PurchaseItems, item.QualityMagic)
+					if err != nil {
+						ctx.Logger.Error("Error gambling item, skipping recipe", "error", err, "recipe", recipe.Name)
+						break
+					}
 
-					// Add items to the stash
-					actions = append(actions, b.Stash(true))
+					purchasedItem := getPurchasedItem(ctx, recipe.PurchaseItems)
+					if purchasedItem.Name == "" {
+						ctx.Logger.Debug("Could not find purchased item. Skipping recipe", "recipe", recipe.Name)
+						break
+					}
 
-					// Remove or decrement the used items from itemsInStash
-					itemsInStash = removeUsedItems(itemsInStash, items)
-				} else {
-					continueProcessing = false
+					// Add the purchased item the list of items to cube
+					items = append(items, purchasedItem)
 				}
+
+				// Add items to the cube and perform the transmutation
+				err := CubeAddItems(items...)
+				if err != nil {
+					return err
+				}
+				if err = CubeTransmute(); err != nil {
+					return err
+				}
+
+				// Get a list of items that are in our invetory
+				itemsInInv := ctx.Data.Inventory.ByLocation(item.LocationInventory)
+
+				stashingRequired := false
+				stashingGrandCharm := false
+
+				// Check if the items that are not in the protected invetory slots should be stashed
+				for _, item := range itemsInInv {
+					// If item is not in the protected slots, check if it should be stashed
+					if ctx.CharacterCfg.Inventory.InventoryLock[item.Position.Y][item.Position.X] == 1 {
+
+						shouldStash, reason, _ := shouldStashIt(item, false)
+
+						if shouldStash {
+							ctx.Logger.Debug("Stashing item after cube recipe.", "item", item.Name, "recipe", recipe.Name, "reason", reason)
+							stashingRequired = true
+						} else if item.Name == "GrandCharm" {
+							ctx.Logger.Debug("Checking if we need to stash a GrandCharm that doesn't match any NIP rules.", "recipe", recipe.Name)
+							// Check if we have a GrandCharm in stash that doesn't match any NIP rules
+							hasUnmatchedGrandCharm := false
+							for _, stashItem := range itemsInStash {
+								if stashItem.Name == "GrandCharm" {
+									if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(stashItem); result != nip.RuleResultFullMatch {
+										hasUnmatchedGrandCharm = true
+										break
+									}
+								}
+							}
+							if !hasUnmatchedGrandCharm {
+
+								ctx.Logger.Debug("GrandCharm doesn't match any NIP rules and we don't have any in stash to be used for this recipe. Stashing it.", "recipe", recipe.Name)
+								stashingRequired = true
+								stashingGrandCharm = true
+
+							} else {
+								DropInventoryItem(item)
+								utils.Sleep(500)
+							}
+						} else {
+							DropInventoryItem(item)
+							utils.Sleep(500)
+						}
+					}
+				}
+
+				// Add items to the stash if needed
+				if stashingRequired && !stashingGrandCharm {
+					_ = Stash(false)
+				} else if stashingGrandCharm {
+					// Force stashing of the invetory
+					_ = Stash(true)
+				}
+
+				// Remove or decrement the used items from itemsInStash
+				itemsInStash = removeUsedItems(itemsInStash, items)
+			} else {
+				continueProcessing = false
 			}
 		}
-		return actions
-	})
+	}
+
+	return nil
 }
 
-func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]data.Item, bool) {
-	// Create a map of the items we need for the recipe.
+func hasItemsForRecipe(ctx *context.Status, items []data.Item, recipe CubeRecipe) ([]data.Item, bool) {
+
+	// Special handling for "Reroll GrandCharms" recipe
+	if recipe.Name == "Reroll GrandCharms" {
+		return hasItemsForGrandCharmReroll(ctx, items)
+	}
+
 	recipeItems := make(map[string]int)
 	for _, item := range recipe.Items {
 		recipeItems[item]++
@@ -229,9 +483,17 @@ func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]dat
 
 	itemsForRecipe := []data.Item{}
 
-	// Iterate over the items in our stash to see if we have the items for the recipe.
+	// Iterate over the items in our stash to see if we have the items for the recipie.
 	for _, item := range items {
 		if count, ok := recipeItems[string(item.Name)]; ok {
+
+			// Let's make sure we don't use an item we don't want to. Add more if needed (depending on the recipes we have)
+			if item.Name == "Jewel" {
+				if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(item); result == nip.RuleResultFullMatch {
+					continue
+				}
+			}
+
 			itemsForRecipe = append(itemsForRecipe, item)
 
 			// Check if we now have exactly the needed count before decrementing
@@ -247,8 +509,39 @@ func (b *Builder) hasItemsForRecipe(items []data.Item, recipe CubeRecipe) ([]dat
 		}
 	}
 
-	// We don't have all the items for the recipe.
+	// We don't have all the items for the recipie.
 	return nil, false
+}
+
+func hasItemsForGrandCharmReroll(ctx *context.Status, items []data.Item) ([]data.Item, bool) {
+	var grandCharm data.Item
+	perfectGems := make([]data.Item, 0, 3)
+
+	for _, itm := range items {
+		if itm.Name == "GrandCharm" {
+			if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result != nip.RuleResultFullMatch && itm.Quality == item.QualityMagic {
+				grandCharm = itm
+			}
+		} else if isPerfectGem(itm) && len(perfectGems) < 3 {
+			perfectGems = append(perfectGems, itm)
+		}
+
+		if grandCharm.Name != "" && len(perfectGems) == 3 {
+			return append([]data.Item{grandCharm}, perfectGems...), true
+		}
+	}
+
+	return nil, false
+}
+
+func isPerfectGem(item data.Item) bool {
+	perfectGems := []string{"PerfectAmethyst", "PerfectDiamond", "PerfectEmerald", "PerfectRuby", "PerfectSapphire", "PerfectTopaz", "PerfectSkull"}
+	for _, gemName := range perfectGems {
+		if string(item.Name) == gemName {
+			return true
+		}
+	}
+	return false
 }
 
 func removeUsedItems(stash []data.Item, usedItems []data.Item) []data.Item {
@@ -270,4 +563,16 @@ func removeUsedItems(stash []data.Item, usedItems []data.Item) []data.Item {
 	}
 
 	return remainingItems
+}
+
+func getPurchasedItem(ctx *context.Status, purchaseItems []string) data.Item {
+	itemsInInv := ctx.Data.Inventory.ByLocation(item.LocationInventory)
+	for _, citem := range itemsInInv {
+		for _, pi := range purchaseItems {
+			if string(citem.Name) == pi && citem.Quality == item.QualityMagic {
+				return citem
+			}
+		}
+	}
+	return data.Item{}
 }

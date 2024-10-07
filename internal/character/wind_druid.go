@@ -1,6 +1,7 @@
 package character
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"time"
@@ -10,11 +11,9 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const (
@@ -27,14 +26,15 @@ var lastRavenAt = map[string]time.Time{}
 
 type WindDruid struct {
 	BaseCharacter
+	*game.HID
 }
 
-func (s WindDruid) CheckKeyBindings(d game.Data) []skill.ID {
+func (s WindDruid) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.Hurricane, skill.OakSage, skill.CycloneArmor, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
@@ -46,99 +46,106 @@ func (s WindDruid) CheckKeyBindings(d game.Data) []skill.ID {
 	return missingKeybindings
 }
 
-func (du WindDruid) KillMonsterSequence(
+func (s WindDruid) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
-	opts ...step.AttackOption,
-) action.Action {
+) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		id, found := monsterSelector(d)
+	for {
+		id, found := monsterSelector(*s.data)
 		if !found {
-			return []step.Step{}
+			return nil
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
-		if !du.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
 		}
 
-		du.RecastBuffs(d)
+		s.RecastBuffs()
 
-		if completedAttackLoops >= druMaxAttacksLoop {
-			return []step.Step{}
+		if completedAttackLoops >= maxAttacksLoop {
+			return nil
 		}
 
-		steps := make([]step.Step, 0)
+		monster, found := s.data.Monsters.FindByID(id)
+		if !found {
+			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		// Add a random movement, maybe tornado is not hitting the target
 		if previousUnitID == int(id) {
-			steps = append(steps,
-				step.SyncStep(func(d game.Data) error {
-					monster, f := d.Monsters.FindByID(id)
-					if f && monster.Stats[stat.Life] > 0 {
-						du.container.PathFinder.RandomMovement(d)
-					}
-					return nil
-				}),
-			)
+			if monster.Stats[stat.Life] > 0 {
+				s.pf.RandomMovement()
+			}
+			return nil
 		}
 
-		steps = append(steps,
-			step.PrimaryAttack(
-				id,
-				3,
-				true,
-				step.Distance(druMinDistance, druMaxDistance),
-			),
+		step.PrimaryAttack(
+			id,
+			3,
+			true,
+			step.Distance(druMinDistance, druMaxDistance),
 		)
+
 		completedAttackLoops++
 		previousUnitID = int(id)
-
-		return steps
-	}, action.RepeatUntilNoSteps())
+	}
 }
 
-func (du WindDruid) RecastBuffs(d game.Data) {
+func (s WindDruid) killMonster(npc npc.ID, t data.MonsterType) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found {
+			return 0, false
+		}
+
+		return m.UnitID, true
+	}, nil)
+}
+
+func (s WindDruid) RecastBuffs() {
 	skills := []skill.ID{skill.Hurricane, skill.OakSage, skill.CycloneArmor}
 	states := []state.State{state.Hurricane, state.Oaksage, state.Cyclonearmor}
 
 	for i, druSkill := range skills {
-		if kb, found := d.KeyBindings.KeyBindingForSkill(druSkill); found {
-			if !d.PlayerUnit.States.HasState(states[i]) {
-				du.container.HID.PressKeyBinding(kb)
-				helper.Sleep(180)
-				du.container.HID.Click(game.RightButton, 640, 340)
-				helper.Sleep(100)
+		if kb, found := s.data.KeyBindings.KeyBindingForSkill(druSkill); found {
+			if !s.data.PlayerUnit.States.HasState(states[i]) {
+				s.HID.PressKeyBinding(kb)
+				utils.Sleep(180)
+				s.HID.Click(game.RightButton, 640, 340)
+				utils.Sleep(100)
 			}
 		}
 	}
 }
 
-func (du WindDruid) BuffSkills(d game.Data) (buffs []skill.ID) {
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.CycloneArmor); found {
+func (s WindDruid) BuffSkills() (buffs []skill.ID) {
+	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.CycloneArmor); found {
 		buffs = append(buffs, skill.CycloneArmor)
 	}
-	if _, ravenFound := d.KeyBindings.KeyBindingForSkill(skill.Raven); ravenFound {
+	if _, ravenFound := s.data.KeyBindings.KeyBindingForSkill(skill.Raven); ravenFound {
 		buffs = append(buffs, skill.Raven, skill.Raven, skill.Raven, skill.Raven, skill.Raven)
 	}
-	if _, hurricaneFound := d.KeyBindings.KeyBindingForSkill(skill.Hurricane); hurricaneFound {
+	if _, hurricaneFound := s.data.KeyBindings.KeyBindingForSkill(skill.Hurricane); hurricaneFound {
 		buffs = append(buffs, skill.Hurricane)
 	}
 	return buffs
 }
 
-func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
+func (s WindDruid) PreCTABuffSkills() (skills []skill.ID) {
 	needsBear := true
 	wolves := 5
 	direWolves := 3
 	needsOak := true
 	needsCreeper := true
 
-	for _, monster := range d.Monsters {
+	for _, monster := range s.data.Monsters {
 		if monster.IsPet() {
 			if monster.Name == npc.DruBear {
 				needsBear = false
@@ -164,17 +171,17 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 		}
 	}
 
-	if d.PlayerUnit.States.HasState(state.Oaksage) {
+	if s.data.PlayerUnit.States.HasState(state.Oaksage) {
 		needsOak = false
 	}
 
-	_, foundDireWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonDireWolf)
-	_, foundWolf := d.KeyBindings.KeyBindingForSkill(skill.SummonSpiritWolf)
-	_, foundBear := d.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
-	_, foundOak := d.KeyBindings.KeyBindingForSkill(skill.OakSage)
-	_, foundSolarCreeper := d.KeyBindings.KeyBindingForSkill(skill.SolarCreeper)
-	_, foundCarrionCreeper := d.KeyBindings.KeyBindingForSkill(skill.CarrionVine)
-	_, foundPoisonCreeper := d.KeyBindings.KeyBindingForSkill(skill.PoisonCreeper)
+	_, foundDireWolf := s.data.KeyBindings.KeyBindingForSkill(skill.SummonDireWolf)
+	_, foundWolf := s.data.KeyBindings.KeyBindingForSkill(skill.SummonSpiritWolf)
+	_, foundBear := s.data.KeyBindings.KeyBindingForSkill(skill.SummonGrizzly)
+	_, foundOak := s.data.KeyBindings.KeyBindingForSkill(skill.OakSage)
+	_, foundSolarCreeper := s.data.KeyBindings.KeyBindingForSkill(skill.SolarCreeper)
+	_, foundCarrionCreeper := s.data.KeyBindings.KeyBindingForSkill(skill.CarrionVine)
+	_, foundPoisonCreeper := s.data.KeyBindings.KeyBindingForSkill(skill.PoisonCreeper)
 
 	if foundWolf {
 		for i := 0; i < wolves; i++ {
@@ -205,78 +212,24 @@ func (du WindDruid) PreCTABuffSkills(d game.Data) (skills []skill.ID) {
 	return skills
 }
 
-func (du WindDruid) KillCountess() action.Action {
-	return du.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+func (s WindDruid) KillCountess() error {
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (du WindDruid) KillAndariel() action.Action {
-	return du.killMonster(npc.Andariel, data.MonsterTypeNone)
+func (s WindDruid) KillAndariel() error {
+	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
-func (du WindDruid) KillSummoner() action.Action {
-	return du.killMonster(npc.Summoner, data.MonsterTypeNone)
+func (s WindDruid) KillSummoner() error {
+	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
 }
 
-func (du WindDruid) KillDuriel() action.Action {
-	return du.killMonster(npc.Duriel, data.MonsterTypeNone)
+func (s WindDruid) KillDuriel() error {
+	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
 }
 
-func (du WindDruid) KillPindle(_ []stat.Resist) action.Action {
-	return du.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (du WindDruid) KillMephisto() action.Action {
-	return du.killMonster(npc.Mephisto, data.MonsterTypeNone)
-}
-
-func (du WindDruid) KillNihlathak() action.Action {
-	return du.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (du WindDruid) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startTime := time.Time{}
-	diabloFound := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if startTime.IsZero() {
-			startTime = time.Now()
-		}
-
-		if time.Since(startTime) > timeout && !diabloFound {
-			du.logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
-			if diabloFound {
-				return nil
-			}
-
-			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
-				return []step.Step{step.Wait(time.Millisecond * 100)}
-			})}
-		}
-
-		diabloFound = true
-		du.logger.Info("Diablo detected, attacking")
-
-		return []action.Action{
-			du.killMonster(npc.Diablo, data.MonsterTypeNone),
-			du.killMonster(npc.Diablo, data.MonsterTypeNone),
-			du.killMonster(npc.Diablo, data.MonsterTypeNone),
-		}
-	}, action.RepeatUntilNoSteps())
-}
-
-func (du WindDruid) KillIzual() action.Action {
-	return du.killMonster(npc.Izual, data.MonsterTypeNone)
-}
-
-func (du WindDruid) KillCouncil() action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
+func (s WindDruid) KillCouncil() error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
@@ -287,51 +240,66 @@ func (du WindDruid) KillCouncil() action.Action {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(d, councilMembers[i].Position)
-			distanceJ := pather.DistanceFromMe(d, councilMembers[j].Position)
+			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
 
 		for _, m := range councilMembers {
-			for range druMaxAttacksLoop {
-				steps = append(steps,
-					step.PrimaryAttack(
-						m.UnitID,
-						3,
-						true,
-						step.Distance(druMinDistance, druMaxDistance),
-					),
-				)
-			}
+			return m.UnitID, true
 		}
-		return
-	}, action.CanBeSkipped())
+
+		return 0, false
+	}, nil)
 }
 
-func (du WindDruid) KillBaal() action.Action {
-	return du.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+func (s WindDruid) KillMephisto() error {
+	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
 
-func (du WindDruid) killMonster(npcId npc.ID, t data.MonsterType) action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		m, found := d.Monsters.FindOne(npcId, t)
-		if !found {
+func (s WindDruid) KillIzual() error {
+	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+}
+
+func (s WindDruid) KillDiablo() error {
+	timeout := time.Second * 20
+	startTime := time.Now()
+	diabloFound := false
+
+	for {
+		if time.Since(startTime) > timeout && !diabloFound {
+			s.logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		helper.Sleep(100)
-		du.RecastBuffs(d)
-		for range druMaxAttacksLoop {
-			steps = append(steps,
-				step.PrimaryAttack(
-					m.UnitID,
-					3,
-					true,
-					step.Distance(druMinDistance, druMaxDistance),
-				),
-			)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		if !found || diablo.Stats[stat.Life] <= 0 {
+			// Already dead
+			if diabloFound {
+				return nil
+			}
+
+			// Keep waiting...
+			time.Sleep(200)
+			continue
 		}
-		return
-	}, action.CanBeSkipped())
+
+		diabloFound = true
+		s.logger.Info("Diablo detected, attacking")
+
+		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+	}
+}
+
+func (s WindDruid) KillPindle() error {
+	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+}
+
+func (s WindDruid) KillNihlathak() error {
+	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+}
+
+func (s WindDruid) KillBaal() error {
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 }

@@ -1,111 +1,87 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-func (b *Builder) InteractNPC(npc npc.ID, additionalSteps ...step.Step) *StepChainAction {
-	return NewStepChain(func(d game.Data) []step.Step {
-		pos, found := b.getNPCPosition(npc, d)
-		if !found {
-			return nil
+func InteractNPC(npc npc.ID) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "InteractNPC"
+
+	pos, found := getNPCPosition(npc, ctx.Data)
+	if !found {
+		return fmt.Errorf("npc with ID %d not found", npc)
+	}
+
+	var err error
+	for range 5 {
+		err = step.MoveTo(pos)
+		if err != nil {
+			continue
 		}
 
-		steps := []step.Step{
-			step.MoveTo(pos, step.StopAtDistance(7)),
-			step.InteractNPC(npc), step.SyncStep(func(d game.Data) error {
-				event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
-				return nil
-			}),
+		err = step.InteractNPC(npc)
+		if err != nil {
+			continue
 		}
-		steps = append(steps, additionalSteps...)
+		break
+	}
+	if err != nil {
+		return err
+	}
 
-		return steps
-	}, Resettable())
+	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(npc), event.InteractionTypeNPC))
+
+	return nil
 }
 
-func (b *Builder) InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Data) bool, additionalSteps ...step.Step) *StepChainAction {
-	return NewStepChain(func(d game.Data) []step.Step {
-		pos, found := b.getNPCPosition(npc, d)
-		if !found {
-			return nil
+func InteractObject(o data.Object, isCompletedFn func() bool) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "InteractObject"
+
+	pos := o.Position
+	if ctx.Data.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
+		pos = data.Position{X: 7800, Y: 5919}
+	}
+
+	var err error
+	for range 5 {
+		err = step.MoveTo(pos)
+		if err != nil {
+			continue
 		}
 
-		steps := []step.Step{
-			step.MoveTo(pos, step.StopAtDistance(7)),
-			step.InteractNPCWithCheck(npc, isCompletedFn), step.SyncStep(func(d game.Data) error {
-				event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(npc), event.InteractionTypeNPC))
-				return nil
-			}),
+		err = step.InteractObject(o, isCompletedFn)
+		if err != nil {
+			continue
 		}
-		steps = append(steps, additionalSteps...)
+		break
+	}
 
-		return steps
-	}, Resettable())
+	return err
 }
 
-func (b *Builder) InteractObject(name object.Name, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *StepChainAction {
-	return NewStepChain(func(d game.Data) []step.Step {
-		o, _ := d.Objects.FindOne(name)
+func InteractObjectByID(id data.UnitID, isCompletedFn func() bool) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "InteractObjectByID"
 
-		pos := o.Position
-		if d.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
-			pos = data.Position{X: 7800, Y: 5919}
-		}
-		distance := 5
-		if o.Desc().HasCollision && o.Desc().SizeX > 0 {
-			distance = o.Desc().SizeX
-		}
+	o, found := ctx.Data.Objects.FindByID(id)
+	if !found {
+		return fmt.Errorf("object with ID %d not found", id)
+	}
 
-		steps := []step.Step{
-			step.MoveTo(pos, step.StopAtDistance(distance)),
-			step.InteractObject(o.Name, isCompletedFn), step.SyncStep(func(d game.Data) error {
-				event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(name), event.InteractionTypeObject))
-				return nil
-			}),
-		}
-
-		return append(steps, additionalSteps...)
-	}, Resettable())
+	return InteractObject(o, isCompletedFn)
 }
 
-func (b *Builder) InteractObjectByID(id data.UnitID, isCompletedFn func(game.Data) bool, additionalSteps ...step.Step) *StepChainAction {
-	return NewStepChain(func(d game.Data) []step.Step {
-		for _, o := range d.Objects {
-			if o.ID == id {
-				pos := o.Position
-				if d.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
-					pos = data.Position{X: 7800, Y: 5919}
-				}
-
-				distance := 5
-				if o.Desc().HasCollision && o.Desc().SizeX > 0 {
-					distance = o.Desc().SizeX
-				}
-
-				steps := []step.Step{
-					step.MoveTo(pos, step.StopAtDistance(distance)),
-					step.InteractObjectByID(id, isCompletedFn), step.SyncStep(func(d game.Data) error {
-						event.Send(event.InteractedTo(event.Text(b.Supervisor, ""), int(o.Name), event.InteractionTypeObject))
-						return nil
-					}),
-				}
-
-				return append(steps, additionalSteps...)
-			}
-		}
-
-		return nil
-	}, Resettable())
-}
-
-func (b *Builder) getNPCPosition(npc npc.ID, d game.Data) (data.Position, bool) {
+func getNPCPosition(npc npc.ID, d *game.Data) (data.Position, bool) {
 	monster, found := d.Monsters.FindOne(npc, data.MonsterTypeNone)
 	if found {
 		return monster.Position, true

@@ -1,38 +1,34 @@
 package step
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 const attackCycleDuration = 120 * time.Millisecond
 
-type AttackStep struct {
-	basicStep
-	target                data.UnitID
-	numOfAttacksRemaining int
-	primaryAttack         bool
-	skill                 skill.ID
-	followEnemy           bool
-	minDistance           int
-	maxDistance           int
-	moveToStep            *MoveToStep
-	aura                  skill.ID
-	aoe                   bool
-	shouldStandStill      bool
+type attackSettings struct {
+	primaryAttack    bool
+	skill            skill.ID
+	followEnemy      bool
+	minDistance      int
+	maxDistance      int
+	telestomp        bool
+	aura             skill.ID
+	target           data.UnitID
+	shouldStandStill bool
+	numOfAttacks     int
 }
-
-type AttackOption func(step *AttackStep)
+type AttackOption func(step *attackSettings)
 
 func Distance(minimum, maximum int) AttackOption {
-	return func(step *AttackStep) {
+	return func(step *attackSettings) {
 		step.followEnemy = true
 		step.minDistance = minimum
 		step.maxDistance = maximum
@@ -40,174 +36,165 @@ func Distance(minimum, maximum int) AttackOption {
 }
 
 func EnsureAura(aura skill.ID) AttackOption {
-	return func(step *AttackStep) {
+	return func(step *attackSettings) {
 		step.aura = aura
 	}
 }
 
-func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts ...AttackOption) *AttackStep {
-	s := &AttackStep{
-		primaryAttack:         true,
-		basicStep:             newBasicStep(),
-		target:                target,
-		numOfAttacksRemaining: numOfAttacks,
-		aoe:                   target == 0,
-		shouldStandStill:      standStill,
+func Telestomp() AttackOption {
+	return func(step *attackSettings) {
+		step.telestomp = true
 	}
-
-	for _, o := range opts {
-		o(s)
-	}
-	return s
 }
 
-func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts ...AttackOption) *AttackStep {
-	s := &AttackStep{
-		primaryAttack:         false,
-		basicStep:             newBasicStep(),
-		target:                target,
-		numOfAttacksRemaining: numOfAttacks,
-		skill:                 skill,
-		aoe:                   target == 0,
+func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts ...AttackOption) error {
+	ctx := context.Get()
+
+	// Special case for Berserker
+	if berserker, ok := ctx.Char.(interface{ PerformBerserkAttack(data.UnitID) }); ok {
+		for i := 0; i < numOfAttacks; i++ {
+			berserker.PerformBerserkAttack(target)
+		}
+		return nil
+	}
+
+	settings := attackSettings{
+		target:           target,
+		numOfAttacks:     numOfAttacks,
+		shouldStandStill: standStill,
+		primaryAttack:    true,
 	}
 	for _, o := range opts {
-		o(s)
+		o(&settings)
 	}
-	return s
+
+	return attack(settings)
 }
 
-func (p *AttackStep) Status(d game.Data, _ container.Container) Status {
-	if p.status == StatusCompleted {
-		return StatusCompleted
+func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts ...AttackOption) error {
+	settings := attackSettings{
+		target:       target,
+		numOfAttacks: numOfAttacks,
+		skill:        skill,
+	}
+	for _, o := range opts {
+		o(&settings)
 	}
 
-	monster, found := d.Monsters.FindByID(p.target)
-	if !found || monster.Stats[stat.Life] <= 0 || p.numOfAttacksRemaining <= 0 {
-		return p.tryTransitionStatus(StatusCompleted)
-	}
-
-	return p.status
+	return attack(settings)
 }
 
-func (p *AttackStep) Run(d game.Data, container container.Container) error {
-	monster, found := d.Monsters.FindByID(p.target)
+func attack(settings attackSettings) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "Attack"
 
-	// This event notifies the companions that the leader is attacking a specific monster
-	if d.CharacterCfg.Companion.Enabled && d.CharacterCfg.Companion.Leader && found {
-		event.Send(event.CompanionLeaderAttack(event.Text(container.Supervisor, ""), monster.UnitID))
-	}
+	numOfAttacksRemaining := settings.numOfAttacks
+	aoe := settings.target == 0
+	lastRun := time.Time{}
 
-	if !p.aoe {
-		if !found || monster.Stats[stat.Life] <= 0 {
-			// Monster is dead, let's skip the attack sequence
-			p.tryTransitionStatus(StatusCompleted)
+	for {
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
+
+		monster, found := ctx.Data.Monsters.FindByID(settings.target)
+		if !found || monster.Stats[stat.Life] <= 0 || numOfAttacksRemaining <= 0 {
 			return nil
 		}
 
-		// Move into the attack distance range before starting
-		if p.followEnemy {
-			if !p.ensureEnemyIsInRange(container, monster, d) {
-				return nil
-			}
-		} else {
-			// Since we are not following the enemy, and it's not in range, we can't attack it
-			_, distance, found := container.PathFinder.GetPath(d, monster.Position)
-			if !found || distance > p.maxDistance {
-				p.tryTransitionStatus(StatusCompleted)
-				return nil
+		// TeleStomp
+		if settings.telestomp && ctx.Data.CanTeleport() {
+			if !ensureEnemyIsInRange(monster, 2, 1) {
+				path, _, _ := ctx.PathFinder.GetClosestWalkablePath(monster.Position)
+				if len(path) > 0 {
+					// Move to the closest tile to the monster
+					MoveTo(path[len(path)-1])
+				}
 			}
 		}
-	}
 
-	if p.status == StatusNotStarted {
-		if !p.primaryAttack && d.PlayerUnit.RightSkill != p.skill {
-			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.skill))
+		if !aoe {
+			// Move into the attack distance range before starting
+			if settings.followEnemy {
+				if !ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance) {
+					// We cannot reach the enemy, let's skip the attack sequence
+					ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
+					return nil
+				}
+			} else {
+				// Since we are not following the enemy, and it's not in range, we can't attack it
+				_, distance, found := ctx.PathFinder.GetPath(monster.Position)
+				if !found || distance > settings.maxDistance {
+					return nil
+				}
+			}
+		}
+
+		// If we are not using the primary attack, we need to ensure the right skill is selected
+		if !settings.primaryAttack && ctx.Data.PlayerUnit.RightSkill != settings.skill {
+			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
 			time.Sleep(time.Millisecond * 80)
 		}
 
-		if p.aura != 0 {
-			container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(p.aura))
+		// If we have an aura, let's ensure it's active
+		if settings.aura != 0 && lastRun.IsZero() {
+			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.aura))
+		}
+
+		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
+			if settings.shouldStandStill {
+				ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
+			}
+			x, y := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
+
+			if settings.primaryAttack {
+				ctx.HID.Click(game.LeftButton, x, y)
+			} else {
+				ctx.HID.Click(game.RightButton, x, y)
+			}
+			if settings.shouldStandStill {
+				ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+			}
+			lastRun = time.Now()
+			numOfAttacksRemaining--
 		}
 	}
-
-	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) > d.PlayerCastDuration()-attackCycleDuration && p.numOfAttacksRemaining > 0 {
-
-		if p.shouldStandStill {
-			container.HID.KeyDown(d.KeyBindings.StandStill)
-		}
-		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, monster.Position.X, monster.Position.Y)
-
-		if p.primaryAttack {
-			container.HID.Click(game.LeftButton, x, y)
-		} else {
-			container.HID.Click(game.RightButton, x, y)
-		}
-		if p.shouldStandStill {
-			container.HID.KeyUp(d.KeyBindings.StandStill)
-		}
-		p.lastRun = time.Now()
-		p.numOfAttacksRemaining--
-	}
-
-	return nil
 }
+func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) bool {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "ensureEnemyIsInRange"
 
-func (p *AttackStep) ensureEnemyIsInRange(container container.Container, monster data.Monster, d game.Data) bool {
-	if !p.followEnemy {
-		return true
-	}
-
-	path, distance, found := container.PathFinder.GetPath(d, monster.Position)
+	_, distance, found := ctx.PathFinder.GetPath(monster.Position)
 
 	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
 		return false
 	}
 
-	hasLoS := pather.LineOfSight(d, d.PlayerUnit.Position, monster.Position)
+	hasLoS := ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position)
 
-	if distance > p.maxDistance || !hasLoS {
-		if p.moveToStep == nil {
-			if found && p.minDistance > 0 || !hasLoS {
-				// Try to move to the minimum distance
-				if distance > p.minDistance {
-					moveTo := p.minDistance - 1
-					if len(path) < p.minDistance {
-						moveTo = len(path) - 1 // Ensure moveTo is within path bounds
-					}
+	if distance > maxDistance || !hasLoS {
+		if distance > minDistance && minDistance > 0 {
+			// TODO tweak this crap
+			//moveTo := minDistance - 1
+			//if len(path) < minDistance {
+			//	moveTo = len(path) - 1 // Ensure moveTo is within path bounds
+			//}
 
-					for i := moveTo; i > 0; i-- {
-						posTile := path[i].(*pather.Tile)
-						pos := data.Position{
-							X: posTile.X + d.AreaOrigin.X,
-							Y: posTile.Y + d.AreaOrigin.Y,
-						}
-
-						hasLoS = pather.LineOfSight(d, pos, monster.Position)
-						if hasLoS {
-							path, distance, _ = container.PathFinder.GetPath(d, pos)
-							p.moveToStep = MoveTo(pos)
-							break
-						}
-					}
-				}
-			}
-
-			// Okay, enough, let's telestomp
-			if p.moveToStep == nil {
-				p.moveToStep = MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
-			}
+			MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
+			//for i := moveTo; i > 0; i-- {
+			//	posTile := path[i].(*pather.Tile)
+			//	pos := data.Position{
+			//		X: posTile.X + ctx.Data.AreaOrigin.X,
+			//		Y: posTile.Y + ctx.Data.AreaOrigin.Y,
+			//	}
+			//
+			//	hasLoS = ctx.PathFinder.LineOfSight(pos, monster.Position)
+			//	if hasLoS {
+			//		path, distance, _ = ctx.PathFinder.GetPath(pos)
+			//		_ = MoveTo(pos)
+			//	}
+			//}
 		}
-
-		if p.moveToStep.Status(d, container) != StatusCompleted {
-			p.moveToStep.Run(d, container)
-			return false
-		}
-		if p.moveToStep.GetStopDistance() > p.maxDistance {
-			p.maxDistance = p.moveToStep.GetStopDistance()
-		}
-		p.moveToStep = nil
 	}
 
 	return true

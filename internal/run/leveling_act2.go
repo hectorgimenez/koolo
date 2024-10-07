@@ -9,212 +9,336 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 )
 
-func (a Leveling) act2() action.Action {
+func (a Leveling) act2() error {
 	running := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if running || d.PlayerUnit.Area != area.LutGholein {
-			return nil
+
+	if running || a.ctx.Data.PlayerUnit.Area != area.LutGholein {
+		return nil
+	}
+
+	running = true
+	// Find Horadric Cube
+	_, found := a.ctx.Data.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+	if found {
+		a.ctx.Logger.Info("Horadric Cube found, skipping quest")
+	} else {
+		a.ctx.Logger.Info("Horadric Cube not found, starting quest")
+		return a.findHoradricCube()
+	}
+
+	if a.ctx.Data.Quests[quest.Act2TheSummoner].Completed() {
+		// Try to get level 21 before moving to Duriel and Act3
+
+		if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 18 {
+			return TalRashaTombs{}.Run()
 		}
 
-		running = true
-		// Find Horadric Cube
-		_, found := d.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+		return a.duriel(a.ctx.Data.Quests[quest.Act2TheHoradricStaff].Completed(), *a.ctx.Data)
+	}
+
+	_, horadricStaffFound := a.ctx.Data.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+
+	// Find Staff of Kings
+	_, found = a.ctx.Data.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+	if found || horadricStaffFound {
+		a.ctx.Logger.Info("StaffOfKings found, skipping quest")
+	} else {
+		a.ctx.Logger.Info("StaffOfKings not found, starting quest")
+		return a.findStaff()
+	}
+
+	// Find Amulet
+	_, found = a.ctx.Data.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+	if found || horadricStaffFound {
+		a.ctx.Logger.Info("Amulet of the Viper found, skipping quest")
+	} else {
+		a.ctx.Logger.Info("Amulet of the Viper not found, starting quest")
+		return a.findAmulet()
+	}
+
+	// Summoner
+	a.ctx.Logger.Info("Starting summoner quest")
+	return a.summoner()
+
+}
+
+func (a Leveling) findHoradricCube() error {
+	err := action.WayPoint(area.HallsOfTheDeadLevel2)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.HallsOfTheDeadLevel3)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		chest, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
 		if found {
-			a.logger.Info("Horadric Cube found, skipping quest")
-		} else {
-			a.logger.Info("Horadric Cube not found, starting quest")
-			return a.findHoradricCube()
+			a.ctx.Logger.Info("Horadric Cube chest found, moving to that room")
+			return chest.Position, true
 		}
-
-		if d.Quests[quest.Act2TheSummoner].Completed() {
-			// Try to get level 21 before moving to Duriel and Act3
-
-			if lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 18 {
-				return TalRashaTombs{a.baseRun}.BuildActions()
-			}
-
-			return a.duriel(d.Quests[quest.Act2TheHoradricStaff].Completed(), d)
-		}
-
-		_, horadricStaffFound := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-
-		// Find Staff of Kings
-		_, found = d.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found || horadricStaffFound {
-			a.logger.Info("StaffOfKings found, skipping quest")
-		} else {
-			a.logger.Info("StaffOfKings not found, starting quest")
-			return a.findStaff()
-		}
-
-		// Find Amulet
-		_, found = d.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found || horadricStaffFound {
-			a.logger.Info("Amulet of the Viper found, skipping quest")
-		} else {
-			a.logger.Info("Amulet of the Viper not found, starting quest")
-			return a.findAmulet()
-		}
-
-		// Summoner
-		a.logger.Info("Starting summoner quest")
-		return a.summoner()
+		return data.Position{}, false
 	})
-}
-
-//func (a Leveling) radament() action.Action {
-//	return action.NewChain(func(d game.Data) (actions []action.Action) {
-//		actions = append(actions,
-//			a.builder.WayPoint(area.SewersLevel2Act2),
-//			a.builder.MoveToArea(area.SewersLevel3Act2),
-//		)
-//
-//		// TODO: Find Radament (use 355 object to locate him)
-//		return
-//	})
-//}
-
-func (a Leveling) findHoradricCube() []action.Action {
-	return []action.Action{
-		a.builder.WayPoint(area.HallsOfTheDeadLevel2),
-		a.builder.MoveToArea(area.HallsOfTheDeadLevel3),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Horadric Cube chest found, moving to that room")
-			chest, found := d.Objects.FindOne(object.HoradricCubeChest)
-
-			return chest.Position, found
-		}),
-		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.HoradricCubeChest, func(d game.Data) bool {
-			chest, _ := d.Objects.FindOne(object.HoradricCubeChest)
-			return !chest.Selectable
-		}),
-		a.builder.ItemPickup(true, 10),
+	if err != nil {
+		return err
 	}
-}
 
-func (a Leveling) findStaff() []action.Action {
-	return []action.Action{
-		a.builder.WayPoint(area.FarOasis),
-		a.builder.MoveToArea(area.MaggotLairLevel1),
-		a.builder.MoveToArea(area.MaggotLairLevel2),
-		a.builder.MoveToArea(area.MaggotLairLevel3),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Staff Of Kings chest found, moving to that room")
-			chest, found := d.Objects.FindOne(object.StaffOfKingsChest)
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
 
-			return chest.Position, found
-		}),
-		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.StaffOfKingsChest, func(d game.Data) bool {
-			chest, _ := d.Objects.FindOne(object.StaffOfKingsChest)
-			return !chest.Selectable
-		}),
-		a.builder.ItemPickup(true, 10),
+	obj, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
+	if !found {
+		return err
 	}
-}
 
-func (a Leveling) findAmulet() []action.Action {
-	return []action.Action{
-		a.builder.WayPoint(area.LostCity),
-		a.builder.MoveToArea(area.ValleyOfSnakes),
-		a.builder.MoveToArea(area.ClawViperTempleLevel1),
-		a.builder.MoveToArea(area.ClawViperTempleLevel2),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			a.logger.Info("Altar found, moving closer")
-			chest, found := d.Objects.FindOne(object.TaintedSunAltar)
-
-			return chest.Position, found
-		}),
-		a.builder.InteractObject(object.TaintedSunAltar, func(d game.Data) bool {
-			chest, _ := d.Objects.FindOne(object.TaintedSunAltar)
-			return !chest.Selectable
-		}),
-		a.builder.ItemPickup(true, 10),
+	err = action.InteractObject(obj, func() bool {
+		updatedObj, found := a.ctx.Data.Objects.FindOne(object.HoradricCubeChest)
+		if found {
+			if !updatedObj.Selectable {
+				a.ctx.Logger.Debug("Interacted with Horadric Cube Chest")
+			}
+			return !updatedObj.Selectable
+		}
+		return false
+	})
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func (a Leveling) summoner() []action.Action {
-	actions := Summoner{baseRun: a.baseRun}.BuildActions()
+func (a Leveling) findStaff() error {
+	err := action.WayPoint(area.FarOasis)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.MaggotLairLevel1)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.MaggotLairLevel2)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.MaggotLairLevel3)
+	if err != nil {
+		return err
+	}
+	err = action.MoveTo(func() (data.Position, bool) {
+		chest, found := a.ctx.Data.Objects.FindOne(object.StaffOfKingsChest)
+		if found {
+			a.ctx.Logger.Info("Staff Of Kings chest found, moving to that room")
+			return chest.Position, true
+		}
+		return data.Position{}, false
+	})
+	if err != nil {
+		return err
+	}
+
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+
+	obj, found := a.ctx.Data.Objects.FindOne(object.StaffOfKingsChest)
+	if !found {
+		return err
+	}
+
+	err = action.InteractObject(obj, func() bool {
+		updatedObj, found := a.ctx.Data.Objects.FindOne(object.StaffOfKingsChest)
+		if found {
+			if !updatedObj.Selectable {
+				a.ctx.Logger.Debug("Interacted with Staff Of Kings Chest")
+			}
+			return !updatedObj.Selectable
+		}
+		return false
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a Leveling) findAmulet() error {
+	err := action.WayPoint(area.LostCity)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.ValleyOfSnakes)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.ClawViperTempleLevel1)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.ClawViperTempleLevel2)
+	if err != nil {
+		return err
+	}
+	err = action.MoveTo(func() (data.Position, bool) {
+		chest, found := a.ctx.Data.Objects.FindOne(object.TaintedSunAltar)
+		if found {
+			a.ctx.Logger.Info("Tainted Sun Altar found, moving to that room")
+			return chest.Position, true
+		}
+		return data.Position{}, false
+	})
+	if err != nil {
+		return err
+	}
+
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+
+	obj, found := a.ctx.Data.Objects.FindOne(object.TaintedSunAltar)
+	if !found {
+		return err
+	}
+
+	err = action.InteractObject(obj, func() bool {
+		updatedObj, found := a.ctx.Data.Objects.FindOne(object.TaintedSunAltar)
+		if found {
+			if !updatedObj.Selectable {
+				a.ctx.Logger.Debug("Interacted with Tainted Sun Altar")
+			}
+			return !updatedObj.Selectable
+		}
+		return false
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a Leveling) summoner() error {
+	// Start Summoner run to find and kill Summoner
+	err := Summoner{}.Run()
+	if err != nil {
+		return err
+	}
+
+	tome, found := a.ctx.Data.Objects.FindOne(object.YetAnotherTome)
+	if !found {
+		return err
+	}
 
 	// Try to use the portal and discover the waypoint
-	actions = append(actions,
-		a.builder.InteractObject(object.YetAnotherTome, func(d game.Data) bool {
-			_, found := d.Objects.FindOne(object.PermanentTownPortal)
-			return found
-		}),
-		a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
-			return d.PlayerUnit.Area == area.CanyonOfTheMagi
-		}),
-		a.builder.DiscoverWaypoint(),
-		a.builder.ReturnTown(),
-		a.builder.InteractNPC(npc.Atma, step.KeySequence(win.VK_ESCAPE)),
-	)
+	err = action.InteractObject(tome, func() bool {
+		_, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+		return found
+	})
+	if err != nil {
+		return err
+	}
 
-	return actions
+	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+	if !found {
+		return err
+	}
+
+	err = action.InteractObject(portal, func() bool {
+		return a.ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi
+	})
+	if err != nil {
+		return err
+	}
+
+	err = action.DiscoverWaypoint()
+	if err != nil {
+		return err
+	}
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	err = action.InteractNPC(npc.Atma)
+	if err != nil {
+		return err
+	}
+
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
+
+	return nil
 }
 
-func (a Leveling) prepareStaff() action.Action {
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		horadricStaff, found := d.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if found {
-			a.logger.Info("Horadric Staff found!")
-			if horadricStaff.Location.LocationType == item.LocationStash {
-				a.logger.Info("It's in the stash, let's pickup it (not done yet)")
+func (a Leveling) prepareStaff() error {
+	horadricStaff, found := a.ctx.Data.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+	if found {
+		a.ctx.Logger.Info("Horadric Staff found!")
+		if horadricStaff.Location.LocationType == item.LocationStash {
+			a.ctx.Logger.Info("It's in the stash, let's pick it up")
 
-				return []action.Action{
-					a.builder.InteractObject(object.Bank, func(d game.Data) bool {
-						return d.OpenMenus.Stash
-					},
-						step.SyncStep(func(d game.Data) error {
-							screenPos := a.UIManager.GetScreenCoordsForItem(horadricStaff)
-
-							a.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-							helper.Sleep(300)
-							a.HID.PressKey(win.VK_ESCAPE)
-							return nil
-						}),
-					),
-				}
+			bank, found := a.ctx.Data.Objects.FindOne(object.Bank)
+			if !found {
+				a.ctx.Logger.Info("bank object not found")
 			}
 
+			err := action.InteractObject(bank, func() bool {
+				return a.ctx.Data.OpenMenus.Stash
+			})
+			if err != nil {
+				return err
+			}
+
+			screenPos := ui.GetScreenCoordsForItem(horadricStaff)
+			a.ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+			utils.Sleep(300)
+			a.ctx.HID.PressKey(win.VK_ESCAPE)
+
 			return nil
 		}
+	}
 
-		staff, found := d.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if !found {
-			a.logger.Info("Staff of Kings not found, skipping")
-			return nil
-		}
+	staff, found := a.ctx.Data.Inventory.Find("StaffOfKings", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+	if !found {
+		a.ctx.Logger.Info("Staff of Kings not found, skipping")
+		return nil
+	}
 
-		amulet, found := d.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
-		if !found {
-			a.logger.Info("AmuletOfTheViper not found, skipping")
-			return nil
-		}
+	amulet, found := a.ctx.Data.Inventory.Find("AmuletOfTheViper", item.LocationInventory, item.LocationStash, item.LocationEquipped)
+	if !found {
+		a.ctx.Logger.Info("Amulet of the Viper not found, skipping")
+		return nil
+	}
 
-		return []action.Action{
-			a.builder.CubeAddItems(staff, amulet),
-			a.builder.CubeTransmute(),
-		}
-	})
+	err := action.CubeAddItems(staff, amulet)
+	if err != nil {
+		return err
+	}
+
+	err = action.CubeTransmute()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.Action) {
-	a.logger.Info("Starting Duriel....")
+func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) error {
+	a.ctx.Logger.Info("Starting Duriel....")
 
 	var realTomb area.ID
 	for _, tomb := range talRashaTombs {
-		_, _, objects, _ := a.Reader.GetCachedMapData(false).NPCsExitsAndObjects(data.Position{}, tomb)
-		for _, obj := range objects {
+		for _, obj := range a.ctx.Data.Areas[tomb].Objects {
 			if obj.Name == object.HoradricOrifice {
 				realTomb = tomb
 				break
@@ -223,49 +347,49 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 	}
 
 	if realTomb == 0 {
-		a.logger.Info("Could not find the real tomb :(")
+		a.ctx.Logger.Info("Could not find the real tomb :(")
 		return nil
 	}
 
 	if !staffAlreadyUsed {
-		actions = append(actions, a.prepareStaff())
+		a.prepareStaff()
 	}
 
 	// Move close to the Horadric Orifice
-	actions = append(actions,
-		a.builder.WayPoint(area.CanyonOfTheMagi),
-		a.builder.Buff(),
-		a.builder.MoveToArea(realTomb),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			orifice, _ := d.Objects.FindOne(object.HoradricOrifice)
-
-			return orifice.Position, true
-		}),
-	)
+	action.WayPoint(area.CanyonOfTheMagi)
+	action.Buff()
+	action.MoveToArea(realTomb)
+	action.MoveTo(func() (data.Position, bool) {
+		orifice, found := d.Objects.FindOne(object.HoradricOrifice)
+		if !found {
+			return data.Position{}, false
+		}
+		return orifice.Position, true
+	})
 
 	// If staff has not been used, then put it in the orifice and wait for the entrance to open
 	if !staffAlreadyUsed {
-		actions = append(actions,
-			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
-			a.builder.InteractObject(object.HoradricOrifice, func(d game.Data) bool {
-				return d.OpenMenus.Anvil
-			},
-				step.SyncStep(func(d game.Data) error {
-					staff, _ := d.Inventory.Find("HoradricStaff", item.LocationInventory)
+		action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
 
-					screenPos := a.UIManager.GetScreenCoordsForItem(staff)
+		orifice, found := a.ctx.Data.Objects.FindOne(object.HoradricOrifice)
+		if !found {
+			a.ctx.Logger.Info("Horadric Orifice not found")
+			return nil
+		}
 
-					a.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
-					helper.Sleep(300)
-					a.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
-					helper.Sleep(500)
-					a.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
-					helper.Sleep(20000)
+		action.InteractObject(orifice, func() bool {
+			return d.OpenMenus.Anvil
+		})
 
-					return nil
-				}),
-			),
-		)
+		staff, _ := d.Inventory.Find("HoradricStaff", item.LocationInventory)
+		screenPos := ui.GetScreenCoordsForItem(staff)
+
+		a.ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+		utils.Sleep(300)
+		a.ctx.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
+		utils.Sleep(500)
+		a.ctx.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
+		utils.Sleep(20000)
 	}
 
 	potsToBuy := 4
@@ -274,85 +398,76 @@ func (a Leveling) duriel(staffAlreadyUsed bool, d game.Data) (actions []action.A
 	}
 
 	// Return to the city, ensure we have pots and everything, and get some thawing potions
-	actions = append(actions,
-		a.builder.ReturnTown(),
-		a.builder.ReviveMerc(),
-		a.builder.VendorRefill(false, true),
-		a.builder.BuyAtVendor(npc.Lysander, action.VendorItemRequest{
-			Item:     "ThawingPotion",
-			Quantity: potsToBuy,
-			Tab:      4,
-		}),
-		action.NewStepChain(func(d game.Data) []step.Step {
-			return []step.Step{
-				step.SyncStep(func(d game.Data) error {
-					a.HID.PressKeyBinding(d.KeyBindings.Inventory)
-					x := 0
-					for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
-						if itm.Name != "ThawingPotion" {
-							continue
-						}
+	action.ReturnTown()
+	action.ReviveMerc()
+	action.VendorRefill(false, true)
+	action.BuyAtVendor(npc.Lysander, action.VendorItemRequest{
+		Item:     "ThawingPotion",
+		Quantity: potsToBuy,
+		Tab:      4,
+	})
 
-						pos := a.UIManager.GetScreenCoordsForItem(itm)
-						helper.Sleep(500)
+	a.ctx.HID.PressKeyBinding(d.KeyBindings.Inventory)
+	x := 0
+	for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
+		if itm.Name != "ThawingPotion" {
+			continue
+		}
 
-						if x > 3 {
-							a.HID.Click(game.LeftButton, pos.X, pos.Y)
-							helper.Sleep(300)
-							if d.LegacyGraphics {
-								a.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
-							} else {
-								a.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
-							}
-						} else {
-							a.HID.Click(game.RightButton, pos.X, pos.Y)
-						}
-						x++
-					}
+		pos := ui.GetScreenCoordsForItem(itm)
+		utils.Sleep(500)
 
-					a.HID.PressKey(win.VK_ESCAPE)
-					return nil
-				}),
+		if x > 3 {
+			a.ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
+			utils.Sleep(300)
+			if d.LegacyGraphics {
+				a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
+			} else {
+				a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
 			}
-		}),
-		a.builder.UsePortalInTown(),
-		a.builder.Buff(),
-	)
+		} else {
+			a.ctx.HID.Click(game.RightButton, pos.X, pos.Y)
+		}
+		x++
+	}
 
-	return append(actions,
-		action.NewChain(func(d game.Data) []action.Action {
-			_, found := d.Objects.FindOne(object.DurielsLairPortal)
-			if found {
-				return []action.Action{a.builder.InteractObject(object.DurielsLairPortal, func(d game.Data) bool {
-					return d.PlayerUnit.Area == area.DurielsLair
-				})}
-			}
-			return nil
-		}),
-		a.char.KillDuriel(),
-		a.builder.ItemPickup(true, 30),
-		a.builder.MoveToCoords(data.Position{
-			X: 22577,
-			Y: 15613,
-		}),
-		a.builder.InteractNPCWithCheck(npc.Tyrael, func(d game.Data) bool {
-			obj, found := d.Objects.FindOne(object.TownPortal)
-			if found && pather.DistanceFromMe(d, obj.Position) < 10 {
-				return true
-			}
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
-			return false
-		}),
-		a.builder.ReturnTown(),
-		a.builder.MoveToCoords(data.Position{
-			X: 5092,
-			Y: 5144,
-		}),
-		a.builder.InteractNPC(npc.Jerhyn, step.KeySequence(win.VK_ESCAPE)),
-		a.builder.MoveToCoords(data.Position{
-			X: 5195,
-			Y: 5060,
-		}),
-		a.builder.InteractNPC(npc.Meshif, step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)),
-	)
+	action.UsePortalInTown()
+	action.Buff()
+
+	duriellair, found := d.Objects.FindOne(object.DurielsLairPortal)
+	if found {
+		action.InteractObject(duriellair, func() bool {
+			return d.PlayerUnit.Area == area.DurielsLair
+		})
+	}
+
+	a.ctx.Char.KillDuriel()
+
+	action.MoveToCoords(data.Position{
+		X: 22577,
+		Y: 15613,
+	})
+
+	action.InteractNPC(npc.Tyrael)
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
+
+	action.ReturnTown()
+	action.MoveToCoords(data.Position{
+		X: 5092,
+		Y: 5144,
+	})
+
+	action.InteractNPC(npc.Jerhyn)
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
+
+	action.MoveToCoords(data.Position{
+		X: 5195,
+		Y: 5060,
+	})
+	action.InteractNPC(npc.Meshif)
+	a.ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+
+	return nil
 }
