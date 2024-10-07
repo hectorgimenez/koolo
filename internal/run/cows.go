@@ -36,7 +36,7 @@ func (a Cows) Run() error {
 	}
 
 	// Sell junk, refill potions, etc. (basically ensure space for getting the TP tome)
-	action.PreRun(true)
+	action.PreRun(false)
 
 	err = a.preparePortal()
 	if err != nil {
