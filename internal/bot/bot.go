@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/runtype"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/character"
@@ -25,16 +26,15 @@ func NewBot(ctx *botCtx.Context) *Bot {
 	}
 }
 
-func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
+func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
-	b.ctx.SwitchPriority(botCtx.PriorityNormal)     // Restore priority to normal, in case it was stopped in previous game
-	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{} // Reset current game helper structure
+	b.ctx.SwitchPriority(botCtx.PriorityNormal)
+	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{ExpectedArea: b.ctx.Data.PlayerUnit.Area}
 
-	// Let's make sure we have updated game data before we start the runs
 	err := b.ctx.GameReader.FetchMapData()
 	if err != nil {
 		return err
@@ -42,11 +42,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	b.ctx.WaitForGameToLoad()
 
-	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
 
-	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
 		ticker := time.NewTicker(10 * time.Millisecond)
@@ -65,10 +63,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		}
 	})
 
-	// This routine is in charge of handling the health/chicken of the bot, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
-
 		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
@@ -97,7 +93,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		}
 	})
 
-	// High priority loop, this will interrupt (pause) low priority loop
 	g.Go(func() error {
 		defer func() {
 			cancel()
@@ -122,7 +117,13 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
-				// Check if Berserker is currently killing council
+
+				// Area correction
+				err := b.areaCorrection()
+				if err != nil {
+					b.ctx.Logger.Error("Area correction failed", "error", err)
+				}
+
 				if berserker, ok := b.ctx.Char.(*character.Berserker); !ok || !berserker.IsKillingCouncil() {
 					action.ItemPickup(30)
 				}
@@ -130,7 +131,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				_, healingPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.HealingPotion)
 				_, manaPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.ManaPotion)
-				// Check if we need to go back to town (no pots or merc died)
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
@@ -143,7 +143,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		}
 	})
 
-	// Low priority loop, this will keep executing main run scripts
 	g.Go(func() error {
 		defer func() {
 			cancel()
@@ -153,6 +152,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for k, r := range runs {
+			b.ctx.CurrentGame.CurrentRun = r // Update the CurrentRun for area correction
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
 			err = action.PreRun(firstRun)
 			if err != nil {
@@ -179,4 +179,25 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 func (b *Bot) Stop() {
 	b.ctx.SwitchPriority(botCtx.PriorityStop)
 	b.ctx.Detach()
+}
+func (b *Bot) areaCorrection() error {
+	// Skip correction if in town
+	if b.ctx.Data.PlayerUnit.Area.IsTown() {
+		return nil
+	}
+
+	if areaAwareRun, ok := b.ctx.CurrentGame.CurrentRun.(run.AreaAwareRun); ok {
+		currentArea := b.ctx.Data.PlayerUnit.Area
+		if !areaAwareRun.IsAreaPartOfRun(currentArea) {
+			b.ctx.Logger.Info("Area mismatch detected", "current", currentArea)
+			expectedAreas := areaAwareRun.ExpectedAreas()
+			if len(expectedAreas) > 0 {
+				err := action.MoveToArea(expectedAreas[0])
+				if err != nil {
+					b.ctx.Logger.Error("Failed to move to expected area", "error", err)
+				}
+			}
+		}
+	}
+	return nil
 }

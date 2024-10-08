@@ -20,6 +20,9 @@ func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveToArea"
 
+	// Update ExpectedArea based on the destination
+	ctx.CurrentGame.ExpectedArea = dst
+
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
 		ctx.Logger.Debug("Arcane Sanctuary detected, finding the Portal")

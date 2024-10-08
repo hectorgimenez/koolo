@@ -195,7 +195,7 @@ func (s *Berserker) getOptimalClickPosition(corpse data.Monster) data.Position {
 // TODO find a way to get active inventory slot from memory.
 func (s *Berserker) SwapToSlot(slot int) {
 	ctx := context.Get()
-	if !ctx.CharacterCfg.Character.FindItemSwitch {
+	if !ctx.CharacterCfg.Character.BerserkerBarb.FindItemSwitch {
 		return // Do nothing if FindItemSwitch is disabled
 	}
 
@@ -290,19 +290,10 @@ func (s *Berserker) KillDiablo() error {
 func (s *Berserker) KillCouncil() error {
 	s.isKillingCouncil.Store(true)
 	defer s.isKillingCouncil.Store(false)
-	for {
-		err := s.killAllCouncilMembers()
-		if err != nil {
-			if err == ErrNotInTravincal {
-				s.logger.Info("Not in Travincal during Council kill, moving back")
-				if moveErr := action.MoveToArea(area.Travincal); moveErr != nil {
-					return moveErr
-				}
-				continue // Retry the Council kill after moving back to Travincal
-			}
-			return err
-		}
-		break // Exit the loop if killAllCouncilMembers completes without error
+
+	err := s.killAllCouncilMembers()
+	if err != nil {
+		return err
 	}
 
 	// Wait for corpses to settle
@@ -310,10 +301,6 @@ func (s *Berserker) KillCouncil() error {
 
 	// Perform horking in two passes
 	for i := 0; i < 2; i++ {
-		if err := s.ensureInTravincal(); err != nil {
-			return err
-		}
-
 		s.FindItemOnNearbyCorpses(maxHorkRange)
 
 		// Wait between passes
@@ -327,7 +314,7 @@ func (s *Berserker) KillCouncil() error {
 	time.Sleep(500 * time.Millisecond)
 
 	// Final item pickup
-	err := action.ItemPickup(maxHorkRange)
+	err = action.ItemPickup(maxHorkRange)
 	if err != nil {
 		s.logger.Warn("Error during final item pickup after horking", "error", err)
 		return err
@@ -341,10 +328,6 @@ func (s *Berserker) KillCouncil() error {
 
 func (s *Berserker) killAllCouncilMembers() error {
 	for {
-		if err := s.ensureInTravincal(); err != nil {
-			return ErrNotInTravincal
-		}
-
 		if !s.anyCouncilMemberAlive() {
 			return nil
 		}
@@ -359,11 +342,6 @@ func (s *Berserker) killAllCouncilMembers() error {
 		}, nil)
 
 		if err != nil {
-			// Check if we're still in Travincal after the attack sequence
-			if checkErr := s.ensureInTravincal(); checkErr != nil {
-				return ErrNotInTravincal
-			}
-			// If we're still in Travincal, return the original error
 			return err
 		}
 	}
