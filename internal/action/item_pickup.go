@@ -122,6 +122,14 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 			continue
 		}
 
+		// Skip potion pickup for Berserker Barb in Travincal if configured
+		if ctx.CharacterCfg.Character.Class == "berserker" &&
+			ctx.CharacterCfg.Character.BerserkerBarb.SkipPotionPickupInTravincal &&
+			ctx.Data.PlayerUnit.Area == area.Travincal &&
+			itm.IsPotion() {
+			continue
+		}
+
 		// Skip items that are outside pickup radius, this is useful when clearing big areas to prevent
 		// character going back to pickup potions all the time after using them
 		itemDistance := ctx.PathFinder.DistanceFromMe(itm.Position)

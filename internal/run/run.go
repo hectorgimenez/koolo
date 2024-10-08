@@ -1,10 +1,17 @@
 package run
 
-import "github.com/hectorgimenez/koolo/internal/config"
+import (
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/runtype"
+)
 
-type Run interface {
-	Name() string
-	Run() error
+type Run = runtype.Run
+
+type AreaAwareRun interface {
+	Run
+	ExpectedAreas() []area.ID
+	IsAreaPartOfRun(id area.ID) bool
 }
 
 func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {

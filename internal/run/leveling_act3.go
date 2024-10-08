@@ -270,7 +270,7 @@ func (a Leveling) findKhalimsHeart() error {
 
 func (a Leveling) openMephistoStairs() error {
 	// Use Travincal/Council run to kill the council
-	err := Council{}.Run()
+	err := NewTravincal().Run()
 	if err != nil {
 		return err
 	}
