@@ -101,11 +101,14 @@ type CharacterCfg struct {
 		BeltColumns   BeltColumns `yaml:"beltColumns"`
 	} `yaml:"inventory"`
 	Character struct {
-		Class          string `yaml:"class"`
-		UseMerc        bool   `yaml:"useMerc"`
-		StashToShared  bool   `yaml:"stashToShared"`
-		UseTeleport    bool   `yaml:"useTeleport"`
-		FindItemSwitch bool   `yaml:"find_item_switch"`
+		Class         string `yaml:"class"`
+		UseMerc       bool   `yaml:"useMerc"`
+		StashToShared bool   `yaml:"stashToShared"`
+		UseTeleport   bool   `yaml:"useTeleport"`
+		BerserkerBarb struct {
+			FindItemSwitch              bool `yaml:"find_item_switch"`
+			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
+		} `yaml:"berserker_barb"`
 	} `yaml:"character"`
 
 	Game struct {
