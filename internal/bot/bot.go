@@ -2,9 +2,7 @@ package bot
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/runtype"
 	"time"
 
@@ -77,23 +75,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
 					continue
 				}
-
 				err = b.ctx.HealthManager.HandleHealthAndMana()
 				if err != nil {
-					if errors.Is(err, health.ErrChicken) || errors.Is(err, health.ErrMercChicken) {
-						b.ctx.Logger.Error("Chicken triggered", "error", err)
-						// Exit game immediately
-						exitErr := b.ctx.Manager.ExitGame()
-						if exitErr != nil {
-							b.ctx.Logger.Error("Failed to exit game", "error", exitErr)
-						}
-						// Stop all other goroutines
-						cancel()
-						b.Stop()
-						// Return the chicken error to ensure it's logged properly
-						return err
-					}
-					// For other errors, just cancel and stop
 					cancel()
 					b.Stop()
 					return err
