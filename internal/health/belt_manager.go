@@ -121,7 +121,3 @@ func (bm BeltManager) GetMissingCount(potionType data.PotionType) int {
 
 	return 0
 }
-func (bm BeltManager) HasPotion(potionType data.PotionType) bool {
-	_, found := bm.data.Inventory.Belt.GetFirstPotion(potionType)
-	return found
-}
