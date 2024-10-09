@@ -82,15 +82,14 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if err != nil {
 					if errors.Is(err, health.ErrChicken) || errors.Is(err, health.ErrMercChicken) {
 						b.ctx.Logger.Error("Chicken triggered", "error", err)
-						// Stop all other goroutines
-						b.Stop()
-
 						// Exit game immediately
 						exitErr := b.ctx.Manager.ExitGame()
 						if exitErr != nil {
 							b.ctx.Logger.Error("Failed to exit game", "error", exitErr)
 						}
+						// Stop all other goroutines
 						cancel()
+						b.Stop()
 						// Return the chicken error to ensure it's logged properly
 						return err
 					}
