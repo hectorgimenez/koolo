@@ -1,6 +1,8 @@
 package context
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/runtype"
 	"log/slog"
 	"runtime"
 	"strconv"
@@ -61,6 +63,8 @@ type Debug struct {
 
 type CurrentGameHelper struct {
 	BlacklistedItems []data.Item
+	ExpectedArea     area.ID
+	CurrentRun       runtype.Run
 }
 
 func NewContext(name string) *Status {

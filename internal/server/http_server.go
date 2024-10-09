@@ -781,7 +781,10 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
-		cfg.Character.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
+		if cfg.Character.Class == "berserker" {
+			cfg.Character.BerserkerBarb.SkipPotionPickupInTravincal = r.Form.Has("barbSkipPotionPickupInTravincal")
+			cfg.Character.BerserkerBarb.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
+		}
 
 		for y, row := range cfg.Inventory.InventoryLock {
 			for x := range row {

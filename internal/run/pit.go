@@ -1,3 +1,5 @@
+// run/pit.go
+
 package run
 
 import (
@@ -18,11 +20,11 @@ func NewPit() *Pit {
 	}
 }
 
-func (p Pit) Name() string {
+func (p *Pit) Name() string {
 	return string(config.PitRun)
 }
 
-func (p Pit) Run() error {
+func (p *Pit) Run() error {
 
 	// Define a default filter
 	monsterFilter := data.MonsterAnyFilter()
@@ -83,4 +85,29 @@ func (p Pit) Run() error {
 
 	// Clear it
 	return action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter)
+}
+
+func (p *Pit) getMonsterFilter() data.MonsterFilter {
+	if p.ctx.CharacterCfg.Game.Pit.FocusOnElitePacks {
+		return data.MonsterEliteFilter()
+	}
+	return data.MonsterAnyFilter()
+}
+
+func (p *Pit) ExpectedAreas() []area.ID {
+	return []area.ID{
+		area.BlackMarsh,
+		area.TamoeHighland,
+		area.PitLevel1,
+		area.PitLevel2,
+	}
+}
+
+func (p *Pit) IsAreaPartOfRun(a area.ID) bool {
+	for _, expectedArea := range p.ExpectedAreas() {
+		if a == expectedArea {
+			return true
+		}
+	}
+	return false
 }

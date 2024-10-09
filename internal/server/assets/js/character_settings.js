@@ -114,10 +114,22 @@ function updateButtonForDisabledRun(runElement) {
 document.addEventListener('DOMContentLoaded', function () {
     const schedulerEnabled = document.querySelector('input[name="schedulerEnabled"]');
     const schedulerSettings = document.getElementById('scheduler-settings');
+    const characterClassSelect = document.querySelector('select[name="characterClass"]');
+    const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
 
     function toggleSchedulerVisibility() {
         schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
     }
+    function updateCharacterOptions() {
+        const selectedClass = characterClassSelect.value;
+        if (selectedClass === 'berserker') {
+            berserkerBarbOptions.style.display = 'block';
+        } else {
+            berserkerBarbOptions.style.display = 'none';
+        }
+    }
+    characterClassSelect.addEventListener('change', updateCharacterOptions);
+    updateCharacterOptions(); // Call this initially to set the correct state
 
     // Set initial state
     toggleSchedulerVisibility();
