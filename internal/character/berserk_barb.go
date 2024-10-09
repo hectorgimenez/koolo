@@ -2,7 +2,6 @@ package character
 
 import (
 	"errors"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"sort"
@@ -94,6 +93,7 @@ func (s *Berserker) KillMonsterSequence(
 
 func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
 	ctx := context.Get()
+	ctx.PauseIfNotPriority()
 	monster, found := s.data.Monsters.FindByID(monsterID)
 	if !found {
 		return
@@ -112,7 +112,7 @@ func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
 
 func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 	ctx := context.Get()
-
+	ctx.PauseIfNotPriority()
 	s.SwapToSlot(1)
 
 	findItemKey, found := s.data.KeyBindings.KeyBindingForSkill(skill.FindItem)
@@ -354,15 +354,6 @@ func (s *Berserker) anyCouncilMemberAlive() bool {
 		}
 	}
 	return false
-}
-
-// could be optimized it takes up to 15 second to get back in
-func (s *Berserker) ensureInTravincal() error {
-	ctx := context.Get()
-	if ctx.Data.PlayerUnit.Area != area.Travincal {
-		return ErrNotInTravincal
-	}
-	return nil
 }
 
 func (s *Berserker) KillIzual() error {
