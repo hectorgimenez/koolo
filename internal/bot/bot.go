@@ -170,7 +170,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for k, r := range runs {
-			b.ctx.CurrentGame.CurrentRun = r
+			b.ctx.CurrentGame.CurrentRun = r // Update the CurrentRun for area correction
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
 			err = action.PreRun(firstRun)
 			if err != nil {
@@ -180,10 +180,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 			firstRun = false
 			err = r.Run()
 			if err != nil {
-				if errors.Is(err, health.ErrChicken) || errors.Is(err, health.ErrMercChicken) {
-					b.ctx.Logger.Error("Chicken triggered during run", "error", err)
-					return err // This will trigger the immediate game exit
-				}
 				return err
 			}
 
