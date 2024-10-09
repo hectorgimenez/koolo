@@ -1,15 +1,14 @@
+// run/pit.go
+
 package run
 
 import (
-	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
-
-var _ AreaAwareRun = (*Pit)(nil)
 
 type Pit struct {
 	ctx *context.Status
@@ -26,44 +25,73 @@ func (p *Pit) Name() string {
 }
 
 func (p *Pit) Run() error {
-	// Use waypoint to Black Marsh
-	err := action.WayPoint(area.BlackMarsh)
-	if err != nil {
-		return fmt.Errorf("error using waypoint to Black Marsh: %w", err)
+
+	// Define a default filter
+	monsterFilter := data.MonsterAnyFilter()
+
+	// Update filter if we selected to clear only elites
+	if p.ctx.CharacterCfg.Game.Pit.FocusOnElitePacks {
+		monsterFilter = data.MonsterEliteFilter()
 	}
 
-	// Move through areas
-	if p.ctx.CharacterCfg.Game.Pit.MoveThroughBlackMarsh {
-		if err := action.MoveToArea(area.TamoeHighland); err != nil {
-			return fmt.Errorf("error moving through Black Marsh: %w", err)
+	if !p.ctx.CharacterCfg.Game.Pit.MoveThroughBlackMarsh {
+		// Use the waypoint to travel to the OuterCloister
+		err := action.WayPoint(area.OuterCloister)
+		if err != nil {
+			return err
 		}
-	}
 
-	if err := action.MoveToArea(area.PitLevel1); err != nil {
-		return fmt.Errorf("error moving to Pit: %w", err)
-	}
+		// Move to the Monastery Gate
+		if err = action.MoveToArea(area.MonasteryGate); err != nil {
+			return err
+		}
 
-	// Clear Pit Level 1 if not only clearing Level 2
-	if !p.ctx.CharacterCfg.Game.Pit.OnlyClearLevel2 {
-		if err := p.clearLevel(area.PitLevel1); err != nil {
+		// Move to the Tamoe Highland
+		if err = action.MoveToArea(area.TamoeHighland); err != nil {
+			return err
+		}
+	} else {
+		// Use the waypoint to travel to the BlackMarsh
+		err := action.WayPoint(area.BlackMarsh)
+		if err != nil {
+			return err
+		}
+
+		// Move to the TamoeHighland
+		if err = action.MoveToArea(area.TamoeHighland); err != nil {
 			return err
 		}
 	}
 
-	// Move to and clear Pit Level 2
-	if err := action.MoveToArea(area.PitLevel2); err != nil {
-		return fmt.Errorf("error moving to Pit Level 2: %w", err)
+	// Travel to pit level 1
+	if err := action.MoveToArea(area.PitLevel1); err != nil {
+		return err
 	}
 
-	return p.clearLevel(area.PitLevel2)
+	// Open a TP If we're the leader
+	action.OpenTPIfLeader()
+
+	// Clear the area if we don't have only clear lvl2 selected
+	if !p.ctx.CharacterCfg.Game.Pit.OnlyClearLevel2 {
+		if err := action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter); err != nil {
+			return err
+		}
+	}
+
+	// Move to PitLvl2
+	if err := action.MoveToArea(area.PitLevel2); err != nil {
+		return err
+	}
+
+	// Clear it
+	return action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter)
 }
 
-func (p *Pit) clearLevel(a area.ID) error {
-	monsterFilter := data.MonsterAnyFilter()
+func (p *Pit) getMonsterFilter() data.MonsterFilter {
 	if p.ctx.CharacterCfg.Game.Pit.FocusOnElitePacks {
-		monsterFilter = data.MonsterEliteFilter()
+		return data.MonsterEliteFilter()
 	}
-	return action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter)
+	return data.MonsterAnyFilter()
 }
 
 func (p *Pit) ExpectedAreas() []area.ID {
