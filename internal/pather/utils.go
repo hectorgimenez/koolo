@@ -145,41 +145,36 @@ func DistanceFromPoint(from data.Position, to data.Position) int {
 }
 
 func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Position) bool {
-	x0, y0 := origin.X-pf.data.AreaOrigin.X, origin.Y-pf.data.AreaOrigin.Y
-	x1, y1 := destination.X-pf.data.AreaOrigin.X, destination.Y-pf.data.AreaOrigin.Y
+	dx := int(math.Abs(float64(destination.X - origin.X)))
+	dy := int(math.Abs(float64(destination.Y - origin.Y)))
+	sx, sy := 1, 1
 
-	dx := int(math.Abs(float64(x1 - x0)))
-	dy := int(math.Abs(float64(y1 - y0)))
-	sx := -1
-	sy := -1
-
-	if x0 < x1 {
-		sx = 1
+	if origin.X > destination.X {
+		sx = -1
 	}
-	if y0 < y1 {
-		sy = 1
+	if origin.Y > destination.Y {
+		sy = -1
 	}
 
 	err := dx - dy
 
+	x, y := origin.X, origin.Y
+
 	for {
-		if !pf.data.AreaData.Grid.IsWalkable(data.Position{X: x0, Y: y0}) {
+		if !pf.data.AreaData.Grid.IsWalkable(data.Position{X: x, Y: y}) {
 			return false
 		}
-
-		// Check if we have reached the end point
-		if x0 == x1 && y0 == y1 {
+		if x == destination.X && y == destination.Y {
 			break
 		}
-
 		e2 := 2 * err
 		if e2 > -dy {
 			err -= dy
-			x0 += sx
+			x += sx
 		}
 		if e2 < dx {
 			err += dx
-			y0 += sy
+			y += sy
 		}
 	}
 
