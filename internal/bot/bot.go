@@ -32,8 +32,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
-	b.ctx.SwitchPriority(botCtx.PriorityNormal)
-	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{ExpectedArea: b.ctx.Data.PlayerUnit.Area}
+	b.ctx.SwitchPriority(botCtx.PriorityNormal) // Restore priority to normal, in case it was stopped in previous game
+	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{ExpectedArea: b.ctx.Data.PlayerUnit.Area}  // Reset current game helper structure
 
 	err := b.ctx.GameReader.FetchMapData()
 	if err != nil {
@@ -46,7 +46,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
 
-	// This routine is in charge of handling the health/chicken of the bot, will work in parallel with any other execution
+	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
 		ticker := time.NewTicker(10 * time.Millisecond)
@@ -64,7 +64,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 			}
 		}
 	})
-	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
+	// This routine is in charge of handling the health/chicken of the bot, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
 		ticker := time.NewTicker(100 * time.Millisecond)
@@ -125,7 +125,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if err != nil {
 					b.ctx.Logger.Error("Area correction failed", "error", err)
 				}
-
+				// Check if Berserker is currently killing council
 				if berserker, ok := b.ctx.Char.(*character.Berserker); !ok || !berserker.IsKillingCouncil() {
 					action.ItemPickup(30)
 				}
@@ -133,6 +133,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 
 				_, healingPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.HealingPotion)
 				_, manaPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.ManaPotion)
+				// Check if we need to go back to town (no pots or merc died)
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
