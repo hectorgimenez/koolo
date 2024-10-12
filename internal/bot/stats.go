@@ -50,10 +50,16 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 		})
 		h.stats.SupervisorStatus = InGame
 	case event.GameFinishedEvent:
-		h.stats.Games[len(h.stats.Games)-1].FinishedAt = evt.OccurredAt()
-		h.stats.Games[len(h.stats.Games)-1].Reason = evt.Reason
-		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].FinishedAt = evt.OccurredAt()
-		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Reason = evt.Reason
+		if len(h.stats.Games) > 0 {
+			lastGame := &h.stats.Games[len(h.stats.Games)-1]
+			lastGame.FinishedAt = evt.OccurredAt()
+			lastGame.Reason = evt.Reason
+			if len(lastGame.Runs) > 0 {
+				lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
+				lastRun.FinishedAt = evt.OccurredAt()
+				lastRun.Reason = evt.Reason
+			}
+		}
 	case event.RunStartedEvent:
 		if len(h.stats.Games) == 0 {
 			h.stats.Games = append(h.stats.Games, GameStats{
@@ -61,10 +67,13 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 			})
 			h.stats.SupervisorStatus = InGame
 		}
-		h.stats.Games[len(h.stats.Games)-1].Runs = append(h.stats.Games[len(h.stats.Games)-1].Runs, RunStats{
-			Name:      evt.RunName,
-			StartedAt: evt.OccurredAt(),
-		})
+		if len(h.stats.Games) > 0 {
+			lastGame := &h.stats.Games[len(h.stats.Games)-1]
+			lastGame.Runs = append(lastGame.Runs, RunStats{
+				Name:      evt.RunName,
+				StartedAt: evt.OccurredAt(),
+			})
+		}
 	case event.GamePausedEvent:
 		if evt.Paused {
 			h.stats.SupervisorStatus = Paused
@@ -72,16 +81,20 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 			h.stats.SupervisorStatus = InGame
 		}
 	case event.RunFinishedEvent:
-		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].FinishedAt = evt.OccurredAt()
-		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Reason = evt.Reason
+		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
+			lastGame := &h.stats.Games[len(h.stats.Games)-1]
+			lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
+			lastRun.FinishedAt = evt.OccurredAt()
+			lastRun.Reason = evt.Reason
+		}
 	case event.ItemStashedEvent:
-		// The hell is this Hector o.O
-		//h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Items = append(h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].Items, evt.Item)
-
-		// Ain't this much easier?
 		h.stats.Drops = append(h.stats.Drops, evt.Item)
 	case event.UsedPotionEvent:
-		h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].UsedPotions = append(h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1].UsedPotions, evt)
+		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
+			lastGame := &h.stats.Games[len(h.stats.Games)-1]
+			lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
+			lastRun.UsedPotions = append(lastRun.UsedPotions, evt)
+		}
 	}
 
 	return nil

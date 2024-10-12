@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 
@@ -102,10 +103,26 @@ func MoveToArea(dst area.ID) error {
 	}
 
 	if lvl.IsEntrance {
-		err := step.InteractEntrance(dst)
-		if err != nil {
-			return err
+		maxAttempts := 3
+		for attempt := 0; attempt < maxAttempts; attempt++ {
+			// Add a short delay before each attempt
+			utils.Sleep(200)
+
+			err := step.InteractEntrance(dst)
+			if err == nil {
+				// Successful interaction, exit the loop
+				break
+			}
+
+			if attempt == maxAttempts-1 {
+				// If this was the last attempt, return the error
+				return fmt.Errorf("failed to interact with entrance after %d attempts: %w", maxAttempts, err)
+			}
+
 		}
+
+		// Add a short delay after successful interaction
+		utils.Sleep(200)
 	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
@@ -114,9 +131,15 @@ func MoveToArea(dst area.ID) error {
 }
 
 func MoveToCoords(to data.Position) error {
-	return MoveTo(func() (data.Position, bool) {
+	ctx := context.Get()
+	err := MoveTo(func() (data.Position, bool) {
 		return to, true
 	})
+	if err == nil {
+		// Record the successful move
+		ctx.CurrentGame.RunProgress.VisitedCoords = append(ctx.CurrentGame.RunProgress.VisitedCoords, to)
+	}
+	return err
 }
 
 func MoveTo(toFunc func() (data.Position, bool)) error {

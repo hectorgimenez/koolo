@@ -183,21 +183,18 @@ func (s NovaSorceress) KillCountess() error {
 }
 
 func (s NovaSorceress) KillAndariel() error {
-	m, _ := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeNone)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(8, 13))
-
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, NovaSorceressMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeNone, NovaSorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, NovaSorceressMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillDuriel() error {
-	m, _ := s.data.Monsters.FindOne(npc.Duriel, data.MonsterTypeNone)
+	m, _ := s.data.Monsters.FindOne(npc.Duriel, data.MonsterTypeUnique)
 	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(8, 13))
 
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s NovaSorceress) KillCouncil() error {
@@ -226,23 +223,17 @@ func (s NovaSorceress) KillCouncil() error {
 }
 
 func (s NovaSorceress) KillMephisto() error {
-	m, _ := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeNone)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(8, 13))
+	m, _ := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(8, 13))
 
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, NovaSorceressMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillIzual() error {
-	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(8, 13))
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(8, 13))
 
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s NovaSorceress) KillDiablo() error {
@@ -256,7 +247,7 @@ func (s NovaSorceress) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -271,9 +262,9 @@ func (s NovaSorceress) KillDiablo() error {
 		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
-		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(8, 13))
+		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 4, step.Distance(8, 13))
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -286,11 +277,8 @@ func (s NovaSorceress) KillNihlathak() error {
 }
 
 func (s NovaSorceress) KillBaal() error {
-	m, _ := s.data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
-	step.SecondaryAttack(skill.StaticField, m.UnitID, 5, step.Distance(8, 13))
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	m, _ := s.data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
+	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(8, 13))
 
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

@@ -12,6 +12,10 @@ type AreaAwareRun interface {
 	Run
 	ExpectedAreas() []area.ID
 	IsAreaPartOfRun(id area.ID) bool
+	GetVisitedAreas() map[area.ID]bool
+	GetLastActionArea() area.ID
+	SetVisitedAreas(areas map[area.ID]bool)
+	SetLastActionArea(area area.ID)
 }
 
 func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
