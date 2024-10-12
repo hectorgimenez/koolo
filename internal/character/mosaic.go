@@ -194,15 +194,15 @@ func (s MosaicSin) KillCountess() error {
 }
 
 func (s MosaicSin) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillCouncil() error {
@@ -232,18 +232,11 @@ func (s MosaicSin) KillCouncil() error {
 }
 
 func (s MosaicSin) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillIzual() error {
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillDiablo() error {
@@ -257,7 +250,7 @@ func (s MosaicSin) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -272,7 +265,7 @@ func (s MosaicSin) KillDiablo() error {
 		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -285,9 +278,5 @@ func (s MosaicSin) KillNihlathak() error {
 }
 
 func (s MosaicSin) KillBaal() error {
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

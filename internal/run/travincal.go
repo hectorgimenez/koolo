@@ -12,7 +12,9 @@ import (
 var _ AreaAwareRun = (*Travincal)(nil)
 
 type Travincal struct {
-	ctx *context.Status
+	ctx         *context.Status
+	councilPos  data.Position
+	killingDone bool
 }
 
 func NewTravincal() *Travincal {
@@ -28,34 +30,55 @@ func (t *Travincal) Name() string {
 func (t *Travincal) Run() error {
 	// Check if the character is a Berserker and swap to combat gear
 	if berserker, ok := t.ctx.Char.(*character.Berserker); ok {
-		berserker.SwapToSlot(0) // Swap to combat gear (lowest Gold Find)
+		if t.ctx.CharacterCfg.Character.BerserkerBarb.FindItemSwitch {
+			berserker.SwapToSlot(0) // Swap to combat gear (lowest Gold Find)
+		}
 	}
 
-	err := action.WayPoint(area.Travincal)
-	t.ctx.WaitForGameToLoad()
-	t.ctx.RefreshGameData()
-
-	if err != nil {
-		return err
+	if t.ctx.Data.PlayerUnit.Area != area.Travincal {
+		err := action.WayPoint(area.Travincal)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Buff after ensuring we're in Travincal
 	action.Buff()
 
-	for _, al := range t.ctx.Data.AdjacentLevels {
-		if al.Area == area.DuranceOfHateLevel1 {
-			err = action.MoveToCoords(data.Position{
-				X: al.Position.X - 1,
-				Y: al.Position.Y + 3,
-			})
-			if err != nil {
-				t.ctx.Logger.Warn("Error moving to council area", err)
-			}
-		}
+	if t.councilPos.X == 0 && t.councilPos.Y == 0 {
+		t.findCouncilPosition()
 	}
 
-	return t.ctx.Char.KillCouncil()
+	err := action.MoveToCoords(t.councilPos)
+	if err != nil {
+		t.ctx.Logger.Warn("Error moving to council area", "error", err)
+		return err
+	}
+
+	if !t.killingDone {
+		err = t.ctx.Char.KillCouncil()
+		if err != nil {
+			return err
+		}
+		t.killingDone = true
+	}
+
+	return nil
 }
+
+func (t *Travincal) findCouncilPosition() {
+	for _, al := range t.ctx.Data.AdjacentLevels {
+		if al.Area == area.DuranceOfHateLevel1 {
+			t.councilPos = data.Position{
+				X: al.Position.X - 1,
+				Y: al.Position.Y + 3,
+			}
+			break
+		}
+	}
+}
+
+// Implementing AreaAwareRun interface methods
 
 func (t *Travincal) ExpectedAreas() []area.ID {
 	return []area.ID{
@@ -64,10 +87,21 @@ func (t *Travincal) ExpectedAreas() []area.ID {
 }
 
 func (t *Travincal) IsAreaPartOfRun(a area.ID) bool {
-	for _, expectedArea := range t.ExpectedAreas() {
-		if a == expectedArea {
-			return true
-		}
-	}
-	return false
+	return a == area.Travincal
+}
+
+func (t *Travincal) GetVisitedAreas() map[area.ID]bool {
+	return map[area.ID]bool{area.Travincal: true}
+}
+
+func (t *Travincal) GetLastActionArea() area.ID {
+	return area.Travincal
+}
+
+func (t *Travincal) SetVisitedAreas(areas map[area.ID]bool) {
+	// No-op for Travincal run
+}
+
+func (t *Travincal) SetLastActionArea(area area.ID) {
+	// No-op for Travincal run
 }

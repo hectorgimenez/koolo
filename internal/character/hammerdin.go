@@ -128,15 +128,15 @@ func (s Hammerdin) KillCountess() error {
 }
 
 func (s Hammerdin) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillCouncil() error {
@@ -166,11 +166,11 @@ func (s Hammerdin) KillCouncil() error {
 }
 
 func (s Hammerdin) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s Hammerdin) KillDiablo() error {
@@ -184,7 +184,7 @@ func (s Hammerdin) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -199,7 +199,7 @@ func (s Hammerdin) KillDiablo() error {
 		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -212,5 +212,5 @@ func (s Hammerdin) KillNihlathak() error {
 }
 
 func (s Hammerdin) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

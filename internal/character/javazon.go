@@ -168,15 +168,15 @@ func (s Javazon) KillCountess() error {
 }
 
 func (s Javazon) KillAndariel() error {
-	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
+	return s.killBoss(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillDuriel() error {
-	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
+	return s.killBoss(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillCouncil() error {
@@ -206,11 +206,11 @@ func (s Javazon) KillCouncil() error {
 }
 
 func (s Javazon) KillMephisto() error {
-	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
+	return s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillIzual() error {
-	return s.killBoss(npc.Izual, data.MonsterTypeNone)
+	return s.killBoss(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillDiablo() error {
@@ -224,7 +224,7 @@ func (s Javazon) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -239,7 +239,7 @@ func (s Javazon) KillDiablo() error {
 		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -252,5 +252,5 @@ func (s Javazon) KillNihlathak() error {
 }
 
 func (s Javazon) KillBaal() error {
-	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeUnique)
 }

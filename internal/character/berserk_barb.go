@@ -1,7 +1,6 @@
 package character
 
 import (
-	"errors"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"sort"
@@ -28,8 +27,6 @@ const (
 	meleeRange        = 5
 	maxAttackAttempts = 20
 )
-
-var ErrNotInTravincal = errors.New("not in Travincal")
 
 func (s *Berserker) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem, skill.Berserk}
@@ -245,19 +242,19 @@ func (s *Berserker) KillCountess() error {
 }
 
 func (s *Berserker) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s *Berserker) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s *Berserker) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s *Berserker) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s *Berserker) KillDiablo() error {
@@ -271,7 +268,7 @@ func (s *Berserker) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			if diabloFound {
 				return nil
@@ -283,7 +280,7 @@ func (s *Berserker) KillDiablo() error {
 		diabloFound = true
 		s.logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -352,12 +349,13 @@ func (s *Berserker) anyCouncilMemberAlive() bool {
 		if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
 			return true
 		}
+
 	}
 	return false
 }
 
 func (s *Berserker) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s *Berserker) KillPindle() error {
@@ -369,5 +367,5 @@ func (s *Berserker) KillNihlathak() error {
 }
 
 func (s *Berserker) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }
