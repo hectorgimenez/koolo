@@ -116,6 +116,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const schedulerSettings = document.getElementById('scheduler-settings');
     const characterClassSelect = document.querySelector('select[name="characterClass"]');
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
+    const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
+    const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
 
     function toggleSchedulerVisibility() {
         schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
@@ -124,15 +126,57 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedClass = characterClassSelect.value;
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
+            novaSorceressOptions.style.display = 'none';
+        } else if (selectedClass === 'nova') {
+            berserkerBarbOptions.style.display = 'none';
+            novaSorceressOptions.style.display = 'block';
+            updateNovaSorceressOptions();
         } else {
             berserkerBarbOptions.style.display = 'none';
+            novaSorceressOptions.style.display = 'none';
         }
     }
+    function updateNovaSorceressOptions() {
+        const selectedDifficulty = document.getElementById('gameDifficulty').value;
+        updateBossStaticThresholdMin(selectedDifficulty);
+    }
+
+    function updateBossStaticThresholdMin(difficulty) {
+        let minValue;
+        switch(difficulty) {
+            case 'normal':
+                minValue = 1;
+                break;
+            case 'nightmare':
+                minValue = 33;
+                break;
+            case 'hell':
+                minValue = 50;
+                break;
+            default:
+                minValue = 65;
+        }
+        bossStaticThresholdInput.min = minValue;
+
+        // Automatically adjust the value if it's below the new minimum
+        if (parseInt(bossStaticThresholdInput.value) < minValue) {
+            bossStaticThresholdInput.value = minValue;
+        }
+    }
+
+    characterClassSelect.addEventListener('change', updateCharacterOptions);
+    document.getElementById('gameDifficulty').addEventListener('change', function() {
+        if (characterClassSelect.value === 'nova') {
+            updateNovaSorceressOptions();
+        }
+    });
+
     characterClassSelect.addEventListener('change', updateCharacterOptions);
     updateCharacterOptions(); // Call this initially to set the correct state
 
     // Set initial state
     toggleSchedulerVisibility();
+    updateNovaSorceressOptions();
 
     schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
 

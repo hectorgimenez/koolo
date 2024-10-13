@@ -109,6 +109,9 @@ type CharacterCfg struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
 		} `yaml:"berserker_barb"`
+		NovaSorceress struct {
+			BossStaticThreshold int `yaml:"boss_static_threshold"`
+		} `yaml:"nova_sorceress"`
 	} `yaml:"character"`
 
 	Game struct {
@@ -323,6 +326,9 @@ func Load() error {
 
 		Characters[entry.Name()] = &charCfg
 	}
+	for _, charCfg := range Characters {
+		charCfg.Validate()
+	}
 
 	return nil
 }
@@ -374,6 +380,7 @@ func ValidateAndSaveConfig(config KooloCfg) error {
 func SaveSupervisorConfig(supervisorName string, config *CharacterCfg) error {
 	filePath := filepath.Join("config", supervisorName, "config.yaml")
 	d, err := yaml.Marshal(config)
+	config.Validate()
 	if err != nil {
 		return err
 	}
@@ -384,4 +391,21 @@ func SaveSupervisorConfig(supervisorName string, config *CharacterCfg) error {
 	}
 
 	return Load()
+}
+
+func (c *CharacterCfg) Validate() {
+	if c.Character.Class == "nova" {
+		minThreshold := 65 // Default
+		switch c.Game.Difficulty {
+		case difficulty.Normal:
+			minThreshold = 1
+		case difficulty.Nightmare:
+			minThreshold = 33
+		case difficulty.Hell:
+			minThreshold = 50
+		}
+		if c.Character.NovaSorceress.BossStaticThreshold < minThreshold || c.Character.NovaSorceress.BossStaticThreshold > 100 {
+			c.Character.NovaSorceress.BossStaticThreshold = minThreshold
+		}
+	}
 }
