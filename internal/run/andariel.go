@@ -63,6 +63,14 @@ func (a Andariel) Name() string {
 	return string(config.AndarielRun)
 }
 
+func (a Andariel) disableItemPickup() {
+	a.ctx.DisableItemPickup = true
+}
+
+func (a Andariel) enableItemPickup() {
+	a.ctx.DisableItemPickup = false
+}
+
 func (a Andariel) Run() error {
 	// Moving to Catacombs Level 4
 	a.ctx.Logger.Info("Moving to Catacombs 4")
@@ -98,8 +106,15 @@ func (a Andariel) Run() error {
 		action.MoveToCoords(andarielStartingPosition)
 	}
 
+	// Disable item pickup while fighting Andariel (prevent picking up items if nearby monsters die)
+	a.disableItemPickup()
+
 	// Attacking Andariel
 	a.ctx.Logger.Info("Killing Andariel")
+	err = a.ctx.Char.KillAndariel()
 
-	return a.ctx.Char.KillAndariel()
+	// Enable item pickup after the fight
+	a.enableItemPickup()
+
+	return err
 }

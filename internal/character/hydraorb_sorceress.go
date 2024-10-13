@@ -153,9 +153,21 @@ func (s HydraOrbSorceress) KillCountess() error {
 }
 
 func (s HydraOrbSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
-}
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Andariel is dead or not found
+		}
 
+		err := s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
+}
 func (s HydraOrbSorceress) KillSummoner() error {
 	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
 }
@@ -190,7 +202,20 @@ func (s HydraOrbSorceress) KillCouncil() error {
 }
 
 func (s HydraOrbSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Mephisto is dead or not found
+		}
+
+		err := s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (s HydraOrbSorceress) KillIzual() error {

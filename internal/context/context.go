@@ -54,6 +54,7 @@ type Context struct {
 	LastBuffAt        time.Time
 	ContextDebug      *Debug
 	CurrentGame       *CurrentGameHelper
+	DisableItemPickup bool
 }
 
 type Debug struct {

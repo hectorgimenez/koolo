@@ -128,9 +128,21 @@ func (s Hammerdin) KillCountess() error {
 }
 
 func (s Hammerdin) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, false)
-}
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Andariel is dead or not found
+		}
 
+		err := s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, false)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
+}
 func (s Hammerdin) KillSummoner() error {
 	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, false)
 }
@@ -166,9 +178,21 @@ func (s Hammerdin) KillCouncil() error {
 }
 
 func (s Hammerdin) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, false)
-}
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Mephisto is dead or not found
+		}
 
+		err := s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, false)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
+}
 func (s Hammerdin) KillIzual() error {
 	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }

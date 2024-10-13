@@ -221,7 +221,20 @@ func (s NovaSorceress) PreCTABuffSkills() []skill.ID {
 }
 
 func (s NovaSorceress) KillAndariel() error {
-	return s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Andariel is dead or not found
+		}
+
+		err := s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (s NovaSorceress) KillDuriel() error {
@@ -229,7 +242,20 @@ func (s NovaSorceress) KillDuriel() error {
 }
 
 func (s NovaSorceress) KillMephisto() error {
-	return s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Mephisto is dead or not found
+		}
+
+		err := s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (s NovaSorceress) KillDiablo() error {
