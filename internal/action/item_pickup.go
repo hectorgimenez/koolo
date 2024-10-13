@@ -195,23 +195,40 @@ func shouldBePickedUp(i data.Item) bool {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "shouldBePickedUp"
 
+	// Anti-idle logic
+	idleCounter := 0
+	const maxIdleCount = 3
+
+	// Check if character is standing idle outside town
+	if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
+		idleCounter++
+		if idleCounter >= maxIdleCount {
+			ctx.Logger.Debug("Character idle for too long, forcing movement")
+			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.ForceMove)
+			idleCounter = 0
+		}
+	} else {
+		idleCounter = 0
+	}
+
+	// Existing item pickup logic
 	if i.IsRuneword {
 		return true
 	}
 
-	// Skip picking up gold if we can not carry more
+	// Skip picking up gold if we cannot carry more
 	gold, _ := ctx.Data.PlayerUnit.FindStat(stat.Gold, 0)
 	if gold.Value >= ctx.Data.PlayerUnit.MaxGold() && i.Name == "Gold" {
 		ctx.Logger.Debug("Skipping gold pickup, inventory full")
 		return false
 	}
 
-	// Always pickup WirtsLeg!
+	// Always pick up WirtsLeg!
 	if i.Name == "WirtsLeg" {
 		return true
 	}
 
-	// Pick up quest items if we're in leveling or questing run
+	// Pick up quest items if in leveling or questing run
 	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
 	switch i.Name {
 	case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
@@ -220,26 +237,24 @@ func shouldBePickedUp(i data.Item) bool {
 		}
 	}
 
-	// Book of Skill doesnt work by name, so we find it by ID
+	// Book of Skill (found by ID)
 	if i.ID == 552 {
 		return true
 	}
 
-	// Only during leveling if gold amount is low pickup items to sell as junk
+	// Pick up items to sell as junk during leveling if gold is low
 	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
-
-	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
-	// stay away of that
 	if isLevelingChar && ctx.Data.PlayerUnit.TotalPlayerGold() < 50000 && i.Name != "Gold" {
 		return true
 	}
 
+	// Pick up all magic/superior items if gold is below threshold
 	minGoldPickupThreshold := ctx.CharacterCfg.Game.MinGoldPickupThreshold
-	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
 	if ctx.Data.PlayerUnit.TotalPlayerGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
 	}
 
+	// Apply rule-based logic
 	matchedRule, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 	if result == nip.RuleResultNoMatch {
 		return false
@@ -250,6 +265,5 @@ func shouldBePickedUp(i data.Item) bool {
 	}
 
 	exceedQuantity := doesExceedQuantity(matchedRule)
-
 	return !exceedQuantity
 }
