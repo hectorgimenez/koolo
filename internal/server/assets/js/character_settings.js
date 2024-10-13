@@ -151,13 +151,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 minValue = 20;
                 break;
             case 'nightmare':
-                minValue = 66;
+                minValue = 33;
                 break;
             case 'hell':
                 minValue = 50;
                 break;
             default:
-                minValue = 50;
+                minValue = 65;
         }
         input.min = minValue;
 
@@ -222,7 +222,7 @@ function handleBossStaticThresholdChange() {
             minValue = 1;
             break;
         case 'nightmare':
-            minValue = 66;
+            minValue = 33;
             break;
         case 'hell':
             minValue = 50;
