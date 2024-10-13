@@ -1,7 +1,7 @@
 package character
 
 import (
-	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"log/slog"
 	"sort"
 	"time"
@@ -48,16 +48,14 @@ func (s Foh) KillMonsterSequence(
 	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
-	previousUnitID := data.UnitID(0)
+	ctx := context.Get()
 
 	for {
+		ctx.PauseIfNotPriority()
 
 		id, found := monsterSelector(*s.data)
 		if !found {
 			return nil
-		}
-		if previousUnitID != id {
-			completedAttackLoops = 0
 		}
 
 		if !s.preBattleChecks(id, skipOnImmunities) {
@@ -69,46 +67,48 @@ func (s Foh) KillMonsterSequence(
 		}
 
 		monster, found := s.data.Monsters.FindByID(id)
-		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+		if !found || monster.Stats[stat.Life] <= 0 {
 			return nil
 		}
-		ctx := context.Get()
-		ctx.PauseIfNotPriority()
 
 		hbKey, holyBoltFound := s.data.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
 		fohKey, fohFound := s.data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
+		convictionKey, convictionFound := s.data.KeyBindings.KeyBindingForSkill(skill.Conviction)
 
 		if monster.Type == data.MonsterTypeUnique {
-			// Boss attack pattern
 			s.attackBoss(monster.UnitID, hbKey, fohKey)
 		} else {
-			// Logic for normal monsters
-			if resistance, ok := monster.Stats[stat.LightningResist]; ok && resistance >= 100 {
-				if holyBoltFound {
-					context.Get().HID.PressKeyBinding(hbKey)
-				}
-			} else {
-				if fohFound {
-					context.Get().HID.PressKeyBinding(fohKey)
-				}
+			// Ensure Conviction is active
+			if convictionFound {
+				ctx.HID.PressKeyBinding(convictionKey)
+				utils.Sleep(50)
 			}
-			utils.Sleep(40)
+
+			isLightningImmune := false
+			if resistance, ok := monster.Stats[stat.LightningResist]; ok && resistance >= 100 {
+				isLightningImmune = true
+			}
+
+			if monster.States.HasState(state.Conviction) && isLightningImmune && holyBoltFound {
+				ctx.HID.PressKeyBinding(hbKey)
+			} else if fohFound {
+				ctx.HID.PressKeyBinding(fohKey)
+			} else if holyBoltFound {
+				ctx.HID.PressKeyBinding(hbKey)
+			}
+
 			step.PrimaryAttack(
 				id,
 				3,
 				true,
 				step.Distance(fohMinDistance, fohMaxDistance),
-				step.EnsureAura(skill.Conviction),
 			)
 		}
 
 		completedAttackLoops++
-		previousUnitID = id
 		utils.Sleep(50)
 	}
 }
-
 func (s Foh) attackBoss(bossID data.UnitID, hbKey, fohKey data.KeyBinding) {
 	ctx := context.Get()
 	ctx.PauseIfNotPriority()
