@@ -74,15 +74,15 @@ func (s Foh) KillMonsterSequence(
 		hbKey, holyBoltFound := s.data.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
 		fohKey, fohFound := s.data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 		convictionKey, convictionFound := s.data.KeyBindings.KeyBindingForSkill(skill.Conviction)
+		// Ensure Conviction is active
+		if convictionFound {
+			ctx.HID.PressKeyBinding(convictionKey)
+			utils.Sleep(50)
+		}
 
 		if monster.Type == data.MonsterTypeUnique {
 			s.attackBoss(monster.UnitID, hbKey, fohKey)
 		} else {
-			// Ensure Conviction is active
-			if convictionFound {
-				ctx.HID.PressKeyBinding(convictionKey)
-				utils.Sleep(50)
-			}
 
 			isLightningImmune := false
 			if resistance, ok := monster.Stats[stat.LightningResist]; ok && resistance >= 100 {
