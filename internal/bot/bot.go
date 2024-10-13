@@ -138,7 +138,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if !b.ctx.DisableItemPickup {
 					if berserker, ok := b.ctx.Char.(*character.Berserker); ok && berserker.IsKillingCouncil() {
 						// Skip item pickup
-						b.ctx.Logger.Debug("Skipping item pickup while Berserker is killing council")
 					} else {
 						// Perform item pickup
 						action.ItemPickup(30)
