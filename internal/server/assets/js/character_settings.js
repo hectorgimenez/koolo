@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let minValue;
         switch(difficulty) {
             case 'normal':
-                minValue = 20;
+                minValue = 1;
                 break;
             case 'nightmare':
                 minValue = 33;
