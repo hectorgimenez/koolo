@@ -340,10 +340,22 @@ func (s SorceressLevelingLightning) KillCountess() error {
 }
 
 func (s SorceressLevelingLightning) KillAndariel() error {
-	m, _ := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5))
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Andariel is dead or not found
+		}
+		m, _ := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5))
 
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+		err := s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (s SorceressLevelingLightning) KillSummoner() error {
@@ -384,12 +396,23 @@ func (s SorceressLevelingLightning) KillCouncil() error {
 }
 
 func (s SorceressLevelingLightning) KillMephisto() error {
-	m, _ := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Mephisto is dead or not found
+		}
+		m, _ := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
 
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+		err := s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
-
 func (s SorceressLevelingLightning) KillIzual() error {
 	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
 	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))

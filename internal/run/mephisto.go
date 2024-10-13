@@ -25,6 +25,14 @@ func (m Mephisto) Name() string {
 	return string(config.MephistoRun)
 }
 
+func (m Mephisto) disableItemPickup() {
+	m.ctx.DisableItemPickup = true
+}
+
+func (m Mephisto) enableItemPickup() {
+	m.ctx.DisableItemPickup = false
+}
+
 func (m Mephisto) Run() error {
 
 	// Use waypoint to DuranceOfHateLevel2
@@ -50,8 +58,16 @@ func (m Mephisto) Run() error {
 		Y: 8069,
 	})
 
+	// Disable item pickup while fighting Mephisto (prevent picking up items if nearby monsters die)
+	m.disableItemPickup()
+
 	// Kill Mephisto
-	if err = m.ctx.Char.KillMephisto(); err != nil {
+	err = m.ctx.Char.KillMephisto()
+
+	// Enable item pickup after the fight
+	m.enableItemPickup()
+
+	if err != nil {
 		return err
 	}
 

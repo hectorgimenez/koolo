@@ -217,9 +217,21 @@ func (s WindDruid) KillCountess() error {
 }
 
 func (s WindDruid) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
-}
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Andariel is dead or not found
+		}
 
+		err := s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
+}
 func (s WindDruid) KillSummoner() error {
 	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
@@ -255,7 +267,20 @@ func (s WindDruid) KillCouncil() error {
 }
 
 func (s WindDruid) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Mephisto is dead or not found
+		}
+
+		err := s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (s WindDruid) KillIzual() error {

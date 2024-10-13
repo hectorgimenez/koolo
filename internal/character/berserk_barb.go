@@ -242,7 +242,20 @@ func (s *Berserker) KillCountess() error {
 }
 
 func (s *Berserker) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Andariel is dead or not found
+		}
+
+		err := s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (s *Berserker) KillSummoner() error {
@@ -254,9 +267,21 @@ func (s *Berserker) KillDuriel() error {
 }
 
 func (s *Berserker) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
-}
+	for {
+		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil // Mephisto is dead or not found
+		}
 
+		err := s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+		if err != nil {
+			return err
+		}
+
+		// Short delay before checking again
+		time.Sleep(100 * time.Millisecond)
+	}
+}
 func (s *Berserker) KillDiablo() error {
 	timeout := time.Second * 20
 	startTime := time.Now()

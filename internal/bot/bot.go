@@ -138,6 +138,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if berserker, ok := b.ctx.Char.(*character.Berserker); !ok || !berserker.IsKillingCouncil() {
 					action.ItemPickup(30)
 				}
+				// Only perform item pickup if it's not disabled
+				if !b.ctx.DisableItemPickup {
+					action.ItemPickup(30)
+				}
 				action.BuffIfRequired()
 
 				_, healingPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.HealingPotion)
