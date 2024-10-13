@@ -55,8 +55,6 @@ func (a Cows) Run() error {
 		return err
 	}
 
-	action.Buff()
-
 	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter())
 }
 

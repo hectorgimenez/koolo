@@ -1,6 +1,7 @@
 package step
 
 import (
+	"errors"
 	"log/slog"
 	"time"
 
@@ -103,19 +104,16 @@ func attack(settings attackSettings) error {
 
 		// TeleStomp
 		if settings.telestomp && ctx.Data.CanTeleport() {
-			if !ensureEnemyIsInRange(monster, 2, 1) {
-				path, _, _ := ctx.PathFinder.GetClosestWalkablePath(monster.Position)
-				if len(path) > 0 {
-					// Move to the closest tile to the monster
-					MoveTo(path[len(path)-1])
-				}
+			err := ensureEnemyIsInRange(monster, 2, 1)
+			if err != nil {
+				return err
 			}
 		}
 
 		if !aoe {
 			// Move into the attack distance range before starting
 			if settings.followEnemy {
-				if !ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance) {
+				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
 					// We cannot reach the enemy, let's skip the attack sequence
 					ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
 					return nil
@@ -159,43 +157,39 @@ func attack(settings attackSettings) error {
 		}
 	}
 }
-func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) bool {
+func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "ensureEnemyIsInRange"
 
-	_, distance, found := ctx.PathFinder.GetPath(monster.Position)
+	path, distance, found := ctx.PathFinder.GetPath(monster.Position)
 
 	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
-		return false
+		return errors.New("path could not be calculated")
 	}
 
 	hasLoS := ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position)
 
-	if distance > maxDistance || !hasLoS {
-		if distance > minDistance && minDistance > 0 {
-			// TODO tweak this crap
-			//moveTo := minDistance - 1
-			//if len(path) < minDistance {
-			//	moveTo = len(path) - 1 // Ensure moveTo is within path bounds
-			//}
+	// We have line of sight, and we are inside the attack range, we can skip
+	if hasLoS && distance < maxDistance {
+		return nil
+	}
 
-			MoveTo(data.Position{X: monster.Position.X, Y: monster.Position.Y})
-			//for i := moveTo; i > 0; i-- {
-			//	posTile := path[i].(*pather.Tile)
-			//	pos := data.Position{
-			//		X: posTile.X + ctx.Data.AreaOrigin.X,
-			//		Y: posTile.Y + ctx.Data.AreaOrigin.Y,
-			//	}
-			//
-			//	hasLoS = ctx.PathFinder.LineOfSight(pos, monster.Position)
-			//	if hasLoS {
-			//		path, distance, _ = ctx.PathFinder.GetPath(pos)
-			//		_ = MoveTo(pos)
-			//	}
-			//}
+	for i, pos := range path {
+		distance = len(path) - i
+		// In this case something weird is happening, just telestomp
+		if distance < 2 {
+			return MoveTo(monster.Position)
+		}
+
+		if distance > maxDistance {
+			continue
+		}
+
+		if ctx.PathFinder.LineOfSight(pos, monster.Position) {
+			return MoveTo(pos)
 		}
 	}
 
-	return true
+	return nil
 }
