@@ -18,8 +18,8 @@ import (
 
 const (
 	NovaSorceressMaxAttacksLoop = 10
-	NovaSorceressMinDistance    = 8
-	NovaSorceressMaxDistance    = 13
+	NovaSorceressMinDistance    = 5
+	NovaSorceressMaxDistance    = 10
 	StaticFieldMaxDistance      = 8
 )
 
@@ -90,24 +90,29 @@ func (s NovaSorceress) KillMonsterSequence(
 			return nil
 		}
 
+		nearbyMonsterCount := s.countNearbyMonsters(NovaSorceressMaxDistance)
+		if nearbyMonsterCount == 0 {
+			// No nearby monsters, move closer to the target
+			err := step.MoveTo(monster.Position)
+			if err != nil {
+				s.logger.Warn("Failed to move closer to monster", slog.String("error", err.Error()))
+			}
+			continue
+		}
+
 		opts := step.Distance(NovaSorceressMinDistance, NovaSorceressMaxDistance)
 
 		if s.shouldCastStatic() {
 			step.SecondaryAttack(skill.StaticField, id, 1, opts)
 		}
 
-		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
-		if completedAttackLoops > 5 {
-			if completedAttackLoops == 6 {
-				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance.")
-			}
-			opts = step.Distance(0, 1)
-		}
-
-		step.SecondaryAttack(skill.Nova, id, 5, opts)
+		step.SecondaryAttack(skill.Nova, id, 1, opts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
+
+		// Add a small delay between attacks
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
@@ -171,35 +176,37 @@ func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType
 }
 
 func (s NovaSorceress) shouldCastStatic() bool {
-
-	// Iterate through all mobs within max range and collect them
-	mobs := make([]data.Monster, 0)
-
-	for _, m := range s.data.Monsters.Enemies() {
-		if s.pf.DistanceFromMe(m.Position) <= NovaSorceressMaxDistance+5 {
-			mobs = append(mobs, m)
-		} else {
-			continue
+	nearbyMobs := make([]data.Monster, 0)
+	for _, monster := range s.data.Monsters.Enemies() {
+		if s.pf.DistanceFromMe(monster.Position) <= NovaSorceressMaxDistance {
+			nearbyMobs = append(nearbyMobs, monster)
 		}
 	}
 
-	// Iterate through the mob list and check their if more than 50% of the mobs are above 60% hp
-	var mobsAbove60Percent int
-	for _, mob := range mobs {
+	if len(nearbyMobs) == 0 {
+		return false
+	}
 
-		life := mob.Stats[stat.Life]
-		maxLife := mob.Stats[stat.MaxLife]
-
-		lifePercentage := int((float64(life) / float64(maxLife)) * 100)
-
+	mobsAbove60Percent := 0
+	for _, mob := range nearbyMobs {
+		lifePercentage := int((float64(mob.Stats[stat.Life]) / float64(mob.Stats[stat.MaxLife])) * 100)
 		if lifePercentage > 60 {
 			mobsAbove60Percent++
 		}
 	}
 
-	return mobsAbove60Percent > len(mobs)/2
+	return mobsAbove60Percent > len(nearbyMobs)/2
 }
 
+func (s NovaSorceress) countNearbyMonsters(maxDistance int) int {
+	count := 0
+	for _, m := range s.data.Monsters.Enemies() {
+		if s.pf.DistanceFromMe(m.Position) <= maxDistance && m.Stats[stat.Life] > 0 {
+			count++
+		}
+	}
+	return count
+}
 func (s NovaSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
 	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {

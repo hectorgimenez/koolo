@@ -134,13 +134,15 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if err != nil {
 					b.ctx.Logger.Error("Area correction failed", "error", err)
 				}
-				// Check if Berserker is currently killing council, then temporarily skip item pickup
-				if berserker, ok := b.ctx.Char.(*character.Berserker); !ok || !berserker.IsKillingCouncil() {
-					action.ItemPickup(30)
-				}
-				// Only perform item pickup if it's not disabled
+				// Only perform item pickup if it's not disabled and not during Berserker council killing
 				if !b.ctx.DisableItemPickup {
-					action.ItemPickup(30)
+					if berserker, ok := b.ctx.Char.(*character.Berserker); ok && berserker.IsKillingCouncil() {
+						// Skip item pickup
+						b.ctx.Logger.Debug("Skipping item pickup while Berserker is killing council")
+					} else {
+						// Perform item pickup
+						action.ItemPickup(30)
+					}
 				}
 				action.BuffIfRequired()
 
