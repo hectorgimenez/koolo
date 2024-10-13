@@ -69,6 +69,9 @@ func (s NovaSorceress) KillMonsterSequence(
 		if !found {
 			return nil
 		}
+		ctx := context.Get()
+		ctx.PauseIfNotPriority()
+
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
@@ -109,6 +112,7 @@ func (s NovaSorceress) KillMonsterSequence(
 }
 func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
 	ctx := context.Get()
+	ctx.PauseIfNotPriority()
 	for {
 		boss, found := s.data.Monsters.FindOne(bossID, monsterType)
 		if !found || boss.Stats[stat.Life] <= 0 {
