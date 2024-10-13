@@ -118,7 +118,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
-
+    if (bossStaticThresholdInput) {
+        bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
+    }
     function toggleSchedulerVisibility() {
         schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
     }
@@ -139,28 +141,29 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateNovaSorceressOptions() {
         const selectedDifficulty = document.getElementById('gameDifficulty').value;
         updateBossStaticThresholdMin(selectedDifficulty);
+        handleBossStaticThresholdChange();
     }
-
     function updateBossStaticThresholdMin(difficulty) {
+        const input = document.getElementById('novaBossStaticThreshold');
         let minValue;
         switch(difficulty) {
             case 'normal':
-                minValue = 1;
+                minValue = 20;
                 break;
             case 'nightmare':
-                minValue = 33;
+                minValue = 66;
                 break;
             case 'hell':
                 minValue = 50;
                 break;
             default:
-                minValue = 65;
+                minValue = 50;
         }
-        bossStaticThresholdInput.min = minValue;
+        input.min = minValue;
 
-        // Automatically adjust the value if it's below the new minimum
-        if (parseInt(bossStaticThresholdInput.value) < minValue) {
-            bossStaticThresholdInput.value = minValue;
+        // Ensure the current value is not less than the new minimum
+        if (parseInt(input.value) < minValue) {
+            input.value = minValue;
         }
     }
 
@@ -210,3 +213,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+function handleBossStaticThresholdChange() {
+    const input = document.getElementById('novaBossStaticThreshold');
+    const selectedDifficulty = document.getElementById('gameDifficulty').value;
+    let minValue;
+    switch(selectedDifficulty) {
+        case 'normal':
+            minValue = 1;
+            break;
+        case 'nightmare':
+            minValue = 66;
+            break;
+        case 'hell':
+            minValue = 50;
+            break;
+        default:
+            minValue = 65;
+    }
+
+    let value = parseInt(input.value);
+    if (isNaN(value) || value < minValue) {
+        value = minValue;
+    } else if (value > 100) {
+        value = 100;
+    }
+    input.value = value;
+}
