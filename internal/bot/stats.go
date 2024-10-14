@@ -85,7 +85,18 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 			lastGame := &h.stats.Games[len(h.stats.Games)-1]
 			lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
 			lastRun.FinishedAt = evt.OccurredAt()
+			lastRun.Duration = lastRun.FinishedAt.Sub(lastRun.StartedAt)
 			lastRun.Reason = evt.Reason
+
+			h.stats.TotalRunCount++
+			h.stats.TotalRunTime += lastRun.Duration
+
+			if h.stats.FastestRun == 0 || lastRun.Duration < h.stats.FastestRun {
+				h.stats.FastestRun = lastRun.Duration
+			}
+			if lastRun.Duration > h.stats.SlowestRun {
+				h.stats.SlowestRun = lastRun.Duration
+			}
 		}
 	case event.ItemStashedEvent:
 		h.stats.Drops = append(h.stats.Drops, evt.Item)
@@ -110,11 +121,16 @@ type Stats struct {
 	Details          string
 	Drops            []data.Drop
 	Games            []GameStats
+	FastestRun       time.Duration
+	SlowestRun       time.Duration
+	TotalRunTime     time.Duration
+	TotalRunCount    int
 }
 
 type GameStats struct {
 	StartedAt  time.Time
 	FinishedAt time.Time
+	Duration   time.Duration
 	Reason     event.FinishReason
 	Runs       []RunStats
 }
@@ -125,6 +141,7 @@ type RunStats struct {
 	StartedAt   time.Time
 	Items       []data.Item
 	FinishedAt  time.Time
+	Duration    time.Duration
 	UsedPotions []event.UsedPotionEvent
 }
 
