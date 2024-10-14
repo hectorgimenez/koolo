@@ -64,16 +64,12 @@ func (s *SinglePlayerSupervisor) Start() error {
 				}
 			}
 
-			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
-				// Create the game
 				if err = s.HandleOutOfGameFlow(); err != nil {
-					// Ignore loading screen errors or unhandled errors (for now) and try again
 					if err.Error() == "loading screen" || err.Error() == "" {
 						utils.Sleep(100)
 						continue
 					}
-
 					s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 					continue
 				}
@@ -88,10 +84,8 @@ func (s *SinglePlayerSupervisor) Start() error {
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
-			// Refresh game data to make sure we have the latest information
 			s.bot.ctx.RefreshGameData()
 
-			// Perform keybindings check on the first run only
 			if firstRun {
 				missingKeybindings := s.bot.ctx.Char.CheckKeyBindings()
 				if len(missingKeybindings) > 0 {
@@ -109,33 +103,18 @@ func (s *SinglePlayerSupervisor) Start() error {
 			err = s.bot.Run(ctx, firstRun, runs)
 			firstRun = false
 
-			// Send RunFinished events after the bot run
 			var gameFinishReason event.FinishReason
-			for _, r := range runs {
-				var runFinishReason event.FinishReason
-				if err != nil {
-					switch {
-					case errors.Is(err, health.ErrChicken):
-						runFinishReason = event.FinishedChicken
-					case errors.Is(err, health.ErrMercChicken):
-						runFinishReason = event.FinishedMercChicken
-					case errors.Is(err, health.ErrDied):
-						runFinishReason = event.FinishedDied
-					default:
-						runFinishReason = event.FinishedError
-					}
-					gameFinishReason = runFinishReason
-				} else {
-					runFinishReason = event.FinishedOK
-				}
-				event.Send(event.RunFinished(event.Text(s.name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
-			}
-
 			if err != nil {
-				if errors.Is(ctx.Err(), context.Canceled) {
-					continue
+				switch {
+				case errors.Is(err, health.ErrChicken):
+					gameFinishReason = event.FinishedChicken
+				case errors.Is(err, health.ErrMercChicken):
+					gameFinishReason = event.FinishedMercChicken
+				case errors.Is(err, health.ErrDied):
+					gameFinishReason = event.FinishedDied
+				default:
+					gameFinishReason = event.FinishedError
 				}
-
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), gameFinishReason))
 				s.bot.ctx.Logger.Warn(
 					fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
@@ -143,14 +122,13 @@ func (s *SinglePlayerSupervisor) Start() error {
 					slog.Uint64("mapSeed", uint64(s.bot.ctx.GameReader.MapSeed())),
 				)
 			} else {
-				// Send GameFinished event with FinishedOK reason if there was no error
-				event.Send(event.GameFinished(event.Text(s.name, "Game finished successfully"), event.FinishedOK))
+				gameFinishReason = event.FinishedOK
+				event.Send(event.GameFinished(event.Text(s.name, "Game finished successfully"), gameFinishReason))
 			}
 
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
-				errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
+				errMsg := fmt.Sprintf("Error exiting game %s", exitErr.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
-
 				return errors.New(errMsg)
 			}
 		}
