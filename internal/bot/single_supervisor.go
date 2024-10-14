@@ -113,24 +113,35 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 			err = s.bot.Run(ctx, firstRun, runs)
 			firstRun = false
+
+			// Send RunFinished events after the bot run
+			var gameFinishReason event.FinishReason
+			for _, r := range runs {
+				var runFinishReason event.FinishReason
+				if err != nil {
+					switch {
+					case errors.Is(err, health.ErrChicken):
+						runFinishReason = event.FinishedChicken
+					case errors.Is(err, health.ErrMercChicken):
+						runFinishReason = event.FinishedMercChicken
+					case errors.Is(err, health.ErrDied):
+						runFinishReason = event.FinishedDied
+					default:
+						runFinishReason = event.FinishedError
+					}
+					gameFinishReason = runFinishReason
+				} else {
+					runFinishReason = event.FinishedOK
+				}
+				event.Send(event.RunFinished(event.Text(s.name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+			}
+
 			if err != nil {
 				if errors.Is(ctx.Err(), context.Canceled) {
 					continue
 				}
 
-				var finishReason event.FinishReason
-				switch {
-				case errors.Is(err, health.ErrChicken):
-					finishReason = event.FinishedChicken
-				case errors.Is(err, health.ErrMercChicken):
-					finishReason = event.FinishedMercChicken
-				case errors.Is(err, health.ErrDied):
-					finishReason = event.FinishedDied
-				default:
-					finishReason = event.FinishedError
-				}
-
-				event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), finishReason))
+				event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), gameFinishReason))
 				s.bot.ctx.Logger.Warn(
 					fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
 					slog.String("supervisor", s.name),
@@ -296,4 +307,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)
 
 	return nil
+}
+func (s *SinglePlayerSupervisor) updateRunStats(runName string, startTime, endTime time.Time, reason event.FinishReason) {
+	event.Send(event.RunStatsUpdated(event.Text(s.name, fmt.Sprintf("Updated stats for run: %s", runName)), runName, startTime, endTime, reason))
 }

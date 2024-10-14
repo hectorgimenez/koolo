@@ -75,6 +75,19 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 			lastRun.Reason = evt.Reason
 		}
 
+	/*case event.RunStatsUpdatedEvent:
+	if len(h.stats.Games) > 0 {
+		lastGame := &h.stats.Games[len(h.stats.Games)-1]
+		for i := range lastGame.Runs {
+			if lastGame.Runs[i].Name == evt.RunName {
+				lastGame.Runs[i].StartedAt = evt.StartTime
+				lastGame.Runs[i].FinishedAt = evt.EndTime
+				lastGame.Runs[i].Reason = evt.Reason
+				break
+			}
+		}
+	}*/
+
 	case event.ItemStashedEvent:
 		h.stats.Drops = append(h.stats.Drops, evt.Item)
 

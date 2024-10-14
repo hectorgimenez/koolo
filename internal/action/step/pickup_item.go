@@ -3,7 +3,6 @@ package step
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -29,29 +28,11 @@ func PickupItem(it data.Item) error {
 	currentMouseCoords := data.Position{}
 	lastRun := time.Now()
 	itemToPickup := it
-	idleStartTime := time.Time{}
-	const idleThreshold = 4 * time.Second // Time to consider the character as idle
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 		ctx.RefreshGameData()
-
-		// Check for idle state
-		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
-			if idleStartTime.IsZero() {
-				idleStartTime = time.Now()
-			} else if time.Since(idleStartTime) > idleThreshold {
-				ctx.Logger.Debug("Character idle for too long, attempting to resume pickup")
-				// Attempt to resume pickup process
-				mouseOverAttempts = 0
-				waitingForInteraction = time.Time{}
-				idleStartTime = time.Time{}
-				continue
-			}
-		} else {
-			idleStartTime = time.Time{}
-		}
 
 		// Reset item to empty
 		it = data.Item{}
