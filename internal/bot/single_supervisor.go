@@ -68,7 +68,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if !s.bot.ctx.Manager.InGame() {
 				// Create the game
 				if err = s.HandleOutOfGameFlow(); err != nil {
-
 					// Ignore loading screen errors or unhandled errors (for now) and try again
 					if err.Error() == "loading screen" || err.Error() == "" {
 						utils.Sleep(100)
@@ -94,7 +93,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 			// Perform keybindings check on the first run only
 			if firstRun {
-
 				missingKeybindings := s.bot.ctx.Char.CheckKeyBindings()
 				if len(missingKeybindings) > 0 {
 					var missingKeybindingsText = "Missing key binding for skill(s):"
@@ -108,6 +106,11 @@ func (s *SinglePlayerSupervisor) Start() error {
 				}
 			}
 
+			// Send RunStarted events before running the bot
+			for _, r := range runs {
+				event.Send(event.RunStarted(event.Text(s.name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
+			}
+
 			err = s.bot.Run(ctx, firstRun, runs)
 			firstRun = false
 			if err != nil {
@@ -115,28 +118,31 @@ func (s *SinglePlayerSupervisor) Start() error {
 					continue
 				}
 
+				var finishReason event.FinishReason
 				switch {
 				case errors.Is(err, health.ErrChicken):
-					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedChicken))
-					s.bot.ctx.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
+					finishReason = event.FinishedChicken
 				case errors.Is(err, health.ErrMercChicken):
-					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedMercChicken))
-					s.bot.ctx.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
+					finishReason = event.FinishedMercChicken
 				case errors.Is(err, health.ErrDied):
-					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedDied))
-					s.bot.ctx.Logger.Warn(err.Error(), slog.Float64("gameLength", time.Since(gameStart).Seconds()))
+					finishReason = event.FinishedDied
 				default:
-					event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
-					s.bot.ctx.Logger.Warn(
-						fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
-						slog.String("supervisor", s.name),
-						slog.Uint64("mapSeed", uint64(s.bot.ctx.GameReader.MapSeed())),
-					)
+					finishReason = event.FinishedError
 				}
+
+				event.Send(event.GameFinished(event.WithScreenshot(s.name, err.Error(), s.bot.ctx.GameReader.Screenshot()), finishReason))
+				s.bot.ctx.Logger.Warn(
+					fmt.Sprintf("Game finished with errors, reason: %s. Game total time: %0.2fs", err.Error(), time.Since(gameStart).Seconds()),
+					slog.String("supervisor", s.name),
+					slog.Uint64("mapSeed", uint64(s.bot.ctx.GameReader.MapSeed())),
+				)
+			} else {
+				// Send GameFinished event with FinishedOK reason if there was no error
+				event.Send(event.GameFinished(event.Text(s.name, "Game finished successfully"), event.FinishedOK))
 			}
 
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
-				errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
+				errMsg := fmt.Sprintf("Error exiting game %s", exitErr.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
 
 				return errors.New(errMsg)
