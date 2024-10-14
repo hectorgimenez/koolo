@@ -106,11 +106,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 				}
 			}
 
-			// Send RunStarted events before running the bot
-			for _, r := range runs {
-				event.Send(event.RunStarted(event.Text(s.name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
-			}
-
 			err = s.bot.Run(ctx, firstRun, runs)
 			firstRun = false
 
@@ -153,7 +148,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
-				errMsg := fmt.Sprintf("Error exiting game %s", exitErr.Error())
+				errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
 
 				return errors.New(errMsg)
