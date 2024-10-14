@@ -1,7 +1,6 @@
 package context
 
 import (
-	"errors"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/runtype"
 	"log/slog"
@@ -130,7 +129,7 @@ func (ctx *Context) SwitchPriority(priority Priority) {
 	ctx.ExecutionPriority = priority
 }
 
-func (s *Status) PauseIfNotPriority() error {
+func (s *Status) PauseIfNotPriority() {
 	// This prevents bot from trying to move when loading screen is shown.
 	if s.Data.OpenMenus.LoadingScreen {
 		time.Sleep(time.Millisecond * 5)
@@ -138,18 +137,11 @@ func (s *Status) PauseIfNotPriority() error {
 
 	for s.Priority != s.ExecutionPriority {
 		if s.ExecutionPriority == PriorityStop {
-			//???  doesnt work here? panic!! =(
-			//panic("Bot is stopped")
-			s.Context.Logger.Error("Bot is being stopped",
-				slog.String("currentPriority", string(s.Priority)),
-				slog.String("executionPriority", string(s.ExecutionPriority)))
-			return errors.New("bot is stopped")
+			panic("Bot is stopped")
 		}
 
 		time.Sleep(time.Millisecond * 10)
 	}
-
-	return nil
 }
 func (ctx *Context) WaitForGameToLoad() {
 	for ctx.Data.OpenMenus.LoadingScreen {
