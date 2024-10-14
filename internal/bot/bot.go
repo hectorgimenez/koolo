@@ -2,9 +2,11 @@ package bot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/runtype"
 	"time"
 
@@ -164,10 +166,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 		}()
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
-		for k, r := range runs {
-			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
-			b.ctx.CurrentGame.CurrentRun = r // Update the CurrentRun for area correction
-			// Reset progress for each run
+		for _, r := range runs {
+			event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
+			b.ctx.CurrentGame.CurrentRun = r
 			b.ctx.CurrentGame.RunProgress = &botCtx.RunProgress{
 				VisitedAreas:  make(map[area.ID]bool),
 				VisitedCoords: make([]data.Position, 0),
@@ -179,11 +180,30 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 
 			firstRun = false
 			err = r.Run()
+
+			var runFinishReason event.FinishReason
+			if err != nil {
+				switch {
+				case errors.Is(err, health.ErrChicken):
+					runFinishReason = event.FinishedChicken
+				case errors.Is(err, health.ErrMercChicken):
+					runFinishReason = event.FinishedMercChicken
+				case errors.Is(err, health.ErrDied):
+					runFinishReason = event.FinishedDied
+				default:
+					runFinishReason = event.FinishedError
+				}
+			} else {
+				runFinishReason = event.FinishedOK
+			}
+
+			event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+
 			if err != nil {
 				return err
 			}
 
-			err = action.PostRun(k == len(runs)-1)
+			err = action.PostRun(r == runs[len(runs)-1])
 			if err != nil {
 				return err
 			}
