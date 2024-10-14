@@ -7,8 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/runtype"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/character"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
@@ -134,14 +132,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				if err != nil {
 					b.ctx.Logger.Error("Area correction failed", "error", err)
 				}
-				// Only perform item pickup if it's not disabled and not during Berserker council killing
+				// Perform item pickup if enabled
 				if !b.ctx.DisableItemPickup {
-					if berserker, ok := b.ctx.Char.(*character.Berserker); ok && berserker.IsKillingCouncil() {
-						// Skip item pickup
-					} else {
-						// Perform item pickup
-						action.ItemPickup(30)
-					}
+					// Perform item pickup
+					action.ItemPickup(30)
 				}
 				action.BuffIfRequired()
 
