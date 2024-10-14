@@ -31,7 +31,7 @@ func NewStatsHandler(name string, logger *slog.Logger) *StatsHandler {
 		name:   name,
 		logger: logger,
 		stats: &Stats{
-			SupervisorStatus: NotStarted,
+			SupervisorStatus: Starting,
 			StartedAt:        time.Now(),
 			Games:            make([]GameStats, 0),
 		},
@@ -69,6 +69,7 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 
 	case event.RunFinishedEvent:
 		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
+
 			lastGame := &h.stats.Games[len(h.stats.Games)-1]
 			lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
 			lastRun.FinishedAt = evt.OccurredAt()
