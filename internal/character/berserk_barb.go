@@ -44,7 +44,15 @@ func (s *Berserker) CheckKeyBindings() []skill.ID {
 
 	return missingKeybindings
 }
+func (s *Berserker) disableItemPickup() {
+	ctx := context.Get()
+	ctx.DisableItemPickup = true
+}
 
+func (s *Berserker) enableItemPickup() {
+	ctx := context.Get()
+	ctx.DisableItemPickup = false
+}
 func (s *Berserker) IsKillingCouncil() bool {
 	return s.isKillingCouncil.Load()
 }
@@ -318,6 +326,8 @@ func (s *Berserker) KillCouncil() error {
 		return err
 	}
 
+	s.enableItemPickup()
+
 	// Wait for corpses to settle
 	time.Sleep(500 * time.Millisecond)
 
@@ -349,6 +359,8 @@ func (s *Berserker) KillCouncil() error {
 }
 
 func (s *Berserker) killAllCouncilMembers() error {
+
+	s.disableItemPickup()
 	for {
 		if !s.anyCouncilMemberAlive() {
 			return nil
