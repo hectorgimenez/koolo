@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/runtype"
 	"time"
 
@@ -164,6 +165,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for k, r := range runs {
+			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
 			b.ctx.CurrentGame.CurrentRun = r // Update the CurrentRun for area correction
 			// Reset progress for each run
 			b.ctx.CurrentGame.RunProgress = &botCtx.RunProgress{
