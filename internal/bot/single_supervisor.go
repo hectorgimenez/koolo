@@ -63,18 +63,15 @@ func (s *SinglePlayerSupervisor) Start() error {
 					return fmt.Errorf("error waiting for character selection screen: %w", err)
 				}
 			}
-
 			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
 				// Create the game
 				if err = s.HandleOutOfGameFlow(); err != nil {
-
 					// Ignore loading screen errors or unhandled errors (for now) and try again
 					if err.Error() == "loading screen" || err.Error() == "" {
 						utils.Sleep(100)
 						continue
 					}
-
 					s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 					continue
 				}
@@ -88,13 +85,11 @@ func (s *SinglePlayerSupervisor) Start() error {
 			event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
-
 			// Refresh game data to make sure we have the latest information
 			s.bot.ctx.RefreshGameData()
 
 			// Perform keybindings check on the first run only
 			if firstRun {
-
 				missingKeybindings := s.bot.ctx.Char.CheckKeyBindings()
 				if len(missingKeybindings) > 0 {
 					var missingKeybindingsText = "Missing key binding for skill(s):"
@@ -102,9 +97,31 @@ func (s *SinglePlayerSupervisor) Start() error {
 						missingKeybindingsText += fmt.Sprintf("\n%s", skill.SkillNames[v])
 					}
 					missingKeybindingsText += "\nPlease bind the skills. Pausing bot..."
-
 					utils.ShowDialog("Missing keybindings for "+s.bot.ctx.Name, missingKeybindingsText)
 					s.TogglePause()
+				}
+			}
+
+			for _, r := range runs {
+				event.Send(event.RunStartedEvent{
+					BaseEvent: event.Text(s.name, fmt.Sprintf("Starting run: %s", r.Name())),
+					RunName:   r.Name(),
+				})
+
+				err := r.Run()
+
+				if err != nil {
+					event.Send(event.RunFinishedEvent{
+						BaseEvent: event.Text(s.name, fmt.Sprintf("Run finished with error: %s", err)),
+						RunName:   r.Name(),
+						Reason:    event.FinishedError,
+					})
+				} else {
+					event.Send(event.RunFinishedEvent{
+						BaseEvent: event.Text(s.name, "Run finished successfully"),
+						RunName:   r.Name(),
+						Reason:    event.FinishedOK,
+					})
 				}
 			}
 
@@ -138,7 +155,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
 				errMsg := fmt.Sprintf("Error exiting game %s", err.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
-
 				return errors.New(errMsg)
 			}
 		}
@@ -220,7 +236,13 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 
 			// Create the game
 			if err := s.bot.ctx.Manager.NewGame(); err != nil {
-				return fmt.Errorf("failed to create game")
+				return fmt.Errorf("failed to create game: %w", err)
+			}
+
+			// Add a small delay and check if we're actually in the game
+			time.Sleep(5 * time.Second)
+			if !s.bot.ctx.Manager.InGame() {
+				return fmt.Errorf("failed to enter game after creation")
 			}
 
 			return nil
