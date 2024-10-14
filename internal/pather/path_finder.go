@@ -34,6 +34,11 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
 
+	if a.Grid == nil {
+
+		return nil, 0, false
+	}
+
 	// We don't want to modify the original grid
 	grid := a.Grid.Copy()
 
