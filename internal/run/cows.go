@@ -2,8 +2,6 @@ package run
 
 import (
 	"errors"
-	"fmt"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"slices"
 	"strings"
 
@@ -91,28 +89,16 @@ func (a Cows) getWirtsLeg() error {
 	if err != nil {
 		return err
 	}
+
 	wirtCorpse, found := a.ctx.Data.Objects.FindOne(object.WirtCorpse)
 	if !found {
 		return errors.New("wirt corpse not found")
 	}
-	maxAttempts := 3
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		err = action.InteractObject(wirtCorpse, func() bool {
-			_, found := a.ctx.Data.Inventory.Find("WirtsLeg")
-			return found
-		})
+	err = action.InteractObject(wirtCorpse, func() bool {
+		_, found := a.ctx.Data.Inventory.Find("WirtsLeg")
 
-		if err == nil {
-			break
-		}
-
-		if attempt < maxAttempts {
-			a.ctx.Logger.Warn("Failed to interact with Wirt's corpse, retrying...", "attempt", attempt)
-			utils.Sleep(150)
-		} else {
-			return fmt.Errorf("failed to interact with Wirt's corpse after %d attempts: %w", maxAttempts, err)
-		}
-	}
+		return found
+	})
 
 	return action.ReturnTown()
 }
