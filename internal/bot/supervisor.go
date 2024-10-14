@@ -60,12 +60,12 @@ func (s *baseSupervisor) TogglePause() {
 		s.bot.ctx.SwitchPriority(ct.PriorityNormal)
 		s.bot.ctx.Logger.Info("Resuming...", slog.String("configuration", s.name))
 		event.Send(event.GamePaused(event.Text(s.name, "Game resumed"), false))
-		return
+	} else {
+		s.bot.ctx.SwitchPriority(ct.PriorityPause)
+		s.bot.ctx.MemoryInjector.RestoreMemory()
+		s.bot.ctx.Logger.Info("Pausing...", slog.String("configuration", s.name))
+		event.Send(event.GamePaused(event.Text(s.name, "Game paused"), true))
 	}
-	s.bot.ctx.SwitchPriority(ct.PriorityPause)
-	s.bot.ctx.MemoryInjector.RestoreMemory()
-	s.bot.ctx.Logger.Info("Pausing...", slog.String("configuration", s.name))
-	event.Send(event.GamePaused(event.Text(s.name, "Game paused"), true))
 }
 
 func (s *baseSupervisor) Stop() {
