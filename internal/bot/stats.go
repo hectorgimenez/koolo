@@ -31,14 +31,14 @@ func NewStatsHandler(name string, logger *slog.Logger) *StatsHandler {
 		name:   name,
 		logger: logger,
 		stats: &Stats{
-			SupervisorStatus: Starting,
+			SupervisorStatus: NotStarted,
 			StartedAt:        time.Now(),
+			Games:            make([]GameStats, 0),
 		},
 	}
 }
 
 func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
-	// Only handle events from the supervisor
 	if !strings.EqualFold(e.Supervisor(), h.name) {
 		return nil
 	}
@@ -47,26 +47,18 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 	case event.GameCreatedEvent:
 		h.stats.Games = append(h.stats.Games, GameStats{
 			StartedAt: evt.OccurredAt(),
+			Runs:      make([]RunStats, 0),
 		})
 		h.stats.SupervisorStatus = InGame
+
 	case event.GameFinishedEvent:
 		if len(h.stats.Games) > 0 {
 			lastGame := &h.stats.Games[len(h.stats.Games)-1]
 			lastGame.FinishedAt = evt.OccurredAt()
 			lastGame.Reason = evt.Reason
-			if len(lastGame.Runs) > 0 {
-				lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
-				lastRun.FinishedAt = evt.OccurredAt()
-				lastRun.Reason = evt.Reason
-			}
 		}
+
 	case event.RunStartedEvent:
-		if len(h.stats.Games) == 0 {
-			h.stats.Games = append(h.stats.Games, GameStats{
-				StartedAt: evt.OccurredAt(),
-			})
-			h.stats.SupervisorStatus = InGame
-		}
 		if len(h.stats.Games) > 0 {
 			lastGame := &h.stats.Games[len(h.stats.Games)-1]
 			lastGame.Runs = append(lastGame.Runs, RunStats{
@@ -74,12 +66,7 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 				StartedAt: evt.OccurredAt(),
 			})
 		}
-	case event.GamePausedEvent:
-		if evt.Paused {
-			h.stats.SupervisorStatus = Paused
-		} else {
-			h.stats.SupervisorStatus = InGame
-		}
+
 	case event.RunFinishedEvent:
 		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
 			lastGame := &h.stats.Games[len(h.stats.Games)-1]
@@ -87,13 +74,22 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 			lastRun.FinishedAt = evt.OccurredAt()
 			lastRun.Reason = evt.Reason
 		}
+
 	case event.ItemStashedEvent:
 		h.stats.Drops = append(h.stats.Drops, evt.Item)
+
 	case event.UsedPotionEvent:
 		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
 			lastGame := &h.stats.Games[len(h.stats.Games)-1]
 			lastRun := &lastGame.Runs[len(lastGame.Runs)-1]
 			lastRun.UsedPotions = append(lastRun.UsedPotions, evt)
+		}
+
+	case event.GamePausedEvent:
+		if evt.Paused {
+			h.stats.SupervisorStatus = Paused
+		} else {
+			h.stats.SupervisorStatus = InGame
 		}
 	}
 
