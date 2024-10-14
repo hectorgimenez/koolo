@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
@@ -146,7 +145,7 @@ func MoveToCoords(to data.Position) error {
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveTo"
-	stuckCounter := 0
+
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
 	for {
@@ -154,19 +153,6 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		to, found := toFunc()
 		if !found {
 			return nil
-		}
-
-		// Check if player is standing idle outside town
-		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
-			stuckCounter++
-			if stuckCounter > 3 { // Allow a few iterations before forcing move
-				ctx.Logger.Debug("Player standing idle outside town, forcing move")
-				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.ForceMove)
-				utils.Sleep(100)
-				stuckCounter = 0
-			}
-		} else {
-			stuckCounter = 0
 		}
 
 		// If we can teleport, don't bother with the rest, stop here
