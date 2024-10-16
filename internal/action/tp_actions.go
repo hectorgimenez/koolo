@@ -3,6 +3,7 @@ package action
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data"
 
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -14,18 +15,27 @@ import (
 func ReturnTown() error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ReturnTown"
+	ctx.PauseIfNotPriority()
 
 	if ctx.Data.PlayerUnit.Area.IsTown() {
 		return nil
 	}
 
-	_ = step.OpenPortal()
-	tp, found := ctx.Data.Objects.FindOne(object.TownPortal)
-	if !found {
-		return errors.New("town portal not found")
+	err := step.OpenPortal()
+	if err != nil {
+		return err
 	}
 
-	return InteractObject(tp, func() bool {
+	// Clear monsters around the portal
+	ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+
+	// Now that it is safe, interact with portal
+	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
+	if !found {
+		return errors.New("portal not found")
+	}
+
+	return InteractObject(portal, func() bool {
 		return ctx.Data.PlayerUnit.Area.IsTown()
 	})
 }
