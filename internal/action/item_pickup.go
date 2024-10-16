@@ -3,6 +3,7 @@ package action
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"log/slog"
 	"slices"
 
@@ -200,6 +201,12 @@ func shouldBePickedUp(i data.Item) bool {
 	if i.ID == 552 { // Book of Skill doesnt work by name, so we find it by ID
 		return true
 	}
+	// Skip picking up gold if we can not carry more
+	gold, _ := ctx.Data.PlayerUnit.FindStat(stat.Gold, 0)
+	if gold.Value >= ctx.Data.PlayerUnit.MaxGold() && i.Name == "Gold" {
+		ctx.Logger.Debug("Skipping gold pickup, inventory full")
+		return false
+	}
 
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that
@@ -208,7 +215,7 @@ func shouldBePickedUp(i data.Item) bool {
 		return true
 	}
 
-	// Handle pickup based on gold threshold and item quality
+	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
 	minGoldPickupThreshold := ctx.CharacterCfg.Game.MinGoldPickupThreshold
 	if ctx.Data.PlayerUnit.TotalPlayerGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
