@@ -21,9 +21,6 @@ func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveToArea"
 
-	// Update ExpectedArea based on the destination
-	ctx.CurrentGame.ExpectedArea = dst
-
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
 		ctx.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
@@ -124,8 +121,12 @@ func MoveToArea(dst area.ID) error {
 		// Add a short delay after successful interaction
 		utils.Sleep(200)
 	}
+	if !dst.IsTown() {
+		ctx.CurrentGame.ExpectedArea = dst
+	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
+	// Only set ExpectedArea if it's not a town
 
 	return nil
 }
@@ -138,8 +139,6 @@ func MoveToCoords(to data.Position) error {
 	if err != nil {
 		return err
 	}
-	// Record the successful move
-	ctx.CurrentGame.RunProgress.VisitedCoords = append(ctx.CurrentGame.RunProgress.VisitedCoords, to)
 	return nil
 }
 func MoveTo(toFunc func() (data.Position, bool)) error {

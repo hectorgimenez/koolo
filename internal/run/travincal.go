@@ -9,8 +9,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 )
 
-var _ AreaAwareRun = (*Travincal)(nil)
-
 type Travincal struct {
 	ctx         *context.Status
 	councilPos  data.Position
@@ -76,32 +74,4 @@ func (t *Travincal) findCouncilPosition() {
 			break
 		}
 	}
-}
-
-// Implementing AreaAwareRun interface methods
-
-func (t *Travincal) ExpectedAreas() []area.ID {
-	return []area.ID{
-		area.Travincal,
-	}
-}
-
-func (t *Travincal) IsAreaPartOfRun(a area.ID) bool {
-	return a == area.Travincal
-}
-
-func (t *Travincal) GetVisitedAreas() map[area.ID]bool {
-	return map[area.ID]bool{area.Travincal: true}
-}
-
-func (t *Travincal) GetLastActionArea() area.ID {
-	return area.Travincal
-}
-
-func (t *Travincal) SetVisitedAreas(areas map[area.ID]bool) {
-	// No-op for Travincal run
-}
-
-func (t *Travincal) SetLastActionArea(area area.ID) {
-	// No-op for Travincal run
 }

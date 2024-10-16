@@ -62,17 +62,10 @@ type Debug struct {
 	LastStep   string
 }
 
-type RunProgress struct {
-	VisitedAreas   map[area.ID]bool
-	LastActionArea area.ID
-	VisitedCoords  []data.Position
-}
-
 type CurrentGameHelper struct {
 	BlacklistedItems []data.Item
 	CurrentRun       runtype.Run
 	ExpectedArea     area.ID
-	RunProgress      *RunProgress
 }
 
 func NewContext(name string) *Status {
@@ -81,12 +74,7 @@ func NewContext(name string) *Status {
 		Data:              &game.Data{},
 		ExecutionPriority: PriorityNormal,
 		ContextDebug:      &Debug{},
-		CurrentGame: &CurrentGameHelper{
-			RunProgress: &RunProgress{
-				VisitedAreas:  make(map[area.ID]bool),
-				VisitedCoords: make([]data.Position, 0),
-			},
-		},
+		CurrentGame:       &CurrentGameHelper{},
 	}
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 

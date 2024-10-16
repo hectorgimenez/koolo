@@ -28,9 +28,10 @@ func InteractEntrance(area area.ID) error {
 
 		// Give some extra time to render the UI
 		if ctx.Data.PlayerUnit.Area == area && time.Since(lastRun) > time.Millisecond*500 {
+			// Update the ExpectedArea after successfully entering the new area
+			ctx.CurrentGame.ExpectedArea = area
 			return nil
 		}
-
 		if interactionAttempts > maxInteractionAttempts {
 			return fmt.Errorf("area %s [%d] could not be interacted", area.Area().Name, area)
 		}

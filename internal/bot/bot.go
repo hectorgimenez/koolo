@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/runtype"
@@ -13,19 +12,16 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/run"
 	"golang.org/x/sync/errgroup"
 )
 
 type Bot struct {
-	ctx         *botCtx.Context
-	runProgress *botCtx.RunProgress
+	ctx *botCtx.Context
 }
 
 func NewBot(ctx *botCtx.Context) *Bot {
 	return &Bot{
-		ctx:         ctx,
-		runProgress: ctx.CurrentGame.RunProgress,
+		ctx: ctx,
 	}
 }
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error {
@@ -161,10 +157,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 		for _, r := range runs {
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
 			b.ctx.CurrentGame.CurrentRun = r
-			b.ctx.CurrentGame.RunProgress = &botCtx.RunProgress{
-				VisitedAreas:  make(map[area.ID]bool),
-				VisitedCoords: make([]data.Position, 0),
-			}
 			err = action.PreRun(firstRun)
 			if err != nil {
 				return err
@@ -212,93 +204,29 @@ func (b *Bot) Stop() {
 }
 
 func (b *Bot) areaCorrection() error {
-	// Skip correction if in town
-	if b.ctx.Data.PlayerUnit.Area.IsTown() {
+	ctx := b.ctx
+	currentArea := ctx.Data.PlayerUnit.Area
+	expectedArea := ctx.CurrentGame.ExpectedArea
+
+	// Skip correction if in town, if we're in the expected area, or if expected area is not set
+	if currentArea.IsTown() || currentArea == expectedArea || expectedArea == 0 {
 		return nil
 	}
-	// Skip correction if run isn't AreaAware
-	areaAwareRun, isAreaAware := b.ctx.CurrentGame.CurrentRun.(run.AreaAwareRun)
-	if !isAreaAware {
-		return nil
-	}
 
-	currentArea := b.ctx.Data.PlayerUnit.Area
-	expectedAreas := areaAwareRun.ExpectedAreas()
-	visitedAreas := areaAwareRun.GetVisitedAreas()
-	lastActionArea := areaAwareRun.GetLastActionArea()
+	// Check if the expected area is adjacent to our current area
+	for _, adjacentLevel := range ctx.Data.AdjacentLevels {
+		if adjacentLevel.Area == expectedArea {
+			b.ctx.Logger.Info("Accidentally went to adjacent area, returning to expected area",
+				"current", currentArea.Area().Name,
+				"expected", expectedArea.Area().Name)
 
-	if !areaAwareRun.IsAreaPartOfRun(currentArea) {
-		b.ctx.Logger.Info("Area mismatch detected", "current", currentArea.Area().Name, "lastAction", lastActionArea.Area().Name)
-
-		if len(expectedAreas) == 0 {
-			return fmt.Errorf("no expected areas defined for the current run")
-		}
-
-		// Check if any expected area is adjacent
-		for _, adjacentLevel := range b.ctx.Data.AdjacentLevels {
-			if areaAwareRun.IsAreaPartOfRun(adjacentLevel.Area) {
-				err := action.MoveToArea(adjacentLevel.Area)
-				if err == nil {
-					visitedAreas[adjacentLevel.Area] = true
-					lastActionArea = adjacentLevel.Area
-					areaAwareRun.SetVisitedAreas(visitedAreas)
-					areaAwareRun.SetLastActionArea(lastActionArea)
-					return nil
-				}
-			}
-		}
-
-		// If no adjacent areas or move failed, return to town
-		if err := action.ReturnTown(); err != nil {
-			return fmt.Errorf("failed to return to town: %w", err)
-		}
-
-		// Find the last visited area in the expected sequence
-		var lastVisitedIndex int
-		for i, area := range expectedAreas {
-			if visitedAreas[area] {
-				lastVisitedIndex = i
-			}
-		}
-
-		// From town, move sequentially through the expected areas up to the last visited area
-		for i := 0; i <= lastVisitedIndex; i++ {
-			targetArea := expectedAreas[i]
-
-			var err error
-			if i == 0 {
-				if _, hasWaypoint := area.WPAddresses[targetArea]; hasWaypoint {
-					err = action.WayPoint(targetArea)
-				} else {
-					err = action.MoveToArea(targetArea)
-				}
-			} else {
-				err = action.MoveToArea(targetArea)
-			}
-
+			err := action.MoveToArea(expectedArea)
 			if err != nil {
-				return fmt.Errorf("failed to move to area %s: %w", targetArea.Area().Name, err)
+				b.ctx.Logger.Warn("Failed to move back to expected area",
+					"error", err)
 			}
-
-			visitedAreas[targetArea] = true
-			lastActionArea = targetArea
-			areaAwareRun.SetVisitedAreas(visitedAreas)
-			areaAwareRun.SetLastActionArea(lastActionArea)
+			return nil
 		}
-		// After moving to the correct area, move to the last visited coordinates
-		if len(b.ctx.CurrentGame.RunProgress.VisitedCoords) > 0 {
-			lastCoord := b.ctx.CurrentGame.RunProgress.VisitedCoords[len(b.ctx.CurrentGame.RunProgress.VisitedCoords)-1]
-			err := action.MoveToCoords(lastCoord)
-			if err != nil {
-				return fmt.Errorf("failed to move to last known position: %w", err)
-			}
-			b.ctx.Logger.Info("Moved to last known position after area correction",
-				"x", lastCoord.X, "y", lastCoord.Y)
-		}
-
-		b.ctx.Logger.Info("Area correction completed",
-			"currentArea", b.ctx.Data.PlayerUnit.Area.Area().Name,
-			"lastActionArea", areaAwareRun.GetLastActionArea().Area().Name)
 	}
 
 	return nil
