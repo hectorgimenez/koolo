@@ -18,9 +18,9 @@ import (
 
 const (
 	NovaSorceressMaxAttacksLoop = 10
-	NovaSorceressMinDistance    = 5
+	NovaSorceressMinDistance    = 6
 	NovaSorceressMaxDistance    = 10
-	StaticFieldMaxDistance      = 8
+	StaticFieldMaxDistance      = 13
 )
 
 type NovaSorceress struct {
@@ -90,12 +90,14 @@ func (s NovaSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		nearbyMonsterCount := s.countNearbyMonsters(NovaSorceressMaxDistance)
-		if nearbyMonsterCount == 0 {
-			// No nearby monsters, move closer to the target
-			err := step.MoveTo(monster.Position)
-			if err != nil {
-				s.logger.Warn("Failed to move closer to monster", slog.String("error", err.Error()))
+		distance := s.pf.DistanceFromMe(monster.Position)
+		if distance > NovaSorceressMaxDistance {
+			safePosition := s.findSafePosition(monster.Position, NovaSorceressMinDistance, NovaSorceressMaxDistance)
+			if safePosition != s.data.PlayerUnit.Position {
+				err := step.MoveTo(safePosition)
+				if err != nil {
+					s.logger.Warn("Failed to move closer to monster", slog.String("error", err.Error()))
+				}
 			}
 			continue
 		}
@@ -106,7 +108,7 @@ func (s NovaSorceress) KillMonsterSequence(
 			step.SecondaryAttack(skill.StaticField, id, 1, opts)
 		}
 
-		step.SecondaryAttack(skill.Nova, id, 1, opts)
+		step.SecondaryAttack(skill.Nova, id, 3, opts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -153,6 +155,39 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 		}
 	}
 }
+func (s NovaSorceress) findSafePosition(monsterPos data.Position, minDistance, maxDistance int) data.Position {
+	playerPos := s.data.PlayerUnit.Position
+	currentDistance := s.pf.DistanceFromMe(monsterPos)
+
+	if currentDistance >= minDistance && currentDistance <= maxDistance {
+		return playerPos // Already at a safe distance
+	}
+
+	// Check positions at increasing distances from the monster
+	for distance := minDistance; distance <= maxDistance; distance++ {
+		positions := s.getPositionsAtDistance(monsterPos, distance)
+		for _, pos := range positions {
+			if s.data.AreaData.Grid.IsWalkable(pos) {
+				return pos
+			}
+		}
+	}
+
+	return playerPos // If no safe position found, don't move
+}
+
+func (s NovaSorceress) getPositionsAtDistance(center data.Position, distance int) []data.Position {
+	positions := make([]data.Position, 0, 8*distance)
+	for x := -distance; x <= distance; x++ {
+		positions = append(positions, data.Position{X: center.X + x, Y: center.Y + distance})
+		positions = append(positions, data.Position{X: center.X + x, Y: center.Y - distance})
+	}
+	for y := -distance + 1; y < distance; y++ {
+		positions = append(positions, data.Position{X: center.X + distance, Y: center.Y + y})
+		positions = append(positions, data.Position{X: center.X - distance, Y: center.Y + y})
+	}
+	return positions
+}
 
 func (s NovaSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
@@ -198,15 +233,6 @@ func (s NovaSorceress) shouldCastStatic() bool {
 	return mobsAbove60Percent > len(nearbyMobs)/2
 }
 
-func (s NovaSorceress) countNearbyMonsters(maxDistance int) int {
-	count := 0
-	for _, m := range s.data.Monsters.Enemies() {
-		if s.pf.DistanceFromMe(m.Position) <= maxDistance && m.Stats[stat.Life] > 0 {
-			count++
-		}
-	}
-	return count
-}
 func (s NovaSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
 	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {

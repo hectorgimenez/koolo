@@ -28,6 +28,7 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 }
 
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
+
 	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
 
@@ -69,7 +70,8 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 					continue
 				}
 				if grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] == game.CollisionTypeWalkable {
-					grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] = game.CollisionTypeLowPriority
+					grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] = game.CollisionTypeBlockLOS
+
 				}
 			}
 		}
