@@ -119,9 +119,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
 				// Area correction
-				err := b.areaCorrection()
-				if err != nil {
-					b.ctx.Logger.Error("Area correction failed", "error", err)
+				if err := action.AreaCorrection(); err != nil {
+					b.ctx.Logger.Warn("Area correction failed", "error", err)
 				}
 				// Perform item pickup if enabled
 				if !b.ctx.DisableItemPickup {
@@ -201,33 +200,4 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 func (b *Bot) Stop() {
 	b.ctx.SwitchPriority(botCtx.PriorityStop)
 	b.ctx.Detach()
-}
-
-func (b *Bot) areaCorrection() error {
-	ctx := b.ctx
-	currentArea := ctx.Data.PlayerUnit.Area
-	expectedArea := ctx.CurrentGame.ExpectedArea
-
-	// Skip correction if in town, if we're in the expected area, or if expected area is not set
-	if currentArea.IsTown() || currentArea == expectedArea || expectedArea == 0 {
-		return nil
-	}
-
-	// Check if the expected area is adjacent to our current area
-	for _, adjacentLevel := range ctx.Data.AdjacentLevels {
-		if adjacentLevel.Area == expectedArea {
-			b.ctx.Logger.Info("Accidentally went to adjacent area, returning to expected area",
-				"current", currentArea.Area().Name,
-				"expected", expectedArea.Area().Name)
-
-			err := action.MoveToArea(expectedArea)
-			if err != nil {
-				b.ctx.Logger.Warn("Failed to move back to expected area",
-					"error", err)
-			}
-			return nil
-		}
-	}
-
-	return nil
 }
