@@ -98,6 +98,10 @@ func MoveToArea(dst area.ID) error {
 	if err != nil {
 		fmt.Println(err)
 	}
+	// Update ExpectedArea immediately after a successful move
+	if ctx.Data.PlayerUnit.Area == dst {
+		ctx.CurrentGame.ExpectedArea = dst
+	}
 
 	if lvl.IsEntrance {
 		maxAttempts := 3
@@ -120,9 +124,6 @@ func MoveToArea(dst area.ID) error {
 
 		// Add a short delay after successful interaction
 		utils.Sleep(200)
-	}
-	if !dst.IsTown() {
-		ctx.CurrentGame.ExpectedArea = dst
 	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))

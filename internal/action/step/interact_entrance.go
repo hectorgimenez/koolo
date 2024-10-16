@@ -23,20 +23,18 @@ func InteractEntrance(area area.ID) error {
 	ctx.ContextDebug.LastStep = "InteractEntrance"
 
 	for {
-		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		// Give some extra time to render the UI
-		if ctx.Data.PlayerUnit.Area == area && time.Since(lastRun) > time.Millisecond*500 {
-			// Update the ExpectedArea after successfully entering the new area
-			ctx.CurrentGame.ExpectedArea = area
+		if ctx.Data.PlayerUnit.Area == area {
+			// We've successfully entered the new area
 			return nil
 		}
+
 		if interactionAttempts > maxInteractionAttempts {
 			return fmt.Errorf("area %s [%d] could not be interacted", area.Area().Name, area)
 		}
 
-		if (waitingForInteraction && time.Since(lastRun) < time.Millisecond*500) || ctx.Data.PlayerUnit.Area == area {
+		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
 			continue
 		}
 
@@ -53,6 +51,8 @@ func InteractEntrance(area area.ID) error {
 					if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
 						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 						waitingForInteraction = true
+						// Set the ExpectedArea here, right after we've interacted with the entrance
+						ctx.CurrentGame.ExpectedArea = area
 					}
 
 					x, y := utils.Spiral(interactionAttempts)
@@ -62,7 +62,7 @@ func InteractEntrance(area area.ID) error {
 					continue
 				}
 
-				return fmt.Errorf("area %s [%d]  is not an entrance", area.Area().Name, area)
+				return fmt.Errorf("area %s [%d] is not an entrance", area.Area().Name, area)
 			}
 		}
 	}
