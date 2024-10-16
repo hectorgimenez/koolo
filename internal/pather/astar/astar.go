@@ -114,7 +114,7 @@ func getCost(tileType game.CollisionType) int {
 		return 16
 	case game.CollisionTypeObject:
 		return 4 // Soft blocker
-	case game.CollisionTypeBlockLOS:
+	case game.CollisionTypeLowPriority:
 		return 20
 	default:
 		return math.MaxInt32

@@ -23,9 +23,11 @@ func InteractEntrance(area area.ID) error {
 	ctx.ContextDebug.LastStep = "InteractEntrance"
 
 	for {
+		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		if ctx.Data.PlayerUnit.Area == area {
+		// Give some extra time to render the UI
+		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
 			// We've successfully entered the new area
 			return nil
 		}
@@ -51,8 +53,6 @@ func InteractEntrance(area area.ID) error {
 					if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
 						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 						waitingForInteraction = true
-						// Set the ExpectedArea here, right after we've interacted with the entrance
-						ctx.CurrentGame.ExpectedArea = area
 					}
 
 					x, y := utils.Spiral(interactionAttempts)

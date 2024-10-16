@@ -7,21 +7,13 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Data, pf *pather.PathFinder) (context.Character, error) {
+func BuildCharacter(ctx *context.Context) (context.Character, error) {
 	bc := BaseCharacter{
-		logger: logger,
-		data:   data,
-		cfg:    cfg,
-		pf:     pf,
+		Context: ctx,
 	}
-
-	ctx := context.Get()
 
 	if len(ctx.CharacterCfg.Game.Runs) > 0 && ctx.CharacterCfg.Game.Runs[0] == "leveling" {
 		switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
@@ -36,7 +28,7 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		return nil, fmt.Errorf("leveling only available for sorceress and paladin")
 	}
 
-	switch strings.ToLower(cfg.Character.Class) {
+	switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
 	case "nova":
@@ -59,24 +51,21 @@ func BuildCharacter(logger *slog.Logger, cfg *config.CharacterCfg, data *game.Da
 		return &Berserker{BaseCharacter: bc}, nil // Return a pointer to Berserker
 	}
 
-	return nil, fmt.Errorf("class %s not implemented", cfg.Character.Class)
+	return nil, fmt.Errorf("class %s not implemented", ctx.CharacterCfg.Character.Class)
 }
 
 type BaseCharacter struct {
-	logger *slog.Logger
-	data   *game.Data
-	cfg    *config.CharacterCfg
-	pf     *pather.PathFinder
+	*context.Context
 }
 
 func (bc BaseCharacter) preBattleChecks(id data.UnitID, skipOnImmunities []stat.Resist) bool {
-	monster, found := bc.data.Monsters.FindByID(id)
+	monster, found := bc.Data.Monsters.FindByID(id)
 	if !found {
 		return false
 	}
 	for _, i := range skipOnImmunities {
 		if monster.IsImmune(i) {
-			bc.logger.Info("Monster is immune! skipping", slog.String("immuneTo", string(i)))
+			bc.Logger.Info("Monster is immune! skipping", slog.String("immuneTo", string(i)))
 			return false
 		}
 	}

@@ -31,7 +31,7 @@ func (pf *PathFinder) renderMap(grid *game.Grid, from, to data.Position, path Pa
 					img.Set(x, y, color.Black)
 				case game.CollisionTypeWalkable:
 					img.Set(x, y, color.White)
-				case game.CollisionTypeBlockLOS:
+				case game.CollisionTypeLowPriority:
 					img.Set(x, y, color.RGBA{R: 200, G: 200, B: 200, A: 255}) // Gray
 				case game.CollisionTypeMonster:
 					img.Set(x, y, color.RGBA{R: 255, A: 255}) // Red

@@ -82,7 +82,6 @@ func MoveTo(dest data.Position) error {
 
 		// We skip the movement if we can teleport and the last movement time was less than the player cast duration
 		if ctx.Data.CanTeleport() && time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
-
 			continue
 		}
 

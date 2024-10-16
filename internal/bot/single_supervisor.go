@@ -63,14 +63,17 @@ func (s *SinglePlayerSupervisor) Start() error {
 					return fmt.Errorf("error waiting for character selection screen: %w", err)
 				}
 			}
+
 			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
+				// Create the game
 				if err = s.HandleOutOfGameFlow(); err != nil {
 					// Ignore loading screen errors or unhandled errors (for now) and try again
 					if err.Error() == "loading screen" || err.Error() == "" {
 						utils.Sleep(100)
 						continue
 					}
+
 					s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 					continue
 				}
@@ -283,7 +286,4 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)
 
 	return nil
-}
-func (s *SinglePlayerSupervisor) updateRunStats(runName string, startTime, endTime time.Time, reason event.FinishReason) {
-	event.Send(event.RunStatsUpdated(event.Text(s.name, fmt.Sprintf("Updated stats for run: %s", runName)), runName, startTime, endTime, reason))
 }

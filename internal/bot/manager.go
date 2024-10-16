@@ -223,7 +223,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	ctx.PathFinder = pf
 	ctx.BeltManager = bm
 	ctx.HealthManager = hm
-	char, err := character.BuildCharacter(logger, cfg, ctx.Data, pf)
+	char, err := character.BuildCharacter(ctx.Context)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating character: %w", err)
 	}

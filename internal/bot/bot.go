@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/runtype"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/health"
+	"github.com/hectorgimenez/koolo/internal/run"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,14 +24,14 @@ func NewBot(ctx *botCtx.Context) *Bot {
 		ctx: ctx,
 	}
 }
-func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error {
+func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
-	b.ctx.SwitchPriority(botCtx.PriorityNormal)                                             // Restore priority to normal, in case it was stopped in previous game
-	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{ExpectedArea: b.ctx.Data.PlayerUnit.Area} // Reset current game helper structure
+	b.ctx.SwitchPriority(botCtx.PriorityNormal) // Restore priority to normal, in case it was stopped in previous game
+	b.ctx.CurrentGame = botCtx.NewGameHelper()  // Reset current game helper structure
 
 	err := b.ctx.GameReader.FetchMapData()
 	if err != nil {
@@ -62,6 +62,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 			}
 		}
 	})
+
 	// This routine is in charge of handling the health/chicken of the bot, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
@@ -119,12 +120,12 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
 				// Area correction
-				if err := action.AreaCorrection(); err != nil {
+				if err = action.AreaCorrection(); err != nil {
 					b.ctx.Logger.Warn("Area correction failed", "error", err)
 				}
+
 				// Perform item pickup if enabled
-				if !b.ctx.DisableItemPickup {
-					// Perform item pickup
+				if b.ctx.CurrentGame.PickupItems {
 					action.ItemPickup(30)
 				}
 				action.BuffIfRequired()
@@ -155,7 +156,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for _, r := range runs {
 			event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
-			b.ctx.CurrentGame.CurrentRun = r
 			err = action.PreRun(firstRun)
 			if err != nil {
 				return err

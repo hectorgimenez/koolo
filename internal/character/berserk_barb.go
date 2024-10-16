@@ -1,11 +1,12 @@
 package character
 
 import (
-	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"sort"
 	"sync/atomic"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/action"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -33,26 +34,18 @@ func (s *Berserker) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
 }
-func (s *Berserker) disableItemPickup() {
-	ctx := context.Get()
-	ctx.DisableItemPickup = true
-}
 
-func (s *Berserker) enableItemPickup() {
-	ctx := context.Get()
-	ctx.DisableItemPickup = false
-}
 func (s *Berserker) IsKillingCouncil() bool {
 	return s.isKillingCouncil.Load()
 }
@@ -63,7 +56,7 @@ func (s *Berserker) KillMonsterSequence(
 ) error {
 
 	for attackAttempts := 0; attackAttempts < maxAttackAttempts; attackAttempts++ {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			if !s.isKillingCouncil.Load() {
 				s.FindItemOnNearbyCorpses(maxHorkRange)
@@ -75,16 +68,16 @@ func (s *Berserker) KillMonsterSequence(
 			return nil
 		}
 
-		monster, monsterFound := s.data.Monsters.FindByID(id)
+		monster, monsterFound := s.Data.Monsters.FindByID(id)
 		if !monsterFound || monster.Stats[stat.Life] <= 0 {
 			continue
 		}
 
-		distance := s.pf.DistanceFromMe(monster.Position)
+		distance := s.PathFinder.DistanceFromMe(monster.Position)
 		if distance > meleeRange {
 			err := step.MoveTo(monster.Position)
 			if err != nil {
-				s.logger.Warn("Failed to move to monster", slog.String("error", err.Error()))
+				s.Logger.Warn("Failed to move to monster", slog.String("error", err.Error()))
 				continue
 			}
 		}
@@ -99,14 +92,14 @@ func (s *Berserker) KillMonsterSequence(
 func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
 	ctx := context.Get()
 	ctx.PauseIfNotPriority()
-	monster, found := s.data.Monsters.FindByID(monsterID)
+	monster, found := s.Data.Monsters.FindByID(monsterID)
 	if !found {
 		return
 	}
 
 	// Ensure Berserk skill is active
-	berserkKey, found := s.data.KeyBindings.KeyBindingForSkill(skill.Berserk)
-	if found && s.data.PlayerUnit.RightSkill != skill.Berserk {
+	berserkKey, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Berserk)
+	if found && s.Data.PlayerUnit.RightSkill != skill.Berserk {
 		ctx.HID.PressKeyBinding(berserkKey)
 		time.Sleep(50 * time.Millisecond)
 	}
@@ -120,23 +113,23 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 	ctx.PauseIfNotPriority()
 	s.SwapToSlot(1)
 
-	findItemKey, found := s.data.KeyBindings.KeyBindingForSkill(skill.FindItem)
+	findItemKey, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FindItem)
 	if !found {
-		s.logger.Debug("Find Item skill not found in key bindings")
+		s.Logger.Debug("Find Item skill not found in key bindings")
 		return
 	}
 
-	corpses := s.getSortedHorkableCorpses(s.data.Corpses, s.data.PlayerUnit.Position, maxRange)
-	s.logger.Debug("Horkable corpses found", slog.Int("count", len(corpses)))
+	corpses := s.getSortedHorkableCorpses(s.Data.Corpses, s.Data.PlayerUnit.Position, maxRange)
+	s.Logger.Debug("Horkable corpses found", slog.Int("count", len(corpses)))
 
 	for _, corpse := range corpses {
 		err := step.MoveTo(corpse.Position)
 		if err != nil {
-			s.logger.Warn("Failed to move to corpse", slog.String("error", err.Error()))
+			s.Logger.Warn("Failed to move to corpse", slog.String("error", err.Error()))
 			continue
 		}
 
-		if s.data.PlayerUnit.RightSkill != skill.FindItem {
+		if s.Data.PlayerUnit.RightSkill != skill.FindItem {
 			ctx.HID.PressKeyBinding(findItemKey)
 			time.Sleep(time.Millisecond * 50)
 		}
@@ -144,7 +137,7 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 		clickPos := s.getOptimalClickPosition(corpse)
 		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(clickPos.X, clickPos.Y)
 		ctx.HID.Click(game.RightButton, screenX, screenY)
-		s.logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
+		s.Logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
 
 		time.Sleep(time.Millisecond * 300)
 	}
@@ -154,14 +147,14 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 func (s *Berserker) getSortedHorkableCorpses(corpses data.Monsters, playerPos data.Position, maxRange int) []data.Monster {
 	var horkableCorpses []data.Monster
 	for _, corpse := range corpses {
-		if s.isCorpseHorkable(corpse) && s.pf.DistanceFromMe(corpse.Position) <= maxRange {
+		if s.isCorpseHorkable(corpse) && s.PathFinder.DistanceFromMe(corpse.Position) <= maxRange {
 			horkableCorpses = append(horkableCorpses, corpse)
 		}
 	}
 
 	sort.Slice(horkableCorpses, func(i, j int) bool {
-		distI := s.pf.DistanceFromMe(horkableCorpses[i].Position)
-		distJ := s.pf.DistanceFromMe(horkableCorpses[j].Position)
+		distI := s.PathFinder.DistanceFromMe(horkableCorpses[i].Position)
+		distJ := s.PathFinder.DistanceFromMe(horkableCorpses[j].Position)
 		return distI < distJ
 	})
 
@@ -204,11 +197,11 @@ func (s *Berserker) SwapToSlot(slot int) {
 		return // Do nothing if FindItemSwitch is disabled
 	}
 
-	initialGF, _ := s.data.PlayerUnit.FindStat(stat.GoldFind, 0)
+	initialGF, _ := s.Data.PlayerUnit.FindStat(stat.GoldFind, 0)
 	ctx.HID.PressKey('W')
 	time.Sleep(100 * time.Millisecond)
 	ctx.RefreshGameData()
-	swappedGF, _ := s.data.PlayerUnit.FindStat(stat.GoldFind, 0)
+	swappedGF, _ := s.Data.PlayerUnit.FindStat(stat.GoldFind, 0)
 
 	if (slot == 0 && swappedGF.Value > initialGF.Value) ||
 		(slot == 1 && swappedGF.Value < initialGF.Value) {
@@ -219,13 +212,13 @@ func (s *Berserker) SwapToSlot(slot int) {
 func (s *Berserker) BuffSkills() []skill.ID {
 
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.BattleCommand); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.BattleCommand); found {
 		skillsList = append(skillsList, skill.BattleCommand)
 	}
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.Shout); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Shout); found {
 		skillsList = append(skillsList, skill.Shout)
 	}
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.BattleOrders); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.BattleOrders); found {
 		skillsList = append(skillsList, skill.BattleOrders)
 	}
 	return skillsList
@@ -250,20 +243,7 @@ func (s *Berserker) KillCountess() error {
 }
 
 func (s *Berserker) KillAndariel() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Andariel is dead or not found
-		}
-
-		err := s.killMonster(npc.Andariel, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s *Berserker) KillSummoner() error {
@@ -275,20 +255,7 @@ func (s *Berserker) KillDuriel() error {
 }
 
 func (s *Berserker) KillMephisto() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Mephisto is dead or not found
-		}
-
-		err := s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
 }
 func (s *Berserker) KillDiablo() error {
 	timeout := time.Second * 20
@@ -297,11 +264,11 @@ func (s *Berserker) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			if diabloFound {
 				return nil
@@ -311,7 +278,7 @@ func (s *Berserker) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
 		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
@@ -326,7 +293,7 @@ func (s *Berserker) KillCouncil() error {
 		return err
 	}
 
-	s.enableItemPickup()
+	context.Get().EnableItemPickup()
 
 	// Wait for corpses to settle
 	time.Sleep(500 * time.Millisecond)
@@ -348,7 +315,7 @@ func (s *Berserker) KillCouncil() error {
 	// Final item pickup
 	err = action.ItemPickup(maxHorkRange)
 	if err != nil {
-		s.logger.Warn("Error during final item pickup after horking", "error", err)
+		s.Logger.Warn("Error during final item pickup after horking", "error", err)
 		return err
 	}
 
@@ -359,8 +326,7 @@ func (s *Berserker) KillCouncil() error {
 }
 
 func (s *Berserker) killAllCouncilMembers() error {
-
-	s.disableItemPickup()
+	context.Get().DisableItemPickup()
 	for {
 		if !s.anyCouncilMemberAlive() {
 			return nil
@@ -382,7 +348,7 @@ func (s *Berserker) killAllCouncilMembers() error {
 }
 
 func (s *Berserker) anyCouncilMemberAlive() bool {
-	for _, m := range s.data.Monsters.Enemies() {
+	for _, m := range s.Data.Monsters.Enemies() {
 		if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
 			return true
 		}

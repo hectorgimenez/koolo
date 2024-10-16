@@ -10,9 +10,7 @@ import (
 )
 
 type Travincal struct {
-	ctx         *context.Status
-	councilPos  data.Position
-	killingDone bool
+	ctx *context.Status
 }
 
 func NewTravincal() *Travincal {
@@ -33,45 +31,31 @@ func (t *Travincal) Run() error {
 		}
 	}
 
-	if t.ctx.Data.PlayerUnit.Area != area.Travincal {
-		err := action.WayPoint(area.Travincal)
-		if err != nil {
-			return err
-		}
+	err := action.WayPoint(area.Travincal)
+	if err != nil {
+		return err
 	}
 
-	// Buff after ensuring we're in Travincal
-	action.Buff()
+	councilPosition := t.findCouncilPosition()
 
-	if t.councilPos.X == 0 && t.councilPos.Y == 0 {
-		t.findCouncilPosition()
-	}
-
-	err := action.MoveToCoords(t.councilPos)
+	err = action.MoveToCoords(councilPosition)
 	if err != nil {
 		t.ctx.Logger.Warn("Error moving to council area", "error", err)
 		return err
 	}
 
-	if !t.killingDone {
-		err = t.ctx.Char.KillCouncil()
-		if err != nil {
-			return err
-		}
-		t.killingDone = true
-	}
-
-	return nil
+	return t.ctx.Char.KillCouncil()
 }
 
-func (t *Travincal) findCouncilPosition() {
+func (t *Travincal) findCouncilPosition() data.Position {
 	for _, al := range t.ctx.Data.AdjacentLevels {
 		if al.Area == area.DuranceOfHateLevel1 {
-			t.councilPos = data.Position{
+			return data.Position{
 				X: al.Position.X - 1,
 				Y: al.Position.Y + 3,
 			}
-			break
 		}
 	}
+
+	return data.Position{}
 }

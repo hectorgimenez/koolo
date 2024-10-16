@@ -29,13 +29,13 @@ func (s SorceressLevelingLightning) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -49,7 +49,7 @@ func (s SorceressLevelingLightning) KillMonsterSequence(
 	previousUnitID := 0
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -65,44 +65,44 @@ func (s SorceressLevelingLightning) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
-		lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
-		if s.data.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
-			s.logger.Debug("Low mana, using primary attack")
+		lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
+		if s.Data.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
+			s.Logger.Debug("Low mana, using primary attack")
 			step.PrimaryAttack(id, 1, false, step.Distance(1, 3))
 		} else {
-			if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
+			if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
 				if completedAttackLoops%2 == 0 {
-					for _, m := range s.data.Monsters.Enemies() {
-						if d := s.pf.DistanceFromMe(m.Position); d < 4 {
-							s.logger.Debug("Monster close, casting Blizzard")
+					for _, m := range s.Data.Monsters.Enemies() {
+						if d := s.PathFinder.DistanceFromMe(m.Position); d < 4 {
+							s.Logger.Debug("Monster close, casting Blizzard")
 							step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, step.Distance(25, 30))
 							break
 						}
 					}
 				}
 
-				s.logger.Debug("Using Blizzard")
+				s.Logger.Debug("Using Blizzard")
 
 				step.SecondaryAttack(skill.Blizzard, id, 1, step.Distance(25, 30))
 				step.PrimaryAttack(id, 3, false, step.Distance(25, 30))
 
-			} else if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.Nova); found {
-				s.logger.Debug("Using Nova")
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Nova); found {
+				s.Logger.Debug("Using Nova")
 				step.SecondaryAttack(skill.Nova, id, 4, step.Distance(1, 5))
-			} else if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.ChargedBolt); found {
-				s.logger.Debug("Using ChargedBolt")
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.ChargedBolt); found {
+				s.Logger.Debug("Using ChargedBolt")
 				step.SecondaryAttack(skill.ChargedBolt, id, 4, step.Distance(1, 5))
-			} else if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
-				s.logger.Debug("Using FireBolt")
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
+				s.Logger.Debug("Using FireBolt")
 				step.SecondaryAttack(skill.FireBolt, id, 4, step.Distance(1, 5))
 			} else {
-				s.logger.Debug("No secondary skills available, using primary attack")
+				s.Logger.Debug("No secondary skills available, using primary attack")
 				step.PrimaryAttack(id, 1, false, step.Distance(1, 3))
 			}
 		}
@@ -125,17 +125,17 @@ func (s SorceressLevelingLightning) killMonster(npc npc.ID, t data.MonsterType) 
 
 func (s SorceressLevelingLightning) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
 
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.ThunderStorm); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.ThunderStorm); found {
 		skillsList = append(skillsList, skill.ThunderStorm)
 	}
 
 	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
 	for _, armor := range armors {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(armor); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
 			skillsList = append(skillsList, armor)
 			break
 		}
@@ -156,14 +156,14 @@ func (s SorceressLevelingLightning) staticFieldCasts() int {
 	case difficulty.Normal:
 		casts = 8
 	}
-	s.logger.Debug("Static Field casts", "count", casts)
+	s.Logger.Debug("Static Field casts", "count", casts)
 	return casts
 }
 
 func (s SorceressLevelingLightning) ShouldResetSkills() bool {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
-	if lvl.Value >= 25 && s.data.PlayerUnit.Skills[skill.Nova].Level > 10 {
-		s.logger.Info("Resetting skills: Level 25+ and Nova level > 10")
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value >= 25 && s.Data.PlayerUnit.Skills[skill.Nova].Level > 10 {
+		s.Logger.Info("Resetting skills: Level 25+ and Nova level > 10")
 		return true
 	}
 
@@ -171,7 +171,7 @@ func (s SorceressLevelingLightning) ShouldResetSkills() bool {
 }
 
 func (s SorceressLevelingLightning) SkillsToBind() (skill.ID, []skill.ID) {
-	level, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	level, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	skillBindings := []skill.ID{
 		skill.TomeOfTownPortal,
 	}
@@ -187,27 +187,27 @@ func (s SorceressLevelingLightning) SkillsToBind() (skill.ID, []skill.ID) {
 		skillBindings = append(skillBindings, skill.Teleport)
 	}
 
-	if s.data.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
+	if s.Data.PlayerUnit.Skills[skill.Blizzard].Level > 0 {
 		skillBindings = append(skillBindings, skill.Blizzard)
-	} else if s.data.PlayerUnit.Skills[skill.Nova].Level > 1 {
+	} else if s.Data.PlayerUnit.Skills[skill.Nova].Level > 1 {
 		skillBindings = append(skillBindings, skill.Nova)
-	} else if s.data.PlayerUnit.Skills[skill.ChargedBolt].Level > 0 {
+	} else if s.Data.PlayerUnit.Skills[skill.ChargedBolt].Level > 0 {
 		skillBindings = append(skillBindings, skill.ChargedBolt)
-	} else if s.data.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
+	} else if s.Data.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
 		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
 	mainSkill := skill.AttackSkill
-	if s.data.PlayerUnit.Skills[skill.GlacialSpike].Level > 0 {
+	if s.Data.PlayerUnit.Skills[skill.GlacialSpike].Level > 0 {
 		mainSkill = skill.GlacialSpike
 	}
 
-	s.logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
+	s.Logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
 	return mainSkill, skillBindings
 }
 
 func (s SorceressLevelingLightning) StatPoints() map[stat.ID]int {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
 	if lvl.Value < 9 {
@@ -222,12 +222,12 @@ func (s SorceressLevelingLightning) StatPoints() map[stat.ID]int {
 		statPoints[stat.Vitality] = 9999
 	}
 
-	s.logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
+	s.Logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
 	return statPoints
 }
 
 func (s SorceressLevelingLightning) SkillPoints() []skill.ID {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	var skillPoints []skill.ID
 
 	if lvl.Value < 25 {
@@ -331,7 +331,7 @@ func (s SorceressLevelingLightning) SkillPoints() []skill.ID {
 		}
 	}
 
-	s.logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
+	s.Logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
 	return skillPoints
 }
 
@@ -340,22 +340,9 @@ func (s SorceressLevelingLightning) KillCountess() error {
 }
 
 func (s SorceressLevelingLightning) KillAndariel() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Andariel is dead or not found
-		}
-		m, _ := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-		_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5))
-
-		err := s.killMonster(npc.Andariel, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	m, _ := s.Data.Monsters.FindOne(npc.Andariel, data.MonsterTypeNone)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(3, 5))
+	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
 }
 
 func (s SorceressLevelingLightning) KillSummoner() error {
@@ -363,7 +350,7 @@ func (s SorceressLevelingLightning) KillSummoner() error {
 }
 
 func (s SorceressLevelingLightning) KillDuriel() error {
-	m, _ := s.data.Monsters.FindOne(npc.Duriel, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.Duriel, data.MonsterTypeUnique)
 	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
 
 	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
@@ -381,8 +368,8 @@ func (s SorceressLevelingLightning) KillCouncil() error {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
+			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
@@ -396,25 +383,13 @@ func (s SorceressLevelingLightning) KillCouncil() error {
 }
 
 func (s SorceressLevelingLightning) KillMephisto() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Mephisto is dead or not found
-		}
-		m, _ := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-		_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
-
-		err := s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	m, _ := s.Data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeNone)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
+	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
 }
+
 func (s SorceressLevelingLightning) KillIzual() error {
-	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
 	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
 
 	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
@@ -427,11 +402,11 @@ func (s SorceressLevelingLightning) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -444,7 +419,7 @@ func (s SorceressLevelingLightning) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
 		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
 
@@ -461,8 +436,8 @@ func (s SorceressLevelingLightning) KillNihlathak() error {
 }
 
 func (s SorceressLevelingLightning) KillAncients() error {
-	for _, m := range s.data.Monsters.Enemies(data.MonsterEliteFilter()) {
-		m, _ := s.data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
+	for _, m := range s.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
+		m, _ := s.Data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
 
 		step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10))
 
@@ -474,7 +449,7 @@ func (s SorceressLevelingLightning) KillAncients() error {
 }
 
 func (s SorceressLevelingLightning) KillBaal() error {
-	m, _ := s.data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
 	step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 4))
 
 	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)

@@ -1,8 +1,6 @@
 package context
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/runtype"
 	"log/slog"
 	"runtime"
 	"strconv"
@@ -11,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -54,7 +53,6 @@ type Context struct {
 	LastBuffAt        time.Time
 	ContextDebug      *Debug
 	CurrentGame       *CurrentGameHelper
-	DisableItemPickup bool
 }
 
 type Debug struct {
@@ -64,8 +62,11 @@ type Debug struct {
 
 type CurrentGameHelper struct {
 	BlacklistedItems []data.Item
-	CurrentRun       runtype.Run
-	ExpectedArea     area.ID
+	AreaCorrection   struct {
+		Enabled      bool
+		ExpectedArea area.ID
+	}
+	PickupItems bool
 }
 
 func NewContext(name string) *Status {
@@ -79,6 +80,12 @@ func NewContext(name string) *Status {
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 
 	return botContexts[getGoroutineID()]
+}
+
+func NewGameHelper() *CurrentGameHelper {
+	return &CurrentGameHelper{
+		PickupItems: true,
+	}
 }
 
 func Get() *Status {
@@ -115,6 +122,14 @@ func (ctx *Context) AttachRoutine(priority Priority) {
 
 func (ctx *Context) SwitchPriority(priority Priority) {
 	ctx.ExecutionPriority = priority
+}
+
+func (ctx *Context) DisableItemPickup() {
+	ctx.CurrentGame.PickupItems = false
+}
+
+func (ctx *Context) EnableItemPickup() {
+	ctx.CurrentGame.PickupItems = true
 }
 
 func (s *Status) PauseIfNotPriority() {

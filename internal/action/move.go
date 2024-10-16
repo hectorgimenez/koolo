@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 
@@ -20,6 +19,11 @@ import (
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveToArea"
+	ctx.CurrentGame.AreaCorrection.Enabled = false
+	defer func() {
+		ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
+		ctx.CurrentGame.AreaCorrection.Enabled = true
+	}()
 
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
@@ -96,52 +100,34 @@ func MoveToArea(dst area.ID) error {
 
 	err := MoveTo(toFun)
 	if err != nil {
-		fmt.Println(err)
-	}
-	// Update ExpectedArea immediately after a successful move
-	if ctx.Data.PlayerUnit.Area == dst {
-		ctx.CurrentGame.ExpectedArea = dst
+		ctx.Logger.Warn("error moving to area, will try to continue", slog.String("error", err.Error()))
 	}
 
 	if lvl.IsEntrance {
-		maxAttempts := 3
-		for attempt := 0; attempt < maxAttempts; attempt++ {
-			// Add a short delay before each attempt
-			utils.Sleep(200)
-
-			err := step.InteractEntrance(dst)
-			if err == nil {
-				// Successful interaction, exit the loop
-				break
-			}
-
-			if attempt == maxAttempts-1 {
-				// If this was the last attempt, return the error
-				return fmt.Errorf("failed to interact with entrance after %d attempts: %w", maxAttempts, err)
-			}
-
+		err = step.InteractEntrance(dst)
+		if err != nil {
+			return err
 		}
-
-		// Add a short delay after successful interaction
-		utils.Sleep(200)
 	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
-	// Only set ExpectedArea if it's not a town
 
 	return nil
 }
 
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "MoveToCoords"
+	ctx.CurrentGame.AreaCorrection.Enabled = false
+	defer func() {
+		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
+		ctx.CurrentGame.AreaCorrection.Enabled = true
+	}()
 
-	err := step.MoveTo(to)
-	if err != nil {
-		return err
-	}
-	return nil
+	return MoveTo(func() (data.Position, bool) {
+		return to, true
+	})
 }
+
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveTo"

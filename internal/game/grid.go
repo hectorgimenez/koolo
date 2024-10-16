@@ -5,7 +5,7 @@ import "github.com/hectorgimenez/d2go/pkg/data"
 const (
 	CollisionTypeNonWalkable CollisionType = iota
 	CollisionTypeWalkable
-	CollisionTypeBlockLOS
+	CollisionTypeLowPriority
 	CollisionTypeMonster
 	CollisionTypeObject
 )
@@ -42,7 +42,7 @@ func NewGrid(rawCollisionGrid [][]CollisionType, offsetX, offsetY int) *Grid {
 							continue
 						}
 						if rawCollisionGrid[y+i][x+j] == CollisionTypeWalkable {
-							rawCollisionGrid[y+i][x+j] = CollisionTypeBlockLOS
+							rawCollisionGrid[y+i][x+j] = CollisionTypeLowPriority
 						}
 					}
 				}

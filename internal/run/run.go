@@ -2,10 +2,12 @@ package run
 
 import (
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/runtype"
 )
 
-type Run = runtype.Run
+type Run interface {
+	Name() string
+	Run() error
+}
 
 func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 	//if cfg.Companion.Enabled && !cfg.Companion.Leader {

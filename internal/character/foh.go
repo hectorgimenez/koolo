@@ -1,10 +1,11 @@
 package character
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"log/slog"
 	"sort"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data/state"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -31,13 +32,13 @@ func (s Foh) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -53,7 +54,7 @@ func (s Foh) KillMonsterSequence(
 	for {
 		ctx.PauseIfNotPriority()
 
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -66,14 +67,14 @@ func (s Foh) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found || monster.Stats[stat.Life] <= 0 {
 			return nil
 		}
 
-		hbKey, holyBoltFound := s.data.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
-		fohKey, fohFound := s.data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
-		convictionKey, convictionFound := s.data.KeyBindings.KeyBindingForSkill(skill.Conviction)
+		hbKey, holyBoltFound := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
+		fohKey, fohFound := s.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
+		convictionKey, convictionFound := s.Data.KeyBindings.KeyBindingForSkill(skill.Conviction)
 		// Ensure Conviction is active
 		if convictionFound {
 			ctx.HID.PressKeyBinding(convictionKey)
@@ -137,7 +138,7 @@ func (s Foh) attackBoss(bossID data.UnitID, hbKey, fohKey data.KeyBinding) {
 }
 
 func (s Foh) BuffSkills() []skill.ID {
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		return []skill.ID{skill.HolyShield}
 	}
 	return []skill.ID{}
@@ -162,20 +163,7 @@ func (s Foh) KillCountess() error {
 }
 
 func (s Foh) KillAndariel() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Andariel is dead or not found
-		}
-
-		err := s.killBoss(npc.Andariel, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killBoss(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s Foh) KillSummoner() error {
@@ -196,7 +184,7 @@ func (s Foh) KillCouncil() error {
 		}
 
 		sort.Slice(councilMembers, func(i, j int) bool {
-			return s.pf.DistanceFromMe(councilMembers[i].Position) < s.pf.DistanceFromMe(councilMembers[j].Position)
+			return s.PathFinder.DistanceFromMe(councilMembers[i].Position) < s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 		})
 
 		if len(councilMembers) > 0 {
@@ -208,20 +196,7 @@ func (s Foh) KillCouncil() error {
 }
 
 func (s Foh) KillMephisto() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Mephisto is dead or not found
-		}
-
-		err := s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s Foh) KillIzual() error {
@@ -235,11 +210,11 @@ func (s Foh) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			if diabloFound {
 				return nil
@@ -249,7 +224,7 @@ func (s Foh) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
 		return s.killBoss(npc.Diablo, data.MonsterTypeUnique)
 	}

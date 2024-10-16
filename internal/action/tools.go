@@ -48,27 +48,18 @@ func PostRun(isLastRun bool) error {
 func AreaCorrection() error {
 	ctx := context.Get()
 	currentArea := ctx.Data.PlayerUnit.Area
-	expectedArea := ctx.CurrentGame.ExpectedArea
+	expectedArea := ctx.CurrentGame.AreaCorrection.ExpectedArea
 
 	// Skip correction if in town, if we're in the expected area, or if expected area is not set
 	if currentArea.IsTown() || currentArea == expectedArea || expectedArea == 0 {
 		return nil
 	}
 
-	// Check if the expected area is adjacent to our current area
-	for _, adjacentLevel := range ctx.Data.AdjacentLevels {
-		if adjacentLevel.Area == expectedArea {
-			ctx.Logger.Info("Accidentally went to adjacent area, returning to expected area",
-				"current", currentArea.Area().Name,
-				"expected", expectedArea.Area().Name)
-
-			err := MoveToArea(expectedArea)
-			if err != nil {
-				ctx.Logger.Warn("Failed to move back to expected area",
-					"error", err)
-			}
-			return nil
-		}
+	if ctx.CurrentGame.AreaCorrection.Enabled && ctx.CurrentGame.AreaCorrection.ExpectedArea != ctx.Data.AreaData.Area {
+		ctx.Logger.Info("Accidentally went to adjacent area, returning to expected area",
+			"current", ctx.Data.AreaData.Area.Area().Name,
+			"expected", ctx.CurrentGame.AreaCorrection.ExpectedArea.Area().Name)
+		return MoveToArea(ctx.CurrentGame.AreaCorrection.ExpectedArea)
 	}
 
 	return nil

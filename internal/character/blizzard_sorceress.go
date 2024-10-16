@@ -29,12 +29,12 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			switch cskill {
 			// Since we can have one of 3 armors:
 			case skill.ShiverArmor:
-				_, found1 := s.data.KeyBindings.KeyBindingForSkill(skill.FrozenArmor)
-				_, found2 := s.data.KeyBindings.KeyBindingForSkill(skill.ChillingArmor)
+				_, found1 := s.Data.KeyBindings.KeyBindingForSkill(skill.FrozenArmor)
+				_, found2 := s.Data.KeyBindings.KeyBindingForSkill(skill.ChillingArmor)
 				if !found1 && !found2 {
 					missingKeybindings = append(missingKeybindings, skill.ShiverArmor)
 				}
@@ -45,7 +45,7 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -60,7 +60,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	previousSelfBlizzard := time.Time{}
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -76,26 +76,26 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
 		opts := step.Distance(sorceressMinDistance, sorceressMaxDistance)
 
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		if time.Since(previousSelfBlizzard) > time.Second*4 && !s.data.PlayerUnit.States.HasState(state.Cooldown) {
-			for _, m := range s.data.Monsters.Enemies() {
-				if dist := s.pf.DistanceFromMe(m.Position); dist < 4 {
-					s.logger.Debug("Monster detected close to the player, casting Blizzard over it")
+		if time.Since(previousSelfBlizzard) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
+			for _, m := range s.Data.Monsters.Enemies() {
+				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
+					s.Logger.Debug("Monster detected close to the player, casting Blizzard over it")
 					previousSelfBlizzard = time.Now()
 					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, opts)
 				}
 			}
 		}
 
-		if s.data.PlayerUnit.States.HasState(state.Cooldown) {
+		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			step.PrimaryAttack(id, 2, true, opts)
 		}
 
@@ -129,13 +129,13 @@ func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.Monster
 
 func (s BlizzardSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
 
 	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
 	for _, armor := range armors {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(armor); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
 			skillsList = append(skillsList, armor)
 			return skillsList
 		}
@@ -153,20 +153,7 @@ func (s BlizzardSorceress) KillCountess() error {
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Andariel is dead or not found
-		}
-
-		err := s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, sorceressMaxDistance, false, nil)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeNone, sorceressMaxDistance, false, nil)
 }
 
 func (s BlizzardSorceress) KillSummoner() error {
@@ -203,24 +190,11 @@ func (s BlizzardSorceress) KillCouncil() error {
 }
 
 func (s BlizzardSorceress) KillMephisto() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Mephisto is dead or not found
-		}
-
-		err := s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
 }
 
 func (s BlizzardSorceress) KillIzual() error {
-	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
 	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
 
 	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
@@ -233,11 +207,11 @@ func (s BlizzardSorceress) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -250,7 +224,7 @@ func (s BlizzardSorceress) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
 		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(3, 8))
 
@@ -259,7 +233,7 @@ func (s BlizzardSorceress) KillDiablo() error {
 }
 
 func (s BlizzardSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.cfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (s BlizzardSorceress) KillNihlathak() error {
@@ -267,7 +241,7 @@ func (s BlizzardSorceress) KillNihlathak() error {
 }
 
 func (s BlizzardSorceress) KillBaal() error {
-	m, _ := s.data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
 	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
 
 	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)

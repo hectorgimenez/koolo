@@ -32,7 +32,7 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requiredKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
@@ -41,7 +41,7 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 	armorSkills := []skill.ID{skill.FrozenArmor, skill.ShiverArmor, skill.ChillingArmor}
 	hasArmor := false
 	for _, armor := range armorSkills {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(armor); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
 			hasArmor = true
 			break
 		}
@@ -51,7 +51,7 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -64,7 +64,7 @@ func (s NovaSorceress) KillMonsterSequence(
 	previousUnitID := 0
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -82,9 +82,9 @@ func (s NovaSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
@@ -97,7 +97,7 @@ func (s NovaSorceress) KillMonsterSequence(
 		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
 		if completedAttackLoops > 5 {
 			if completedAttackLoops == 6 {
-				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance.")
+				s.Logger.Debug("Looks like monster is not reachable, reducing max attack distance.")
 			}
 			opts = step.Distance(0, 1)
 		}
@@ -113,7 +113,7 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 	ctx := context.Get()
 	ctx.PauseIfNotPriority()
 	for {
-		boss, found := s.data.Monsters.FindOne(bossID, monsterType)
+		boss, found := s.Data.Monsters.FindOne(bossID, monsterType)
 		if !found || boss.Stats[stat.Life] <= 0 {
 			return nil
 		}
@@ -121,11 +121,11 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
 
 		// Move closer if too far for Static Field
-		distance := s.pf.DistanceFromMe(boss.Position)
+		distance := s.PathFinder.DistanceFromMe(boss.Position)
 		if distance > StaticFieldMaxDistance {
 			err := step.MoveTo(boss.Position)
 			if err != nil {
-				s.logger.Warn("Failed to move closer to boss", slog.String("error", err.Error()))
+				s.Logger.Warn("Failed to move closer to boss", slog.String("error", err.Error()))
 			}
 			utils.Sleep(100) // Short delay after moving
 		}
@@ -170,8 +170,8 @@ func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType
 
 func (s NovaSorceress) shouldCastStatic() bool {
 	nearbyMobs := make([]data.Monster, 0)
-	for _, monster := range s.data.Monsters.Enemies() {
-		if s.pf.DistanceFromMe(monster.Position) <= NovaSorceressMaxDistance {
+	for _, monster := range s.Data.Monsters.Enemies() {
+		if s.PathFinder.DistanceFromMe(monster.Position) <= NovaSorceressMaxDistance {
 			nearbyMobs = append(nearbyMobs, monster)
 		}
 	}
@@ -193,16 +193,16 @@ func (s NovaSorceress) shouldCastStatic() bool {
 
 func (s NovaSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.ThunderStorm); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.ThunderStorm); found {
 		skillsList = append(skillsList, skill.ThunderStorm)
 	}
 
 	// Add one of the armor skills
 	for _, armor := range []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor} {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(armor); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
 			skillsList = append(skillsList, armor)
 			break
 		}
@@ -216,20 +216,7 @@ func (s NovaSorceress) PreCTABuffSkills() []skill.ID {
 }
 
 func (s NovaSorceress) KillAndariel() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Andariel is dead or not found
-		}
-
-		err := s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s NovaSorceress) KillDuriel() error {
@@ -237,20 +224,7 @@ func (s NovaSorceress) KillDuriel() error {
 }
 
 func (s NovaSorceress) KillMephisto() error {
-	for {
-		boss, found := s.data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
-		if !found || boss.Stats[stat.Life] <= 0 {
-			return nil // Mephisto is dead or not found
-		}
-
-		err := s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
-		if err != nil {
-			return err
-		}
-
-		// Short delay before checking again
-		time.Sleep(100 * time.Millisecond)
-	}
+	return s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s NovaSorceress) KillDiablo() error {
@@ -260,11 +234,11 @@ func (s NovaSorceress) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			if diabloFound {
 				return nil
@@ -274,7 +248,7 @@ func (s NovaSorceress) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
 		return s.killBossWithStatic(npc.Diablo, data.MonsterTypeUnique)
 	}
@@ -308,7 +282,7 @@ func (s NovaSorceress) KillCouncil() error {
 }
 
 func (s NovaSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.cfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (s NovaSorceress) KillNihlathak() error {

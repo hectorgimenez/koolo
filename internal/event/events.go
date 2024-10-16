@@ -2,7 +2,6 @@ package event
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"time"
 )
 
 const (
@@ -21,13 +20,6 @@ type UsedPotionEvent struct {
 	BaseEvent
 	PotionType data.PotionType
 	OnMerc     bool
-}
-type RunStatsUpdatedEvent struct {
-	BaseEvent
-	RunName   string
-	StartTime time.Time
-	EndTime   time.Time
-	Reason    FinishReason
 }
 
 func UsedPotion(be BaseEvent, pt data.PotionType, onMerc bool) UsedPotionEvent {
@@ -145,14 +137,5 @@ func GamePaused(be BaseEvent, paused bool) GamePausedEvent {
 	return GamePausedEvent{
 		BaseEvent: be,
 		Paused:    paused,
-	}
-}
-func RunStatsUpdated(be BaseEvent, runName string, startTime, endTime time.Time, reason FinishReason) RunStatsUpdatedEvent {
-	return RunStatsUpdatedEvent{
-		BaseEvent: be,
-		RunName:   runName,
-		StartTime: startTime,
-		EndTime:   endTime,
-		Reason:    reason,
 	}
 }
