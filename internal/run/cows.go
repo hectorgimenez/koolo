@@ -2,8 +2,10 @@ package run
 
 import (
 	"errors"
+	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -49,7 +51,11 @@ func (a Cows) Run() error {
 	}
 
 	err = action.InteractObject(townPortal, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.MooMooFarm
+		if a.ctx.Data.PlayerUnit.Area == area.MooMooFarm {
+			a.ctx.UpdateArea(area.MooMooFarm)
+			return true
+		}
+		return false
 	})
 	if err != nil {
 		return err
@@ -77,15 +83,33 @@ func (a Cows) getWirtsLeg() error {
 	if err != nil {
 		return err
 	}
+	// Add a small delay after entering Cow  to ensure game data is updated
+	time.Sleep(500 * time.Millisecond)
+	a.ctx.RefreshGameData()
+
 	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
-		return errors.New("tristram not found")
+		return errors.New("tristram portal not found")
 	}
+
 	err = action.InteractObject(portal, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.Tristram
+		if a.ctx.Data.PlayerUnit.Area == area.Tristram {
+			a.ctx.UpdateArea(area.Tristram)
+			return true
+		}
+		return false
 	})
+	if err != nil {
+		return err
+	}
+
+	// Add a small delay after entering Tristram to ensure game data is updated
+	a.ctx.RefreshGameData()
+	time.Sleep(500 * time.Millisecond)
+
+	err = a.moveToWirtsCorpse()
 	if err != nil {
 		return err
 	}
@@ -96,11 +120,61 @@ func (a Cows) getWirtsLeg() error {
 	}
 	err = action.InteractObject(wirtCorpse, func() bool {
 		_, found := a.ctx.Data.Inventory.Find("WirtsLeg")
-
 		return found
 	})
+	if err != nil {
+		return err
+	}
 
 	return action.ReturnTown()
+}
+
+func (a Cows) moveToWirtsCorpse() error {
+	// Approximate location of Wirt's corpse
+	wirtLocation := data.Position{X: 25149, Y: 5075}
+
+	path, distance, found := a.ctx.PathFinder.GetPath(wirtLocation)
+	if !found {
+		return errors.New("could not find path to Wirt's corpse")
+	}
+
+	a.ctx.Logger.Info("Moving to Wirt's corpse",
+		slog.Any("path_length", len(path)),
+		slog.Int("distance", distance))
+
+	return action.MoveTo(func() (data.Position, bool) {
+		return wirtLocation, true
+	})
+}
+
+func (a Cows) findCairnStones() error {
+	cainStone, found := a.ctx.Data.Objects.FindOne(object.CairnStoneAlpha)
+	if !found {
+		a.ctx.Logger.Warn("Cairn Stones not found, moving to approximate location")
+		return action.MoveToCoords(data.Position{X: 20000, Y: 5000}) // Approximate location
+	}
+	return action.MoveToCoords(cainStone.Position)
+}
+
+func (a Cows) enterTristramPortal() error {
+	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+	if !found {
+		return errors.New("tristram portal not found")
+	}
+	return action.InteractObject(portal, func() bool {
+		return a.ctx.Data.PlayerUnit.Area == area.Tristram
+	})
+}
+
+func (a Cows) findWirtsCorpse() error {
+	wirtCorpse, found := a.ctx.Data.Objects.FindOne(object.WirtCorpse)
+	if !found {
+		return errors.New("wirt corpse not found")
+	}
+	return action.InteractObject(wirtCorpse, func() bool {
+		_, found := a.ctx.Data.Inventory.Find("WirtsLeg")
+		return found
+	})
 }
 
 func (a Cows) preparePortal() error {

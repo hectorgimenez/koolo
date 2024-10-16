@@ -132,16 +132,16 @@ func MoveToArea(dst area.ID) error {
 
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
-	err := MoveTo(func() (data.Position, bool) {
-		return to, true
-	})
-	if err == nil {
-		// Record the successful move
-		ctx.CurrentGame.RunProgress.VisitedCoords = append(ctx.CurrentGame.RunProgress.VisitedCoords, to)
-	}
-	return err
-}
+	ctx.ContextDebug.LastAction = "MoveToCoords"
 
+	err := step.MoveTo(to)
+	if err != nil {
+		return err
+	}
+	// Record the successful move
+	ctx.CurrentGame.RunProgress.VisitedCoords = append(ctx.CurrentGame.RunProgress.VisitedCoords, to)
+	return nil
+}
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveTo"

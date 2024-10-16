@@ -151,3 +151,9 @@ func (ctx *Context) WaitForGameToLoad() {
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)
 }
+
+// Syncing player area with gamedata. fix the pathing error after entering a new area.
+func (ctx *Context) UpdateArea(newArea area.ID) {
+	ctx.Data.PlayerUnit.Area = newArea
+	ctx.CurrentGame.ExpectedArea = newArea
+}
