@@ -35,6 +35,8 @@ func (t *Travincal) Run() error {
 	if err != nil {
 		return err
 	}
+	//this is temporary needed for barb because have no cta; isrebuffrequired not working for him
+	action.Buff()
 
 	councilPosition := t.findCouncilPosition()
 
