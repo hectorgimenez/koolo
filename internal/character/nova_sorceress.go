@@ -56,7 +56,6 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 
 	return missingKeybindings
 }
-
 func (s NovaSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
@@ -71,7 +70,6 @@ func (s NovaSorceress) KillMonsterSequence(
 		}
 		ctx := context.Get()
 		ctx.PauseIfNotPriority()
-
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
@@ -90,33 +88,27 @@ func (s NovaSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		distance := s.pf.DistanceFromMe(monster.Position)
-		if distance > NovaSorceressMaxDistance {
-			safePosition := s.findSafePosition(monster.Position, NovaSorceressMinDistance, NovaSorceressMaxDistance)
-			if safePosition != s.data.PlayerUnit.Position {
-				err := step.MoveTo(safePosition)
-				if err != nil {
-					s.logger.Warn("Failed to move closer to monster", slog.String("error", err.Error()))
-				}
-			}
-			continue
-		}
-
 		opts := step.Distance(NovaSorceressMinDistance, NovaSorceressMaxDistance)
 
 		if s.shouldCastStatic() {
 			step.SecondaryAttack(skill.StaticField, id, 1, opts)
 		}
 
-		step.SecondaryAttack(skill.Nova, id, 3, opts)
+		// In case monster is stuck behind a wall or character is not able to reach it we will short the distance
+		if completedAttackLoops > 5 {
+			if completedAttackLoops == 6 {
+				s.logger.Debug("Looks like monster is not reachable, reducing max attack distance.")
+			}
+			opts = step.Distance(0, 1)
+		}
+
+		step.SecondaryAttack(skill.Nova, id, 5, opts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
-
-		// Add a small delay between attacks
-		time.Sleep(50 * time.Millisecond)
 	}
 }
+
 func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
 	ctx := context.Get()
 	ctx.PauseIfNotPriority()
