@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"log/slog"
 	"slices"
 
@@ -47,10 +46,7 @@ func itemFitsInventory(i data.Item) bool {
 func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ItemPickup"
-
-	idleCounter := 0
-	const maxIdleCount = 3 // Maximum number of idle iterations before attempting to resume
-
+	
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
 		if len(itemsToPickup) == 0 {
@@ -69,18 +65,6 @@ func ItemPickup(maxDistance int) error {
 			ctx.Logger.Debug("Inventory is full, returning to town to sell junk and stash items")
 			InRunReturnTownRoutine()
 			continue
-		}
-		// Check if character is standing idle outside town
-		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
-			idleCounter++
-			if idleCounter >= maxIdleCount {
-				ctx.Logger.Debug("Character idle for too long, forcing movement")
-				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.ForceMove)
-				idleCounter = 0
-				continue
-			}
-		} else {
-			idleCounter = 0
 		}
 
 		for _, m := range ctx.Data.Monsters.Enemies() {
