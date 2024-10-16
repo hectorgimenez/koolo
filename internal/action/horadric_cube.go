@@ -120,14 +120,21 @@ func ensureCubeIsOpen(cube data.Item) error {
 	ctx := context.Get()
 	ctx.Logger.Debug("Opening Horadric Cube...")
 
-	// Switch to the tab
-	SwitchStashTab(cube.Location.Page + 1)
+	if ctx.Data.OpenMenus.Cube {
+		ctx.Logger.Debug("Horadric Cube window already open")
+		return nil
+	}
+
+	// If cube is in stash, switch to the correct tab
+	if cube.Location.LocationType == item.LocationStash || cube.Location.LocationType == item.LocationSharedStash {
+		SwitchStashTab(cube.Location.Page + 1)
+	}
 
 	screenPos := ui.GetScreenCoordsForItem(cube)
 
 	utils.Sleep(300)
 	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-	utils.Sleep(200)
+	utils.Sleep(500)
 
 	if ctx.Data.OpenMenus.Cube {
 		ctx.Logger.Debug("Horadric Cube window detected")
