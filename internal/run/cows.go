@@ -147,15 +147,6 @@ func (a Cows) moveToWirtsCorpse() error {
 	})
 }
 
-func (a Cows) findCairnStones() error {
-	cainStone, found := a.ctx.Data.Objects.FindOne(object.CairnStoneAlpha)
-	if !found {
-		a.ctx.Logger.Warn("Cairn Stones not found, moving to approximate location")
-		return action.MoveToCoords(data.Position{X: 20000, Y: 5000}) // Approximate location
-	}
-	return action.MoveToCoords(cainStone.Position)
-}
-
 func (a Cows) enterTristramPortal() error {
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {

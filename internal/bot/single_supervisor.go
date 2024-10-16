@@ -63,9 +63,10 @@ func (s *SinglePlayerSupervisor) Start() error {
 					return fmt.Errorf("error waiting for character selection screen: %w", err)
 				}
 			}
-
+			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
 				if err = s.HandleOutOfGameFlow(); err != nil {
+					// Ignore loading screen errors or unhandled errors (for now) and try again
 					if err.Error() == "loading screen" || err.Error() == "" {
 						utils.Sleep(100)
 						continue
@@ -84,8 +85,10 @@ func (s *SinglePlayerSupervisor) Start() error {
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
+			// Refresh game data to make sure we have the latest information
 			s.bot.ctx.RefreshGameData()
 
+			// Perform keybindings check on the first run only
 			if firstRun {
 				missingKeybindings := s.bot.ctx.Char.CheckKeyBindings()
 				if len(missingKeybindings) > 0 {
