@@ -147,40 +147,6 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 		}
 	}
 }
-func (s NovaSorceress) findSafePosition(monsterPos data.Position, minDistance, maxDistance int) data.Position {
-	playerPos := s.data.PlayerUnit.Position
-	currentDistance := s.pf.DistanceFromMe(monsterPos)
-
-	if currentDistance >= minDistance && currentDistance <= maxDistance {
-		return playerPos // Already at a safe distance
-	}
-
-	// Check positions at increasing distances from the monster
-	for distance := minDistance; distance <= maxDistance; distance++ {
-		positions := s.getPositionsAtDistance(monsterPos, distance)
-		for _, pos := range positions {
-			if s.data.AreaData.Grid.IsWalkable(pos) {
-				return pos
-			}
-		}
-	}
-
-	return playerPos // If no safe position found, don't move
-}
-
-func (s NovaSorceress) getPositionsAtDistance(center data.Position, distance int) []data.Position {
-	positions := make([]data.Position, 0, 8*distance)
-	for x := -distance; x <= distance; x++ {
-		positions = append(positions, data.Position{X: center.X + x, Y: center.Y + distance})
-		positions = append(positions, data.Position{X: center.X + x, Y: center.Y - distance})
-	}
-	for y := -distance + 1; y < distance; y++ {
-		positions = append(positions, data.Position{X: center.X + distance, Y: center.Y + y})
-		positions = append(positions, data.Position{X: center.X - distance, Y: center.Y + y})
-	}
-	return positions
-}
-
 func (s NovaSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
