@@ -1,22 +1,11 @@
 package run
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/runtype"
 )
 
 type Run = runtype.Run
-
-type AreaAwareRun interface {
-	Run
-	ExpectedAreas() []area.ID
-	IsAreaPartOfRun(id area.ID) bool
-	GetVisitedAreas() map[area.ID]bool
-	GetLastActionArea() area.ID
-	SetVisitedAreas(areas map[area.ID]bool)
-	SetLastActionArea(area area.ID)
-}
 
 func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 	//if cfg.Companion.Enabled && !cfg.Companion.Leader {
