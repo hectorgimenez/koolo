@@ -44,6 +44,8 @@ func (d *Diablo) Run() error {
 	if err := action.WayPoint(area.RiverOfFlame); err != nil {
 		return err
 	}
+	//updating our destination
+	d.ctx.CurrentGame.ExpectedArea = area.ChaosSanctuary
 
 	targetPosition := diabloSpawnPosition
 	if d.ctx.CharacterCfg.Game.Diablo.FullClear {

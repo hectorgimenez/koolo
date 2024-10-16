@@ -52,9 +52,27 @@ func WayPoint(dest area.ID) error {
 		}
 	}
 
-	return useWP(dest)
-}
+	err := useWP(dest)
+	if err != nil {
+		return err
+	}
 
+	// Set ExpectedArea after successful waypoint use, but only if it's not a town
+	if !dest.IsTown() {
+		ctx.CurrentGame.ExpectedArea = dest
+	}
+
+	// Wait for the game to load after using the waypoint
+	ctx.WaitForGameToLoad()
+
+	// Verify that we've reached the destination
+	ctx.RefreshGameData()
+	if ctx.Data.PlayerUnit.Area != dest {
+		return fmt.Errorf("failed to reach destination area %s using waypoint", area.Areas[dest].Name)
+	}
+
+	return nil
+}
 func useWP(dest area.ID) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "useWP"
@@ -111,6 +129,9 @@ func useWP(dest area.ID) error {
 			if err != nil {
 				return err
 			}
+		}
+		if !dst.IsTown() {
+			ctx.CurrentGame.ExpectedArea = dst
 		}
 	}
 
