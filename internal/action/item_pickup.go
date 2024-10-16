@@ -46,7 +46,7 @@ func itemFitsInventory(i data.Item) bool {
 func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ItemPickup"
-	
+
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
 		if len(itemsToPickup) == 0 {

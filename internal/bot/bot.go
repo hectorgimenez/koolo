@@ -19,21 +19,13 @@ import (
 
 type Bot struct {
 	ctx         *botCtx.Context
-	runProgress *RunProgress
-}
-
-type RunProgress struct {
-	VisitedAreas   map[area.ID]bool
-	LastActionArea area.ID
-	VisitedCoords  []data.Position
+	runProgress *botCtx.RunProgress
 }
 
 func NewBot(ctx *botCtx.Context) *Bot {
 	return &Bot{
-		ctx: ctx,
-		runProgress: &RunProgress{
-			VisitedAreas: make(map[area.ID]bool),
-		},
+		ctx:         ctx,
+		runProgress: ctx.CurrentGame.RunProgress,
 	}
 }
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []runtype.Run) error {
