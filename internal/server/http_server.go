@@ -781,7 +781,37 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
-		cfg.Character.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
+		// Berserker Barb specific options
+		if cfg.Character.Class == "berserker" {
+			cfg.Character.BerserkerBarb.SkipPotionPickupInTravincal = r.Form.Has("barbSkipPotionPickupInTravincal")
+			cfg.Character.BerserkerBarb.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
+		}
+		// Nova Sorceress specific options
+		if cfg.Character.Class == "nova" {
+			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))
+			if err == nil {
+				minThreshold := 65 // Default
+				switch cfg.Game.Difficulty {
+				case difficulty.Normal:
+					minThreshold = 1
+				case difficulty.Nightmare:
+					minThreshold = 33
+				case difficulty.Hell:
+					minThreshold = 50
+				}
+				if bossStaticThreshold >= minThreshold && bossStaticThreshold <= 100 {
+					cfg.Character.NovaSorceress.BossStaticThreshold = bossStaticThreshold
+				} else {
+					cfg.Character.NovaSorceress.BossStaticThreshold = minThreshold
+					s.logger.Warn("Invalid Boss Static Threshold, setting to minimum for difficulty",
+						slog.Int("min", minThreshold),
+						slog.String("difficulty", string(cfg.Game.Difficulty)))
+				}
+			} else {
+				cfg.Character.NovaSorceress.BossStaticThreshold = 65 // Default value
+				s.logger.Warn("Invalid Boss Static Threshold input, setting to default", slog.Int("default", 65))
+			}
+		}
 
 		for y, row := range cfg.Inventory.InventoryLock {
 			for x := range row {
@@ -851,6 +881,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
 		cfg.Game.Diablo.FocusOnElitePacks = r.Form.Has("gameDiabloFocusOnElitePacks")
 		cfg.Game.Diablo.SkipStormcasters = r.Form.Has("gameDiabloSkipStormcasters")
+		cfg.Game.Diablo.DisableItemPickupDuringBosses = r.Form.Has("gameDiabloDisableItemPickupDuringBosses")
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 

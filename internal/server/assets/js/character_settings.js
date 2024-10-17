@@ -114,13 +114,72 @@ function updateButtonForDisabledRun(runElement) {
 document.addEventListener('DOMContentLoaded', function () {
     const schedulerEnabled = document.querySelector('input[name="schedulerEnabled"]');
     const schedulerSettings = document.getElementById('scheduler-settings');
-
+    const characterClassSelect = document.querySelector('select[name="characterClass"]');
+    const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
+    const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
+    const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
+    if (bossStaticThresholdInput) {
+        bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
+    }
     function toggleSchedulerVisibility() {
         schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
     }
+    function updateCharacterOptions() {
+        const selectedClass = characterClassSelect.value;
+        if (selectedClass === 'berserker') {
+            berserkerBarbOptions.style.display = 'block';
+            novaSorceressOptions.style.display = 'none';
+        } else if (selectedClass === 'nova') {
+            berserkerBarbOptions.style.display = 'none';
+            novaSorceressOptions.style.display = 'block';
+            updateNovaSorceressOptions();
+        } else {
+            berserkerBarbOptions.style.display = 'none';
+            novaSorceressOptions.style.display = 'none';
+        }
+    }
+    function updateNovaSorceressOptions() {
+        const selectedDifficulty = document.getElementById('gameDifficulty').value;
+        updateBossStaticThresholdMin(selectedDifficulty);
+        handleBossStaticThresholdChange();
+    }
+    function updateBossStaticThresholdMin(difficulty) {
+        const input = document.getElementById('novaBossStaticThreshold');
+        let minValue;
+        switch(difficulty) {
+            case 'normal':
+                minValue = 1;
+                break;
+            case 'nightmare':
+                minValue = 33;
+                break;
+            case 'hell':
+                minValue = 50;
+                break;
+            default:
+                minValue = 65;
+        }
+        input.min = minValue;
+
+        // Ensure the current value is not less than the new minimum
+        if (parseInt(input.value) < minValue) {
+            input.value = minValue;
+        }
+    }
+
+    characterClassSelect.addEventListener('change', updateCharacterOptions);
+    document.getElementById('gameDifficulty').addEventListener('change', function() {
+        if (characterClassSelect.value === 'nova') {
+            updateNovaSorceressOptions();
+        }
+    });
+
+    characterClassSelect.addEventListener('change', updateCharacterOptions);
+    updateCharacterOptions(); // Call this initially to set the correct state
 
     // Set initial state
     toggleSchedulerVisibility();
+    updateNovaSorceressOptions();
 
     schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
 
@@ -154,3 +213,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+function handleBossStaticThresholdChange() {
+    const input = document.getElementById('novaBossStaticThreshold');
+    const selectedDifficulty = document.getElementById('gameDifficulty').value;
+    let minValue;
+    switch(selectedDifficulty) {
+        case 'normal':
+            minValue = 1;
+            break;
+        case 'nightmare':
+            minValue = 33;
+            break;
+        case 'hell':
+            minValue = 50;
+            break;
+        default:
+            minValue = 65;
+    }
+
+    let value = parseInt(input.value);
+    if (isNaN(value) || value < minValue) {
+        value = minValue;
+    } else if (value > 100) {
+        value = 100;
+    }
+    input.value = value;
+}

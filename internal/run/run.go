@@ -1,6 +1,8 @@
 package run
 
-import "github.com/hectorgimenez/koolo/internal/config"
+import (
+	"github.com/hectorgimenez/koolo/internal/config"
+)
 
 type Run interface {
 	Name() string

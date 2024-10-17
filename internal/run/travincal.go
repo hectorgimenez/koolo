@@ -9,45 +9,55 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 )
 
-type Council struct {
+type Travincal struct {
 	ctx *context.Status
 }
 
-func NewTravincal() *Council {
-	return &Council{
+func NewTravincal() *Travincal {
+	return &Travincal{
 		ctx: context.Get(),
 	}
 }
 
-func (s Council) Name() string {
+func (t *Travincal) Name() string {
 	return string(config.TravincalRun)
 }
 
-func (s Council) Run() error {
+func (t *Travincal) Run() error {
 	// Check if the character is a Berserker and swap to combat gear
-	if berserker, ok := s.ctx.Char.(*character.Berserker); ok {
-		berserker.SwapToSlot(0) // Swap to combat gear (lowest Gold Find)
+	if berserker, ok := t.ctx.Char.(*character.Berserker); ok {
+		if t.ctx.CharacterCfg.Character.BerserkerBarb.FindItemSwitch {
+			berserker.SwapToSlot(0) // Swap to combat gear (lowest Gold Find)
+		}
 	}
 
 	err := action.WayPoint(area.Travincal)
 	if err != nil {
 		return err
 	}
-
-	// Buff after ensuring we're in Travincal
+	//this is temporary needed for barb because have no cta; isrebuffrequired not working for him
 	action.Buff()
 
-	for _, al := range s.ctx.Data.AdjacentLevels {
+	councilPosition := t.findCouncilPosition()
+
+	err = action.MoveToCoords(councilPosition)
+	if err != nil {
+		t.ctx.Logger.Warn("Error moving to council area", "error", err)
+		return err
+	}
+
+	return t.ctx.Char.KillCouncil()
+}
+
+func (t *Travincal) findCouncilPosition() data.Position {
+	for _, al := range t.ctx.Data.AdjacentLevels {
 		if al.Area == area.DuranceOfHateLevel1 {
-			err = action.MoveToCoords(data.Position{
+			return data.Position{
 				X: al.Position.X - 1,
 				Y: al.Position.Y + 3,
-			})
-			if err != nil {
-				s.ctx.Logger.Warn("Error moving to council area", err)
 			}
 		}
 	}
 
-	return s.ctx.Char.KillCouncil()
+	return data.Position{}
 }

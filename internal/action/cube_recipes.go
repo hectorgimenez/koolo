@@ -368,7 +368,8 @@ func CubeRecipes() error {
 	for _, recipe := range Recipes {
 		// Check if the current recipe is Enabled
 		if !slices.Contains(ctx.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
-			ctx.Logger.Debug("Cube recipe is not enabled, skipping", "recipe", recipe.Name)
+			// is this really needed ? making huge logs
+			//		ctx.Logger.Debug("Cube recipe is not enabled, skipping", "recipe", recipe.Name)
 			continue
 		}
 

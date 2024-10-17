@@ -92,10 +92,23 @@
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
                 </label>
-                <label>
-                    <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.FindItemSwitch }}checked{{ end }}/>
-                    Find Item Switch (Barb Only)
-                </label>
+                <div class="berserker-barb-options" style="display: none;">
+                    <label>
+                        <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.BerserkerBarb.FindItemSwitch }}checked{{ end }}/>
+                        Find Item Switch
+                    </label>
+                    <label>
+                        <input type="checkbox" name="barbSkipPotionPickupInTravincal" {{if .Config.Character.BerserkerBarb.SkipPotionPickupInTravincal}}checked{{end}}>
+                        Skip potion pickup during Travincal
+                    </label>
+                </div>
+                <div class="nova-sorceress-options" style="display: none;">
+                    <label>
+                        Boss Static HP (%)
+                        <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
+                    </label>
+                    <small>(100% to disable)</small>
+                </div>
             </fieldset>
             <label>
                 Minimum Gold (will pick up Magic+ to sell for gold if below)
@@ -304,20 +317,14 @@
                 </label>
             </fieldset>
             <fieldset class="grid">
-            <label>
-                Game Difficulty
-                <select name="gameDifficulty">
-                    <option value="normal" {{ if eq .Config.Game.Difficulty
-                    "normal" }}selected{{ end }}>Normal
-                    </option>
-                    <option value="nightmare" {{ if eq .Config.Game.Difficulty
-                    "nightmare" }}selected{{ end }}>Nightmare
-                    </option>
-                    <option value="hell" {{ if eq .Config.Game.Difficulty
-                    "hell" }}selected{{ end }}>Hell
-                    </option>
-                </select>
-            </label>
+                <label>
+                    Game Difficulty
+                    <select name="gameDifficulty" id="gameDifficulty">
+                        <option value="normal" {{ if eq .Config.Game.Difficulty "normal" }}selected{{ end }}>Normal</option>
+                        <option value="nightmare" {{ if eq .Config.Game.Difficulty "nightmare" }}selected{{ end }}>Nightmare</option>
+                        <option value="hell" {{ if eq .Config.Game.Difficulty "hell" }}selected{{ end }}>Hell</option>
+                    </select>
+                </label>
             <label>
                 Max game length (seconds)
                 <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"

@@ -28,13 +28,13 @@ func (s PaladinLeveling) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -48,7 +48,7 @@ func (s PaladinLeveling) KillMonsterSequence(
 	previousUnitID := 0
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -64,31 +64,31 @@ func (s PaladinLeveling) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
 		numOfAttacks := 5
 
-		if s.data.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 {
-			s.logger.Debug("Using Blessed Hammer")
+		if s.Data.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 {
+			s.Logger.Debug("Using Blessed Hammer")
 			// Add a random movement, maybe hammer is not hitting the target
 			if previousUnitID == int(id) {
 				if monster.Stats[stat.Life] > 0 {
-					s.pf.RandomMovement()
+					s.PathFinder.RandomMovement()
 				}
 				return nil
 			}
 			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(2, 7), step.EnsureAura(skill.Concentration))
 
 		} else {
-			if s.data.PlayerUnit.Skills[skill.Zeal].Level > 0 {
-				s.logger.Debug("Using Zeal")
+			if s.Data.PlayerUnit.Skills[skill.Zeal].Level > 0 {
+				s.Logger.Debug("Using Zeal")
 				numOfAttacks = 1
 			}
-			s.logger.Debug("Using primary attack with Holy Fire aura")
+			s.Logger.Debug("Using primary attack with Holy Fire aura")
 			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.HolyFire))
 		}
 
@@ -110,10 +110,10 @@ func (s PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) error {
 
 func (s PaladinLeveling) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		skillsList = append(skillsList, skill.HolyShield)
 	}
-	s.logger.Info("Buff skills", "skills", skillsList)
+	s.Logger.Info("Buff skills", "skills", skillsList)
 	return skillsList
 }
 
@@ -122,9 +122,9 @@ func (s PaladinLeveling) PreCTABuffSkills() []skill.ID {
 }
 
 func (s PaladinLeveling) ShouldResetSkills() bool {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
-	if lvl.Value >= 21 && s.data.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
-		s.logger.Info("Resetting skills: Level 21+ and Holy Fire level > 10")
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
+	if lvl.Value >= 21 && s.Data.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
+		s.Logger.Info("Resetting skills: Level 21+ and Holy Fire level > 10")
 		return true
 	}
 
@@ -132,7 +132,7 @@ func (s PaladinLeveling) ShouldResetSkills() bool {
 }
 
 func (s PaladinLeveling) SkillsToBind() (skill.ID, []skill.ID) {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	mainSkill := skill.AttackSkill
 	skillBindings := []skill.ID{}
 
@@ -144,28 +144,28 @@ func (s PaladinLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 		skillBindings = append(skillBindings, skill.HolyShield)
 	}
 
-	if s.data.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && lvl.Value >= 18 {
+	if s.Data.PlayerUnit.Skills[skill.BlessedHammer].Level > 0 && lvl.Value >= 18 {
 		mainSkill = skill.BlessedHammer
-	} else if s.data.PlayerUnit.Skills[skill.Zeal].Level > 0 {
+	} else if s.Data.PlayerUnit.Skills[skill.Zeal].Level > 0 {
 		mainSkill = skill.Zeal
 	}
 
-	if s.data.PlayerUnit.Skills[skill.Concentration].Level > 0 && lvl.Value >= 18 {
+	if s.Data.PlayerUnit.Skills[skill.Concentration].Level > 0 && lvl.Value >= 18 {
 		skillBindings = append(skillBindings, skill.Concentration)
 	} else {
-		if _, found := s.data.PlayerUnit.Skills[skill.HolyFire]; found {
+		if _, found := s.Data.PlayerUnit.Skills[skill.HolyFire]; found {
 			skillBindings = append(skillBindings, skill.HolyFire)
-		} else if _, found := s.data.PlayerUnit.Skills[skill.Might]; found {
+		} else if _, found := s.Data.PlayerUnit.Skills[skill.Might]; found {
 			skillBindings = append(skillBindings, skill.Might)
 		}
 	}
 
-	s.logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
+	s.Logger.Info("Skills bound", "mainSkill", mainSkill, "skillBindings", skillBindings)
 	return mainSkill, skillBindings
 }
 
 func (s PaladinLeveling) StatPoints() map[stat.ID]int {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
 	if lvl.Value < 21 {
@@ -189,12 +189,12 @@ func (s PaladinLeveling) StatPoints() map[stat.ID]int {
 		statPoints[stat.Energy] = 0
 	}
 
-	s.logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
+	s.Logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
 	return statPoints
 }
 
 func (s PaladinLeveling) SkillPoints() []skill.ID {
-	lvl, _ := s.data.PlayerUnit.FindStat(stat.Level, 0)
+	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	var skillPoints []skill.ID
 
 	if lvl.Value < 21 {
@@ -315,7 +315,7 @@ func (s PaladinLeveling) SkillPoints() []skill.ID {
 		}
 	}
 
-	s.logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
+	s.Logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
 	return skillPoints
 }
 
@@ -324,15 +324,15 @@ func (s PaladinLeveling) KillCountess() error {
 }
 
 func (s PaladinLeveling) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s PaladinLeveling) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s PaladinLeveling) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s PaladinLeveling) KillCouncil() error {
@@ -346,28 +346,27 @@ func (s PaladinLeveling) KillCouncil() error {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
+			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
 
 		if len(councilMembers) > 0 {
-			s.logger.Debug("Targeting Council member", "id", councilMembers[0].UnitID)
+			s.Logger.Debug("Targeting Council member", "id", councilMembers[0].UnitID)
 			return councilMembers[0].UnitID, true
 		}
 
-		s.logger.Debug("No Council members found")
+		s.Logger.Debug("No Council members found")
 		return 0, false
 	}, nil)
 }
 
 func (s PaladinLeveling) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
 }
-
 func (s PaladinLeveling) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s PaladinLeveling) KillDiablo() error {
@@ -377,11 +376,11 @@ func (s PaladinLeveling) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -394,12 +393,9 @@ func (s PaladinLeveling) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
-		s.killMonster(npc.Diablo, data.MonsterTypeNone)
-		s.killMonster(npc.Diablo, data.MonsterTypeNone)
-
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -412,8 +408,8 @@ func (s PaladinLeveling) KillNihlathak() error {
 }
 
 func (s PaladinLeveling) KillAncients() error {
-	for _, m := range s.data.Monsters.Enemies(data.MonsterEliteFilter()) {
-		m, _ := s.data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
+	for _, m := range s.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
+		m, _ := s.Data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
 
 		s.killMonster(m.Name, data.MonsterTypeSuperUnique)
 	}
@@ -421,5 +417,5 @@ func (s PaladinLeveling) KillAncients() error {
 }
 
 func (s PaladinLeveling) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

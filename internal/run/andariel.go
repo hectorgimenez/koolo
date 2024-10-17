@@ -98,8 +98,15 @@ func (a Andariel) Run() error {
 		action.MoveToCoords(andarielStartingPosition)
 	}
 
+	// Disable item pickup while fighting Andariel (prevent picking up items if nearby monsters die)
+	a.ctx.DisableItemPickup()
+
 	// Attacking Andariel
 	a.ctx.Logger.Info("Killing Andariel")
+	err = a.ctx.Char.KillAndariel()
 
-	return a.ctx.Char.KillAndariel()
+	// Enable item pickup after the fight
+	a.ctx.EnableItemPickup()
+
+	return err
 }

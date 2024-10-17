@@ -30,13 +30,13 @@ func (s Trapsin) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -50,7 +50,7 @@ func (s Trapsin) KillMonsterSequence(
 	previousUnitID := 0
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -66,9 +66,9 @@ func (s Trapsin) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
@@ -99,12 +99,12 @@ func (s Trapsin) BuffSkills() []skill.ID {
 	armor := skill.Fade
 	armors := []skill.ID{skill.BurstOfSpeed, skill.Fade}
 	for _, arm := range armors {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(arm); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(arm); found {
 			armor = arm
 		}
 	}
 
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.BladeShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.BladeShield); found {
 		return []skill.ID{armor, skill.BladeShield}
 	}
 
@@ -116,7 +116,7 @@ func (s Trapsin) PreCTABuffSkills() []skill.ID {
 	armors := []skill.ID{skill.ShadowWarrior, skill.ShadowMaster}
 	hasShadow := false
 	for _, arm := range armors {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(arm); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(arm); found {
 			armor = arm
 			hasShadow = true
 		}
@@ -134,15 +134,15 @@ func (s Trapsin) KillCountess() error {
 }
 
 func (s Trapsin) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
+	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s Trapsin) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s Trapsin) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s Trapsin) KillCouncil() error {
@@ -157,8 +157,8 @@ func (s Trapsin) KillCouncil() error {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
+			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
@@ -172,11 +172,11 @@ func (s Trapsin) KillCouncil() error {
 }
 
 func (s Trapsin) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s Trapsin) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s Trapsin) KillDiablo() error {
@@ -186,11 +186,11 @@ func (s Trapsin) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -203,9 +203,9 @@ func (s Trapsin) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -218,5 +218,5 @@ func (s Trapsin) KillNihlathak() error {
 }
 
 func (s Trapsin) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

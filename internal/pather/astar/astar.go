@@ -112,8 +112,10 @@ func getCost(tileType game.CollisionType) int {
 		return 1 // Walkable
 	case game.CollisionTypeMonster:
 		return 16
-	case game.CollisionTypeLowPriority, game.CollisionTypeObject:
+	case game.CollisionTypeObject:
 		return 4 // Soft blocker
+	case game.CollisionTypeLowPriority:
+		return 20
 	default:
 		return math.MaxInt32
 	}

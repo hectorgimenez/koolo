@@ -2,6 +2,7 @@ package step
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -58,10 +59,12 @@ func MoveTo(dest data.Position) error {
 			if ctx.PathFinder.DistanceFromMe(dest) < stopAtDistance+5 {
 				return nil
 			}
-
+			ctx.Logger.Error("Path could not be calculated",
+				slog.Any("destination", dest),
+				slog.Any("player_position", ctx.Data.PlayerUnit.Position),
+				slog.String("area", ctx.Data.PlayerUnit.Area.Area().Name))
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
-
 		if distance <= stopAtDistance || len(path) <= stopAtDistance || len(path) == 0 {
 			return nil
 		}

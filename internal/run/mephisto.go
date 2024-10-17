@@ -50,8 +50,16 @@ func (m Mephisto) Run() error {
 		Y: 8069,
 	})
 
+	// Disable item pickup while fighting Mephisto (prevent picking up items if nearby monsters die)
+	m.ctx.DisableItemPickup()
+
 	// Kill Mephisto
-	if err = m.ctx.Char.KillMephisto(); err != nil {
+	err = m.ctx.Char.KillMephisto()
+
+	// Enable item pickup after the fight
+	m.ctx.EnableItemPickup()
+
+	if err != nil {
 		return err
 	}
 

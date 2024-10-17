@@ -29,12 +29,12 @@ func (s HydraOrbSorceress) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			switch cskill {
 			// Since we can have one of 3 armors:
 			case skill.ShiverArmor:
-				_, found1 := s.data.KeyBindings.KeyBindingForSkill(skill.FrozenArmor)
-				_, found2 := s.data.KeyBindings.KeyBindingForSkill(skill.ChillingArmor)
+				_, found1 := s.Data.KeyBindings.KeyBindingForSkill(skill.FrozenArmor)
+				_, found2 := s.Data.KeyBindings.KeyBindingForSkill(skill.ChillingArmor)
 				if !found1 && !found2 {
 					missingKeybindings = append(missingKeybindings, skill.ShiverArmor)
 				}
@@ -45,7 +45,7 @@ func (s HydraOrbSorceress) CheckKeyBindings() []skill.ID {
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -60,7 +60,7 @@ func (s HydraOrbSorceress) KillMonsterSequence(
 	// previousSelfHydra := time.Time{}
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -76,26 +76,26 @@ func (s HydraOrbSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
 		opts := step.Distance(ho_sorceressMinDistance, ho_sorceressMaxDistance)
 
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		// if time.Since(previousSelfHydra) > time.Second*4 && !s.data.PlayerUnit.States.HasState(state.Cooldown) {
-		//	for _, m := range s.data.Monsters.Enemies() {
+		// if time.Since(previousSelfHydra) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
+		//	for _, m := range s.Data.Monsters.Enemies() {
 		//		if dist := s.pf.DistanceFromMe(m.Position); dist < 4 {
-		//			s.logger.Debug("Monster detected close to the player, casting Hydra on myself")
+		//			s.Logger.Debug("Monster detected close to the player, casting Hydra on myself")
 		//			previousSelfHydra = time.Now()
 		//			step.SecondaryAttack(skill.Hydra, m.UnitID, 1, opts)
 		//		}
 		//	}
 		//}
 
-		if s.data.PlayerUnit.States.HasState(state.Cooldown) {
+		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			step.SecondaryAttack(skill.Hydra, id, 1, opts)
 		}
 
@@ -129,13 +129,13 @@ func (s HydraOrbSorceress) killMonsterByName(id npc.ID, monsterType data.Monster
 
 func (s HydraOrbSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
 
 	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
 	for _, armor := range armors {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(armor); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
 			skillsList = append(skillsList, armor)
 			return skillsList
 		}
@@ -153,15 +153,14 @@ func (s HydraOrbSorceress) KillCountess() error {
 }
 
 func (s HydraOrbSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeNone, ho_sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
 }
-
 func (s HydraOrbSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeNone, ho_sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
 }
 
 func (s HydraOrbSorceress) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeNone, ho_sorceressMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, ho_sorceressMaxDistance, true, nil)
 }
 
 func (s HydraOrbSorceress) KillCouncil() error {
@@ -190,20 +189,14 @@ func (s HydraOrbSorceress) KillCouncil() error {
 }
 
 func (s HydraOrbSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeNone, sorceressMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
 }
 
 func (s HydraOrbSorceress) KillIzual() error {
-	m, _ := s.data.Monsters.FindOne(npc.Izual, data.MonsterTypeNone)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 7, step.Distance(5, 8))
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
-	s.killMonster(npc.Izual, data.MonsterTypeNone)
+	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
 
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s HydraOrbSorceress) KillDiablo() error {
@@ -213,11 +206,11 @@ func (s HydraOrbSorceress) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -230,16 +223,16 @@ func (s HydraOrbSorceress) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
 		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(3, 8))
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
 func (s HydraOrbSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false, s.cfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (s HydraOrbSorceress) KillNihlathak() error {
@@ -247,11 +240,8 @@ func (s HydraOrbSorceress) KillNihlathak() error {
 }
 
 func (s HydraOrbSorceress) KillBaal() error {
-	m, _ := s.data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeNone)
+	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
 	step.SecondaryAttack(skill.StaticField, m.UnitID, 5, step.Distance(5, 8))
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
-	s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
 
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

@@ -23,7 +23,6 @@ func (p Pit) Name() string {
 }
 
 func (p Pit) Run() error {
-
 	// Define a default filter
 	monsterFilter := data.MonsterAnyFilter()
 
@@ -33,35 +32,28 @@ func (p Pit) Run() error {
 	}
 
 	if !p.ctx.CharacterCfg.Game.Pit.MoveThroughBlackMarsh {
-		// Use the waypoint to travel to the OuterCloister
 		err := action.WayPoint(area.OuterCloister)
 		if err != nil {
 			return err
 		}
 
-		// Move to the Monastery Gate
 		if err = action.MoveToArea(area.MonasteryGate); err != nil {
 			return err
 		}
 
-		// Move to the Tamoe Highland
 		if err = action.MoveToArea(area.TamoeHighland); err != nil {
 			return err
 		}
 	} else {
-		// Use the waypoint to travel to the BlackMarsh
 		err := action.WayPoint(area.BlackMarsh)
 		if err != nil {
 			return err
 		}
 
-		// Move to the TamoeHighland
 		if err = action.MoveToArea(area.TamoeHighland); err != nil {
 			return err
 		}
 	}
-
-	// Travel to pit level 1
 	if err := action.MoveToArea(area.PitLevel1); err != nil {
 		return err
 	}

@@ -3,13 +3,13 @@ package action
 import (
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"log/slog"
 	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -114,11 +114,24 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 	missingHealingPotions := ctx.BeltManager.GetMissingCount(data.HealingPotion)
 	missingManaPotions := ctx.BeltManager.GetMissingCount(data.ManaPotion)
 	missingRejuvenationPotions := ctx.BeltManager.GetMissingCount(data.RejuvenationPotion)
+
 	var itemsToPickup []data.Item
 	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+
 	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
-		if isLevelingChar && !itm.IsFromQuest() && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 || ctx.Data.PlayerUnit.Area == area.MaggotLairLevel2 || ctx.Data.PlayerUnit.Area == area.MaggotLairLevel3 || ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary) {
+		if isLevelingChar && !itm.IsFromQuest() && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 ||
+			ctx.Data.PlayerUnit.Area == area.MaggotLairLevel2 ||
+			ctx.Data.PlayerUnit.Area == area.MaggotLairLevel3 ||
+			ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary) {
+			continue
+		}
+
+		// Skip potion pickup for Berserker Barb in Travincal if configured
+		if ctx.CharacterCfg.Character.Class == "berserker" &&
+			ctx.CharacterCfg.Character.BerserkerBarb.SkipPotionPickupInTravincal &&
+			ctx.Data.PlayerUnit.Area == area.Travincal &&
+			itm.IsPotion() {
 			continue
 		}
 
@@ -129,52 +142,65 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 			continue
 		}
 
-		if !shouldBePickedUp(itm) {
-			continue
-		}
-
-		// Pickup potions only if they are required
-		if itm.IsHealingPotion() && missingHealingPotions > 0 {
-			itemsToPickup = append(itemsToPickup, itm)
-			missingHealingPotions--
-			continue
-		}
-		if itm.IsManaPotion() && missingManaPotions > 0 {
-			itemsToPickup = append(itemsToPickup, itm)
-			missingManaPotions--
-			continue
-		}
-		if itm.IsRejuvPotion() && missingRejuvenationPotions > 0 {
-			itemsToPickup = append(itemsToPickup, itm)
-			missingRejuvenationPotions--
-			continue
-		}
-
-		if !itm.IsPotion() {
+		if itm.IsPotion() {
+			if (itm.IsHealingPotion() && missingHealingPotions > 0) ||
+				(itm.IsManaPotion() && missingManaPotions > 0) ||
+				(itm.IsRejuvPotion() && missingRejuvenationPotions > 0) {
+				if shouldBePickedUp(itm) {
+					itemsToPickup = append(itemsToPickup, itm)
+					switch {
+					case itm.IsHealingPotion():
+						missingHealingPotions--
+					case itm.IsManaPotion():
+						missingManaPotions--
+					case itm.IsRejuvPotion():
+						missingRejuvenationPotions--
+					}
+				}
+			}
+		} else if shouldBePickedUp(itm) {
 			itemsToPickup = append(itemsToPickup, itm)
 		}
 	}
 
 	// Remove blacklisted items from the list, we don't want to pick them up
-	for i, itm := range itemsToPickup {
-		for _, k := range ctx.CurrentGame.BlacklistedItems {
-			if itm.UnitID == k.UnitID {
-				itemsToPickup = append(itemsToPickup[:i], itemsToPickup[i+1:]...)
+	filteredItems := make([]data.Item, 0, len(itemsToPickup))
+	for _, itm := range itemsToPickup {
+		isBlacklisted := false
+		for _, blacklistedItem := range ctx.CurrentGame.BlacklistedItems {
+			if itm.UnitID == blacklistedItem.UnitID {
+				isBlacklisted = true
+				break
 			}
+		}
+		if !isBlacklisted {
+			filteredItems = append(filteredItems, itm)
 		}
 	}
 
-	return itemsToPickup
+	return filteredItems
 }
 
 func shouldBePickedUp(i data.Item) bool {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "shouldBePickedUp"
 
-	if i.IsRuneword {
+	// Always pickup Runewords and Wirt's Leg
+	if i.IsRuneword || i.Name == "WirtsLeg" {
 		return true
 	}
 
+	// Pick up quest items if we're in leveling or questing run
+	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
+	if specialRuns {
+		switch i.Name {
+		case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
+			return true
+		}
+	}
+	if i.ID == 552 { // Book of Skill doesnt work by name, so we find it by ID
+		return true
+	}
 	// Skip picking up gold if we can not carry more
 	gold, _ := ctx.Data.PlayerUnit.FindStat(stat.Gold, 0)
 	if gold.Value >= ctx.Data.PlayerUnit.MaxGold() && i.Name == "Gold" {
@@ -182,50 +208,26 @@ func shouldBePickedUp(i data.Item) bool {
 		return false
 	}
 
-	// Always pickup WirtsLeg!
-	if i.Name == "WirtsLeg" {
-		return true
-	}
-
-	// Pick up quest items if we're in leveling or questing run
-	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
-	switch i.Name {
-	case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
-		if specialRuns {
-			return true
-		}
-	}
-
-	// Book of Skill doesnt work by name, so we find it by ID
-	if i.ID == 552 {
-		return true
-	}
-
-	// Only during leveling if gold amount is low pickup items to sell as junk
-	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
-
 	// Skip picking up gold, usually early game there are small amounts of gold in many places full of enemies, better
 	// stay away of that
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ctx.Data.PlayerUnit.TotalPlayerGold() < 50000 && i.Name != "Gold" {
 		return true
 	}
 
-	minGoldPickupThreshold := ctx.CharacterCfg.Game.MinGoldPickupThreshold
 	// Pickup all magic or superior items if total gold is low, filter will not pass and items will be sold to vendor
+	minGoldPickupThreshold := ctx.CharacterCfg.Game.MinGoldPickupThreshold
 	if ctx.Data.PlayerUnit.TotalPlayerGold() < minGoldPickupThreshold && i.Quality >= item.QualityMagic {
 		return true
 	}
 
+	// Evaluate item based on NIP rules
 	matchedRule, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(i)
 	if result == nip.RuleResultNoMatch {
 		return false
 	}
-
 	if result == nip.RuleResultPartial {
 		return true
 	}
-
-	exceedQuantity := doesExceedQuantity(matchedRule)
-
-	return !exceedQuantity
+	return !doesExceedQuantity(matchedRule)
 }

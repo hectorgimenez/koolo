@@ -45,3 +45,22 @@ func PostRun(isLastRun bool) error {
 
 	return nil
 }
+func AreaCorrection() error {
+	ctx := context.Get()
+	currentArea := ctx.Data.PlayerUnit.Area
+	expectedArea := ctx.CurrentGame.AreaCorrection.ExpectedArea
+
+	// Skip correction if in town, if we're in the expected area, or if expected area is not set
+	if currentArea.IsTown() || currentArea == expectedArea || expectedArea == 0 {
+		return nil
+	}
+
+	if ctx.CurrentGame.AreaCorrection.Enabled && ctx.CurrentGame.AreaCorrection.ExpectedArea != ctx.Data.AreaData.Area {
+		ctx.Logger.Info("Accidentally went to adjacent area, returning to expected area",
+			"current", ctx.Data.AreaData.Area.Area().Name,
+			"expected", ctx.CurrentGame.AreaCorrection.ExpectedArea.Area().Name)
+		return MoveToArea(ctx.CurrentGame.AreaCorrection.ExpectedArea)
+	}
+
+	return nil
+}

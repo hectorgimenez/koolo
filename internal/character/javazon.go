@@ -30,13 +30,13 @@ func (s Javazon) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -51,7 +51,7 @@ func (s Javazon) KillMonsterSequence(
 	const numOfAttacks = 5
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -67,14 +67,14 @@ func (s Javazon) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
 		closeMonsters := 0
-		for _, mob := range s.data.Monsters {
+		for _, mob := range s.Data.Monsters {
 			if mob.IsPet() || mob.IsMerc() || mob.IsGoodNPC() || mob.IsSkip() || monster.Stats[stat.Life] <= 0 && mob.UnitID != monster.UnitID {
 				continue
 			}
@@ -106,7 +106,7 @@ func (s Javazon) KillBossSequence(
 	const numOfAttacks = 5
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -152,7 +152,7 @@ func (s Javazon) killBoss(npc npc.ID, t data.MonsterType) error {
 }
 
 func (s Javazon) PreCTABuffSkills() []skill.ID {
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.Valkyrie); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Valkyrie); found {
 		return []skill.ID{skill.Valkyrie}
 	} else {
 		return []skill.ID{}
@@ -168,15 +168,15 @@ func (s Javazon) KillCountess() error {
 }
 
 func (s Javazon) KillAndariel() error {
-	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
+	return s.killBoss(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillDuriel() error {
-	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
+	return s.killBoss(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillCouncil() error {
@@ -191,8 +191,8 @@ func (s Javazon) KillCouncil() error {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
+			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
@@ -206,11 +206,11 @@ func (s Javazon) KillCouncil() error {
 }
 
 func (s Javazon) KillMephisto() error {
-	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
+	return s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillIzual() error {
-	return s.killBoss(npc.Izual, data.MonsterTypeNone)
+	return s.killBoss(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s Javazon) KillDiablo() error {
@@ -220,11 +220,11 @@ func (s Javazon) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -237,9 +237,9 @@ func (s Javazon) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -252,5 +252,5 @@ func (s Javazon) KillNihlathak() error {
 }
 
 func (s Javazon) KillBaal() error {
-	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeUnique)
 }

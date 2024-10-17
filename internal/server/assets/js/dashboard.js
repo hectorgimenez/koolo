@@ -158,11 +158,25 @@ let socket;
 
         if (startPauseBtn) {
             startPauseBtn.addEventListener('click', function() {
-                const action = this.textContent.trim() === 'Start' ? 'start' : 'togglePause';
-                fetch(`/${action}?characterName=${key}`).then(() => fetchInitialData());
+                const currentStatus = this.className.includes('btn-start') ? 'Not Started' :
+                    this.className.includes('btn-pause') ? 'In game' :
+                        'Paused';
+                let action;
+                if (currentStatus === 'Not Started') {
+                    action = 'start';
+                } else if (currentStatus === 'In game') {
+                    action = 'togglePause';
+                } else { // Paused
+                    action = 'togglePause';
+                }
+                fetch(`/${action}?characterName=${key}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        updateDashboard(data);
+                    })
+                    .catch(error => console.error('Error:', error));
             });
         }
-
         if (stopBtn) {
             stopBtn.addEventListener('click', function() {
                 fetch(`/stop?characterName=${key}`).then(() => fetchInitialData());
@@ -208,7 +222,9 @@ let socket;
         if (startPauseBtn && stopBtn && attachBtn) {
             updateButtons(startPauseBtn, stopBtn, attachBtn, value.SupervisorStatus);
         }
-        
+
+
+
         updateStats(card, key, value.Games, dropCount);
         updateRunStats(card, value.Games);
         
@@ -264,19 +280,24 @@ let socket;
         runningForElement.textContent = `Running for: ${duration}`;
     }
 
-    function updateButtons(startPauseBtn, stopBtn, attachBtn, status) {
-        if (status === "Paused" || status === "In game" || status === "Starting") {
-            startPauseBtn.innerHTML = '<i class="bi bi-pause-fill btn-icon"></i>Pause';
-            startPauseBtn.className = 'start-pause btn btn-pause';
-            stopBtn.style.display = 'inline-block';
-            attachBtn.style.display = 'none';
-        } else {
-            startPauseBtn.innerHTML = '<i class="bi bi-play-fill btn-icon"></i>Start';
-            startPauseBtn.className = 'start-pause btn btn-start';
-            stopBtn.style.display = 'none';
-            attachBtn.style.display = 'inline-block';
-        }
+function updateButtons(startPauseBtn, stopBtn, attachBtn, status) {
+    if (status === "Paused") {
+        startPauseBtn.innerHTML = '<i class="bi bi-play-fill btn-icon"></i>Resume';
+        startPauseBtn.className = 'start-pause btn btn-resume';
+        stopBtn.style.display = 'inline-block';
+        attachBtn.style.display = 'none';
+    } else if (status === "In game" || status === "Starting") {
+        startPauseBtn.innerHTML = '<i class="bi bi-pause-fill btn-icon"></i>Pause';
+        startPauseBtn.className = 'start-pause btn btn-pause';
+        stopBtn.style.display = 'inline-block';
+        attachBtn.style.display = 'none';
+    } else {
+        startPauseBtn.innerHTML = '<i class="bi bi-play-fill btn-icon"></i>Start';
+        startPauseBtn.className = 'start-pause btn btn-start';
+        stopBtn.style.display = 'none';
+        attachBtn.style.display = 'inline-block';
     }
+}
 
     function updateStats(card, key, games, dropCount) {
         const stats = calculateStats(games);

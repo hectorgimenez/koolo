@@ -27,7 +27,8 @@ func InteractEntrance(area area.ID) error {
 		ctx.PauseIfNotPriority()
 
 		// Give some extra time to render the UI
-		if ctx.Data.PlayerUnit.Area == area && time.Since(lastRun) > time.Millisecond*500 {
+		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
+			// We've successfully entered the new area
 			return nil
 		}
 
@@ -35,7 +36,7 @@ func InteractEntrance(area area.ID) error {
 			return fmt.Errorf("area %s [%d] could not be interacted", area.Area().Name, area)
 		}
 
-		if (waitingForInteraction && time.Since(lastRun) < time.Millisecond*500) || ctx.Data.PlayerUnit.Area == area {
+		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
 			continue
 		}
 
@@ -61,7 +62,7 @@ func InteractEntrance(area area.ID) error {
 					continue
 				}
 
-				return fmt.Errorf("area %s [%d]  is not an entrance", area.Area().Name, area)
+				return fmt.Errorf("area %s [%d] is not an entrance", area.Area().Name, area)
 			}
 		}
 	}

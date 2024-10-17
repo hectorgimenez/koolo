@@ -19,6 +19,11 @@ import (
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "MoveToArea"
+	ctx.CurrentGame.AreaCorrection.Enabled = false
+	defer func() {
+		ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
+		ctx.CurrentGame.AreaCorrection.Enabled = true
+	}()
 
 	// Exception for Arcane Sanctuary, we need to find the portal first
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
@@ -95,11 +100,11 @@ func MoveToArea(dst area.ID) error {
 
 	err := MoveTo(toFun)
 	if err != nil {
-		fmt.Println(err)
+		ctx.Logger.Warn("error moving to area, will try to continue", slog.String("error", err.Error()))
 	}
 
 	if lvl.IsEntrance {
-		err := step.InteractEntrance(dst)
+		err = step.InteractEntrance(dst)
 		if err != nil {
 			return err
 		}
@@ -111,6 +116,13 @@ func MoveToArea(dst area.ID) error {
 }
 
 func MoveToCoords(to data.Position) error {
+	ctx := context.Get()
+	ctx.CurrentGame.AreaCorrection.Enabled = false
+	defer func() {
+		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
+		ctx.CurrentGame.AreaCorrection.Enabled = true
+	}()
+
 	return MoveTo(func() (data.Position, bool) {
 		return to, true
 	})

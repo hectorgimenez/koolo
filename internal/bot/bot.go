@@ -2,15 +2,15 @@ package bot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
-
-	"github.com/hectorgimenez/koolo/internal/character"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/health"
 	"github.com/hectorgimenez/koolo/internal/run"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,24 +24,22 @@ func NewBot(ctx *botCtx.Context) *Bot {
 		ctx: ctx,
 	}
 }
-
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	g, ctx := errgroup.WithContext(ctx)
 
 	gameStartedAt := time.Now()
-	b.ctx.SwitchPriority(botCtx.PriorityNormal)     // Restore priority to normal, in case it was stopped in previous game
-	b.ctx.CurrentGame = &botCtx.CurrentGameHelper{} // Reset current game helper structure
+	b.ctx.SwitchPriority(botCtx.PriorityNormal) // Restore priority to normal, in case it was stopped in previous game
+	b.ctx.CurrentGame = botCtx.NewGameHelper()  // Reset current game helper structure
 
-	// Let's make sure we have updated game data before we start the runs
 	err := b.ctx.GameReader.FetchMapData()
 	if err != nil {
 		return err
 	}
 
+	// Let's make sure we have updated game data also fully loaded before performing anything
 	b.ctx.WaitForGameToLoad()
-
 	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
@@ -68,7 +66,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	// This routine is in charge of handling the health/chicken of the bot, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
-
 		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
@@ -96,7 +93,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			}
 		}
 	})
-
 	// High priority loop, this will interrupt (pause) low priority loop
 	g.Go(func() error {
 		defer func() {
@@ -122,8 +118,14 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
-				// Check if Berserker is currently killing council
-				if berserker, ok := b.ctx.Char.(*character.Berserker); !ok || !berserker.IsKillingCouncil() {
+
+				// Area correction
+				if err = action.AreaCorrection(); err != nil {
+					b.ctx.Logger.Warn("Area correction failed", "error", err)
+				}
+
+				// Perform item pickup if enabled
+				if b.ctx.CurrentGame.PickupItems {
 					action.ItemPickup(30)
 				}
 				action.BuffIfRequired()
@@ -152,8 +154,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		}()
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
-		for k, r := range runs {
-			event.Send(event.RunStarted(event.Text(b.ctx.Name, "Starting run"), r.Name()))
+		for _, r := range runs {
+			event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
 			err = action.PreRun(firstRun)
 			if err != nil {
 				return err
@@ -161,11 +163,30 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 			firstRun = false
 			err = r.Run()
+
+			var runFinishReason event.FinishReason
+			if err != nil {
+				switch {
+				case errors.Is(err, health.ErrChicken):
+					runFinishReason = event.FinishedChicken
+				case errors.Is(err, health.ErrMercChicken):
+					runFinishReason = event.FinishedMercChicken
+				case errors.Is(err, health.ErrDied):
+					runFinishReason = event.FinishedDied
+				default:
+					runFinishReason = event.FinishedError
+				}
+			} else {
+				runFinishReason = event.FinishedOK
+			}
+
+			event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+
 			if err != nil {
 				return err
 			}
 
-			err = action.PostRun(k == len(runs)-1)
+			err = action.PostRun(r == runs[len(runs)-1])
 			if err != nil {
 				return err
 			}

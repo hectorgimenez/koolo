@@ -28,13 +28,13 @@ func (s Hammerdin) CheckKeyBindings() []skill.ID {
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := s.data.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
@@ -48,7 +48,7 @@ func (s Hammerdin) KillMonsterSequence(
 	previousUnitID := 0
 
 	for {
-		id, found := monsterSelector(*s.data)
+		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
@@ -64,16 +64,16 @@ func (s Hammerdin) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.data.Monsters.FindByID(id)
+		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
-			s.logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
 		// Add a random movement, maybe hammer is not hitting the target
 		if previousUnitID == int(id) {
 			if monster.Stats[stat.Life] > 0 {
-				s.pf.RandomMovement()
+				s.PathFinder.RandomMovement()
 			}
 			return nil
 		}
@@ -113,7 +113,7 @@ func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ 
 }
 
 func (s Hammerdin) BuffSkills() []skill.ID {
-	if _, found := s.data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		return []skill.ID{skill.HolyShield}
 	}
 	return []skill.ID{}
@@ -128,15 +128,14 @@ func (s Hammerdin) KillCountess() error {
 }
 
 func (s Hammerdin) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, false)
 }
-
 func (s Hammerdin) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillCouncil() error {
@@ -151,8 +150,8 @@ func (s Hammerdin) KillCouncil() error {
 
 		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.pf.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.pf.DistanceFromMe(councilMembers[j].Position)
+			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
+			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 
 			return distanceI < distanceJ
 		})
@@ -166,11 +165,10 @@ func (s Hammerdin) KillCouncil() error {
 }
 
 func (s Hammerdin) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, false)
 }
-
 func (s Hammerdin) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeNone)
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s Hammerdin) KillDiablo() error {
@@ -180,11 +178,11 @@ func (s Hammerdin) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.data.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			// Already dead
 			if diabloFound {
@@ -197,9 +195,9 @@ func (s Hammerdin) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeNone)
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -212,5 +210,5 @@ func (s Hammerdin) KillNihlathak() error {
 }
 
 func (s Hammerdin) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeNone)
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

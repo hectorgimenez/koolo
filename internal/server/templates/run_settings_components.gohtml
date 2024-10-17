@@ -103,13 +103,17 @@
 {{ end }}
 
 {{ define "diablo" }}
-    <fieldset class="grid">
-        <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label>         
-        <label><input type="checkbox" name="gameDiabloSkipStormcasters" {{ if .Config.Game.Diablo.SkipStormcasters }}checked{{ end }}> Skip Stormcasters</label>
+    <fieldset class="options-group">
+        <legend>Boss Options</legend>
+        <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label>
+        <label><input type="checkbox" name="gameDiabloDisableItemPickupDuringBosses" {{ if .Config.Game.Diablo.DisableItemPickupDuringBosses }}checked{{ end }}> Temporarily Disable Item Pickup During Seal Boss Fights.</label>
     </fieldset>
-    <fieldset class="grid">
+
+    <fieldset class="options-group">
+        <legend>Clear Options</legend>
+        <label><input type="checkbox" name="gameDiabloSkipStormcasters" {{ if .Config.Game.Diablo.SkipStormcasters }}checked{{ end }}> Skip Stormcasters</label>
         <label><input type="checkbox" name="gameDiabloFullClear" {{ if .Config.Game.Diablo.FullClear }}checked{{ end }}> Full Clear</label>
-        <label><input type="checkbox" name="gameDiabloFocusOnElitePacks" {{ if .Config.Game.Diablo.FocusOnElitePacks }}checked{{ end }}> Elite Packs Only</label>        
+        <label><input type="checkbox" name="gameDiabloFocusOnElitePacks" {{ if .Config.Game.Diablo.FocusOnElitePacks }}checked{{ end }}> Elite Packs Only</label>
     </fieldset>
 {{ end }}
 
