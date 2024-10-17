@@ -9,14 +9,14 @@ import (
 	"runtime/debug"
 
 	sloggger "github.com/hectorgimenez/koolo/cmd/koolo/log"
-	koolo "github.com/hectorgimenez/koolo/internal"
+	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/helper/winproc"
 	"github.com/hectorgimenez/koolo/internal/remote/discord"
 	"github.com/hectorgimenez/koolo/internal/remote/telegram"
 	"github.com/hectorgimenez/koolo/internal/server"
+	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/inkeliz/gowebview"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,7 +24,7 @@ import (
 func main() {
 	err := config.Load()
 	if err != nil {
-		helper.ShowDialog("Error loading configuration", err.Error())
+		utils.ShowDialog("Error loading configuration", err.Error())
 		log.Fatalf("Error loading configuration: %s", err.Error())
 		return
 	}
@@ -40,7 +40,7 @@ func main() {
 			err = fmt.Errorf("fatal error detected, Koolo will close with the following error: %v\n Stacktrace: %s", r, debug.Stack())
 			logger.Error(err.Error())
 			sloggger.FlushLog()
-			helper.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
+			utils.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
 		}
 	}()
 
@@ -52,8 +52,9 @@ func main() {
 	winproc.SetProcessDpiAware.Call() // Set DPI awareness to be able to read the correct scale and show the window correctly
 
 	eventListener := event.NewListener(logger)
-	manager := koolo.NewSupervisorManager(logger, eventListener)
-
+	manager := bot.NewSupervisorManager(logger, eventListener)
+	scheduler := bot.NewScheduler(manager, logger)
+	go scheduler.Start()
 	srv, err := server.New(logger, manager)
 	if err != nil {
 		log.Fatalf("Error starting local server: %s", err.Error())
@@ -87,7 +88,7 @@ func main() {
 
 	// Discord Bot initialization
 	if config.Koolo.Discord.Enabled {
-		discordBot, err := discord.NewBot(config.Koolo.Discord.Token, config.Koolo.Discord.ChannelID)
+		discordBot, err := discord.NewBot(config.Koolo.Discord.Token, config.Koolo.Discord.ChannelID, manager)
 		if err != nil {
 			logger.Error("Discord could not been initialized", slog.Any("error", err))
 			return
@@ -128,6 +129,7 @@ func main() {
 		logger.Info("Koolo shutting down...")
 		cancel()
 		manager.StopAll()
+		scheduler.Stop()
 		err = srv.Stop()
 		if err != nil {
 			logger.Error("error stopping local server", slog.Any("error", err))

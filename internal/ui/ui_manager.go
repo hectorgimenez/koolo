@@ -3,21 +3,12 @@ package ui
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
-type Manager struct {
-	gr *game.MemoryReader
-}
-
-func NewManager(gr *game.MemoryReader) *Manager {
-	return &Manager{
-		gr: gr,
-	}
-}
-
-func (ui *Manager) GetScreenCoordsForItem(itm data.Item) data.Position {
-	if ui.gr.LegacyGraphics() {
+func GetScreenCoordsForItem(itm data.Item) data.Position {
+	ctx := context.Get()
+	if ctx.GameReader.LegacyGraphics() {
 		return getScreenCoordsForItemClassic(itm)
 	}
 

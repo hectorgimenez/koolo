@@ -1,12 +1,14 @@
 package action
 
 import (
-	"log/slog"
 	"slices"
-	"time"
 
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -15,10 +17,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
 var uiStatButtonPosition = map[stat.ID]data.Position{
@@ -53,152 +51,129 @@ var uiSkillPagePositionLegacy = [3]data.Position{
 var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
-func (b *Builder) EnsureStatPoints() *StepChainAction {
-	return NewStepChain(func(d game.Data) []step.Step {
-		char, isLevelingChar := b.ch.(LevelingCharacter)
-		_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-		if !isLevelingChar || !unusedStatPoints {
-			if d.OpenMenus.Character {
-				return []step.Step{
-					step.SyncStep(func(_ game.Data) error {
-						b.HID.PressKey(win.VK_ESCAPE)
-						return nil
-					}),
-				}
-			}
+func EnsureStatPoints() error {
+	// TODO finish this
+	return nil
+	//return NewStepChain(func(d game.Data) []step.Step {
+	//	char, isLevelingChar := b.ch.(LevelingCharacter)
+	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
+	//	if !isLevelingChar || !unusedStatPoints {
+	//		if d.OpenMenus.Character {
+	//			return []step.Step{
+	//				step.SyncStep(func(_ game.Data) error {
+	//					b.HID.PressKey(win.VK_ESCAPE)
+	//					return nil
+	//				}),
+	//			}
+	//		}
+	//
+	//		return nil
+	//	}
+	//
+	//	for st, targetPoints := range char.StatPoints(d) {
+	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
+	//		if !found || currentPoints.Value >= targetPoints {
+	//			continue
+	//		}
+	//
+	//		if !d.OpenMenus.Character {
+	//			return []step.Step{
+	//				step.SyncStep(func(_ game.Data) error {
+	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
+	//					return nil
+	//				}),
+	//			}
+	//		}
+	//
+	//		var statBtnPosition data.Position
+	//		if d.LegacyGraphics {
+	//			statBtnPosition = uiStatButtonPositionLegacy[st]
+	//		} else {
+	//			statBtnPosition = uiStatButtonPosition[st]
+	//		}
+	//
+	//		return []step.Step{
+	//			step.SyncStep(func(_ game.Data) error {
+	//				utils.Sleep(100)
+	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+	//				utils.Sleep(500)
+	//				return nil
+	//			}),
+	//		}
+	//	}
+	//
+	//	return nil
+	//}, RepeatUntilNoSteps())
+}
 
-			return nil
-		}
+func EnsureSkillPoints() error {
+	// TODO finish this
+	return nil
+	//ctx := context.Get()
+	//
+	//char, isLevelingChar := ctx.Char.(LevelingCharacter)
+	//availablePoints, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+	//
+	//assignedPoints := make(map[skill.ID]int)
+	//for _, sk := range char.SkillPoints() {
+	//	currentPoints, found := assignedPoints[sk]
+	//	if !found {
+	//		currentPoints = 0
+	//	}
+	//
+	//	assignedPoints[sk] = currentPoints + 1
+	//
+	//	characterPoints, found := ctx.Data.PlayerUnit.Skills[sk]
+	//	if !found || int(characterPoints.Level) < assignedPoints[sk] {
+	//		skillDesc, skFound := skill.Desc[sk]
+	//		if !skFound {
+	//			ctx.Logger.Error("skill not found for character", slog.Any("skill", sk))
+	//			return nil
+	//		}
+	//
+	//		if !ctx.Data.OpenMenus.SkillTree {
+	//			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+	//		}
+	//
+	//		utils.Sleep(100)
+	//		if ctx.Data.LegacyGraphics {
+	//			ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+	//		} else {
+	//			ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+	//		}
+	//		utils.Sleep(200)
+	//		if ctx.Data.LegacyGraphics {
+	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+	//		} else {
+	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+	//		}
+	//		utils.Sleep(500)
+	//		return nil
+	//	}
+	//}
+	//
+	//return nil
+}
 
-		for st, targetPoints := range char.StatPoints(d) {
-			currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-			if !found || currentPoints.Value >= targetPoints {
-				continue
-			}
+func UpdateQuestLog() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "UpdateQuestLog"
 
-			if !d.OpenMenus.Character {
-				return []step.Step{
-					step.SyncStep(func(_ game.Data) error {
-						b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-						return nil
-					}),
-				}
-			}
-
-			var statBtnPosition data.Position
-			if d.LegacyGraphics {
-				statBtnPosition = uiStatButtonPositionLegacy[st]
-			} else {
-				statBtnPosition = uiStatButtonPosition[st]
-			}
-
-			return []step.Step{
-				step.SyncStep(func(_ game.Data) error {
-					helper.Sleep(100)
-					b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-					helper.Sleep(500)
-					return nil
-				}),
-			}
-		}
-
+	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); !isLevelingChar {
 		return nil
-	}, RepeatUntilNoSteps())
+	}
+
+	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.QuestLog)
+	utils.Sleep(1000)
+
+	return step.CloseAllMenus()
 }
-
-func (b *Builder) EnsureSkillPoints() *StepChainAction {
-	assignAttempts := 0
-	return NewStepChain(func(d game.Data) []step.Step {
-		char, isLevelingChar := b.ch.(LevelingCharacter)
-		availablePoints, unusedSkillPoints := d.PlayerUnit.FindStat(stat.SkillPoints, 0)
-		if !isLevelingChar || !unusedSkillPoints || assignAttempts >= availablePoints.Value {
-			if d.OpenMenus.SkillTree {
-				return []step.Step{
-					step.SyncStep(func(_ game.Data) error {
-						b.HID.PressKey(win.VK_ESCAPE)
-						return nil
-					}),
-				}
-			}
-
-			return nil
-		}
-
-		assignedPoints := make(map[skill.ID]int)
-		for _, sk := range char.SkillPoints(d) {
-			currentPoints, found := assignedPoints[sk]
-			if !found {
-				currentPoints = 0
-			}
-
-			assignedPoints[sk] = currentPoints + 1
-
-			characterPoints, found := d.PlayerUnit.Skills[sk]
-			if !found || int(characterPoints.Level) < assignedPoints[sk] {
-				skillDesc, skFound := skill.Desc[sk]
-				if !skFound {
-					b.Logger.Error("skill not found for character", slog.Any("skill", sk))
-					return nil
-				}
-
-				if !d.OpenMenus.SkillTree {
-					return []step.Step{
-						step.SyncStep(func(_ game.Data) error {
-							b.HID.PressKeyBinding(d.KeyBindings.SkillTree)
-							return nil
-						}),
-					}
-				}
-
-				return []step.Step{
-					step.SyncStep(func(_ game.Data) error {
-						assignAttempts++
-						helper.Sleep(100)
-						if d.LegacyGraphics {
-							b.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
-						} else {
-							b.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
-						}
-						helper.Sleep(200)
-						if d.LegacyGraphics {
-							b.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
-						} else {
-							b.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
-						}
-						helper.Sleep(500)
-						return nil
-					}),
-				}
-			}
-		}
-
-		return nil
-	}, RepeatUntilNoSteps())
-}
-
-func (b *Builder) UpdateQuestLog() *StepChainAction {
-	return NewStepChain(func(d game.Data) []step.Step {
-		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
-			return nil
-		}
-
-		return []step.Step{
-			step.SyncStep(func(_ game.Data) error {
-				b.HID.PressKeyBinding(d.KeyBindings.QuestLog)
-				return nil
-			}),
-			step.Wait(time.Second),
-			step.SyncStep(func(_ game.Data) error {
-				b.HID.PressKeyBinding(d.KeyBindings.QuestLog)
-				return nil
-			}),
-		}
-	})
-}
-func (b *Builder) getAvailableSkillKB(d game.Data) []data.KeyBinding {
+func getAvailableSkillKB() []data.KeyBinding {
 	availableSkillKB := make([]data.KeyBinding, 0)
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "getAvailableSkillKB"
 
-	for _, sb := range d.KeyBindings.Skills {
+	for _, sb := range ctx.Data.KeyBindings.Skills {
 		if sb.SkillID == -1 && (sb.Key1[0] != 0 && sb.Key1[0] != 255) || (sb.Key2[0] != 0 && sb.Key2[0] != 255) {
 			availableSkillKB = append(availableSkillKB, sb.KeyBinding)
 		}
@@ -207,70 +182,67 @@ func (b *Builder) getAvailableSkillKB(d game.Data) []data.KeyBinding {
 	return availableSkillKB
 }
 
-func (b *Builder) EnsureSkillBindings() *StepChainAction {
-	return NewStepChain(func(d game.Data) (steps []step.Step) {
-		if _, isLevelingChar := b.ch.(LevelingCharacter); !isLevelingChar {
-			return nil
+func EnsureSkillBindings() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "EnsureSkillBindings"
+
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if !isLevelingChar {
+		return nil
+	}
+
+	mainSkill, skillsToBind := char.SkillsToBind()
+	skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+	notBoundSkills := make([]skill.ID, 0)
+	for _, sk := range skillsToBind {
+		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && ctx.Data.PlayerUnit.Skills[sk].Level > 0 {
+			notBoundSkills = append(notBoundSkills, sk)
 		}
-		char, _ := b.ch.(LevelingCharacter)
-		mainSkill, skillsToBind := char.SkillsToBind(d)
-		skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
-		notBoundSkills := make([]skill.ID, 0)
-		for _, sk := range skillsToBind {
-			if _, found := d.KeyBindings.KeyBindingForSkill(sk); !found && d.PlayerUnit.Skills[sk].Level > 0 {
-				notBoundSkills = append(notBoundSkills, sk)
+	}
+
+	if len(notBoundSkills) > 0 {
+		ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+		utils.Sleep(300)
+		ctx.HID.MovePointer(10, 10)
+		utils.Sleep(300)
+
+		availableKB := getAvailableSkillKB()
+
+		for i, sk := range notBoundSkills {
+			skillPosition, found := calculateSkillPositionInUI(false, sk)
+			if !found {
+				continue
 			}
+
+			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
+			utils.Sleep(100)
+			ctx.HID.PressKeyBinding(availableKB[i])
+			utils.Sleep(300)
 		}
 
-		if len(notBoundSkills) > 0 {
-			steps = append(steps, step.SyncStep(func(d game.Data) error {
-				b.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
-				helper.Sleep(300)
-				b.HID.MovePointer(10, 10)
-				helper.Sleep(300)
+	}
 
-				availableKB := b.getAvailableSkillKB(d)
+	if ctx.Data.PlayerUnit.LeftSkill != mainSkill {
+		ctx.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
+		utils.Sleep(300)
+		ctx.HID.MovePointer(10, 10)
+		utils.Sleep(300)
 
-				for i, sk := range notBoundSkills {
-					skillPosition, found := b.calculateSkillPositionInUI(d, false, sk)
-					if !found {
-						continue
-					}
-
-					b.HID.MovePointer(skillPosition.X, skillPosition.Y)
-					helper.Sleep(100)
-					b.HID.PressKeyBinding(availableKB[i])
-					helper.Sleep(300)
-				}
-
-				return nil
-			}))
+		skillPosition, found := calculateSkillPositionInUI(true, mainSkill)
+		if found {
+			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
+			utils.Sleep(100)
+			ctx.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
+			utils.Sleep(300)
 		}
+	}
 
-		if d.PlayerUnit.LeftSkill != mainSkill {
-			steps = append(steps, step.SyncStep(func(d game.Data) error {
-				b.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
-				helper.Sleep(300)
-				b.HID.MovePointer(10, 10)
-				helper.Sleep(300)
-
-				skillPosition, found := b.calculateSkillPositionInUI(d, true, mainSkill)
-				if found {
-					b.HID.MovePointer(skillPosition.X, skillPosition.Y)
-					helper.Sleep(100)
-					b.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
-					helper.Sleep(300)
-				}
-
-				return nil
-			}))
-		}
-
-		return
-	}, RepeatUntilNoSteps())
+	return nil
 }
 
-func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillID skill.ID) (data.Position, bool) {
+func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position, bool) {
+	d := context.Get().Data
+
 	var scrolls = []skill.ID{
 		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
 	}
@@ -359,66 +331,67 @@ func (b *Builder) calculateSkillPositionInUI(d game.Data, mainSkill bool, skillI
 	}, true
 }
 
-func (b *Builder) HireMerc() *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		_, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar && d.CharacterCfg.Character.UseMerc {
-			// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
-			if d.CharacterCfg.Game.Difficulty == difficulty.Normal && d.MercHPPercent() <= 0 && d.PlayerUnit.TotalPlayerGold() > 30000 && d.PlayerUnit.Area == area.LutGholein {
-				b.Logger.Info("Hiring merc...")
-				// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
-				actions = append(actions,
-					b.InteractNPC(
-						town.GetTownByArea(d.PlayerUnit.Area).MercContractorNPC(),
-						step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN),
-						step.Wait(time.Second*2),
-						step.SyncStep(func(d game.Data) error {
-							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
-							helper.Sleep(300)
-							b.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+func HireMerc() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "HireMerc"
 
-							return nil
-						}),
-					),
-				)
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if isLevelingChar && ctx.CharacterCfg.Character.UseMerc {
+		// Hire the merc if we don't have one, we have enough gold, and we are in act 2. We assume that ReviveMerc was called before this.
+		if ctx.CharacterCfg.Game.Difficulty == difficulty.Normal && ctx.Data.MercHPPercent() <= 0 && ctx.Data.PlayerUnit.TotalPlayerGold() > 30000 && ctx.Data.PlayerUnit.Area == area.LutGholein {
+			ctx.Logger.Info("Hiring merc...")
+			// TODO: Hire Holy Freeze merc if available, if not, hire Defiance merc.
+			err := InteractNPC(town.GetTownByArea(ctx.Data.PlayerUnit.Area).MercContractorNPC())
+			if err != nil {
+				return err
 			}
+			ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+			utils.Sleep(2000)
+			ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+			utils.Sleep(500)
+			ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
 		}
+	}
 
-		return
-	})
+	return nil
 }
 
-func (b *Builder) ResetStats() *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		ch, isLevelingChar := b.ch.(LevelingCharacter)
-		if isLevelingChar && ch.ShouldResetSkills(d) {
-			currentArea := d.PlayerUnit.Area
-			if d.PlayerUnit.Area != area.RogueEncampment {
-				actions = append(actions, b.WayPoint(area.RogueEncampment))
-			}
-			actions = append(actions,
-				b.InteractNPC(npc.Akara,
-					step.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_DOWN, win.VK_RETURN),
-					step.Wait(time.Second),
-					step.KeySequence(win.VK_HOME, win.VK_RETURN),
-				),
-			)
-			if d.PlayerUnit.Area != area.RogueEncampment {
-				actions = append(actions, b.WayPoint(currentArea))
+func ResetStats() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "ResetStats"
+
+	ch, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if isLevelingChar && ch.ShouldResetSkills() {
+		currentArea := ctx.Data.PlayerUnit.Area
+		if ctx.Data.PlayerUnit.Area != area.RogueEncampment {
+			err := WayPoint(area.RogueEncampment)
+			if err != nil {
+				return err
 			}
 		}
+		InteractNPC(npc.Akara)
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_DOWN, win.VK_RETURN)
+		utils.Sleep(1000)
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_RETURN)
 
-		return
-	})
+		if currentArea != area.RogueEncampment {
+			return WayPoint(currentArea)
+		}
+	}
+
+	return nil
 }
 
-func (b *Builder) WaitForAllMembersWhenLeveling() *Chain {
-	return NewChain(func(d game.Data) []Action {
-		_, isLeveling := b.ch.(LevelingCharacter)
-		if d.CharacterCfg.Companion.Enabled && d.CharacterCfg.Companion.Leader && !d.PlayerUnit.Area.IsTown() && isLeveling {
+func WaitForAllMembersWhenLeveling() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "WaitForAllMembersWhenLeveling"
+
+	for {
+		_, isLeveling := ctx.Char.(context.LevelingCharacter)
+		if ctx.CharacterCfg.Companion.Leader && !ctx.Data.PlayerUnit.Area.IsTown() && isLeveling {
 			allMembersAreaCloseToMe := true
-			for _, member := range d.Roster {
-				if member.Name != d.PlayerUnit.Name && pather.DistanceFromMe(d, member.Position) > 20 {
+			for _, member := range ctx.Data.Roster {
+				if member.Name != ctx.Data.PlayerUnit.Name && ctx.PathFinder.DistanceFromMe(member.Position) > 20 {
 					allMembersAreaCloseToMe = false
 				}
 			}
@@ -427,9 +400,9 @@ func (b *Builder) WaitForAllMembersWhenLeveling() *Chain {
 				return nil
 			}
 
-			return []Action{b.ClearAreaAroundPlayer(5, data.MonsterAnyFilter())}
+			ClearAreaAroundPlayer(5, data.MonsterAnyFilter())
+		} else {
+			return nil
 		}
-
-		return nil
-	}, RepeatUntilNoSteps())
+	}
 }

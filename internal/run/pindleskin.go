@@ -1,13 +1,14 @@
 package run
 
 import (
+	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 var fixedPlaceNearRedPortal = data.Position{
@@ -21,22 +22,40 @@ var pindleSafePosition = data.Position{
 }
 
 type Pindleskin struct {
-	SkipOnImmunities []stat.Resist
-	baseRun
+	ctx *context.Status
+}
+
+func NewPindleskin() *Pindleskin {
+	return &Pindleskin{
+		ctx: context.Get(),
+	}
 }
 
 func (p Pindleskin) Name() string {
 	return string(config.PindleskinRun)
 }
 
-func (p Pindleskin) BuildActions() (actions []action.Action) {
-	return []action.Action{
-		p.builder.WayPoint(area.Harrogath),              // Move to Act 5
-		p.builder.MoveToCoords(fixedPlaceNearRedPortal), // Moving closer to the portal to detect it
-		p.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
-			return d.PlayerUnit.Area == area.NihlathaksTemple
-		}), // Enter Nihlathak's Temple
-		p.builder.MoveToCoords(pindleSafePosition), // Travel to boss position
-		p.char.KillPindle(p.SkipOnImmunities),      // Kill Pindleskin
+func (p Pindleskin) Run() error {
+	err := action.WayPoint(area.Harrogath)
+	if err != nil {
+		return err
 	}
+
+	_ = action.MoveToCoords(fixedPlaceNearRedPortal)
+
+	redPortal, found := p.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+	if !found {
+		return errors.New("red portal not found")
+	}
+
+	err = action.InteractObject(redPortal, func() bool {
+		return p.ctx.Data.PlayerUnit.Area == area.NihlathaksTemple
+	})
+	if err != nil {
+		return err
+	}
+
+	_ = action.MoveToCoords(pindleSafePosition)
+
+	return p.ctx.Char.KillPindle()
 }

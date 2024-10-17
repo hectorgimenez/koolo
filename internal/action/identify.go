@@ -8,69 +8,91 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 )
 
-func (b *Builder) IdentifyAll(skipIdentify bool) *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		items := b.itemsToIdentify(d)
+func IdentifyAll(skipIdentify bool) error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "IdentifyAll"
 
-		b.Logger.Debug("Checking for items to identify...")
-		if len(items) == 0 || skipIdentify {
-			b.Logger.Debug("No items to identify...")
-			return
-		}
+	items := itemsToIdentify()
 
-		idTome, found := d.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
-		if !found {
-			b.Logger.Warn("ID Tome not found, not identifying items")
-			return
-		}
+	ctx.Logger.Debug("Checking for items to identify...")
+	if len(items) == 0 || skipIdentify {
+		ctx.Logger.Debug("No items to identify...")
+		return nil
+	}
 
-		if st, statFound := idTome.FindStat(stat.Quantity, 0); !statFound || st.Value < len(items) {
-			b.Logger.Info("Not enough ID scrolls, refilling...")
-			actions = append(actions, b.VendorRefill(true, false))
-		}
+	idTome, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
+	if !found {
+		ctx.Logger.Warn("ID Tome not found, not identifying items")
+		return nil
+	}
 
-		b.Logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
-		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-			return []step.Step{
-				step.SyncStepWithCheck(func(d game.Data) error {
-					b.HID.PressKeyBinding(d.KeyBindings.Inventory)
-					return nil
-				}, func(d game.Data) step.Status {
-					if d.OpenMenus.Inventory {
-						return step.StatusCompleted
-					}
-					return step.StatusInProgress
-				}),
-				step.SyncStep(func(d game.Data) error {
+	if st, statFound := idTome.FindStat(stat.Quantity, 0); !statFound || st.Value < len(items) {
+		ctx.Logger.Info("Not enough ID scrolls, refilling...")
+		VendorRefill(true, false)
+	}
 
-					for _, i := range items {
-						b.identifyItem(idTome, i)
-					}
+	ctx.Logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
+	step.CloseAllMenus()
+	for !ctx.Data.OpenMenus.Inventory {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
+		utils.Sleep(300)
+	}
+	for _, i := range items {
+		identifyItem(idTome, i)
+	}
+	step.CloseAllMenus()
 
-					b.HID.PressKey(win.VK_ESCAPE)
-
-					return nil
-				}),
-			}
-		}))
-
-		return
-	}, Resettable(), CanBeSkipped())
+	return nil
 }
 
-func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
-	for _, i := range d.Inventory.ByLocation(item.LocationInventory) {
+func CainIdentify() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "CainIdentify"
+
+	stayAwhileAndListen := town.GetTownByArea(ctx.Data.PlayerUnit.Area).IdentifyNPC()
+
+	err := InteractNPC(stayAwhileAndListen)
+	if err != nil {
+		ctx.Logger.Error("Error interacting with Cain: ", "error", err.Error())
+		return err
+	}
+
+	// Select the identify option
+	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+	if len(itemsToIdentify()) > 0 {
+
+		// Close the NPC interact menu if it's open
+		if ctx.Data.OpenMenus.NPCInteract {
+			ctx.HID.KeySequence(win.VK_ESCAPE)
+		}
+
+		return fmt.Errorf("failed to identify items")
+	}
+
+	utils.Sleep(500)
+
+	return step.CloseAllMenus()
+}
+
+func itemsToIdentify() (items []data.Item) {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "itemsToIdentify"
+
+	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
 			continue
 		}
 
 		// Skip identifying items that fully match a rule when unid
-		if _, result := b.CharacterCfg.Runtime.Rules.EvaluateAll(i); result == nip.RuleResultFullMatch {
+		if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i); result == nip.RuleResultFullMatch {
 			continue
 		}
 
@@ -80,15 +102,32 @@ func (b *Builder) itemsToIdentify(d game.Data) (items []data.Item) {
 	return
 }
 
-func (b *Builder) identifyItem(idTome data.Item, i data.Item) {
-	screenPos := b.UIManager.GetScreenCoordsForItem(idTome)
+func HaveItemsToStashUnidentified() bool {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "HaveItemsToStashUnidentified"
 
-	helper.Sleep(500)
-	b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-	helper.Sleep(1000)
+	items := ctx.Data.Inventory.ByLocation(item.LocationInventory)
+	for _, i := range items {
+		if !i.Identified {
+			if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i); result == nip.RuleResultFullMatch {
+				return true
+			}
+		}
+	}
 
-	screenPos = b.UIManager.GetScreenCoordsForItem(i)
+	return false
+}
 
-	b.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
-	helper.Sleep(350)
+func identifyItem(idTome data.Item, i data.Item) {
+	ctx := context.Get()
+	screenPos := ui.GetScreenCoordsForItem(idTome)
+
+	utils.Sleep(500)
+	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	utils.Sleep(1000)
+
+	screenPos = ui.GetScreenCoordsForItem(i)
+
+	ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+	utils.Sleep(350)
 }

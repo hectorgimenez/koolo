@@ -1,102 +1,117 @@
 package run
 
 import (
+	"errors"
+	"log/slog"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"log/slog"
 )
 
 type Nihlathak struct {
-	baseRun
+	ctx *context.Status
 }
 
-func (a Nihlathak) Name() string {
+func NewNihlathak() *Nihlathak {
+	return &Nihlathak{
+		ctx: context.Get(),
+	}
+}
+
+func (n Nihlathak) Name() string {
 	return string(config.NihlathakRun)
 }
 
-func (a Nihlathak) BuildActions() (actions []action.Action) {
-	// Moving to starting point (Halls of Pain)
-	actions = append(actions, a.builder.WayPoint(area.HallsOfPain))
+func (n Nihlathak) Run() error {
 
-	// Travel to boss position
-	actions = append(actions, a.builder.MoveToArea(area.HallsOfVaught))
+	// Use the waypoint to HallsOfPain
+	err := action.WayPoint(area.HallsOfPain)
+	if err != nil {
+		return err
+	}
 
-	// Move close to Nilhatak, but don't teleport over all the monsters
-	var nilaO data.Object
-	actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
-		for _, o := range d.Objects {
-			if o.Name == object.NihlathakWildernessStartPositionName {
-				nilaO = o
-				return []step.Step{step.MoveTo(o.Position, step.StopAtDistance(40))}
-			}
-		}
+	// Move to Halls Of Vaught
+	if err = action.MoveToArea(area.HallsOfVaught); err != nil {
+		return err
+	}
 
-		return []step.Step{}
-	}))
+	var nihlaObject data.Object
 
-	// Try to find the safest place
-	actions = append(actions, action.NewStepChain(func(d game.Data) []step.Step {
-		corners := [4]data.Position{
-			{
-				X: nilaO.Position.X + 20,
-				Y: nilaO.Position.Y + 20,
-			},
-			{
-				X: nilaO.Position.X - 20,
-				Y: nilaO.Position.Y + 20,
-			},
-			{
-				X: nilaO.Position.X - 20,
-				Y: nilaO.Position.Y - 20,
-			},
-			{
-				X: nilaO.Position.X + 20,
-				Y: nilaO.Position.Y - 20,
-			},
-		}
+	o, found := n.ctx.Data.Objects.FindOne(object.NihlathakWildernessStartPositionName)
+	if !found {
+		return errors.New("failed to find Nihlathak's Start Position")
+	}
 
-		bestCorner := 0
-		bestCornerDistance := 0
-		for i, c := range corners {
-			if pather.IsWalkable(c, d.PlayerUnit.Position, d.CollisionGrid) {
-				averageDistance := 0
-				for _, m := range d.Monsters.Enemies() {
-					averageDistance += pather.DistanceFromPoint(c, m.Position)
-				}
-				if averageDistance > bestCornerDistance {
-					bestCorner = i
-					bestCornerDistance = averageDistance
-				}
-				a.logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", len(d.Monsters.Enemies())), slog.Int("distance", averageDistance))
-			}
-		}
+	// Move to Nihlathak
+	action.MoveToCoords(o.Position)
 
-		a.logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("averageDistance", bestCornerDistance))
-		return []step.Step{step.MoveTo(corners[bestCorner], step.StopAtDistance(5))}
-	}))
+	// Try to position in the safest corner
+	action.MoveToCoords(n.findBestCorner(o.Position))
 
 	// Kill Nihlathak
-	actions = append(actions, a.char.KillNihlathak())
+	if err = n.ctx.Char.KillNihlathak(); err != nil {
+		return err
+	}
 
 	// Clear monsters around the area, sometimes it makes difficult to pickup items if there are many monsters around the area
-	if a.CharacterCfg.Game.Nihlathak.ClearArea {
-		actions = append(actions, a.char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+	if n.ctx.CharacterCfg.Game.Nihlathak.ClearArea {
+		n.ctx.Logger.Debug("Clearing monsters around Nihlathak position")
+
+		n.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 			for _, m := range d.Monsters.Enemies() {
-				if d := pather.DistanceFromPoint(nilaO.Position, m.Position); d < 15 {
-					a.logger.Debug("Clearing monsters around Nihlathak position", slog.Any("monster", m))
+				if d := pather.DistanceFromPoint(nihlaObject.Position, m.Position); d < 15 {
 					return m.UnitID, true
 				}
 			}
 
 			return 0, false
-		}, nil))
+		}, nil)
 	}
 
-	return
+	return nil
+}
+
+func (n Nihlathak) findBestCorner(nihlathakPosition data.Position) data.Position {
+	corners := [4]data.Position{
+		{
+			X: nihlathakPosition.X + 20,
+			Y: nihlathakPosition.Y + 20,
+		},
+		{
+			X: nihlathakPosition.X - 20,
+			Y: nihlathakPosition.Y + 20,
+		},
+		{
+			X: nihlathakPosition.X - 20,
+			Y: nihlathakPosition.Y - 20,
+		},
+		{
+			X: nihlathakPosition.X + 20,
+			Y: nihlathakPosition.Y - 20,
+		},
+	}
+
+	bestCorner := 0
+	bestCornerDistance := 0
+	for i, c := range corners {
+		if n.ctx.Data.AreaData.IsWalkable(c) {
+			averageDistance := 0
+			for _, m := range n.ctx.Data.Monsters.Enemies() {
+				averageDistance += pather.DistanceFromPoint(c, m.Position)
+			}
+			if averageDistance > bestCornerDistance {
+				bestCorner = i
+				bestCornerDistance = averageDistance
+			}
+			n.ctx.Logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", len(n.ctx.Data.Monsters.Enemies())), slog.Int("distance", averageDistance))
+		}
+	}
+
+	return corners[bestCorner]
 }

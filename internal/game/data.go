@@ -11,6 +11,8 @@ import (
 )
 
 type Data struct {
+	Areas    map[area.ID]AreaData `json:"-"`
+	AreaData AreaData             `json:"-"`
 	data.Data
 	CharacterCfg config.CharacterCfg
 }

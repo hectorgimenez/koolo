@@ -1,52 +1,37 @@
 package step
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-type OpenPortalStep struct {
-	basicStep
-}
+func OpenPortal() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "OpenPortal"
 
-func OpenPortal() *OpenPortalStep {
-	return &OpenPortalStep{
-		basicStep: newBasicStep(),
-	}
-}
+	lastRun := time.Time{}
+	for {
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
 
-func (s *OpenPortalStep) Status(d game.Data, _ container.Container) Status {
-	if s.status == StatusCompleted {
-		return StatusCompleted
-	}
-
-	// Give some extra time, sometimes if we move the mouse over the portal before is shown
-	// and there is an intractable entity behind it, will keep it focused
-	if time.Since(s.LastRun()) > time.Second*1 {
-		for _, o := range d.Objects {
-			if o.IsPortal() {
-				return s.tryTransitionStatus(StatusCompleted)
-			}
+		_, found := ctx.Data.Objects.FindOne(object.TownPortal)
+		if found {
+			return nil
 		}
+
+		// Give some time to portal to popup before retrying...
+		if time.Since(lastRun) < time.Second*2 {
+			continue
+		}
+
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
+		utils.Sleep(250)
+		ctx.HID.Click(game.RightButton, 300, 300)
+		lastRun = time.Now()
 	}
-
-	return StatusInProgress
-}
-
-func (s *OpenPortalStep) Run(d game.Data, container container.Container) error {
-	// Give some time to portal to popup before retrying...
-	if time.Since(s.LastRun()) < time.Second*2 {
-		return nil
-	}
-
-	container.HID.PressKeyBinding(d.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
-	helper.Sleep(250)
-	container.HID.Click(game.RightButton, 300, 300)
-	s.lastRun = time.Now()
-
-	return nil
 }

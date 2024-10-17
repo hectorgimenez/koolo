@@ -59,6 +59,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "spider_cavern" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameSpiderCavernOpenChests" {{ if .Config.Game.SpiderCavern.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameSpiderCavernFocusOnElitePacks" {{ if .Config.Game.SpiderCavern.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
 {{ define "mephisto" }}
     <fieldset>
         <label><input type="checkbox" name="gameMephistoKillCouncilMembers" {{ if .Config.Game.Mephisto.KillCouncilMembers }}checked{{ end }}> Kill council members</label>
@@ -96,10 +103,15 @@
 {{ end }}
 
 {{ define "diablo" }}
-    <fieldset>
-        <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label> 
+    <fieldset class="options-group">
+        <legend>Boss Options</legend>
+        <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label>
+        <label><input type="checkbox" name="gameDiabloDisableItemPickupDuringBosses" {{ if .Config.Game.Diablo.DisableItemPickupDuringBosses }}checked{{ end }}> Temporarily Disable Item Pickup During Seal Boss Fights.</label>
     </fieldset>
-    <fieldset class="grid">
+
+    <fieldset class="options-group">
+        <legend>Clear Options</legend>
+        <label><input type="checkbox" name="gameDiabloSkipStormcasters" {{ if .Config.Game.Diablo.SkipStormcasters }}checked{{ end }}> Skip Stormcasters</label>
         <label><input type="checkbox" name="gameDiabloFullClear" {{ if .Config.Game.Diablo.FullClear }}checked{{ end }}> Full Clear</label>
         <label><input type="checkbox" name="gameDiabloFocusOnElitePacks" {{ if .Config.Game.Diablo.FocusOnElitePacks }}checked{{ end }}> Elite Packs Only</label>
     </fieldset>
@@ -144,9 +156,9 @@
             <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="light" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "light" }}checked{{ end }}> Light</label>
             <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="poison" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "poison" }}checked{{ end }}> Poison</label>
         </fieldset>
-        <label>Tracked areas</label>
+        <label>Tracked areas <input type="checkbox" name="tzTrackAll" id="tzTrackAll"></label>
         {{ range $id, $name := .AvailableTZs }}
-            <label><input type="checkbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" {{ if isTZSelected $topLevelContext.Config.Game.TerrorZone.Areas $id }}checked{{ end }}>{{ $name }}</label>
+            <label><input type="checkbox" class="tzTrackCheckbox" name="gameTerrorZoneAreas[]" value="{{ $id }}" {{ if isTZSelected $topLevelContext.Config.Game.TerrorZone.Areas $id }}checked{{ end }}>{{ $name }}</label>
         {{ end }}
     </fieldset>
 {{ end }}
