@@ -93,6 +93,11 @@ func attack(settings attackSettings) error {
 	aoe := settings.target == 0
 	lastRun := time.Time{}
 
+	// If shouldStandStill is true, ensure we always release the key
+	if settings.shouldStandStill {
+		defer ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+	}
+
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
@@ -148,9 +153,6 @@ func attack(settings attackSettings) error {
 				ctx.HID.Click(game.LeftButton, x, y)
 			} else {
 				ctx.HID.Click(game.RightButton, x, y)
-			}
-			if settings.shouldStandStill {
-				ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 			}
 			lastRun = time.Now()
 			numOfAttacksRemaining--
