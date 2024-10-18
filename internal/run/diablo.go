@@ -252,11 +252,19 @@ func (d *Diablo) moveToBossSpawn(boss string) error {
 	// Define a safe distance (8 units is about 16 yards, which should be a good balance)
 	safeDistance := 8
 
-	// Calculate a safe position
-	safePos := d.getSafePosition(spawnPos, safeDistance)
+	if boss != "Infector" {
+		// Calculate a safe position
+		safePos := d.getSafePosition(spawnPos, safeDistance)
 
-	// Move to the safe position
-	if err := action.MoveToCoords(safePos); err != nil {
+		// Move to the safe position
+		if err := action.MoveToCoords(safePos); err != nil {
+			d.ctx.Logger.Error(fmt.Sprintf("Failed to move to safe position for %s: %v", boss, err))
+			return err
+		}
+		action.ClearAreaAroundPlayer(safeDistance+2, d.getMonsterFilter())
+		return nil
+	}
+	if err := action.MoveToCoords(spawnPos); err != nil {
 		d.ctx.Logger.Error(fmt.Sprintf("Failed to move to safe position for %s: %v", boss, err))
 		return err
 	}
