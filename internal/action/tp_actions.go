@@ -3,6 +3,7 @@ package action
 import (
 	"errors"
 	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -82,20 +83,13 @@ func UsePortalFrom(owner string) error {
 
 	for _, obj := range ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == owner {
-			err := InteractObjectByID(obj.ID, func() bool {
+			return InteractObjectByID(obj.ID, func() bool {
 				if !ctx.Data.PlayerUnit.Area.IsTown() {
 					utils.Sleep(500)
 					return true
 				}
 				return false
 			})
-
-			if err == nil {
-				// Perform actions after re-entering the game area
-
-			}
-
-			return err
 		}
 	}
 

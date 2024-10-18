@@ -254,7 +254,7 @@ func (a Leveling) summoner() error {
 	}
 
 	err = action.InteractObject(portal, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi
+		return a.ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
 	})
 	if err != nil {
 		return err

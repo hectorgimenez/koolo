@@ -49,7 +49,7 @@ func (a Cows) Run() error {
 	}
 
 	err = action.InteractObject(townPortal, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.MooMooFarm
+		return a.ctx.Data.AreaData.Area == area.MooMooFarm && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
 	})
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (a Cows) getWirtsLeg() error {
 		return errors.New("tristram not found")
 	}
 	err = action.InteractObject(portal, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.Tristram
+		return a.ctx.Data.AreaData.Area == area.Tristram && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
 	})
 	if err != nil {
 		return err
