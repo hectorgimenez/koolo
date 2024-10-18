@@ -66,15 +66,8 @@ func ItemPickup(maxDistance int) error {
 			continue
 		}
 
-		// Clear monsters near the item
-		for _, m := range ctx.Data.Monsters.Enemies() {
-			if _, dist, _ := ctx.PathFinder.GetPathFrom(itemToPickup.Position, m.Position); dist <= 3 {
-				ctx.Logger.Debug("Monsters detected near item to pickup, killing them...", slog.String("monster", string(m.Name)))
-				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-					return m.UnitID, true
-				}, nil)
-			}
-		}
+		// Clear enemy monsters near the item
+		clearNearbyMonsters(itemToPickup.Position, 3)
 
 		ctx.Logger.Debug(fmt.Sprintf(
 			"Item Detected: %s [%d] at X:%d Y:%d",
@@ -94,18 +87,11 @@ func ItemPickup(maxDistance int) error {
 			if err != nil {
 				ctx.Logger.Warn("Failed moving closer to item, trying to pickup anyway")
 			} else {
-
-				// Check for monsters again after moving
-				for _, m := range ctx.Data.Monsters.Enemies() {
-					if _, dist, _ := ctx.PathFinder.GetPathFrom(itemToPickup.Position, m.Position); dist <= 3 {
-						ctx.Logger.Debug("Monsters detected near item to pickup, killing them...", slog.String("monster", string(m.Name)))
-						_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-							return m.UnitID, true
-						}, nil)
-					}
-				}
+				// Clear enemy monsters near the item
+				clearNearbyMonsters(itemToPickup.Position, 3)
 			}
 		}
+
 		err := step.PickupItem(itemToPickup)
 		if err == nil {
 			continue // Item picked up successfully, move to next item
@@ -252,4 +238,28 @@ func shouldBePickedUp(i data.Item) bool {
 		return true
 	}
 	return !doesExceedQuantity(matchedRule)
+}
+
+func clearNearbyMonsters(position data.Position, maxDistance int) {
+	ctx := context.Get()
+
+	monsterFilter := func(monsters data.Monsters) []data.Monster {
+		var nearbyMonsters []data.Monster
+		for _, m := range monsters {
+			if ctx.PathFinder.DistanceFromMe(m.Position) <= maxDistance {
+				nearbyMonsters = append(nearbyMonsters, m)
+			}
+		}
+		return nearbyMonsters
+	}
+
+	nearbyEnemies := ctx.Data.Monsters.Enemies(monsterFilter)
+
+	for _, m := range nearbyEnemies {
+		ctx.Logger.Debug("Enemy detected near item, killing it...",
+			slog.String("monster", string(m.Name)))
+		_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			return m.UnitID, true
+		}, nil)
+	}
 }

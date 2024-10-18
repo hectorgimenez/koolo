@@ -170,9 +170,8 @@ type CharacterCfg struct {
 		} `yaml:"nihlathak"`
 		Diablo struct {
 			KillDiablo                    bool `yaml:"killDiablo"`
-			FullClear                     bool `yaml:"fullClear"`
+			StartFromStar                 bool `yaml:"startFromStar"`
 			FocusOnElitePacks             bool `yaml:"focusOnElitePacks"`
-			SkipStormcasters              bool `yaml:"skipStormcasters"`
 			DisableItemPickupDuringBosses bool `yaml:"disableItemPickupDuringBosses"`
 		} `yaml:"diablo"`
 		Baal struct {

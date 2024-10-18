@@ -3,12 +3,12 @@ package run
 import (
 	"fmt"
 	"log/slog"
+	"math"
 	"slices"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -21,13 +21,12 @@ var diabloSpawnPosition = data.Position{X: 7792, Y: 5294}
 var chaosSanctuaryEntrancePosition = data.Position{X: 7790, Y: 5544}
 
 type Diablo struct {
-	ctx             *context.Status
-	vizLayout       int
-	seisLayout      int
-	infLayout       int
-	cleared         []data.Position
-	paths           map[string][]data.Position
-	isKillingVizier bool
+	ctx        *context.Status
+	vizLayout  int
+	seisLayout int
+	infLayout  int
+	cleared    []data.Position
+	paths      map[string][]data.Position
 }
 
 func NewDiablo() *Diablo {
@@ -47,7 +46,7 @@ func (d *Diablo) Run() error {
 	}
 
 	targetPosition := diabloSpawnPosition
-	if d.ctx.CharacterCfg.Game.Diablo.FullClear {
+	if d.ctx.CharacterCfg.Game.Diablo.StartFromStar == false {
 		targetPosition = chaosSanctuaryEntrancePosition
 	}
 
@@ -64,14 +63,14 @@ func (d *Diablo) Run() error {
 		action.ClearAreaAroundPlayer(30, d.getMonsterFilter())
 	}
 
-	if d.ctx.CharacterCfg.Game.Diablo.FullClear {
+	if d.ctx.CharacterCfg.Game.Diablo.StartFromStar == false {
 		if err := d.clearPath("entranceToStar", d.getMonsterFilter()); err != nil {
 			return err
 		}
 	}
 
 	for _, boss := range []string{"Vizier", "Seis", "Infector"} {
-		if d.ctx.CharacterCfg.Game.Diablo.FullClear {
+		if d.ctx.CharacterCfg.Game.Diablo.StartFromStar == false {
 			if err := d.clearPath(fmt.Sprintf("starTo%s", boss), d.getMonsterFilter()); err != nil {
 				return err
 			}
@@ -92,12 +91,14 @@ func (d *Diablo) Run() error {
 		}
 
 		if err := d.ctx.Char.KillDiablo(); err != nil {
+			// Re-enable item pickup if it was disabled
 			if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
-				context.Get().EnableItemPickup() // Re-enable pickup if killing Diablo fails
+				context.Get().EnableItemPickup()
 			}
 			return err
 		}
-		// Re-enable item pickup if it was disabled after diablo is defeated
+
+		// Re-enable item pickup if it was disabled
 		if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
 			context.Get().EnableItemPickup()
 		}
@@ -140,91 +141,115 @@ func (d *Diablo) initPaths() {
 }
 
 func (d *Diablo) killBoss(boss string) error {
-	d.ctx.Logger.Debug(fmt.Sprintf("Moving to %s seal", boss))
+	d.ctx.Logger.Debug(fmt.Sprintf("Starting boss sequence for %s", boss))
 
-	// Set the current seal boss
-	sealName := map[string]object.Name{
-		"Vizier":   object.DiabloSeal4,
-		"Seis":     object.DiabloSeal3,
-		"Infector": object.DiabloSeal1,
-	}[boss]
-
-	d.isKillingVizier = (boss == "Vizier")
-
-	if err := d.moveToBossArea(boss); err != nil {
-		return err
-	}
-
-	seal, _ := d.ctx.Data.Objects.FindOne(sealName)
-	bestCorner := d.getLessConcurredCornerAroundSeal(seal.Position)
-
-	action.MoveToCoords(bestCorner)
-	action.ClearAreaAroundPlayer(20, d.getMonsterFilter())
-
-	// Check if we should disable item pickup while killing boss seals
+	// Disable item pickup for boss seals if configured
 	if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
 		context.Get().DisableItemPickup()
 	}
-
-	if err := d.activateSeal(sealName); err != nil {
+	defer func() {
+		// Re-enable item pickup after boss seal is dead
 		if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
-			context.Get().EnableItemPickup() // Re-enable pickup if seal activation fails
+			context.Get().EnableItemPickup()
 		}
-		return err
-	}
+	}()
 
-	if boss == "Vizier" || boss == "Infector" {
-		secondSeal := map[string]object.Name{
-			"Vizier":   object.DiabloSeal5,
-			"Infector": object.DiabloSeal2,
-		}[boss]
-		if err := d.moveToBossArea(boss); err != nil {
-			context.Get().EnableItemPickup() // Re-enable pickup if movement fails
+	sealNames := map[string][]object.Name{
+		"Vizier":   {object.DiabloSeal4, object.DiabloSeal5},
+		"Seis":     {object.DiabloSeal3},
+		"Infector": {object.DiabloSeal1, object.DiabloSeal2},
+	}[boss]
+
+	for i, sealName := range sealNames {
+		d.ctx.Logger.Debug(fmt.Sprintf("Processing seal %v for %s", sealName, boss))
+
+		if err := d.clearAndActivateSeal(sealName); err != nil {
 			return err
 		}
-		seal, _ = d.ctx.Data.Objects.FindOne(secondSeal)
-		bestCorner = d.getLessConcurredCornerAroundSeal(seal.Position)
-		action.MoveToCoords(bestCorner)
-		action.ClearAreaAroundPlayer(20, d.getMonsterFilter())
-		if err := d.activateSeal(secondSeal); err != nil {
-			context.Get().EnableItemPickup() // Re-enable pickup if seal activation fails
-			return err
+
+		// For Infector, kill the boss after the first seal
+		if boss == "Infector" && i == 0 {
+			if err := d.moveToBossSpawn(boss); err != nil {
+				return err
+			}
+			time.Sleep(1500 * time.Millisecond)
+			if err := d.killSealElite(); err != nil {
+				return err
+			}
 		}
 	}
 
-	d.moveToBossSpawn(boss)
-	time.Sleep(1500 * time.Millisecond)
+	// For Vizier and Seis, kill the boss after all seals are activated
+	if boss != "Infector" {
+		if err := d.moveToBossSpawn(boss); err != nil {
+			return err
+		}
+		time.Sleep(1500 * time.Millisecond)
 
-	err := d.killSealElite()
-	// Re-enable item pickup if it was disabled
-	if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
-		context.Get().EnableItemPickup()
+		if !d.isBossVisibleAndInRange(boss, 10) {
+			d.ctx.Logger.Debug(fmt.Sprintf("%s not visible, moving closer", boss))
+			if err := d.moveToExactBossSpawn(boss); err != nil {
+				return err
+			}
+		}
+
+		if err := d.killSealElite(); err != nil {
+			return err
+		}
 	}
-
-	if err != nil {
-		return err
-	}
-
-	// Now that it's safe, attempt to pick up items
-	_ = action.ItemPickup(30)
 
 	return nil
 }
 
-func (d *Diablo) moveToBossArea(boss string) error {
-	sealName := map[string]object.Name{
-		"Vizier":   object.DiabloSeal4,
-		"Seis":     object.DiabloSeal3,
-		"Infector": object.DiabloSeal1,
-	}[boss]
+func (d *Diablo) clearAndActivateSeal(sealName object.Name) error {
+	seal, found := d.ctx.Data.Objects.FindOne(sealName)
+	if !found {
+		return fmt.Errorf("seal %v not found", sealName)
+	}
 
-	return action.MoveTo(func() (data.Position, bool) {
-		seal, _ := d.ctx.Data.Objects.FindOne(sealName)
-		return seal.Position, true
+	d.ctx.Logger.Debug(fmt.Sprintf("Moving to seal %v", sealName))
+	if err := action.MoveToCoords(seal.Position); err != nil {
+		d.ctx.Logger.Error(fmt.Sprintf("Failed to move to seal %v: %v", sealName, err))
+		return err
+	}
+
+	d.ctx.Logger.Debug("Clearing monsters around the seal")
+	action.ClearAreaAroundPlayer(10, func(monsters data.Monsters) []data.Monster {
+		return slices.DeleteFunc(monsters, func(m data.Monster) bool {
+			return !d.ctx.Data.AreaData.IsInside(m.Position)
+		})
 	})
+
+	d.ctx.Logger.Debug(fmt.Sprintf("Activating seal %v", sealName))
+	return d.activateSeal(sealName)
 }
 
-func (d *Diablo) moveToBossSpawn(boss string) {
+func (d *Diablo) moveToExactBossSpawn(boss string) error {
+	spawnPositions := map[string]map[int]data.Position{
+		"Vizier": {
+			1: {X: 7664, Y: 5305},
+			2: {X: 7675, Y: 5284},
+		},
+		"Seis": {
+			1: {X: 7795, Y: 5195},
+			2: {X: 7795, Y: 5155},
+		},
+		"Infector": {
+			1: {X: 7894, Y: 5294},
+			2: {X: 7928, Y: 5296},
+		},
+	}
+	layout := map[string]int{
+		"Vizier":   d.vizLayout,
+		"Seis":     d.seisLayout,
+		"Infector": d.infLayout,
+	}[boss]
+	spawnPos := spawnPositions[boss][layout]
+
+	return action.MoveToCoords(spawnPos)
+}
+
+func (d *Diablo) moveToBossSpawn(boss string) error {
 	spawnPositions := map[string]map[int]data.Position{
 		"Vizier": {
 			1: {X: 7664, Y: 5305},
@@ -247,36 +272,51 @@ func (d *Diablo) moveToBossSpawn(boss string) {
 	}[boss]
 
 	spawnPos := spawnPositions[boss][layout]
+	d.ctx.Logger.Debug(fmt.Sprintf("Moving towards %s spawn at X: %d, Y: %d - Layout %d", boss, spawnPos.X, spawnPos.Y, layout))
 
-	// Add a safety offset to avoid moving directly to the boss spawn position
-	safetyOffset := data.Position{X: 10, Y: 10}
-	safeSpawnPos := data.Position{
-		X: spawnPos.X + safetyOffset.X,
-		Y: spawnPos.Y + safetyOffset.Y,
+	// Define a safe distance (8 units is about 16 yards, which should be a good balance)
+	safeDistance := 8
+
+	// Calculate a safe position
+	safePos := d.getSafePosition(spawnPos, safeDistance)
+
+	// Move to the safe position
+	if err := action.MoveToCoords(safePos); err != nil {
+		d.ctx.Logger.Error(fmt.Sprintf("Failed to move to safe position for %s: %v", boss, err))
+		return err
 	}
 
-	d.ctx.Logger.Debug(fmt.Sprintf("Moving to safe position near boss spawn: X: %d, Y: %d - %sLayout %d", safeSpawnPos.X, safeSpawnPos.Y, boss, layout))
-	action.MoveToCoords(safeSpawnPos)
+	// Clear the area around the player
+	action.ClearAreaAroundPlayer(safeDistance+2, d.getMonsterFilter())
 
-	// Clear the area around the safe position before approaching the actual spawn
-	action.ClearAreaAroundPlayer(20, d.getMonsterFilter())
+	return nil
+}
 
-	// Now move to the actual spawn position if it's safe
-	if d.isPositionSafe(spawnPos) {
-		d.ctx.Logger.Debug(fmt.Sprintf("Moving to actual boss spawn: X: %d, Y: %d", spawnPos.X, spawnPos.Y))
-		action.MoveToCoords(spawnPos)
-	} else {
-		d.ctx.Logger.Debug("Staying at safe position, actual spawn is not safe")
+func (d *Diablo) getSafePosition(target data.Position, safeDistance int) data.Position {
+	playerPos := d.ctx.Data.PlayerUnit.Position
+	dx := float64(target.X - playerPos.X)
+	dy := float64(target.Y - playerPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance <= float64(safeDistance) {
+		return playerPos // Already at a safe distance
+	}
+
+	ratio := float64(distance-float64(safeDistance)) / distance
+	return data.Position{
+		X: playerPos.X + int(dx*ratio),
+		Y: playerPos.Y + int(dy*ratio),
 	}
 }
 
-func (d *Diablo) isPositionSafe(pos data.Position) bool {
-	for _, m := range d.ctx.Data.Monsters.Enemies() {
-		if pather.DistanceFromPoint(pos, m.Position) < 10 {
-			return false
+func (d *Diablo) isBossVisibleAndInRange(boss string, maxRange int) bool {
+	for _, m := range d.ctx.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
+		if action.IsMonsterSealElite(m) && d.ctx.PathFinder.DistanceFromMe(m.Position) <= maxRange {
+			d.ctx.Logger.Debug(fmt.Sprintf("%s found at distance %d", boss, d.ctx.PathFinder.DistanceFromMe(m.Position)))
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func (d *Diablo) activateSeal(seal object.Name) error {
@@ -291,31 +331,52 @@ func (d *Diablo) activateSeal(seal object.Name) error {
 		}
 	}
 
+	// Clear a larger area around the seal
+	action.ClearAreaAroundPlayer(10, d.sealActivationFilter())
+
+	// Move closer to the seal if not already near it
+	if d.ctx.PathFinder.DistanceFromMe(obj.Position) > 5 {
+		if err := action.MoveToCoords(obj.Position); err != nil {
+			return fmt.Errorf("failed to move to seal position: %w", err)
+		}
+	}
+
 	return action.InteractObject(obj, func() bool {
 		updatedObj, found := d.ctx.Data.Objects.FindOne(seal)
 		return found && !updatedObj.Selectable
 	})
 }
 
+func (d *Diablo) sealActivationFilter() func(data.Monsters) []data.Monster {
+	return func(monsters data.Monsters) []data.Monster {
+		return slices.DeleteFunc(monsters, func(m data.Monster) bool {
+			return !d.ctx.Data.AreaData.IsInside(m.Position)
+		})
+	}
+}
+
 func (d *Diablo) killSealElite() error {
 	d.ctx.Logger.Debug("Waiting for and killing seal elite")
 	startTime := time.Now()
 
-	monsterFilter := d.getMonsterFilter()
-
 	for time.Since(startTime) < 5*time.Second {
-		for _, m := range monsterFilter(d.ctx.Data.Monsters.Enemies()) {
+		for _, m := range d.getMonsterFilter()(d.ctx.Data.Monsters.Enemies(data.MonsterEliteFilter())) {
 			if action.IsMonsterSealElite(m) {
-				d.ctx.Logger.Debug("Seal defender found!", slog.Int("monsterId", int(m.Name)))
-
-				action.ClearAreaAroundPlayer(20, monsterFilter)
+				d.ctx.Logger.Debug("Seal defender found!")
+				action.ClearAreaAroundPlayer(20, func(monsters data.Monsters) []data.Monster {
+					return slices.DeleteFunc(d.getMonsterFilter()(monsters), func(monster data.Monster) bool {
+						return !action.IsMonsterSealElite(monster)
+					})
+				})
 
 				return d.ctx.Char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
-					filteredMonsters := monsterFilter(dat.Monsters.Enemies())
-					for _, monster := range filteredMonsters {
+					for _, monster := range d.getMonsterFilter()(dat.Monsters.Enemies(data.MonsterEliteFilter())) {
 						if action.IsMonsterSealElite(monster) {
-							d.ctx.Logger.Debug("Attempting to kill seal elite", slog.Int("monsterId", int(monster.Name)), slog.Any("position", monster.Position))
-							return monster.UnitID, true
+							_, _, found := d.ctx.PathFinder.GetPath(monster.Position)
+							if found {
+								d.ctx.Logger.Debug(fmt.Sprintf("Attempting to kill seal elite: %v", monster.Name))
+								return monster.UnitID, true
+							}
 						}
 					}
 					d.ctx.Logger.Debug("Seal elite has been killed or is not found")
@@ -329,6 +390,7 @@ func (d *Diablo) killSealElite() error {
 	d.ctx.Logger.Debug("No seal elite found within 5 seconds")
 	return nil
 }
+
 func (d *Diablo) clearPath(pathName string, monsterFilter func(data.Monsters) []data.Monster) error {
 	action.Buff()
 
@@ -342,17 +404,19 @@ func (d *Diablo) clearPath(pathName string, monsterFilter func(data.Monsters) []
 	}
 
 	for _, pos := range path {
-		if d.ctx.Data.AreaData.Grid.IsWalkable(pos) {
-			d.ctx.Logger.Debug("Moving to coords", slog.Any("coords", pos))
-			action.MoveToCoords(pos)
+		walkablePos := d.findNearestWalkablePosition(pos)
+		d.ctx.Logger.Debug("Moving to coords", slog.Any("original", pos), slog.Any("walkable", walkablePos))
+		if err := action.MoveToCoords(walkablePos); err != nil {
+			d.ctx.Logger.Error("Failed to move to coords", slog.Any("pos", walkablePos), slog.String("error", err.Error()))
+			return err
 		}
 
-		action.ClearAreaAroundPlayer(35, monsterFilter)
+		action.ClearAreaAroundPlayer(35, d.getMonsterFilter())
 
-		d.cleared = append(d.cleared, pos)
+		d.cleared = append(d.cleared, walkablePos)
 	}
 
-	return d.clearStrays(monsterFilter)
+	return d.clearStrays(d.getMonsterFilter())
 }
 
 func (d *Diablo) clearStrays(monsterFilter data.MonsterFilter) error {
@@ -385,39 +449,6 @@ func (d *Diablo) clearStrays(monsterFilter data.MonsterFilter) error {
 	return nil
 }
 
-func (d *Diablo) getLessConcurredCornerAroundSeal(sealPosition data.Position) data.Position {
-	corners := [4]data.Position{
-		{X: sealPosition.X + 7, Y: sealPosition.Y + 7},
-		{X: sealPosition.X - 7, Y: sealPosition.Y + 7},
-		{X: sealPosition.X - 7, Y: sealPosition.Y - 7},
-		{X: sealPosition.X + 7, Y: sealPosition.Y - 7},
-	}
-	bestCorner := 0
-	bestCornerDistance := 0
-	for i, c := range corners {
-		averageDistance := 0
-		monstersFound := 0
-		for _, m := range d.ctx.Data.Monsters.Enemies() {
-			distance := pather.DistanceFromPoint(c, m.Position)
-			if distance < 5 {
-				monstersFound++
-				averageDistance += distance
-			}
-		}
-		if averageDistance > bestCornerDistance {
-			bestCorner = i
-			bestCornerDistance = averageDistance
-		}
-		if monstersFound == 0 {
-			d.ctx.Logger.Debug("Moving to corner", slog.Int("corner", i), slog.Int("monsters", monstersFound))
-			return corners[i]
-		}
-		d.ctx.Logger.Debug("Corner", slog.Int("corner", i), slog.Int("monsters", monstersFound), slog.Int("distance", averageDistance))
-	}
-	d.ctx.Logger.Debug("Moving to corner", slog.Int("corner", bestCorner), slog.Int("monsters", bestCornerDistance))
-	return corners[bestCorner]
-}
-
 func (d *Diablo) getMonsterFilter() func(data.Monsters) []data.Monster {
 	return func(monsters data.Monsters) []data.Monster {
 		filteredMonsters := monsters
@@ -425,29 +456,36 @@ func (d *Diablo) getMonsterFilter() func(data.Monsters) []data.Monster {
 			filteredMonsters = data.MonsterEliteFilter()(filteredMonsters)
 		}
 		filteredMonsters = d.offGridFilter(filteredMonsters)
-		if d.ctx.CharacterCfg.Game.Diablo.SkipStormcasters {
-			filteredMonsters = d.skipStormCasterFilter(filteredMonsters)
-		}
 		return filteredMonsters
 	}
-}
-
-func (d *Diablo) skipStormCasterFilter(monsters data.Monsters) []data.Monster {
-	return slices.DeleteFunc(monsters, func(m data.Monster) bool {
-		isStormcaster := m.Name == npc.StormCaster || m.Name == npc.StormCaster2
-		isSuperUnique := m.Type == data.MonsterTypeSuperUnique
-		if isStormcaster && !isSuperUnique {
-			return true
-		}
-		return false
-	})
 }
 
 func (d *Diablo) offGridFilter(monsters data.Monsters) []data.Monster {
 	return slices.DeleteFunc(monsters, func(m data.Monster) bool {
 		isOffGrid := !d.ctx.Data.AreaData.IsInside(m.Position)
 		if isOffGrid {
+			d.ctx.Logger.Debug("Skipping off-grid monster", slog.Any("monster", m.Name), slog.Any("position", m.Position))
 		}
 		return isOffGrid
 	})
+}
+
+func (d *Diablo) findNearestWalkablePosition(pos data.Position) data.Position {
+	if d.ctx.Data.AreaData.Grid.IsWalkable(pos) {
+		return pos
+	}
+
+	for radius := 1; radius <= 10; radius++ {
+		for x := pos.X - radius; x <= pos.X+radius; x++ {
+			for y := pos.Y - radius; y <= pos.Y+radius; y++ {
+				checkPos := data.Position{X: x, Y: y}
+				if d.ctx.Data.AreaData.Grid.IsWalkable(checkPos) {
+					return checkPos
+				}
+			}
+		}
+	}
+
+	// If no walkable position found, return the original position
+	return pos
 }
