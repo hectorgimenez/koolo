@@ -188,7 +188,7 @@ func (d *Diablo) killBoss(boss string) error {
 
 		if !d.isBossVisibleAndInRange(boss, 10) {
 			d.ctx.Logger.Debug(fmt.Sprintf("%s not visible, moving closer", boss))
-			if err := d.moveToExactBossSpawn(boss); err != nil {
+			if err := d.moveToBossSpawn(boss); err != nil {
 				return err
 			}
 		}
@@ -222,31 +222,6 @@ func (d *Diablo) clearAndActivateSeal(sealName object.Name) error {
 
 	d.ctx.Logger.Debug(fmt.Sprintf("Activating seal %v", sealName))
 	return d.activateSeal(sealName)
-}
-
-func (d *Diablo) moveToExactBossSpawn(boss string) error {
-	spawnPositions := map[string]map[int]data.Position{
-		"Vizier": {
-			1: {X: 7664, Y: 5305},
-			2: {X: 7675, Y: 5284},
-		},
-		"Seis": {
-			1: {X: 7795, Y: 5195},
-			2: {X: 7795, Y: 5155},
-		},
-		"Infector": {
-			1: {X: 7894, Y: 5294},
-			2: {X: 7928, Y: 5296},
-		},
-	}
-	layout := map[string]int{
-		"Vizier":   d.vizLayout,
-		"Seis":     d.seisLayout,
-		"Infector": d.infLayout,
-	}[boss]
-	spawnPos := spawnPositions[boss][layout]
-
-	return action.MoveToCoords(spawnPos)
 }
 
 func (d *Diablo) moveToBossSpawn(boss string) error {
