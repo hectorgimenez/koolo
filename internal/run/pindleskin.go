@@ -49,7 +49,7 @@ func (p Pindleskin) Run() error {
 	}
 
 	err = action.InteractObject(redPortal, func() bool {
-		return p.ctx.Data.PlayerUnit.Area == area.NihlathaksTemple
+		return p.ctx.Data.AreaData.Area == area.NihlathaksTemple && p.ctx.Data.AreaData.IsInside(p.ctx.Data.PlayerUnit.Position)
 	})
 	if err != nil {
 		return err
