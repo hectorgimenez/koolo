@@ -20,6 +20,7 @@ import (
 
 var diabloSpawnPosition = data.Position{X: 7792, Y: 5294}
 var chaosSanctuaryEntrancePosition = data.Position{X: 7790, Y: 5544}
+var ErrBossNotFound = errors.New("seal elite not found")
 
 type Diablo struct {
 	ctx        *context.Status
@@ -185,7 +186,16 @@ func (d *Diablo) killBoss(boss string) error {
 
 	// For Vizier and Seis, kill the boss after all seals are activated
 	if boss != "Infector" {
+		if boss == "Seis" {
+			if err := d.moveToDeSeisSpawn(); err != nil {
+				return err
+			}
+		}
 		if err := d.killSealElite(boss); err != nil {
+			if errors.Is(err, ErrBossNotFound) {
+				d.ctx.Logger.Debug(fmt.Sprintf("%s was already killed during seal clearing", boss))
+				return nil
+			}
 			return err
 		}
 	}
@@ -236,15 +246,9 @@ func (d *Diablo) clearImmediateArea(center data.Position, radius int, monsterFil
 func (d *Diablo) killSealElite(boss string) error {
 	d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
 	startTime := time.Now()
-	timeout := 20 * time.Second
+	timeout := 10 * time.Second
 
 	monsterFilter := d.getMonsterFilter(boss)
-
-	if boss == "Seis" {
-		if err := d.moveToDeSeisSpawn(); err != nil {
-			return err
-		}
-	}
 
 	for time.Since(startTime) < timeout {
 		monsters := monsterFilter(d.ctx.Data.Monsters.Enemies())
@@ -290,6 +294,7 @@ func (d *Diablo) killSealElite(boss string) error {
 
 				if err != nil {
 					d.ctx.Logger.Warn(fmt.Sprintf("Failed to kill seal elite: %v", err))
+					return err
 				} else {
 					d.ctx.Logger.Debug("Successfully killed seal elite")
 					return nil
@@ -298,8 +303,9 @@ func (d *Diablo) killSealElite(boss string) error {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	d.ctx.Logger.Warn(fmt.Sprintf("No seal elite found within %v seconds", timeout.Seconds()))
-	return fmt.Errorf("failed to find and kill seal elite: %s", boss)
+
+	d.ctx.Logger.Warn(fmt.Sprintf("No seal elite found for %s within %v seconds", boss, timeout.Seconds()))
+	return ErrBossNotFound
 }
 
 func (d *Diablo) moveToDeSeisSpawn() error {
@@ -328,6 +334,12 @@ func (d *Diablo) moveToDeSeisSpawn() error {
 
 		currentPos := d.ctx.Data.PlayerUnit.Position
 		d.ctx.Logger.Debug(fmt.Sprintf("Moved to position X: %d, Y: %d", currentPos.X, currentPos.Y))
+
+		// Check if De Seis is already dead
+		if !d.isSealEliteAlive("Seis") {
+			d.ctx.Logger.Debug("De Seis was already killed during seal clearing")
+			return nil
+		}
 
 		// Clear the area
 		action.ClearAreaAroundPlayer(15, d.getMonsterFilter("Seis"))
@@ -399,7 +411,7 @@ func (d *Diablo) getMonsterFilter(boss string) func(data.Monsters) []data.Monste
 			})
 		}
 
-		// If FocusOnElitePacks is not enabled, return all filtered monsters (which are already on-grid)
+		// If FocusOnElitePacks is not enabled, return all filtered monsters
 		return filteredMonsters
 	}
 }
@@ -415,7 +427,7 @@ func (d *Diablo) offGridFilter(monsters data.Monsters, boss string) []data.Monst
 	return slices.DeleteFunc(monsters, func(m data.Monster) bool {
 		isOffGrid := !d.ctx.Data.AreaData.IsInside(m.Position)
 
-		// Special case for Vizier: don't filter out the seal elite even if it's off-grid
+		// Special case for Vizier: don't filter him out even if he's off-grid
 		if boss == "Vizier" && action.IsMonsterSealElite(m) {
 			return false
 		}
@@ -425,6 +437,15 @@ func (d *Diablo) offGridFilter(monsters data.Monsters, boss string) []data.Monst
 		}
 		return isOffGrid
 	})
+}
+func (d *Diablo) isSealEliteAlive(boss string) bool {
+	monsters := d.getMonsterFilter(boss)(d.ctx.Data.Monsters.Enemies())
+	for _, m := range monsters {
+		if action.IsMonsterSealElite(m) {
+			return true
+		}
+	}
+	return false
 }
 
 // TODO make this better it doesnt always work  .for walkable characters
