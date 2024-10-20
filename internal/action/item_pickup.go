@@ -86,7 +86,7 @@ func ItemPickup(maxDistance int) error {
 		))
 
 		distance := ctx.PathFinder.DistanceFromMe(itemToPickup.Position)
-		if distance > 4 { // Only move if the item is more than 4 units away  (3 might be better)
+		if distance > 5 { // Only move if the item is more than 4 units away  (3 might be better)
 			ctx.Logger.Debug("Moving closer to item",
 				slog.Int("distance", distance),
 				slog.String("itemName", itemToPickup.Desc().Name))
