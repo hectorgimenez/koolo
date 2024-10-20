@@ -93,6 +93,13 @@ func attack(settings attackSettings) error {
 	aoe := settings.target == 0
 	lastRun := time.Time{}
 
+	standStillPressed := false
+	defer func() {
+		if standStillPressed {
+			ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		}
+	}()
+
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
@@ -140,7 +147,11 @@ func attack(settings attackSettings) error {
 
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
 			if settings.shouldStandStill {
-				ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
+				standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
+				if !ctx.HID.IsKeyPressed(standStillKey) {
+					ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
+					standStillPressed = true
+				}
 			}
 			x, y := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
 
@@ -148,9 +159,6 @@ func attack(settings attackSettings) error {
 				ctx.HID.Click(game.LeftButton, x, y)
 			} else {
 				ctx.HID.Click(game.RightButton, x, y)
-			}
-			if settings.shouldStandStill {
-				ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 			}
 			lastRun = time.Now()
 			numOfAttacksRemaining--

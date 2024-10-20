@@ -19,8 +19,10 @@ import (
 
 const (
 	fohMaxAttacksLoop = 20
-	fohMinDistance    = 15
+	fohMinDistance    = 14
 	fohMaxDistance    = 20
+	hbMinDistance     = 14
+	hbMaxDistance     = 20
 )
 
 type Foh struct {
@@ -75,10 +77,13 @@ func (s Foh) KillMonsterSequence(
 		hbKey, holyBoltFound := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
 		fohKey, fohFound := s.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
 		convictionKey, convictionFound := s.Data.KeyBindings.KeyBindingForSkill(skill.Conviction)
-		// Ensure Conviction is active
-		if convictionFound {
-			ctx.HID.PressKeyBinding(convictionKey)
-			utils.Sleep(50)
+
+		if !s.Data.PlayerUnit.States.HasState(state.Conviction) {
+			// Ensure Conviction is active
+			if convictionFound {
+				ctx.HID.PressKeyBinding(convictionKey)
+				utils.Sleep(50)
+			}
 		}
 
 		if monster.Type == data.MonsterTypeUnique {
@@ -92,22 +97,35 @@ func (s Foh) KillMonsterSequence(
 
 			if monster.States.HasState(state.Conviction) && isLightningImmune && holyBoltFound {
 				ctx.HID.PressKeyBinding(hbKey)
+				utils.Sleep(50)
+				step.PrimaryAttack(
+					id,
+					1,
+					true,
+					step.Distance(hbMinDistance, hbMaxDistance),
+				)
 			} else if fohFound {
 				ctx.HID.PressKeyBinding(fohKey)
+				utils.Sleep(50)
+				step.PrimaryAttack(
+					id,
+					1,
+					true,
+					step.Distance(fohMinDistance, fohMaxDistance),
+				)
 			} else if holyBoltFound {
 				ctx.HID.PressKeyBinding(hbKey)
+				utils.Sleep(50)
+				step.PrimaryAttack(
+					id,
+					1,
+					true,
+					step.Distance(hbMinDistance, hbMaxDistance),
+				)
 			}
-
-			step.PrimaryAttack(
-				id,
-				3,
-				true,
-				step.Distance(fohMinDistance, fohMaxDistance),
-			)
 		}
-
 		completedAttackLoops++
-		utils.Sleep(50)
+		//	utils.Sleep(50)
 	}
 }
 func (s Foh) attackBoss(bossID data.UnitID, hbKey, fohKey data.KeyBinding) {
