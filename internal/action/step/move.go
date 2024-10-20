@@ -16,6 +16,12 @@ func MoveTo(dest data.Position) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "MoveTo"
 
+	// Check if StandStill is pressed before attempting to move
+	standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
+	if ctx.HID.IsKeyPressed(standStillKey) {
+		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		utils.Sleep(100)
+	}
 	// This is to ensure we finished moving before returning
 	defer func() {
 		for {

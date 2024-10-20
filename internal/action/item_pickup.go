@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"slices"
 )
@@ -45,6 +46,13 @@ func itemFitsInventory(i data.Item) bool {
 func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ItemPickup"
+
+	// Check if StandStill is pressed before attempting to release it
+	standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
+	if ctx.HID.IsKeyPressed(standStillKey) {
+		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		utils.Sleep(100)
+	}
 
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)

@@ -93,10 +93,12 @@ func attack(settings attackSettings) error {
 	aoe := settings.target == 0
 	lastRun := time.Time{}
 
-	// If shouldStandStill is true, ensure we always release the key
-	if settings.shouldStandStill {
-		defer ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
-	}
+	standStillPressed := false
+	defer func() {
+		if standStillPressed {
+			ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		}
+	}()
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
@@ -145,7 +147,11 @@ func attack(settings attackSettings) error {
 
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
 			if settings.shouldStandStill {
-				ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
+				standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
+				if !ctx.HID.IsKeyPressed(standStillKey) {
+					ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
+					standStillPressed = true
+				}
 			}
 			x, y := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
 

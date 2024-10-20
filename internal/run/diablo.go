@@ -399,7 +399,7 @@ func (d *Diablo) getMonsterFilter(boss string) func(data.Monsters) []data.Monste
 			})
 		}
 
-		// If FocusOnElitePacks is not enabled, return all filtered monsters
+		// If FocusOnElitePacks is not enabled, return all filtered monsters (which are already on-grid)
 		return filteredMonsters
 	}
 }
