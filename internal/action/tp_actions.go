@@ -3,8 +3,6 @@ package action
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data"
-
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -26,14 +24,13 @@ func ReturnTown() error {
 		return err
 	}
 
-	// Clear monsters around the portal
-	ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-
-	// Now that it is safe, interact with portal
 	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
 	if !found {
 		return errors.New("portal not found")
 	}
+
+	clearNearbyMonsters(portal.Position, 8)
+	// Now that it is safe, interact with portal
 
 	return InteractObject(portal, func() bool {
 		return ctx.Data.PlayerUnit.Area.IsTown()
@@ -82,20 +79,13 @@ func UsePortalFrom(owner string) error {
 
 	for _, obj := range ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == owner {
-			err := InteractObjectByID(obj.ID, func() bool {
+			return InteractObjectByID(obj.ID, func() bool {
 				if !ctx.Data.PlayerUnit.Area.IsTown() {
 					utils.Sleep(500)
 					return true
 				}
 				return false
 			})
-
-			if err == nil {
-				// Perform actions after re-entering the game area
-
-			}
-
-			return err
 		}
 	}
 

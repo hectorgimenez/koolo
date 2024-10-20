@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"math"
 )
 
 func OpenTPIfLeader() error {
@@ -22,11 +23,7 @@ func OpenTPIfLeader() error {
 }
 
 func IsMonsterSealElite(monster data.Monster) bool {
-	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
-		return true
-	}
-
-	return false
+	return monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster)
 }
 
 func PostRun(isLastRun bool) error {
@@ -63,4 +60,59 @@ func AreaCorrection() error {
 	}
 
 	return nil
+}
+
+// FindNearestWalkablePosition finds the nearest walkable position to the given position
+func FindNearestWalkablePosition(pos data.Position) data.Position {
+	ctx := context.Get()
+	if ctx.Data.AreaData.Grid.IsWalkable(pos) {
+		return pos
+	}
+
+	for radius := 1; radius <= 10; radius++ {
+		for x := pos.X - radius; x <= pos.X+radius; x++ {
+			for y := pos.Y - radius; y <= pos.Y+radius; y++ {
+				checkPos := data.Position{X: x, Y: y}
+				if ctx.Data.AreaData.Grid.IsWalkable(checkPos) {
+					return checkPos
+				}
+			}
+		}
+	}
+
+	return pos
+}
+
+func GetSafePositionTowardsMonster(playerPos, monsterPos data.Position, safeDistance int) data.Position {
+	dx := float64(monsterPos.X - playerPos.X)
+	dy := float64(monsterPos.Y - playerPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance > float64(safeDistance) {
+		ratio := float64(safeDistance) / distance
+		safePos := data.Position{
+			X: playerPos.X + int(dx*ratio),
+			Y: playerPos.Y + int(dy*ratio),
+		}
+		return FindNearestWalkablePosition(safePos)
+	}
+
+	return playerPos
+}
+
+func GetSafePositionAwayFromMonster(playerPos, monsterPos data.Position, safeDistance int) data.Position {
+	dx := float64(playerPos.X - monsterPos.X)
+	dy := float64(playerPos.Y - monsterPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance < float64(safeDistance) {
+		ratio := float64(safeDistance) / distance
+		safePos := data.Position{
+			X: monsterPos.X + int(dx*ratio),
+			Y: monsterPos.Y + int(dy*ratio),
+		}
+		return FindNearestWalkablePosition(safePos)
+	}
+
+	return playerPos
 }
