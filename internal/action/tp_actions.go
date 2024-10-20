@@ -23,7 +23,6 @@ func ReturnTown() error {
 	if err != nil {
 		return err
 	}
-
 	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
 	if !found {
 		return errors.New("portal not found")
