@@ -1,57 +1,41 @@
 package step
 
 import (
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
-type SwapWeaponStep struct {
-	basicStep
-	wantCTA bool
+func SwapToMainWeapon() error {
+	return swapWeapon(false)
 }
 
-func SwapToMainWeapon() *SwapWeaponStep {
-	return &SwapWeaponStep{
-		basicStep: newBasicStep(),
-	}
+func SwapToCTA() error {
+	return swapWeapon(true)
 }
 
-func SwapToCTA() *SwapWeaponStep {
-	return &SwapWeaponStep{
-		basicStep: newBasicStep(),
-		wantCTA:   true,
+func swapWeapon(toCTA bool) error {
+	lastRun := time.Time{}
+
+	ctx := context.Get()
+	ctx.ContextDebug.LastStep = "SwapToCTA"
+
+	for {
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
+
+		if time.Since(lastRun) < time.Millisecond*500 {
+			continue
+		}
+
+		_, found := ctx.Data.PlayerUnit.Skills[skill.BattleOrders]
+		if (toCTA && found) || (!toCTA && !found) {
+			return nil
+		}
+
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+
+		lastRun = time.Now()
 	}
-}
-
-func (s *SwapWeaponStep) Status(d game.Data, _ container.Container) Status {
-	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
-	if (s.wantCTA && found) || (!s.wantCTA && !found) {
-		return s.tryTransitionStatus(StatusCompleted)
-	}
-
-	return s.status
-}
-
-func (s *SwapWeaponStep) Run(d game.Data, container container.Container) error {
-	s.tryTransitionStatus(StatusInProgress)
-
-	if time.Since(s.lastRun) < time.Second {
-		return nil
-	}
-
-	_, found := d.PlayerUnit.Skills[skill.BattleOrders]
-	if (s.wantCTA && found) || (!s.wantCTA && !found) {
-		s.tryTransitionStatus(StatusCompleted)
-
-		return nil
-	}
-
-	container.HID.PressKeyBinding(d.KeyBindings.SwapWeapons)
-
-	s.lastRun = time.Now()
-
-	return nil
 }

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 var events = make(chan Event)
@@ -47,7 +47,7 @@ func (l *Listener) Listen(ctx context.Context) error {
 
 			if e.Image() != nil && config.Koolo.Debug.Screenshots {
 				fileName := fmt.Sprintf("screenshots/error-%s.jpeg", time.Now().Format("2006-01-02 15_04_05"))
-				err := helper.SaveImageJPEG(e.Image(), fileName)
+				err := utils.SaveImageJPEG(e.Image(), fileName)
 				if err != nil {
 					l.logger.Error("error saving screenshot", slog.Any("error", err))
 				}

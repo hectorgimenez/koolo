@@ -30,6 +30,10 @@ func (a A3) RepairNPC() npc.ID {
 	return npc.Hratli
 }
 
+func (a A3) IdentifyNPC() npc.ID {
+	return npc.DeckardCain3
+}
+
 func (a A3) TPWaitingArea(_ game.Data) data.Position {
 	return data.Position{
 		X: 5151,

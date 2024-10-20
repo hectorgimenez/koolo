@@ -4,31 +4,28 @@ import (
 	"log/slog"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/lxn/win"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
-func (b *Builder) DiscoverWaypoint() *Chain {
-	return NewChain(func(d game.Data) []Action {
-		b.Logger.Info("Trying to autodiscover Waypoint for current area", slog.String("area", d.PlayerUnit.Area.Area().Name))
-		for _, o := range d.Objects {
-			if o.IsWaypoint() {
-				return []Action{b.InteractObject(o.Name,
-					func(d game.Data) bool {
-						return d.OpenMenus.Waypoint
-					},
-					step.SyncStep(func(d game.Data) error {
-						b.Logger.Info("Waypoint discovered", slog.String("area", d.PlayerUnit.Area.Area().Name))
-						helper.Sleep(500)
-						b.HID.PressKey(win.VK_ESCAPE)
-						return nil
-					}),
-				)}
-			}
-		}
+func DiscoverWaypoint() error {
+	ctx := context.Get()
+	ctx.ContextDebug.LastAction = "DiscoverWaypoint"
 
-		b.Logger.Info("Waypoint not found :(", slog.String("area", d.PlayerUnit.Area.Area().Name))
-		return nil
-	})
+	ctx.Logger.Info("Trying to autodiscover Waypoint for current area", slog.String("area", ctx.Data.PlayerUnit.Area.Area().Name))
+	for _, o := range ctx.Data.Objects {
+		if o.IsWaypoint() {
+			err := InteractObject(o, func() bool {
+				return ctx.Data.OpenMenus.Waypoint
+			})
+			if err != nil {
+				return err
+			}
+
+			ctx.Logger.Info("Waypoint discovered", slog.String("area", ctx.Data.PlayerUnit.Area.Area().Name))
+			step.CloseAllMenus()
+		}
+	}
+
+	ctx.Logger.Info("Waypoint not found :(", slog.String("area", ctx.Data.PlayerUnit.Area.Area().Name))
+	return nil
 }

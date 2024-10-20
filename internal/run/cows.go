@@ -1,12 +1,9 @@
 package run
 
 import (
+	"errors"
 	"slices"
 	"strings"
-	"time"
-
-	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -14,114 +11,142 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type Cows struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewCows() *Cows {
+	return &Cows{
+		ctx: context.Get(),
+	}
 }
 
 func (a Cows) Name() string {
 	return string(config.CowsRun)
 }
 
-func (a Cows) BuildActions() []action.Action {
-	actions := []action.Action{
-		a.getWirtsLeg(),
+func (a Cows) Run() error {
+	err := a.getWirtsLeg()
+	if err != nil {
+		return err
 	}
 
 	// Sell junk, refill potions, etc. (basically ensure space for getting the TP tome)
-	actions = append(actions, a.builder.PreRun(false)...)
+	action.PreRun(false)
 
-	return append(actions,
-		a.preparePortal(),
-		a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
-			return d.PlayerUnit.Area == area.MooMooFarm
-		}),
-		a.builder.Buff(),
-		a.builder.ClearArea(a.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter()),
-	)
+	err = a.preparePortal()
+	if err != nil {
+		return err
+	}
+
+	townPortal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+	if !found {
+		return errors.New("cow portal not found")
+	}
+
+	err = action.InteractObject(townPortal, func() bool {
+		return a.ctx.Data.AreaData.Area == area.MooMooFarm && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
+	})
+	if err != nil {
+		return err
+	}
+
+	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter())
 }
 
-func (a Cows) getWirtsLeg() action.Action {
-	return action.NewChain(func(d game.Data) []action.Action {
-		if _, found := d.Inventory.Find("WirtsLeg", item.LocationStash, item.LocationInventory); found {
-			a.logger.Info("WirtsLeg found, skip finding it")
-			return nil
-		}
+func (a Cows) getWirtsLeg() error {
+	if _, found := a.ctx.Data.Inventory.Find("WirtsLeg", item.LocationStash, item.LocationInventory); found {
+		a.ctx.Logger.Info("WirtsLeg found, skip finding it")
+		return nil
+	}
 
-		return []action.Action{
-			a.builder.WayPoint(area.StonyField), // Moving to starting point (Stony Field)
-			action.NewChain(func(d game.Data) []action.Action {
-				for _, o := range d.Objects {
-					if o.Name == object.CairnStoneAlpha {
-						return []action.Action{a.builder.MoveToCoords(o.Position)}
-					}
-				}
+	err := action.WayPoint(area.StonyField) // Moving to starting point (Stony Field)
+	if err != nil {
+		return err
+	}
 
-				return nil
-			}),
-			a.builder.ClearAreaAroundPlayer(10, data.MonsterAnyFilter()),
-			a.builder.ItemPickup(false, 15),
-			a.builder.InteractObject(object.PermanentTownPortal, func(d game.Data) bool {
-				return d.PlayerUnit.Area == area.Tristram
-			}, step.Wait(time.Second)),
-			a.builder.InteractObject(object.WirtCorpse, func(d game.Data) bool {
-				_, found := d.Inventory.Find("WirtsLeg")
+	cainStone, found := a.ctx.Data.Objects.FindOne(object.CairnStoneAlpha)
+	if !found {
+		return errors.New("cain stones not found")
+	}
+	err = action.MoveToCoords(cainStone.Position)
+	if err != nil {
+		return err
+	}
+	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
-				return found
-			}),
-			a.builder.ItemPickup(false, 30),
-			a.builder.ReturnTown(),
-		}
+	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+	if !found {
+		return errors.New("tristram not found")
+	}
+	err = action.InteractObject(portal, func() bool {
+		return a.ctx.Data.AreaData.Area == area.Tristram && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
 	})
+	if err != nil {
+		return err
+	}
+
+	wirtCorpse, found := a.ctx.Data.Objects.FindOne(object.WirtCorpse)
+	if !found {
+		return errors.New("wirt corpse not found")
+	}
+	err = action.InteractObject(wirtCorpse, func() bool {
+		_, found := a.ctx.Data.Inventory.Find("WirtsLeg")
+
+		return found
+	})
+
+	return action.ReturnTown()
 }
 
-func (a Cows) preparePortal() action.Action {
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		if d.PlayerUnit.Area != area.RogueEncampment {
-			actions = append(actions, a.builder.WayPoint(area.RogueEncampment))
+func (a Cows) preparePortal() error {
+	err := action.WayPoint(area.RogueEncampment)
+	if err != nil {
+		return err
+	}
+
+	currentWPTomes := make([]data.UnitID, 0)
+	leg, found := a.ctx.Data.Inventory.Find("WirtsLeg")
+	if !found {
+		return errors.New("WirtsLeg could not be found, portal cannot be opened")
+	}
+
+	// Backup current WP tomes in inventory, before getting new one at Akara
+	for _, itm := range a.ctx.Data.Inventory.ByLocation(item.LocationInventory) {
+		if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) {
+			currentWPTomes = append(currentWPTomes, itm.UnitID)
 		}
+	}
 
-		currentWPTomes := make([]data.UnitID, 0)
-		leg, found := d.Inventory.Find("WirtsLeg")
-		if !found {
-			a.logger.Error("WirtsLeg could not be found, portal cannot be opened")
-			return nil
-		}
-
-		// Backup current WP tomes in inventory, before getting new one at Akara
-		for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
-			if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) {
-				currentWPTomes = append(currentWPTomes, itm.UnitID)
-			}
-		}
-
-		return append(actions,
-			a.builder.BuyAtVendor(npc.Akara, action.VendorItemRequest{
-				Item:     item.TomeOfTownPortal,
-				Quantity: 1,
-				Tab:      4,
-			}),
-			action.NewChain(func(d game.Data) []action.Action {
-				// Ensure we are using the new WP tome and not the one that we are using for TPs
-				var newWPTome data.Item
-				for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
-					if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) && !slices.Contains(currentWPTomes, itm.UnitID) {
-						newWPTome = itm
-					}
-				}
-
-				if newWPTome.UnitID == 0 {
-					a.logger.Error("TomeOfTownPortal could not be found, portal cannot be opened")
-					return nil
-				}
-
-				return []action.Action{
-					a.builder.CubeAddItems(leg, newWPTome),
-					a.builder.CubeTransmute(),
-				}
-			}),
-		)
+	err = action.BuyAtVendor(npc.Akara, action.VendorItemRequest{
+		Item:     item.TomeOfTownPortal,
+		Quantity: 1,
+		Tab:      4,
 	})
+	if err != nil {
+		return err
+	}
+
+	// Ensure we are using the new WP tome and not the one that we are using for TPs
+	var newWPTome data.Item
+	for _, itm := range a.ctx.Data.Inventory.ByLocation(item.LocationInventory) {
+		if strings.EqualFold(string(itm.Name), item.TomeOfTownPortal) && !slices.Contains(currentWPTomes, itm.UnitID) {
+			newWPTome = itm
+		}
+	}
+
+	if newWPTome.UnitID == 0 {
+		return errors.New("TomeOfTownPortal could not be found, portal cannot be opened")
+	}
+
+	err = action.CubeAddItems(leg, newWPTome)
+	if err != nil {
+		return err
+	}
+
+	return action.CubeTransmute()
 }

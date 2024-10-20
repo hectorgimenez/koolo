@@ -2,14 +2,14 @@ package server
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
-	koolo "github.com/hectorgimenez/koolo/internal"
+	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
 )
 
 type IndexData struct {
 	ErrorMessage string
 	Version      string
-	Status       map[string]koolo.Stats
+	Status       map[string]bot.Stats
 	DropCount    map[string]int
 }
 
@@ -23,6 +23,7 @@ type CharacterSettings struct {
 	ErrorMessage string
 	Supervisor   string
 	Config       *config.CharacterCfg
+	DayNames     []string
 	EnabledRuns  []string
 	DisabledRuns []string
 	AvailableTZs map[int]string

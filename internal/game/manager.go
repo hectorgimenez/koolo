@@ -12,14 +12,10 @@ import (
 	"github.com/billgraziano/dpapi"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
-)
-
-var (
-	user32 = windows.NewLazySystemDLL("user32.dll")
 )
 
 type Manager struct {
@@ -44,24 +40,24 @@ func (gm *Manager) ExitGame() error {
 		if !gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	// If we are still in game, probably character is dead, so let's do it nicely.
 	// Probably closing the socket is more reliable, but was not working properly for me on singleplayer.
 	for range 10 {
-		if gm.gr.GetData(false).OpenMenus.QuitMenu {
+		if gm.gr.GetData().OpenMenus.QuitMenu {
 			gm.hid.Click(LeftButton, gm.gr.GameAreaSizeX/2, int(float64(gm.gr.GameAreaSizeY)/2.2))
 
 			for range 5 {
 				if !gm.gr.InGame() {
 					return nil
 				}
-				helper.Sleep(1000)
+				utils.Sleep(1000)
 			}
 		}
 		gm.hid.PressKey(win.VK_ESCAPE)
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	return errors.New("error exiting game! Timeout")
@@ -73,11 +69,11 @@ func (gm *Manager) NewGame() error {
 	}
 
 	for range 30 {
-		if gm.gr.InCharacterSelectionScreen() {
-			helper.Sleep(2000) // Wait for character selection screen to load
+		if gm.gr.IsInCharacterSelectionScreen() {
 			break
+		} else {
+			utils.Sleep(500)
 		}
-		helper.Sleep(500)
 	}
 
 	difficultyPosition := map[difficulty.Difficulty]struct {
@@ -91,14 +87,14 @@ func (gm *Manager) NewGame() error {
 	createX := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty].X
 	createY := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty].Y
 	gm.hid.Click(LeftButton, 600, 650)
-	helper.Sleep(250)
+	utils.Sleep(250)
 	gm.hid.Click(LeftButton, createX, createY)
 
 	for range 12 {
 		if gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(500)
+		utils.Sleep(500)
 	}
 
 	return errors.New("timeout")
@@ -111,13 +107,10 @@ func (gm *Manager) clearGameNameOrPasswordField() {
 }
 
 func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
-	// Enter bnet lobby
-	gm.hid.Click(LeftButton, 744, 650)
-	helper.Sleep(1200)
 
 	// Click "Create game" tab
 	gm.hid.Click(LeftButton, 845, 54)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	difficultyPosition := map[difficulty.Difficulty]struct {
 		X, Y int
@@ -129,7 +122,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 
 	difficultyPos := difficultyPosition[config.Characters[gm.supervisorName].Game.Difficulty]
 	gm.hid.Click(LeftButton, difficultyPos.X, difficultyPos.Y)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 1000, 116)
@@ -141,7 +134,7 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 
 	// Same for password
 	gm.hid.Click(LeftButton, 1000, 161)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	gamePassword := config.Characters[gm.supervisorName].Companion.GamePassword
 	if gamePassword != "" {
 		gm.clearGameNameOrPasswordField()
@@ -155,35 +148,32 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 		if gm.gr.InGame() {
 			return gameName, nil
 		}
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	return gameName, errors.New("error creating game! Timeout")
 }
 
 func (gm *Manager) JoinOnlineGame(gameName, password string) error {
-	// Enter bnet lobby
-	gm.hid.Click(LeftButton, 744, 650)
-	helper.Sleep(1200)
 
 	// Click "Join game" tab
 	gm.hid.Click(LeftButton, 977, 54)
-	helper.Sleep(200)
+	utils.Sleep(200)
 
 	// Click the game name textbox, delete text and type new game name
 	gm.hid.Click(LeftButton, 950, 100)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	gm.clearGameNameOrPasswordField()
-	helper.Sleep(200)
+	utils.Sleep(200)
 	for _, ch := range gameName {
 		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
 
 	// Same for password
 	gm.hid.Click(LeftButton, 1130, 100)
-	helper.Sleep(200)
+	utils.Sleep(200)
 	gm.clearGameNameOrPasswordField()
-	helper.Sleep(200)
+	utils.Sleep(200)
 	for _, ch := range password {
 		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
@@ -193,7 +183,7 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 		if gm.gr.InGame() {
 			return nil
 		}
-		helper.Sleep(1000)
+		utils.Sleep(1000)
 	}
 
 	return errors.New("error joining game! Timeout")
@@ -201,57 +191,6 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 
 func (gm *Manager) InGame() bool {
 	return gm.gr.InGame()
-}
-
-func terminateProcessByName(name string) error {
-	const (
-		PROCESS_TERMINATE  = 0x0001
-		MAX_PATH           = 260
-		TH32CS_SNAPPROCESS = 0x00000002
-	)
-	hSnapshot, err := windows.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-	if err != nil {
-		return fmt.Errorf("failed to create process snapshot")
-	}
-	defer windows.CloseHandle(hSnapshot)
-
-	var pe32 windows.ProcessEntry32
-	pe32.Size = uint32(unsafe.Sizeof(pe32))
-
-	if err := windows.Process32First(hSnapshot, &pe32); err != nil {
-		return fmt.Errorf("error during process list")
-	}
-
-	var pid uint32
-	for {
-		processName := windows.UTF16ToString(pe32.ExeFile[:])
-		if processName == name {
-			pid = pe32.ProcessID
-			break
-		}
-		if err := windows.Process32Next(hSnapshot, &pe32); err != nil {
-			if err == syscall.ERROR_NO_MORE_FILES {
-				break
-			}
-		}
-	}
-
-	if pid == 0 {
-		return nil
-	}
-
-	hProcess, err := windows.OpenProcess(PROCESS_TERMINATE, false, pid)
-	if err != nil {
-		return err
-	}
-
-	defer windows.CloseHandle(hProcess)
-
-	if err := windows.TerminateProcess(hProcess, 0); err != nil {
-		return fmt.Errorf("failed to terminate process")
-	}
-
-	return nil
 }
 
 func StartGame(username string, password string, authmethod string, authToken string, realm string, arguments string, useCustomSettings bool) (uint32, win.HWND, error) {
@@ -278,11 +217,40 @@ func StartGame(username string, password string, authmethod string, authToken st
 	// Parse the provided additional arguments
 	additionalArguments := strings.Fields(arguments)
 
+	// Let's use the mod directory for storing the settings, so we stop overwriting the default config
+	if useCustomSettings {
+		modName := "koolo"
+		found := false
+		for i, arg := range additionalArguments {
+			if arg == "-mod" {
+				modName = additionalArguments[i+1]
+				found = true
+				break
+			}
+		}
+		if !found {
+			additionalArguments = append(additionalArguments, "-mod", modName)
+		}
+
+		// If there is no real mod, let's create a fake mod called "koolo" so we can store our own config
+		if modName == "koolo" {
+			err = config.InstallMod()
+			if err != nil {
+				return 0, 0, err
+			}
+		}
+
+		// Replace game mod settings with the custom ones
+		err = config.ReplaceGameSettings(modName)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
 	// Add them to the full argument list
 	fullArgs := append(baseArgs, additionalArguments...)
 
 	if authmethod == "TokenAuth" {
-
 		// Entropy buffer
 		entropy := []byte{0xc8, 0x76, 0xf4, 0xae, 0x4c, 0x95, 0x2e, 0xfe, 0xf2, 0xfa, 0x0f, 0x54, 0x19, 0xc0, 0x9c, 0x43}
 		tokenBytes := []byte(authToken)
@@ -327,14 +295,6 @@ func StartGame(username string, password string, authmethod string, authToken st
 
 	// Start the game
 	cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", fullArgs...)
-
-	if useCustomSettings {
-		err = config.ReplaceGameSettings()
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-
 	err = cmd.Start()
 	if err != nil {
 		return 0, 0, err

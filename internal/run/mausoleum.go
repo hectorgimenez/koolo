@@ -5,35 +5,52 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type Mausoleum struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewMausoleum() *Mausoleum {
+	return &Mausoleum{
+		ctx: context.Get(),
+	}
 }
 
 func (a Mausoleum) Name() string {
 	return string(config.MausoleumRun)
 }
 
-func (a Mausoleum) BuildActions() []action.Action {
-	openChests := a.CharacterCfg.Game.Mausoleum.OpenChests
-	onlyElites := a.CharacterCfg.Game.Mausoleum.FocusOnElitePacks
-	filter := data.MonsterAnyFilter()
+func (a Mausoleum) Run() error {
 
-	if onlyElites {
-		filter = data.MonsterEliteFilter()
+	// Define a defaut filter
+	monsterFilter := data.MonsterAnyFilter()
+
+	// Update filter if we selected to clear only elites
+	if a.ctx.CharacterCfg.Game.Mausoleum.FocusOnElitePacks {
+		monsterFilter = data.MonsterEliteFilter()
 	}
 
-	actions := []action.Action{
-		a.builder.WayPoint(area.ColdPlains),
-		a.builder.MoveToArea(area.BurialGrounds),
-		a.builder.MoveToArea(area.Mausoleum),
+	// Use the waypoint
+	err := action.WayPoint(area.ColdPlains)
+	if err != nil {
+		return err
 	}
 
-	actions = append(actions,
-		a.builder.OpenTPIfLeader(),
-	)
+	// Move to the BurialGrounds
+	if err = action.MoveToArea(area.BurialGrounds); err != nil {
+		return err
+	}
 
-	// Clear Mausoleum
-	return append(actions, a.builder.ClearArea(openChests, filter))
+	// Move to the Mausoleum
+	if err = action.MoveToArea(area.Mausoleum); err != nil {
+		return err
+	}
+
+	// Open a TP If we're the leader
+	action.OpenTPIfLeader()
+
+	// Clear the area
+	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Mausoleum.OpenChests, monsterFilter)
 }

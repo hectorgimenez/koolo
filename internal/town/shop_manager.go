@@ -2,98 +2,85 @@ package town
 
 import (
 	"fmt"
-	"log/slog"
-	"math/rand"
-
-	"github.com/hectorgimenez/d2go/pkg/nip"
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/health"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/d2go/pkg/nip"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
-type ShopManager struct {
-	logger    *slog.Logger
-	bm        health.BeltManager
-	container container.Container
-}
+func BuyConsumables(forceRefill bool) {
+	ctx := context.Get()
 
-func NewShopManager(logger *slog.Logger, bm health.BeltManager, container container.Container) ShopManager {
-	return ShopManager{
-		logger:    logger,
-		bm:        bm,
-		container: container,
-	}
-}
+	missingHealingPots := ctx.BeltManager.GetMissingCount(data.HealingPotion)
+	missingManaPots := ctx.BeltManager.GetMissingCount(data.ManaPotion)
 
-func (sm ShopManager) BuyConsumables(d game.Data, forceRefill bool) {
-	missingHealingPots := sm.bm.GetMissingCount(d, data.HealingPotion)
-	missingManaPots := sm.bm.GetMissingCount(d, data.ManaPotion)
-
-	sm.logger.Debug(fmt.Sprintf("Buying: %d Healing potions and %d Mana potions", missingHealingPots, missingManaPots))
+	ctx.Logger.Debug(fmt.Sprintf("Buying: %d Healing potions and %d Mana potions", missingHealingPots, missingManaPots))
 
 	// We traverse the items in reverse order because vendor has the best potions at the end
-	pot, found := sm.findFirstMatch(d, "superhealingpotion", "greaterhealingpotion", "healingpotion", "lighthealingpotion", "minorhealingpotion")
+	pot, found := findFirstMatch("superhealingpotion", "greaterhealingpotion", "healingpotion", "lighthealingpotion", "minorhealingpotion")
 	if found && missingHealingPots > 0 {
-		sm.BuyItem(pot, missingHealingPots)
+		BuyItem(pot, missingHealingPots)
 		missingHealingPots = 0
 	}
 
-	pot, found = sm.findFirstMatch(d, "supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
+	pot, found = findFirstMatch("supermanapotion", "greatermanapotion", "manapotion", "lightmanapotion", "minormanapotion")
 	// In Normal greater potions are expensive as we are low level, let's keep with cheap ones
-	if d.CharacterCfg.Game.Difficulty == "normal" {
-		pot, found = sm.findFirstMatch(d, "manapotion", "lightmanapotion", "minormanapotion")
+	if ctx.CharacterCfg.Game.Difficulty == "normal" {
+		pot, found = findFirstMatch("manapotion", "lightmanapotion", "minormanapotion")
 	}
 	if found && missingManaPots > 0 {
-		sm.BuyItem(pot, missingManaPots)
+		BuyItem(pot, missingManaPots)
 		missingManaPots = 0
 	}
 
-	if sm.ShouldBuyTPs(d) || forceRefill {
-		if _, found := d.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
-			sm.logger.Info("TP Tome not found, buying one...")
-			if itm, itmFound := d.Inventory.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
-				sm.BuyItem(itm, 1)
+	if ShouldBuyTPs() || forceRefill {
+		if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
+			ctx.Logger.Info("TP Tome not found, buying one...")
+			if itm, itmFound := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
+				BuyItem(itm, 1)
 			}
 		}
-		sm.logger.Debug("Filling TP Tome...")
-		if itm, found := d.Inventory.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
-			sm.buyFullStack(itm)
+		ctx.Logger.Debug("Filling TP Tome...")
+		if itm, found := ctx.Data.Inventory.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
+			buyFullStack(itm)
 		}
 	}
 
-	if sm.ShouldBuyIDs(d) || forceRefill {
-		if _, found := d.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); !found {
-			sm.logger.Info("ID Tome not found, buying one...")
-			if itm, itmFound := d.Inventory.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
-				sm.BuyItem(itm, 1)
+	if ShouldBuyIDs() || forceRefill {
+		if _, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); !found {
+			ctx.Logger.Info("ID Tome not found, buying one...")
+			if itm, itmFound := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
+				BuyItem(itm, 1)
 			}
 		}
-		sm.logger.Debug("Filling IDs Tome...")
-		if itm, found := d.Inventory.Find(item.ScrollOfIdentify, item.LocationVendor); found {
-			sm.buyFullStack(itm)
+		ctx.Logger.Debug("Filling IDs Tome...")
+		if itm, found := ctx.Data.Inventory.Find(item.ScrollOfIdentify, item.LocationVendor); found {
+			buyFullStack(itm)
 		}
 	}
 
-	keyQuantity, shouldBuyKeys := sm.ShouldBuyKeys(d)
-	if shouldBuyKeys || forceRefill {
-		if itm, found := d.Inventory.Find(item.Key, item.LocationVendor); found {
-			sm.logger.Debug("Vendor with keys detected, provisioning...")
+	keyQuantity, shouldBuyKeys := ShouldBuyKeys()
+	if ctx.Data.PlayerUnit.Class != data.Assassin && (shouldBuyKeys || forceRefill) {
+		if itm, found := ctx.Data.Inventory.Find(item.Key, item.LocationVendor); found {
+			ctx.Logger.Debug("Vendor with keys detected, provisioning...")
+
 			qty, _ := itm.FindStat(stat.Quantity, 0)
 			if (qty.Value + keyQuantity) <= 12 {
-				sm.buyFullStack(itm)
+				buyFullStack(itm)
 			}
 		}
 	}
 }
 
-func (sm ShopManager) findFirstMatch(d game.Data, itemNames ...string) (data.Item, bool) {
+func findFirstMatch(itemNames ...string) (data.Item, bool) {
+	ctx := context.Get()
 	for _, name := range itemNames {
-		if itm, found := d.Inventory.Find(item.Name(name), item.LocationVendor); found {
+		if itm, found := ctx.Data.Inventory.Find(item.Name(name), item.LocationVendor); found {
 			return itm, true
 		}
 	}
@@ -101,30 +88,30 @@ func (sm ShopManager) findFirstMatch(d game.Data, itemNames ...string) (data.Ite
 	return data.Item{}, false
 }
 
-func (sm ShopManager) ShouldBuyTPs(d game.Data) bool {
-	portalTome, found := d.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory)
+func ShouldBuyTPs() bool {
+	portalTome, found := context.Get().Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory)
 	if !found {
 		return true
 	}
 
 	qty, found := portalTome.FindStat(stat.Quantity, 0)
 
-	return qty.Value <= rand.Intn(5-1)+1 || !found
+	return qty.Value < 20 || !found
 }
 
-func (sm ShopManager) ShouldBuyIDs(d game.Data) bool {
-	idTome, found := d.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
+func ShouldBuyIDs() bool {
+	idTome, found := context.Get().Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
 		return true
 	}
 
 	qty, found := idTome.FindStat(stat.Quantity, 0)
 
-	return qty.Value <= rand.Intn(7-3)+1 || !found
+	return qty.Value < 20 || !found
 }
 
-func (sm ShopManager) ShouldBuyKeys(d game.Data) (int, bool) {
-	keys, found := d.Inventory.Find(item.Key, item.LocationInventory)
+func ShouldBuyKeys() (int, bool) {
+	keys, found := context.Get().Data.Inventory.Find(item.Key, item.LocationInventory)
 	if !found {
 		return 12, false
 	}
@@ -137,43 +124,46 @@ func (sm ShopManager) ShouldBuyKeys(d game.Data) (int, bool) {
 	return qty.Value, true
 }
 
-func (sm ShopManager) SellJunk(d game.Data) {
-	for _, i := range ItemsToBeSold(d) {
-		if d.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
-			sm.SellItem(i)
+func SellJunk() {
+	for _, i := range ItemsToBeSold() {
+		if context.Get().Data.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 1 {
+			SellItem(i)
 		}
 	}
 }
 
-func (sm ShopManager) SellItem(i data.Item) {
-	screenPos := sm.container.UIManager.GetScreenCoordsForItem(i)
+func SellItem(i data.Item) {
+	ctx := context.Get()
+	screenPos := ui.GetScreenCoordsForItem(i)
 
-	helper.Sleep(500)
-	sm.container.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-	helper.Sleep(500)
-	sm.logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Desc().Name, i.Quality.ToString()))
+	time.Sleep(500 * time.Millisecond)
+	ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+	time.Sleep(500 * time.Millisecond)
+	ctx.Logger.Debug(fmt.Sprintf("Item %s [%s] sold", i.Desc().Name, i.Quality.ToString()))
 }
 
-func (sm ShopManager) BuyItem(i data.Item, quantity int) {
-	screenPos := sm.container.UIManager.GetScreenCoordsForItem(i)
+func BuyItem(i data.Item, quantity int) {
+	ctx := context.Get()
+	screenPos := ui.GetScreenCoordsForItem(i)
 
-	helper.Sleep(250)
+	time.Sleep(250 * time.Millisecond)
 	for k := 0; k < quantity; k++ {
-		sm.container.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-		helper.Sleep(900)
-		sm.logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Desc().Name, i.Position.X, i.Position.Y))
+		ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		time.Sleep(900 * time.Millisecond)
+		ctx.Logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Desc().Name, i.Position.X, i.Position.Y))
 	}
 }
 
-func (sm ShopManager) buyFullStack(i data.Item) {
-	screenPos := sm.container.UIManager.GetScreenCoordsForItem(i)
+func buyFullStack(i data.Item) {
+	screenPos := ui.GetScreenCoordsForItem(i)
 
-	sm.container.HID.ClickWithModifier(game.RightButton, screenPos.X, screenPos.Y, game.ShiftKey)
-	helper.Sleep(500)
+	context.Get().HID.ClickWithModifier(game.RightButton, screenPos.X, screenPos.Y, game.ShiftKey)
+	time.Sleep(500 * time.Millisecond)
 }
 
-func ItemsToBeSold(d game.Data) (items []data.Item) {
-	for _, itm := range d.Inventory.ByLocation(item.LocationInventory) {
+func ItemsToBeSold() (items []data.Item) {
+	ctx := context.Get()
+	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		if itm.IsFromQuest() {
 			continue
 		}
@@ -186,9 +176,9 @@ func ItemsToBeSold(d game.Data) (items []data.Item) {
 			continue
 		}
 
-		if d.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
+		if ctx.Data.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
 			// If item is a full match will be stashed, we don't want to sell it
-			if _, result := d.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
+			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
 				continue
 			}
 			items = append(items, itm)

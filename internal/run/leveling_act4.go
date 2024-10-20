@@ -6,42 +6,68 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-func (a Leveling) act4() action.Action {
+func (a Leveling) act4() error {
 	running := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if running || d.PlayerUnit.Area != area.ThePandemoniumFortress {
-			return nil
-		}
+	if running || a.ctx.Data.PlayerUnit.Area != area.ThePandemoniumFortress {
+		return nil
+	}
 
-		running = true
+	running = true
 
-		if !d.Quests[quest.Act4TheFallenAngel].Completed() {
-			return a.izual()
-		}
+	if !a.ctx.Data.Quests[quest.Act4TheFallenAngel].Completed() {
+		a.izual()
+	}
 
-		return Diablo{baseRun: a.baseRun, bm: a.bm}.BuildActions()
-	})
+	diabloRun := NewDiablo()
+	err := diabloRun.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (a Leveling) izual() []action.Action {
-	return []action.Action{
-		a.builder.MoveToArea(area.OuterSteppes),
-		a.builder.Buff(),
-		a.builder.MoveToArea(area.PlainsOfDespair),
-		a.builder.Buff(),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			izual, found := d.NPCs.FindOne(npc.Izual)
-			if !found {
-				return data.Position{}, false
-			}
-
-			return izual.Positions[0], true
-		}),
-		a.char.KillIzual(),
-		a.builder.ReturnTown(),
-		a.builder.InteractNPC(npc.Tyrael2),
+func (a Leveling) izual() error {
+	err := action.MoveToArea(area.OuterSteppes)
+	if err != nil {
+		return err
 	}
+	action.Buff()
+
+	err = action.MoveToArea(area.PlainsOfDespair)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		izual, found := a.ctx.Data.NPCs.FindOne(npc.Izual)
+		if !found {
+			return data.Position{}, false
+		}
+
+		return izual.Positions[0], true
+	})
+	if err != nil {
+		return err
+	}
+
+	err = a.ctx.Char.KillIzual()
+	if err != nil {
+		return err
+	}
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	err = action.InteractNPC(npc.Tyrael2)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

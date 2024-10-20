@@ -5,33 +5,43 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type DrifterCavern struct {
-	baseRun
+	ctx *context.Status
 }
 
-func (a DrifterCavern) Name() string {
+func NewDriverCavern() *DrifterCavern {
+	return &DrifterCavern{
+		ctx: context.Get(),
+	}
+}
+
+func (s DrifterCavern) Name() string {
 	return string(config.DrifterCavernRun)
 }
 
-func (a DrifterCavern) BuildActions() (actions []action.Action) {
-	openChests := a.CharacterCfg.Game.DrifterCavern.OpenChests
-	onlyElites := a.CharacterCfg.Game.DrifterCavern.FocusOnElitePacks
-	filter := data.MonsterAnyFilter()
+func (s DrifterCavern) Run() error {
+	// Define a default monster filter
+	monsterFilter := data.MonsterAnyFilter()
 
-	if onlyElites {
-		filter = data.MonsterEliteFilter()
+	// Update filter if we selected to clear only elites
+	if s.ctx.CharacterCfg.Game.DrifterCavern.FocusOnElitePacks {
+		monsterFilter = data.MonsterEliteFilter()
 	}
 
-	actions = []action.Action{
-		a.builder.WayPoint(area.GlacialTrail),
-		a.builder.MoveToArea(area.DrifterCavern),
+	// Use the waypoint
+	err := action.WayPoint(area.GlacialTrail)
+	if err != nil {
+		return err
 	}
 
-	/*actions = append(actions,
-		a.builder.OpenTPIfLeader(),
-	)*/
+	// Move to the correct area
+	if err = action.MoveToArea(area.DrifterCavern); err != nil {
+		return err
+	}
 
-	return append(actions, a.builder.ClearArea(openChests, filter))
+	// Clear the area
+	return action.ClearCurrentLevel(s.ctx.CharacterCfg.Game.DrifterCavern.OpenChests, monsterFilter)
 }

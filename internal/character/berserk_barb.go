@@ -3,399 +3,372 @@ package character
 import (
 	"log/slog"
 	"sort"
+	"sync/atomic"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/action"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
-	"github.com/hectorgimenez/d2go/pkg/utils"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 type Berserker struct {
 	BaseCharacter
+	isKillingCouncil atomic.Bool
 }
 
-func (s Berserker) CheckKeyBindings(d game.Data) []skill.ID {
-	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem, skill.TomeOfTownPortal}
+const (
+	maxHorkRange      = 40
+	meleeRange        = 5
+	maxAttackAttempts = 20
+)
+
+func (s *Berserker) CheckKeyBindings() []skill.ID {
+	requireKeybindings := []skill.ID{skill.BattleCommand, skill.BattleOrders, skill.Shout, skill.FindItem, skill.Berserk}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
 }
 
-func (s Berserker) KillMonsterSequence(
+func (s *Berserker) IsKillingCouncil() bool {
+	return s.isKillingCouncil.Load()
+}
+
+func (s *Berserker) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
-	opts ...step.AttackOption,
-) action.Action {
-	var attackAttempts int
-	var findItemAttempts int
-	const maxFindItemAttempts = 1
-	const maxRange = 15
+) error {
 
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		// Monster Selection
-		id, found := monsterSelector(d)
-		if found {
-			s.logger.Debug("Monster found", slog.Int("unitID", int(id)))
-			attackAttempts = 0
-
-			monster, monsterFound := d.Monsters.FindByID(id)
-			if !monsterFound {
-				s.logger.Debug("Monster data not found")
-				return []step.Step{}
-			}
-
-			if !s.preBattleChecks(d, id, skipOnImmunities) {
-				s.logger.Debug("Pre-battle checks failed")
-				return []step.Step{}
-			}
-
-			steps = append(steps, step.MoveTo(monster.Position))
-			s.logger.Debug("Added step to move towards monster", slog.Any("position", monster.Position))
-
-			s.logger.Debug("Adding primary attack step", slog.Int("attemptNumber", attackAttempts+1))
-			attackStep := step.PrimaryAttack(id, 1, false, step.Distance(1, maxRange))
-			steps = append(steps, step.SyncStep(func(d game.Data) error {
-				s.logger.Debug("Executing primary attack", slog.Int("attemptNumber", attackAttempts+1))
-				err := attackStep.Run(d, s.container)
-				if err != nil {
-					s.logger.Debug("Primary attack failed", slog.String("error", err.Error()))
-				} else {
-					s.logger.Debug("Primary attack executed successfully")
-				}
-				attackAttempts++
-				return err
-			}))
-
-			if attackAttempts >= 5 {
-				s.logger.Debug("Resetting attack sequence after multiple attempts")
-				attackAttempts = 0
-			}
-		} else {
-			s.logger.Debug("No targetable monster found")
-			attackAttempts = 0
-
-			// If no close monsters, attempt Find Item
-			if findItemAttempts < maxFindItemAttempts {
-				foundCorpse := s.FindItemOnNearbyCorpses(d, maxRange, time.Millisecond*100)
-				if foundCorpse {
-					findItemAttempts++
-					steps = append(steps, step.Wait(time.Millisecond*100))
-				} else {
-					findItemAttempts = maxFindItemAttempts // Ensure we don't try Find Item again if no corpses found
-				}
-			}
-
-			if findItemAttempts >= maxFindItemAttempts {
-				s.logger.Debug("Find Item attempts exhausted, exiting sequence")
-				return nil
-			}
-		}
-
-		s.logger.Debug("Steps created", slog.Int("stepCount", len(steps)))
-		return steps
-	}, action.RepeatUntilNoSteps())
-}
-
-func (s *Berserker) FindItemOnNearbyCorpses(d game.Data, maxRange int, waitTime time.Duration) bool {
-	s.logger.Debug("Attempting Find Item on nearby corpses", slog.Int("total_corpses", len(d.Corpses)))
-
-	findItemKey, found := d.KeyBindings.KeyBindingForSkill(skill.FindItem)
-	if !found {
-		s.logger.Debug("Find Item skill not found in key bindings")
-		return false
-	}
-
-	playerPos := d.PlayerUnit.Position
-	originalPosition := playerPos
-	corpseFound := false
-	successfulFindItems := 0
-	checkedCorpses := make(map[data.UnitID]bool)
-
-	// Sort corpses by distance from the player
-	sort.Slice(d.Corpses, func(i, j int) bool {
-		distI := utils.DistanceFromPoint(playerPos, d.Corpses[i].Position)
-		distJ := utils.DistanceFromPoint(playerPos, d.Corpses[j].Position)
-		return distI < distJ
-	})
-
-	for _, corpse := range d.Corpses {
-		distance := utils.DistanceFromPoint(playerPos, corpse.Position)
-
-		if distance > maxRange {
-			s.logger.Debug("Reached corpse beyond maxRange, stopping Find Item process",
-				slog.Int("distance", int(distance)),
-				slog.Int("maxRange", maxRange))
-			break
-		}
-
-		// Check if this corpse has already been processed
-		if checkedCorpses[corpse.UnitID] {
-			s.logger.Debug("Skipping already checked corpse", slog.Any("corpse_id", corpse.UnitID))
-			continue
-		}
-
-		if corpse.Type != data.MonsterTypeChampion &&
-			corpse.Type != data.MonsterTypeMinion &&
-			corpse.Type != data.MonsterTypeUnique &&
-			corpse.Type != data.MonsterTypeSuperUnique {
-			s.logger.Debug("Skipping corpse: not a desired monster type",
-				slog.Any("corpse_id", corpse.UnitID),
-				slog.Any("monster_type", corpse.Type))
-			continue
-		}
-
-		s.logger.Debug("Preparing to use Find Item on corpse",
-			slog.Any("corpse_id", corpse.UnitID),
-			slog.Any("corpse_position", corpse.Position),
-			slog.Any("monster_type", corpse.Type),
-			slog.Int("distance", int(distance)))
-
-		screenX, screenY := s.container.PathFinder.GameCoordsToScreenCords(
-			playerPos.X, playerPos.Y,
-			corpse.Position.X, corpse.Position.Y,
-		)
-
-		s.logger.Debug("Find Item screen coordinates",
-			slog.Int("screenX", screenX),
-			slog.Int("screenY", screenY),
-			slog.Any("playerPos", playerPos),
-			slog.Any("corpsePos", corpse.Position))
-
-		s.container.HID.MovePointer(screenX, screenY)
-		time.Sleep(waitTime)
-
-		s.container.HID.PressKeyBinding(findItemKey)
-		time.Sleep(waitTime)
-
-		s.container.HID.Click(game.RightButton, screenX, screenY)
-		s.logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
-		time.Sleep(waitTime)
-
-		// Mark this corpse as checked
-		checkedCorpses[corpse.UnitID] = true
-
-		corpseFound = true
-		successfulFindItems++
-
-		if d.PlayerUnit.States.HasState(state.Cooldown) {
-			s.logger.Debug("Find Item on cooldown, stopping")
-			break
-		}
-
-		playerPos = d.PlayerUnit.Position
-
-		if utils.DistanceFromPoint(originalPosition, playerPos) > maxRange {
-			s.logger.Debug("Moved too far from original position, stopping Find Item",
-				slog.Any("originalPosition", originalPosition),
-				slog.Any("currentPosition", playerPos),
-				slog.Int("distance", int(utils.DistanceFromPoint(originalPosition, playerPos))))
-			break
-		}
-	}
-
-	s.logger.Debug("Find Item sequence completed",
-		slog.Bool("corpse_found", corpseFound),
-		slog.Int("successful_find_items", successfulFindItems))
-	return corpseFound
-}
-
-func (s Berserker) PreCTABuffSkills(d game.Data) []skill.ID {
-	return []skill.ID{}
-}
-
-func (s Berserker) BuffSkills(d game.Data) []skill.ID {
-	skillsList := make([]skill.ID, 0)
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.BattleCommand); found {
-		skillsList = append(skillsList, skill.BattleCommand)
-	}
-
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.Shout); found {
-		skillsList = append(skillsList, skill.Shout)
-	}
-
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.BattleOrders); found {
-		skillsList = append(skillsList, skill.BattleOrders)
-	}
-
-	return skillsList
-}
-
-// func (s Berserker) ensureHowlSkill(d game.Data) []step.Step {
-// 	if d.PlayerUnit.RightSkill != skill.Howl {
-// 		if howlKey, found := d.KeyBindings.KeyBindingForSkill(skill.Howl); found {
-// 			s.logger.Debug(fmt.Sprintf("Activating Howl skill with key binding: %v", howlKey))
-// 			return []step.Step{step.SyncStep(func(d game.Data) error {
-// 				s.container.HID.PressKeyBinding(howlKey)
-// 				time.Sleep(80 * time.Millisecond) // Short delay after key press
-// 				return nil
-// 			})}
-// 		} else {
-// 			s.logger.Debug("Howl key binding not found")
-// 		}
-// 	} else {
-// 		s.logger.Debug("Howl skill already active")
-// 	}
-// 	return nil
-// }
-
-func (s Berserker) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-
-		monster, found := d.Monsters.FindOne(npc, t)
+	for attackAttempts := 0; attackAttempts < maxAttackAttempts; attackAttempts++ {
+		id, found := monsterSelector(*s.Data)
 		if !found {
-			return []step.Step{}
-		}
-
-		opts := []step.AttackOption{step.Distance(1, 2)}
-
-		// Finish it off with primary attack
-		steps = append(steps, step.PrimaryAttack(monster.UnitID, 1, false, opts...))
-
-		return steps
-	}, action.RepeatUntilNoSteps())
-}
-
-func (s Berserker) KillCouncil() action.Action {
-	var councilKilled bool
-	var findItemAttempts int
-	const maxFindItemAttempts = 1
-	const maxRange = 30
-
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// If council is killed and we've done enough Find Item attempts, exit the sequence
-		if councilKilled && findItemAttempts >= maxFindItemAttempts {
-			return 0, false
-		}
-
-		// If council is killed, attempt Find Item
-		if councilKilled {
-			findItemAttempts++
-			corpseFound := s.FindItemOnNearbyCorpses(d, maxRange, time.Millisecond*100)
-			if !corpseFound {
-				return 0, false
+			if !s.isKillingCouncil.Load() {
+				s.FindItemOnNearbyCorpses(maxHorkRange)
 			}
-			// If Find Item was successful, continue the sequence to potentially find more council members
-			councilKilled = false
-			return 0, true
-		}
-
-		// Logic to find and target council members
-		for _, mobs := range d.Monsters.Enemies() {
-			if (mobs.Name == npc.CouncilMember || mobs.Name == npc.CouncilMember2 || mobs.Name == npc.CouncilMember3) &&
-				utils.DistanceFromPoint(d.PlayerUnit.Position, mobs.Position) <= maxRange {
-				return mobs.UnitID, true
-			}
-		}
-
-		// If no council members found, mark as killed and attempt Find Item on next iteration
-		councilKilled = true
-		return 0, true
-	}, nil, step.Distance(1, maxRange))
-}
-
-func (s Berserker) KillBaal() action.Action {
-	return action.NewChain(func(d game.Data) []action.Action {
-		return []action.Action{
-			// We will need a lot of cycles to kill him probably
-			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
-			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
-			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
-			s.killMonster(npc.BaalCrab, data.MonsterTypeNone),
-		}
-	})
-}
-
-func (s Berserker) KillIzual() action.Action {
-	return action.NewChain(func(d game.Data) []action.Action {
-		return []action.Action{
-			// We will need a lot of cycles to kill him probably
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-			s.killMonster(npc.Izual, data.MonsterTypeNone),
-		}
-	})
-}
-
-func (s Berserker) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startTime := time.Time{}
-	diabloFound := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if startTime.IsZero() {
-			startTime = time.Now()
-		}
-
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+
+		monster, monsterFound := s.Data.Monsters.FindByID(id)
+		if !monsterFound || monster.Stats[stat.Life] <= 0 {
+			continue
+		}
+
+		distance := s.PathFinder.DistanceFromMe(monster.Position)
+		if distance > meleeRange {
+			err := step.MoveTo(monster.Position)
+			if err != nil {
+				s.Logger.Warn("Failed to move to monster", slog.String("error", err.Error()))
+				continue
+			}
+		}
+
+		s.PerformBerserkAttack(monster.UnitID)
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	return nil
+}
+
+func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
+	ctx := context.Get()
+	ctx.PauseIfNotPriority()
+	monster, found := s.Data.Monsters.FindByID(monsterID)
+	if !found {
+		return
+	}
+
+	// Ensure Berserk skill is active
+	berserkKey, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Berserk)
+	if found && s.Data.PlayerUnit.RightSkill != skill.Berserk {
+		ctx.HID.PressKeyBinding(berserkKey)
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
+	ctx.HID.Click(game.LeftButton, screenX, screenY)
+}
+
+func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
+	ctx := context.Get()
+	ctx.PauseIfNotPriority()
+	s.SwapToSlot(1)
+
+	findItemKey, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FindItem)
+	if !found {
+		s.Logger.Debug("Find Item skill not found in key bindings")
+		return
+	}
+
+	corpses := s.getSortedHorkableCorpses(s.Data.Corpses, s.Data.PlayerUnit.Position, maxRange)
+	s.Logger.Debug("Horkable corpses found", slog.Int("count", len(corpses)))
+
+	for _, corpse := range corpses {
+		err := step.MoveTo(corpse.Position)
+		if err != nil {
+			s.Logger.Warn("Failed to move to corpse", slog.String("error", err.Error()))
+			continue
+		}
+
+		if s.Data.PlayerUnit.RightSkill != skill.FindItem {
+			ctx.HID.PressKeyBinding(findItemKey)
+			time.Sleep(time.Millisecond * 50)
+		}
+
+		clickPos := s.getOptimalClickPosition(corpse)
+		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(clickPos.X, clickPos.Y)
+		ctx.HID.Click(game.RightButton, screenX, screenY)
+		s.Logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
+
+		time.Sleep(time.Millisecond * 300)
+	}
+
+}
+
+func (s *Berserker) getSortedHorkableCorpses(corpses data.Monsters, playerPos data.Position, maxRange int) []data.Monster {
+	var horkableCorpses []data.Monster
+	for _, corpse := range corpses {
+		if s.isCorpseHorkable(corpse) && s.PathFinder.DistanceFromMe(corpse.Position) <= maxRange {
+			horkableCorpses = append(horkableCorpses, corpse)
+		}
+	}
+
+	sort.Slice(horkableCorpses, func(i, j int) bool {
+		distI := s.PathFinder.DistanceFromMe(horkableCorpses[i].Position)
+		distJ := s.PathFinder.DistanceFromMe(horkableCorpses[j].Position)
+		return distI < distJ
+	})
+
+	return horkableCorpses
+}
+
+func (s *Berserker) isCorpseHorkable(corpse data.Monster) bool {
+	unhorkableStates := []state.State{
+		state.CorpseNoselect,
+		state.CorpseNodraw,
+		state.Revive,
+		state.Redeemed,
+		state.Shatter,
+		state.Freeze,
+		state.Restinpeace,
+	}
+
+	for _, st := range unhorkableStates {
+		if corpse.States.HasState(st) {
+			return false
+		}
+	}
+
+	return corpse.Type == data.MonsterTypeChampion ||
+		corpse.Type == data.MonsterTypeMinion ||
+		corpse.Type == data.MonsterTypeUnique ||
+		corpse.Type == data.MonsterTypeSuperUnique
+}
+
+func (s *Berserker) getOptimalClickPosition(corpse data.Monster) data.Position {
+	return data.Position{X: corpse.Position.X, Y: corpse.Position.Y + 1}
+}
+
+// slot 0 means lowest Gold Find, slot 1 means highest Gold Find
+// Presuming attack items will be on slot 0 and Goldfind items on slot 1
+// TODO find a way to get active inventory slot from memory.
+func (s *Berserker) SwapToSlot(slot int) {
+	ctx := context.Get()
+	if !ctx.CharacterCfg.Character.BerserkerBarb.FindItemSwitch {
+		return // Do nothing if FindItemSwitch is disabled
+	}
+
+	initialGF, _ := s.Data.PlayerUnit.FindStat(stat.GoldFind, 0)
+	ctx.HID.PressKey('W')
+	time.Sleep(100 * time.Millisecond)
+	ctx.RefreshGameData()
+	swappedGF, _ := s.Data.PlayerUnit.FindStat(stat.GoldFind, 0)
+
+	if (slot == 0 && swappedGF.Value > initialGF.Value) ||
+		(slot == 1 && swappedGF.Value < initialGF.Value) {
+		ctx.HID.PressKey('W') // Swap back if not in desired slot
+	}
+}
+
+func (s *Berserker) BuffSkills() []skill.ID {
+
+	skillsList := make([]skill.ID, 0)
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.BattleCommand); found {
+		skillsList = append(skillsList, skill.BattleCommand)
+	}
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Shout); found {
+		skillsList = append(skillsList, skill.Shout)
+	}
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.BattleOrders); found {
+		skillsList = append(skillsList, skill.BattleOrders)
+	}
+	return skillsList
+}
+
+func (s *Berserker) PreCTABuffSkills() []skill.ID {
+	return []skill.ID{}
+}
+
+func (s *Berserker) killMonster(npc npc.ID, t data.MonsterType) error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found {
+			return 0, false
+		}
+		return m.UnitID, true
+	}, nil)
+}
+
+func (s *Berserker) KillCountess() error {
+	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+}
+
+func (s *Berserker) KillAndariel() error {
+	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+}
+
+func (s *Berserker) KillSummoner() error {
+	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
+}
+
+func (s *Berserker) KillDuriel() error {
+	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
+}
+
+func (s *Berserker) KillMephisto() error {
+	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+}
+func (s *Berserker) KillDiablo() error {
+	timeout := time.Second * 20
+	startTime := time.Now()
+	diabloFound := false
+
+	for {
+		if time.Since(startTime) > timeout && !diabloFound {
+			s.Logger.Error("Diablo was not found, timeout reached")
+			return nil
+		}
+
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
 			if diabloFound {
 				return nil
 			}
-
-			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
-				return []step.Step{step.Wait(time.Millisecond * 100)}
-			})}
+			time.Sleep(200 * time.Millisecond)
+			continue
 		}
 
 		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
+		s.Logger.Info("Diablo detected, attacking")
 
-		return []action.Action{
-			s.killMonster(npc.Diablo, data.MonsterTypeNone),
+		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+	}
+}
+
+func (s *Berserker) KillCouncil() error {
+	s.isKillingCouncil.Store(true)
+	defer s.isKillingCouncil.Store(false)
+
+	err := s.killAllCouncilMembers()
+	if err != nil {
+		return err
+	}
+
+	context.Get().EnableItemPickup()
+
+	// Wait for corpses to settle
+	time.Sleep(500 * time.Millisecond)
+
+	// Perform horking in two passes
+	for i := 0; i < 2; i++ {
+		s.FindItemOnNearbyCorpses(maxHorkRange)
+
+		// Wait between passes
+		time.Sleep(300 * time.Millisecond)
+
+		// Refresh game data to catch any new corpses
+		context.Get().RefreshGameData()
+	}
+
+	// Final wait for items to drop
+	time.Sleep(500 * time.Millisecond)
+
+	// Final item pickup
+	err = action.ItemPickup(maxHorkRange)
+	if err != nil {
+		s.Logger.Warn("Error during final item pickup after horking", "error", err)
+		return err
+	}
+
+	// Wait a moment to ensure all items are picked up
+	time.Sleep(300 * time.Millisecond)
+
+	return nil
+}
+
+func (s *Berserker) killAllCouncilMembers() error {
+	context.Get().DisableItemPickup()
+	for {
+		if !s.anyCouncilMemberAlive() {
+			return nil
 		}
-	}, action.RepeatUntilNoSteps())
+
+		err := s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			for _, m := range d.Monsters.Enemies() {
+				if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
+					return m.UnitID, true
+				}
+			}
+			return 0, false
+		}, nil)
+
+		if err != nil {
+			return err
+		}
+	}
 }
 
-func (s Berserker) KillNihlathak() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+func (s *Berserker) anyCouncilMemberAlive() bool {
+	for _, m := range s.Data.Monsters.Enemies() {
+		if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
+			return true
+		}
+
+	}
+	return false
 }
 
-func (s Berserker) KillMephisto() action.Action {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeNone)
+func (s *Berserker) KillIzual() error {
+	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
 
-func (s Berserker) KillPindle(skipOnImmunities []stat.Resist) action.Action {
+func (s *Berserker) KillPindle() error {
 	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
-func (s Berserker) KillDuriel() action.Action {
-	return s.killMonster(npc.Duriel, data.MonsterTypeNone)
+func (s *Berserker) KillNihlathak() error {
+	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
-func (s Berserker) KillSummoner() action.Action {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
-}
-
-func (s Berserker) KillAndariel() action.Action {
-	return s.killMonster(npc.Andariel, data.MonsterTypeNone)
-}
-
-func (s Berserker) KillCountess() action.Action {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+func (s *Berserker) KillBaal() error {
+	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }
