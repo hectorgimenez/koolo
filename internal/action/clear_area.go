@@ -31,7 +31,7 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 			monsterDist := pather.DistanceFromPoint(originalPosition, m.Position)
 			engageDistance := distance
 
-			if ctx.Data.PlayerUnit.Area == area.ChaosSanctuary && m.IsSealBoss() && !(ctx.CharacterCfg.Game.Diablo.AttackFromDistance == 0) {
+			if ctx.Data.PlayerUnit.Area == area.ChaosSanctuary && IsMonsterSealElite(m) && !(ctx.CharacterCfg.Game.Diablo.AttackFromDistance == 0) {
 				engageDistance = ctx.CharacterCfg.Game.Diablo.AttackFromDistance
 
 				if monsterDist <= engageDistance {
