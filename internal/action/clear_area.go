@@ -15,7 +15,7 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ClearAreaAroundPlayer"
 
-	originalPosition := ctx.Data.PlayerUnit.Position
+	originalPosition := data.Position{}
 
 	ctx.Logger.Debug("Clearing area around character...", slog.Int("distance", distance))
 
