@@ -11,7 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"slices"
 )
@@ -47,13 +46,6 @@ func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "ItemPickup"
 
-	// Check if StandStill is pressed before attempting to release it
-	standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
-	if ctx.HID.IsKeyPressed(standStillKey) {
-		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
-		utils.Sleep(100)
-	}
-
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
 		if len(itemsToPickup) == 0 {
@@ -86,7 +78,7 @@ func ItemPickup(maxDistance int) error {
 		))
 
 		distance := ctx.PathFinder.DistanceFromMe(itemToPickup.Position)
-		if distance > 4 { // Only move if the item is more than 4 units away  (3 might be better)
+		if distance > 5 { // Only move if the item is more than 4 units away  (3 might be better)
 			ctx.Logger.Debug("Moving closer to item",
 				slog.Int("distance", distance),
 				slog.String("itemName", itemToPickup.Desc().Name))

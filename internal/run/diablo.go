@@ -113,8 +113,6 @@ func (d *Diablo) Run() error {
 		if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
 			context.Get().EnableItemPickup()
 		}
-		// Now that it's safe, attempt to pick up items
-		_ = action.ItemPickup(20)
 	}
 
 	return nil
@@ -257,24 +255,6 @@ func (d *Diablo) killSealElite(boss string) error {
 				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
 
 				safeDistance := d.ctx.CharacterCfg.Game.Diablo.AttackFromDistance
-				currentDistance := d.ctx.PathFinder.DistanceFromMe(m.Position)
-
-				var safePos data.Position
-				if currentDistance > safeDistance {
-					d.ctx.Logger.Debug(fmt.Sprintf("Moving closer to seal elite. Current distance: %d, Safe distance: %d", currentDistance, safeDistance))
-					safePos = action.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, m.Position, safeDistance)
-				} else if currentDistance < safeDistance {
-					d.ctx.Logger.Debug(fmt.Sprintf("Moving away from seal elite. Current distance: %d, Safe distance: %d", currentDistance, safeDistance))
-					safePos = action.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, m.Position, safeDistance)
-				} else {
-					safePos = d.ctx.Data.PlayerUnit.Position
-				}
-
-				if safePos != d.ctx.Data.PlayerUnit.Position {
-					if err := action.MoveToCoords(safePos); err != nil {
-						d.ctx.Logger.Warn(fmt.Sprintf("Failed to move to safe position: %v", err))
-					}
-				}
 
 				err := d.ctx.Char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
 					monster, found := dat.Monsters.FindByID(m.UnitID)
@@ -282,11 +262,13 @@ func (d *Diablo) killSealElite(boss string) error {
 						return 0, false
 					}
 					currentDist := d.ctx.PathFinder.DistanceFromMe(monster.Position)
-					if currentDist < safeDistance {
-						newSafePos := action.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
-						_ = action.MoveToCoords(newSafePos)
-					} else if currentDist > safeDistance {
-						newSafePos := action.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
+					if currentDist < safeDistance-5 || currentDist > safeDistance+5 {
+						var newSafePos data.Position
+						if currentDist < safeDistance {
+							newSafePos = action.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
+						} else {
+							newSafePos = action.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
+						}
 						_ = action.MoveToCoords(newSafePos)
 					}
 					return monster.UnitID, true

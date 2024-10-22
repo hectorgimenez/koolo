@@ -25,6 +25,7 @@ type attackSettings struct {
 	target           data.UnitID
 	shouldStandStill bool
 	numOfAttacks     int
+	isBurstCastSkill bool
 }
 type AttackOption func(step *attackSettings)
 
@@ -74,9 +75,11 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts .
 
 func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts ...AttackOption) error {
 	settings := attackSettings{
-		target:       target,
-		numOfAttacks: numOfAttacks,
-		skill:        skill,
+		target:           target,
+		numOfAttacks:     numOfAttacks,
+		skill:            skill,
+		primaryAttack:    false,
+		isBurstCastSkill: skill == 48, //nova can define any other burst skill here
 	}
 	for _, o := range opts {
 		o(&settings)
@@ -93,12 +96,12 @@ func attack(settings attackSettings) error {
 	aoe := settings.target == 0
 	lastRun := time.Time{}
 
-	standStillPressed := false
-	defer func() {
-		if standStillPressed {
-			ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
-		}
-	}()
+	// Ensure keys/buttons are released when function exits or errors
+	cleanup := func() {
+		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		ctx.HID.ReleaseMouseButton(game.RightButton)
+	}
+	defer cleanup()
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
@@ -106,62 +109,84 @@ func attack(settings attackSettings) error {
 
 		monster, found := ctx.Data.Monsters.FindByID(settings.target)
 		if !found || monster.Stats[stat.Life] <= 0 || numOfAttacksRemaining <= 0 {
+			cleanup() // Explicitly cleanup before returning
 			return nil
 		}
 
 		// TeleStomp
 		if settings.telestomp && ctx.Data.CanTeleport() {
-			err := ensureEnemyIsInRange(monster, 2, 1)
-			if err != nil {
+			if err := ensureEnemyIsInRange(monster, 2, 1); err != nil {
+				cleanup() // Explicitly cleanup before returning error
 				return err
 			}
 		}
 
-		if !aoe {
-			// Move into the attack distance range before starting
-			if settings.followEnemy {
-				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
-					// We cannot reach the enemy, let's skip the attack sequence
-					ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
-					return nil
-				}
-			} else {
-				// Since we are not following the enemy, and it's not in range, we can't attack it
-				_, distance, found := ctx.PathFinder.GetPath(monster.Position)
-				if !found || distance > settings.maxDistance {
-					return nil
-				}
+		if !aoe && settings.followEnemy {
+			if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
+				ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
+				cleanup() // Explicitly cleanup before returning
+				return nil
 			}
 		}
 
-		// If we are not using the primary attack, we need to ensure the right skill is selected
+		// Ensure correct skill is selected for secondary attack
 		if !settings.primaryAttack && ctx.Data.PlayerUnit.RightSkill != settings.skill {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
 			time.Sleep(time.Millisecond * 80)
 		}
 
-		// If we have an aura, let's ensure it's active
+		// Activate aura if necessary
 		if settings.aura != 0 && lastRun.IsZero() {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.aura))
 		}
 
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
-			if settings.shouldStandStill {
-				standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
-				if !ctx.HID.IsKeyPressed(standStillKey) {
-					ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
-					standStillPressed = true
-				}
-			}
 			x, y := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
 
+			// Press StandStill if required
+			if settings.shouldStandStill {
+				ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
+			}
+
+			// For burst skills, release any previously held right click before starting new attack
+			if settings.isBurstCastSkill {
+				ctx.HID.ReleaseMouseButton(game.RightButton)
+				//		time.Sleep(time.Millisecond * 50) // Small delay to ensure button is fully released
+			}
+
+			// Perform attack
 			if settings.primaryAttack {
 				ctx.HID.Click(game.LeftButton, x, y)
+			} else if settings.isBurstCastSkill {
+				// Only hold the button if target is still valid
+				if monster.Stats[stat.Life] > 0 {
+					ctx.HID.HoldMouseButton(game.RightButton, x, y)
+				}
 			} else {
 				ctx.HID.Click(game.RightButton, x, y)
 			}
+
+			// Release StandStill immediately after attack
+			if settings.shouldStandStill {
+				ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+			}
+
+			// Release right mouse button for non-burst skills
+			if !settings.isBurstCastSkill {
+				ctx.HID.ReleaseMouseButton(game.RightButton)
+			}
+
 			lastRun = time.Now()
 			numOfAttacksRemaining--
+		}
+
+		// For burst skills, check if we should release the button early
+		if settings.isBurstCastSkill {
+			// Release if target is dead or we're done with attacks
+			if numOfAttacksRemaining <= 0 || monster.Stats[stat.Life] <= 0 {
+				ctx.HID.ReleaseMouseButton(game.RightButton)
+				//		time.Sleep(time.Millisecond * 50) // Small delay to ensure button is fully released
+			}
 		}
 	}
 }
