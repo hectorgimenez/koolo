@@ -2,7 +2,6 @@ package step
 
 import (
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -95,6 +94,10 @@ func attack(settings attackSettings) error {
 	numOfAttacksRemaining := settings.numOfAttacks
 	aoe := settings.target == 0
 	lastRun := time.Time{}
+	failedAttackAttempts := 0
+	originalMaxDistance := settings.maxDistance
+	var hasTargets bool
+	var targetPos data.Position
 
 	// Ensure keys/buttons are released when function exits or errors
 	cleanup := func() {
@@ -104,31 +107,52 @@ func attack(settings attackSettings) error {
 	defer cleanup()
 
 	// Helper function to check if there are any valid targets within range
-	hasValidTargets := func() bool {
+	hasValidTargets := func(currentMaxDistance int) (bool, data.Position) {
 		if !aoe {
 			// For single target skills, just check the specific monster
 			monster, found := ctx.Data.Monsters.FindByID(settings.target)
-			return found && monster.Stats[stat.Life] > 0
+			if found && monster.Stats[stat.Life] > 0 {
+				return true, monster.Position
+			}
+			return false, data.Position{}
 		}
 
 		// For AoE skills like Nova, check all monsters in range
+		var nearestPos data.Position
+		var nearestDist float64 = 999999
+		hasTarget := false
+
 		for _, monster := range ctx.Data.Monsters.Enemies() {
 			distance := ctx.PathFinder.DistanceFromMe(monster.Position)
-			if distance >= settings.minDistance && distance <= settings.maxDistance {
+			if distance >= settings.minDistance && distance <= currentMaxDistance {
 				if monster.Stats[stat.Life] > 0 {
-					return true
+					if !hasTarget || float64(distance) < nearestDist {
+						nearestDist = float64(distance)
+						nearestPos = monster.Position
+						hasTarget = true
+					}
 				}
 			}
 		}
-		return false
+		return hasTarget, nearestPos
 	}
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		// Check if we should continue attacking based on remaining attacks and valid targets
-		if numOfAttacksRemaining <= 0 || !hasValidTargets() {
+		// Adjust range if we're having trouble hitting the target
+		currentMaxDistance := originalMaxDistance
+		if failedAttackAttempts > 5 {
+			if failedAttackAttempts == 6 {
+				ctx.Logger.Debug("Looks like monster is not reachable, reducing max attack distance.")
+			}
+			currentMaxDistance = 1 // Reduce range to minimum when monsters seem unreachable
+		}
+
+		// Check for valid targets with current range
+		hasTargets, targetPos = hasValidTargets(currentMaxDistance)
+		if !hasTargets || numOfAttacksRemaining <= 0 {
 			cleanup()
 			return nil
 		}
@@ -150,10 +174,14 @@ func attack(settings attackSettings) error {
 			}
 
 			if settings.followEnemy {
-				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
-					ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
-					cleanup()
-					return nil
+				if err := ensureEnemyIsInRange(monster, currentMaxDistance, settings.minDistance); err != nil {
+					failedAttackAttempts++
+					if failedAttackAttempts > 10 {
+						ctx.Logger.Info("Enemy remains unreachable after multiple attempts, aborting")
+						cleanup()
+						return nil
+					}
+					continue
 				}
 			}
 		}
@@ -161,7 +189,6 @@ func attack(settings attackSettings) error {
 		// Ensure correct skill is selected for secondary attack
 		if !settings.primaryAttack && ctx.Data.PlayerUnit.RightSkill != settings.skill {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
-			time.Sleep(time.Millisecond * 80)
 		}
 
 		// Activate aura if necessary
@@ -170,30 +197,9 @@ func attack(settings attackSettings) error {
 		}
 
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
-			// For AoE skills, target the position of the nearest valid monster
 			x, y := 0, 0
 			if aoe {
-				var nearestDist float64 = 999999
-				var nearestPos data.Position
-				hasTarget := false
-
-				for _, monster := range ctx.Data.Monsters.Enemies() {
-					distance := ctx.PathFinder.DistanceFromMe(monster.Position)
-					if distance >= settings.minDistance && distance <= settings.maxDistance && monster.Stats[stat.Life] > 0 {
-						if !hasTarget || float64(distance) < nearestDist {
-							nearestDist = float64(distance)
-							nearestPos = monster.Position
-							hasTarget = true
-						}
-					}
-				}
-
-				if !hasTarget {
-					cleanup()
-					return nil
-				}
-
-				x, y = ctx.PathFinder.GameCoordsToScreenCords(nearestPos.X, nearestPos.Y)
+				x, y = ctx.PathFinder.GameCoordsToScreenCords(targetPos.X, targetPos.Y)
 			} else {
 				monster, _ := ctx.Data.Monsters.FindByID(settings.target)
 				x, y = ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
@@ -213,7 +219,8 @@ func attack(settings attackSettings) error {
 			if settings.primaryAttack {
 				ctx.HID.Click(game.LeftButton, x, y)
 			} else if settings.isBurstCastSkill {
-				if hasValidTargets() {
+				hasTargets, _ = hasValidTargets(currentMaxDistance)
+				if hasTargets {
 					ctx.HID.HoldMouseButton(game.RightButton, x, y)
 				}
 			} else {
@@ -232,13 +239,24 @@ func attack(settings attackSettings) error {
 
 			lastRun = time.Now()
 			numOfAttacksRemaining--
+			failedAttackAttempts++ // Increment failed attempts - will be reset if we hit something
 		}
 
 		// For burst skills, check if we should release the button early
 		if settings.isBurstCastSkill {
-			if numOfAttacksRemaining <= 0 || !hasValidTargets() {
+			hasTargets, _ = hasValidTargets(currentMaxDistance)
+			if numOfAttacksRemaining <= 0 || !hasTargets {
 				ctx.HID.ReleaseMouseButton(game.RightButton)
 			}
+		}
+
+		// Check if we actually hit something - reset failed attempts if we did
+		if lastRun.IsZero() {
+			continue
+		}
+		hasTargets, _ = hasValidTargets(originalMaxDistance)
+		if !hasTargets {
+			failedAttackAttempts = 0 // Reset counter if we cleared the monsters
 		}
 	}
 }
