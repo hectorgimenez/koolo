@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"log/slog"
 	"slices"
 	"time"
@@ -95,7 +96,7 @@ func (d *Diablo) Run() error {
 	if d.ctx.CharacterCfg.Game.Diablo.KillDiablo {
 		action.Buff()
 
-		safePos := action.FindNearestWalkablePosition(diabloSpawnPosition)
+		safePos := step.FindNearestWalkablePosition(diabloSpawnPosition)
 		action.MoveToCoords(safePos)
 
 		// Check if we should disable item pickup for Diablo
@@ -265,9 +266,9 @@ func (d *Diablo) killSealElite(boss string) error {
 					if currentDist < safeDistance-5 || currentDist > safeDistance+5 {
 						var newSafePos data.Position
 						if currentDist < safeDistance {
-							newSafePos = action.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
+							newSafePos = step.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
 						} else {
-							newSafePos = action.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
+							newSafePos = step.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
 						}
 						_ = action.MoveToCoords(newSafePos)
 					}
@@ -302,7 +303,7 @@ func (d *Diablo) moveToDeSeisSpawn() error {
 	for _, pos := range positions {
 		d.ctx.Logger.Debug(fmt.Sprintf("Trying position X: %d, Y: %d", pos.X, pos.Y))
 
-		walkablePos := action.FindNearestWalkablePosition(pos)
+		walkablePos := step.FindNearestWalkablePosition(pos)
 		if !d.isSafePositionForSeis(walkablePos) {
 			d.ctx.Logger.Debug(fmt.Sprintf("Skipping unsafe position X: %d, Y: %d", walkablePos.X, walkablePos.Y))
 			continue
@@ -358,7 +359,7 @@ func (d *Diablo) clearPath(pathName string, boss string) error {
 	monsterFilter := d.getMonsterFilter(boss)
 
 	for _, pos := range path {
-		walkablePos := action.FindNearestWalkablePosition(pos)
+		walkablePos := step.FindNearestWalkablePosition(pos)
 		d.ctx.Logger.Debug("Moving to coords", slog.Any("original", pos), slog.Any("walkable", walkablePos))
 		if err := action.MoveToCoords(walkablePos); err != nil {
 			d.ctx.Logger.Error("Failed to move to coords", slog.Any("pos", walkablePos), slog.String("error", err.Error()))

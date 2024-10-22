@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"log/slog"
 	"sort"
 
@@ -39,9 +40,9 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 					currentPos := ctx.Data.PlayerUnit.Position
 
 					if monsterDist > engageDistance {
-						targetPos = GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
+						targetPos = step.GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
 					} else if monsterDist < engageDistance {
-						targetPos = GetSafePositionAwayFromMonster(currentPos, m.Position, engageDistance)
+						targetPos = step.GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
 					} else {
 						targetPos = currentPos
 					}

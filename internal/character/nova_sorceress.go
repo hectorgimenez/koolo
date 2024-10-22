@@ -2,7 +2,6 @@ package character
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
 	"time"
 
@@ -84,7 +83,7 @@ func (s NovaSorceress) KillMonsterSequence(
 		}
 
 		// Find the nearest walkable position to the monster
-		walkablePos := action.FindNearestWalkablePosition(monster.Position)
+		walkablePos := step.FindNearestWalkablePosition(monster.Position)
 		distance := ctx.PathFinder.DistanceFromMe(walkablePos)
 
 		// Cast Static Field only if we haven't started Nova attacks and we're not too close
