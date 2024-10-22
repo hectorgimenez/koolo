@@ -103,29 +103,58 @@ func attack(settings attackSettings) error {
 	}
 	defer cleanup()
 
+	// Helper function to check if there are any valid targets within range
+	hasValidTargets := func() bool {
+		if !aoe {
+			// For single target skills, just check the specific monster
+			monster, found := ctx.Data.Monsters.FindByID(settings.target)
+			return found && monster.Stats[stat.Life] > 0
+		}
+
+		// For AoE skills like Nova, check all monsters in range
+		for _, monster := range ctx.Data.Monsters.Enemies() {
+			distance := ctx.PathFinder.DistanceFromMe(monster.Position)
+			if distance >= settings.minDistance && distance <= settings.maxDistance {
+				if monster.Stats[stat.Life] > 0 {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		monster, found := ctx.Data.Monsters.FindByID(settings.target)
-		if !found || monster.Stats[stat.Life] <= 0 || numOfAttacksRemaining <= 0 {
-			cleanup() // Explicitly cleanup before returning
+		// Check if we should continue attacking based on remaining attacks and valid targets
+		if numOfAttacksRemaining <= 0 || !hasValidTargets() {
+			cleanup()
 			return nil
 		}
 
-		// TeleStomp
-		if settings.telestomp && ctx.Data.CanTeleport() {
-			if err := ensureEnemyIsInRange(monster, 2, 1); err != nil {
-				cleanup() // Explicitly cleanup before returning error
-				return err
-			}
-		}
-
-		if !aoe && settings.followEnemy {
-			if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
-				ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
-				cleanup() // Explicitly cleanup before returning
+		// For non-AoE attacks, handle telestomp and range checks
+		if !aoe {
+			monster, found := ctx.Data.Monsters.FindByID(settings.target)
+			if !found || monster.Stats[stat.Life] <= 0 {
+				cleanup()
 				return nil
+			}
+
+			// TeleStomp
+			if settings.telestomp && ctx.Data.CanTeleport() {
+				if err := ensureEnemyIsInRange(monster, 2, 1); err != nil {
+					cleanup()
+					return err
+				}
+			}
+
+			if settings.followEnemy {
+				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
+					ctx.Logger.Info("Enemy is out of range and can not be reached", slog.Any("monster", monster.Name))
+					cleanup()
+					return nil
+				}
 			}
 		}
 
@@ -141,7 +170,34 @@ func attack(settings attackSettings) error {
 		}
 
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
-			x, y := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
+			// For AoE skills, target the position of the nearest valid monster
+			x, y := 0, 0
+			if aoe {
+				var nearestDist float64 = 999999
+				var nearestPos data.Position
+				hasTarget := false
+
+				for _, monster := range ctx.Data.Monsters.Enemies() {
+					distance := ctx.PathFinder.DistanceFromMe(monster.Position)
+					if distance >= settings.minDistance && distance <= settings.maxDistance && monster.Stats[stat.Life] > 0 {
+						if !hasTarget || float64(distance) < nearestDist {
+							nearestDist = float64(distance)
+							nearestPos = monster.Position
+							hasTarget = true
+						}
+					}
+				}
+
+				if !hasTarget {
+					cleanup()
+					return nil
+				}
+
+				x, y = ctx.PathFinder.GameCoordsToScreenCords(nearestPos.X, nearestPos.Y)
+			} else {
+				monster, _ := ctx.Data.Monsters.FindByID(settings.target)
+				x, y = ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
+			}
 
 			// Press StandStill if required
 			if settings.shouldStandStill {
@@ -151,15 +207,13 @@ func attack(settings attackSettings) error {
 			// For burst skills, release any previously held right click before starting new attack
 			if settings.isBurstCastSkill {
 				ctx.HID.ReleaseMouseButton(game.RightButton)
-				//		time.Sleep(time.Millisecond * 50) // Small delay to ensure button is fully released
 			}
 
 			// Perform attack
 			if settings.primaryAttack {
 				ctx.HID.Click(game.LeftButton, x, y)
 			} else if settings.isBurstCastSkill {
-				// Only hold the button if target is still valid
-				if monster.Stats[stat.Life] > 0 {
+				if hasValidTargets() {
 					ctx.HID.HoldMouseButton(game.RightButton, x, y)
 				}
 			} else {
@@ -182,10 +236,8 @@ func attack(settings attackSettings) error {
 
 		// For burst skills, check if we should release the button early
 		if settings.isBurstCastSkill {
-			// Release if target is dead or we're done with attacks
-			if numOfAttacksRemaining <= 0 || monster.Stats[stat.Life] <= 0 {
+			if numOfAttacksRemaining <= 0 || !hasValidTargets() {
 				ctx.HID.ReleaseMouseButton(game.RightButton)
-				//		time.Sleep(time.Millisecond * 50) // Small delay to ensure button is fully released
 			}
 		}
 	}
