@@ -40,6 +40,14 @@ func Distance(minimum, maximum int) AttackOption {
 		step.isMeleeAttack = minimum <= 1 && maximum <= 3
 	}
 }
+func RangedDistance(minimum, maximum int) AttackOption {
+	return func(step *attackSettings) {
+		step.followEnemy = false // Don't follow enemies for ranged attacks
+		step.minDistance = minimum
+		step.maxDistance = maximum
+		step.isMeleeAttack = false
+	}
+}
 
 func EnsureAura(aura skill.ID) AttackOption {
 	return func(step *attackSettings) {
@@ -154,7 +162,18 @@ func attack(settings attackSettings) error {
 				}
 			}
 
-			// For melee attacks, we only want to position once at the start
+			currentDistance := ctx.PathFinder.DistanceFromMe(monster.Position)
+
+			// Handle ranged attacks positioning
+			if !settings.followEnemy && currentDistance > settings.maxDistance {
+				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
+					ctx.Logger.Info("Enemy is out of range and cannot be reached", slog.Any("monster", monster.Name))
+					cleanup()
+					return nil
+				}
+			}
+
+			// Handle melee/following attacks positioning
 			if settings.followEnemy && (!settings.isMeleeAttack || lastRun.IsZero()) {
 				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
 					ctx.Logger.Info("Enemy is out of range and cannot be reached", slog.Any("monster", monster.Name))
@@ -176,7 +195,7 @@ func attack(settings attackSettings) error {
 		// Ensure correct skill is selected for secondary attack
 		if !settings.primaryAttack && ctx.Data.PlayerUnit.RightSkill != settings.skill {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
-			time.Sleep(time.Millisecond * 40)
+			time.Sleep(time.Millisecond * 10)
 		}
 
 		// Activate aura if necessary

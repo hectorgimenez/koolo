@@ -1,7 +1,6 @@
 package character
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -15,12 +14,12 @@ import (
 )
 
 const (
-	NovaSorceressMaxAttacksLoop = 10
-	NovaSorceressMinDistance    = 6
-	NovaSorceressMaxDistance    = 10
-	StaticFieldMinDistance      = 13
-	StaticFieldMaxDistance      = 22
-	StaticFieldThreshold        = 67 // Cast Static Field if monster HP is above this percentage
+	NovaMinDistance      = 9
+	NovaMaxDistance      = 10
+	StaticMinDistance    = 13
+	StaticMaxDistance    = 22
+	NovaMaxAttacksLoop   = 10
+	StaticFieldThreshold = 67 // Cast Static Field if monster HP is above this percentage
 )
 
 type NovaSorceress struct {
@@ -56,6 +55,7 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 
 	return missingKeybindings
 }
+
 func (s NovaSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
@@ -63,7 +63,6 @@ func (s NovaSorceress) KillMonsterSequence(
 	ctx := context.Get()
 	completedAttackLoops := 0
 	staticFieldCast := false
-	failedMoveAttempts := 0
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -73,96 +72,54 @@ func (s NovaSorceress) KillMonsterSequence(
 			return nil
 		}
 
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+
 		monster, found := s.Data.Monsters.FindByID(id)
 		if !found || monster.Stats[stat.Life] <= 0 {
 			return nil
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
-			return nil
-		}
+		// Cast Static Field first if needed
+		if !staticFieldCast && s.shouldCastStaticField(monster) {
+			staticOpts := []step.AttackOption{
+				step.RangedDistance(StaticMinDistance, StaticMaxDistance),
+			}
 
-		// Find the nearest walkable position to the monster
-		walkablePos := step.FindNearestWalkablePosition(monster.Position)
-		distance := ctx.PathFinder.DistanceFromMe(walkablePos)
-
-		// Cast Static Field only if we haven't started Nova attacks and we're not too close
-		if !staticFieldCast && distance > NovaSorceressMaxDistance {
-			s.castStaticFieldOnMonstersInRange()
-			staticFieldCast = true
-		}
-
-		// Move closer to the target if needed
-		if distance > NovaSorceressMaxDistance {
-			if err := s.moveCloserToTarget(walkablePos); err != nil {
-				failedMoveAttempts++
-				if failedMoveAttempts >= 3 {
-					s.Logger.Warn("Failed to move closer to monster after multiple attempts, skipping this monster",
-						slog.String("error", err.Error()),
-						slog.Any("walkablePos", walkablePos))
-					return nil // Skip this monster and move on
-				}
+			if err := step.SecondaryAttack(skill.StaticField, monster.UnitID, 1, staticOpts...); err == nil {
+				staticFieldCast = true
 				continue
 			}
-			failedMoveAttempts = 0 // Reset failed attempts counter on successful move
-		} else {
-			// We're in Nova range, start attacking
-			opts := step.Distance(NovaSorceressMinDistance, NovaSorceressMaxDistance)
-			err := step.SecondaryAttack(skill.Nova, id, 1, opts)
-			if err == nil {
-				completedAttackLoops++
-			}
 		}
 
-		if completedAttackLoops > NovaSorceressMaxAttacksLoop {
+		novaOpts := []step.AttackOption{
+			step.RangedDistance(NovaMinDistance, NovaMaxDistance),
+		}
+
+		if err := step.SecondaryAttack(skill.Nova, monster.UnitID, 1, novaOpts...); err == nil {
+			completedAttackLoops++
+		}
+
+		if completedAttackLoops >= NovaMaxAttacksLoop {
 			completedAttackLoops = 0
-			staticFieldCast = false // Reset static field flag for the next group of monsters
+			staticFieldCast = false
 		}
 	}
 }
-func (s NovaSorceress) moveCloserToTarget(target data.Position) error {
-	ctx := context.Get()
-
-	// Try to move directly to the target
-	if err := step.MoveTo(target); err == nil {
-		return nil
+func (s NovaSorceress) shouldCastStaticField(monster data.Monster) bool {
+	// Only cast Static Field if monster HP is above threshold
+	maxLife := float64(monster.Stats[stat.MaxLife])
+	if maxLife == 0 {
+		return false
 	}
 
-	// If direct movement fails, try to find an intermediate point
-	path, _, found := ctx.PathFinder.GetPath(target)
-	if !found || len(path) == 0 {
-		return fmt.Errorf("no path found to target")
-	}
-
-	// Move to an intermediate point (e.g., halfway)
-	intermediatePoint := path[len(path)/2]
-	return step.MoveTo(intermediatePoint)
-}
-
-func (s NovaSorceress) castStaticFieldOnMonstersInRange() {
-	monstersInRange := s.getMonstersInStaticFieldRange()
-	for _, monster := range monstersInRange {
-		if s.shouldCastStaticField(monster) {
-			step.SecondaryAttack(skill.StaticField, monster.UnitID, 1, step.Distance(StaticFieldMinDistance, StaticFieldMaxDistance))
-		}
-	}
-}
-
-func (s NovaSorceress) getMonstersInStaticFieldRange() []data.Monster {
-	ctx := context.Get()
-	var monstersInRange []data.Monster
-	for _, monster := range ctx.Data.Monsters.Enemies() {
-		distance := ctx.PathFinder.DistanceFromMe(monster.Position)
-		if distance > NovaSorceressMaxDistance && distance <= StaticFieldMaxDistance {
-			monstersInRange = append(monstersInRange, monster)
-		}
-	}
-	return monstersInRange
+	hpPercentage := (float64(monster.Stats[stat.Life]) / maxLife) * 100
+	return hpPercentage > StaticFieldThreshold
 }
 
 func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
 	ctx := context.Get()
-	completedAttackLoops := 0
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -175,33 +132,22 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
 		thresholdFloat := float64(ctx.CharacterCfg.Character.NovaSorceress.BossStaticThreshold)
 
-		opts := step.Distance(NovaSorceressMinDistance, StaticFieldMaxDistance)
-
-		// Reduce distance if boss seems unreachable
-		if completedAttackLoops > 5 {
-			if completedAttackLoops == 6 {
-				s.Logger.Debug("Boss seems unreachable, reducing max attack distance.")
-			}
-			opts = step.Distance(0, 1)
-		}
-
+		// Cast Static Field until boss HP is below threshold
 		if bossHPPercent > thresholdFloat {
-			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, opts)
+			staticOpts := []step.AttackOption{
+				step.Distance(StaticMinDistance, StaticMaxDistance),
+			}
+			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, staticOpts...)
 			if err != nil {
 				s.Logger.Warn("Failed to cast Static Field", slog.String("error", err.Error()))
 			}
-		} else {
-			return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-				return boss.UnitID, true
-			}, nil)
+			continue
 		}
 
-		completedAttackLoops++
-
-		// Reset the loop counter if we've successfully attacked for a while
-		if completedAttackLoops > 10 {
-			completedAttackLoops = 0
-		}
+		// Switch to Nova once boss HP is low enough
+		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			return boss.UnitID, true
+		}, nil)
 	}
 }
 
@@ -213,11 +159,6 @@ func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType
 
 		return 0, false
 	}, skipOnImmunities)
-}
-
-func (s NovaSorceress) shouldCastStaticField(monster data.Monster) bool {
-	hpPercentage := float64(monster.Stats[stat.Life]) / float64(monster.Stats[stat.MaxLife]) * 100
-	return hpPercentage > StaticFieldThreshold
 }
 
 func (s NovaSorceress) BuffSkills() []skill.ID {
@@ -288,11 +229,11 @@ func (s NovaSorceress) KillBaal() error {
 }
 
 func (s NovaSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, NovaSorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, NovaMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, NovaSorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, NovaMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillIzual() error {
@@ -315,5 +256,5 @@ func (s NovaSorceress) KillPindle() error {
 }
 
 func (s NovaSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, NovaSorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, NovaMaxDistance, false, nil)
 }
