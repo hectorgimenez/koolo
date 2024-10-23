@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	NovaMinDistance      = 9
-	NovaMaxDistance      = 10
+	NovaMinDistance      = 7
+	NovaMaxDistance      = 9
 	StaticMinDistance    = 13
 	StaticMaxDistance    = 22
 	NovaMaxAttacksLoop   = 10
