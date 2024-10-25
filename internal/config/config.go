@@ -173,7 +173,6 @@ type CharacterCfg struct {
 			StartFromStar                 bool `yaml:"startFromStar"`
 			FocusOnElitePacks             bool `yaml:"focusOnElitePacks"`
 			DisableItemPickupDuringBosses bool `yaml:"disableItemPickupDuringBosses"`
-			AttackFromDistance            int  `yaml:"attackFromDistance"`
 		} `yaml:"diablo"`
 		Baal struct {
 			KillBaal    bool `yaml:"killBaal"`

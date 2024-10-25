@@ -246,7 +246,6 @@ func (d *Diablo) killSealElite(boss string) error {
 	d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
 	startTime := time.Now()
 	timeout := 10 * time.Second
-
 	monsterFilter := d.getMonsterFilter(boss)
 
 	for time.Since(startTime) < timeout {
@@ -254,27 +253,13 @@ func (d *Diablo) killSealElite(boss string) error {
 		for _, m := range monsters {
 			if action.IsMonsterSealElite(m) {
 				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
-
-				safeDistance := d.ctx.CharacterCfg.Game.Diablo.AttackFromDistance
-
 				err := d.ctx.Char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
 					monster, found := dat.Monsters.FindByID(m.UnitID)
 					if !found || monster.Stats[stat.Life] <= 0 {
 						return 0, false
 					}
-					currentDist := d.ctx.PathFinder.DistanceFromMe(monster.Position)
-					if currentDist < safeDistance-5 || currentDist > safeDistance+5 {
-						var newSafePos data.Position
-						if currentDist < safeDistance {
-							newSafePos = step.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
-						} else {
-							newSafePos = step.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
-						}
-						_ = action.MoveToCoords(newSafePos)
-					}
 					return monster.UnitID, true
 				}, nil)
-
 				if err != nil {
 					d.ctx.Logger.Warn(fmt.Sprintf("Failed to kill seal elite: %v", err))
 					return err
@@ -286,7 +271,6 @@ func (d *Diablo) killSealElite(boss string) error {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-
 	d.ctx.Logger.Warn(fmt.Sprintf("No seal elite found for %s within %v seconds", boss, timeout.Seconds()))
 	return ErrBossNotFound
 }

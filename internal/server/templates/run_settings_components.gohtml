@@ -107,10 +107,6 @@
         <legend>Boss Options</legend>
         <label><input type="checkbox" name="gameDiabloKillDiablo" {{ if .Config.Game.Diablo.KillDiablo }}checked{{ end }}> Kill Diablo</label>
         <label><input type="checkbox" name="gameDiabloDisableItemPickupDuringBosses" {{ if .Config.Game.Diablo.DisableItemPickupDuringBosses }}checked{{ end }}> Temporarily Disable Item Pickup During Seal Boss Fights</label>
-        <label>
-            Attack from Distance:
-            <input type="number" name="gameDiabloAttackFromDistance" value="{{ .Config.Game.Diablo.AttackFromDistance }}" min="0" max="25">
-        </label>
     </fieldset>
 
     <fieldset class="options-group">

@@ -2,6 +2,8 @@ package step
 
 import (
 	"errors"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"time"
 
@@ -15,18 +17,19 @@ import (
 const attackCycleDuration = 120 * time.Millisecond
 
 type attackSettings struct {
-	primaryAttack    bool
-	skill            skill.ID
-	followEnemy      bool
-	minDistance      int
-	maxDistance      int
-	telestomp        bool
-	aura             skill.ID
-	target           data.UnitID
-	shouldStandStill bool
-	numOfAttacks     int
-	isBurstCastSkill bool
-	isMeleeAttack    bool
+	primaryAttack     bool
+	skill             skill.ID
+	followEnemy       bool
+	minDistance       int
+	maxDistance       int
+	telestomp         bool
+	aura              skill.ID
+	target            data.UnitID
+	shouldStandStill  bool
+	numOfAttacks      int
+	isBurstCastSkill  bool
+	isMeleeAttack     bool
+	currentlyBursting bool
 }
 
 type AttackOption func(step *attackSettings)
@@ -36,16 +39,26 @@ func Distance(minimum, maximum int) AttackOption {
 		step.followEnemy = true
 		step.minDistance = minimum
 		step.maxDistance = maximum
-		// Set isMeleeAttack if it's melee range
 		step.isMeleeAttack = minimum <= 1 && maximum <= 3
 	}
 }
+
 func RangedDistance(minimum, maximum int) AttackOption {
 	return func(step *attackSettings) {
-		step.followEnemy = false // Don't follow enemies for ranged attacks
+		step.followEnemy = false
 		step.minDistance = minimum
 		step.maxDistance = maximum
 		step.isMeleeAttack = false
+	}
+}
+
+func StationaryDistance(minimum, maximum int) AttackOption {
+	return func(step *attackSettings) {
+		step.followEnemy = false
+		step.minDistance = minimum
+		step.maxDistance = maximum
+		step.isMeleeAttack = false
+		step.shouldStandStill = true
 	}
 }
 
@@ -64,7 +77,6 @@ func Telestomp() AttackOption {
 func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts ...AttackOption) error {
 	ctx := context.Get()
 
-	// Special case for Berserker
 	if berserker, ok := ctx.Char.(interface{ PerformBerserkAttack(data.UnitID) }); ok {
 		for i := 0; i < numOfAttacks; i++ {
 			berserker.PerformBerserkAttack(target)
@@ -91,7 +103,7 @@ func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts 
 		numOfAttacks:     numOfAttacks,
 		skill:            skill,
 		primaryAttack:    false,
-		isBurstCastSkill: skill == 48, // nova can define any other burst skill here
+		isBurstCastSkill: skill == 48, // nova
 	}
 	for _, o := range opts {
 		o(&settings)
@@ -107,24 +119,24 @@ func attack(settings attackSettings) error {
 	numOfAttacksRemaining := settings.numOfAttacks
 	aoe := settings.target == 0
 	lastRun := time.Time{}
+	lastMovement := time.Time{}
 	initialPosition := ctx.Data.PlayerUnit.Position
+	isAttackInProgress := false
 
-	// Ensure keys/buttons are released when function exits or errors
 	cleanup := func() {
 		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 		ctx.HID.ReleaseMouseButton(game.RightButton)
+		settings.currentlyBursting = false
+		isAttackInProgress = false
 	}
 	defer cleanup()
 
-	// Helper function to check if there are any valid targets within range
 	hasValidTargets := func() bool {
 		if !aoe {
-			// For single target skills, just check the specific monster
 			monster, found := ctx.Data.Monsters.FindByID(settings.target)
 			return found && monster.Stats[stat.Life] > 0
 		}
 
-		// For AoE skills like Nova, check all monsters in range
 		for _, monster := range ctx.Data.Monsters.Enemies() {
 			distance := ctx.PathFinder.DistanceFromMe(monster.Position)
 			if distance >= settings.minDistance && distance <= settings.maxDistance {
@@ -137,73 +149,67 @@ func attack(settings attackSettings) error {
 	}
 
 	for {
-		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		// Check if we should continue attacking based on remaining attacks and valid targets
 		if numOfAttacksRemaining <= 0 || !hasValidTargets() {
 			cleanup()
 			return nil
 		}
 
-		// For non-AoE attacks, handle telestomp and range checks
-		if !aoe {
-			monster, found := ctx.Data.Monsters.FindByID(settings.target)
-			if !found || monster.Stats[stat.Life] <= 0 {
-				cleanup()
-				return nil
-			}
+		allowMovement := !settings.currentlyBursting &&
+			!isAttackInProgress &&
+			time.Since(lastRun) > ctx.Data.PlayerCastDuration() &&
+			time.Since(lastMovement) > time.Millisecond*200
 
-			// TeleStomp
-			if settings.telestomp && ctx.Data.CanTeleport() {
-				if err := ensureEnemyIsInRange(monster, 2, 1); err != nil {
-					cleanup()
-					return err
-				}
-			}
-
-			currentDistance := ctx.PathFinder.DistanceFromMe(monster.Position)
-
-			// Handle ranged attacks positioning
-			if !settings.followEnemy && currentDistance > settings.maxDistance {
-				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
-					ctx.Logger.Info("Enemy is out of range and cannot be reached", slog.Any("monster", monster.Name))
+		if allowMovement {
+			if !aoe {
+				monster, found := ctx.Data.Monsters.FindByID(settings.target)
+				if !found || monster.Stats[stat.Life] <= 0 {
 					cleanup()
 					return nil
 				}
-			}
 
-			// Handle melee/following attacks positioning
-			if settings.followEnemy && (!settings.isMeleeAttack || lastRun.IsZero()) {
-				if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance); err != nil {
-					ctx.Logger.Info("Enemy is out of range and cannot be reached", slog.Any("monster", monster.Name))
-					cleanup()
-					return nil
+				currentDistance := ctx.PathFinder.DistanceFromMe(monster.Position)
+				hasLoS := ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position)
+
+				needsRepositioning := currentDistance > settings.maxDistance ||
+					currentDistance < settings.minDistance ||
+					!hasLoS
+
+				if needsRepositioning {
+					if err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance, settings); err != nil {
+						cleanup()
+						return err
+					}
+					lastMovement = time.Now()
+					// Add delay after movement
+					time.Sleep(time.Millisecond * 100)
 				}
-			}
 
-			// For melee attacks, return to initial position if we've been knocked back significantly
-			if settings.isMeleeAttack && !lastRun.IsZero() {
-				if distance := ctx.PathFinder.DistanceFromMe(monster.Position); distance > settings.maxDistance {
-					if err := MoveTo(initialPosition); err != nil {
-						ctx.Logger.Debug("Failed to return to initial position", slog.String("error", err.Error()))
+				// Handle melee repositioning
+				if settings.isMeleeAttack && !lastRun.IsZero() {
+					if distance := ctx.PathFinder.DistanceFromMe(monster.Position); distance > settings.maxDistance {
+						if err := MoveTo(initialPosition); err != nil {
+							ctx.Logger.Debug("Failed to return to initial position", slog.String("error", err.Error()))
+						}
+						lastMovement = time.Now()
 					}
 				}
 			}
 		}
 
-		// Ensure correct skill is selected for secondary attack
-		if !settings.primaryAttack && ctx.Data.PlayerUnit.RightSkill != settings.skill {
+		if !settings.primaryAttack && ctx.Data.PlayerUnit.RightSkill != settings.skill && !settings.currentlyBursting {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * 40)
 		}
 
-		// Activate aura if necessary
 		if settings.aura != 0 && lastRun.IsZero() {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.aura))
 		}
 
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
+			isAttackInProgress = true
+
 			x, y := 0, 0
 			if aoe {
 				var nearestDist float64 = 999999
@@ -232,71 +238,93 @@ func attack(settings attackSettings) error {
 				x, y = ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
 			}
 
-			// Press StandStill if required
 			if settings.shouldStandStill {
 				ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
 			}
 
-			// For burst skills, release any previously held right click before starting new attack
-			if settings.isBurstCastSkill {
-				ctx.HID.ReleaseMouseButton(game.RightButton)
-			}
-
-			// Perform attack
 			if settings.primaryAttack {
 				ctx.HID.Click(game.LeftButton, x, y)
 			} else if settings.isBurstCastSkill {
-				if hasValidTargets() {
+				if !settings.currentlyBursting {
 					ctx.HID.HoldMouseButton(game.RightButton, x, y)
+					settings.currentlyBursting = true
 				}
 			} else {
 				ctx.HID.Click(game.RightButton, x, y)
 			}
 
-			// Release StandStill immediately after attack
-			if settings.shouldStandStill {
+			if settings.shouldStandStill && !settings.isBurstCastSkill {
 				ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
-			}
-
-			// Release right mouse button for non-burst skills
-			if !settings.isBurstCastSkill {
-				ctx.HID.ReleaseMouseButton(game.RightButton)
 			}
 
 			lastRun = time.Now()
 			numOfAttacksRemaining--
+
+			if !settings.isBurstCastSkill {
+				time.Sleep(ctx.Data.PlayerCastDuration())
+				isAttackInProgress = false
+			}
 		}
 
-		// For burst skills, check if we should release the button early
-		if settings.isBurstCastSkill {
-			if numOfAttacksRemaining <= 0 || !hasValidTargets() {
-				ctx.HID.ReleaseMouseButton(game.RightButton)
+		if settings.currentlyBursting && !hasValidTargets() {
+			ctx.HID.ReleaseMouseButton(game.RightButton)
+			if settings.shouldStandStill {
+				ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 			}
+			settings.currentlyBursting = false
+			isAttackInProgress = false
 		}
 	}
 }
 
-func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
+func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int, settings attackSettings) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "ensureEnemyIsInRange"
 
 	path, distance, found := ctx.PathFinder.GetPath(monster.Position)
-
-	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
 		return errors.New("path could not be calculated")
 	}
 
 	hasLoS := ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position)
 
-	// We have line of sight, and we are inside the attack range, we can skip
 	if hasLoS && distance < maxDistance {
 		return nil
 	}
 
+	// For Mosaic Sin stack building - stay on monster
+	if maxDistance == 0 && minDistance == 0 {
+		if distance < 2 {
+			return MoveTo(monster.Position)
+		}
+		return nil
+	}
+	// First release stand still if it's active
+	if settings.shouldStandStill {
+		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		time.Sleep(40 * time.Millisecond) // Small delay to ensure key release
+	}
+	// Handle ranged characters (like FoH)
+	if !settings.isBurstCastSkill && minDistance > 3 {
+		currentDistance := ctx.PathFinder.DistanceFromMe(monster.Position)
+		if currentDistance > maxDistance || !hasLoS {
+			for _, pos := range path {
+				potentialPosition := data.Position{
+					X: pos.X + ctx.Data.AreaOrigin.X,
+					Y: pos.Y + ctx.Data.AreaOrigin.Y,
+				}
+				distanceToMonster := pather.DistanceFromPoint(potentialPosition, monster.Position)
+				if distanceToMonster <= maxDistance && ctx.PathFinder.LineOfSight(potentialPosition, monster.Position) {
+					utils.Sleep(100)
+					return MoveTo(potentialPosition)
+				}
+			}
+		}
+		return nil
+	}
+	// For any other characters just move directly to monster for now
 	for i, pos := range path {
 		distance = len(path) - i
-		// In this case something weird is happening, just telestomp
 		if distance < 2 {
 			return MoveTo(monster.Position)
 		}

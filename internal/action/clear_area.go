@@ -1,8 +1,7 @@
 package action
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"log/slog"
 	"sort"
 
@@ -29,38 +28,19 @@ func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
 		})
 
 		for _, m := range monsters {
+			// Special case: Always allow (Vizier seal boss) even if off grid
+			isVizier := m.Type == data.MonsterTypeSuperUnique && m.Name == npc.StormCaster
+
+			// Skip monsters that are off grid
+			if !isVizier && !ctx.Data.AreaData.IsInside(m.Position) {
+				ctx.Logger.Debug("Skipping off-grid monster",
+					slog.Any("monster", m.Name),
+					slog.Any("position", m.Position))
+				continue
+			}
+
 			monsterDist := pather.DistanceFromPoint(originalPosition, m.Position)
-			engageDistance := distance
-
-			if ctx.Data.PlayerUnit.Area == area.ChaosSanctuary && IsMonsterSealElite(m) && ctx.CharacterCfg.Game.Diablo.AttackFromDistance != 0 {
-				engageDistance = ctx.CharacterCfg.Game.Diablo.AttackFromDistance
-
-				if monsterDist <= engageDistance {
-					var targetPos data.Position
-					currentPos := ctx.Data.PlayerUnit.Position
-
-					if monsterDist > engageDistance {
-						targetPos = step.GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
-					} else if monsterDist < engageDistance {
-						targetPos = step.GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
-					} else {
-						targetPos = currentPos
-					}
-
-					if targetPos != currentPos {
-						if err := MoveToCoords(targetPos); err != nil {
-							ctx.Logger.Warn("Failed to move to safe position",
-								slog.String("error", err.Error()),
-								slog.Any("monster", m.Name),
-								slog.Any("position", targetPos))
-							continue
-						}
-					}
-
-					return m.UnitID, true
-				}
-			} else if monsterDist <= distance {
-				// For other areas or non-seal elites, use the original logic
+			if monsterDist <= distance {
 				return m.UnitID, true
 			}
 		}
