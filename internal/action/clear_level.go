@@ -26,7 +26,6 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 			continue
 		}
 
-		// Handle chests after room is cleared
 		for _, o := range ctx.Data.Objects {
 			if o.IsChest() && o.Selectable && r.IsInside(o.Position) {
 				err = MoveToCoords(o.Position)
@@ -53,7 +52,6 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastAction = "clearRoom"
 
-	// Initial room positioning
 	path, _, found := ctx.PathFinder.GetClosestWalkablePath(room.GetCenter())
 	if !found {
 		return errors.New("failed to find a path to the room center")
@@ -63,13 +61,10 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 		X: path.To().X + ctx.Data.AreaOrigin.X,
 		Y: path.To().Y + ctx.Data.AreaOrigin.Y,
 	}
-
-	// Move to room center first
-	if err := MoveToCoords(to); err != nil {
+	err := MoveToCoords(to)
+	if err != nil {
 		return fmt.Errorf("failed moving to room center: %w", err)
 	}
-
-	// Allow time for monsters to become visible/targetable
 
 	for {
 		monsters := getMonstersInRoom(room, filter)
@@ -77,45 +72,34 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 			return nil
 		}
 
-		// Prioritize monster raisers
-		targetMonster := selectTargetMonster(monsters)
-
-		// Let attack.go handle all positioning and attack logic
-		err := ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-			// Only return monsters that are still alive
-			m, found := d.Monsters.FindByID(targetMonster.UnitID)
-			if found && m.Stats[stat.Life] > 0 {
-				return targetMonster.UnitID, true
+		// Check if there are monsters that can summon new monsters, and kill them first
+		targetMonster := monsters[0]
+		for _, m := range monsters {
+			if m.IsMonsterRaiser() {
+				targetMonster = m
 			}
-			return 0, false
-		}, nil)
-
-		if err != nil {
-			ctx.Logger.Debug("Failed to kill monster, moving to next target", "error", err)
-		}
-	}
-}
-
-// selectTargetMonster prioritizes monsters based on their type and threat level
-func selectTargetMonster(monsters []data.Monster) data.Monster {
-	// Start with first monster as default target
-	targetMonster := monsters[0]
-
-	// Look for priority targets
-	for _, m := range monsters {
-		// Prioritize monster raisers first
-		if m.IsMonsterRaiser() {
-			return m
 		}
 
-		// Could add more prioritization logic here if needed
-		// For example:
-		// - Prioritize elites
-		// - Prioritize ranged monsters
-		// - Prioritize based on immunities
-	}
+		path, _, mPathFound := ctx.PathFinder.GetPath(targetMonster.Position)
+		if mPathFound {
+			if !ctx.Data.CanTeleport() {
+				for _, o := range ctx.Data.Objects {
+					if o.IsDoor() && o.Selectable && path.Intersects(*ctx.Data, o.Position, 4) {
+						ctx.Logger.Debug("Door is blocking the path to the monster, moving closer")
+						MoveToCoords(targetMonster.Position)
+					}
+				}
+			}
 
-	return targetMonster
+			ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				m, found := d.Monsters.FindByID(targetMonster.UnitID)
+				if found && m.Stats[stat.Life] > 0 {
+					return targetMonster.UnitID, true
+				}
+				return 0, false
+			}, nil)
+		}
+	}
 }
 
 func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster {
@@ -124,8 +108,7 @@ func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster
 
 	monstersInRoom := make([]data.Monster, 0)
 	for _, m := range ctx.Data.Monsters.Enemies(filter) {
-		// Consider monsters either in the room or close to the player
-		if m.Stats[stat.Life] > 0 && (room.IsInside(m.Position) || ctx.PathFinder.DistanceFromMe(m.Position) < 30) {
+		if m.Stats[stat.Life] > 0 && room.IsInside(m.Position) || ctx.PathFinder.DistanceFromMe(m.Position) < 30 {
 			monstersInRoom = append(monstersInRoom, m)
 		}
 	}
