@@ -1,18 +1,18 @@
 package character
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/state"
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 	"time"
-
-	"github.com/hectorgimenez/d2go/pkg/data/state"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -21,7 +21,7 @@ const (
 	fohMaxDistance    = 18
 	hbMinDistance     = 6
 	hbMaxDistance     = 12
-	fohMaxAttacksLoop = 20 // Maximum attack attempts before resetting
+	fohMaxAttacksLoop = 15 // Maximum attack attempts before resetting
 )
 
 type Foh struct {
@@ -44,84 +44,60 @@ func (s Foh) CheckKeyBindings() []skill.ID {
 
 	return missingKeybindings
 }
-
-func (s Foh) KillMonsterSequence(
-	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
-) error {
+func (s Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {
 	ctx := context.Get()
-	ctx.RefreshGameData()
 	lastRefresh := time.Now()
 	completedAttackLoops := 0
+	fohOpts := []step.AttackOption{
+		step.StationaryDistance(fohMinDistance, fohMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
+	hbOpts := []step.AttackOption{
+		step.StationaryDistance(hbMinDistance, hbMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
 
 	for {
-		// Limit refresh rate to 10 times per second for state checks
 		if time.Since(lastRefresh) > time.Millisecond*100 {
 			ctx.RefreshGameData()
 			lastRefresh = time.Now()
 		}
-
+		ctx.PauseIfNotPriority()
+		if completedAttackLoops >= fohMaxAttacksLoop {
+			return nil
+		}
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
-
 		if !s.preBattleChecks(id, skipOnImmunities) {
 			return nil
 		}
-
-		if completedAttackLoops >= fohMaxAttacksLoop {
-			return nil
-		}
-
 		monster, found := s.Data.Monsters.FindByID(id)
 		if !found || monster.Stats[stat.Life] <= 0 {
 			return nil
 		}
-
-		// Ensure our Conviction aura is active
 		if !s.Data.PlayerUnit.States.HasState(state.Conviction) {
-			if convictionKey, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Conviction); found {
-				ctx.HID.PressKeyBinding(convictionKey)
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Conviction); found {
+				ctx.HID.PressKeyBinding(kb)
 			}
 		}
 
-		// Setup attack options
-		fohOpts := []step.AttackOption{
-			step.RangedDistance(fohMinDistance, fohMaxDistance),
-			step.EnsureAura(skill.Conviction),
-		}
-
-		hbOpts := []step.AttackOption{
-			step.RangedDistance(hbMinDistance, hbMaxDistance),
-			step.EnsureAura(skill.Conviction),
-		}
-
-		// Special handling for bosses and unique monsters
-		if monster.Type == data.MonsterTypeUnique || monster.Type == data.MonsterTypeSuperUnique {
-			// Cast FOH first
-			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
-				ctx.HID.PressKeyBinding(kb)
-				if err := step.PrimaryAttack(id, 1, true, fohOpts...); err == nil {
-					// Then cast Holy Bolt
-					if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
-						ctx.HID.PressKeyBinding(kb)
-						if err := step.PrimaryAttack(id, 3, true, hbOpts...); err == nil {
-							completedAttackLoops++
-						}
+		// Handle attacks
+		validTargets := 0
+		lightImmuneTargets := 0
+		for _, m := range ctx.Data.Monsters.Enemies() {
+			if ctx.Data.AreaData.IsInside(m.Position) {
+				dist := ctx.PathFinder.DistanceFromMe(m.Position)
+				if dist <= fohMaxDistance && dist >= fohMinDistance && m.Stats[stat.Life] > 0 {
+					validTargets++
+					if m.IsImmune(stat.LightImmune) && !m.States.HasState(state.Conviction) {
+						lightImmuneTargets++
 					}
 				}
 			}
-			continue
 		}
-
-		// Check if monster is under the effect of our Conviction and still lightning immune
-		monsterHasConviction := monster.States.HasState(state.Conviction)
-		isLightningImmune := monster.IsImmune(stat.LightImmune)
-
-		// Choose and select skill based on current state
-		if isLightningImmune && monsterHasConviction {
-			// Monster is still immune even while under our Conviction effect, use Holy Bolt
+		if monster.IsImmune(stat.LightImmune) && !monster.States.HasState(state.Conviction) && validTargets == 1 {
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
 				ctx.HID.PressKeyBinding(kb)
 				if err := step.PrimaryAttack(id, 1, true, hbOpts...); err == nil {
@@ -129,13 +105,74 @@ func (s Foh) KillMonsterSequence(
 				}
 			}
 		} else {
-			// Either monster is not lightning immune or it might have immunity broken by Conviction, use FOH
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
 				ctx.HID.PressKeyBinding(kb)
 				if err := step.PrimaryAttack(id, 1, true, fohOpts...); err == nil {
 					completedAttackLoops++
 				}
 			}
+		}
+	}
+}
+
+func (s Foh) handleBoss(bossID data.UnitID, fohOpts, hbOpts []step.AttackOption, completedAttackLoops *int) error {
+	ctx := context.Get()
+	if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
+		ctx.HID.PressKeyBinding(kb)
+		utils.Sleep(100)
+		if err := step.PrimaryAttack(bossID, 1, true, fohOpts...); err == nil {
+			time.Sleep(ctx.Data.PlayerCastDuration())
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
+				ctx.HID.PressKeyBinding(kb)
+				if err := step.PrimaryAttack(bossID, 3, true, hbOpts...); err == nil {
+					(*completedAttackLoops)++
+				}
+			}
+		}
+	}
+	return nil
+}
+func (s Foh) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {
+	ctx := context.Get()
+	lastRefresh := time.Now()
+	completedAttackLoops := 0
+	fohOpts := []step.AttackOption{
+		step.StationaryDistance(fohMinDistance, fohMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
+	hbOpts := []step.AttackOption{
+		step.StationaryDistance(hbMinDistance, hbMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
+
+	for {
+		if time.Since(lastRefresh) > time.Millisecond*100 {
+			ctx.RefreshGameData()
+			lastRefresh = time.Now()
+		}
+		ctx.PauseIfNotPriority()
+		if completedAttackLoops >= fohMaxAttacksLoop {
+			return nil
+		}
+		id, found := monsterSelector(*s.Data)
+		if !found {
+			return nil
+		}
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+		monster, found := s.Data.Monsters.FindByID(id)
+		if !found || monster.Stats[stat.Life] <= 0 {
+			return nil
+		}
+		if !s.Data.PlayerUnit.States.HasState(state.Conviction) {
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Conviction); found {
+				ctx.HID.PressKeyBinding(kb)
+			}
+		}
+
+		if err := s.handleBoss(monster.UnitID, fohOpts, hbOpts, &completedAttackLoops); err == nil {
+			continue
 		}
 	}
 }
@@ -152,7 +189,7 @@ func (s Foh) PreCTABuffSkills() []skill.ID {
 }
 
 func (s Foh) killBoss(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found || m.Stats[stat.Life] <= 0 {
 			return 0, false
@@ -185,15 +222,12 @@ func (s Foh) KillCouncil() error {
 				councilMembers = append(councilMembers, m)
 			}
 		}
-
 		sort.Slice(councilMembers, func(i, j int) bool {
 			return s.PathFinder.DistanceFromMe(councilMembers[i].Position) < s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 		})
-
 		if len(councilMembers) > 0 {
 			return councilMembers[0].UnitID, true
 		}
-
 		return 0, false
 	}, nil)
 }

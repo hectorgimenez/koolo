@@ -2,6 +2,7 @@ package step
 
 import (
 	"errors"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"log/slog"
 	"time"
 
@@ -14,23 +15,28 @@ import (
 
 const attackCycleDuration = 120 * time.Millisecond
 
+// Contains all configuration for an attack sequence
 type attackSettings struct {
-	primaryAttack    bool
-	skill            skill.ID
-	followEnemy      bool
-	minDistance      int
-	maxDistance      int
-	telestomp        bool
-	aura             skill.ID
-	target           data.UnitID
-	shouldStandStill bool
-	numOfAttacks     int
-	isBurstCastSkill bool
-	isMeleeAttack    bool
+	primaryAttack     bool        // Whether this is a primary (left click) attack
+	skill             skill.ID    // Skill ID for secondary attacks
+	followEnemy       bool        // Whether to follow the enemy while attacking
+	minDistance       int         // Minimum attack range
+	maxDistance       int         // Maximum attack range
+	telestomp         bool        // Whether to use teleport stomping
+	aura              skill.ID    // Aura to maintain during attack
+	target            data.UnitID // Specific target's unit ID (0 for AOE)
+	shouldStandStill  bool        // Whether to stand still while attacking
+	numOfAttacks      int         // Number of attacks to perform
+	isBurstCastSkill  bool        // Whether this is a channeled/burst skill like Nova
+	isMeleeAttack     bool        // Whether this is a melee range attack
+	currentlyBursting bool        // Whether currently performing a burst cast
+	isAOE             bool        // Whether this is aoe attack
 }
 
+// AttackOption defines a function type for configuring attack settings
 type AttackOption func(step *attackSettings)
 
+// Distance configures attack to follow enemy within specified range
 func Distance(minimum, maximum int) AttackOption {
 	return func(step *attackSettings) {
 		step.followEnemy = true
@@ -40,6 +46,8 @@ func Distance(minimum, maximum int) AttackOption {
 		step.isMeleeAttack = minimum <= 1 && maximum <= 3
 	}
 }
+
+// RangedDistance configures attack for ranged combat without following
 func RangedDistance(minimum, maximum int) AttackOption {
 	return func(step *attackSettings) {
 		step.followEnemy = false // Don't follow enemies for ranged attacks
@@ -49,22 +57,36 @@ func RangedDistance(minimum, maximum int) AttackOption {
 	}
 }
 
+// StationaryDistance configures attack to remain stationary (like FoH)
+func StationaryDistance(minimum, maximum int) AttackOption {
+	return func(step *attackSettings) {
+		step.followEnemy = false
+		step.minDistance = minimum
+		step.maxDistance = maximum
+		step.isMeleeAttack = false
+		step.shouldStandStill = true
+	}
+}
+
+// EnsureAura ensures specified aura is active during attack
 func EnsureAura(aura skill.ID) AttackOption {
 	return func(step *attackSettings) {
 		step.aura = aura
 	}
 }
 
+// Telestomp will attempt attacking with mercenary by Teleporting on target
 func Telestomp() AttackOption {
 	return func(step *attackSettings) {
 		step.telestomp = true
 	}
 }
 
+// PrimaryAttack initiates a primary (left-click) attack sequence
 func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts ...AttackOption) error {
 	ctx := context.Get()
 
-	// Special case for Berserker
+	// Special handling for Berserker characters
 	if berserker, ok := ctx.Char.(interface{ PerformBerserkAttack(data.UnitID) }); ok {
 		for i := 0; i < numOfAttacks; i++ {
 			berserker.PerformBerserkAttack(target)
@@ -85,6 +107,7 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts .
 	return attack(settings)
 }
 
+// SecondaryAttack initiates a secondary (right-click) attack sequence with a specific skill
 func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts ...AttackOption) error {
 	settings := attackSettings{
 		target:           target,
@@ -92,6 +115,7 @@ func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts 
 		skill:            skill,
 		primaryAttack:    false,
 		isBurstCastSkill: skill == 48, // nova can define any other burst skill here
+		isAOE:            skill == 48, // nova, can define other AOE skills here
 	}
 	for _, o := range opts {
 		o(&settings)
@@ -100,6 +124,7 @@ func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts 
 	return attack(settings)
 }
 
+// attack performs the main attack sequence based on provided settings
 func attack(settings attackSettings) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "Attack"
@@ -111,12 +136,25 @@ func attack(settings attackSettings) error {
 
 	// Ensure keys/buttons are released when function exits or errors
 	cleanup := func() {
-		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
+		if ctx.HID.IsKeyPressed(standStillKey) {
+			ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
+		}
+		// Release any held mouse buttons
 		ctx.HID.ReleaseMouseButton(game.RightButton)
 	}
-	defer cleanup()
+	defer cleanup() // Ensure cleanup happens when function exit
 
-	// Helper function to check if there are any valid targets within range
+	// Skip monsters that are off grid unless it's a special case
+	isMonsterValid := func(monster data.Monster) bool {
+		// Special case: Always allow Vizier seal boss even if off grid
+		isVizier := monster.Type == data.MonsterTypeSuperUnique && monster.Name == npc.StormCaster
+		if !isVizier && !ctx.Data.AreaData.IsInside(monster.Position) {
+			return false
+		}
+		return monster.Stats[stat.Life] > 0
+	}
+	// Check if we have any valid targets within range
 	hasValidTargets := func() bool {
 		if !aoe {
 			// For single target skills, just check the specific monster
@@ -126,6 +164,9 @@ func attack(settings attackSettings) error {
 
 		// For AoE skills like Nova, check all monsters in range
 		for _, monster := range ctx.Data.Monsters.Enemies() {
+			if !isMonsterValid(monster) {
+				continue
+			}
 			distance := ctx.PathFinder.DistanceFromMe(monster.Position)
 			if distance >= settings.minDistance && distance <= settings.maxDistance {
 				if monster.Stats[stat.Life] > 0 {
@@ -203,7 +244,10 @@ func attack(settings attackSettings) error {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.aura))
 		}
 
+		// Only attack if enough time has passed or starting a new burst
 		if time.Since(lastRun) > ctx.Data.PlayerCastDuration()-attackCycleDuration && numOfAttacksRemaining > 0 {
+
+			// Calculate target position
 			x, y := 0, 0
 			if aoe {
 				var nearestDist float64 = 999999
@@ -242,7 +286,7 @@ func attack(settings attackSettings) error {
 				ctx.HID.ReleaseMouseButton(game.RightButton)
 			}
 
-			// Perform attack
+			// Perform the actual attack
 			if settings.primaryAttack {
 				ctx.HID.Click(game.LeftButton, x, y)
 			} else if settings.isBurstCastSkill {
@@ -270,12 +314,14 @@ func attack(settings attackSettings) error {
 		// For burst skills, check if we should release the button early
 		if settings.isBurstCastSkill {
 			if numOfAttacksRemaining <= 0 || !hasValidTargets() {
+				// End burst if no valid targets remain
 				ctx.HID.ReleaseMouseButton(game.RightButton)
 			}
 		}
 	}
 }
 
+// ensureEnemyIsInRange handles positioning for attacks
 func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "ensureEnemyIsInRange"
