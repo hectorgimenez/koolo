@@ -20,6 +20,13 @@ type SorceressLeveling struct {
 	BaseCharacter
 }
 
+const (
+	SorceressLevelingMaxAttacksLoop = 10
+	SorceressLevelingMinDistance    = 25
+	SorceressLevelingMaxDistance    = 30
+	SorceressLevelingMeleeDistance  = 3
+)
+
 func (s SorceressLeveling) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
@@ -57,7 +64,7 @@ func (s SorceressLeveling) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= NovaSorceressMaxAttacksLoop {
+		if completedAttackLoops >= SorceressLevelingMaxAttacksLoop {
 			return nil
 		}
 
@@ -70,23 +77,23 @@ func (s SorceressLeveling) KillMonsterSequence(
 		lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 		if s.Data.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
 			s.Logger.Debug("Low mana, using primary attack")
-			step.PrimaryAttack(id, 1, false, step.Distance(1, 3))
+			step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
 		} else {
 			if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
 				s.Logger.Debug("Using Blizzard")
-				step.SecondaryAttack(skill.Blizzard, id, 1, step.Distance(25, 30))
+				step.SecondaryAttack(skill.Blizzard, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Meteor); found {
 				s.Logger.Debug("Using Meteor")
-				step.SecondaryAttack(skill.Meteor, id, 1, step.Distance(25, 30))
+				step.SecondaryAttack(skill.Meteor, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBall); found {
 				s.Logger.Debug("Using FireBall")
-				step.SecondaryAttack(skill.FireBall, id, 4, step.Distance(25, 30))
+				step.SecondaryAttack(skill.FireBall, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.IceBolt); found {
 				s.Logger.Debug("Using IceBolt")
-				step.SecondaryAttack(skill.IceBolt, id, 4, step.Distance(25, 30))
+				step.SecondaryAttack(skill.IceBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else {
 				s.Logger.Debug("No secondary skills available, using primary attack")
-				step.PrimaryAttack(id, 1, false, step.Distance(1, 3))
+				step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
 			}
 		}
 

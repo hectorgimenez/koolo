@@ -22,11 +22,7 @@ func OpenTPIfLeader() error {
 }
 
 func IsMonsterSealElite(monster data.Monster) bool {
-	if monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster) {
-		return true
-	}
-
-	return false
+	return monster.Type == data.MonsterTypeSuperUnique && (monster.Name == npc.OblivionKnight || monster.Name == npc.VenomLord || monster.Name == npc.StormCaster)
 }
 
 func PostRun(isLastRun bool) error {

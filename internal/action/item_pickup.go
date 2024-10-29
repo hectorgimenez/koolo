@@ -3,17 +3,16 @@ package action
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"log/slog"
-	"slices"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"log/slog"
+	"slices"
 )
 
 func itemFitsInventory(i data.Item) bool {
@@ -67,15 +66,8 @@ func ItemPickup(maxDistance int) error {
 			continue
 		}
 
-		for _, m := range ctx.Data.Monsters.Enemies() {
-			if _, dist, _ := ctx.PathFinder.GetPathFrom(itemToPickup.Position, m.Position); dist <= 3 {
-				ctx.Logger.Debug("Monsters detected close to the item being picked up, killing them...", slog.Any("monster", m))
-				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-					return m.UnitID, true
-				}, nil)
-				continue
-			}
-		}
+		// Clear enemy monsters near the item
+		clearNearbyMonsters(itemToPickup.Position, 3)
 
 		ctx.Logger.Debug(fmt.Sprintf(
 			"Item Detected: %s [%d] at X:%d Y:%d",
@@ -85,28 +77,40 @@ func ItemPickup(maxDistance int) error {
 			itemToPickup.Position.Y,
 		))
 
-		err := MoveToCoords(itemToPickup.Position)
-		if err != nil {
-			ctx.Logger.Warn("Failed moving closer to item, trying to pickup it anyway", err)
+		distance := ctx.PathFinder.DistanceFromMe(itemToPickup.Position)
+		if distance > 7 { // Only move if the item is more than 7 units away
+			ctx.Logger.Debug("Moving closer to item",
+				slog.Int("distance", distance),
+				slog.String("itemName", itemToPickup.Desc().Name))
+
+			err := MoveToCoords(itemToPickup.Position)
+			if err != nil {
+				ctx.Logger.Warn("Failed moving closer to item, trying to pickup anyway")
+			} else {
+				// Clear enemy monsters near the item
+				clearNearbyMonsters(itemToPickup.Position, 3)
+			}
 		}
 
-		err = step.PickupItem(itemToPickup)
+		err := step.PickupItem(itemToPickup)
+		if err == nil {
+			continue // Item picked up successfully, move to next item
+		}
+
 		if errors.Is(err, step.ErrItemTooFar) {
 			ctx.Logger.Debug("Item is too far away, retrying...")
 			continue
 		}
-		if err != nil {
-			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
-			ctx.Logger.Warn(
-				"Failed picking up item, blacklisting it",
-				err.Error(),
-				slog.String("itemName", itemToPickup.Desc().Name),
-				slog.Int("unitID", int(itemToPickup.UnitID)),
-			)
-		}
+
+		// If it's any other error, blacklist the item
+		ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
+		ctx.Logger.Warn(
+			"Failed picking up item, blacklisting it",
+			slog.String("itemName", itemToPickup.Desc().Name),
+			slog.Int("unitID", int(itemToPickup.UnitID)),
+		)
 	}
 }
-
 func GetItemsToPickup(maxDistance int) []data.Item {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "GetItemsToPickup"
@@ -119,6 +123,10 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 
 	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
+		itemDistance := ctx.PathFinder.DistanceFromMe(itm.Position)
+		if itemDistance > maxDistance {
+			continue
+		}
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
 		if isLevelingChar && !itm.IsFromQuest() && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 ||
 			ctx.Data.PlayerUnit.Area == area.MaggotLairLevel2 ||
@@ -137,7 +145,7 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 
 		// Skip items that are outside pickup radius, this is useful when clearing big areas to prevent
 		// character going back to pickup potions all the time after using them
-		itemDistance := ctx.PathFinder.DistanceFromMe(itm.Position)
+
 		if maxDistance > 0 && itemDistance > maxDistance && itm.IsPotion() {
 			continue
 		}
@@ -230,4 +238,28 @@ func shouldBePickedUp(i data.Item) bool {
 		return true
 	}
 	return !doesExceedQuantity(matchedRule)
+}
+
+func clearNearbyMonsters(position data.Position, maxDistance int) {
+	ctx := context.Get()
+
+	monsterFilter := func(monsters data.Monsters) []data.Monster {
+		var nearbyMonsters []data.Monster
+		for _, m := range monsters {
+			if ctx.PathFinder.DistanceFromMe(m.Position) <= maxDistance {
+				nearbyMonsters = append(nearbyMonsters, m)
+			}
+		}
+		return nearbyMonsters
+	}
+
+	nearbyEnemies := ctx.Data.Monsters.Enemies(monsterFilter)
+
+	for _, m := range nearbyEnemies {
+		ctx.Logger.Debug("Enemy detected near item, killing it...",
+			slog.String("monster", string(m.Name)))
+		_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			return m.UnitID, true
+		}, nil)
+	}
 }

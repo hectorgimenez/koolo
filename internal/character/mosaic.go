@@ -74,72 +74,68 @@ func (s MosaicSin) KillMonsterSequence(
 			return nil
 		}
 
-		opts := step.Distance(1, 2)
+		// Initial move to monster if we're too far
+		if ctx.PathFinder.DistanceFromMe(monster.Position) > 3 {
+			if err := step.MoveTo(monster.Position); err != nil {
+				s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
+				continue
+			}
+		}
 
-		if !s.MobAlive(id, *s.Data) { // Check if the mob is still alive
+		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
 
-		// Number of charges display as stats
-		/*
-			318 = Tiger Strike
-			319 = Cobra Strike
-			320 = Phoenix Strike
-			321 = Fists of Fire
-			322 = Blades of Ice
-			323 = Claws of Thunder
-		*/
-
 		// Tiger Strike - 3 charges
 		if !s.Data.PlayerUnit.States.HasState(state.Tigerstrike) || (foundTiger && tigerCharges.Value < 3) {
-			step.SecondaryAttack(skill.TigerStrike, id, 1, opts)
+			step.SecondaryAttack(skill.TigerStrike, id, 1)
 			continue
 		}
 
-		if !s.MobAlive(id, *s.Data) { // Check if the mob is still alive
+		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
 
 		// Cobra Strike - 3 charges
 		if !s.Data.PlayerUnit.States.HasState(state.Cobrastrike) || (foundCobra && cobraCharges.Value < 3) {
-			step.SecondaryAttack(skill.CobraStrike, id, 1, opts)
+			step.SecondaryAttack(skill.CobraStrike, id, 1)
 			continue
 		}
 
-		if !s.MobAlive(id, *s.Data) { // Check if the mob is still alive
+		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
 
 		// Phoenix Strike - 2 charges
 		if !s.Data.PlayerUnit.States.HasState(state.Phoenixstrike) || (foundPhoenix && phoenixCharges.Value < 2) {
-			step.SecondaryAttack(skill.PhoenixStrike, id, 1, opts)
+			step.SecondaryAttack(skill.PhoenixStrike, id, 1)
 			continue
 		}
 
-		if !s.MobAlive(id, *s.Data) { // Check if the mob is still alive
+		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
 
 		// Claws of Thunder - 3 charges
 		if !s.Data.PlayerUnit.States.HasState(state.Clawsofthunder) || (foundClaws && clawsCharges.Value < 3) {
-			step.SecondaryAttack(skill.ClawsOfThunder, id, 1, opts)
+			step.SecondaryAttack(skill.ClawsOfThunder, id, 1)
 			continue
 		}
 
-		if !s.MobAlive(id, *s.Data) { // Check if the mob is still alive
+		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
 
 		// Blades of Ice - 3 charges
 		if !s.Data.PlayerUnit.States.HasState(state.Bladesofice) || (foundBlades && bladesCharges.Value < 3) {
-			step.SecondaryAttack(skill.BladesOfIce, id, 1, opts)
+			step.SecondaryAttack(skill.BladesOfIce, id, 1)
 			continue
 		}
 
-		if !s.MobAlive(id, *s.Data) { // Check if the mob is still alive
+		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
-
+		opts := step.Distance(1, 2)
 		// Finish it off with primary attack
 		step.PrimaryAttack(id, 1, false, opts)
 	}
@@ -156,7 +152,6 @@ func (s MosaicSin) BuffSkills() []skill.ID {
 	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Fade); found {
 		skillsList = append(skillsList, skill.Fade)
 	} else {
-
 		// If we don't use fade but we use Burst of Speed
 		if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.BurstOfSpeed); found {
 			skillsList = append(skillsList, skill.BurstOfSpeed)
@@ -167,15 +162,12 @@ func (s MosaicSin) BuffSkills() []skill.ID {
 }
 
 func (s MosaicSin) PreCTABuffSkills() []skill.ID {
-
 	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.ShadowMaster); found {
 		return []skill.ID{skill.ShadowMaster}
 	} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.ShadowWarrior); found {
 		return []skill.ID{skill.ShadowWarrior}
-	} else {
-		return []skill.ID{}
 	}
-
+	return []skill.ID{}
 }
 
 func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
@@ -184,7 +176,6 @@ func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
 		if !found {
 			return 0, false
 		}
-
 		return m.UnitID, true
 	}, nil)
 }
@@ -207,7 +198,6 @@ func (s MosaicSin) KillDuriel() error {
 
 func (s MosaicSin) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
@@ -215,16 +205,14 @@ func (s MosaicSin) KillCouncil() error {
 			}
 		}
 
-		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
 			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
 			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
-
 			return distanceI < distanceJ
 		})
 
-		for _, m := range councilMembers {
-			return m.UnitID, true
+		if len(councilMembers) > 0 {
+			return councilMembers[0].UnitID, true
 		}
 
 		return 0, false
@@ -252,19 +240,15 @@ func (s MosaicSin) KillDiablo() error {
 
 		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
 			if diabloFound {
 				return nil
 			}
-
-			// Keep waiting...
-			time.Sleep(200)
+			time.Sleep(200 * time.Millisecond)
 			continue
 		}
 
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
-
 		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
 	}
 }

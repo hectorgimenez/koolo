@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"log/slog"
 	"strings"
 	"syscall"
@@ -196,4 +197,13 @@ func (i *MemoryInjector) stopTrackingMouseLeaveEvents() error {
 	hook := append(disableMouseLeaveRequest, injectBytes...)
 
 	return windows.WriteProcessMemory(i.handle, i.trackMouseEventAddr, &hook[0], uintptr(len(hook)), nil)
+}
+
+func (i *MemoryInjector) IsKeyPressed(key byte) bool {
+	if !i.isLoaded {
+		return false
+	}
+
+	ret, _, _ := winproc.GetKeyState.Call(uintptr(key))
+	return (ret & 0x8000) != 0
 }

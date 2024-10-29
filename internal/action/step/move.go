@@ -3,6 +3,7 @@ package step
 import (
 	"errors"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -16,7 +17,6 @@ func MoveTo(dest data.Position) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "MoveTo"
 
-	// This is to ensure we finished moving before returning
 	defer func() {
 		for {
 			switch ctx.Data.PlayerUnit.Mode {
@@ -32,6 +32,8 @@ func MoveTo(dest data.Position) error {
 
 	timeout := time.Second * 30
 	stopAtDistance := 7
+	idleThreshold := time.Second * 3
+	idleStartTime := time.Time{}
 
 	startedAt := time.Now()
 	lastRun := time.Time{}
@@ -42,6 +44,21 @@ func MoveTo(dest data.Position) error {
 
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
+
+		// Check for idle state outside town
+		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
+			if idleStartTime.IsZero() {
+				idleStartTime = time.Now()
+			} else if time.Since(idleStartTime) > idleThreshold {
+				// Perform anti-idle action
+				ctx.Logger.Debug("Anti-idle triggered")
+				ctx.PathFinder.RandomMovement()
+				idleStartTime = time.Time{} // Reset idle timer
+				continue
+			}
+		} else {
+			idleStartTime = time.Time{} // Reset idle timer if not in StandingOutsideTown mode
+		}
 
 		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 		if ctx.Data.CanTeleport() {
@@ -96,4 +113,58 @@ func MoveTo(dest data.Position) error {
 		previousPosition = ctx.Data.PlayerUnit.Position
 		ctx.PathFinder.MoveThroughPath(path, walkDuration)
 	}
+}
+func GetSafePositionTowardsMonster(playerPos, monsterPos data.Position, safeDistance int) data.Position {
+	dx := float64(monsterPos.X - playerPos.X)
+	dy := float64(monsterPos.Y - playerPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance > float64(safeDistance) {
+		ratio := float64(safeDistance) / distance
+		safePos := data.Position{
+			X: playerPos.X + int(dx*ratio),
+			Y: playerPos.Y + int(dy*ratio),
+		}
+		return FindNearestWalkablePosition(safePos)
+	}
+
+	return playerPos
+}
+
+func GetSafePositionAwayFromMonster(playerPos, monsterPos data.Position, safeDistance int) data.Position {
+	dx := float64(playerPos.X - monsterPos.X)
+	dy := float64(playerPos.Y - monsterPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance < float64(safeDistance) {
+		ratio := float64(safeDistance) / distance
+		safePos := data.Position{
+			X: monsterPos.X + int(dx*ratio),
+			Y: monsterPos.Y + int(dy*ratio),
+		}
+		return FindNearestWalkablePosition(safePos)
+	}
+
+	return playerPos
+}
+
+// FindNearestWalkablePosition finds the nearest walkable position to the given position
+func FindNearestWalkablePosition(pos data.Position) data.Position {
+	ctx := context.Get()
+	if ctx.Data.AreaData.Grid.IsWalkable(pos) {
+		return pos
+	}
+
+	for radius := 1; radius <= 10; radius++ {
+		for x := pos.X - radius; x <= pos.X+radius; x++ {
+			for y := pos.Y - radius; y <= pos.Y+radius; y++ {
+				checkPos := data.Position{X: x, Y: y}
+				if ctx.Data.AreaData.Grid.IsWalkable(checkPos) {
+					return checkPos
+				}
+			}
+		}
+	}
+
+	return pos
 }
