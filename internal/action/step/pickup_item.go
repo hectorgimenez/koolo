@@ -21,13 +21,6 @@ func PickupItem(it data.Item) error {
 	ctx := context.Get()
 	ctx.ContextDebug.LastStep = "PickupItem"
 
-	// Check if StandStill is pressed before attempting to release it
-	standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
-	if ctx.HID.IsKeyPressed(standStillKey) {
-		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
-		utils.Sleep(100)
-	}
-
 	ctx.Logger.Debug(fmt.Sprintf("Picking up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
 
 	waitingForInteraction := time.Time{}

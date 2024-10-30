@@ -3,6 +3,8 @@ package action
 import (
 	"errors"
 	"fmt"
+
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -28,9 +30,11 @@ func ReturnTown() error {
 		return errors.New("portal not found")
 	}
 
-	clearNearbyMonsters(portal.Position, 8)
-	// Now that it is safe, interact with portal
+	if err = ClearAreaAroundPosition(portal.Position, 8, data.MonsterAnyFilter()); err != nil {
+		ctx.Logger.Warn("Error clearing area around portal", "error", err)
+	}
 
+	// Now that it is safe, interact with portal
 	return InteractObject(portal, func() bool {
 		return ctx.Data.PlayerUnit.Area.IsTown()
 	})

@@ -2,9 +2,10 @@ package step
 
 import (
 	"errors"
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"log/slog"
 	"time"
+
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
@@ -136,10 +137,7 @@ func attack(settings attackSettings) error {
 
 	// Ensure keys/buttons are released when function exits or errors
 	cleanup := func() {
-		standStillKey := ctx.Data.KeyBindings.StandStill.Key1[0]
-		if ctx.HID.IsKeyPressed(standStillKey) {
-			ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
-		}
+		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 		// Release any held mouse buttons
 		ctx.HID.ReleaseMouseButton(game.RightButton)
 	}
@@ -159,7 +157,7 @@ func attack(settings attackSettings) error {
 		if !aoe {
 			// For single target skills, just check the specific monster
 			monster, found := ctx.Data.Monsters.FindByID(settings.target)
-			return found && monster.Stats[stat.Life] > 0
+			return found && monster.Stats[stat.Life] > 0 && ctx.Data.AreaData.IsWalkable(monster.Position)
 		}
 
 		// For AoE skills like Nova, check all monsters in range

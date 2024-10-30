@@ -124,6 +124,3 @@ func (hid *HID) calculatelParam(keyCode byte, down bool) uintptr {
 	lParam := uintptr((repeatCount & 0xFFFF) | (scanCode << 16) | (extendedKeyFlag << 24) | (contextCode << 29) | (previousKeyState << 30) | (transitionState << 31))
 	return lParam
 }
-func (hid *HID) IsKeyPressed(key byte) bool {
-	return hid.gi.IsKeyPressed(key)
-}

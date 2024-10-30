@@ -1,66 +1,46 @@
 package action
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"log/slog"
-	"sort"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
+func ClearAreaAroundPlayer(radius int, filter data.MonsterFilter) error {
+	return ClearAreaAroundPosition(context.Get().Data.PlayerUnit.Position, radius, filter)
+}
+
+func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterFilter) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ClearAreaAroundPlayer"
-
-	originalPosition := ctx.Data.PlayerUnit.Position
-
-	ctx.Logger.Debug("Clearing area around character...", slog.Int("distance", distance))
+	ctx.ContextDebug.LastAction = "ClearAreaAroundPosition"
+	ctx.Logger.Debug("Clearing area around character...", slog.Int("radius", radius))
 
 	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		monsters := d.Monsters.Enemies(filter)
-		sort.Slice(monsters, func(i, j int) bool {
-			distI := pather.DistanceFromPoint(originalPosition, monsters[i].Position)
-			distJ := pather.DistanceFromPoint(originalPosition, monsters[j].Position)
-			return distI < distJ
-		})
+		for _, m := range d.Monsters.Enemies(filter) {
+			monsterDistance := pather.DistanceFromPoint(pos, m.Position)
+			attackDistance := radius
 
-		for _, m := range monsters {
-			monsterDist := pather.DistanceFromPoint(originalPosition, m.Position)
-			engageDistance := distance
-
+			// Hack the attack distance only for Chaos Sanctuary run
 			if ctx.Data.PlayerUnit.Area == area.ChaosSanctuary && IsMonsterSealElite(m) && ctx.CharacterCfg.Game.Diablo.AttackFromDistance != 0 {
-				engageDistance = ctx.CharacterCfg.Game.Diablo.AttackFromDistance
+				attackDistance = ctx.CharacterCfg.Game.Diablo.AttackFromDistance
+			}
 
-				if monsterDist <= engageDistance {
-					var targetPos data.Position
-					currentPos := ctx.Data.PlayerUnit.Position
+			targetPos := ctx.PathFinder.GetSafePositionTowardsMonster(ctx.Data.PlayerUnit.Position, m.Position, attackDistance)
 
-					if monsterDist > engageDistance {
-						targetPos = step.GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
-					} else if monsterDist < engageDistance {
-						targetPos = step.GetSafePositionTowardsMonster(currentPos, m.Position, engageDistance)
-					} else {
-						targetPos = currentPos
-					}
-
-					if targetPos != currentPos {
-						if err := MoveToCoords(targetPos); err != nil {
-							ctx.Logger.Warn("Failed to move to safe position",
-								slog.String("error", err.Error()),
-								slog.Any("monster", m.Name),
-								slog.Any("position", targetPos))
-							continue
-						}
-					}
-
-					return m.UnitID, true
+			if targetPos != ctx.Data.PlayerUnit.Position {
+				if err := MoveToCoords(targetPos); err != nil {
+					ctx.Logger.Warn("Failed to move to safe position",
+						slog.String("error", err.Error()),
+						slog.Any("monster", m.Name),
+						slog.Any("position", targetPos))
 				}
-			} else if monsterDist <= distance {
-				// For other areas or non-seal elites, use the original logic
+			}
+
+			if monsterDistance <= attackDistance && ctx.Data.AreaData.IsWalkable(m.Position) {
 				return m.UnitID, true
 			}
 		}

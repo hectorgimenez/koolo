@@ -40,6 +40,7 @@ func NewHealthManager(bm *BeltManager, data *game.Data) *Manager {
 
 func (hm *Manager) HandleHealthAndMana() error {
 	hpConfig := hm.data.CharacterCfg.Health
+	// Safe area, skipping
 	if hm.data.PlayerUnit.Area.IsTown() {
 		return nil
 	}
@@ -64,6 +65,7 @@ func (hm *Manager) HandleHealthAndMana() error {
 			hm.data.PlayerUnit.MPPercent() < hpConfig.RejuvPotionAtMana) {
 		if hm.beltManager.DrinkPotion(data.RejuvenationPotion, false) {
 			hm.lastRejuv = time.Now()
+			return nil
 		}
 	}
 
@@ -90,6 +92,7 @@ func (hm *Manager) HandleHealthAndMana() error {
 			hm.data.MercHPPercent() <= hpConfig.MercRejuvPotionAt {
 			if hm.beltManager.DrinkPotion(data.RejuvenationPotion, true) {
 				hm.lastRejuvMerc = time.Now()
+				return nil
 			}
 		}
 

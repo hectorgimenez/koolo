@@ -180,3 +180,57 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 
 	return true
 }
+
+func (pf *PathFinder) GetSafePositionTowardsMonster(playerPos, monsterPos data.Position, safeDistance int) data.Position {
+	dx := float64(monsterPos.X - playerPos.X)
+	dy := float64(monsterPos.Y - playerPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance > float64(safeDistance) {
+		ratio := float64(safeDistance) / distance
+		safePos := data.Position{
+			X: playerPos.X + int(dx*ratio),
+			Y: playerPos.Y + int(dy*ratio),
+		}
+		return pf.FindNearestWalkablePosition(safePos)
+	}
+
+	return playerPos
+}
+
+func (pf *PathFinder) GetSafePositionAwayFromMonster(playerPos, monsterPos data.Position, safeDistance int) data.Position {
+	dx := float64(playerPos.X - monsterPos.X)
+	dy := float64(playerPos.Y - monsterPos.Y)
+	distance := math.Sqrt(dx*dx + dy*dy)
+
+	if distance < float64(safeDistance) {
+		ratio := float64(safeDistance) / distance
+		safePos := data.Position{
+			X: monsterPos.X + int(dx*ratio),
+			Y: monsterPos.Y + int(dy*ratio),
+		}
+		return pf.FindNearestWalkablePosition(safePos)
+	}
+
+	return playerPos
+}
+
+// FindNearestWalkablePosition finds the nearest walkable position to the given position
+func (pf *PathFinder) FindNearestWalkablePosition(pos data.Position) data.Position {
+	if pf.data.AreaData.Grid.IsWalkable(pos) {
+		return pos
+	}
+
+	for radius := 1; radius <= 10; radius++ {
+		for x := pos.X - radius; x <= pos.X+radius; x++ {
+			for y := pos.Y - radius; y <= pos.Y+radius; y++ {
+				checkPos := data.Position{X: x, Y: y}
+				if pf.data.AreaData.Grid.IsWalkable(checkPos) {
+					return checkPos
+				}
+			}
+		}
+	}
+
+	return pos
+}
