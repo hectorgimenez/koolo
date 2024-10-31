@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	NovaMinDistance      = 7
+	NovaMinDistance      = 6
 	NovaMaxDistance      = 9
 	StaticMinDistance    = 13
 	StaticMaxDistance    = 22
@@ -24,6 +24,9 @@ const (
 
 type NovaSorceress struct {
 	BaseCharacter
+	startTime        time.Time
+	lastProgressTime time.Time
+	hasMadeProgress  bool
 }
 
 func (s NovaSorceress) CheckKeyBindings() []skill.ID {

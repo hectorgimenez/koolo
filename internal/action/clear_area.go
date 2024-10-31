@@ -43,6 +43,7 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 			}
 		}
 
+		//can be removed no longer used
 		if targetMonster != nil {
 			// Special case for Chaos Sanctuary
 			if ctx.Data.PlayerUnit.Area == area.ChaosSanctuary && IsMonsterSealElite(*targetMonster) && ctx.CharacterCfg.Game.Diablo.AttackFromDistance != 0 {

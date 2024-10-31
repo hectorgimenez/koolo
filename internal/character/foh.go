@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	fohMinDistance    = 9
-	fohMaxDistance    = 18
+	fohMinDistance    = 8
+	fohMaxDistance    = 15
 	hbMinDistance     = 6
 	hbMaxDistance     = 12
 	fohMaxAttacksLoop = 20 // Maximum attack attempts before resetting
