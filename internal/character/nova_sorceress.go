@@ -24,9 +24,6 @@ const (
 
 type NovaSorceress struct {
 	BaseCharacter
-	startTime        time.Time
-	lastProgressTime time.Time
-	hasMadeProgress  bool
 }
 
 func (s NovaSorceress) CheckKeyBindings() []skill.ID {
