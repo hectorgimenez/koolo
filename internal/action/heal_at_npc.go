@@ -10,7 +10,7 @@ import (
 
 func HealAtNPC() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "HealAtNPC"
+	ctx.SetLastAction("HealAtNPC")
 
 	shouldHeal := false
 	if ctx.Data.PlayerUnit.HPPercent() < 80 {

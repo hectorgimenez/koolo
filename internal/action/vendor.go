@@ -14,7 +14,7 @@ import (
 
 func VendorRefill(forceRefill, sellJunk bool) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "VendorRefill"
+	ctx.SetLastAction("VendorRefill")
 
 	if !forceRefill && !shouldVisitVendor() {
 		return nil
@@ -54,7 +54,7 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 
 func BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "BuyAtVendor"
+	ctx.SetLastAction("BuyAtVendor")
 
 	err := InteractNPC(vendor)
 	if err != nil {
@@ -89,7 +89,7 @@ type VendorItemRequest struct {
 
 func shouldVisitVendor() bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "shouldVisitVendor"
+	ctx.SetLastStep("shouldVisitVendor")
 
 	// Check if we should sell junk
 	if len(town.ItemsToBeSold()) > 0 {

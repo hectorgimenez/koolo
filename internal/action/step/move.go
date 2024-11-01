@@ -14,7 +14,7 @@ import (
 
 func MoveTo(dest data.Position) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "MoveTo"
+	ctx.SetLastStep("MoveTo")
 
 	defer func() {
 		for {

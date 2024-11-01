@@ -10,7 +10,7 @@ import (
 
 func OpenTPIfLeader() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "OpenTPIfLeader"
+	ctx.SetLastAction("OpenTPIfLeader")
 
 	isLeader := ctx.CharacterCfg.Companion.Leader
 
@@ -27,7 +27,7 @@ func IsMonsterSealElite(monster data.Monster) bool {
 
 func PostRun(isLastRun bool) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "PostRun"
+	ctx.SetLastAction("PostRun")
 
 	// Allow some time for items drop to the ground, otherwise we might miss some
 	utils.Sleep(200)

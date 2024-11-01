@@ -14,7 +14,7 @@ import (
 
 func WayPoint(dest area.ID) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "WayPoint"
+	ctx.SetLastAction("WayPoint")
 	ctx.CurrentGame.AreaCorrection.Enabled = false
 	defer func() {
 		ctx.CurrentGame.AreaCorrection.ExpectedArea = dest
@@ -78,7 +78,7 @@ func WayPoint(dest area.ID) error {
 }
 func useWP(dest area.ID) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "useWP"
+	ctx.SetLastAction("useWP")
 
 	finalDestination := dest
 	traverseAreas := make([]area.ID, 0)

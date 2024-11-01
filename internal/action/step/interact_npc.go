@@ -20,7 +20,7 @@ func InteractNPC(npcID npc.ID) error {
 	lastRun := time.Time{}
 
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "InteractNPC"
+	ctx.SetLastStep("InteractNPC")
 
 	for {
 		ctx.RefreshGameData()

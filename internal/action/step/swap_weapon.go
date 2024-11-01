@@ -19,7 +19,7 @@ func swapWeapon(toCTA bool) error {
 	lastRun := time.Time{}
 
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "SwapToCTA"
+	ctx.SetLastStep("SwapToCTA")
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority

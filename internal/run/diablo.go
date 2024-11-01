@@ -3,17 +3,15 @@ package run
 import (
 	"errors"
 	"fmt"
-
 	"log/slog"
 	"slices"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -97,8 +95,7 @@ func (d *Diablo) Run() error {
 	if d.ctx.CharacterCfg.Game.Diablo.KillDiablo {
 		action.Buff()
 
-		safePos := d.ctx.PathFinder.FindNearestWalkablePosition(diabloSpawnPosition)
-		action.MoveToCoords(safePos)
+		action.MoveToCoords(diabloSpawnPosition)
 
 		// Check if we should disable item pickup for Diablo
 		if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
@@ -256,22 +253,10 @@ func (d *Diablo) killSealElite(boss string) error {
 			if action.IsMonsterSealElite(m) {
 				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
 
-				safeDistance := d.ctx.CharacterCfg.Game.Diablo.AttackFromDistance
-
 				err := d.ctx.Char.KillMonsterSequence(func(dat game.Data) (data.UnitID, bool) {
 					monster, found := dat.Monsters.FindByID(m.UnitID)
 					if !found || monster.Stats[stat.Life] <= 0 {
 						return 0, false
-					}
-					currentDist := d.ctx.PathFinder.DistanceFromMe(monster.Position)
-					if currentDist < safeDistance-5 || currentDist > safeDistance+5 {
-						var newSafePos data.Position
-						if currentDist < safeDistance {
-							newSafePos = d.ctx.PathFinder.GetSafePositionAwayFromMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
-						} else {
-							newSafePos = d.ctx.PathFinder.GetSafePositionTowardsMonster(d.ctx.Data.PlayerUnit.Position, monster.Position, safeDistance)
-						}
-						_ = action.MoveToCoords(newSafePos)
 					}
 					return monster.UnitID, true
 				}, nil)
@@ -304,14 +289,13 @@ func (d *Diablo) moveToDeSeisSpawn() error {
 	for _, pos := range positions {
 		d.ctx.Logger.Debug(fmt.Sprintf("Trying position X: %d, Y: %d", pos.X, pos.Y))
 
-		walkablePos := d.ctx.PathFinder.FindNearestWalkablePosition(pos)
-		if !d.isSafePositionForSeis(walkablePos) {
-			d.ctx.Logger.Debug(fmt.Sprintf("Skipping unsafe position X: %d, Y: %d", walkablePos.X, walkablePos.Y))
+		if !d.isSafePositionForSeis(pos) {
+			d.ctx.Logger.Debug(fmt.Sprintf("Skipping unsafe position X: %d, Y: %d", pos.X, pos.Y))
 			continue
 		}
 
-		d.ctx.Logger.Debug(fmt.Sprintf("Moving to safe position X: %d, Y: %d", walkablePos.X, walkablePos.Y))
-		if err := action.MoveToCoords(walkablePos); err != nil {
+		d.ctx.Logger.Debug(fmt.Sprintf("Moving to safe position X: %d, Y: %d", pos.X, pos.Y))
+		if err := action.MoveToCoords(pos); err != nil {
 			d.ctx.Logger.Warn(fmt.Sprintf("Failed to move to position: %v", err))
 			continue
 		}
@@ -360,10 +344,9 @@ func (d *Diablo) clearPath(pathName string, boss string) error {
 	monsterFilter := d.getMonsterFilter(boss)
 
 	for _, pos := range path {
-		walkablePos := d.ctx.PathFinder.FindNearestWalkablePosition(pos)
-		d.ctx.Logger.Debug("Moving to coords", slog.Any("original", pos), slog.Any("walkable", walkablePos))
-		if err := action.MoveToCoords(walkablePos); err != nil {
-			d.ctx.Logger.Error("Failed to move to coords", slog.Any("pos", walkablePos), slog.String("error", err.Error()))
+		d.ctx.Logger.Debug("Moving to coords", slog.Any("original", pos), slog.Any("walkable", pos))
+		if err := action.MoveToCoords(pos); err != nil {
+			d.ctx.Logger.Error("Failed to move to coords", slog.Any("pos", pos), slog.String("error", err.Error()))
 			return err
 		}
 
@@ -377,7 +360,7 @@ func (d *Diablo) clearPath(pathName string, boss string) error {
 			}
 		}
 
-		d.cleared = append(d.cleared, walkablePos)
+		d.cleared = append(d.cleared, pos)
 	}
 
 	return nil

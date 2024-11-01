@@ -19,7 +19,7 @@ var ErrItemTooFar = errors.New("item is too far away")
 
 func PickupItem(it data.Item) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "PickupItem"
+	ctx.SetLastStep("PickupItem")
 
 	ctx.Logger.Debug(fmt.Sprintf("Picking up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
 

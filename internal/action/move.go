@@ -18,7 +18,7 @@ import (
 
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "MoveToArea"
+	ctx.SetLastAction("MoveToArea")
 	ctx.CurrentGame.AreaCorrection.Enabled = false
 	defer func() {
 		ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
@@ -130,7 +130,7 @@ func MoveToCoords(to data.Position) error {
 
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "MoveTo"
+	ctx.SetLastAction("MoveTo")
 
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}

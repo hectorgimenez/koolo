@@ -39,7 +39,7 @@ func BuffIfRequired() {
 
 func Buff() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "Buff"
+	ctx.SetLastAction("Buff")
 
 	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
 		return
@@ -94,7 +94,7 @@ func Buff() {
 
 func IsRebuffRequired() bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "IsRebuffRequired"
+	ctx.SetLastAction("IsRebuffRequired")
 
 	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
 	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
@@ -129,7 +129,7 @@ func IsRebuffRequired() bool {
 
 func buffCTA() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "buffCTA"
+	ctx.SetLastAction("buffCTA")
 
 	if ctaFound(*ctx.Data) {
 		ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")

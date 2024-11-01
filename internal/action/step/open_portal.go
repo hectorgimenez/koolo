@@ -12,7 +12,7 @@ import (
 
 func OpenPortal() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "OpenPortal"
+	ctx.SetLastStep("OpenPortal")
 
 	lastRun := time.Time{}
 	for {

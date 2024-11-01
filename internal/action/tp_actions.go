@@ -14,7 +14,7 @@ import (
 
 func ReturnTown() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ReturnTown"
+	ctx.SetLastAction("ReturnTown")
 	ctx.PauseIfNotPriority()
 
 	if ctx.Data.PlayerUnit.Area.IsTown() {
@@ -42,7 +42,7 @@ func ReturnTown() error {
 
 func UsePortalInTown() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "UsePortalInTown"
+	ctx.SetLastAction("UsePortalInTown")
 
 	tpArea := town.GetTownByArea(ctx.Data.PlayerUnit.Area).TPWaitingArea(*ctx.Data)
 	_ = MoveToCoords(tpArea)
@@ -74,7 +74,7 @@ func UsePortalInTown() error {
 
 func UsePortalFrom(owner string) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "UsePortalFrom"
+	ctx.SetLastAction("UsePortalFrom")
 
 	if !ctx.Data.PlayerUnit.Area.IsTown() {
 		return nil

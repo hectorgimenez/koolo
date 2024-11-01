@@ -11,7 +11,7 @@ import (
 
 func ReviveMerc() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ReviveMerc"
+	ctx.SetLastAction("ReviveMerc")
 
 	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if ctx.CharacterCfg.Character.UseMerc && ctx.Data.MercHPPercent() <= 0 {
