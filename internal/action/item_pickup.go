@@ -3,17 +3,16 @@ package action
 import (
 	"errors"
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"log/slog"
 	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 func itemFitsInventory(i data.Item) bool {
@@ -45,7 +44,7 @@ func itemFitsInventory(i data.Item) bool {
 
 func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ItemPickup"
+	ctx.SetLastAction("ItemPickup")
 
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
@@ -67,15 +66,8 @@ func ItemPickup(maxDistance int) error {
 			continue
 		}
 
-		for _, m := range ctx.Data.Monsters.Enemies() {
-			if _, dist, _ := ctx.PathFinder.GetPathFrom(itemToPickup.Position, m.Position); dist <= 3 {
-				ctx.Logger.Debug("Monsters detected close to the item being picked up, killing them...", slog.Any("monster", m))
-				_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-					return m.UnitID, true
-				}, nil)
-				continue
-			}
-		}
+		// Clear enemy monsters near the item
+		ClearAreaAroundPosition(itemToPickup.Position, 3, data.MonsterAnyFilter())
 
 		ctx.Logger.Debug(fmt.Sprintf(
 			"Item Detected: %s [%d] at X:%d Y:%d",
@@ -87,29 +79,31 @@ func ItemPickup(maxDistance int) error {
 
 		err := MoveToCoords(itemToPickup.Position)
 		if err != nil {
-			ctx.Logger.Warn("Failed moving closer to item, trying to pickup it anyway", err)
+			ctx.Logger.Warn("Failed moving closer to item, trying to pickup anyway")
 		}
 
 		err = step.PickupItem(itemToPickup)
+		if err == nil {
+			continue // Item picked up successfully, move to next item
+		}
+
 		if errors.Is(err, step.ErrItemTooFar) {
 			ctx.Logger.Debug("Item is too far away, retrying...")
 			continue
 		}
-		if err != nil {
-			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
-			ctx.Logger.Warn(
-				"Failed picking up item, blacklisting it",
-				err.Error(),
-				slog.String("itemName", itemToPickup.Desc().Name),
-				slog.Int("unitID", int(itemToPickup.UnitID)),
-			)
-		}
+
+		// If it's any other error, blacklist the item
+		ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
+		ctx.Logger.Warn(
+			"Failed picking up item, blacklisting it",
+			slog.String("itemName", itemToPickup.Desc().Name),
+			slog.Int("unitID", int(itemToPickup.UnitID)),
+		)
 	}
 }
-
 func GetItemsToPickup(maxDistance int) []data.Item {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "GetItemsToPickup"
+	ctx.SetLastAction("GetItemsToPickup")
 
 	missingHealingPotions := ctx.BeltManager.GetMissingCount(data.HealingPotion)
 	missingManaPotions := ctx.BeltManager.GetMissingCount(data.ManaPotion)
@@ -183,7 +177,7 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 
 func shouldBePickedUp(i data.Item) bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "shouldBePickedUp"
+	ctx.SetLastAction("shouldBePickedUp")
 
 	// Always pickup Runewords and Wirt's Leg
 	if i.IsRuneword || i.Name == "WirtsLeg" {

@@ -467,7 +467,7 @@ func (s *HttpServer) debugData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type DebugData struct {
-		DebugData *ctx.Debug
+		DebugData map[ctx.Priority]*ctx.Debug
 		GameData  *game.Data
 	}
 
@@ -877,11 +877,22 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Baal.OnlyElites = r.Form.Has("gameBaalOnlyElites")
 
 		cfg.Game.Eldritch.KillShenk = r.Form.Has("gameEldritchKillShenk")
-		cfg.Game.Diablo.FullClear = r.Form.Has("gameDiabloFullClear")
+		cfg.Game.Diablo.StartFromStar = r.Form.Has("gameDiabloStartFromStar")
 		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
 		cfg.Game.Diablo.FocusOnElitePacks = r.Form.Has("gameDiabloFocusOnElitePacks")
-		cfg.Game.Diablo.SkipStormcasters = r.Form.Has("gameDiabloSkipStormcasters")
 		cfg.Game.Diablo.DisableItemPickupDuringBosses = r.Form.Has("gameDiabloDisableItemPickupDuringBosses")
+		attackFromDistance, err := strconv.Atoi(r.Form.Get("gameDiabloAttackFromDistance"))
+		if err != nil {
+			s.logger.Warn("Invalid Attack From Distance value, setting to default",
+				slog.String("error", err.Error()),
+				slog.Int("default", 0))
+			cfg.Game.Diablo.AttackFromDistance = 0 // 0 will not reposition
+		} else {
+			if attackFromDistance > 25 {
+				attackFromDistance = 25
+			}
+			cfg.Game.Diablo.AttackFromDistance = attackFromDistance
+		}
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 

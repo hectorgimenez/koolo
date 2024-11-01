@@ -18,7 +18,7 @@ import (
 
 func IdentifyAll(skipIdentify bool) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "IdentifyAll"
+	ctx.SetLastAction("IdentifyAll")
 
 	items := itemsToIdentify()
 
@@ -55,7 +55,7 @@ func IdentifyAll(skipIdentify bool) error {
 
 func CainIdentify() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "CainIdentify"
+	ctx.SetLastAction("CainIdentify")
 
 	stayAwhileAndListen := town.GetTownByArea(ctx.Data.PlayerUnit.Area).IdentifyNPC()
 
@@ -84,7 +84,7 @@ func CainIdentify() error {
 
 func itemsToIdentify() (items []data.Item) {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "itemsToIdentify"
+	ctx.SetLastAction("itemsToIdentify")
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		if i.Identified || i.Quality == item.QualityNormal || i.Quality == item.QualitySuperior {
@@ -104,7 +104,7 @@ func itemsToIdentify() (items []data.Item) {
 
 func HaveItemsToStashUnidentified() bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "HaveItemsToStashUnidentified"
+	ctx.SetLastAction("HaveItemsToStashUnidentified")
 
 	items := ctx.Data.Inventory.ByLocation(item.LocationInventory)
 	for _, i := range items {

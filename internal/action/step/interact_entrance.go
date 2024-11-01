@@ -20,7 +20,7 @@ func InteractEntrance(area area.ID) error {
 	lastRun := time.Time{}
 
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "InteractEntrance"
+	ctx.SetLastStep("InteractEntrance")
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority

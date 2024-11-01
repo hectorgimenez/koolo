@@ -12,7 +12,7 @@ import (
 func ManageBelt() error {
 
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ManageBelt"
+	ctx.SetLastAction("ManageBelt")
 
 	// Check for misplaced potions
 	misplacedPotions := checkMisplacedPotions()
@@ -40,7 +40,7 @@ func ManageBelt() error {
 
 func checkMisplacedPotions() []data.Item {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "CheckMisplacedPotions"
+	ctx.SetLastAction("CheckMisplacedPotions")
 
 	// Get list of potions in the first row
 	potions := []data.Item{}

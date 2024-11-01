@@ -18,7 +18,7 @@ import (
 
 func Repair() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "Repair"
+	ctx.SetLastAction("Repair")
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
 
@@ -83,7 +83,7 @@ func Repair() error {
 
 func RepairRequired() bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "RepairRequired"
+	ctx.SetLastAction("RepairRequired")
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
 

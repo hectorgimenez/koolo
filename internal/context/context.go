@@ -51,7 +51,7 @@ type Context struct {
 	HealthManager     *health.Manager
 	Char              Character
 	LastBuffAt        time.Time
-	ContextDebug      *Debug
+	ContextDebug      map[Priority]*Debug
 	CurrentGame       *CurrentGameHelper
 }
 
@@ -74,8 +74,14 @@ func NewContext(name string) *Status {
 		Name:              name,
 		Data:              &game.Data{},
 		ExecutionPriority: PriorityNormal,
-		ContextDebug:      &Debug{},
-		CurrentGame:       &CurrentGameHelper{},
+		ContextDebug: map[Priority]*Debug{
+			PriorityBackground: {},
+			PriorityNormal:     {},
+			PriorityHigh:       {},
+			PriorityPause:      {},
+			PriorityStop:       {},
+		},
+		CurrentGame: &CurrentGameHelper{},
 	}
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 
@@ -92,6 +98,14 @@ func Get() *Status {
 	mu.Lock()
 	defer mu.Unlock()
 	return botContexts[getGoroutineID()]
+}
+
+func (s *Status) SetLastAction(actionName string) {
+	s.Context.ContextDebug[s.Priority].LastAction = actionName
+}
+
+func (s *Status) SetLastStep(stepName string) {
+	s.Context.ContextDebug[s.Priority].LastStep = stepName
 }
 
 func getGoroutineID() uint64 {

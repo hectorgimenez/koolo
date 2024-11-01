@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -15,7 +14,7 @@ import (
 
 func ReturnTown() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ReturnTown"
+	ctx.SetLastAction("ReturnTown")
 	ctx.PauseIfNotPriority()
 
 	if ctx.Data.PlayerUnit.Area.IsTown() {
@@ -26,16 +25,16 @@ func ReturnTown() error {
 	if err != nil {
 		return err
 	}
-
-	// Clear monsters around the portal
-	ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-
-	// Now that it is safe, interact with portal
 	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
 	if !found {
 		return errors.New("portal not found")
 	}
 
+	if err = ClearAreaAroundPosition(portal.Position, 8, data.MonsterAnyFilter()); err != nil {
+		ctx.Logger.Warn("Error clearing area around portal", "error", err)
+	}
+
+	// Now that it is safe, interact with portal
 	return InteractObject(portal, func() bool {
 		return ctx.Data.PlayerUnit.Area.IsTown()
 	})
@@ -43,7 +42,7 @@ func ReturnTown() error {
 
 func UsePortalInTown() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "UsePortalInTown"
+	ctx.SetLastAction("UsePortalInTown")
 
 	tpArea := town.GetTownByArea(ctx.Data.PlayerUnit.Area).TPWaitingArea(*ctx.Data)
 	_ = MoveToCoords(tpArea)
@@ -75,7 +74,7 @@ func UsePortalInTown() error {
 
 func UsePortalFrom(owner string) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "UsePortalFrom"
+	ctx.SetLastAction("UsePortalFrom")
 
 	if !ctx.Data.PlayerUnit.Area.IsTown() {
 		return nil

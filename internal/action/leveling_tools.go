@@ -157,7 +157,7 @@ func EnsureSkillPoints() error {
 
 func UpdateQuestLog() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "UpdateQuestLog"
+	ctx.SetLastAction("UpdateQuestLog")
 
 	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); !isLevelingChar {
 		return nil
@@ -171,7 +171,7 @@ func UpdateQuestLog() error {
 func getAvailableSkillKB() []data.KeyBinding {
 	availableSkillKB := make([]data.KeyBinding, 0)
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "getAvailableSkillKB"
+	ctx.SetLastAction("getAvailableSkillKB")
 
 	for _, sb := range ctx.Data.KeyBindings.Skills {
 		if sb.SkillID == -1 && (sb.Key1[0] != 0 && sb.Key1[0] != 255) || (sb.Key2[0] != 0 && sb.Key2[0] != 255) {
@@ -184,7 +184,7 @@ func getAvailableSkillKB() []data.KeyBinding {
 
 func EnsureSkillBindings() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "EnsureSkillBindings"
+	ctx.SetLastAction("EnsureSkillBindings")
 
 	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if !isLevelingChar {
@@ -333,7 +333,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 
 func HireMerc() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "HireMerc"
+	ctx.SetLastAction("HireMerc")
 
 	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ctx.CharacterCfg.Character.UseMerc {
@@ -358,7 +358,7 @@ func HireMerc() error {
 
 func ResetStats() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ResetStats"
+	ctx.SetLastAction("ResetStats")
 
 	ch, isLevelingChar := ctx.Char.(context.LevelingCharacter)
 	if isLevelingChar && ch.ShouldResetSkills() {
@@ -384,7 +384,7 @@ func ResetStats() error {
 
 func WaitForAllMembersWhenLeveling() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "WaitForAllMembersWhenLeveling"
+	ctx.SetLastAction("WaitForAllMembersWhenLeveling")
 
 	for {
 		_, isLeveling := ctx.Char.(context.LevelingCharacter)

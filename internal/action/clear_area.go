@@ -9,24 +9,20 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
-func ClearAreaAroundPlayer(distance int, filter data.MonsterFilter) error {
+func ClearAreaAroundPlayer(radius int, filter data.MonsterFilter) error {
+	return ClearAreaAroundPosition(context.Get().Data.PlayerUnit.Position, radius, filter)
+}
+
+// let character's specific combat logic handle attack distance (no overwrite)
+func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterFilter) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "ClearAreaAroundPlayer"
-
-	originalPosition := data.Position{}
-
-	ctx.Logger.Debug("Clearing area around character...", slog.Int("distance", distance))
+	ctx.SetLastAction("ClearAreaAroundPosition")
+	ctx.Logger.Debug("Clearing area around position...", slog.Int("radius", radius))
 
 	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		if originalPosition.X == 0 && originalPosition.Y == 0 {
-			originalPosition = d.PlayerUnit.Position
-		}
-
 		for _, m := range d.Monsters.Enemies(filter) {
-			monsterDist := pather.DistanceFromPoint(originalPosition, m.Position)
-			shouldEngage := IsMonsterSealElite(m) || d.AreaData.IsWalkable(m.Position)
-
-			if monsterDist <= distance && shouldEngage {
+			distanceToTarget := pather.DistanceFromPoint(pos, m.Position)
+			if ctx.Data.AreaData.IsWalkable(m.Position) && distanceToTarget <= radius {
 				return m.UnitID, true
 			}
 		}

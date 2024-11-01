@@ -16,7 +16,7 @@ import (
 
 func CubeAddItems(items ...data.Item) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "CubeAddItems"
+	ctx.SetLastAction("CubeAddItems")
 
 	cube, found := ctx.Data.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
 	if !found {

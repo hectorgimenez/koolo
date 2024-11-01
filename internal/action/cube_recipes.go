@@ -356,7 +356,7 @@ var (
 
 func CubeRecipes() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "CubeRecipes"
+	ctx.SetLastAction("CubeRecipes")
 
 	// If cubing is disabled from settings just return nil
 	if !ctx.CharacterCfg.CubeRecipes.Enabled {

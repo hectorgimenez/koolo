@@ -14,7 +14,7 @@ import (
 
 func doesExceedQuantity(rule nip.Rule) bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "doesExceedQuantity"
+	ctx.SetLastAction("doesExceedQuantity")
 
 	stashItems := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
 
@@ -41,7 +41,7 @@ func doesExceedQuantity(rule nip.Rule) bool {
 
 func DropMouseItem() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "DropMouseItem"
+	ctx.SetLastAction("DropMouseItem")
 
 	if len(ctx.Data.Inventory.ByLocation(item.LocationCursor)) > 0 {
 		utils.Sleep(1000)
@@ -52,7 +52,7 @@ func DropMouseItem() {
 
 func DropInventoryItem(i data.Item) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "DropInventoryItem"
+	ctx.SetLastAction("DropInventoryItem")
 
 	closeAttempts := 0
 

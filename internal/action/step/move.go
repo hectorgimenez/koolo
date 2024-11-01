@@ -14,9 +14,8 @@ import (
 
 func MoveTo(dest data.Position) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "MoveTo"
+	ctx.SetLastStep("MoveTo")
 
-	// This is to ensure we finished moving before returning
 	defer func() {
 		for {
 			switch ctx.Data.PlayerUnit.Mode {
@@ -32,6 +31,8 @@ func MoveTo(dest data.Position) error {
 
 	timeout := time.Second * 30
 	stopAtDistance := 7
+	idleThreshold := time.Second * 3
+	idleStartTime := time.Time{}
 
 	startedAt := time.Now()
 	lastRun := time.Time{}
@@ -42,6 +43,21 @@ func MoveTo(dest data.Position) error {
 
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
+
+		// Check for idle state outside town
+		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
+			if idleStartTime.IsZero() {
+				idleStartTime = time.Now()
+			} else if time.Since(idleStartTime) > idleThreshold {
+				// Perform anti-idle action
+				ctx.Logger.Debug("Anti-idle triggered")
+				ctx.PathFinder.RandomMovement()
+				idleStartTime = time.Time{} // Reset idle timer
+				continue
+			}
+		} else {
+			idleStartTime = time.Time{} // Reset idle timer if not in StandingOutsideTown mode
+		}
 
 		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 		if ctx.Data.CanTeleport() {

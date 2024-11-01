@@ -27,7 +27,7 @@ const (
 
 func Stash(forceStash bool) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "Stash"
+	ctx.SetLastAction("Stash")
 
 	ctx.Logger.Debug("Checking for items to stash...")
 	if !isStashingRequired(forceStash) {
@@ -60,7 +60,7 @@ func Stash(forceStash bool) error {
 
 func orderInventoryPotions() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "orderInventoryPotions"
+	ctx.SetLastStep("orderInventoryPotions")
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		if i.IsPotion() {
@@ -78,7 +78,7 @@ func orderInventoryPotions() {
 
 func isStashingRequired(firstRun bool) bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "isStashingRequired"
+	ctx.SetLastStep("isStashingRequired")
 
 	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 		stashIt, _, _ := shouldStashIt(i, firstRun)
@@ -103,7 +103,7 @@ func isStashingRequired(firstRun bool) bool {
 
 func stashGold() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "stashGold"
+	ctx.SetLastAction("stashGold")
 
 	if ctx.Data.Inventory.Gold == 0 {
 		return
@@ -129,7 +129,7 @@ func stashGold() {
 
 func stashInventory(firstRun bool) {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "stashInventory"
+	ctx.SetLastAction("stashInventory")
 
 	currentTab := 1
 	if ctx.CharacterCfg.Character.StashToShared {
@@ -174,7 +174,7 @@ func stashInventory(firstRun bool) {
 
 func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "shouldStashIt"
+	ctx.SetLastStep("shouldStashIt")
 
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); isLevelingChar && i.IsFromQuest() {
@@ -222,7 +222,7 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 
 func shouldKeepRecipeItem(i data.Item) bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "shouldKeepRecipeItem"
+	ctx.SetLastStep("shouldKeepRecipeItem")
 
 	// No items with quality higher than magic can be part of a recipe
 	if i.Quality > item.QualityMagic {
@@ -260,7 +260,7 @@ func shouldKeepRecipeItem(i data.Item) bool {
 
 func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) bool {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "stashItemAction"
+	ctx.SetLastAction("stashItemAction")
 
 	screenPos := ui.GetScreenCoordsForItem(i)
 	ctx.HID.MovePointer(screenPos.X, screenPos.Y)
@@ -286,7 +286,7 @@ func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) b
 
 func clickStashGoldBtn() {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "clickStashGoldBtn"
+	ctx.SetLastStep("clickStashGoldBtn")
 
 	utils.Sleep(170)
 	if ctx.GameReader.LegacyGraphics() {
@@ -302,7 +302,7 @@ func clickStashGoldBtn() {
 
 func SwitchStashTab(tab int) {
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "switchTab"
+	ctx.SetLastStep("switchTab")
 
 	if ctx.GameReader.LegacyGraphics() {
 		x := ui.SwitchStashTabBtnXClassic
@@ -325,7 +325,7 @@ func SwitchStashTab(tab int) {
 
 func OpenStash() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "OpenStash"
+	ctx.SetLastAction("OpenStash")
 
 	bank, found := ctx.Data.Objects.FindOne(object.Bank)
 	if !found {
@@ -342,7 +342,7 @@ func OpenStash() error {
 
 func CloseStash() error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "CloseStash"
+	ctx.SetLastAction("CloseStash")
 
 	if ctx.Data.OpenMenus.Stash {
 		ctx.HID.PressKey(win.VK_ESCAPE)
@@ -355,7 +355,7 @@ func CloseStash() error {
 
 func TakeItemsFromStash(stashedItems []data.Item) error {
 	ctx := context.Get()
-	ctx.ContextDebug.LastAction = "TakeItemsFromStash"
+	ctx.SetLastAction("TakeItemsFromStash")
 
 	if ctx.Data.OpenMenus.Stash {
 		err := OpenStash()

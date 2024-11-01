@@ -30,7 +30,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	}
 
 	ctx := context.Get()
-	ctx.ContextDebug.LastStep = "InteractObject"
+	ctx.SetLastStep("InteractObject")
 
 	for !isCompletedFn() {
 		// Pause the execution if the priority is not the same as the execution priority
