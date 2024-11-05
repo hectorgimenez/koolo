@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -13,7 +14,6 @@ func ClearAreaAroundPlayer(radius int, filter data.MonsterFilter) error {
 	return ClearAreaAroundPosition(context.Get().Data.PlayerUnit.Position, radius, filter)
 }
 
-// let character's specific combat logic handle attack distance (no overwrite)
 func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("ClearAreaAroundPosition")
@@ -29,4 +29,37 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 
 		return 0, false
 	}, nil)
+}
+
+func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) error {
+	ctx := context.Get()
+
+	for {
+		ctx.PauseIfNotPriority()
+
+		ClearAreaAroundPosition(ctx.Data.PlayerUnit.Position, radius, filter)
+
+		path, distance, found := ctx.PathFinder.GetPath(pos)
+		if !found {
+			return fmt.Errorf("path could not be calculated")
+		}
+
+		if distance <= distanceToFinishMoving {
+			return nil
+		}
+
+		movementDistance := radius
+		if radius > len(path) {
+			movementDistance = len(path)
+		}
+
+		dest := data.Position{
+			X: path[movementDistance-1].X + ctx.Data.AreaData.OffsetX,
+			Y: path[movementDistance-1].Y + ctx.Data.AreaData.OffsetY,
+		}
+		err := MoveToCoords(dest)
+		if err != nil {
+			return err
+		}
+	}
 }

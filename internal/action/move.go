@@ -16,6 +16,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
+const distanceToFinishMoving = 7
+
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
@@ -148,7 +150,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 
 		_, distance, _ := ctx.PathFinder.GetPath(to)
 		// This prevents we stuck in an infinite loop when we can not get closer to the destination
-		if distance <= 7 {
+		if distance <= distanceToFinishMoving {
 			return nil
 		}
 
