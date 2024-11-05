@@ -106,8 +106,9 @@ func (d *Diablo) Run() error {
 
 		// Skip Infector boss because was already killed
 		if bossName != "Infector" {
-			// Wait for the boss to spawn and kill it
-			if err := d.killSealElite(bossName); err != nil {
+			// Wait for the boss to spawn and kill it.
+			// Lord De Seis sometimes it's far, and we can not detect him, but we will kill him anyway heading to the next seal
+			if err := d.killSealElite(bossName); err != nil && bossName != "Lord De Seis" {
 				return err
 			}
 		}
@@ -133,7 +134,7 @@ func (d *Diablo) Run() error {
 func (d *Diablo) killSealElite(boss string) error {
 	d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
 	startTime := time.Now()
-	timeout := 5 * time.Second
+	timeout := 4 * time.Second
 
 	for time.Since(startTime) < timeout {
 		for _, m := range d.ctx.Data.Monsters.Enemies(d.ctx.Data.MonsterFilterAnyReachable()) {
