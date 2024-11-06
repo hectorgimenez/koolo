@@ -29,6 +29,7 @@ import (
 	ctx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 )
@@ -305,11 +306,6 @@ func getRunningProcesses() ([]Process, error) {
 	return processes, nil
 }
 
-var (
-	user32             = windows.NewLazySystemDLL("user32.dll")
-	procGetWindowTextW = user32.NewProc("GetWindowTextW")
-)
-
 func getWindowTitle(pid uint32) (string, error) {
 	var windowTitle string
 	var hwnd windows.HWND
@@ -334,7 +330,7 @@ func getWindowTitle(pid uint32) (string, error) {
 
 	// Get window title
 	var title [256]uint16
-	_, _, _ = procGetWindowTextW.Call(
+	_, _, _ = winproc.GetWindowText.Call(
 		uintptr(hwnd),
 		uintptr(unsafe.Pointer(&title[0])),
 		uintptr(len(title)),
