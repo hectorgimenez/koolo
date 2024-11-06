@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/inkeliz/w32"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/lxn/win"
 )
 
@@ -111,7 +111,8 @@ var specialChars = map[string]byte{
 }
 
 func (hid *HID) calculatelParam(keyCode byte, down bool) uintptr {
-	scanCode := int(w32.MapVirtualKey(uint(keyCode), w32.MAPVK_VK_TO_VSC))
+	ret, _, _ := winproc.MapVirtualKey.Call(uintptr(keyCode), 0)
+	scanCode := int(ret)
 	repeatCount := 1
 	extendedKeyFlag := 0
 	contextCode := 0

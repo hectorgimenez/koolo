@@ -9,4 +9,6 @@ var (
 	SetProcessDpiAware = USER32.NewProc("SetProcessDPIAware")
 	SetWindowText      = USER32.NewProc("SetWindowTextW")
 	GetKeyState        = USER32.NewProc("GetKeyState")
+	GetWindowText      = USER32.NewProc("GetWindowTextW")
+	MapVirtualKey      = USER32.NewProc("MapVirtualKeyW")
 )
