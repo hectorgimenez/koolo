@@ -1,6 +1,6 @@
 module github.com/hectorgimenez/koolo
 
-go 1.22
+go 1.23
 
 require (
 	github.com/billgraziano/dpapi v0.5.0
