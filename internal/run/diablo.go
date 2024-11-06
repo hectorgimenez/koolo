@@ -165,7 +165,7 @@ func (d *Diablo) getMonsterFilter() data.MonsterFilter {
 
 			// If FocusOnElitePacks is enabled, only return elite monsters and seal bosses
 			if d.ctx.CharacterCfg.Game.Diablo.FocusOnElitePacks {
-				if m.IsElite() && action.IsMonsterSealElite(m) {
+				if m.IsElite() || action.IsMonsterSealElite(m) {
 					filteredMonsters = append(filteredMonsters, m)
 				}
 			} else {
