@@ -258,7 +258,7 @@ func shouldKeepRecipeItem(i data.Item) bool {
 	return false
 }
 
-func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) bool {
+func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool) bool {
 	ctx := context.Get()
 	ctx.SetLastAction("stashItemAction")
 
@@ -277,7 +277,7 @@ func stashItemAction(i data.Item, rule string, ruleFile string, firstRun bool) b
 	}
 
 	// Don't log items that we already have in inventory during first run
-	if !firstRun {
+	if !skipLogging {
 		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
 	}
 

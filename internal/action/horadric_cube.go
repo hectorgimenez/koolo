@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -12,17 +13,12 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"github.com/lxn/win"
 )
 
 func CubeAddItems(items ...data.Item) error {
 	ctx := context.Get()
 	ctx.SetLastAction("CubeAddItems")
-
-	cube, found := ctx.Data.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
-	if !found {
-		ctx.Logger.Info("No Horadric Cube found in inventory")
-		return nil
-	}
 
 	// Ensure stash is open
 	if !ctx.Data.OpenMenus.Stash {
@@ -59,7 +55,12 @@ func CubeAddItems(items ...data.Item) error {
 		utils.Sleep(300)
 	}
 
-	err := ensureCubeIsOpen(cube)
+	err := ensureCubeIsOpen()
+	if err != nil {
+		return err
+	}
+
+	err = ensureCubeIsEmpty()
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func CubeAddItems(items ...data.Item) error {
 				screenPos := ui.GetScreenCoordsForItem(updatedItem)
 
 				ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-				utils.Sleep(300)
+				utils.Sleep(500)
 			}
 		}
 	}
@@ -83,13 +84,7 @@ func CubeAddItems(items ...data.Item) error {
 func CubeTransmute() error {
 	ctx := context.Get()
 
-	cube, found := ctx.Data.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
-	if !found {
-		ctx.Logger.Info("No Horadric Cube found in inventory")
-		return nil
-	}
-
-	err := ensureCubeIsOpen(cube)
+	err := ensureCubeIsOpen()
 	if err != nil {
 		return err
 	}
@@ -116,13 +111,52 @@ func CubeTransmute() error {
 	return step.CloseAllMenus()
 }
 
-func ensureCubeIsOpen(cube data.Item) error {
+func ensureCubeIsEmpty() error {
+	ctx := context.Get()
+	if !ctx.Data.OpenMenus.Cube {
+		return errors.New("horadric Cube window not detected")
+	}
+
+	cubeItems := ctx.Data.Inventory.ByLocation(item.LocationCube)
+	if len(cubeItems) == 0 {
+		return nil
+	}
+
+	ctx.Logger.Debug("Emptying the Horadric Cube")
+	for _, itm := range cubeItems {
+		ctx.Logger.Debug("Moving Item to the inventory", slog.String("Item", string(itm.Name)))
+
+		screenPos := ui.GetScreenCoordsForItem(itm)
+
+		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		utils.Sleep(700)
+
+		itm, _ = ctx.Data.Inventory.FindByID(itm.UnitID)
+		if itm.Location.LocationType == item.LocationCube {
+			return fmt.Errorf("item %s could not be removed from the cube", itm.Name)
+		}
+	}
+
+	ctx.HID.PressKey(win.VK_ESCAPE)
+	utils.Sleep(300)
+
+	stashInventory(true)
+
+	return ensureCubeIsOpen()
+}
+
+func ensureCubeIsOpen() error {
 	ctx := context.Get()
 	ctx.Logger.Debug("Opening Horadric Cube...")
 
 	if ctx.Data.OpenMenus.Cube {
 		ctx.Logger.Debug("Horadric Cube window already open")
 		return nil
+	}
+
+	cube, found := ctx.Data.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+	if !found {
+		return errors.New("horadric cube not found in inventory")
 	}
 
 	// If cube is in stash, switch to the correct tab

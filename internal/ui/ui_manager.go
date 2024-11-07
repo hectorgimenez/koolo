@@ -22,6 +22,11 @@ func getScreenCoordsForItem(itm data.Item) data.Position {
 		y := topCornerVendorWindowY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
 
 		return data.Position{X: x, Y: y}
+	case item.LocationCube:
+		x := topCornerCubeWindowX + itm.Position.X*itemBoxSize + (itemBoxSize / 2)
+		y := topCornerCubeWindowY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
+
+		return data.Position{X: x, Y: y}
 	}
 
 	x := inventoryTopLeftX + itm.Position.X*itemBoxSize + (itemBoxSize / 2)
@@ -35,6 +40,11 @@ func getScreenCoordsForItemClassic(itm data.Item) data.Position {
 	case item.LocationVendor, item.LocationStash, item.LocationSharedStash:
 		x := topCornerVendorWindowXClassic + itm.Position.X*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
 		y := topCornerVendorWindowYClassic + itm.Position.Y*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
+
+		return data.Position{X: x, Y: y}
+	case item.LocationCube:
+		x := topCornerCubeWindowXClassic + itm.Position.X*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
+		y := topCornerCubeWindowYClassic + itm.Position.Y*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
 
 		return data.Position{X: x, Y: y}
 	}

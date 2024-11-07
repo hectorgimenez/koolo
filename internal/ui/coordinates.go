@@ -16,6 +16,12 @@ const (
 	topCornerVendorWindowY        = 147
 	topCornerVendorWindowYClassic = 149
 
+	topCornerCubeWindowX        = 222
+	topCornerCubeWindowXClassic = 398
+
+	topCornerCubeWindowY        = 247
+	topCornerCubeWindowYClassic = 239
+
 	MercAvatarPositionX        = 36
 	MercAvatarPositionXClassic = 208
 
