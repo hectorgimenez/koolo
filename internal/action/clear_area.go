@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
@@ -34,18 +35,19 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) error {
 	ctx := context.Get()
 
+	lastMovement := false
 	for {
 		ctx.PauseIfNotPriority()
 
 		ClearAreaAroundPosition(ctx.Data.PlayerUnit.Position, radius, filter)
 
-		path, distance, found := ctx.PathFinder.GetPath(pos)
-		if !found {
-			return fmt.Errorf("path could not be calculated")
+		if lastMovement {
+			return nil
 		}
 
-		if distance <= distanceToFinishMoving {
-			return nil
+		path, _, found := ctx.PathFinder.GetPath(pos)
+		if !found {
+			return fmt.Errorf("path could not be calculated")
 		}
 
 		movementDistance := radius
@@ -57,6 +59,14 @@ func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) 
 			X: path[movementDistance-1].X + ctx.Data.AreaData.OffsetX,
 			Y: path[movementDistance-1].Y + ctx.Data.AreaData.OffsetY,
 		}
+
+		// Let's handle the last movement logic to MoveToCoords function, we will trust the pathfinder because
+		// it can finish within a bigger distance than we expect (because blockers), so we will just check how far
+		// we should be after the latest movement in a theoretical way
+		if len(path)-movementDistance <= step.DistanceToFinishMoving {
+			lastMovement = true
+		}
+
 		err := MoveToCoords(dest)
 		if err != nil {
 			return err

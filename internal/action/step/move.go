@@ -3,6 +3,7 @@ package step
 import (
 	"errors"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -12,7 +13,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
+const DistanceToFinishMoving = 7
+
 func MoveTo(dest data.Position) error {
+	minDistanceToFinishMoving := DistanceToFinishMoving
+
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
 
@@ -30,13 +35,13 @@ func MoveTo(dest data.Position) error {
 	}()
 
 	timeout := time.Second * 30
-	stopAtDistance := 7
 	idleThreshold := time.Second * 3
 	idleStartTime := time.Time{}
 
 	startedAt := time.Now()
 	lastRun := time.Time{}
 	previousPosition := data.Position{}
+	previousDistance := 0
 
 	for {
 		ctx.RefreshGameData()
@@ -72,7 +77,7 @@ func MoveTo(dest data.Position) error {
 
 		path, distance, found := ctx.PathFinder.GetPath(dest)
 		if !found {
-			if ctx.PathFinder.DistanceFromMe(dest) < stopAtDistance+5 {
+			if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
 				return nil
 			}
 			ctx.Logger.Error("Path could not be calculated",
@@ -81,7 +86,7 @@ func MoveTo(dest data.Position) error {
 				slog.String("area", ctx.Data.PlayerUnit.Area.Area().Name))
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
-		if distance <= stopAtDistance || len(path) <= stopAtDistance || len(path) == 0 {
+		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
 			return nil
 		}
 
@@ -109,7 +114,15 @@ func MoveTo(dest data.Position) error {
 			continue
 		}
 
+		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
+		if distance < 20 && math.Abs(float64(previousDistance-distance)) < 5 {
+			minDistanceToFinishMoving += 5
+		} else {
+			minDistanceToFinishMoving = DistanceToFinishMoving
+		}
+
 		previousPosition = ctx.Data.PlayerUnit.Position
+		previousDistance = distance
 		ctx.PathFinder.MoveThroughPath(path, walkDuration)
 	}
 }
