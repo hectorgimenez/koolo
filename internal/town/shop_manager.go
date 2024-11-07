@@ -96,7 +96,7 @@ func ShouldBuyTPs() bool {
 
 	qty, found := portalTome.FindStat(stat.Quantity, 0)
 
-	return qty.Value < 20 || !found
+	return qty.Value < 5 || !found
 }
 
 func ShouldBuyIDs() bool {
@@ -107,7 +107,7 @@ func ShouldBuyIDs() bool {
 
 	qty, found := idTome.FindStat(stat.Quantity, 0)
 
-	return qty.Value < 20 || !found
+	return qty.Value < 10 || !found
 }
 
 func ShouldBuyKeys() (int, bool) {
