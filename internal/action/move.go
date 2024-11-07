@@ -134,6 +134,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
+	lastMovement := false
 	for {
 		ctx.RefreshGameData()
 		to, found := toFunc()
@@ -242,6 +243,16 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		// Continue moving
 		WaitForAllMembersWhenLeveling()
 		previousIterationPosition = ctx.Data.PlayerUnit.Position
+
+		if lastMovement {
+			return nil
+		}
+
+		// TODO: refactor this to use the same approach as ClearThroughPath
+		if _, distance, _ := ctx.PathFinder.GetPathFrom(ctx.Data.PlayerUnit.Position, to); distance <= step.DistanceToFinishMoving {
+			lastMovement = true
+		}
+
 		err := step.MoveTo(to)
 		if err != nil {
 			return err
