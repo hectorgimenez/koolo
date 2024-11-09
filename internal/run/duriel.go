@@ -1,80 +1,83 @@
 package run
 
 import (
+	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
+var talTombs = []area.ID{area.TalRashasTomb1, area.TalRashasTomb2, area.TalRashasTomb3, area.TalRashasTomb4, area.TalRashasTomb5, area.TalRashasTomb6, area.TalRashasTomb7}
+
 type Duriel struct {
-	baseRun
+	ctx *context.Status
 }
 
-func (a Duriel) Name() string {
+func NewDuriel() *Duriel {
+	return &Duriel{
+		ctx: context.Get(),
+	}
+}
+
+func (d Duriel) Name() string {
 	return string(config.DurielRun)
 }
 
-func (a Duriel) BuildActions() (actions []action.Action) {
+func (d Duriel) Run() error {
+	err := action.WayPoint(area.CanyonOfTheMagi)
+	if err != nil {
+		return err
+	}
 
-	// Traveling to the real Tomb
-	actions = append(actions, a.travelToTomb())
+	// Move to the real Tal Rasha tomb
+	if realTalRashaTomb, err := d.findRealTomb(); err != nil {
+		return err
+	} else {
+		action.MoveToArea(realTalRashaTomb)
+	}
 
-	//Entering lair and killing Duriel
-	actions = append(actions, a.killDuriel())
+	// Get Orifice position and move to it, clear surrounding area
+	if orifice, found := d.ctx.Data.Objects.FindOne(object.HoradricOrifice); found {
+		action.MoveToCoords(orifice.Position)
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+	} else {
+		return errors.New("failed to find Duriel's Lair entrance")
+	}
 
-	return actions
+	// Buff before we enter :)
+	action.Buff()
+
+	// Find Duriel's entrance and enter
+	if portal, found := d.ctx.Data.Objects.FindOne(object.DurielsLairPortal); found {
+		action.InteractObject(portal, func() bool {
+			return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
+		})
+	}
+
+	d.ctx.RefreshGameData()
+
+	return d.ctx.Char.KillDuriel()
 }
 
-func (a Duriel) travelToTomb() action.Action {
-	a.logger.Info("Traveling to real tomb")
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		var realTomb area.ID
-		for _, tomb := range talRashaTombs {
-			_, _, objects, _ := a.Reader.GetCachedMapData(false).NPCsExitsAndObjects(data.Position{}, tomb)
-			for _, obj := range objects {
-				if obj.Name == object.HoradricOrifice {
-					realTomb = tomb
-					break
-				}
+func (d Duriel) findRealTomb() (area.ID, error) {
+	var realTomb area.ID
+
+	for _, tomb := range talTombs {
+		for _, obj := range d.ctx.Data.Areas[tomb].Objects {
+			if obj.Name == object.HoradricOrifice {
+				realTomb = tomb
+				break
 			}
 		}
+	}
 
-		if realTomb == 0 {
-			a.logger.Info("Could not find the real tomb")
-			return nil
-		}
+	if realTomb == 0 {
+		return 0, errors.New("failed to find the real Tal Rasha tomb")
+	}
 
-		return []action.Action{
-			a.builder.WayPoint(area.CanyonOfTheMagi),
-			a.builder.Buff(),
-			a.builder.MoveToArea(realTomb),
-			a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-				orifice, _ := d.Objects.FindOne(object.HoradricOrifice)
-				return orifice.Position, true
-			}),
-			a.builder.ClearAreaAroundPlayer(30, data.MonsterAnyFilter()),
-		}
-	})
-}
-
-func (a Duriel) killDuriel() action.Action {
-	a.logger.Info("Entering lair and killing Duriel")
-	return action.NewChain(func(d game.Data) (actions []action.Action) {
-		return []action.Action{
-			action.NewChain(func(d game.Data) []action.Action {
-				_, found := d.Objects.FindOne(object.DurielsLairPortal)
-				if found {
-					return []action.Action{a.builder.InteractObject(object.DurielsLairPortal, func(d game.Data) bool {
-						return d.PlayerUnit.Area == area.DurielsLair
-					})}
-				}
-				return nil
-			}),
-			a.char.KillDuriel(),
-			a.builder.ItemPickup(true, 30),
-		}
-	})
+	return realTomb, nil
 }

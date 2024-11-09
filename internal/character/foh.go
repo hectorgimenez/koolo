@@ -1,6 +1,10 @@
 package character
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/state"
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 	"time"
@@ -9,288 +13,268 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/pather"
 )
 
 const (
-	fohMaxAttacksLoop = 20
-	fohMinDistance    = 5
-	fohMaxDistance    = 20
+	fohMinDistance    = 8
+	fohMaxDistance    = 15
+	hbMinDistance     = 6
+	hbMaxDistance     = 12
+	fohMaxAttacksLoop = 20 // Maximum attack attempts before resetting
 )
 
 type Foh struct {
 	BaseCharacter
 }
 
-func (s Foh) CheckKeyBindings(d game.Data) []skill.ID {
-	requireKeybindings := []skill.ID{skill.Conviction, skill.HolyShield, skill.TomeOfTownPortal}
+func (s Foh) CheckKeyBindings() []skill.ID {
+	requireKeybindings := []skill.ID{skill.Conviction, skill.HolyShield, skill.TomeOfTownPortal, skill.FistOfTheHeavens, skill.HolyBolt}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
-		if _, found := d.KeyBindings.KeyBindingForSkill(cskill); !found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
 			missingKeybindings = append(missingKeybindings, cskill)
 		}
 	}
 
 	if len(missingKeybindings) > 0 {
-		s.logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
+		s.Logger.Debug("There are missing required key bindings.", slog.Any("Bindings", missingKeybindings))
 	}
 
 	return missingKeybindings
 }
-
-func (s Foh) KillMonsterSequence(
-	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
-	opts ...step.AttackOption,
-) action.Action {
+func (s Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {
+	ctx := context.Get()
+	lastRefresh := time.Now()
 	completedAttackLoops := 0
-	previousUnitID := 0
+	fohOpts := []step.AttackOption{
+		step.StationaryDistance(fohMinDistance, fohMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
+	hbOpts := []step.AttackOption{
+		step.StationaryDistance(hbMinDistance, hbMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
 
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		id, found := monsterSelector(d)
-		if !found {
-			return []step.Step{}
+	for {
+		if time.Since(lastRefresh) > time.Millisecond*100 {
+			ctx.RefreshGameData()
+			lastRefresh = time.Now()
 		}
-		if previousUnitID != int(id) {
-			completedAttackLoops = 0
-		}
-
-		if !s.preBattleChecks(d, id, skipOnImmunities) {
-			return []step.Step{}
-		}
-
+		ctx.PauseIfNotPriority()
 		if completedAttackLoops >= fohMaxAttacksLoop {
-			return []step.Step{}
-		}
-
-		steps := make([]step.Step, 0)
-		if d.PlayerUnit.LeftSkill != skill.FistOfTheHeavens {
-			fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
-			if fohFound {
-				steps = append(steps, step.SyncStep(func(_ game.Data) error {
-					helper.Sleep(40)
-					s.container.HID.PressKeyBinding(fohKey)
-					return nil
-				}))
-			}
-		}
-		steps = append(steps, step.PrimaryAttack(
-			id,
-			3,
-			true,
-			step.Distance(fohMinDistance, fohMaxDistance),
-			step.EnsureAura(skill.Conviction),
-		))
-
-		completedAttackLoops++
-		previousUnitID = int(id)
-
-		return steps
-	}, action.RepeatUntilNoSteps())
-}
-
-func (s Foh) killBoss(npc npc.ID, t data.MonsterType) action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found || m.Stats[stat.Life] <= 0 {
-			helper.Sleep(100)
 			return nil
 		}
-		hbKey, holyBoltFound := d.KeyBindings.KeyBindingForSkill(skill.HolyBolt)
-		fohKey, fohFound := d.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens)
-
-		// Switch between foh and holy bolt while attacking
-		if holyBoltFound && fohFound {
-			helper.Sleep(50)
-			steps = []step.Step{
-				step.PrimaryAttack(
-					m.UnitID,
-					1,
-					true,
-					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(skill.Conviction),
-				),
-				step.SyncStep(func(_ game.Data) error {
-					s.container.HID.PressKeyBinding(hbKey)
-					helper.Sleep(40)
-					return nil
-				}),
-				step.PrimaryAttack(
-					m.UnitID,
-					3,
-					true,
-					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(skill.Conviction),
-				),
-				step.SyncStep(func(_ game.Data) error {
-					helper.Sleep(40)
-					s.container.HID.PressKeyBinding(fohKey)
-					return nil
-				}),
-			}
-		} else {
-			helper.Sleep(100)
-			// Don't switch because no keybindings found
-			steps = []step.Step{
-				step.PrimaryAttack(
-					m.UnitID,
-					3,
-					true,
-					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(skill.Conviction),
-				),
+		id, found := monsterSelector(*s.Data)
+		if !found {
+			return nil
+		}
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+		monster, found := s.Data.Monsters.FindByID(id)
+		if !found || monster.Stats[stat.Life] <= 0 {
+			return nil
+		}
+		if !s.Data.PlayerUnit.States.HasState(state.Conviction) {
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Conviction); found {
+				ctx.HID.PressKeyBinding(kb)
 			}
 		}
 
-		return steps
-	}, action.RepeatUntilNoSteps())
+		// Handle attacks
+		validTargets := 0
+		lightImmuneTargets := 0
+		for _, m := range ctx.Data.Monsters.Enemies() {
+			if ctx.Data.AreaData.IsInside(m.Position) {
+				dist := ctx.PathFinder.DistanceFromMe(m.Position)
+				if dist <= fohMaxDistance && dist >= fohMinDistance && m.Stats[stat.Life] > 0 {
+					validTargets++
+					if m.IsImmune(stat.LightImmune) && !m.States.HasState(state.Conviction) {
+						lightImmuneTargets++
+					}
+				}
+			}
+		}
+		if monster.IsImmune(stat.LightImmune) && !monster.States.HasState(state.Conviction) && validTargets == 1 {
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
+				ctx.HID.PressKeyBinding(kb)
+				if err := step.PrimaryAttack(id, 1, true, hbOpts...); err == nil {
+					completedAttackLoops++
+				}
+			}
+		} else {
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
+				ctx.HID.PressKeyBinding(kb)
+				if err := step.PrimaryAttack(id, 1, true, fohOpts...); err == nil {
+					completedAttackLoops++
+				}
+			}
+		}
+	}
 }
 
-func (s Foh) BuffSkills(d game.Data) []skill.ID {
-	if _, found := d.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+func (s Foh) handleBoss(bossID data.UnitID, fohOpts, hbOpts []step.AttackOption, completedAttackLoops *int) error {
+	ctx := context.Get()
+	if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
+		ctx.HID.PressKeyBinding(kb)
+		utils.Sleep(100)
+		if err := step.PrimaryAttack(bossID, 1, true, fohOpts...); err == nil {
+			time.Sleep(ctx.Data.PlayerCastDuration())
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
+				ctx.HID.PressKeyBinding(kb)
+				if err := step.PrimaryAttack(bossID, 3, true, hbOpts...); err == nil {
+					(*completedAttackLoops)++
+				}
+			}
+		}
+	}
+	return nil
+}
+func (s Foh) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {
+	ctx := context.Get()
+	lastRefresh := time.Now()
+	completedAttackLoops := 0
+	fohOpts := []step.AttackOption{
+		step.StationaryDistance(fohMinDistance, fohMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
+	hbOpts := []step.AttackOption{
+		step.StationaryDistance(hbMinDistance, hbMaxDistance),
+		step.EnsureAura(skill.Conviction),
+	}
+
+	for {
+		if time.Since(lastRefresh) > time.Millisecond*100 {
+			ctx.RefreshGameData()
+			lastRefresh = time.Now()
+		}
+		ctx.PauseIfNotPriority()
+		if completedAttackLoops >= fohMaxAttacksLoop {
+			return nil
+		}
+		id, found := monsterSelector(*s.Data)
+		if !found {
+			return nil
+		}
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+		monster, found := s.Data.Monsters.FindByID(id)
+		if !found || monster.Stats[stat.Life] <= 0 {
+			return nil
+		}
+		if !s.Data.PlayerUnit.States.HasState(state.Conviction) {
+			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Conviction); found {
+				ctx.HID.PressKeyBinding(kb)
+			}
+		}
+
+		if err := s.handleBoss(monster.UnitID, fohOpts, hbOpts, &completedAttackLoops); err == nil {
+			continue
+		}
+	}
+}
+
+func (s Foh) BuffSkills() []skill.ID {
+	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
 		return []skill.ID{skill.HolyShield}
 	}
 	return []skill.ID{}
 }
 
-func (s Foh) PreCTABuffSkills(_ game.Data) []skill.ID {
+func (s Foh) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
-func (s Foh) KillCountess() action.Action {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
-}
-
-func (s Foh) KillAndariel() action.Action {
-	return s.killBoss(npc.Andariel, data.MonsterTypeNone)
-}
-
-func (s Foh) KillSummoner() action.Action {
-	return s.killMonster(npc.Summoner, data.MonsterTypeNone)
-}
-
-func (s Foh) KillDuriel() action.Action {
-	return s.killBoss(npc.Duriel, data.MonsterTypeNone)
-}
-
-func (s Foh) KillPindle(_ []stat.Resist) action.Action {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (s Foh) KillMephisto() action.Action {
-	return s.killBoss(npc.Mephisto, data.MonsterTypeNone)
-}
-
-func (s Foh) KillNihlathak() action.Action {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (s Foh) KillDiablo() action.Action {
-	timeout := time.Second * 20
-	startTime := time.Time{}
-	diabloFound := false
-	return action.NewChain(func(d game.Data) []action.Action {
-		if startTime.IsZero() {
-			startTime = time.Now()
+func (s Foh) killBoss(npc npc.ID, t data.MonsterType) error {
+	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
+		m, found := d.Monsters.FindOne(npc, t)
+		if !found || m.Stats[stat.Life] <= 0 {
+			return 0, false
 		}
-
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := d.Monsters.FindOne(npc.Diablo, data.MonsterTypeNone)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
-			if diabloFound {
-				return nil
-			}
-
-			// Keep waiting...
-			return []action.Action{action.NewStepChain(func(d game.Data) []step.Step {
-				return []step.Step{step.Wait(time.Millisecond * 100)}
-			})}
-		}
-
-		diabloFound = true
-		s.logger.Info("Diablo detected, attacking")
-
-		return []action.Action{
-			s.killBoss(npc.Diablo, data.MonsterTypeNone),
-			s.killBoss(npc.Diablo, data.MonsterTypeNone),
-			s.killBoss(npc.Diablo, data.MonsterTypeNone),
-		}
-	}, action.RepeatUntilNoSteps())
+		return m.UnitID, true
+	}, nil)
 }
 
-func (s Foh) KillIzual() action.Action {
-	return s.killBoss(npc.Izual, data.MonsterTypeNone)
+func (s Foh) KillCountess() error {
+	return s.killBoss(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
-func (s Foh) KillCouncil() action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		// Exclude monsters that are not council members
+func (s Foh) KillAndariel() error {
+	return s.killBoss(npc.Andariel, data.MonsterTypeUnique)
+}
+
+func (s Foh) KillSummoner() error {
+	return s.killBoss(npc.Summoner, data.MonsterTypeUnique)
+}
+
+func (s Foh) KillDuriel() error {
+	return s.killBoss(npc.Duriel, data.MonsterTypeUnique)
+}
+
+func (s Foh) KillCouncil() error {
+	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
 		for _, m := range d.Monsters {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
 				councilMembers = append(councilMembers, m)
 			}
 		}
-
-		// Order council members by distance
 		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := pather.DistanceFromMe(d, councilMembers[i].Position)
-			distanceJ := pather.DistanceFromMe(d, councilMembers[j].Position)
-
-			return distanceI < distanceJ
+			return s.PathFinder.DistanceFromMe(councilMembers[i].Position) < s.PathFinder.DistanceFromMe(councilMembers[j].Position)
 		})
-
-		for _, m := range councilMembers {
-			for range fohMaxAttacksLoop {
-				steps = append(steps,
-					step.PrimaryAttack(
-						m.UnitID,
-						3,
-						true,
-						step.Distance(fohMinDistance, fohMaxDistance),
-						step.EnsureAura(skill.Conviction),
-					),
-				)
-			}
+		if len(councilMembers) > 0 {
+			return councilMembers[0].UnitID, true
 		}
-		return
-	}, action.CanBeSkipped())
+		return 0, false
+	}, nil)
 }
 
-func (s Foh) KillBaal() action.Action {
-	return s.killBoss(npc.BaalCrab, data.MonsterTypeNone)
+func (s Foh) KillMephisto() error {
+	return s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
 }
 
-func (s Foh) killMonster(npc npc.ID, t data.MonsterType) action.Action {
-	return action.NewStepChain(func(d game.Data) (steps []step.Step) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
+func (s Foh) KillIzual() error {
+	return s.killBoss(npc.Izual, data.MonsterTypeUnique)
+}
+
+func (s Foh) KillDiablo() error {
+	timeout := time.Second * 20
+	startTime := time.Now()
+	diabloFound := false
+
+	for {
+		if time.Since(startTime) > timeout && !diabloFound {
+			s.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		helper.Sleep(100)
-		for range fohMaxAttacksLoop {
-			steps = append(steps,
-				step.PrimaryAttack(
-					m.UnitID,
-					3,
-					true,
-					step.Distance(fohMinDistance, fohMaxDistance),
-					step.EnsureAura(skill.Conviction),
-				),
-			)
+		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		if !found || diablo.Stats[stat.Life] <= 0 {
+			if diabloFound {
+				return nil
+			}
+			time.Sleep(200 * time.Millisecond)
+			continue
 		}
 
-		return
-	}, action.CanBeSkipped())
+		diabloFound = true
+		s.Logger.Info("Diablo detected, attacking")
+
+		return s.killBoss(npc.Diablo, data.MonsterTypeUnique)
+	}
+}
+
+func (s Foh) KillPindle() error {
+	return s.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+}
+
+func (s Foh) KillNihlathak() error {
+	return s.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
+}
+
+func (s Foh) KillBaal() error {
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeUnique)
 }

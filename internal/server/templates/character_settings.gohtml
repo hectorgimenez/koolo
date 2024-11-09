@@ -4,9 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark"/>
+    <meta name="color-scheme" content="dark"/>
     <link rel="stylesheet" href="../assets/css/pico.min.css">
     <link rel="stylesheet" href="../assets/css/custom.css">
+    <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
     <script src="../assets/js/Sortable.min.js"></script>
     <script src="../assets/js/character_settings.js"></script>
     <title>Koolo Settings</title>
@@ -25,7 +26,7 @@
         </div>
     {{ end }}
     <div class="notification">
-        <h2>Settings</h2>
+        <h3>General Settings</h3><br>
         <form method="post" autocomplete="off" class="compact-form">
             <label {{ if ne .Supervisor "" }}hidden="hidden" {{ end }}>
                 <span>Supervisor name</span>
@@ -33,10 +34,48 @@
             </label>
             <fieldset class="grid">
                 <label>
-                    Max game length (seconds)
-                    <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
-                           value="{{ .Config.MaxGameLength }}"/>
-
+                    Class
+                    <select name="characterClass">
+                        <option value="sorceress" {{ if eq .Config.Character.Class
+                        "sorceress" }}selected{{ end }}>Blizzard Sorceress
+                        </option>
+                        <option value="hammerdin" {{ if eq .Config.Character.Class
+                        "hammerdin" }}selected{{ end }}>Hammer Paladin
+                        </option>
+                        <option value="foh" {{ if eq .Config.Character.Class
+                        "foh" }}selected{{ end }}>FOH Paladin
+                        </option>
+                        <option value="nova" {{ if eq .Config.Character.Class
+                        "nova" }}selected{{ end }}>Nova Sorceress
+                        </option>
+                        <option value="hydraorb" {{ if eq .Config.Character.Class
+                        "hydraorb" }}selected{{ end }}>Hydra Orb Sorceress
+                        </option>
+                        <option value="paladin" {{ if eq .Config.Character.Class
+                        "paladin" }}selected{{ end }}>Paladin (Leveling)
+                        </option>
+                        <option value="sorceress_leveling_lightning" {{ if eq .Config.Character.Class
+                        "sorceress_leveling_lightning" }}selected{{ end }}>Sorc (Leveling as Lightning)
+                        </option>
+                        <option value="sorceress_leveling" {{ if eq .Config.Character.Class
+                        "sorceress_leveling" }}selected{{ end }}>Sorc (Leveling as Fire)
+                        </option>
+                        <option value="trapsin" {{ if eq .Config.Character.Class
+                        "trapsin" }}selected{{ end }}>Lightning Trapsin
+                        </option>
+                        <option value="mosaic" {{ if eq .Config.Character.Class
+                        "mosaic" }}selected{{ end }}>Mosaic Assassin
+                        </option>
+                        <option value="winddruid" {{ if eq .Config.Character.Class
+                        "winddruid" }}selected{{ end }}>Tornado Druid
+                        </option>
+                        <option value="javazon" {{ if eq .Config.Character.Class
+                        "javazon" }}selected{{ end }}>Javazon
+                        </option>
+                        <option value="berserker" {{ if eq .Config.Character.Class
+                        "berserker" }}selected{{ end }}>Berserk Barbarian
+                        </option>
+                    </select>
                 </label>
                 <label>
                     Character name
@@ -46,7 +85,41 @@
             </fieldset>
             <fieldset class="grid">
                 <label>
-                    Diablo2 Command Line Arguments
+                    Use teleport when available
+                    <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
+                </label>
+                <label>
+                    <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
+                    Always stash to shared tab
+                </label>
+                <div class="berserker-barb-options" style="display: none;">
+                    <label>
+                        <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.BerserkerBarb.FindItemSwitch }}checked{{ end }}/>
+                        Find Item Switch
+                    </label>
+                    <label>
+                        <input type="checkbox" name="barbSkipPotionPickupInTravincal" {{if .Config.Character.BerserkerBarb.SkipPotionPickupInTravincal}}checked{{end}}>
+                        Skip potion pickup during Travincal
+                    </label>
+                </div>
+                <div class="nova-sorceress-options" style="display: none;">
+                    <label>
+                        Boss Static HP (%)
+                        <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
+                    </label>
+                    <small>(100% to disable)</small>
+                </div>
+            </fieldset>
+            <label>
+                Minimum Gold (will pick up Magic+ to sell for gold if below)
+                <input min="0" type="number" name="gameMinGoldPickupThreshold"
+                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
+                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
+            </label>
+            <h3>Client Settings</h3><br>
+            <fieldset class="grid">
+                <label>
+                    Client launch options (arguments)
                     <input name="commandLineArgs" placeholder="{{ .Config.CommandLineArgs }}"
                         value="{{ .Config.CommandLineArgs }}"/>
                 </label>
@@ -56,7 +129,7 @@
                     <input id="kill_d2_process" type="checkbox" name="kill_d2_process" {{ if .Config.KillD2OnStop }}checked{{ end }}/>
                     Kill D2 process on bot stop
                 </label>
-                                <label>
+                <label>
                     <input id="classic_mode" type="checkbox" name="classic_mode" {{ if .Config.ClassicMode }}checked{{ end }}/>
                     Use Classic Mode (Legacy Graphics)
                 </label>
@@ -65,7 +138,7 @@
                     Close the mini panel at game start (Legacy Graphics)
                 </label>
             </fieldset>
-            <h4>Battle.net settings</h4>
+            <h3>Battle.net settings</h3><br>
             <fieldset class="grid">
                 <label>
                     Username
@@ -111,7 +184,39 @@
                     <input type="password" name="AuthToken" placeholder="{{ .Config.AuthToken }}" value="{{ .Config.AuthToken }}"/>
                 </label>
             </fieldset>
-            <h4>Health settings</h4>
+            
+            <h3>Scheduler</h3><br>
+            <label>Set the time ranges when the bot should Start and Stop automatically. Multiple time ranges can be set for the same day if you want to simulate breaks. This will enforce killing of the game client on Stop.</label><br>
+            <fieldset class="grid">
+                <label>
+                    Enabled
+                    <input type="checkbox" name="schedulerEnabled" {{ if .Config.Scheduler.Enabled }}checked{{ end }}/>
+                </label>
+            </fieldset>
+
+            <div id="scheduler-settings" {{ if not .Config.Scheduler.Enabled }}style="display: none;"{{ end }}>
+                {{ range $dayIndex := seq 0 6 }}
+                    <div class="scheduler-day">
+                        <h4>{{ index $.DayNames $dayIndex }}</h4>
+                        <div class="time-ranges" data-day="{{ $dayIndex }}">
+                            {{ $day := index $.Config.Scheduler.Days $dayIndex }}
+                            {{ range $timeRange := $day.TimeRanges }}
+                                <div class="time-range">
+                                    <input type="time" name="scheduler[{{ $dayIndex }}][start][]" value="{{ $timeRange.Start.Format "15:04" }}" required>
+                                    <span>to</span>
+                                    <input type="time" name="scheduler[{{ $dayIndex }}][end][]" value="{{ $timeRange.End.Format "15:04" }}" required>
+                                    <button type="button" class="remove-time-range"><i class="bi bi-trash"></i></button>
+                                </div>
+                            {{ end }}
+                        </div>
+                        <button type="button" class="add-time-range" data-day="{{ $dayIndex }}">
+                            <i class="bi bi-plus-circle"></i> Add Time Range
+                        </button>
+                    </div>
+                {{ end }}
+            </div>
+
+            <br><h3>Health settings</h3><br>
             <fieldset class="grid">
                 <label>
                     Healing at (%)
@@ -124,12 +229,12 @@
                            value="{{ .Config.Health.ManaPotionAt }}"/>
                 </label>
                 <label>
-                    Reju at (% of life)
+                    Rejuv at (% of life)
                     <input type="number" name="rejuvPotionAtLife" min="0" max="99" placeholder="{{ .Config.Health.RejuvPotionAtLife }}"
                            value="{{ .Config.Health.RejuvPotionAtLife }}"/>
                 </label>
                 <label>
-                    Reju at (% of mana)
+                    Rejuv at (% of mana)
                     <input type="number" name="rejuvPotionAtMana" min="0" max="99" placeholder="{{ .Config.Health.RejuvPotionAtMana }}"
                            value="{{ .Config.Health.RejuvPotionAtMana }}"/>
                 </label>
@@ -139,6 +244,26 @@
                            value="{{ .Config.Health.ChickenAt }}"/>
                 </label>
             </fieldset>
+            <h4>Belt Layout</h4><br>
+            <fieldset class="grid">
+                {{ range $index, $potionType := .Config.Inventory.BeltColumns }}
+                    <label>
+                        Column {{ $index }}
+                        <select name="inventoryBeltColumns[]">
+                            <option value="healing" {{ if eq $potionType
+                            "healing" }}selected{{ end }}>Healing
+                            </option>
+                            <option value="mana" {{ if eq $potionType
+                            "mana" }}selected{{ end }}>Mana
+                            </option>
+                            <option value="rejuvenation" {{ if eq $potionType
+                            "rejuvenation" }}selected{{ end }}>Rejuvenation
+                            </option>
+                        </select>
+                    </label>
+                {{ end }}
+            </fieldset>
+            <h3>Merc Settings</h3><br>
             <label>
                 <input id="use_merc" type="checkbox" name="useMerc" {{ if .Config.Character.UseMerc }}checked{{ end }}/>
                 Use merc
@@ -161,51 +286,7 @@
                            value="{{ .Config.Health.MercChickenAt }}"/>
                 </label>
             </fieldset>
-            <fieldset class="grid">
-                <label>
-                    Class
-                    <select id="characterClass" name="characterClass" onchange="checkLevelingProfile()">
-                        <option value="sorceress" {{ if eq .Config.Character.Class
-                        "sorceress" }}selected{{ end }}>Sorc (Blizzard)
-                        </option>
-                        <option value="hammerdin" {{ if eq .Config.Character.Class
-                        "hammerdin" }}selected{{ end }}>Paladin (Hammer)
-                        </option>
-                        <option value="foh" {{ if eq .Config.Character.Class
-                        "foh" }}selected{{ end }}>Paladin (FoH)
-                        </option>
-                        <option value="lightning" {{ if eq .Config.Character.Class
-                        "lightning" }}selected{{ end }}>Sorc (Nova)
-                        </option>
-                        <option value="paladin" {{ if eq .Config.Character.Class
-                        "paladin" }}selected{{ end }}>Paladin (Leveling)
-                        </option>
-                        <option value="sorceress_leveling_lightning" {{ if eq .Config.Character.Class
-                        "sorceress_leveling_lightning" }}selected{{ end }}>Sorc (Leveling as Lightning)
-                        </option>
-                        <option value="trapsin" {{ if eq .Config.Character.Class
-                        "trapsin" }}selected{{ end }}>Lightning Trapsin
-                        </option>
-                        <option value="mosaic" {{ if eq .Config.Character.Class
-                        "mosaic" }}selected{{ end }}>Mosaic Assassin
-                        </option>
-                        <option value="winddruid" {{ if eq .Config.Character.Class
-                        "winddruid" }}selected{{ end }}>Tornado druid
-                        </option>
-                        <option value="javazon" {{ if eq .Config.Character.Class
-                        "javazon" }}selected{{ end }}>Javazon
-                        </option>
-                        <option value="berserker" {{ if eq .Config.Character.Class
-                        "berserker" }}selected{{ end }}>Barbarian (Berserk)
-                        </option>
-                    </select>
-                </label>
-                <label>
-                    Use teleport when available
-                    <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
-                </label>
-            </fieldset>
-            <h4>Inventory (Checked means locked)</h4>
+            <h3>Inventory (Checked means locked)</h3>
             <table>
                 {{ range $rowIndex, $row := .Config.Inventory.InventoryLock }}
                     <tr>
@@ -213,142 +294,117 @@
                         <td>
                             <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
                                    {{ if not $unlocked }}checked{{ end }}/>
-                            {{ end }}
+                        </td>
+                        {{ end }}
                     </tr>
                 {{ end }}
             </table>
-            <h4>Potion belt</h4>
+            <h3>Game Settings</h3><br>
+            <label>
+                <input type="checkbox" name="createLobbyGames" {{ if .Config.Game.CreateLobbyGames }}checked{{ end }}/>
+                Create Lobby Games
+            </label><br>
             <fieldset class="grid">
-                {{ range $index, $potionType := .Config.Inventory.BeltColumns }}
-                    <label>
-                        Column {{ $index }}
-                        <select name="inventoryBeltColumns[]">
-                            <option value="healing" {{ if eq $potionType
-                            "healing" }}selected{{ end }}>Healing
-                            </option>
-                            <option value="mana" {{ if eq $potionType
-                            "mana" }}selected{{ end }}>Mana
-                            </option>
-                            <option value="rejuvenation" {{ if eq $potionType
-                            "rejuvenation" }}selected{{ end }}>Rejuvenation
-                            </option>
-                        </select>
-                    </label>
-                {{ end }}
-            </fieldset>
-            <h4>Game</h4>
-            <label>
-                <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
-                Always stash to shared tab
-            </label>
-            <label>
-                Minimum gold to pickup
-                <input min="0" type="number" name="gameMinGoldPickupThreshold"
-                       placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
-                       value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
-            </label>
-            <label>
-                Difficulty
-                <select name="gameDifficulty">
-                    <option value="normal" {{ if eq .Config.Game.Difficulty
-                    "normal" }}selected{{ end }}>Normal
-                    </option>
-                    <option value="nightmare" {{ if eq .Config.Game.Difficulty
-                    "nightmare" }}selected{{ end }}>Nightmare
-                    </option>
-                    <option value="hell" {{ if eq .Config.Game.Difficulty
-                    "hell" }}selected{{ end }}>Hell
-                    </option>
-                </select>
-            </label>
-            <label>
-                <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
-                Randomize runs
-            </label>
-            <input type="hidden" id="gameRuns" name="gameRuns" value="">
-            <div class="grid">
-                <div>
-                    <h6>Enabled runs (drag & drop)</h6>
-                    <button type="button" id="clear-enabled-runs">Clear All</button>
-
-                    <ul class="run-list" id="enabled_runs">
-                        {{ range $index, $run := .EnabledRuns }}
-                            <li value="{{ $run }}">
-                                <details>
-                                    <summary role="button" class="outline secondary">{{ $run }}</summary>
-                                    <p>{{ executeTemplateByName $run $topLevelContext }}</p>
-                                </details>
-                            </li>
-                        {{ end }}
-                    </ul>
-                </div>
-                <div>
-                    <h6>Disabled runs</h6>
-                    <input type="text" id="search-disabled-runs" placeholder="Search runs...">
-                    <ul class="run-list" id="disabled_runs">
-                        {{ range $index, $run := .DisabledRuns }}
-                            <li value="{{ $run }}">
-                                <details>
-                                    <summary role="button" class="outline secondary">{{ $run }}</summary>
-                                    <p>{{ executeTemplateByName $run $topLevelContext }}</p>
-                                </details>
-                            </li>
-                        {{ end }}
-                    </ul>
-                </div>
-            </div>
-            <h4>Gambling</h4>
-            <label>
-                <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
-                Enabled
-            </label>
-            <h4>Cube Recipes:</h4>
-            <label>
-                <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
-                Enabled
-            </label>
-            {{ range $index, $recipe := .RecipeList }}
-                <label>
-                <input type="checkbox" name="enabledRecipes" value="{{ $recipe }}" {{ if contains $.Config.CubeRecipes.EnabledRecipes $recipe }}checked{{ end }}>
-                {{ $recipe }}
-                </label>
-            {{ end }}
-            <h4>Companion mode</h4>
-            <label>
-                <input type="checkbox" name="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>
-                Enabled
-            </label>
-            <label>
-                <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
-                Leader
-            </label>
-            <label>
-                <input type="checkbox" name="companionAttack" {{ if .Config.Companion.Attack }}checked{{ end }}/>
-                Attack
-            </label>
-            <label>
-                <input type="checkbox" name="companionFollowLeader" {{ if .Config.Companion.FollowLeader }}checked{{ end }}/>
-                Follow Leader
-            </label>
-            <fieldset class="grid">
-                <label>
-                    Leader Name
-                    <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
-                           value="{{ .Config.Companion.LeaderName }}"/>
-                </label>
                 <label>
                     Game name pattern
                     <input name="companionGameNameTemplate" placeholder="{{ .Config.Companion.GameNameTemplate }}"
                            value="{{ .Config.Companion.GameNameTemplate }}"/>
                 </label>
                 <label>
-                    Game password
+                    Game password (leave blank for public games)
                     <input name="companionGamePassword" placeholder="{{ .Config.Companion.GamePassword }}"
                            value="{{ .Config.Companion.GamePassword }}"/>
                 </label>
             </fieldset>
+            <fieldset class="grid">
+                <label>
+                    Game Difficulty
+                    <select name="gameDifficulty" id="gameDifficulty">
+                        <option value="normal" {{ if eq .Config.Game.Difficulty "normal" }}selected{{ end }}>Normal</option>
+                        <option value="nightmare" {{ if eq .Config.Game.Difficulty "nightmare" }}selected{{ end }}>Nightmare</option>
+                        <option value="hell" {{ if eq .Config.Game.Difficulty "hell" }}selected{{ end }}>Hell</option>
+                    </select>
+                </label>
+            <label>
+                Max game length (seconds)
+                <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
+                    value="{{ .Config.MaxGameLength }}"/>
+                </label>
+            </fieldset>
+            <h4>Run Settings</h4><br>
+            <label>
+                Choose the runs that you want the bot to run. You can either drag & drop runs below to enable or disable them, or use the + - buttons. Click on any of the runs to expand them and see more details and options.
+            </label><br>
+            <label>
+                <input type="checkbox" name="gameRandomizeRuns" {{ if .Config.Game.RandomizeRuns }}checked{{ end }}/>
+                Randomize run order
+            </label><br>
+            <input type="hidden" id="gameRuns" name="gameRuns" value="">
+            <div class="grid">
+                <div>
+                    <h6>Enabled Runs:</h6>                    
+                    <ul style="padding-top: 52px" class="run-list" id="enabled_runs">
+                        {{ range $index, $run := .EnabledRuns }}
+                            <li value="{{ $run }}">
+                                <details>
+                                    <summary role="button" class="outline secondary">
+                                        <span>{{ $run }}</span>
+                                        <button type="button" class="remove-run" title="Remove run"><i class="bi bi-dash"></i></button>
+                                    </summary>
+                                    {{ executeTemplateByName $run $topLevelContext }}
+                                </details>
+                            </li>
+                        {{ end }}
+                    </ul>
+                </div>
+                <div>
+                    <h6>Disabled Runs:</h6>
+                    <input type="text" id="search-disabled-runs" placeholder="Search runs...">
+                    <ul class="run-list" id="disabled_runs">
+                        {{ range $index, $run := .DisabledRuns }}
+                            <li value="{{ $run }}">
+                                <details>
+                                    <summary role="button" class="outline secondary">
+                                        <span>{{ $run }}</span>
+                                        <button type="button" class="add-run" title="Add run"><i class="bi bi-plus"></i></button>
+                                    </summary>
+                                    {{ executeTemplateByName $run $topLevelContext }}
+                                </details>
+                            </li>
+                        {{ end }}
+                    </ul>
+                </div>
+            </div>
+            <h3>Gambling</h3>
+            <label>
+                <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
+                Enabled
+            </label>
+            <h3>Cube Recipes</h3>
+            <label>
+                <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
+                Enable the bot to automatically cube item recipes.
+            </label><br>
 
-            <h4>Back to Town Settings:</h4>
+            <div class="recipe-grid">
+                {{ range $index, $recipe := .RecipeList }}
+                    <label>
+                        <input type="checkbox" name="enabledRecipes" value="{{ $recipe }}" {{ if contains $.Config.CubeRecipes.EnabledRecipes $recipe }}checked{{ end }}>
+                        {{ $recipe }}
+                    </label>
+                {{ end }}
+            </div>
+            <h3>Leader mode</h3>
+            <label>
+                <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
+                Leader
+            </label>
+            <label>
+                    Leader Name
+                    <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
+                           value="{{ .Config.Companion.LeaderName }}"/>
+                </label>
+            <h3>Back to Town Settings:</h3>
             <fieldset class="grid">    
                 <label>
                 <input id="no_hp_potions" type="checkbox" name="noHpPotions" {{ if .Config.BackToTown.NoHpPotions }}checked{{ end }}/>

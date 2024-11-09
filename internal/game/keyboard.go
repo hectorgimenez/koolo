@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/inkeliz/w32"
+	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/lxn/win"
 )
 
@@ -21,6 +21,13 @@ func (hid *HID) PressKey(key byte) {
 	sleepTime := rand.Intn(keyPressMaxTime-keyPressMinTime) + keyPressMinTime
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
 	win.PostMessage(hid.gr.HWND, win.WM_KEYUP, uintptr(key), hid.calculatelParam(key, false))
+}
+
+func (hid *HID) KeySequence(keysToPress ...byte) {
+	for _, key := range keysToPress {
+		hid.PressKey(key)
+		time.Sleep(200 * time.Millisecond)
+	}
 }
 
 // PressKeyWithModifier works the same as PressKey but with a modifier key (shift, ctrl, alt)
@@ -104,7 +111,8 @@ var specialChars = map[string]byte{
 }
 
 func (hid *HID) calculatelParam(keyCode byte, down bool) uintptr {
-	scanCode := int(w32.MapVirtualKey(uint(keyCode), w32.MAPVK_VK_TO_VSC))
+	ret, _, _ := winproc.MapVirtualKey.Call(uintptr(keyCode), 0)
+	scanCode := int(ret)
 	repeatCount := 1
 	extendedKeyFlag := 0
 	contextCode := 0

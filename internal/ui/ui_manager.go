@@ -3,21 +3,12 @@ package ui
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
-type Manager struct {
-	gr *game.MemoryReader
-}
-
-func NewManager(gr *game.MemoryReader) *Manager {
-	return &Manager{
-		gr: gr,
-	}
-}
-
-func (ui *Manager) GetScreenCoordsForItem(itm data.Item) data.Position {
-	if ui.gr.LegacyGraphics() {
+func GetScreenCoordsForItem(itm data.Item) data.Position {
+	ctx := context.Get()
+	if ctx.GameReader.LegacyGraphics() {
 		return getScreenCoordsForItemClassic(itm)
 	}
 
@@ -29,6 +20,11 @@ func getScreenCoordsForItem(itm data.Item) data.Position {
 	case item.LocationVendor, item.LocationStash, item.LocationSharedStash:
 		x := topCornerVendorWindowX + itm.Position.X*itemBoxSize + (itemBoxSize / 2)
 		y := topCornerVendorWindowY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
+
+		return data.Position{X: x, Y: y}
+	case item.LocationCube:
+		x := topCornerCubeWindowX + itm.Position.X*itemBoxSize + (itemBoxSize / 2)
+		y := topCornerCubeWindowY + itm.Position.Y*itemBoxSize + (itemBoxSize / 2)
 
 		return data.Position{X: x, Y: y}
 	}
@@ -44,6 +40,11 @@ func getScreenCoordsForItemClassic(itm data.Item) data.Position {
 	case item.LocationVendor, item.LocationStash, item.LocationSharedStash:
 		x := topCornerVendorWindowXClassic + itm.Position.X*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
 		y := topCornerVendorWindowYClassic + itm.Position.Y*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
+
+		return data.Position{X: x, Y: y}
+	case item.LocationCube:
+		x := topCornerCubeWindowXClassic + itm.Position.X*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
+		y := topCornerCubeWindowYClassic + itm.Position.Y*itemBoxSizeClassic + (itemBoxSizeClassic / 2)
 
 		return data.Position{X: x, Y: y}
 	}

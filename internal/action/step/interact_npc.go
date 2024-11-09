@@ -1,89 +1,69 @@
 package step
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
-type InteractNPCStep struct {
-	basicStep
-	NPC                   npc.ID
-	waitingForInteraction bool
-	isCompletedFn         func(d game.Data) bool
-	currentMouseCoords    data.Position
-}
+func InteractNPC(npcID npc.ID) error {
+	maxInteractionAttempts := 5
+	interactionAttempts := 0
+	waitingForInteraction := false
+	currentMouseCoords := data.Position{}
+	lastRun := time.Time{}
 
-func InteractNPC(npc npc.ID) *InteractNPCStep {
-	return &InteractNPCStep{
-		basicStep: newBasicStep(),
-		NPC:       npc,
-	}
-}
+	ctx := context.Get()
+	ctx.SetLastStep("InteractNPC")
 
-func InteractNPCWithCheck(npc npc.ID, isCompletedFn func(d game.Data) bool) *InteractNPCStep {
-	return &InteractNPCStep{
-		basicStep:     newBasicStep(),
-		NPC:           npc,
-		isCompletedFn: isCompletedFn,
-	}
-}
+	for {
+		ctx.RefreshGameData()
 
-func (i *InteractNPCStep) Status(d game.Data, _ container.Container) Status {
-	if i.status == StatusCompleted {
-		return StatusCompleted
-	}
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
 
-	if i.isCompletedFn != nil && i.isCompletedFn(d) {
-		return i.tryTransitionStatus(StatusCompleted)
-	}
-
-	// Give some extra time to render the UI
-	if d.OpenMenus.NPCInteract && time.Since(i.lastRun) > time.Second*1 {
-		return i.tryTransitionStatus(StatusCompleted)
-	}
-
-	return i.status
-}
-
-func (i *InteractNPCStep) Run(d game.Data, container container.Container) error {
-	i.tryTransitionStatus(StatusInProgress)
-
-	// Give some time before retrying the interaction
-	if i.waitingForInteraction && time.Since(i.lastRun) < time.Second {
-		return nil
-	}
-
-	i.lastRun = time.Now()
-	m, found := d.Monsters.FindOne(i.NPC, data.MonsterTypeNone)
-	if found {
-		if m.IsHovered {
-			container.HID.Click(game.LeftButton, i.currentMouseCoords.X, i.currentMouseCoords.Y)
-			i.waitingForInteraction = true
+		if ctx.Data.OpenMenus.NPCInteract {
 			return nil
 		}
 
-		distance := pather.DistanceFromMe(d, m.Position)
-		if distance > 15 {
-			return fmt.Errorf("NPC is too far away: %d. Current distance: %d", i.NPC, distance)
+		if interactionAttempts >= maxInteractionAttempts {
+			return errors.New("failed interacting with NPC")
 		}
 
-		x, y := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, m.Position.X, m.Position.Y)
-		// Act 4 Tyrael has a super weird hitbox
-		if i.NPC == npc.Tyrael2 {
-			y = y - 40
+		// Give some time before retrying the interaction
+		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
+			continue
 		}
-		i.currentMouseCoords = data.Position{X: x, Y: y}
-		container.HID.MovePointer(x, y)
 
-		return nil
+		lastRun = time.Now()
+		m, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone)
+		if found {
+			if m.IsHovered {
+				ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+				waitingForInteraction = true
+				interactionAttempts++
+				continue
+			}
+
+			distance := ctx.PathFinder.DistanceFromMe(m.Position)
+			if distance > 15 {
+				return fmt.Errorf("NPC is too far away: %d. Current distance: %d", npcID, distance)
+			}
+
+			x, y := ui.GameCoordsToScreenCords(m.Position.X, m.Position.Y)
+			// Act 4 Tyrael has a super weird hitbox
+			if npcID == npc.Tyrael2 {
+				y = y - 40
+			}
+			currentMouseCoords = data.Position{X: x, Y: y}
+			ctx.HID.MovePointer(x, y)
+			interactionAttempts++
+		}
 	}
-
-	return fmt.Errorf("npc %d not found", i.NPC)
 }

@@ -10,7 +10,7 @@ const (
 	SummonerRun         Run = "summoner"
 	DurielRun           Run = "duriel"
 	MephistoRun         Run = "mephisto"
-	CouncilRun          Run = "council"
+	TravincalRun        Run = "travincal"
 	EldritchRun         Run = "eldritch"
 	PindleskinRun       Run = "pindleskin"
 	NihlathakRun        Run = "nihlathak"
@@ -29,6 +29,7 @@ const (
 	TerrorZoneRun       Run = "terror_zone"
 	ThreshsocketRun     Run = "threshsocket"
 	DrifterCavernRun    Run = "drifter_cavern"
+	SpiderCavernRun     Run = "spider_cavern"
 	EnduguRun           Run = "endugu"
 )
 
@@ -40,7 +41,7 @@ var AvailableRuns = map[Run]interface{}{
 	SummonerRun:         nil,
 	DurielRun:           nil,
 	MephistoRun:         nil,
-	CouncilRun:          nil,
+	TravincalRun:        nil,
 	EldritchRun:         nil,
 	PindleskinRun:       nil,
 	NihlathakRun:        nil,
@@ -59,5 +60,6 @@ var AvailableRuns = map[Run]interface{}{
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
 	DrifterCavernRun:    nil,
+	SpiderCavernRun:     nil,
 	EnduguRun:           nil,
 }

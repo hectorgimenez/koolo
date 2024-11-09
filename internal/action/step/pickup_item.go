@@ -1,121 +1,107 @@
 package step
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
 	"time"
-
-	"github.com/hectorgimenez/koolo/internal/container"
-	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
-	"github.com/hectorgimenez/koolo/internal/helper"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const maxInteractions = 45
 
-type PickupItemStep struct {
-	basicStep
-	item                  data.Item
-	waitingForInteraction time.Time
-	mouseOverAttempts     int
-	logger                *slog.Logger
-	startedAt             time.Time
-	currentMouseCoords    data.Position
-}
+var ErrItemTooFar = errors.New("item is too far away")
 
-func PickupItem(logger *slog.Logger, item data.Item) *PickupItemStep {
-	return &PickupItemStep{
-		basicStep: newBasicStep(),
-		item:      item,
-		logger:    logger,
-	}
-}
+func PickupItem(it data.Item) error {
+	ctx := context.Get()
+	ctx.SetLastStep("PickupItem")
 
-func (p *PickupItemStep) Status(d game.Data, _ container.Container) Status {
-	if p.status == StatusCompleted {
-		return p.status
-	}
+	ctx.Logger.Debug(fmt.Sprintf("Picking up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
 
-	for _, i := range d.Inventory.ByLocation(item.LocationGround) {
-		if i.UnitID == p.item.UnitID {
-			return p.status
-		}
-	}
+	waitingForInteraction := time.Time{}
+	mouseOverAttempts := 0
+	currentMouseCoords := data.Position{}
+	lastRun := time.Now()
+	itemToPickup := it
 
-	p.logger.Info(fmt.Sprintf("Item picked up: %s [%s]", p.item.Desc().Name, p.item.Quality.ToString()))
+	for {
+		// Pause the execution if the priority is not the same as the execution priority
+		ctx.PauseIfNotPriority()
+		ctx.RefreshGameData()
 
-	return p.tryTransitionStatus(StatusCompleted)
-}
+		// Reset item to empty
+		it = data.Item{}
 
-func (p *PickupItemStep) Run(d game.Data, container container.Container) error {
-	for _, m := range d.Monsters.Enemies() {
-		if dist := pather.DistanceFromMe(d, m.Position); dist < 7 && p.mouseOverAttempts > 1 {
-			return fmt.Errorf("monster %d [%s] is too close to item %s [%s]", m.Name, m.Type, p.item.Desc().Name, p.item.Quality.ToString())
-		}
-	}
-
-	if p.mouseOverAttempts > maxInteractions || !p.waitingForInteraction.IsZero() && time.Since(p.waitingForInteraction) > time.Second*3 {
-		return fmt.Errorf("item %s [%s] could not be picked up", p.item.Desc().Name, p.item.Quality.ToString())
-	}
-
-	if p.status == StatusNotStarted {
-		p.logger.Debug(fmt.Sprintf("Picking up: %s [%s]", p.item.Desc().Name, p.item.Quality.ToString()))
-		p.startedAt = time.Now()
-	}
-
-	p.tryTransitionStatus(StatusInProgress)
-	if time.Since(p.lastRun) < helper.RandomDurationMs(120, 320) {
-		return nil
-	}
-
-	if !p.waitingForInteraction.IsZero() && time.Since(p.lastRun) < time.Second {
-		return nil
-	}
-
-	p.lastRun = time.Now()
-	for _, i := range d.Inventory.ByLocation(item.LocationGround) {
-		if i.UnitID == p.item.UnitID {
-			objectX := i.Position.X - 1
-			objectY := i.Position.Y - 1
-			mX, mY := container.PathFinder.GameCoordsToScreenCords(d.PlayerUnit.Position.X, d.PlayerUnit.Position.Y, objectX, objectY)
-
-			if i.IsHovered {
-				container.HID.Click(game.LeftButton, p.currentMouseCoords.X, p.currentMouseCoords.Y)
-				if p.waitingForInteraction.IsZero() {
-					p.waitingForInteraction = time.Now()
-				}
-				return nil
-			} else {
-				// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
-				// on Andariel, so we open it
-				if p.isChestHovered(d) {
-					container.HID.Click(game.LeftButton, p.currentMouseCoords.X, p.currentMouseCoords.Y)
-				}
-
-				distance := pather.DistanceFromMe(d, i.Position)
-				if distance > 7 {
-					p.logger.Info("item is too far away", slog.String("item", p.item.Desc().Name))
-					return fmt.Errorf("item is too far away: %s", p.item.Desc().Name)
-				}
-
-				x, y := helper.Spiral(p.mouseOverAttempts)
-				p.currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
-				container.HID.MovePointer(mX+x, mY+y)
-				p.mouseOverAttempts++
-
-				return nil
+		for _, i := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
+			if i.UnitID == itemToPickup.UnitID {
+				it = i
 			}
 		}
-	}
 
-	return fmt.Errorf("item %s not found", p.item.Desc().Name)
+		if it.UnitID != itemToPickup.UnitID {
+			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", itemToPickup.Desc().Name, itemToPickup.Quality.ToString()))
+			return nil
+		}
+
+		if mouseOverAttempts > maxInteractions || !waitingForInteraction.IsZero() && time.Since(waitingForInteraction) > time.Second*3 {
+			return fmt.Errorf("item %s [%s] could not be picked up: mouseover attempts limit reached", it.Desc().Name, it.Quality.ToString())
+		}
+
+		if time.Since(lastRun) < utils.RandomDurationMs(120, 320) {
+			continue
+		}
+
+		if !waitingForInteraction.IsZero() && time.Since(lastRun) < time.Second {
+			continue
+		}
+
+		lastRun = time.Now()
+		objectX := it.Position.X - 1
+		objectY := it.Position.Y - 1
+
+		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
+
+		// Move the mouse to the coords
+		ctx.HID.MovePointer(mX, mY)
+
+		// Refresh game data to update the item hover status
+		mouseOverAttempts++
+		time.Sleep(time.Millisecond * 100)
+		ctx.RefreshGameData()
+
+		if it.IsHovered {
+			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+			if waitingForInteraction.IsZero() {
+				waitingForInteraction = time.Now()
+			}
+			continue
+		} else {
+			// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
+			// on Andariel, so we open it
+			if isChestHovered() {
+				ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+			}
+
+			distance := ctx.PathFinder.DistanceFromMe(it.Position)
+			if distance > 10 {
+				return fmt.Errorf("%w (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
+			}
+
+			x, y := utils.Spiral(mouseOverAttempts)
+			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
+			ctx.HID.MovePointer(mX+x, mY+y)
+			mouseOverAttempts++
+		}
+	}
 }
 
-func (p *PickupItemStep) isChestHovered(d game.Data) bool {
-	for _, o := range d.Objects {
+func isChestHovered() bool {
+	for _, o := range context.Get().Data.Objects {
 		if o.IsChest() && o.IsHovered {
 			return true
 		}

@@ -23,9 +23,9 @@ func NewLogger(debug bool, logDir, supervisor string) (*slog.Logger, error) {
 		}
 	}
 
-	fileName := "koolo-log-" + time.Now().Format("2006-01-02-15-04-05") + ".txt"
+	fileName := "Koolo-log-" + time.Now().Format("2006-01-02-15-04-05") + ".txt"
 	if supervisor != "" {
-		fileName = fmt.Sprintf("koolo-log-%s-%s.txt", supervisor, time.Now().Format("2006-01-02-15-04-05"))
+		fileName = fmt.Sprintf("Supervisor-log-%s-%s.txt", supervisor, time.Now().Format("2006-01-02-15-04-05"))
 	}
 
 	lfh, err := os.Create(logDir + "/" + fileName)

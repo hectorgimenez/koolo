@@ -5,26 +5,36 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type ArachnidLair struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewArachnidLair() *ArachnidLair {
+	return &ArachnidLair{
+		ctx: context.Get(),
+	}
 }
 
 func (a ArachnidLair) Name() string {
 	return string(config.ArachnidLairRun)
 }
 
-func (a ArachnidLair) BuildActions() []action.Action {
-	actions := []action.Action{
-		a.builder.WayPoint(area.SpiderForest), // Moving to starting point (Spider Forest)
-		a.builder.MoveToArea(area.SpiderCave), // Travel to ArachnidLair
+func (a ArachnidLair) Run() error {
+	err := action.WayPoint(area.SpiderForest)
+	if err != nil {
+		return err
 	}
 
-	actions = append(actions,
-		a.builder.OpenTPIfLeader(),
-	)
+	err = action.MoveToArea(area.SpiderCave)
+	if err != nil {
+		return err
+	}
+
+	action.OpenTPIfLeader()
 
 	// Clear ArachnidLair
-	return append(actions, a.builder.ClearArea(true, data.MonsterAnyFilter()))
+	return action.ClearCurrentLevel(true, data.MonsterAnyFilter())
 }

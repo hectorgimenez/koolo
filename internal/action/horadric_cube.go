@@ -1,154 +1,179 @@
 package action
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
 	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 )
 
-func (b *Builder) CubeAddItems(items ...data.Item) *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		cube, found := d.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
-		if !found {
-			b.Logger.Info("No Horadric Cube found in inventory")
-			return nil
+func CubeAddItems(items ...data.Item) error {
+	ctx := context.Get()
+	ctx.SetLastAction("CubeAddItems")
+
+	// Ensure stash is open
+	if !ctx.Data.OpenMenus.Stash {
+		bank, _ := ctx.Data.Objects.FindOne(object.Bank)
+		err := InteractObject(bank, func() bool {
+			return ctx.Data.OpenMenus.Stash
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	ctx.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
+
+	// If items are on the Stash, pickup them to the inventory
+	for _, itm := range items {
+		nwIt := itm
+		if nwIt.Location.LocationType != item.LocationStash && nwIt.Location.LocationType != item.LocationSharedStash {
+			continue
 		}
 
-		// Ensure stash is open
-		if !d.OpenMenus.Stash {
-			actions = append(actions, b.InteractObject(object.Bank, func(d game.Data) bool {
-				return d.OpenMenus.Stash
-			}))
+		// Check in which tab the item is and switch to it
+		switch nwIt.Location.LocationType {
+		case item.LocationStash:
+			SwitchStashTab(1)
+		case item.LocationSharedStash:
+			SwitchStashTab(nwIt.Location.Page + 1)
 		}
 
-		b.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
+		ctx.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
+		screenPos := ui.GetScreenCoordsForItem(nwIt)
 
-		// If items are on the Stash, pickup them to the inventory
-		for _, itm := range items {
-			nwIt := itm
-			if nwIt.Location.LocationType != item.LocationStash && nwIt.Location.LocationType != item.LocationSharedStash {
-				continue
+		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		utils.Sleep(300)
+	}
+
+	err := ensureCubeIsOpen()
+	if err != nil {
+		return err
+	}
+
+	err = ensureCubeIsEmpty()
+	if err != nil {
+		return err
+	}
+
+	for _, itm := range items {
+		for _, updatedItem := range ctx.Data.Inventory.AllItems {
+			if itm.UnitID == updatedItem.UnitID {
+				ctx.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(itm.Name)))
+
+				screenPos := ui.GetScreenCoordsForItem(updatedItem)
+
+				ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+				utils.Sleep(500)
 			}
-
-			// Check in which tab the item is and switch to it
-			switch nwIt.Location.LocationType {
-			case item.LocationStash:
-				actions = append(actions, b.SwitchStashTab(1))
-			case item.LocationSharedStash:
-				actions = append(actions, b.SwitchStashTab(nwIt.Location.Page+1))
-			}
-
-			b.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
-			actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-				screenPos := b.UIManager.GetScreenCoordsForItem(nwIt)
-
-				b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-				helper.Sleep(300)
-
-				return nil
-			}))
 		}
+	}
 
-		actions = append(actions, b.ensureCubeIsOpen(cube))
-
-		for _, itm := range items {
-			nwIt := itm
-			actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-				for _, updatedItem := range d.Inventory.AllItems {
-					if nwIt.UnitID == updatedItem.UnitID {
-						b.Logger.Debug("Moving Item to the Horadric Cube", slog.String("Item", string(nwIt.Name)))
-
-						screenPos := b.UIManager.GetScreenCoordsForItem(updatedItem)
-
-						b.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
-						helper.Sleep(300)
-					}
-				}
-
-				return nil
-			}))
-		}
-
-		return
-	})
+	return nil
 }
 
-func (b *Builder) CubeTransmute() *Chain {
-	return NewChain(func(d game.Data) (actions []Action) {
-		cube, found := d.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
-		if !found {
-			b.Logger.Info("No Horadric Cube found in inventory")
-			return nil
-		}
+func CubeTransmute() error {
+	ctx := context.Get()
 
-		actions = append(actions, b.ensureCubeIsOpen(cube))
+	err := ensureCubeIsOpen()
+	if err != nil {
+		return err
+	}
 
-		actions = append(actions, NewStepChain(func(d game.Data) []step.Step {
-			b.Logger.Debug("Transmuting items in the Horadric Cube")
-			helper.Sleep(150)
+	ctx.Logger.Debug("Transmuting items in the Horadric Cube")
+	utils.Sleep(150)
 
-			if d.LegacyGraphics {
-				b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic)
-			} else {
-				b.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
-			}
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic)
+	} else {
+		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
+	}
 
-			helper.Sleep(2000)
+	utils.Sleep(2000)
 
-			if d.LegacyGraphics {
-				b.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
-			} else {
-				b.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
-			}
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
+	} else {
+		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
+	}
 
-			helper.Sleep(300)
+	utils.Sleep(300)
 
-			return []step.Step{
-				step.SyncStepWithCheck(func(d game.Data) error {
-					b.HID.PressKey(win.VK_ESCAPE)
-					helper.Sleep(300)
-					return nil
-				}, func(d game.Data) step.Status {
-					if d.OpenMenus.Inventory {
-						return step.StatusInProgress
-					}
-					return step.StatusCompleted
-				}),
-			}
-		}))
-
-		return
-	})
+	return step.CloseAllMenus()
 }
 
-func (b *Builder) ensureCubeIsOpen(cube data.Item) Action {
-	return NewStepChain(func(d game.Data) []step.Step {
-		b.Logger.Debug("Opening Horadric Cube...")
-		return []step.Step{
-			step.SyncStepWithCheck(func(d game.Data) error {
-				// Switch to the tab
-				b.switchTab(cube.Location.Page + 1)
+func ensureCubeIsEmpty() error {
+	ctx := context.Get()
+	if !ctx.Data.OpenMenus.Cube {
+		return errors.New("horadric Cube window not detected")
+	}
 
-				screenPos := b.UIManager.GetScreenCoordsForItem(cube)
+	cubeItems := ctx.Data.Inventory.ByLocation(item.LocationCube)
+	if len(cubeItems) == 0 {
+		return nil
+	}
 
-				helper.Sleep(300)
-				b.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-				helper.Sleep(200)
-				return nil
-			}, func(d game.Data) step.Status {
-				if d.OpenMenus.Cube {
-					b.Logger.Debug("Horadric Cube window detected")
-					return step.StatusCompleted
-				}
-				return step.StatusInProgress
-			}),
+	ctx.Logger.Debug("Emptying the Horadric Cube")
+	for _, itm := range cubeItems {
+		ctx.Logger.Debug("Moving Item to the inventory", slog.String("Item", string(itm.Name)))
+
+		screenPos := ui.GetScreenCoordsForItem(itm)
+
+		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		utils.Sleep(700)
+
+		itm, _ = ctx.Data.Inventory.FindByID(itm.UnitID)
+		if itm.Location.LocationType == item.LocationCube {
+			return fmt.Errorf("item %s could not be removed from the cube", itm.Name)
 		}
-	})
+	}
+
+	ctx.HID.PressKey(win.VK_ESCAPE)
+	utils.Sleep(300)
+
+	stashInventory(true)
+
+	return ensureCubeIsOpen()
+}
+
+func ensureCubeIsOpen() error {
+	ctx := context.Get()
+	ctx.Logger.Debug("Opening Horadric Cube...")
+
+	if ctx.Data.OpenMenus.Cube {
+		ctx.Logger.Debug("Horadric Cube window already open")
+		return nil
+	}
+
+	cube, found := ctx.Data.Inventory.Find("HoradricCube", item.LocationInventory, item.LocationStash)
+	if !found {
+		return errors.New("horadric cube not found in inventory")
+	}
+
+	// If cube is in stash, switch to the correct tab
+	if cube.Location.LocationType == item.LocationStash || cube.Location.LocationType == item.LocationSharedStash {
+		SwitchStashTab(cube.Location.Page + 1)
+	}
+
+	screenPos := ui.GetScreenCoordsForItem(cube)
+
+	utils.Sleep(300)
+	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	utils.Sleep(500)
+
+	if ctx.Data.OpenMenus.Cube {
+		ctx.Logger.Debug("Horadric Cube window detected")
+		return nil
+	}
+
+	return errors.New("horadric Cube window not detected")
 }

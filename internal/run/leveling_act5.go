@@ -11,125 +11,216 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/helper"
+	"github.com/hectorgimenez/koolo/internal/ui"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
 )
 
-func (a Leveling) act5() action.Action {
-	return action.NewChain(func(d game.Data) []action.Action {
-		if d.PlayerUnit.Area != area.Harrogath {
-			return nil
-		}
+func (a Leveling) act5() error {
+	if a.ctx.Data.PlayerUnit.Area != area.Harrogath {
+		return nil
+	}
 
-		if d.Quests[quest.Act5RiteOfPassage].Completed() {
-			a.logger.Info("Starting Baal run...")
-			actions := Baal{baseRun: a.baseRun}.BuildActions()
-			return append(actions, action.NewStepChain(func(d game.Data) []step.Step {
-				lvl, _ := d.PlayerUnit.FindStat(stat.Level, 0)
-				if d.PlayerUnit.Area == area.TheWorldstoneChamber && len(d.Monsters.Enemies()) == 0 {
-					switch a.CharacterCfg.Game.Difficulty {
-					case difficulty.Normal:
-						if lvl.Value >= 46 {
-							a.CharacterCfg.Game.Difficulty = difficulty.Nightmare
-						}
-					case difficulty.Nightmare:
-						if lvl.Value >= 65 {
-							a.CharacterCfg.Game.Difficulty = difficulty.Hell
-						}
-					}
+	if a.ctx.Data.Quests[quest.Act5RiteOfPassage].Completed() {
+		a.ctx.Logger.Info("Starting Baal run...")
+		Baal{}.Run()
+
+		lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0)
+		if a.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber && len(a.ctx.Data.Monsters.Enemies()) == 0 {
+			switch a.ctx.CharacterCfg.Game.Difficulty {
+			case difficulty.Normal:
+				if lvl.Value >= 46 {
+					a.ctx.CharacterCfg.Game.Difficulty = difficulty.Nightmare
 				}
-				return nil
-			}))
+			case difficulty.Nightmare:
+				if lvl.Value >= 65 {
+					a.ctx.CharacterCfg.Game.Difficulty = difficulty.Hell
+				}
+			}
 		}
+		return nil
 
-		wp, _ := d.Objects.FindOne(object.ExpansionWaypoint)
-		actions := []action.Action{a.builder.MoveToCoords(wp.Position)}
-		actions = append(actions, action.NewChain(func(d game.Data) []action.Action {
-			if _, found := d.Monsters.FindOne(npc.Drehya, data.MonsterTypeNone); !found {
-				return a.anya()
-			}
+	}
 
-			return a.ancients()
-		}))
+	wp, _ := a.ctx.Data.Objects.FindOne(object.ExpansionWaypoint)
+	action.MoveToCoords(wp.Position)
 
-		return actions
+	if _, found := a.ctx.Data.Monsters.FindOne(npc.Drehya, data.MonsterTypeNone); !found {
+		a.anya()
+	}
+
+	err := a.ancients()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a Leveling) anya() error {
+	a.ctx.Logger.Info("Rescuing Anya...")
+
+	err := action.WayPoint(area.CrystallinePassage)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveToArea(area.FrozenRiver)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveTo(func() (data.Position, bool) {
+		anya, found := a.ctx.Data.NPCs.FindOne(793)
+		return anya.Positions[0], found
 	})
-}
-
-func (a Leveling) anya() []action.Action {
-	a.logger.Info("Rescuing Anya...")
-	return []action.Action{
-		a.builder.WayPoint(area.CrystallinePassage),
-		a.builder.MoveToArea(area.FrozenRiver),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			anya, found := d.NPCs.FindOne(793)
-			return anya.Positions[0], found
-		}),
-		a.builder.MoveTo(func(d game.Data) (data.Position, bool) {
-			anya, found := d.Objects.FindOne(object.FrozenAnya)
-			return anya.Position, found
-		}),
-		a.builder.ClearAreaAroundPlayer(15, data.MonsterAnyFilter()),
-		a.builder.InteractObject(object.FrozenAnya, nil),
-		a.builder.ReturnTown(),
-		a.builder.IdentifyAll(false),
-		a.builder.Stash(false),
-		a.builder.ReviveMerc(),
-		a.builder.Repair(),
-		a.builder.VendorRefill(false, true),
-		a.builder.InteractNPC(npc.Malah),
-		a.builder.UsePortalInTown(),
-		a.builder.InteractObject(object.FrozenAnya, nil),
-		a.builder.ReturnTown(),
-		a.builder.Wait(time.Second * 8),
-		a.builder.InteractNPC(npc.Malah,
-			step.SyncStep(func(d game.Data) error {
-				a.HID.PressKey(win.VK_ESCAPE)
-				a.HID.PressKeyBinding(d.KeyBindings.Inventory)
-				itm, _ := d.Inventory.Find("ScrollOfResistance")
-				screenPos := a.UIManager.GetScreenCoordsForItem(itm)
-				helper.Sleep(200)
-				a.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-				a.HID.PressKey(win.VK_ESCAPE)
-
-				return nil
-			}),
-		),
-	}
-}
-
-func (a Leveling) ancients() []action.Action {
-	char := a.char.(action.LevelingCharacter)
-	a.logger.Info("Kill the Ancients...")
-	actions := []action.Action{
-		a.builder.WayPoint(area.TheAncientsWay),
-		a.builder.MoveToArea(area.ArreatSummit),
-		a.builder.ReturnTown(),
+	if err != nil {
+		return err
 	}
 
-	actions = append(actions, a.builder.InRunReturnTownRoutine()...)
+	err = action.MoveTo(func() (data.Position, bool) {
+		anya, found := a.ctx.Data.Objects.FindOne(object.FrozenAnya)
+		return anya.Position, found
+	})
+	if err != nil {
+		return err
+	}
 
-	return append(actions,
-		a.builder.UsePortalInTown(),
-		a.builder.Buff(),
-		a.builder.InteractObject(object.AncientsAltar, func(d game.Data) bool {
-			if len(d.Monsters.Enemies()) > 0 {
-				return true
-			}
-			a.HID.Click(game.LeftButton, 300, 300)
-			helper.Sleep(1000)
-			return false
-		}),
-		char.KillAncients(),
-		a.builder.InteractObject(object.ArreatSummitDoorToWorldstone, func(d game.Data) bool {
-			obj, _ := d.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
-			return !obj.Selectable
-		}),
-		a.builder.Wait(time.Second*5), // Wait until the door is open
-		a.builder.MoveToArea(area.TheWorldStoneKeepLevel1),
-		a.builder.MoveToArea(area.TheWorldStoneKeepLevel2),
-		a.builder.DiscoverWaypoint(),
-	)
+	action.ClearAreaAroundPlayer(15, data.MonsterAnyFilter())
+
+	anya, found := a.ctx.Data.Objects.FindOne(object.FrozenAnya)
+	if !found {
+		a.ctx.Logger.Debug("Frozen Anya not found")
+	}
+
+	err = action.InteractObject(anya, nil)
+	if err != nil {
+		return err
+	}
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	action.IdentifyAll(false)
+	action.Stash(false)
+	action.ReviveMerc()
+	action.Repair()
+	action.VendorRefill(false, true)
+
+	err = action.InteractNPC(npc.Malah)
+	if err != nil {
+		return err
+	}
+
+	err = action.UsePortalInTown()
+	if err != nil {
+		return err
+	}
+
+	err = action.InteractObject(anya, nil)
+	if err != nil {
+		return err
+	}
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(8000)
+
+	err = action.InteractNPC(npc.Malah)
+	if err != nil {
+		return err
+	}
+
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
+	itm, _ := a.ctx.Data.Inventory.Find("ScrollOfResistance")
+	screenPos := ui.GetScreenCoordsForItem(itm)
+	utils.Sleep(200)
+	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	a.ctx.HID.PressKey(win.VK_ESCAPE)
+
+	return nil
+}
+
+func (a Leveling) ancients() error {
+	char := a.ctx.Char.(context.LevelingCharacter)
+
+	a.ctx.Logger.Info("Kill the Ancients...")
+
+	err := action.WayPoint(area.TheAncientsWay)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	err = action.MoveToArea(area.ArreatSummit)
+	if err != nil {
+		return err
+	}
+	action.Buff()
+
+	action.ReturnTown()
+	action.InRunReturnTownRoutine()
+	action.UsePortalInTown()
+	action.Buff()
+
+	ancientsaltar, found := a.ctx.Data.Objects.FindOne(object.AncientsAltar)
+	if !found {
+		a.ctx.Logger.Debug("Ancients Altar not found")
+	}
+
+	err = action.InteractObject(ancientsaltar, func() bool {
+		if len(a.ctx.Data.Monsters.Enemies()) > 0 {
+			return true
+		}
+		a.ctx.HID.Click(game.LeftButton, 300, 300)
+		utils.Sleep(1000)
+		return false
+	})
+	if err != nil {
+		return err
+	}
+
+	err = char.KillAncients()
+	if err != nil {
+		return err
+	}
+
+	summitdoor, found := a.ctx.Data.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
+	if !found {
+		a.ctx.Logger.Debug("Worldstone Door not found")
+	}
+
+	err = action.InteractObject(summitdoor, func() bool {
+		obj, _ := a.ctx.Data.Objects.FindOne(object.ArreatSummitDoorToWorldstone)
+		return !obj.Selectable
+	})
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(5000)
+
+	err = action.MoveToArea(area.TheWorldStoneKeepLevel1)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.TheWorldStoneKeepLevel2)
+	if err != nil {
+		return err
+	}
+
+	action.DiscoverWaypoint()
+
+	return nil
 }

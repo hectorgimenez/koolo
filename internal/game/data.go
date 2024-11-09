@@ -11,6 +11,8 @@ import (
 )
 
 type Data struct {
+	Areas    map[area.ID]AreaData `json:"-"`
+	AreaData AreaData             `json:"-"`
 	data.Data
 	CharacterCfg config.CharacterCfg
 }
@@ -35,4 +37,16 @@ func (d Data) PlayerCastDuration() time.Duration {
 	secs = math.Max(0.40, secs)
 
 	return time.Duration(secs*1000) * time.Millisecond
+}
+
+func (d Data) MonsterFilterAnyReachable() data.MonsterFilter {
+	return func(monsters data.Monsters) (filtered []data.Monster) {
+		for _, m := range monsters {
+			if d.AreaData.IsWalkable(m.Position) {
+				filtered = append(filtered, m)
+			}
+		}
+
+		return filtered
+	}
 }

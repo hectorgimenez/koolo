@@ -1,168 +1,117 @@
 package action
 
 import (
-	"time"
+	"errors"
+	"fmt"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-func (b *Builder) ClearArea(openChests bool, filter data.MonsterFilter) *Chain {
-	var clearedRooms []data.Room
-	openedDoors := make(map[object.Name]data.Position)
+func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
+	ctx := context.Get()
+	ctx.SetLastAction("ClearCurrentLevel")
 
-	return NewChain(func(d game.Data) []Action {
-		var currentRoom data.Room
-		for _, r := range d.Rooms {
-			if r.IsInside(d.PlayerUnit.Position) {
-				currentRoom = r
-				break
-			}
+	rooms := ctx.PathFinder.OptimizeRoomsTraverseOrder()
+	for _, r := range rooms {
+		err := clearRoom(r, filter)
+		if err != nil {
+			ctx.Logger.Warn("Failed to clear room: %v", err)
 		}
 
-		// Check if there is a door blocking our path
-		if !d.CanTeleport() {
-			for _, o := range d.Objects {
-				if o.IsDoor() && pather.DistanceFromMe(d, o.Position) < 10 && openedDoors[o.Name] != o.Position {
-					if o.Selectable {
-						b.Logger.Info("Door detected and teleport is not available, trying to open it...")
-						return []Action{b.InteractObject(o.Name, func(d game.Data) bool {
-							for _, obj := range d.Objects {
-								if obj.Name == o.Name && obj.Position == o.Position && !obj.Selectable {
-									openedDoors[o.Name] = o.Position
-									return true
-								}
-							}
-							return false
-						})}
-					}
-				}
-			}
+		if !openChests {
+			continue
 		}
 
-		monstersInRoom := make([]data.Monster, 0)
-		for _, m := range d.Monsters.Enemies(filter) {
-			if currentRoom.IsInside(m.Position) || pather.DistanceFromMe(d, m.Position) < 30 {
-				monstersInRoom = append(monstersInRoom, m)
-			}
-		}
-
-		if len(monstersInRoom) > 0 {
-			targetMonster := monstersInRoom[0]
-			// Check if there are monsters that can summon new monsters, and kill them first
-			for _, m := range monstersInRoom {
-				if m.IsMonsterRaiser() {
-					targetMonster = m
-				}
-			}
-
-			path, _, mPathFound := b.PathFinder.GetPath(d, targetMonster.Position)
-			if mPathFound {
-				doorIsBlocking := false
-				if !d.CanTeleport() {
-					for _, o := range d.Objects {
-						if o.IsDoor() && o.Selectable && path.Intersects(d, o.Position, 4) {
-							b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
-							doorIsBlocking = true
-						}
-					}
-				}
-
-				if !doorIsBlocking {
-					return []Action{b.ch.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-						m, found := d.Monsters.FindByID(targetMonster.UnitID)
-						if found && m.Stats[stat.Life] > 0 {
-							return targetMonster.UnitID, true
-						}
-						return 0, false
-					}, nil)}
-				} else {
-					b.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
-				}
-			}
-		}
-
-		if alreadyCleared(currentRoom, clearedRooms) {
-			// Finished, all rooms are clear
-			if len(clearedRooms) == len(d.Rooms) {
-				b.Logger.Debug("All the rooms for this level have been cleared, finishing run.")
-				return nil
-			}
-
-			// Move to the closest room
-			previousDistance := 999999
-			closestRoom := data.Room{}
-			for _, r := range d.Rooms {
-				if alreadyCleared(r, clearedRooms) {
+		for _, o := range ctx.Data.Objects {
+			if o.IsChest() && o.Selectable && r.IsInside(o.Position) {
+				err = MoveToCoords(o.Position)
+				if err != nil {
+					ctx.Logger.Warn("Failed moving to chest: %v", err)
 					continue
 				}
-				d := pather.DistanceFromMe(d, r.GetCenter())
-				if d < previousDistance {
-					previousDistance = d
-					closestRoom = r
+				err = InteractObject(o, func() bool {
+					chest, _ := ctx.Data.Objects.FindByID(o.ID)
+					return !chest.Selectable
+				})
+				if err != nil {
+					ctx.Logger.Warn("Failed interacting with chest: %v", err)
 				}
+				utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
 			}
-
-			return []Action{NewStepChain(func(d game.Data) []step.Step {
-				_, distance, found := b.PathFinder.GetPath(d, closestRoom.GetCenter())
-				// We don't need to be very precise, usually chests are not close to the map border tiles
-				if !found && d.PlayerUnit.Area != area.LowerKurast {
-					_, distance, found = b.PathFinder.GetClosestWalkablePath(d, closestRoom.GetCenter())
-				}
-				if !found || distance <= 5 {
-					b.Logger.Debug("Next room is not walkable, skipping it.")
-					clearedRooms = append(clearedRooms, closestRoom)
-					return []step.Step{}
-				}
-
-				return []step.Step{step.MoveTo(
-					closestRoom.GetCenter(),
-					step.WithTimeout(time.Second),
-				)}
-			})}
-		}
-
-		clearedRooms = append(clearedRooms, currentRoom)
-
-		// Open chests if are inside this room
-		if openChests {
-			for _, o := range d.Objects {
-				if o.IsChest() && o.Selectable && currentRoom.IsInside(o.Position) {
-					chest := o
-					doorIsBlocking := false
-					if !d.CanTeleport() {
-						path, _, chestPathFound := b.PathFinder.GetPath(d, chest.Position)
-						for _, obj := range d.Objects {
-							if chestPathFound && obj.IsDoor() && obj.Selectable && path.Intersects(d, obj.Position, 4) {
-								doorIsBlocking = true
-							}
-						}
-					}
-					if !doorIsBlocking {
-						return []Action{b.InteractObjectByID(chest.ID, func(d game.Data) bool {
-							chest, _ = d.Objects.FindByID(chest.ID)
-							return !chest.Selectable
-						})}
-					}
-				}
-			}
-		}
-
-		return []Action{b.ItemPickup(false, 60)}
-	}, RepeatUntilNoSteps())
-}
-
-func alreadyCleared(room data.Room, clearedRooms []data.Room) bool {
-	for _, r := range clearedRooms {
-		if r.X == room.X && r.Y == room.Y {
-			return true
 		}
 	}
 
-	return false
+	return nil
+}
+
+func clearRoom(room data.Room, filter data.MonsterFilter) error {
+	ctx := context.Get()
+	ctx.SetLastAction("clearRoom")
+
+	path, _, found := ctx.PathFinder.GetClosestWalkablePath(room.GetCenter())
+	if !found {
+		return errors.New("failed to find a path to the room center")
+	}
+
+	to := data.Position{
+		X: path.To().X + ctx.Data.AreaOrigin.X,
+		Y: path.To().Y + ctx.Data.AreaOrigin.Y,
+	}
+	err := MoveToCoords(to)
+	if err != nil {
+		return fmt.Errorf("failed moving to room center: %w", err)
+	}
+
+	for {
+		monsters := getMonstersInRoom(room, filter)
+		if len(monsters) == 0 {
+			return nil
+		}
+
+		// Check if there are monsters that can summon new monsters, and kill them first
+		targetMonster := monsters[0]
+		for _, m := range monsters {
+			if m.IsMonsterRaiser() {
+				targetMonster = m
+			}
+		}
+
+		path, _, mPathFound := ctx.PathFinder.GetPath(targetMonster.Position)
+		if mPathFound {
+			if !ctx.Data.CanTeleport() {
+				for _, o := range ctx.Data.Objects {
+					if o.IsDoor() && o.Selectable && path.Intersects(*ctx.Data, o.Position, 4) {
+						ctx.Logger.Debug("Door is blocking the path to the monster, moving closer")
+						MoveToCoords(targetMonster.Position)
+					}
+				}
+			}
+
+			ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				m, found := d.Monsters.FindByID(targetMonster.UnitID)
+				if found && m.Stats[stat.Life] > 0 {
+					return targetMonster.UnitID, true
+				}
+				return 0, false
+			}, nil)
+		}
+	}
+}
+
+func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster {
+	ctx := context.Get()
+	ctx.SetLastAction("getMonstersInRoom")
+
+	monstersInRoom := make([]data.Monster, 0)
+	for _, m := range ctx.Data.Monsters.Enemies(filter) {
+		if m.Stats[stat.Life] > 0 && room.IsInside(m.Position) || ctx.PathFinder.DistanceFromMe(m.Position) < 30 {
+			monstersInRoom = append(monstersInRoom, m)
+		}
+	}
+
+	return monstersInRoom
 }

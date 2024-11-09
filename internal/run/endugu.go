@@ -5,50 +5,66 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
-	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"time"
+	"github.com/hectorgimenez/koolo/internal/context"
 )
 
 type Endugu struct {
-	baseRun
+	ctx *context.Status
+}
+
+func NewEndugu() *Endugu {
+	return &Endugu{
+		ctx: context.Get(),
+	}
 }
 
 func (e Endugu) Name() string {
 	return string(config.EnduguRun)
 }
 
-func (e Endugu) BuildActions() []action.Action {
-	return []action.Action{
-		e.builder.WayPoint(area.FlayerJungle),
-		e.builder.MoveToArea(area.FlayerDungeonLevel1),
-		e.builder.MoveToArea(area.FlayerDungeonLevel2),
-		e.builder.MoveToArea(area.FlayerDungeonLevel3),
-		e.moveToKhalimChest(),
-		e.builder.ClearAreaAroundPlayer(15, data.MonsterEliteFilter()),
-		action.NewStepChain(func(d game.Data) []step.Step {
-			return []step.Step{step.Wait(3 * time.Second)}
-		}),
-		e.openKhalimChest(),
-		e.builder.ItemPickup(false, 10),
-	}
-}
+func (e Endugu) Run() error {
 
-func (e Endugu) moveToKhalimChest() action.Action {
-	return action.NewStepChain(func(d game.Data) []step.Step {
-		for _, o := range d.Objects {
+	// Use waypoint to FlayerJungle
+	err := action.WayPoint(area.FlayerJungle)
+	if err != nil {
+		return err
+	}
+
+	// Move to FlayerDungeonLevel1
+	if err = action.MoveToArea(area.FlayerDungeonLevel1); err != nil {
+		return err
+	}
+
+	// Move to FlayerDungeonLevel2
+	if err = action.MoveToArea(area.FlayerDungeonLevel2); err != nil {
+		return err
+	}
+
+	// Move to FlayerDungeonLevel3
+	if err = action.MoveToArea(area.FlayerDungeonLevel3); err != nil {
+		return err
+	}
+
+	var khalimChest2 data.Object
+
+	// Move to KhalimChest
+	action.MoveTo(func() (data.Position, bool) {
+		for _, o := range e.ctx.Data.Objects {
 			if o.Name == object.KhalimChest2 {
-				return []step.Step{step.MoveTo(o.Position, step.StopAtDistance(10))}
+				khalimChest2 = o
+				return o.Position, true
 			}
 		}
-		return nil
+		return data.Position{}, false
 	})
-}
 
-func (e Endugu) openKhalimChest() action.Action {
-	return e.builder.InteractObject(object.KhalimChest2, func(d game.Data) bool {
-		for _, obj := range d.Objects {
+	// Clear monsters around player
+	action.ClearAreaAroundPlayer(15, data.MonsterEliteFilter())
+
+	// Open the chest
+	return action.InteractObject(khalimChest2, func() bool {
+		for _, obj := range e.ctx.Data.Objects {
 			if obj.Name == object.KhalimChest2 && !obj.Selectable {
 				return true
 			}
