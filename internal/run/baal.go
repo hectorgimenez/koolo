@@ -10,7 +10,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -104,25 +103,20 @@ func (s Baal) Run() error {
 			lastWave = true
 		}
 
-		enemies := false
-		for _, e := range s.ctx.Data.Monsters.Enemies() {
-			dist := pather.DistanceFromPoint(baalThronePosition, e.Position)
-			if dist < 50 {
-				enemies = true
-			}
+		err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+		if err != nil {
+			return err
 		}
-		if enemies {
-			err = action.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
-			if err != nil {
-				return err
-			}
-		}
+
 		action.MoveToCoords(baalThronePosition)
 	}
 
+	// Let's be sure everything is dead
+	err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
-		utils.Sleep(10000)
+		utils.Sleep(15000)
 		action.Buff()
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		err = action.InteractObjectByID(baalPortal.ID, func() bool {
