@@ -1,13 +1,14 @@
 package character
 
 import (
+	"log/slog"
+	"sort"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"log/slog"
-	"sort"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -21,7 +22,7 @@ const (
 	fohMaxDistance    = 15
 	hbMinDistance     = 6
 	hbMaxDistance     = 12
-	fohMaxAttacksLoop = 20 // Maximum attack attempts before resetting
+	fohMaxAttacksLoop = 35 // Maximum attack attempts before resetting
 )
 
 type Foh struct {
