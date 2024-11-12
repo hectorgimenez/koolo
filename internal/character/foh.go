@@ -1,19 +1,19 @@
 package character
 
 import (
+	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"log/slog"
 	"sort"
 	"time"
-
-	"github.com/hectorgimenez/d2go/pkg/data/state"
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/data/state"
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -22,11 +22,13 @@ const (
 	fohMaxDistance    = 15
 	hbMinDistance     = 6
 	hbMaxDistance     = 12
-	fohMaxAttacksLoop = 35 // Maximum attack attempts before resetting
+	fohMaxAttacksLoop = 35              // Maximum attack attempts before resetting
+	castingTimeout    = 3 * time.Second // Maximum time to wait for a cast to complete
 )
 
 type Foh struct {
 	BaseCharacter
+	lastCastTime time.Time
 }
 
 func (s Foh) CheckKeyBindings() []skill.ID {
@@ -45,10 +47,33 @@ func (s Foh) CheckKeyBindings() []skill.ID {
 
 	return missingKeybindings
 }
+
+// waitForCastComplete waits until the character is no longer in casting animation
+func (f *Foh) waitForCastComplete() bool {
+	ctx := context.Get()
+	startTime := time.Now()
+
+	for time.Since(startTime) < castingTimeout {
+		ctx.RefreshGameData()
+
+		// Check if we're no longer casting and enough time has passed since last cast
+		if ctx.Data.PlayerUnit.Mode != mode.CastingSkill &&
+			time.Since(f.lastCastTime) > 150*time.Millisecond { //150 for Foh but if we make that generic it would need tuning maybe from skill desc
+			return true
+		}
+
+		time.Sleep(16 * time.Millisecond) // Small sleep to avoid hammering CPU
+	}
+
+	return false
+}
 func (s Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {
 	ctx := context.Get()
 	lastRefresh := time.Now()
 	completedAttackLoops := 0
+	var currentTargetID data.UnitID
+	useHolyBolt := false
+
 	fohOpts := []step.AttackOption{
 		step.StationaryDistance(fohMinDistance, fohMaxDistance),
 		step.EnsureAura(skill.Conviction),
@@ -58,57 +83,98 @@ func (s Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 		step.EnsureAura(skill.Conviction),
 	}
 
+	// Initial target selection and analysis
+	initialTargetAnalysis := func() (data.UnitID, bool, bool) {
+		id, found := monsterSelector(*s.Data)
+		if !found {
+			return 0, false, false
+		}
+
+		// Count initial valid targets
+		validTargets := 0
+		monstersInRange := make([]data.Monster, 0)
+		monster, found := s.Data.Monsters.FindByID(id)
+		if !found {
+			return 0, false, false
+		}
+
+		for _, m := range ctx.Data.Monsters.Enemies() {
+			if ctx.Data.AreaData.IsInside(m.Position) {
+				dist := ctx.PathFinder.DistanceFromMe(m.Position)
+				if dist <= fohMaxDistance && dist >= fohMinDistance && m.Stats[stat.Life] > 0 {
+					validTargets++
+					monstersInRange = append(monstersInRange, m)
+				}
+			}
+		}
+
+		// Determine if we should use Holy Bolt
+		// Only use Holy Bolt if it's a single target and it's immune to lightning
+		shouldUseHB := validTargets == 1 && monster.IsImmune(stat.LightImmune)
+
+		return id, true, shouldUseHB
+	}
+
 	for {
+		// Refresh game data periodically
 		if time.Since(lastRefresh) > time.Millisecond*100 {
 			ctx.RefreshGameData()
 			lastRefresh = time.Now()
 		}
+
 		ctx.PauseIfNotPriority()
+
 		if completedAttackLoops >= fohMaxAttacksLoop {
 			return nil
 		}
-		id, found := monsterSelector(*s.Data)
-		if !found {
-			return nil
+
+		// If we don't have a current target, get one and analyze the situation
+		if currentTargetID == 0 {
+			var found bool
+			currentTargetID, found, useHolyBolt = initialTargetAnalysis()
+			if !found {
+				return nil
+			}
 		}
-		if !s.preBattleChecks(id, skipOnImmunities) {
-			return nil
-		}
-		monster, found := s.Data.Monsters.FindByID(id)
+
+		// Verify our target still exists and is alive
+		monster, found := s.Data.Monsters.FindByID(currentTargetID)
 		if !found || monster.Stats[stat.Life] <= 0 {
+			currentTargetID = 0 // Reset target
+			continue
+		}
+
+		if !s.preBattleChecks(currentTargetID, skipOnImmunities) {
 			return nil
 		}
+
+		// Ensure Conviction is active
 		if !s.Data.PlayerUnit.States.HasState(state.Conviction) {
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Conviction); found {
 				ctx.HID.PressKeyBinding(kb)
 			}
 		}
 
-		// Handle attacks
-		validTargets := 0
-		lightImmuneTargets := 0
-		for _, m := range ctx.Data.Monsters.Enemies() {
-			if ctx.Data.AreaData.IsInside(m.Position) {
-				dist := ctx.PathFinder.DistanceFromMe(m.Position)
-				if dist <= fohMaxDistance && dist >= fohMinDistance && m.Stats[stat.Life] > 0 {
-					validTargets++
-					if m.IsImmune(stat.LightImmune) && !m.States.HasState(state.Conviction) {
-						lightImmuneTargets++
-					}
-				}
-			}
-		}
-		if monster.IsImmune(stat.LightImmune) && !monster.States.HasState(state.Conviction) && validTargets == 1 {
+		// Cast appropriate skill
+		if useHolyBolt {
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
 				ctx.HID.PressKeyBinding(kb)
-				if err := step.PrimaryAttack(id, 1, true, hbOpts...); err == nil {
+				if err := step.PrimaryAttack(currentTargetID, 1, true, hbOpts...); err == nil {
+					if !s.waitForCastComplete() {
+						continue
+					}
+					s.lastCastTime = time.Now()
 					completedAttackLoops++
 				}
 			}
 		} else {
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
 				ctx.HID.PressKeyBinding(kb)
-				if err := step.PrimaryAttack(id, 1, true, fohOpts...); err == nil {
+				if err := step.PrimaryAttack(currentTargetID, 1, true, fohOpts...); err == nil {
+					if !s.waitForCastComplete() {
+						continue
+					}
+					s.lastCastTime = time.Now()
 					completedAttackLoops++
 				}
 			}
@@ -116,18 +182,35 @@ func (s Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 	}
 }
 
-func (s Foh) handleBoss(bossID data.UnitID, fohOpts, hbOpts []step.AttackOption, completedAttackLoops *int) error {
+func (f *Foh) handleBoss(bossID data.UnitID, fohOpts, hbOpts []step.AttackOption, completedAttackLoops *int) error {
 	ctx := context.Get()
+
+	// Cast FoH
 	if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FistOfTheHeavens); found {
 		ctx.HID.PressKeyBinding(kb)
-		utils.Sleep(100)
+
 		if err := step.PrimaryAttack(bossID, 1, true, fohOpts...); err == nil {
-			time.Sleep(ctx.Data.PlayerCastDuration())
+			// Wait for FoH cast to complete
+			if !f.waitForCastComplete() {
+				return fmt.Errorf("FoH cast timed out")
+			}
+			f.lastCastTime = time.Now()
+
+			// Switch to Holy Bolt
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
 				ctx.HID.PressKeyBinding(kb)
-				if err := step.PrimaryAttack(bossID, 3, true, hbOpts...); err == nil {
-					(*completedAttackLoops)++
+
+				// Cast 3 Holy Bolts
+				for i := 0; i < 3; i++ {
+					if err := step.PrimaryAttack(bossID, 1, true, hbOpts...); err == nil {
+						if !f.waitForCastComplete() {
+							return fmt.Errorf("Holy Bolt cast timed out")
+						}
+						f.lastCastTime = time.Now()
+					}
 				}
+
+				(*completedAttackLoops)++
 			}
 		}
 	}
