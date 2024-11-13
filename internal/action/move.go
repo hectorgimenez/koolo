@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"log/slog"
 	"sort"
 	"time"
@@ -220,10 +221,11 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		targetedNormalEnemies := make([]data.Monster, 0)
 		targetedElites := make([]data.Monster, 0)
 		minDistance := 6
-		minDistanceForElites := 20
-		stuck := ctx.PathFinder.DistanceFromMe(previousIterationPosition) < 5
+		minDistanceForElites := 20                                            // This will make the character to kill elites even if they are far away, ONLY during leveling
+		stuck := ctx.PathFinder.DistanceFromMe(previousIterationPosition) < 5 // Detect if character was not able to move from last iteration
 
 		for _, m := range ctx.Data.Monsters.Enemies() {
+			// Skip if monster is already dead
 			if m.Stats[stat.Life] <= 0 {
 				continue
 			}
@@ -246,7 +248,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			}
 		}
 
-		if len(targetedNormalEnemies) > 5 || len(targetedElites) > 0 || (stuck && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) {
+		if len(targetedNormalEnemies) > 5 || len(targetedElites) > 0 || (stuck && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) || (pather.IsNarrowMap(ctx.Data.PlayerUnit.Area) && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) {
 			if stuck {
 				ctx.Logger.Info("Character stuck and monsters detected, trying to kill monsters around")
 			} else {
@@ -271,12 +273,15 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			}
 		}
 
+		// Continue moving
+		WaitForAllMembersWhenLeveling()
 		previousIterationPosition = ctx.Data.PlayerUnit.Position
 
 		if lastMovement {
 			return nil
 		}
 
+		// TODO: refactor this to use the same approach as ClearThroughPath
 		if _, distance, _ := ctx.PathFinder.GetPathFrom(ctx.Data.PlayerUnit.Position, to); distance <= step.DistanceToFinishMoving {
 			lastMovement = true
 		}
