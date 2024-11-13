@@ -3,8 +3,8 @@ package character
 import (
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"log/slog"
-	"sort"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -313,21 +313,55 @@ func (f Foh) KillDuriel() error {
 }
 
 func (f Foh) KillCouncil() error {
-	return f.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		var councilMembers []data.Monster
-		for _, m := range d.Monsters {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				councilMembers = append(councilMembers, m)
+	// Disable item pickup while killing council members
+	context.Get().DisableItemPickup()
+	defer context.Get().EnableItemPickup()
+
+	err := f.killAllCouncilMembers()
+	if err != nil {
+		return err
+	}
+
+	// Wait a moment for items to settle
+	time.Sleep(300 * time.Millisecond)
+
+	// Re-enable item pickup and do a final pickup pass
+	err = action.ItemPickup(40)
+	if err != nil {
+		f.Logger.Warn("Error during final item pickup after council", "error", err)
+	}
+
+	return nil
+}
+func (f Foh) killAllCouncilMembers() error {
+	for {
+		if !f.anyCouncilMemberAlive() {
+			return nil
+		}
+
+		err := f.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			for _, m := range d.Monsters.Enemies() {
+				if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
+					return m.UnitID, true
+				}
 			}
+			return 0, false
+		}, nil)
+
+		if err != nil {
+			return err
 		}
-		sort.Slice(councilMembers, func(i, j int) bool {
-			return f.PathFinder.DistanceFromMe(councilMembers[i].Position) < f.PathFinder.DistanceFromMe(councilMembers[j].Position)
-		})
-		if len(councilMembers) > 0 {
-			return councilMembers[0].UnitID, true
+	}
+}
+
+func (f Foh) anyCouncilMemberAlive() bool {
+	for _, m := range f.Data.Monsters.Enemies() {
+		if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
+			return true
 		}
-		return 0, false
-	}, nil)
+
+	}
+	return false
 }
 
 func (f Foh) KillMephisto() error {
