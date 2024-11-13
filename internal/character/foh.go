@@ -116,8 +116,8 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 		}
 
 		// Determine if we should use Holy Bolt
-		// Only use Holy Bolt if it's a single target and it's immune to lightning after conviction
-		shouldUseHB := validTargets == 1 && monster.IsImmune(stat.LightImmune) && monster.States.HasState(state.Convicted)
+		// Only use Holy Bolt if it's a single target and it's immune to lightning
+		shouldUseHB := validTargets == 1 && monster.IsImmune(stat.LightImmune)
 
 		return id, true, shouldUseHB
 	}
@@ -216,7 +216,7 @@ func (f Foh) handleBoss(bossID data.UnitID, fohOpts, hbOpts []step.AttackOption,
 					}
 				}
 
-				*completedAttackLoops++
+				(*completedAttackLoops)++
 			}
 		}
 	}
