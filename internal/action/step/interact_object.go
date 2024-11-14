@@ -7,6 +7,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"time"
 )
@@ -116,10 +117,10 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 				return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
 			}
 
-			mX, mY := ctx.PathFinder.GameCoordsToScreenCords(objectX, objectY)
+			mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
 			if mouseOverAttempts == 2 && o.Name == object.TownPortal {
-				mX, mY = ctx.PathFinder.GameCoordsToScreenCords(objectX-4, objectY-4)
+				mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
 			}
 
 			x, y := utils.Spiral(mouseOverAttempts)

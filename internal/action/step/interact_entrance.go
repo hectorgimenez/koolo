@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	maxEntranceDistance = 6 // Increased from 3 to accommodate DistanceToFinishMoving
+	maxEntranceDistance = 6
 )
 
 func InteractEntrance(area area.ID) error {
@@ -25,10 +25,12 @@ func InteractEntrance(area area.ID) error {
 	ctx.SetLastStep("InteractEntrance")
 
 	for {
+		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
 		// Give some extra time to render the UI
 		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
+			// We've successfully entered the new area
 			return nil
 		}
 
@@ -57,7 +59,6 @@ func InteractEntrance(area area.ID) error {
 						utils.Sleep(200) // Small delay after click
 					}
 
-					// Smaller spiral pattern for more precise clicks
 					x, y := utils.Spiral(interactionAttempts)
 					x = x / 3 // Reduce spiral size further
 					y = y / 3

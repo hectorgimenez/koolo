@@ -56,7 +56,7 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 				if err != nil {
 					ctx.Logger.Warn("Failed interacting with chest", "error", err)
 				}
-				utils.Sleep(500)
+				utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
 			}
 		}
 	}
