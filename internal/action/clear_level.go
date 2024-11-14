@@ -15,22 +15,38 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("ClearCurrentLevel")
 
+	// First check if we're in town, if so, exit early
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		return fmt.Errorf("cannot clear level in town")
+	}
+
+	currentArea := ctx.Data.PlayerUnit.Area
 	rooms := ctx.PathFinder.OptimizeRoomsTraverseOrder()
 	for _, r := range rooms {
+		// If we're no longer in the same area (e.g., took portal to town), stop clearing
+		if ctx.Data.PlayerUnit.Area != currentArea {
+			return nil
+		}
+
 		err := clearRoom(r, filter)
 		if err != nil {
-			ctx.Logger.Warn("Failed to clear room: %v", err)
+			ctx.Logger.Warn("Failed to clear room", "error", err)
 		}
 
 		if !openChests {
 			continue
 		}
 
+		// Again check area before chest operations
+		if ctx.Data.PlayerUnit.Area != currentArea {
+			return nil
+		}
+
 		for _, o := range ctx.Data.Objects {
 			if o.IsChest() && o.Selectable && r.IsInside(o.Position) {
 				err = MoveToCoords(o.Position)
 				if err != nil {
-					ctx.Logger.Warn("Failed moving to chest: %v", err)
+					ctx.Logger.Warn("Failed moving to chest", "error", err)
 					continue
 				}
 				err = InteractObject(o, func() bool {
@@ -38,19 +54,20 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 					return !chest.Selectable
 				})
 				if err != nil {
-					ctx.Logger.Warn("Failed interacting with chest: %v", err)
+					ctx.Logger.Warn("Failed interacting with chest", "error", err)
 				}
-				utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
+				utils.Sleep(500)
 			}
 		}
 	}
 
 	return nil
 }
-
 func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("clearRoom")
+
+	currentArea := ctx.Data.PlayerUnit.Area
 
 	path, _, found := ctx.PathFinder.GetClosestWalkablePath(room.GetCenter())
 	if !found {
@@ -61,12 +78,23 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 		X: path.To().X + ctx.Data.AreaOrigin.X,
 		Y: path.To().Y + ctx.Data.AreaOrigin.Y,
 	}
+
+	// Check if we're still in the same area before moving
+	if ctx.Data.PlayerUnit.Area != currentArea {
+		return nil
+	}
+
 	err := MoveToCoords(to)
 	if err != nil {
 		return fmt.Errorf("failed moving to room center: %w", err)
 	}
 
 	for {
+		// Exit if we've changed areas
+		if ctx.Data.PlayerUnit.Area != currentArea {
+			return nil
+		}
+
 		monsters := getMonstersInRoom(room, filter)
 		if len(monsters) == 0 {
 			return nil

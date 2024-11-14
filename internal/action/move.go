@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 	"time"
@@ -140,9 +141,49 @@ func MoveToArea(dst area.ID) error {
 	}
 
 	if lvl.IsEntrance {
-		err = step.InteractEntrance(dst)
+		maxAttempts := 3
+		for attempt := 0; attempt < maxAttempts; attempt++ {
+			// Check current distance
+			currentDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
+			// If we're too far, try to get closer using direct clicks
+			if currentDistance > 4 {
+				ctx.Logger.Debug("Attempting to move closer to entrance using direct movement")
+
+				// Calculate screen coordinates for a position closer to the entrance
+				screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
+					lvl.Position.X-2,
+					lvl.Position.Y-2,
+				)
+
+				// Use direct click to move closer
+				ctx.HID.Click(game.LeftButton, screenX, screenY)
+
+				// Give time for movement
+				utils.Sleep(800)
+				ctx.RefreshGameData()
+
+				// Verify new position
+				newDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
+				ctx.Logger.Debug("New distance after move attempt",
+					slog.Int("distance", newDistance),
+					slog.Int("attempt", attempt+1))
+			}
+
+			err = step.InteractEntrance(dst)
+			if err == nil {
+				break
+			}
+
+			if attempt < maxAttempts-1 {
+				ctx.Logger.Debug("Entrance interaction failed, retrying...",
+					slog.Int("attempt", attempt+1),
+					slog.String("error", err.Error()))
+				utils.Sleep(1000)
+			}
+		}
+
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to interact with area %s after %d attempts: %v", dst.Area().Name, maxAttempts, err)
 		}
 
 		// Wait for area transition to complete
@@ -152,9 +193,9 @@ func MoveToArea(dst area.ID) error {
 	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
-
 	return nil
 }
+
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
 	ctx.CurrentGame.AreaCorrection.Enabled = false
@@ -172,7 +213,6 @@ func MoveToCoords(to data.Position) error {
 	})
 }
 
-// MoveTo moves to a destination, ensuring area data is synchronized
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveTo")
