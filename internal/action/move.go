@@ -254,6 +254,21 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 				}
 			}
 		}
+		// Check if there is any object blocking our path
+		for _, o := range ctx.Data.Objects {
+			if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
+				err := step.InteractObject(o, func() bool {
+					obj, found := ctx.Data.Objects.FindByID(o.ID)
+					//additional click on barrel to avoid getting stuck
+					x, y := ctx.PathFinder.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
+					ctx.HID.Click(game.LeftButton, x, y)
+					return found && !obj.Selectable
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
 
 		// Check for monsters close to player
 		closestMonster := data.Monster{}
