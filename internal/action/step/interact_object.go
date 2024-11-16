@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"time"
@@ -44,11 +46,27 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			expectedArea = area.Tristram
 		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.RogueEncampment:
 			expectedArea = area.MooMooFarm
+		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.Harrogath:
+			expectedArea = area.NihlathaksTemple
+		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary:
+			expectedArea = area.CanyonOfTheMagi
+		}
+	} else if obj.IsPortal() {
+		// For blue town portals, determine the town area based on current area
+		fromArea := ctx.Data.PlayerUnit.Area
+		if !fromArea.IsTown() {
+			expectedArea = town.GetTownByArea(fromArea).TownArea()
+		} else {
+			// When using portal from town, we need to wait for any non-town area
+			isCompletedFn = func() bool {
+				return !ctx.Data.PlayerUnit.Area.IsTown() &&
+					ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) &&
+					len(ctx.Data.Objects) > 0
+			}
 		}
 	}
 
 	for !isCompletedFn() {
-		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
@@ -77,12 +95,28 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		}
 
 		lastRun = time.Now()
+
+		// Check portal states
+		if o.IsPortal() || o.IsRedPortal() {
+			// If portal is still being created, wait
+			if o.Mode == mode.ObjectModeOperating {
+				utils.Sleep(100)
+				continue
+			}
+
+			// Only interact when portal is fully opened
+			if o.Mode != mode.ObjectModeOpened {
+				utils.Sleep(100)
+				continue
+			}
+		}
+
 		if o.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 			waitingForInteraction = true
 			interactionAttempts++
 
-			// For portals, we need to wait for proper area sync
+			// For portals with expected area, we need to wait for proper area sync
 			if expectedArea != 0 {
 				utils.Sleep(500) // Initial delay for area transition
 				for attempts := 0; attempts < maxPortalSyncAttempts; attempts++ {
@@ -90,13 +124,11 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 					if ctx.Data.PlayerUnit.Area == expectedArea {
 						if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
 							if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+								if expectedArea.IsTown() {
+									return nil // For town areas, we can return immediately
+								}
 								// For special areas, ensure we have proper object data loaded
-								switch expectedArea {
-								case area.Tristram, area.MooMooFarm:
-									if len(ctx.Data.Objects) > 0 {
-										return nil
-									}
-								default:
+								if len(ctx.Data.Objects) > 0 {
 									return nil
 								}
 							}
@@ -104,9 +136,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 					}
 					utils.Sleep(portalSyncDelay)
 				}
-				if !isCompletedFn() {
-					return fmt.Errorf("portal sync timeout - expected area: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
-				}
+				return fmt.Errorf("portal sync timeout - expected area: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
 			}
 			continue
 		} else {
@@ -119,7 +149,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 			mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
-			if mouseOverAttempts == 2 && o.Name == object.TownPortal {
+			if mouseOverAttempts == 2 && o.IsPortal() {
 				mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
 			}
 
