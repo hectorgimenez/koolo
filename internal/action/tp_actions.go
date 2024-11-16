@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -12,12 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/utils"
-)
-
-const (
-	portalTransitionTimeout = 3 * time.Second
-	portalSyncDelay         = 100
-	initialTransitionDelay  = 200
 )
 
 func ReturnTown() error {
@@ -29,19 +22,10 @@ func ReturnTown() error {
 		return nil
 	}
 
-	// Store initial state
-	fromArea := ctx.Data.PlayerUnit.Area
-	townArea := town.GetTownByArea(fromArea).TownArea()
-
-	ctx.Logger.Debug("Starting town return sequence",
-		slog.String("from_area", fromArea.Area().Name),
-		slog.String("to_area", townArea.Area().Name))
-
 	err := step.OpenPortal()
 	if err != nil {
 		return err
 	}
-
 	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
 	if !found {
 		return errors.New("portal not found")
@@ -51,15 +35,6 @@ func ReturnTown() error {
 		ctx.Logger.Warn("Error clearing area around portal", "error", err)
 	}
 
-	// Disable area correction before portal interaction
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	ctx.SwitchPriority(context.PriorityHigh)
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-		ctx.SwitchPriority(context.PriorityNormal)
-	}()
-
-	ctx.Logger.Debug("Interacting with portal")
 	// Now that it is safe, interact with portal
 	err = InteractObject(portal, func() bool {
 		return ctx.Data.PlayerUnit.Area.IsTown()
@@ -68,103 +43,59 @@ func ReturnTown() error {
 		return err
 	}
 
-	// Initial delay to let the game process the transition request
-	utils.Sleep(initialTransitionDelay)
+	// Wait for area transition and data sync
+	utils.Sleep(1000)
 	ctx.RefreshGameData()
 
-	// Verify we've actually started the transition
-	if ctx.Data.PlayerUnit.Area == fromArea {
-		ctx.Logger.Debug("Still in source area after initial delay, starting transition wait")
-	}
-
-	// Wait for proper town transition
-	deadline := time.Now().Add(portalTransitionTimeout)
-	transitionStartTime := time.Now()
-
+	// Wait for town area data to be fully loaded
+	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
-		ctx.RefreshGameData()
-		currentArea := ctx.Data.PlayerUnit.Area
-
-		ctx.Logger.Debug("Waiting for transition",
-			slog.String("current_area", currentArea.Area().Name),
-			slog.Duration("elapsed", time.Since(transitionStartTime)))
-
-		if currentArea == townArea {
-			if areaData, ok := ctx.Data.Areas[townArea]; ok {
-				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-					ctx.Logger.Debug("Successfully reached town area")
-					utils.Sleep(300) // Extra wait to ensure everything is loaded
-					ctx.RefreshGameData()
+		if ctx.Data.PlayerUnit.Area.IsTown() {
+			// Verify area data exists and is loaded
+			if townData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+				if townData.IsInside(ctx.Data.PlayerUnit.Position) {
 					return nil
 				}
 			}
 		}
-		utils.Sleep(portalSyncDelay)
+		utils.Sleep(100)
+		ctx.RefreshGameData()
 	}
 
-	return fmt.Errorf("failed to verify town transition within timeout (start area: %s)", fromArea.Area().Name)
+	return fmt.Errorf("failed to verify town area data after portal transition")
 }
+
 func UsePortalInTown() error {
 	ctx := context.Get()
 	ctx.SetLastAction("UsePortalInTown")
 
 	tpArea := town.GetTownByArea(ctx.Data.PlayerUnit.Area).TPWaitingArea(*ctx.Data)
-	if err := MoveToCoords(tpArea); err != nil {
-		return err
-	}
-
-	// Store initial state
-	fromArea := ctx.Data.PlayerUnit.Area
-
-	// Disable area correction and raise priority during transition
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	ctx.SwitchPriority(context.PriorityHigh)
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-		ctx.SwitchPriority(context.PriorityNormal)
-	}()
+	_ = MoveToCoords(tpArea)
 
 	err := UsePortalFrom(ctx.Data.PlayerUnit.Name)
 	if err != nil {
 		return err
 	}
 
-	// Initial delay to let the game process the transition request
-	utils.Sleep(initialTransitionDelay)
+	// Wait for area sync before attempting any movement
+	utils.Sleep(500)
 	ctx.RefreshGameData()
-
-	// Wait for proper area transition
-	deadline := time.Now().Add(portalTransitionTimeout)
-	transitionStartTime := time.Now()
-
-	for time.Now().Before(deadline) {
-		ctx.RefreshGameData()
-		currentArea := ctx.Data.PlayerUnit.Area
-
-		ctx.Logger.Debug("Waiting for transition",
-			slog.String("current_area", currentArea.Area().Name),
-			slog.Duration("elapsed", time.Since(transitionStartTime)))
-
-		if currentArea != fromArea {
-			if areaData, ok := ctx.Data.Areas[currentArea]; ok {
-				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-					ctx.Logger.Debug("Successfully reached destination area")
-					utils.Sleep(300) // Extra wait to ensure everything is loaded
-					ctx.RefreshGameData()
-
-					// Perform item pickup after re-entering the portal
-					err = ItemPickup(40)
-					if err != nil {
-						ctx.Logger.Warn("Error during item pickup after portal use", "error", err)
-					}
-					return nil
-				}
-			}
-		}
-		utils.Sleep(portalSyncDelay)
+	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+		return err
 	}
 
-	return fmt.Errorf("failed to verify area transition within timeout (start area: %s)", fromArea.Area().Name)
+	// Ensure we're not in town
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		return fmt.Errorf("failed to leave town area")
+	}
+
+	// Perform item pickup after re-entering the portal
+	err = ItemPickup(40)
+	if err != nil {
+		ctx.Logger.Warn("Error during item pickup after portal use", "error", err)
+	}
+
+	return nil
 }
 
 func UsePortalFrom(owner string) error {
@@ -179,18 +110,14 @@ func UsePortalFrom(owner string) error {
 		if obj.IsPortal() && obj.Owner == owner {
 			return InteractObjectByID(obj.ID, func() bool {
 				if !ctx.Data.PlayerUnit.Area.IsTown() {
-					// Initial delay to let the game process the transition
-					utils.Sleep(initialTransitionDelay)
+					// Ensure area data is synced after portal transition
+					utils.Sleep(500)
 					ctx.RefreshGameData()
 
-					// Verify we're no longer in town
-					if ctx.Data.PlayerUnit.Area.IsTown() {
+					if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 						return false
 					}
-
-					if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
-						return areaData.IsInside(ctx.Data.PlayerUnit.Position)
-					}
+					return true
 				}
 				return false
 			})
