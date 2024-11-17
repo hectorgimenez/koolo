@@ -2,8 +2,11 @@ package action
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -13,8 +16,38 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 )
+
+const (
+	maxAreaSyncAttempts = 10
+	areaSyncDelay       = 100 * time.Millisecond
+)
+
+func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
+	// Skip sync check if we're already in the expected area and have valid area data
+	if ctx.Data.PlayerUnit.Area == expectedArea {
+		if areaData, ok := ctx.Data.Areas[expectedArea]; ok && areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+			return nil
+		}
+	}
+
+	// Wait for area data to sync
+	for attempts := 0; attempts < maxAreaSyncAttempts; attempts++ {
+		ctx.RefreshGameData()
+
+		if ctx.Data.PlayerUnit.Area == expectedArea {
+			if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
+				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+					return nil
+				}
+			}
+		}
+
+		time.Sleep(areaSyncDelay)
+	}
+
+	return fmt.Errorf("area sync timeout - expected: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
+}
 
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
@@ -25,7 +58,11 @@ func MoveToArea(dst area.ID) error {
 		ctx.CurrentGame.AreaCorrection.Enabled = true
 	}()
 
-	// Exception for Arcane Sanctuary, we need to find the portal first
+	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+		return err
+	}
+
+	// Exception for Arcane Sanctuary
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
 		ctx.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
 		portal, _ := ctx.Data.Objects.FindOne(object.ArcaneSanctuaryPortal)
@@ -104,14 +141,58 @@ func MoveToArea(dst area.ID) error {
 	}
 
 	if lvl.IsEntrance {
-		err = step.InteractEntrance(dst)
+		maxAttempts := 3
+		for attempt := 0; attempt < maxAttempts; attempt++ {
+			// Check current distance
+			currentDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
+			// If we're too far, try to get closer using direct clicks
+			if currentDistance > 4 {
+				ctx.Logger.Debug("Attempting to move closer to entrance using direct movement")
+
+				// Calculate screen coordinates for a position closer to the entrance
+				screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
+					lvl.Position.X-2,
+					lvl.Position.Y-2,
+				)
+
+				// Use direct click to move closer
+				ctx.HID.Click(game.LeftButton, screenX, screenY)
+
+				// Give time for movement
+				utils.Sleep(800)
+				ctx.RefreshGameData()
+
+				// Verify new position
+				newDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
+				ctx.Logger.Debug("New distance after move attempt",
+					slog.Int("distance", newDistance),
+					slog.Int("attempt", attempt+1))
+			}
+
+			err = step.InteractEntrance(dst)
+			if err == nil {
+				break
+			}
+
+			if attempt < maxAttempts-1 {
+				ctx.Logger.Debug("Entrance interaction failed, retrying...",
+					slog.Int("attempt", attempt+1),
+					slog.String("error", err.Error()))
+				utils.Sleep(1000)
+			}
+		}
+
 		if err != nil {
+			return fmt.Errorf("failed to interact with area %s after %d attempts: %v", dst.Area().Name, maxAttempts, err)
+		}
+
+		// Wait for area transition to complete
+		if err := ensureAreaSync(ctx, dst); err != nil {
 			return err
 		}
 	}
 
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
-
 	return nil
 }
 
@@ -122,6 +203,10 @@ func MoveToCoords(to data.Position) error {
 		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
 		ctx.CurrentGame.AreaCorrection.Enabled = true
 	}()
+
+	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+		return err
+	}
 
 	return MoveTo(func() (data.Position, bool) {
 		return to, true
@@ -135,6 +220,12 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}
 	lastMovement := false
+
+	// Initial sync check
+	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+		return err
+	}
+
 	for {
 		ctx.RefreshGameData()
 		to, found := toFunc()
@@ -142,12 +233,12 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			return nil
 		}
 
-		// If we can teleport, don't bother with the rest, stop here
+		// If we can teleport, don't bother with the rest
 		if ctx.Data.CanTeleport() {
 			return step.MoveTo(to)
 		}
 
-		// Check if there is a door blocking our path
+		// Check for doors blocking path
 		for _, o := range ctx.Data.Objects {
 			if o.IsDoor() && ctx.PathFinder.DistanceFromMe(o.Position) < 10 && openedDoors[o.Name] != o.Position {
 				if o.Selectable {
@@ -155,7 +246,6 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 					openedDoors[o.Name] = o.Position
 					err := step.InteractObject(o, func() bool {
 						obj, found := ctx.Data.Objects.FindByID(o.ID)
-
 						return found && !obj.Selectable
 					})
 					if err != nil {
@@ -164,7 +254,6 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 				}
 			}
 		}
-
 		// Check if there is any object blocking our path
 		for _, o := range ctx.Data.Objects {
 			if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
@@ -181,7 +270,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			}
 		}
 
-		// Detect if there are monsters close to the player
+		// Check for monsters close to player
 		closestMonster := data.Monster{}
 		closestMonsterDistance := 9999999
 		targetedNormalEnemies := make([]data.Monster, 0)
@@ -189,6 +278,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		minDistance := 6
 		minDistanceForElites := 20                                            // This will make the character to kill elites even if they are far away, ONLY during leveling
 		stuck := ctx.PathFinder.DistanceFromMe(previousIterationPosition) < 5 // Detect if character was not able to move from last iteration
+
 		for _, m := range ctx.Data.Monsters.Enemies() {
 			// Skip if monster is already dead
 			if m.Stats[stat.Life] <= 0 {
@@ -207,11 +297,9 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 				appended = true
 			}
 
-			if appended {
-				if dist < closestMonsterDistance {
-					closestMonsterDistance = dist
-					closestMonster = m
-				}
+			if appended && dist < closestMonsterDistance {
+				closestMonsterDistance = dist
+				closestMonster = m
 			}
 		}
 

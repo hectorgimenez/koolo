@@ -1,15 +1,18 @@
 package step
 
 import (
-	"errors"
 	"fmt"
-	"time"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"time"
+)
+
+const (
+	maxEntranceDistance = 6
+	maxMoveRetries      = 3
 )
 
 func InteractEntrance(area area.ID) error {
@@ -23,12 +26,9 @@ func InteractEntrance(area area.ID) error {
 	ctx.SetLastStep("InteractEntrance")
 
 	for {
-		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		// Give some extra time to render the UI
 		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
-			// We've successfully entered the new area
 			return nil
 		}
 
@@ -44,21 +44,47 @@ func InteractEntrance(area area.ID) error {
 		for _, l := range ctx.Data.AdjacentLevels {
 			if l.Area == area {
 				distance := ctx.PathFinder.DistanceFromMe(l.Position)
-				if distance > 10 {
-					return errors.New("entrance too far away")
+				if distance > maxEntranceDistance {
+					// Try to move closer with retries
+					for retry := 0; retry < maxMoveRetries; retry++ {
+						if err := MoveTo(l.Position); err != nil {
+							// If MoveTo fails, try direct movement
+							screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
+								l.Position.X-2,
+								l.Position.Y-2,
+							)
+							ctx.HID.Click(game.LeftButton, screenX, screenY)
+							utils.Sleep(800)
+							ctx.RefreshGameData()
+						}
+
+						// Check if we're close enough now
+						newDistance := ctx.PathFinder.DistanceFromMe(l.Position)
+						if newDistance <= maxEntranceDistance {
+							break
+						}
+
+						if retry == maxMoveRetries-1 {
+							return fmt.Errorf("entrance too far away (distance: %d)", distance)
+						}
+					}
 				}
 
 				if l.IsEntrance {
-					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-2, l.Position.Y-2)
+					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
 					if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
 						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 						waitingForInteraction = true
+						utils.Sleep(200)
 					}
 
 					x, y := utils.Spiral(interactionAttempts)
+					x = x / 3
+					y = y / 3
 					currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
 					ctx.HID.MovePointer(lx+x, ly+y)
 					interactionAttempts++
+					utils.Sleep(100)
 					continue
 				}
 
