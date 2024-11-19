@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 const (
@@ -20,7 +19,6 @@ func InteractEntrance(area area.ID) error {
 	interactionAttempts := 0
 	waitingForInteraction := false
 	currentMouseCoords := data.Position{}
-	lastRun := time.Time{}
 
 	ctx := context.Get()
 	ctx.SetLastStep("InteractEntrance")
@@ -28,7 +26,7 @@ func InteractEntrance(area area.ID) error {
 	for {
 		ctx.PauseIfNotPriority()
 
-		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
+		if ctx.Data.AreaData.Area == area && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
 			return nil
 		}
 
@@ -36,11 +34,10 @@ func InteractEntrance(area area.ID) error {
 			return fmt.Errorf("area %s [%d] could not be interacted", area.Area().Name, area)
 		}
 
-		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
+		if waitingForInteraction {
 			continue
 		}
 
-		lastRun = time.Now()
 		for _, l := range ctx.Data.AdjacentLevels {
 			if l.Area == area {
 				distance := ctx.PathFinder.DistanceFromMe(l.Position)
@@ -55,7 +52,6 @@ func InteractEntrance(area area.ID) error {
 							)
 							ctx.HID.Click(game.LeftButton, screenX, screenY)
 							utils.Sleep(800)
-							ctx.RefreshGameData()
 						}
 
 						// Check if we're close enough now
