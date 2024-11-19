@@ -145,37 +145,29 @@ func MoveToArea(dst area.ID) error {
 		for attempt := 0; attempt < maxAttempts; attempt++ {
 			// Check current distance
 			currentDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
-			// If we're too far, try to get closer using direct clicks
-			if currentDistance > 4 {
-				ctx.Logger.Debug("Attempting to move closer to entrance using direct movement")
 
-				// Calculate screen coordinates for a position closer to the entrance
+			// Handle different distance ranges
+			if currentDistance > 7 {
+				// For distances > 7, recursively call MoveToArea as it includes the entrance interaction
+				return MoveToArea(dst)
+			} else if currentDistance > 3 && currentDistance <= 7 {
+				// For distances between 4 and 7, use direct click
 				screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
 					lvl.Position.X-2,
 					lvl.Position.Y-2,
 				)
-
-				// Use direct click to move closer
 				ctx.HID.Click(game.LeftButton, screenX, screenY)
-
-				// Give time for movement
 				utils.Sleep(800)
-				ctx.RefreshGameData()
-
-				// Verify new position
-				newDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
-				ctx.Logger.Debug("New distance after move attempt",
-					slog.Int("distance", newDistance),
-					slog.Int("attempt", attempt+1))
 			}
 
+			// Try to interact with the entrance
 			err = step.InteractEntrance(dst)
 			if err == nil {
 				break
 			}
 
 			if attempt < maxAttempts-1 {
-				ctx.Logger.Debug("Entrance interaction failed, retrying...",
+				ctx.Logger.Debug("Entrance interaction failed, will retry",
 					slog.Int("attempt", attempt+1),
 					slog.String("error", err.Error()))
 				utils.Sleep(1000)
