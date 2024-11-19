@@ -28,6 +28,32 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 }
 
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
+	// Check if we're trying to path to an entrance
+	for _, level := range pf.data.AdjacentLevels {
+		if level.IsEntrance && level.Position == to {
+			// For entrances, try to find a walkable position slightly in front of it
+			// Try a few positions in front of the entrance
+			nearbyPositions := []data.Position{
+				{X: to.X - 1, Y: to.Y},     // Left
+				{X: to.X + 1, Y: to.Y},     // Right
+				{X: to.X, Y: to.Y - 1},     // Up
+				{X: to.X, Y: to.Y + 1},     // Down
+				{X: to.X - 1, Y: to.Y - 1}, // Up-Left
+				{X: to.X + 1, Y: to.Y - 1}, // Up-Right
+				{X: to.X - 1, Y: to.Y + 1}, // Down-Left
+				{X: to.X + 1, Y: to.Y + 1}, // Down-Right
+			}
+
+			// Try each nearby position
+			for _, pos := range nearbyPositions {
+				if pf.data.AreaData.IsWalkable(pos) {
+					return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
+				}
+			}
+		}
+	}
+
+	// Normal pathing for non-entrance destinations
 	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
 
