@@ -27,33 +27,61 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 	}
 }
 
+var wallEntranceAreas = map[area.ID]bool{
+	area.StonyTombLevel1:       true,
+	area.StonyTombLevel2:       true,
+	area.MaggotLairLevel1:      true,
+	area.MaggotLairLevel2:      true,
+	area.MaggotLairLevel3:      true,
+	area.TalRashasTomb1:        true,
+	area.TalRashasTomb2:        true,
+	area.TalRashasTomb3:        true,
+	area.TalRashasTomb4:        true,
+	area.TalRashasTomb5:        true,
+	area.TalRashasTomb6:        true,
+	area.TalRashasTomb7:        true,
+	area.ClawViperTempleLevel1: true,
+	area.ClawViperTempleLevel2: true,
+	area.SwampyPitLevel1:       true,
+	area.SwampyPitLevel2:       true,
+	area.SwampyPitLevel3:       true,
+	area.DisusedFane:           true,
+	area.ForgottenReliquary:    true,
+	area.ForgottenTemple:       true,
+	area.RuinedTemple:          true,
+	area.DisusedReliquary:      true,
+}
+
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
-	// Check if we're trying to path to an entrance
+	// Check if we're trying to path to an entrance in a wall-type area
 	for _, level := range pf.data.AdjacentLevels {
 		if level.IsEntrance && level.Position == to {
-			// For entrances, try to find a walkable position slightly in front of it
-			// Try a few positions in front of the entrance
-			nearbyPositions := []data.Position{
-				{X: to.X - 1, Y: to.Y},     // Left
-				{X: to.X + 1, Y: to.Y},     // Right
-				{X: to.X, Y: to.Y - 1},     // Up
-				{X: to.X, Y: to.Y + 1},     // Down
-				{X: to.X - 1, Y: to.Y - 1}, // Up-Left
-				{X: to.X + 1, Y: to.Y - 1}, // Up-Right
-				{X: to.X - 1, Y: to.Y + 1}, // Down-Left
-				{X: to.X + 1, Y: to.Y + 1}, // Down-Right
-			}
+			// Only apply nearby position logic for wall-entrance areas
+			if wallEntranceAreas[pf.data.PlayerUnit.Area] {
+				// Try walkable positions by priority
+				nearbyPositions := []data.Position{
+					// Cardinal directions first (most common)
+					{X: to.X - 1, Y: to.Y}, // Left
+					{X: to.X + 1, Y: to.Y}, // Right
+					{X: to.X, Y: to.Y - 1}, // Up
+					{X: to.X, Y: to.Y + 1}, // Down
 
-			// Try each nearby position
-			for _, pos := range nearbyPositions {
-				if pf.data.AreaData.IsWalkable(pos) {
-					return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
+					// Diagonals if cardinal directions don't work
+					{X: to.X - 1, Y: to.Y - 1}, // Up-Left
+					{X: to.X + 1, Y: to.Y - 1}, // Up-Right
+					{X: to.X - 1, Y: to.Y + 1}, // Down-Left
+					{X: to.X + 1, Y: to.Y + 1}, // Down-Right
+				}
+				for _, pos := range nearbyPositions {
+					if pf.data.AreaData.IsWalkable(pos) {
+						return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
+					}
 				}
 			}
 		}
 	}
 
-	// Normal pathing for non-entrance destinations
+	// Normal pathing for non-entrance destinations or regular entrances
 	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
 
