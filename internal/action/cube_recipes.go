@@ -2,6 +2,7 @@ package action
 
 import (
 	"slices"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -381,7 +382,7 @@ func CubeRecipes() error {
 
 				// TODO: Check if we have the items in our storage and if not, purchase them, else take the item from the storage
 				if recipe.PurchaseRequired {
-					err := GambleSingleItem(recipe.PurchaseItems, item.QualityMagic)
+					err := GambleSingleItem(recipe.PurchaseItems, item.QualityMagic, time.Now())
 					if err != nil {
 						ctx.Logger.Error("Error gambling item, skipping recipe", "error", err, "recipe", recipe.Name)
 						break

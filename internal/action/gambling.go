@@ -2,7 +2,10 @@ package action
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -18,9 +21,32 @@ import (
 	"github.com/lxn/win"
 )
 
-func Gamble() error {
+const maxGamblingDuration = 10 * time.Minute
+
+func checkTimeLimit(gameStartedAt time.Time, ctx *context.Status) error {
+	if time.Since(gameStartedAt) > maxGamblingDuration {
+		ctx.Logger.Info("Max gambling duration reached, cleaning up...",
+			slog.Float64("duration_seconds", time.Since(gameStartedAt).Seconds()))
+
+		if err := step.CloseAllMenus(); err != nil {
+			ctx.Logger.Error("Failed to close menus during timeout cleanup", slog.String("error", err.Error()))
+		}
+
+		return fmt.Errorf(
+			"max gambling duration reached: %0.2f seconds",
+			time.Since(gameStartedAt).Seconds(),
+		)
+	}
+	return nil
+}
+
+func Gamble(gameStartedAt time.Time) error {
 	ctx := context.Get()
 	ctx.SetLastAction("Gamble")
+
+	if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		return err
+	}
 
 	stashedGold, _ := ctx.Data.PlayerUnit.FindStat(stat.StashGold, 0)
 	if ctx.CharacterCfg.Gambling.Enabled && stashedGold.Value >= 2500000 {
@@ -35,7 +61,10 @@ func Gamble() error {
 				Y: 5119,
 			})
 		}
-
+		// Check time before interacting with NPC
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			return err
+		}
 		InteractNPC(vendorNPC)
 		// Jamella gamble button is the second one
 		if vendorNPC == npc.Jamella {
@@ -47,21 +76,39 @@ func Gamble() error {
 		if !ctx.Data.OpenMenus.NPCShop {
 			return errors.New("failed opening gambling window")
 		}
-
-		return gambleItems()
+		// Check time before gambling
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			return err
+		}
+		return gambleItems(gameStartedAt)
 	}
 
 	return nil
 }
 
-func GambleSingleItem(items []string, desiredQuality item.Quality) error {
+func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt time.Time) error {
 	ctx := context.Get()
 	ctx.SetLastAction("GambleSingleItem")
+
+	cleanup := func(itemBought data.Item) {
+		if itemBought.Name != "" {
+			ctx.Logger.Info("Selling item before timeout cleanup", slog.Any("item", itemBought))
+			town.SellItem(itemBought)
+		}
+
+		if err := step.CloseAllMenus(); err != nil {
+			ctx.Logger.Error("Failed to close menus during cleanup", slog.String("error", err.Error()))
+		}
+	}
+
+	if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		cleanup(data.Item{})
+		return err
+	}
 
 	charGold := ctx.Data.PlayerUnit.TotalPlayerGold()
 	var itemBought data.Item
 
-	// Check if we have enough gold to gamble
 	if charGold >= 150000 {
 		ctx.Logger.Info("Gambling for items", slog.Any("items", items))
 
@@ -75,6 +122,10 @@ func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 			})
 		}
 
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			cleanup(data.Item{})
+			return err
+		}
 		InteractNPC(vendorNPC)
 		// Jamella gamble button is the second one
 		if vendorNPC == npc.Jamella {
@@ -89,6 +140,11 @@ func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 	}
 
 	for {
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			cleanup(itemBought)
+			return err
+		}
+
 		if itemBought.Name != "" {
 			for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 				if itm.UnitID == itemBought.UnitID {
@@ -98,14 +154,11 @@ func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 				}
 			}
 
-			// Check if the item matches our NIP rules
 			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought); result == nip.RuleResultFullMatch {
-				// Filter not pass, selling the item
 				ctx.Logger.Info("Found item matching nip rules, will be kept", slog.Any("item", itemBought))
 				itemBought = data.Item{}
 				continue
 			} else {
-				// Doesn't match NIP rules but check if the item matches our desired quality
 				if itemBought.Quality == desiredQuality {
 					ctx.Logger.Info("Found item matching desired quality, will be kept", slog.Any("item", itemBought))
 					return step.CloseAllMenus()
@@ -117,10 +170,15 @@ func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 		}
 
 		if ctx.Data.PlayerUnit.TotalPlayerGold() < 150000 {
+			cleanup(data.Item{})
 			return errors.New("gold is below 150000, stopping gamble")
 		}
 
-		// Check for any of the desired items in the vendor's inventory
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			cleanup(data.Item{})
+			return err
+		}
+
 		for _, itmName := range items {
 			itm, found := ctx.Data.Inventory.Find(item.Name(itmName), item.LocationVendor)
 			if found {
@@ -130,29 +188,88 @@ func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 			}
 		}
 
-		// If no desired item was found, refresh the gambling window
 		if itemBought.Name == "" {
 			ctx.Logger.Debug("Desired items not found in gambling window, refreshing...", slog.Any("items", items))
-
-			if ctx.Data.LegacyGraphics {
-				ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
-			} else {
-				ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
-			}
-
+			RefreshGamblingWindow(ctx)
 			utils.Sleep(500)
+		}
+
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			cleanup(data.Item{})
+			return err
 		}
 	}
 }
 
-func gambleItems() error {
+type ItemGambleCount struct {
+	counts map[item.Name]int
+	mu     sync.Mutex
+}
+
+func NewItemGambleCount() *ItemGambleCount {
+	return &ItemGambleCount{
+		counts: make(map[item.Name]int),
+	}
+}
+
+func (i *ItemGambleCount) Increment(itemName item.Name) bool {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	i.counts[itemName]++
+	return i.counts[itemName] <= 10
+}
+
+func (i *ItemGambleCount) ShouldReset(items []item.Name) bool {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	for _, name := range items {
+		if i.counts[name] < 10 {
+			return false
+		}
+	}
+
+	i.counts = make(map[item.Name]int)
+	return true
+}
+
+func (i *ItemGambleCount) GetCount(itemName item.Name) int {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	return i.counts[itemName]
+}
+
+func gambleItems(gameStartedAt time.Time) error {
 	ctx := context.Get()
 	ctx.SetLastAction("gambleItems")
 
+	cleanup := func(itemBought data.Item) {
+		if itemBought.Name != "" {
+			ctx.Logger.Info("Selling item before timeout cleanup", slog.Any("item", itemBought))
+			town.SellItem(itemBought)
+		}
+
+		if err := step.CloseAllMenus(); err != nil {
+			ctx.Logger.Error("Failed to close menus during cleanup", slog.String("error", err.Error()))
+		}
+	}
+
+	if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		cleanup(data.Item{})
+		return err
+	}
+
 	var itemBought data.Item
-	currentIdx := 0
 	lastStep := false
+	itemCounts := NewItemGambleCount()
+
 	for {
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			cleanup(itemBought)
+			return err
+		}
+
 		if lastStep {
 			utils.Sleep(200)
 			ctx.Logger.Info("Finished gambling", slog.Int("currentGold", ctx.Data.PlayerUnit.TotalPlayerGold()))
@@ -163,7 +280,9 @@ func gambleItems() error {
 			for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 				if itm.UnitID == itemBought.UnitID {
 					itemBought = itm
-					ctx.Logger.Debug("Gambled for item", slog.Any("item", itemBought))
+					ctx.Logger.Debug("Gambled for item",
+						slog.Any("item", itemBought),
+						slog.Int("attempts", itemCounts.GetCount(itemBought.Name)))
 					break
 				}
 			}
@@ -172,12 +291,16 @@ func gambleItems() error {
 				ctx.Logger.Info("Found item matching NIP rules, keeping", slog.Any("item", itemBought))
 				lastStep = true
 			} else {
-				// Filter not pass, selling the item
 				ctx.Logger.Debug("Item doesn't match NIP rules, selling", slog.Any("item", itemBought))
 				town.SellItem(itemBought)
 			}
-			itemBought = data.Item{} // Reset itemBought after processing
+			itemBought = data.Item{}
 			continue
+		}
+
+		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+			cleanup(itemBought)
+			return err
 		}
 
 		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
@@ -185,27 +308,32 @@ func gambleItems() error {
 			continue
 		}
 
-		for idx, itmName := range ctx.Data.CharacterCfg.Gambling.Items {
-			if currentIdx == len(ctx.CharacterCfg.Gambling.Items) {
-				currentIdx = 0
-			}
+		// Check if we need to reset the counts
+		if itemCounts.ShouldReset(ctx.Data.CharacterCfg.Gambling.Items) {
+			ctx.Logger.Info("Reset gambling counts - all items reached 10 attempts")
+		}
 
-			if currentIdx > idx {
-				continue
+		var foundItem bool
+		for _, itmName := range ctx.Data.CharacterCfg.Gambling.Items {
+			if itm, found := ctx.Data.Inventory.Find(itmName, item.LocationVendor); found {
+				// Only buy if we haven't reached the limit for this item
+				if itemCounts.Increment(itmName) {
+					town.BuyItem(itm, 1)
+					itemBought = itm
+					foundItem = true
+					ctx.Logger.Debug("Found and bought gambling item",
+						slog.String("item", string(itmName)),
+						slog.Int("attempt", itemCounts.GetCount(itmName)))
+					break
+				}
 			}
+		}
 
-			itm, found := ctx.Data.Inventory.Find(itmName, item.LocationVendor)
-			if !found {
-				ctx.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
-				RefreshGamblingWindow(ctx)
-				utils.Sleep(500)
-				break // Exit the inner loop to re-check inventory after refresh
-			}
-
-			town.BuyItem(itm, 1)
-			itemBought = itm
-			currentIdx++
-			break // Exit the inner loop after buying an item
+		if !foundItem {
+			ctx.Logger.Debug("No eligible items found in gambling window, refreshing...",
+				slog.Any("searching_for", ctx.Data.CharacterCfg.Gambling.Items))
+			RefreshGamblingWindow(ctx)
+			utils.Sleep(500)
 		}
 	}
 }
