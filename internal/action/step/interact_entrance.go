@@ -6,8 +6,8 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"time"
 )
 
 const maxEntranceDistance = 6
@@ -17,7 +17,9 @@ func InteractEntrance(dest area.ID) error {
 	ctx.SetLastStep("InteractEntrance")
 
 	interactionAttempts := 0
+	waitingForInteraction := false
 	currentMouseCoords := data.Position{}
+	lastInteraction := time.Time{}
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -31,27 +33,57 @@ func InteractEntrance(dest area.ID) error {
 			return fmt.Errorf("failed to enter area %s after %d attempts", dest.Area().Name, maxInteractionAttempts)
 		}
 
+		// If waiting for interaction, give some time before retrying
+		if waitingForInteraction && time.Since(lastInteraction) < time.Millisecond*500 {
+			utils.Sleep(50)
+			continue
+		}
+
+		// Reset waiting state if enough time has passed
+		if waitingForInteraction && time.Since(lastInteraction) >= time.Millisecond*500 {
+			waitingForInteraction = false
+		}
+
 		// Find the entrance we want to interact with
 		for _, l := range ctx.Data.AdjacentLevels {
-			if l.Area == dest && l.IsEntrance {
+			if l.Area == dest {
 				// Verify distance
 				if ctx.PathFinder.DistanceFromMe(l.Position) > maxEntranceDistance {
 					return fmt.Errorf("entrance is too far away")
 				}
 
-				// Try to interact with entrance
-				if ctx.Data.HoverData.IsHovered {
-					ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
-				} else {
-					x, y := ui.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
-					currentMouseCoords = data.Position{X: x, Y: y}
-					ctx.HID.MovePointer(x, y)
+				if l.IsEntrance {
+					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
+
+					// Check if we're hovering over the entrance
+					if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
+						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+						waitingForInteraction = true
+						lastInteraction = time.Now()
+						utils.Sleep(200)
+						continue
+					}
+
+					// Only try new mouse positions if not waiting for interaction
+					if !waitingForInteraction {
+						// Use spiral pattern with reduced scale for more precise entrance targeting
+						x, y := utils.Spiral(interactionAttempts)
+						x = x / 3
+						y = y / 3
+						currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
+						ctx.HID.MovePointer(lx+x, ly+y)
+						interactionAttempts++
+						utils.Sleep(100)
+					}
+					continue
 				}
 
-				interactionAttempts++
-				utils.Sleep(200)
-				break
+				return fmt.Errorf("area %s [%d] is not an entrance", l.Area.Area().Name, l.Area)
 			}
 		}
+
+		// If we get here without finding the entrance, wait briefly and refresh
+		utils.Sleep(100)
+		ctx.RefreshGameData()
 	}
 }

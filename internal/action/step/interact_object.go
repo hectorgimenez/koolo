@@ -53,6 +53,9 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			expectedArea = area.CanyonOfTheMagi
 		case obj.Name == object.BaalsPortal && ctx.Data.PlayerUnit.Area == area.ThroneOfDestruction:
 			expectedArea = area.TheWorldstoneChamber
+		case obj.Name == object.DurielsLairPortal && (ctx.Data.PlayerUnit.Area == area.TalRashasTomb1 || ctx.Data.PlayerUnit.Area == area.TalRashasTomb2 || ctx.Data.PlayerUnit.Area == area.TalRashasTomb3 || ctx.Data.PlayerUnit.Area == area.TalRashasTomb4 || ctx.Data.PlayerUnit.Area == area.TalRashasTomb5 || ctx.Data.PlayerUnit.Area == area.TalRashasTomb6 || ctx.Data.PlayerUnit.Area == area.TalRashasTomb7):
+			expectedArea = area.DurielsLair
+
 		}
 	} else if obj.IsPortal() {
 		// For blue town portals, determine the town area based on current area
@@ -131,7 +134,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 									return nil // For town areas, we can return immediately
 								}
 								// For special areas and Baal's portal, ensure we have proper object data loaded
-								if len(ctx.Data.Objects) > 0 || expectedArea == area.TheWorldstoneChamber {
+								if len(ctx.Data.Objects) > 0 || expectedArea == area.TheWorldstoneChamber || expectedArea == area.DurielsLair {
 									return nil
 								}
 							}

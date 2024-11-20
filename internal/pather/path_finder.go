@@ -2,6 +2,7 @@ package pather
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"math"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -27,83 +28,90 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 	}
 }
 
-var wallEntranceAreas = map[area.ID]bool{
-	area.ArreatPlateau:         true,
-	area.GlacialTrail:          true,
-	area.FrozenTundra:          true,
-	area.StonyTombLevel1:       true,
-	area.StonyTombLevel2:       true,
-	area.MaggotLairLevel1:      true,
-	area.MaggotLairLevel2:      true,
-	area.MaggotLairLevel3:      true,
-	area.TalRashasTomb1:        true,
-	area.TalRashasTomb2:        true,
-	area.TalRashasTomb3:        true,
-	area.TalRashasTomb4:        true,
-	area.TalRashasTomb5:        true,
-	area.TalRashasTomb6:        true,
-	area.TalRashasTomb7:        true,
-	area.DurielsLair:           true,
-	area.ClawViperTempleLevel1: true,
-	area.ClawViperTempleLevel2: true,
-	area.SwampyPitLevel1:       true,
-	area.SwampyPitLevel2:       true,
-	area.SwampyPitLevel3:       true,
-	area.DisusedFane:           true,
-	area.ForgottenReliquary:    true,
-	area.ForgottenTemple:       true,
-	area.RuinedTemple:          true,
-	area.DisusedReliquary:      true,
+type areaTransition struct {
+	from, to area.ID
 }
 
-// TODO We should determine current area and destination instead of setting an entrance as WallType
-// TODO Exemple Stony tomb lvl 1 from the inside is a Walltype to return to Rocky Waste but to enter from Rocky Waste its a Dungeon entrance type
-func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
-	// Check if we're trying to path to an entrance in a wall-type area
-	for _, level := range pf.data.AdjacentLevels {
-		if level.IsEntrance && level.Position == to {
-			// Only apply nearby position logic for wall-entrance areas
-			if wallEntranceAreas[pf.data.PlayerUnit.Area] {
-				// Try walkable positions by priority
-				nearbyPositions := []data.Position{
-					// Cardinal directions first (most common)
-					{X: to.X - 1, Y: to.Y}, // Left
-					{X: to.X + 1, Y: to.Y}, // Right
-					{X: to.X, Y: to.Y - 1}, // Up
-					{X: to.X, Y: to.Y + 1}, // Down
-					// Diagonals if cardinal directions don't work
-					{X: to.X - 1, Y: to.Y - 1}, // Up-Left
-					{X: to.X + 1, Y: to.Y - 1}, // Up-Right
-					{X: to.X - 1, Y: to.Y + 1}, // Down-Left
-					{X: to.X + 1, Y: to.Y + 1}, // Down-Right
-				}
-				for _, pos := range nearbyPositions {
-					if pf.data.AreaData.IsWalkable(pos) {
-						return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
-					}
-				}
+func (pf *PathFinder) isWallEntrance(from, to area.ID) bool {
+	// Act 1
+	if from == area.DarkWood && to == area.UndergroundPassageLevel1 {
+		return true
+	}
+	if from == area.Cathedral && to == area.CatacombsLevel1 {
+		return true
+	}
 
-				// If first approach didn't work, try expanding radius
-				a := pf.data.AreaData
-				maxRange := 4 // Small radius for entrances
-				for radius := 1; radius <= maxRange; radius++ {
-					positions := []data.Position{
-						{X: to.X - radius, Y: to.Y}, // Left
-						{X: to.X + radius, Y: to.Y}, // Right
-						{X: to.X, Y: to.Y - radius}, // Up
-						{X: to.X, Y: to.Y + radius}, // Down
-					}
-					for _, pos := range positions {
-						if a.IsWalkable(pos) {
-							return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
-						}
-					}
+	// Act 2
+	if from == area.StonyTombLevel1 && to == area.StonyTombLevel2 {
+		return true
+	}
+	if from == area.HallsOfTheDeadLevel1 && to == area.HallsOfTheDeadLevel2 {
+		return true
+	}
+	if from == area.ClawViperTempleLevel1 && to == area.ClawViperTempleLevel2 {
+		return true
+	}
+	if from == area.CanyonOfTheMagi && (to >= area.TalRashasTomb1 && to <= area.TalRashasTomb7) {
+		return true
+	}
+	// Handle Duriel's Lair from any Tal Rasha Tomb
+	if (from >= area.TalRashasTomb1 && from <= area.TalRashasTomb7) && to == area.DurielsLair {
+		return true
+	}
+
+	// Act 5
+	if from == area.CrystallinePassage && to == area.ArreatPlateau {
+		return true
+	}
+	if from == area.ArreatPlateau && to == area.GlacialTrail {
+		return true
+	}
+	if from == area.GlacialTrail && to == area.FrozenTundra {
+		return true
+	}
+
+	return false
+}
+
+func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+
+	for radius := 1; radius <= 3; radius++ {
+		for x := -radius; x <= radius; x++ {
+			for y := -radius; y <= radius; y++ {
+				if x == 0 && y == 0 {
+					continue
+				}
+				pos := data.Position{X: target.X + x, Y: target.Y + y}
+				if pf.data.AreaData.IsWalkable(pos) {
+					return pos, true
 				}
 			}
 		}
 	}
 
-	// Normal pathing for non-entrance destinations or regular entrances
+	return data.Position{}, false
+}
+
+func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
+	// Special case for duriels lair entrance
+	for _, obj := range pf.data.Objects {
+		if obj.Name == object.DurielsLairPortal {
+			if walkable, found := pf.findNearbyWalkablePosition(to); found {
+				return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkable)
+			}
+		}
+	}
+
+	// Then check for wall entrances
+	for _, level := range pf.data.AdjacentLevels {
+		if level.IsEntrance && level.Position == to && pf.isWallEntrance(pf.data.PlayerUnit.Area, level.Area) {
+			if walkable, found := pf.findNearbyWalkablePosition(to); found {
+				return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkable)
+			}
+		}
+	}
+
+	// Normal pathing for non-entrance destinations
 	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
