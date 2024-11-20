@@ -16,12 +16,11 @@ func PreRun(firstRun bool) error {
 	RecoverCorpse()
 	ManageBelt()
 
-	if firstRun {
-		Stash(firstRun)
+	if err := IdentifyAll(false); err != nil {
+		return err
 	}
 
 	UpdateQuestLog()
-	IdentifyAll(firstRun)
 	VendorRefill(false, true)
 	Stash(firstRun)
 	Gamble(time.Now())
