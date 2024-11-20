@@ -53,9 +53,25 @@ func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
 	ctx.CurrentGame.AreaCorrection.Enabled = false
+
+	var lvl data.Level
+	var isEntrance bool
+
 	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-		ctx.CurrentGame.AreaCorrection.Enabled = true
+		// For open areas (non-entrance transitions), wait a bit and verify the transition
+		if !isEntrance {
+			utils.Sleep(200)
+			ctx.RefreshGameData()
+			// Only enable correction if we actually made it to the destination
+			if ctx.Data.PlayerUnit.Area == dst {
+				ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
+				ctx.CurrentGame.AreaCorrection.Enabled = true
+			}
+		} else {
+			// For entrances
+			ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
+			ctx.CurrentGame.AreaCorrection.Enabled = true
+		}
 	}()
 
 	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
@@ -73,10 +89,10 @@ func MoveToArea(dst area.ID) error {
 		})
 	}
 
-	lvl := data.Level{}
 	for _, a := range ctx.Data.AdjacentLevels {
 		if a.Area == dst {
 			lvl = a
+			isEntrance = a.IsEntrance
 			break
 		}
 	}
@@ -120,7 +136,6 @@ func MoveToArea(dst area.ID) error {
 		sort.Slice(objects, func(i, j int) bool {
 			distanceI := ctx.PathFinder.DistanceFromMe(objects[i].Position)
 			distanceJ := ctx.PathFinder.DistanceFromMe(objects[j].Position)
-
 			return distanceI < distanceJ
 		})
 
@@ -146,7 +161,6 @@ func MoveToArea(dst area.ID) error {
 			// Check current distance
 			currentDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
 
-			// Handle different distance ranges
 			if currentDistance > 7 {
 				// For distances > 7, recursively call MoveToArea as it includes the entrance interaction
 				return MoveToArea(dst)

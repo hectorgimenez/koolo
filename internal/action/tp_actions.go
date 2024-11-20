@@ -3,14 +3,13 @@ package action
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 func ReturnTown() error {
@@ -22,80 +21,98 @@ func ReturnTown() error {
 		return nil
 	}
 
+	// Remember original area for area correction
+	originalArea := ctx.Data.PlayerUnit.Area
+
+	// Open portal and wait for it to appear
 	err := step.OpenPortal()
 	if err != nil {
 		return err
 	}
+
 	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
 	if !found {
 		return errors.New("portal not found")
 	}
 
+	// Clear the area around portal before using it
 	if err = ClearAreaAroundPosition(portal.Position, 8, data.MonsterAnyFilter()); err != nil {
 		ctx.Logger.Warn("Error clearing area around portal", "error", err)
 	}
 
-	// Now that it is safe, interact with portal
-	err = InteractObject(portal, func() bool {
-		return ctx.Data.PlayerUnit.Area.IsTown()
+	// Get the expected town area based on current location
+	expectedTownArea := town.GetTownByArea(originalArea).TownArea()
+
+	// Disable area correction during portal transition
+	ctx.CurrentGame.AreaCorrection.Enabled = false
+
+	// Interact with portal and verify transition
+	err = step.InteractObject(portal, func() bool {
+		if !ctx.Data.PlayerUnit.Area.IsTown() {
+			return false
+		}
+
+		// Verify area data exists and is loaded
+		if townData, ok := ctx.Data.Areas[expectedTownArea]; ok {
+			return townData.IsInside(ctx.Data.PlayerUnit.Position)
+		}
+		return false
 	})
+
 	if err != nil {
+		ctx.CurrentGame.AreaCorrection.Enabled = true
 		return err
 	}
 
-	// Wait for area transition and data sync
-	utils.Sleep(1000)
-	ctx.RefreshGameData()
+	// Set expected area to town
+	ctx.CurrentGame.AreaCorrection.ExpectedArea = expectedTownArea
+	ctx.CurrentGame.AreaCorrection.Enabled = true
 
-	// Wait for town area data to be fully loaded
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if ctx.Data.PlayerUnit.Area.IsTown() {
-			// Verify area data exists and is loaded
-			if townData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
-				if townData.IsInside(ctx.Data.PlayerUnit.Position) {
-					return nil
-				}
-			}
-		}
-		utils.Sleep(100)
-		ctx.RefreshGameData()
-	}
-
-	return fmt.Errorf("failed to verify town area data after portal transition")
+	return nil
 }
 
 func UsePortalInTown() error {
 	ctx := context.Get()
 	ctx.SetLastAction("UsePortalInTown")
 
-	tpArea := town.GetTownByArea(ctx.Data.PlayerUnit.Area).TPWaitingArea(*ctx.Data)
-	_ = MoveToCoords(tpArea)
+	// Store current area for verification
+	townArea := ctx.Data.PlayerUnit.Area
+	if !townArea.IsTown() {
+		return errors.New("must be in town to use town portal")
+	}
+
+	// Move to town's portal waiting area
+	tpArea := town.GetTownByArea(townArea).TPWaitingArea(*ctx.Data)
+	if err := MoveToCoords(tpArea); err != nil {
+		return fmt.Errorf("failed to move to portal area: %w", err)
+	}
+
+	// Temporarily disable area correction during portal use
+	ctx.CurrentGame.AreaCorrection.Enabled = false
 
 	err := UsePortalFrom(ctx.Data.PlayerUnit.Name)
 	if err != nil {
+		ctx.CurrentGame.AreaCorrection.Enabled = true
 		return err
 	}
 
-	// Wait for area sync before attempting any movement
-	utils.Sleep(500)
-	ctx.RefreshGameData()
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+	// Wait for area transition and verify
+	if err = ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+		ctx.CurrentGame.AreaCorrection.Enabled = true
 		return err
 	}
 
-	// Ensure we're not in town
+	// Verify we're not in town
 	if ctx.Data.PlayerUnit.Area.IsTown() {
-		return fmt.Errorf("failed to leave town area")
+		ctx.CurrentGame.AreaCorrection.Enabled = true
+		return errors.New("failed to leave town area")
 	}
 
-	// Perform item pickup after re-entering the portal
-	err = ItemPickup(40)
-	if err != nil {
-		ctx.Logger.Warn("Error during item pickup after portal use", "error", err)
-	}
+	// Set area correction to new area
+	ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.PlayerUnit.Area
+	ctx.CurrentGame.AreaCorrection.Enabled = true
 
-	return nil
+	return ItemPickup(40)
 }
 
 func UsePortalFrom(owner string) error {
@@ -106,23 +123,36 @@ func UsePortalFrom(owner string) error {
 		return nil
 	}
 
+	// Find the correct portal and store destination area if available
+	var targetPortal data.Object
+	var found bool
 	for _, obj := range ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == owner {
-			return InteractObjectByID(obj.ID, func() bool {
-				if !ctx.Data.PlayerUnit.Area.IsTown() {
-					// Ensure area data is synced after portal transition
-					utils.Sleep(500)
-					ctx.RefreshGameData()
-
-					if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-						return false
-					}
-					return true
-				}
-				return false
-			})
+			targetPortal = obj
+			found = true
+			break
 		}
 	}
 
-	return errors.New("portal not found")
+	if !found {
+		return errors.New("portal not found")
+	}
+
+	// Wait for portal to be fully opened
+	if targetPortal.Mode == mode.ObjectModeOperating || targetPortal.Mode != mode.ObjectModeOpened {
+		return errors.New("portal is not ready")
+	}
+
+	// Use portal and verify transition
+	return step.InteractObject(targetPortal, func() bool {
+		// Successful when we're no longer in town and area data is synced
+		if ctx.Data.PlayerUnit.Area.IsTown() {
+			return false
+		}
+
+		if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+			return areaData.IsInside(ctx.Data.PlayerUnit.Position) && len(ctx.Data.Objects) > 0
+		}
+		return false
+	})
 }

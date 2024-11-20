@@ -52,7 +52,7 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("clearRoom")
 
-	path, _, found := ctx.PathFinder.GetClosestWalkablePath(room.GetCenter())
+	path, _, found := ctx.PathFinder.GetClosestWalkablePath(room.GetCenter(), 20)
 	if !found {
 		return errors.New("failed to find a path to the room center")
 	}

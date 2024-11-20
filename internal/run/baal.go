@@ -2,7 +2,6 @@ package run
 
 import (
 	"errors"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -116,7 +115,7 @@ func (s Baal) Run() error {
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
-		utils.Sleep(15000)
+		utils.Sleep(12500)
 		action.Buff()
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		err = action.InteractObjectByID(baalPortal.ID, func() bool {

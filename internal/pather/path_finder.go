@@ -28,6 +28,9 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 }
 
 var wallEntranceAreas = map[area.ID]bool{
+	area.ArreatPlateau:         true,
+	area.GlacialTrail:          true,
+	area.FrozenTundra:          true,
 	area.StonyTombLevel1:       true,
 	area.StonyTombLevel2:       true,
 	area.MaggotLairLevel1:      true,
@@ -40,6 +43,7 @@ var wallEntranceAreas = map[area.ID]bool{
 	area.TalRashasTomb5:        true,
 	area.TalRashasTomb6:        true,
 	area.TalRashasTomb7:        true,
+	area.DurielsLair:           true,
 	area.ClawViperTempleLevel1: true,
 	area.ClawViperTempleLevel2: true,
 	area.SwampyPitLevel1:       true,
@@ -56,25 +60,26 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	// Check if we're trying to path to an entrance in a wall-type area
 	for _, level := range pf.data.AdjacentLevels {
 		if level.IsEntrance && level.Position == to {
-			// Only apply nearby position logic for wall-entrance areas
+			// For wall type entrances
 			if wallEntranceAreas[pf.data.PlayerUnit.Area] {
-				// Try walkable positions by priority
-				nearbyPositions := []data.Position{
-					// Cardinal directions first (most common)
-					{X: to.X - 1, Y: to.Y}, // Left
-					{X: to.X + 1, Y: to.Y}, // Right
-					{X: to.X, Y: to.Y - 1}, // Up
-					{X: to.X, Y: to.Y + 1}, // Down
 
-					// Diagonals if cardinal directions don't work
-					{X: to.X - 1, Y: to.Y - 1}, // Up-Left
-					{X: to.X + 1, Y: to.Y - 1}, // Up-Right
-					{X: to.X - 1, Y: to.Y + 1}, // Down-Left
-					{X: to.X + 1, Y: to.Y + 1}, // Down-Right
-				}
-				for _, pos := range nearbyPositions {
-					if pf.data.AreaData.IsWalkable(pos) {
-						return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
+				// Find a walkable position near the entrance
+				a := pf.data.AreaData
+				maxRange := 4 // Small radius for entrances
+
+				// Simple nearby position check
+				for radius := 1; radius <= maxRange; radius++ {
+					positions := []data.Position{
+						{X: to.X - radius, Y: to.Y}, // Left
+						{X: to.X + radius, Y: to.Y}, // Right
+						{X: to.X, Y: to.Y - radius}, // Up
+						{X: to.X, Y: to.Y + radius}, // Down
+					}
+
+					for _, pos := range positions {
+						if a.IsWalkable(pos) {
+							return pf.GetPathFrom(pf.data.PlayerUnit.Position, pos)
+						}
 					}
 				}
 			}
@@ -84,7 +89,6 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	// Normal pathing for non-entrance destinations or regular entrances
 	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
-
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
 
@@ -193,20 +197,22 @@ func copyGrid(dest [][]game.CollisionType, src [][]game.CollisionType, offsetX, 
 	}
 }
 
-func (pf *PathFinder) GetClosestWalkablePath(dest data.Position) (Path, int, bool) {
-	return pf.GetClosestWalkablePathFrom(pf.data.PlayerUnit.Position, dest)
+func (pf *PathFinder) GetClosestWalkablePath(dest data.Position, maxRange int) (Path, int, bool) {
+	return pf.GetClosestWalkablePathFrom(pf.data.PlayerUnit.Position, dest, maxRange)
 }
 
-func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path, int, bool) {
+func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position, maxRange int) (Path, int, bool) {
 	a := pf.data.AreaData
 	if a.IsWalkable(dest) || !a.IsInside(dest) {
-		path, distance, found := pf.GetPath(dest)
-		if found {
-			return path, distance, found
-		}
+		// Directly use GetPathFrom instead of GetPath to avoid recursion
+		return pf.GetPathFrom(from, dest)
 	}
 
-	maxRange := 20
+	// If no maxRange specified, use default of 20
+	if maxRange <= 0 {
+		maxRange = 20
+	}
+
 	step := 4
 	dst := 1
 

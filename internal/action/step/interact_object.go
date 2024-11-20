@@ -2,16 +2,17 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/town"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 const (
@@ -50,6 +51,8 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			expectedArea = area.NihlathaksTemple
 		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary:
 			expectedArea = area.CanyonOfTheMagi
+		case obj.Name == object.BaalsPortal && ctx.Data.PlayerUnit.Area == area.ThroneOfDestruction:
+			expectedArea = area.TheWorldstoneChamber
 		}
 	} else if obj.IsPortal() {
 		// For blue town portals, determine the town area based on current area
@@ -127,8 +130,8 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 								if expectedArea.IsTown() {
 									return nil // For town areas, we can return immediately
 								}
-								// For special areas, ensure we have proper object data loaded
-								if len(ctx.Data.Objects) > 0 {
+								// For special areas and Baal's portal, ensure we have proper object data loaded
+								if len(ctx.Data.Objects) > 0 || expectedArea == area.TheWorldstoneChamber {
 									return nil
 								}
 							}
