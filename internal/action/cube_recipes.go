@@ -22,31 +22,31 @@ var (
 
 		// Flawless Gems
 		{
-			Name:  "Amethyst",
+			Name:  "Flawless Amethyst",
 			Items: []string{"Amethyst", "Amethyst", "Amethyst"},
 		},
 		{
-			Name:  "Diamond",
+			Name:  "Flawless Diamond",
 			Items: []string{"Diamond", "Diamond", "Diamond"},
 		},
 		{
-			Name:  "Emerald",
+			Name:  "Flawless Emerald",
 			Items: []string{"Emerald", "Emerald", "Emerald"},
 		},
 		{
-			Name:  "Ruby",
+			Name:  "Flawless Ruby",
 			Items: []string{"Ruby", "Ruby", "Ruby"},
 		},
 		{
-			Name:  "Sapphire",
+			Name:  "Flawless Sapphire",
 			Items: []string{"Sapphire", "Sapphire", "Sapphire"},
 		},
 		{
-			Name:  "Topaz",
+			Name:  "Flawless Topaz",
 			Items: []string{"Topaz", "Topaz", "Topaz"},
 		},
 		{
-			Name:  "Skull",
+			Name:  "Flawless Skull",
 			Items: []string{"Skull", "Skull", "Skull"},
 		},
 
