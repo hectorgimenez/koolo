@@ -20,7 +20,37 @@ type CubeRecipe struct {
 var (
 	Recipes = []CubeRecipe{
 
-		// Perfects
+		// Flawless Gems
+		{
+			Name:  "Amethyst",
+			Items: []string{"Amethyst", "Amethyst", "Amethyst"},
+		},
+		{
+			Name:  "Diamond",
+			Items: []string{"Diamond", "Diamond", "Diamond"},
+		},
+		{
+			Name:  "Emerald",
+			Items: []string{"Emerald", "Emerald", "Emerald"},
+		},
+		{
+			Name:  "Ruby",
+			Items: []string{"Ruby", "Ruby", "Ruby"},
+		},
+		{
+			Name:  "Sapphire",
+			Items: []string{"Sapphire", "Sapphire", "Sapphire"},
+		},
+		{
+			Name:  "Topaz",
+			Items: []string{"Topaz", "Topaz", "Topaz"},
+		},
+		{
+			Name:  "Skull",
+			Items: []string{"Skull", "Skull", "Skull"},
+		},
+
+		// Perfect Gems
 		{
 			Name:  "Perfect Amethyst",
 			Items: []string{"FlawlessAmethyst", "FlawlessAmethyst", "FlawlessAmethyst"},
