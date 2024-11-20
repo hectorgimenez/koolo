@@ -2,6 +2,13 @@ package config
 
 var AvailableRecipes = []string{
 	// List out all the recipe names from cube_recipes.go
+	"Flawless Amethyst",
+	"Flawless Diamond",
+	"Flawless Emerald",
+	"Flawless Ruby",
+	"Flawless Sapphire",
+	"Flawless Topaz",
+	"Flawless Skull",
 	"Perfect Amethyst",
 	"Perfect Diamond",
 	"Perfect Emerald",
