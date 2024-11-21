@@ -58,14 +58,11 @@ func MoveToArea(dst area.ID) error {
 	var isEntrance bool
 
 	defer func() {
-		// For open areas (non-entrance transitions), wait a bit and verify the transition
+		// For open areas (non-entrance transitions), disable area correction
 		if !isEntrance {
-			utils.Sleep(200)
-			ctx.RefreshGameData()
-			// Only enable correction if we actually made it to the destination
 			if ctx.Data.PlayerUnit.Area == dst {
 				ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-				ctx.CurrentGame.AreaCorrection.Enabled = true
+				ctx.CurrentGame.AreaCorrection.Enabled = false
 			}
 		} else {
 			// For entrances

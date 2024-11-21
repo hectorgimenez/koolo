@@ -181,7 +181,8 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		}
 
 		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-		if mouseOverAttempts == 2 && o.IsPortal() {
+		// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
+		if mouseOverAttempts == 2 && o.Name == object.TownPortal {
 			mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
 		}
 
