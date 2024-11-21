@@ -1,8 +1,6 @@
 package action
 
 import (
-	"time"
-
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -23,7 +21,7 @@ func PreRun(firstRun bool) error {
 	UpdateQuestLog()
 	VendorRefill(false, true)
 	Stash(firstRun)
-	Gamble(time.Now())
+	Gamble()
 	Stash(false)
 	CubeRecipes()
 
@@ -65,7 +63,7 @@ func InRunReturnTownRoutine() error {
 
 	VendorRefill(false, true)
 	Stash(false)
-	Gamble(time.Now())
+	Gamble()
 	Stash(false)
 	CubeRecipes()
 

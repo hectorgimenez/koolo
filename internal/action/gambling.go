@@ -21,30 +21,39 @@ import (
 	"github.com/lxn/win"
 )
 
-const maxGamblingDuration = 10 * time.Minute
+const maxGamblingDuration = 600
 
-func checkTimeLimit(gameStartedAt time.Time, ctx *context.Status) error {
-	if time.Since(gameStartedAt) > maxGamblingDuration {
+var gamblingStartTime time.Time
+
+func checkTimeLimit() error {
+	ctx := context.Get()
+	if gamblingStartTime.IsZero() {
+		gamblingStartTime = time.Now()
+	}
+
+	if time.Since(gamblingStartTime) > maxGamblingDuration*time.Second {
 		ctx.Logger.Info("Max gambling duration reached, cleaning up...",
-			slog.Float64("duration_seconds", time.Since(gameStartedAt).Seconds()))
+			slog.Float64("duration_seconds", time.Since(gamblingStartTime).Seconds()))
 
 		if err := step.CloseAllMenus(); err != nil {
 			ctx.Logger.Error("Failed to close menus during timeout cleanup", slog.String("error", err.Error()))
 		}
 
+		gamblingStartTime = time.Time{}
+
 		return fmt.Errorf(
 			"max gambling duration reached: %0.2f seconds",
-			time.Since(gameStartedAt).Seconds(),
+			time.Since(gamblingStartTime).Seconds(),
 		)
 	}
 	return nil
 }
 
-func Gamble(gameStartedAt time.Time) error {
+func Gamble() error {
 	ctx := context.Get()
 	ctx.SetLastAction("Gamble")
-
-	if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+	gamblingStartTime = time.Time{}
+	if err := checkTimeLimit(); err != nil {
 		return err
 	}
 
@@ -61,8 +70,7 @@ func Gamble(gameStartedAt time.Time) error {
 				Y: 5119,
 			})
 		}
-		// Check time before interacting with NPC
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			return err
 		}
 		InteractNPC(vendorNPC)
@@ -77,19 +85,19 @@ func Gamble(gameStartedAt time.Time) error {
 			return errors.New("failed opening gambling window")
 		}
 		// Check time before gambling
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			return err
 		}
-		return gambleItems(gameStartedAt)
+		return gambleItems()
 	}
 
 	return nil
 }
 
-func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt time.Time) error {
+func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 	ctx := context.Get()
 	ctx.SetLastAction("GambleSingleItem")
-
+	gamblingStartTime = time.Time{}
 	cleanup := func(itemBought data.Item) {
 		if itemBought.Name != "" {
 			ctx.Logger.Info("Selling item before timeout cleanup", slog.Any("item", itemBought))
@@ -101,7 +109,7 @@ func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt
 		}
 	}
 
-	if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+	if err := checkTimeLimit(); err != nil {
 		cleanup(data.Item{})
 		return err
 	}
@@ -122,7 +130,7 @@ func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt
 			})
 		}
 
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			cleanup(data.Item{})
 			return err
 		}
@@ -140,7 +148,7 @@ func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt
 	}
 
 	for {
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			cleanup(itemBought)
 			return err
 		}
@@ -174,7 +182,7 @@ func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt
 			return errors.New("gold is below 150000, stopping gamble")
 		}
 
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			cleanup(data.Item{})
 			return err
 		}
@@ -194,7 +202,7 @@ func GambleSingleItem(items []string, desiredQuality item.Quality, gameStartedAt
 			utils.Sleep(500)
 		}
 
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			cleanup(data.Item{})
 			return err
 		}
@@ -240,10 +248,10 @@ func (i *ItemGambleCount) GetCount(itemName item.Name) int {
 	return i.counts[itemName]
 }
 
-func gambleItems(gameStartedAt time.Time) error {
+func gambleItems() error {
 	ctx := context.Get()
 	ctx.SetLastAction("gambleItems")
-
+	gamblingStartTime = time.Time{}
 	cleanup := func(itemBought data.Item) {
 		if itemBought.Name != "" {
 			ctx.Logger.Info("Selling item before timeout cleanup", slog.Any("item", itemBought))
@@ -255,7 +263,7 @@ func gambleItems(gameStartedAt time.Time) error {
 		}
 	}
 
-	if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+	if err := checkTimeLimit(); err != nil {
 		cleanup(data.Item{})
 		return err
 	}
@@ -265,7 +273,7 @@ func gambleItems(gameStartedAt time.Time) error {
 	itemCounts := NewItemGambleCount()
 
 	for {
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			cleanup(itemBought)
 			return err
 		}
@@ -298,7 +306,7 @@ func gambleItems(gameStartedAt time.Time) error {
 			continue
 		}
 
-		if err := checkTimeLimit(gameStartedAt, ctx); err != nil {
+		if err := checkTimeLimit(); err != nil {
 			cleanup(itemBought)
 			return err
 		}
