@@ -40,6 +40,9 @@ func (pf *PathFinder) isWallEntrance(from, to area.ID) bool {
 	if from == area.Cathedral && to == area.CatacombsLevel1 {
 		return true
 	}
+	if from == area.JailLevel3 && to == area.InnerCloister {
+		return true
+	}
 
 	// Act 2
 	if from == area.StonyTombLevel1 && to == area.StonyTombLevel2 {
@@ -93,6 +96,22 @@ func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Pos
 }
 
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
+	// Validate target position is either in current area or in an adjacent open area
+	// IsInside will prevent attempts to path to coordinates from a different area
+	if !pf.data.AreaData.IsInside(to) {
+		// Check if it's in any adjacent level before failing
+		validPosition := false
+		for _, level := range pf.data.AdjacentLevels {
+			if !level.IsEntrance && pf.data.Areas[level.Area].IsInside(to) {
+				validPosition = true
+				break
+			}
+		}
+		if !validPosition {
+			return nil, 0, false
+		}
+	}
+
 	// Special case for duriels lair entrance
 	for _, obj := range pf.data.Objects {
 		if obj.Name == object.DurielsLairPortal {
@@ -114,6 +133,7 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	// Normal pathing for non-entrance destinations
 	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
+
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
 

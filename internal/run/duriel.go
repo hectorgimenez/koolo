@@ -110,6 +110,8 @@ func (d Duriel) Run() error {
 	// Final refresh before fight
 	d.ctx.RefreshGameData()
 
+	utils.Sleep(700)
+
 	return d.ctx.Char.KillDuriel()
 }
 

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const maxEntranceDistance = 6
+const maxEntranceDistance = 10 // Increased from 6 to handle edge cases
 
 func InteractEntrance(dest area.ID) error {
 	ctx := context.Get()
@@ -53,7 +53,7 @@ func InteractEntrance(dest area.ID) error {
 				}
 
 				if l.IsEntrance {
-					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
+					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-2, l.Position.Y-2)
 
 					// Check if we're hovering over the entrance
 					if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
@@ -66,10 +66,7 @@ func InteractEntrance(dest area.ID) error {
 
 					// Only try new mouse positions if not waiting for interaction
 					if !waitingForInteraction {
-						// Use spiral pattern with reduced scale for more precise entrance targeting
 						x, y := utils.Spiral(interactionAttempts)
-						x = x / 3
-						y = y / 3
 						currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
 						ctx.HID.MovePointer(lx+x, ly+y)
 						interactionAttempts++

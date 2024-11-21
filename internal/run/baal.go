@@ -115,7 +115,7 @@ func (s Baal) Run() error {
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
-		utils.Sleep(12500)
+		utils.Sleep(13500)
 		action.Buff()
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		err = action.InteractObjectByID(baalPortal.ID, func() bool {

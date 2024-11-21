@@ -139,7 +139,7 @@ func UsePortalFrom(owner string) error {
 	}
 
 	// Wait for portal to be fully opened
-	if targetPortal.Mode == mode.ObjectModeOperating || targetPortal.Mode != mode.ObjectModeOpened {
+	if targetPortal.Mode != mode.ObjectModeOpened {
 		return errors.New("portal is not ready")
 	}
 
