@@ -115,7 +115,9 @@ func (s Baal) Run() error {
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
-		utils.Sleep(13500)
+		//Lets keep it at this for now as sometimes baal hasnt entered throne. If initial interaction with that portal fails it could lead to pathfinder calculation
+		//done from throne with chamber  as pathfinder is looping continiously.(if its moving away while clicking = error)
+		utils.Sleep(15000)
 		action.Buff()
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		err = action.InteractObjectByID(baalPortal.ID, func() bool {

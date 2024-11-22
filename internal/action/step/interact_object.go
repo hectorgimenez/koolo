@@ -2,87 +2,32 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const (
 	maxInteractionAttempts = 5
-	portalSyncDelay        = 150
+	maxMouseOverAttempts   = 20
+	interactionDelay       = 200
 	maxPortalSyncAttempts  = 25
+	portalSyncDelay        = 150
+	maxObjectDistance      = 15
+	hoverVerifyDelay       = 50
 )
-
-func findPortalPosition(obj data.Object, ctx *context.Status) (data.Position, error) {
-	if ctx.Data.AreaData.IsWalkable(obj.Position) {
-		return obj.Position, nil
-	}
-	for radius := 1; radius <= 5; radius++ {
-		for x := -radius; x <= radius; x++ {
-			for y := -radius; y <= radius; y++ {
-				if x == 0 && y == 0 {
-					continue
-				}
-				pos := data.Position{X: obj.Position.X + x, Y: obj.Position.Y + y}
-				if ctx.Data.AreaData.IsWalkable(pos) {
-					if path, _, found := ctx.PathFinder.GetPath(pos); found && len(path) > 0 {
-						return pos, nil
-					}
-				}
-			}
-		}
-	}
-	return data.Position{}, fmt.Errorf("no walkable position found near portal at %v", obj.Position)
-}
-
-func handlePortalSync(ctx *context.Status, expectedArea area.ID) error {
-	utils.Sleep(500)
-	for attempts := 0; attempts < maxPortalSyncAttempts; attempts++ {
-		ctx.RefreshGameData()
-		if ctx.Data.PlayerUnit.Area == expectedArea {
-			if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
-				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-					if expectedArea.IsTown() {
-						return nil
-					}
-					if (len(ctx.Data.Objects) > 0 || expectedArea == area.TheWorldstoneChamber ||
-						expectedArea == area.DurielsLair) && ctx.Data.PlayerUnit.Mode != mode.Dead {
-						return nil
-					}
-				}
-			}
-		}
-		if ctx.Data.OpenMenus.LoadingScreen {
-			utils.Sleep(portalSyncDelay * 2)
-			continue
-		}
-		utils.Sleep(portalSyncDelay)
-	}
-	return fmt.Errorf("portal sync timeout - expected: %v, current: %v, mode: %v",
-		expectedArea, ctx.Data.PlayerUnit.Area, ctx.Data.PlayerUnit.Mode)
-}
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	ctx := context.Get()
 	ctx.SetLastStep("InteractObject")
-
-	// For portals, we need to ensure we can reach them
-	if obj.IsPortal() || obj.IsRedPortal() {
-		accessPos, err := findPortalPosition(obj, ctx)
-		if err == nil {
-			if err := MoveTo(accessPos); err != nil {
-				ctx.Logger.Debug("Failed to move to portal access position, continuing with default behavior")
-			}
-		}
-	}
 
 	interactionAttempts := 0
 	mouseOverAttempts := 0
@@ -90,107 +35,181 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	currentMouseCoords := data.Position{}
 	lastRun := time.Time{}
 
-	// If there is no completion check, just assume the interaction is completed after clicking
+	// Default completion check if none provided
 	if isCompletedFn == nil {
 		isCompletedFn = func() bool { return waitingForInteraction }
 	}
 
-	// For portals, we need to ensure proper area sync
-	expectedArea := area.ID(0)
-	if obj.IsRedPortal() {
-		// For red portals, we need to determine the expected destination
-		switch {
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.StonyField:
-			expectedArea = area.Tristram
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.RogueEncampment:
-			expectedArea = area.MooMooFarm
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.Harrogath:
-			expectedArea = area.NihlathaksTemple
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary:
-			expectedArea = area.CanyonOfTheMagi
-		case obj.Name == object.BaalsPortal && ctx.Data.PlayerUnit.Area == area.ThroneOfDestruction:
-			expectedArea = area.TheWorldstoneChamber
-		case obj.Name == object.DurielsLairPortal && (ctx.Data.PlayerUnit.Area >= area.TalRashasTomb1 && ctx.Data.PlayerUnit.Area <= area.TalRashasTomb7):
-			expectedArea = area.DurielsLair
-		}
-	} else if obj.IsPortal() {
-		fromArea := ctx.Data.PlayerUnit.Area
-		if !fromArea.IsTown() {
-			expectedArea = town.GetTownByArea(fromArea).TownArea()
-		} else {
-			isCompletedFn = func() bool {
-				return !ctx.Data.PlayerUnit.Area.IsTown() &&
-					ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) && len(ctx.Data.Objects) > 0
-			}
-		}
-	}
+	// Determine expected area and potentially modify completion function for portals
+	expectedArea := determineExpectedArea(obj, ctx, &isCompletedFn)
 
 	for !isCompletedFn() {
 		ctx.PauseIfNotPriority()
 
-		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
-			return fmt.Errorf("failed interacting with object")
+		// Check for max attempts
+		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= maxMouseOverAttempts {
+			return fmt.Errorf("failed to interact with object after %d attempts", maxInteractionAttempts)
 		}
 
-		ctx.RefreshGameData()
-
-		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
+		// Throttle interaction attempts
+		if waitingForInteraction && time.Since(lastRun) < interactionDelay {
 			continue
 		}
 
-		var o data.Object
-		var found bool
-		if obj.ID != 0 {
-			o, found = ctx.Data.Objects.FindByID(obj.ID)
-		} else {
-			o, found = ctx.Data.Objects.FindOne(obj.Name)
-		}
+		// Find and verify object
+		o, found := findObject(obj, ctx)
 		if !found {
 			return fmt.Errorf("object %v not found", obj)
 		}
 
 		lastRun = time.Now()
 
-		if o.IsPortal() || o.IsRedPortal() {
-			if o.Mode == mode.ObjectModeOperating {
-				utils.Sleep(100)
-				continue
-			}
-			if o.Mode != mode.ObjectModeOpened {
-				utils.Sleep(100)
-				continue
-			}
+		// Handle portal states
+		if shouldWaitForPortal(o) {
+			utils.Sleep(100)
+			continue
 		}
 
+		// Verify hover state with a small delay
 		if o.IsHovered {
-			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+			// Double check hover state after a small delay
+			utils.Sleep(hoverVerifyDelay)
+			o, found = findObject(obj, ctx)
+			if !found || !o.IsHovered {
+				continue
+			}
+
+			// Click multiple times for portals to ensure interaction
+			if o.IsPortal() || o.IsRedPortal() {
+				for i := 0; i < 2; i++ {
+					ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+					utils.Sleep(50)
+				}
+			} else {
+				ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+			}
+
 			waitingForInteraction = true
 			interactionAttempts++
 
 			if expectedArea != 0 {
-				return handlePortalSync(ctx, expectedArea)
+				utils.Sleep(750)
+				return handlePortalTransition(ctx, expectedArea)
 			}
 			continue
 		}
 
-		objectX := o.Position.X - 2
-		objectY := o.Position.Y - 2
-		distance := ctx.PathFinder.DistanceFromMe(o.Position)
-		if distance > 15 {
-			return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
+		// Check distance and try to interact
+		if err := tryInteraction(o, ctx, &mouseOverAttempts, &currentMouseCoords); err != nil {
+			return err
 		}
 
-		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-		// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
-		if mouseOverAttempts == 2 && o.Name == object.TownPortal {
-			mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
-		}
-
-		x, y := utils.Spiral(mouseOverAttempts)
-		currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
-		ctx.HID.MovePointer(mX+x, mY+y)
-		mouseOverAttempts++
+		// Small delay after moving mouse before next iteration
+		utils.Sleep(hoverVerifyDelay)
 	}
 
 	return nil
+}
+
+func findObject(obj data.Object, ctx *context.Status) (data.Object, bool) {
+	if obj.ID != 0 {
+		return ctx.Data.Objects.FindByID(obj.ID)
+	}
+	return ctx.Data.Objects.FindOne(obj.Name)
+}
+
+func shouldWaitForPortal(o data.Object) bool {
+	if !o.IsPortal() && !o.IsRedPortal() {
+		return false
+	}
+	return o.Mode == mode.ObjectModeOperating || o.Mode != mode.ObjectModeOpened
+}
+
+func tryInteraction(o data.Object, ctx *context.Status, attempts *int, coords *data.Position) error {
+	distance := ctx.PathFinder.DistanceFromMe(o.Position)
+	if distance > maxObjectDistance {
+		return fmt.Errorf("object too far: %d (distance: %d)", o.Name, distance)
+	}
+
+	objectX := o.Position.X - 2
+	objectY := o.Position.Y - 2
+
+	mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
+	if *attempts == 2 && o.Name == object.TownPortal {
+		mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
+	}
+
+	x, y := utils.Spiral(*attempts)
+	*coords = data.Position{X: mX + x, Y: mY + y}
+	ctx.HID.MovePointer(mX+x, mY+y)
+	*attempts++
+
+	return nil
+}
+
+func determineExpectedArea(obj data.Object, ctx *context.Status, isCompletedFn *func() bool) area.ID {
+	if obj.IsRedPortal() {
+		// For red portals, we need to determine the expected destination
+		switch {
+		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.StonyField:
+			return area.Tristram
+		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.RogueEncampment:
+			return area.MooMooFarm
+		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.Harrogath:
+			return area.NihlathaksTemple
+		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary:
+			return area.CanyonOfTheMagi
+		case obj.Name == object.BaalsPortal && ctx.Data.PlayerUnit.Area == area.ThroneOfDestruction:
+			return area.TheWorldstoneChamber
+		case obj.Name == object.DurielsLairPortal && (ctx.Data.PlayerUnit.Area >= area.TalRashasTomb1 && ctx.Data.PlayerUnit.Area <= area.TalRashasTomb7):
+			return area.DurielsLair
+		}
+	} else if obj.IsPortal() {
+		fromArea := ctx.Data.PlayerUnit.Area
+		if !fromArea.IsTown() {
+			return town.GetTownByArea(fromArea).TownArea()
+		} else {
+			// For town portals going out of town, modify the completion function
+			*isCompletedFn = func() bool {
+				return !ctx.Data.PlayerUnit.Area.IsTown() &&
+					ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) && len(ctx.Data.Objects) > 0
+			}
+		}
+	}
+
+	return 0
+}
+
+func handlePortalTransition(ctx *context.Status, expectedArea area.ID) error {
+	attempts := 0
+	maxAttempts := maxPortalSyncAttempts
+
+	for attempts < maxAttempts {
+		// Check if we're in a loading screen
+		if ctx.Data.OpenMenus.LoadingScreen {
+			utils.Sleep(portalSyncDelay * 2)
+			continue
+		}
+
+		// Check if we've reached the expected area
+		if ctx.Data.PlayerUnit.Area == expectedArea {
+			if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
+				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+					// Additional checks for special areas
+					if expectedArea.IsTown() ||
+						len(ctx.Data.Objects) > 0 ||
+						expectedArea == area.TheWorldstoneChamber ||
+						expectedArea == area.DurielsLair {
+						return nil
+					}
+				}
+			}
+		}
+
+		attempts++
+		utils.Sleep(portalSyncDelay)
+	}
+
+	return fmt.Errorf("portal transition failed - expected: %v, current: %v (after %d attempts)",
+		expectedArea, ctx.Data.PlayerUnit.Area, maxAttempts)
 }
