@@ -2,14 +2,12 @@ package pather
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"math"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather/astar"
+	"math"
 )
 
 type PathFinder struct {
@@ -28,56 +26,22 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 	}
 }
 
-type areaTransition struct {
-	from, to area.ID
+func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
+	// First try direct path
+	if path, distance, found := pf.GetPathFrom(pf.data.PlayerUnit.Position, to); found {
+		return path, distance, true
+	}
+
+	// If direct path fails, try to find nearby walkable position
+	if walkableTo, found := pf.findNearbyWalkablePosition(to); found {
+		return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkableTo)
+	}
+
+	return nil, 0, false
 }
 
-func (pf *PathFinder) isWallEntrance(from, to area.ID) bool {
-	// Act 1
-	if from == area.DarkWood && to == area.UndergroundPassageLevel1 {
-		return true
-	}
-	if from == area.Cathedral && to == area.CatacombsLevel1 {
-		return true
-	}
-	if from == area.JailLevel3 && to == area.InnerCloister {
-		return true
-	}
-
-	// Act 2
-	if from == area.StonyTombLevel1 && to == area.StonyTombLevel2 {
-		return true
-	}
-	if from == area.HallsOfTheDeadLevel1 && to == area.HallsOfTheDeadLevel2 {
-		return true
-	}
-	if from == area.ClawViperTempleLevel1 && to == area.ClawViperTempleLevel2 {
-		return true
-	}
-	if from == area.CanyonOfTheMagi && (to >= area.TalRashasTomb1 && to <= area.TalRashasTomb7) {
-		return true
-	}
-	// Handle Duriel's Lair from any Tal Rasha Tomb
-	if (from >= area.TalRashasTomb1 && from <= area.TalRashasTomb7) && to == area.DurielsLair {
-		return true
-	}
-
-	// Act 5
-	if from == area.CrystallinePassage && to == area.ArreatPlateau {
-		return true
-	}
-	if from == area.ArreatPlateau && to == area.GlacialTrail {
-		return true
-	}
-	if from == area.GlacialTrail && to == area.FrozenTundra {
-		return true
-	}
-
-	return false
-}
-
-func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
-
+func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+	// Search in expanding squares around the target position
 	for radius := 1; radius <= 3; radius++ {
 		for x := -radius; x <= radius; x++ {
 			for y := -radius; y <= radius; y++ {
@@ -91,47 +55,7 @@ func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Pos
 			}
 		}
 	}
-
 	return data.Position{}, false
-}
-
-func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
-	// Validate target position is either in current area or in an adjacent open area
-	// IsInside will prevent attempts to path to coordinates from a different area
-	if !pf.data.AreaData.IsInside(to) {
-		// Check if it's in any adjacent level before failing
-		validPosition := false
-		for _, level := range pf.data.AdjacentLevels {
-			if !level.IsEntrance && pf.data.Areas[level.Area].IsInside(to) {
-				validPosition = true
-				break
-			}
-		}
-		if !validPosition {
-			return nil, 0, false
-		}
-	}
-
-	// Special case for duriels lair entrance
-	for _, obj := range pf.data.Objects {
-		if obj.Name == object.DurielsLairPortal {
-			if walkable, found := pf.FindNearbyWalkablePosition(to); found {
-				return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkable)
-			}
-		}
-	}
-
-	// Then check for wall entrances
-	for _, level := range pf.data.AdjacentLevels {
-		if level.IsEntrance && level.Position == to && pf.isWallEntrance(pf.data.PlayerUnit.Area, level.Area) {
-			if walkable, found := pf.FindNearbyWalkablePosition(to); found {
-				return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkable)
-			}
-		}
-	}
-
-	// Normal pathing for non-entrance destinations
-	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
 }
 
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {

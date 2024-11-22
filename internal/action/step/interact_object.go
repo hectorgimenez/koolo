@@ -79,16 +79,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 				continue
 			}
 
-			// Click multiple times for portals to ensure interaction
-			if o.IsPortal() || o.IsRedPortal() {
-				for i := 0; i < 2; i++ {
-					ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
-					utils.Sleep(50)
-				}
-			} else {
-				ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
-			}
-
+			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 			waitingForInteraction = true
 			interactionAttempts++
 

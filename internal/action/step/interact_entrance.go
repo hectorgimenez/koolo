@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const maxEntranceDistance = 10 // Increased from 6 to handle edge cases
+const maxEntranceDistance = 10
 
 func InteractEntrance(dest area.ID) error {
 	ctx := context.Get()

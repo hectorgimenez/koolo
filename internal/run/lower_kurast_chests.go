@@ -96,56 +96,50 @@ func (run LowerKurastChests) Run() error {
 		bonfirePos := unprocessedBonfires[0]
 
 		// Move to bonfire
-		if walkablePos, found := run.ctx.PathFinder.FindNearbyWalkablePosition(bonfirePos); found {
-			err = action.MoveToCoords(walkablePos)
-			if err != nil {
-				run.ctx.Logger.Warn("Failed to move to bonfire, skipping", "error", err)
-				processedBonfires[bonfirePos] = true
-				continue
-			}
-
-			// Refresh game data after movement
-			run.ctx.RefreshGameData()
-
-			// Find all valid interactable objects near this bonfire
-			var interactables []data.Object
-			for _, o := range run.ctx.Data.Objects {
-				if (slices.Contains(chestsIds, o.Name) || slices.Contains(rackIds, o.Name)) &&
-					isObjectWithinBonfireRange(o, bonfirePos) {
-					interactables = append(interactables, o)
-				}
-			}
-
-			// Process objects in order of shortest path
-			for len(interactables) > 0 {
-				playerPos := run.ctx.Data.PlayerUnit.Position
-
-				// Sort remaining objects by distance
-				sort.Slice(interactables, func(i, j int) bool {
-					return pather.DistanceFromPoint(interactables[i].Position, playerPos) <
-						pather.DistanceFromPoint(interactables[j].Position, playerPos)
-				})
-
-				// Open closest object
-				closestObject := interactables[0]
-				err = action.InteractObject(closestObject, func() bool {
-					obj, _ := run.ctx.Data.Objects.FindByID(closestObject.ID)
-					return !obj.Selectable
-				})
-				if err != nil {
-					run.ctx.Logger.Warn("Failed interacting with object", "error", err)
-				}
-
-				interactables = interactables[1:]
-			}
-
-			// Mark this bonfire as processed
+		err = action.MoveToCoords(bonfirePos)
+		if err != nil {
+			run.ctx.Logger.Warn("Failed to move to bonfire, skipping", "error", err)
 			processedBonfires[bonfirePos] = true
-
-		} else {
-			run.ctx.Logger.Warn("Could not find walkable position near bonfire, skipping", "bonfire", bonfirePos)
-			processedBonfires[bonfirePos] = true
+			continue
 		}
+
+		// Refresh game data after movement
+		run.ctx.RefreshGameData()
+
+		// Find all valid interactable objects near this bonfire
+		var interactables []data.Object
+		for _, o := range run.ctx.Data.Objects {
+			if (slices.Contains(chestsIds, o.Name) || slices.Contains(rackIds, o.Name)) &&
+				isObjectWithinBonfireRange(o, bonfirePos) {
+				interactables = append(interactables, o)
+			}
+		}
+
+		// Process objects in order of shortest path
+		for len(interactables) > 0 {
+			playerPos := run.ctx.Data.PlayerUnit.Position
+
+			// Sort remaining objects by distance
+			sort.Slice(interactables, func(i, j int) bool {
+				return pather.DistanceFromPoint(interactables[i].Position, playerPos) <
+					pather.DistanceFromPoint(interactables[j].Position, playerPos)
+			})
+
+			// Open closest object
+			closestObject := interactables[0]
+			err = action.InteractObject(closestObject, func() bool {
+				obj, _ := run.ctx.Data.Objects.FindByID(closestObject.ID)
+				return !obj.Selectable
+			})
+			if err != nil {
+				run.ctx.Logger.Warn("Failed interacting with object", "error", err)
+			}
+
+			interactables = interactables[1:]
+		}
+
+		// Mark this bonfire as processed
+		processedBonfires[bonfirePos] = true
 	}
 
 	// Return to town
