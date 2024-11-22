@@ -134,8 +134,10 @@ func (gd *MemoryReader) GetData() Data {
 		for _, clientObject := range currentArea.Objects {
 			found := false
 			for _, obj := range memObjects {
-				if obj.Name == clientObject.Name {
+				// Only consider it a duplicate if same name AND same position
+				if obj.Name == clientObject.Name && obj.Position.X == clientObject.Position.X && obj.Position.Y == clientObject.Position.Y {
 					found = true
+					break
 				}
 			}
 			if !found {

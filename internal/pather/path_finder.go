@@ -76,7 +76,7 @@ func (pf *PathFinder) isWallEntrance(from, to area.ID) bool {
 	return false
 }
 
-func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
 
 	for radius := 1; radius <= 3; radius++ {
 		for x := -radius; x <= radius; x++ {
@@ -115,7 +115,7 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	// Special case for duriels lair entrance
 	for _, obj := range pf.data.Objects {
 		if obj.Name == object.DurielsLairPortal {
-			if walkable, found := pf.findNearbyWalkablePosition(to); found {
+			if walkable, found := pf.FindNearbyWalkablePosition(to); found {
 				return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkable)
 			}
 		}
@@ -124,7 +124,7 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	// Then check for wall entrances
 	for _, level := range pf.data.AdjacentLevels {
 		if level.IsEntrance && level.Position == to && pf.isWallEntrance(pf.data.PlayerUnit.Area, level.Area) {
-			if walkable, found := pf.findNearbyWalkablePosition(to); found {
+			if walkable, found := pf.FindNearbyWalkablePosition(to); found {
 				return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkable)
 			}
 		}

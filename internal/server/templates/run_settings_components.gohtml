@@ -102,6 +102,12 @@
     </fieldset>
 {{ end }}
 
+{{ define "lower_kurast_chest" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameLowerKurastChestOpenRacks" {{ if .Config.Game.LowerKurastChest.OpenRacks }}checked{{ end }}> Weapon Racks + Armor Stands</label>
+    </fieldset>
+{{ end }}
+
 {{ define "diablo" }}
     <fieldset class="options-group">
         <legend>Boss Options</legend>
