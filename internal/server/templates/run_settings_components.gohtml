@@ -102,6 +102,12 @@
     </fieldset>
 {{ end }}
 
+{{ define "lower_kurast_chest" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameLowerKurastChestOpenRacks" {{ if .Config.Game.LowerKurastChest.OpenRacks }}checked{{ end }}> Weapon Racks + Armor Stands</label>
+    </fieldset>
+{{ end }}
+
 {{ define "diablo" }}
     <fieldset class="options-group">
         <legend>Boss Options</legend>
@@ -132,14 +138,14 @@
         <label>Act 1</label>
         <label><input type="checkbox" name="gameQuestsClearDen" {{ if .Config.Game.Quests.ClearDen }}checked{{ end }}> Clear Den</label>
         <label><input type="checkbox" name="gameQuestsRescueCain" {{ if .Config.Game.Quests.RescueCain }}checked{{ end }}> Rescue Cain</label>
-        <label><input type="checkbox" name="gameQuestsRetrieveHammer" {{ if .Config.Game.Quests.RetrieveHammer }}checked{{ end }}> Retrieve Hammer</label>                        
+        <label><input type="checkbox" name="gameQuestsRetrieveHammer" {{ if .Config.Game.Quests.RetrieveHammer }}checked{{ end }}> Retrieve Hammer</label>
         <label>Act 2</label>
         <label><input type="checkbox" name="gameQuestsGetCube" {{ if .Config.Game.Quests.GetCube }}checked{{ end }}> Get Cube</label>
-        <label><input type="checkbox" name="gameQuestsKillRadament" {{ if .Config.Game.Quests.KillRadament }}checked{{ end }}> Kill Radament</label>                        
+        <label><input type="checkbox" name="gameQuestsKillRadament" {{ if .Config.Game.Quests.KillRadament }}checked{{ end }}> Kill Radament</label>
         <label>Act 3</label>
-        <label><input type="checkbox" name="gameQuestsRetrieveBook" {{ if .Config.Game.Quests.RetrieveBook }}checked{{ end }}> Retrieve Book</label>                                
+        <label><input type="checkbox" name="gameQuestsRetrieveBook" {{ if .Config.Game.Quests.RetrieveBook }}checked{{ end }}> Retrieve Book</label>
         <label>Act 4</label>
-        <label><input type="checkbox" name="gameQuestsKillIzual" {{ if .Config.Game.Quests.KillIzual }}checked{{ end }}> Kill Izual</label>                                     
+        <label><input type="checkbox" name="gameQuestsKillIzual" {{ if .Config.Game.Quests.KillIzual }}checked{{ end }}> Kill Izual</label>
         <label>Act 5</label>
         <label><input type="checkbox" name="gameQuestsKillShenk" {{ if .Config.Game.Quests.KillShenk }}checked{{ end }}> Kill Shenk</label>
         <label><input type="checkbox" name="gameQuestsRescueAnya" {{ if .Config.Game.Quests.RescueAnya }}checked{{ end }}> Rescue Anya</label>

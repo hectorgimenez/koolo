@@ -1,9 +1,6 @@
 package run
 
 import (
-	"slices"
-	"sort"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -11,11 +8,14 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/hectorgimenez/koolo/internal/utils"
+	"slices"
+	"sort"
 )
 
-var minChestDistanceFromBonfire = 25
-var maxChestDistanceFromBonfire = 45
+const (
+	minChestDistanceFromBonfire = 25
+	maxChestDistanceFromBonfire = 45
+)
 
 type LowerKurastChests struct {
 	ctx *context.Status
@@ -28,69 +28,118 @@ func NewLowerKurastChest() *LowerKurastChests {
 }
 
 func (run LowerKurastChests) Name() string {
-	return string(config.LowerKurastRun)
+	return string(config.LowerKurastChestRun)
 }
 
 func (run LowerKurastChests) Run() error {
-	run.ctx.Logger.Debug("Running a Lower Kurast Chest run")
-	var bonFirePositions []data.Position
+	run.ctx.Logger.Debug("Starting Lower Kurast Chest run")
+
 	// Use Waypoint to Lower Kurast
 	err := action.WayPoint(area.LowerKurast)
 	if err != nil {
 		return err
 	}
 
-	// Find the bonfires
-	for _, o := range run.ctx.Data.Objects {
-		if o.Name == object.SmallFire {
-			bonFirePositions = append(bonFirePositions, o.Position)
+	// Get bonfires from cached map data
+	cachedLKData := run.ctx.GameReader.GetData()
+	var bonfirePositions []data.Position
+	for _, obj := range cachedLKData.Objects {
+		if obj.Name == object.Name(160) { // SmallFire
+			run.ctx.Logger.Debug("Found bonfire at:", "position", obj.Position)
+			bonfirePositions = append(bonfirePositions, obj.Position)
 		}
 	}
 
-	run.ctx.Logger.Debug("Found bonfires", "bonfires", bonFirePositions)
+	run.ctx.Logger.Debug("Total bonfires found ", "count", len(bonfirePositions))
 
-	var chestsIds = []object.Name{object.JungleMediumChestLeft, object.JungleChest}
+	// Define chest types we want to look for
+	var chestsIds = []object.Name{
+		object.JungleMediumChestLeft,
+		object.JungleChest,
+		object.GoodChest,
+		object.NotSoGoodChestName,
+	}
 
-	// Move to each of the bonfires one by one
-	for _, bonfirePos := range bonFirePositions {
-		// Move to the bonfire
+	// Weapon Racks and Armor Stands if enabled
+	var rackIds []object.Name
+	if run.ctx.CharacterCfg.Game.LowerKurastChest.OpenRacks {
+		rackIds = []object.Name{
+			object.ArmorStandRight,
+			object.ArmorStandLeft,
+			object.WeaponRackRight,
+			object.WeaponRackLeft,
+		}
+	}
+
+	processedBonfires := make(map[data.Position]bool)
+
+	// Process each bonfire one by one
+	for {
+		// Sort remaining bonfires by distance from player
+		unprocessedBonfires := make([]data.Position, 0)
+		for _, pos := range bonfirePositions {
+			if !processedBonfires[pos] {
+				unprocessedBonfires = append(unprocessedBonfires, pos)
+			}
+		}
+
+		if len(unprocessedBonfires) == 0 {
+			break
+		}
+
+		// Sort by distance from current position
+		sort.Slice(unprocessedBonfires, func(i, j int) bool {
+			return run.ctx.PathFinder.DistanceFromMe(unprocessedBonfires[i]) <
+				run.ctx.PathFinder.DistanceFromMe(unprocessedBonfires[j])
+		})
+
+		bonfirePos := unprocessedBonfires[0]
+
+		// Move to bonfire
 		err = action.MoveToCoords(bonfirePos)
 		if err != nil {
-			return err
+			run.ctx.Logger.Warn("Failed to move to bonfire, skipping", "error", err)
+			processedBonfires[bonfirePos] = true
+			continue
 		}
-		// Find the chests
-		var chests []data.Object
+
+		// Refresh game data after movement
+		run.ctx.RefreshGameData()
+
+		// Find all valid interactable objects near this bonfire
+		var interactables []data.Object
 		for _, o := range run.ctx.Data.Objects {
-			if slices.Contains(chestsIds, o.Name) && isChestWithinBonfireRange(o, bonfirePos) {
-				chests = append(chests, o)
+			if (slices.Contains(chestsIds, o.Name) || slices.Contains(rackIds, o.Name)) &&
+				isObjectWithinBonfireRange(o, bonfirePos) {
+				interactables = append(interactables, o)
 			}
 		}
 
-		// Interact with chests in the order of shortest travel
-		for len(chests) > 0 {
-			// Get the player's current position
+		// Process objects in order of shortest path
+		for len(interactables) > 0 {
 			playerPos := run.ctx.Data.PlayerUnit.Position
 
-			// Sort chests by distance from the player
-			sort.Slice(chests, func(i, j int) bool {
-				return pather.DistanceFromPoint(chests[i].Position, playerPos) <
-					pather.DistanceFromPoint(chests[j].Position, playerPos)
+			// Sort remaining objects by distance
+			sort.Slice(interactables, func(i, j int) bool {
+				return pather.DistanceFromPoint(interactables[i].Position, playerPos) <
+					pather.DistanceFromPoint(interactables[j].Position, playerPos)
 			})
 
-			// Interact with the closest chest
-			closestChest := chests[0]
-			err = action.InteractObject(closestChest, func() bool {
-				chest, _ := run.ctx.Data.Objects.FindByID(closestChest.ID)
-				return !chest.Selectable
+			// Open closest object
+			closestObject := interactables[0]
+			err = action.InteractObject(closestObject, func() bool {
+				obj, _ := run.ctx.Data.Objects.FindByID(closestObject.ID)
+				return !obj.Selectable
 			})
 			if err != nil {
-				run.ctx.Logger.Warn("Failed interacting with chest: %v", err)
+				run.ctx.Logger.Warn("Failed interacting with object", "error", err)
 			}
-			utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
 
-			// Remove the interacted chest from the list
-			chests = chests[1:]
+			interactables = interactables[1:]
 		}
+
+		// Mark this bonfire as processed
+		processedBonfires[bonfirePos] = true
 	}
 
 	// Return to town
@@ -104,11 +153,10 @@ func (run LowerKurastChests) Run() error {
 		return err
 	}
 
-	// Done
 	return nil
 }
 
-func isChestWithinBonfireRange(chest data.Object, bonfirePosition data.Position) bool {
-	distance := pather.DistanceFromPoint(chest.Position, bonfirePosition)
+func isObjectWithinBonfireRange(obj data.Object, bonfirePosition data.Position) bool {
+	distance := pather.DistanceFromPoint(obj.Position, bonfirePosition)
 	return distance >= minChestDistanceFromBonfire && distance <= maxChestDistanceFromBonfire
 }
