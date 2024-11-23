@@ -50,6 +50,10 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			expectedArea = area.NihlathaksTemple
 		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary:
 			expectedArea = area.CanyonOfTheMagi
+		case obj.Name == object.BaalsPortal && ctx.Data.PlayerUnit.Area == area.ThroneOfDestruction:
+			expectedArea = area.TheWorldstoneChamber
+		case obj.Name == object.DurielsLairPortal && (ctx.Data.PlayerUnit.Area >= area.TalRashasTomb1 && ctx.Data.PlayerUnit.Area <= area.TalRashasTomb7):
+			expectedArea = area.DurielsLair
 		}
 	} else if obj.IsPortal() {
 		// For blue town portals, determine the town area based on current area

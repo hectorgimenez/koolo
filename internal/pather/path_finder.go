@@ -2,13 +2,12 @@ package pather
 
 import (
 	"fmt"
-	"math"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather/astar"
+	"math"
 )
 
 type PathFinder struct {
@@ -28,7 +27,17 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 }
 
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
-	return pf.GetPathFrom(pf.data.PlayerUnit.Position, to)
+	// First try direct path
+	if path, distance, found := pf.GetPathFrom(pf.data.PlayerUnit.Position, to); found {
+		return path, distance, true
+	}
+
+	// If direct path fails, try to find nearby walkable position
+	if walkableTo, found := pf.findNearbyWalkablePosition(to); found {
+		return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkableTo)
+	}
+
+	return nil, 0, false
 }
 
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
@@ -175,4 +184,22 @@ func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path
 	}
 
 	return nil, 0, false
+}
+
+func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+	// Search in expanding squares around the target position
+	for radius := 1; radius <= 3; radius++ {
+		for x := -radius; x <= radius; x++ {
+			for y := -radius; y <= radius; y++ {
+				if x == 0 && y == 0 {
+					continue
+				}
+				pos := data.Position{X: target.X + x, Y: target.Y + y}
+				if pf.data.AreaData.IsWalkable(pos) {
+					return pos, true
+				}
+			}
+		}
+	}
+	return data.Position{}, false
 }
