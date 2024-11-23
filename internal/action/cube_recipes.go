@@ -20,33 +20,123 @@ type CubeRecipe struct {
 var (
 	Recipes = []CubeRecipe{
 
-		// Perfects
+		// Upgrade Chipped Gems
 		{
-			Name:  "Perfect Amethyst",
+			Name:  "Upgrade Chipped Amethyst",
+			Items: []string{"ChippedAmethyst", "ChippedAmethyst", "ChippedAmethyst"},
+		},
+		{
+			Name:  "Upgrade Chipped Diamond",
+			Items: []string{"ChippedDiamond", "ChippedDiamond", "ChippedDiamond"},
+		},
+		{
+			Name:  "Upgrade Chipped Emerald",
+			Items: []string{"ChippedEmerald", "ChippedEmerald", "ChippedEmerald"},
+		},
+		{
+			Name:  "Upgrade Chipped Ruby",
+			Items: []string{"ChippedRuby", "ChippedRuby", "ChippedRuby"},
+		},
+		{
+			Name:  "Upgrade Chipped Sapphire",
+			Items: []string{"ChippedSapphire", "ChippedSapphire", "ChippedSapphire"},
+		},
+		{
+			Name:  "Upgrade Chipped Topaz",
+			Items: []string{"ChippedTopaz", "ChippedTopaz", "ChippedTopaz"},
+		},
+		{
+			Name:  "Upgrade Chipped Skull",
+			Items: []string{"ChippedSkull", "ChippedSkull", "ChippedSkull"},
+		},
+
+		// Upgrade Flawed Gems
+		{
+			Name:  "Upgrade Flawed Amethyst",
+			Items: []string{"FlawedAmethyst", "FlawedAmethyst", "FlawedAmethyst"},
+		},
+		{
+			Name:  "Upgrade Flawed Diamond",
+			Items: []string{"FlawedDiamond", "FlawedDiamond", "FlawedDiamond"},
+		},
+		{
+			Name:  "Upgrade Flawed Emerald",
+			Items: []string{"FlawedEmerald", "FlawedEmerald", "FlawedEmerald"},
+		},
+		{
+			Name:  "Upgrade Flawed Ruby",
+			Items: []string{"FlawedRuby", "FlawedRuby", "FlawedRuby"},
+		},
+		{
+			Name:  "Upgrade Flawed Sapphire",
+			Items: []string{"FlawedSapphire", "FlawedSapphire", "FlawedSapphire"},
+		},
+		{
+			Name:  "Upgrade Flawed Topaz",
+			Items: []string{"FlawedTopaz", "FlawedTopaz", "FlawedTopaz"},
+		},
+		{
+			Name:  "Upgrade Flawed Skull",
+			Items: []string{"FlawedSkull", "FlawedSkull", "FlawedSkull"},
+		},
+
+		// Upgrade Normal Gems
+		{
+			Name:  "Upgrade Amethyst",
+			Items: []string{"Amethyst", "Amethyst", "Amethyst"},
+		},
+		{
+			Name:  "Upgrade Diamond",
+			Items: []string{"Diamond", "Diamond", "Diamond"},
+		},
+		{
+			Name:  "Upgrade Emerald",
+			Items: []string{"Emerald", "Emerald", "Emerald"},
+		},
+		{
+			Name:  "Upgrade Ruby",
+			Items: []string{"Ruby", "Ruby", "Ruby"},
+		},
+		{
+			Name:  "Upgrade Sapphire",
+			Items: []string{"Sapphire", "Sapphire", "Sapphire"},
+		},
+		{
+			Name:  "Upgrade Topaz",
+			Items: []string{"Topaz", "Topaz", "Topaz"},
+		},
+		{
+			Name:  "Upgrade Skull",
+			Items: []string{"Skull", "Skull", "Skull"},
+		},
+
+		// Upgrade Flawless Gems
+		{
+			Name:  "Upgrade Flawless Amethyst",
 			Items: []string{"FlawlessAmethyst", "FlawlessAmethyst", "FlawlessAmethyst"},
 		},
 		{
-			Name:  "Perfect Diamond",
+			Name:  "Upgrade Flawless Diamond",
 			Items: []string{"FlawlessDiamond", "FlawlessDiamond", "FlawlessDiamond"},
 		},
 		{
-			Name:  "Perfect Emerald",
+			Name:  "Upgrade Flawless Emerald",
 			Items: []string{"FlawlessEmerald", "FlawlessEmerald", "FlawlessEmerald"},
 		},
 		{
-			Name:  "Perfect Ruby",
+			Name:  "Upgrade Flawless Ruby",
 			Items: []string{"FlawlessRuby", "FlawlessRuby", "FlawlessRuby"},
 		},
 		{
-			Name:  "Perfect Sapphire",
+			Name:  "Upgrade Flawless Sapphire",
 			Items: []string{"FlawlessSapphire", "FlawlessSapphire", "FlawlessSapphire"},
 		},
 		{
-			Name:  "Perfect Topaz",
+			Name:  "Upgrade Flawless Topaz",
 			Items: []string{"FlawlessTopaz", "FlawlessTopaz", "FlawlessTopaz"},
 		},
 		{
-			Name:  "Perfect Skull",
+			Name:  "Upgrade Flawless Skull",
 			Items: []string{"FlawlessSkull", "FlawlessSkull", "FlawlessSkull"},
 		},
 
@@ -56,7 +146,7 @@ var (
 			Items: []string{"TwistedEssenceOfSuffering", "ChargedEssenceOfHatred", "BurningEssenceOfTerror", "FesteringEssenceOfDestruction"},
 		},
 
-		// Runes
+		// Upgrade Runes
 		{
 			Name:  "Upgrade El",
 			Items: []string{"ElRune", "ElRune", "ElRune"},
