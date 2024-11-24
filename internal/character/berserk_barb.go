@@ -119,7 +119,7 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 		return
 	}
 
-	corpses := s.getSortedHorkableCorpses(s.Data.Corpses, s.Data.PlayerUnit.Position, maxRange)
+	corpses := s.getSortedHorkableCorpses(s.Data.Corpses, maxRange)
 	s.Logger.Debug("Horkable corpses found", slog.Int("count", len(corpses)))
 
 	for _, corpse := range corpses {
@@ -144,7 +144,7 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 
 }
 
-func (s *Berserker) getSortedHorkableCorpses(corpses data.Monsters, playerPos data.Position, maxRange int) []data.Monster {
+func (s *Berserker) getSortedHorkableCorpses(corpses data.Monsters, maxRange int) []data.Monster {
 	var horkableCorpses []data.Monster
 	for _, corpse := range corpses {
 		if s.isCorpseHorkable(corpse) && s.PathFinder.DistanceFromMe(corpse.Position) <= maxRange {
