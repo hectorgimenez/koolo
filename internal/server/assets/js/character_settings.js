@@ -126,16 +126,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function updateCharacterOptions() {
         const selectedClass = characterClassSelect.value;
+        const noSettingsMessage = document.getElementById('no-settings-message');
+        const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
+        const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
+        
+        // Hide all options first
+        berserkerBarbOptions.style.display = 'none';
+        novaSorceressOptions.style.display = 'none';
+        noSettingsMessage.style.display = 'none';
+        
+        // Show relevant options based on class
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
-            novaSorceressOptions.style.display = 'none';
         } else if (selectedClass === 'nova') {
-            berserkerBarbOptions.style.display = 'none';
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
         } else {
-            berserkerBarbOptions.style.display = 'none';
-            novaSorceressOptions.style.display = 'none';
+            noSettingsMessage.style.display = 'block';
         }
     }
     function updateNovaSorceressOptions() {
@@ -213,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
 function handleBossStaticThresholdChange() {
     const input = document.getElementById('novaBossStaticThreshold');
     const selectedDifficulty = document.getElementById('gameDifficulty').value;

@@ -83,6 +83,37 @@
                         value="{{ .Config.CharacterName }}"/>
                 </label>
             </fieldset>
+
+            <h5>Class-Specific Settings</h5>
+            <div id="class-specific-settings">
+               
+                <div id="no-settings-message" style="display: none;">
+                    No custom settings available for this class.
+                </div>
+                
+                <div class="berserker-barb-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.BerserkerBarb.FindItemSwitch }}checked{{ end }}/>
+                            Find Item Switch
+                        </label>
+                        <label>
+                            <input type="checkbox" name="barbSkipPotionPickupInTravincal" {{if .Config.Character.BerserkerBarb.SkipPotionPickupInTravincal}}checked{{end}}>
+                            Skip potion pickup during Travincal
+                        </label>
+                    </fieldset>
+                </div>
+                
+                <div class="nova-sorceress-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            Boss Static HP (%)
+                            <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
+                        </label>
+                    </fieldset>
+                </div>
+            </div>
+
             <fieldset class="grid">
                 <label>
                     Use teleport when available
@@ -92,23 +123,6 @@
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
                 </label>
-                <div class="berserker-barb-options" style="display: none;">
-                    <label>
-                        <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.BerserkerBarb.FindItemSwitch }}checked{{ end }}/>
-                        Find Item Switch
-                    </label>
-                    <label>
-                        <input type="checkbox" name="barbSkipPotionPickupInTravincal" {{if .Config.Character.BerserkerBarb.SkipPotionPickupInTravincal}}checked{{end}}>
-                        Skip potion pickup during Travincal
-                    </label>
-                </div>
-                <div class="nova-sorceress-options" style="display: none;">
-                    <label>
-                        Boss Static HP (%)
-                        <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
-                    </label>
-                    <small>(100% to disable)</small>
-                </div>
             </fieldset>
             <label>
                 Minimum Gold (will pick up Magic+ to sell for gold if below)

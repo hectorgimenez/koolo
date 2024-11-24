@@ -288,3 +288,28 @@
     border-radius: 4px;
     padding: 2px;
 }
+
+#class-specific-settings {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #2a3140;
+}
+
+#class-specific-settings h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+#no-settings-message {
+    text-align: center;
+    padding: 1rem;
+    color: #666;
+}
+
+#class-specific-settings small {
+    display: block;
+    text-align: center;
+    color: #666;
+    margin-top: 0.5rem;
+}
