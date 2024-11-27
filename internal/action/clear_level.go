@@ -1,13 +1,13 @@
 package action
 
 import (
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"sort"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -52,32 +52,26 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("clearRoom")
 
-	// Get points and filter only for basic validity
-	validPoints := make([]data.Position, 0)
-	for _, p := range getClearPoints(&room) {
-		if ctx.Data.AreaData.IsInside(p) && ctx.Data.AreaData.IsWalkable(p) {
-			validPoints = append(validPoints, p)
+	// Get points and check if its walkable already
+	for _, point := range getClearPoints(&room) {
+		if ctx.Data.AreaData.IsInside(point) {
+			if ctx.Data.AreaData.IsWalkable(point) {
+				if err := MoveToCoords(point); err == nil {
+					goto ClearMonsters //means we have a path inside the room
+				}
+				continue
+			}
+			// look for a nearby walkable position to the point
+			if walkablePoint, found := ctx.PathFinder.FindNearbyWalkablePosition(point); found {
+				if err := MoveToCoords(walkablePoint); err == nil {
+					goto ClearMonsters //means we have a path inside the room
+				}
+			}
 		}
+		//try with next point until we find a position
 	}
-
-	// Sort points by simple distance from player
-	sort.Slice(validPoints, func(i, j int) bool {
-		distI := ctx.PathFinder.DistanceFromMe(validPoints[i])
-		distJ := ctx.PathFinder.DistanceFromMe(validPoints[j])
-		return distI < distJ
-	})
-
-	// Try to move to any valid point
-	for _, point := range validPoints {
-		if err := MoveToCoords(point); err == nil {
-			goto ClearMonsters
-		}
-	}
-
-	// If we couldn't move to any point, try to clear from current position
 
 ClearMonsters:
-
 	for {
 		monsters := getMonstersInRoom(room, filter)
 		if len(monsters) == 0 {
@@ -117,8 +111,7 @@ ClearMonsters:
 }
 
 func getClearPoints(room *data.Room) []data.Position {
-	points := make([]data.Position, 0)
-
+	points := make([]data.Position, 0, 10)
 	center := room.GetCenter()
 	points = append(points, center)
 
@@ -153,15 +146,17 @@ func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster
 
 		inRoom := room.IsInside(m.Position)
 		nearPlayer := ctx.PathFinder.DistanceFromMe(m.Position) < 30
-		nearRoom := false
 
 		if !inRoom && !nearPlayer {
 			roomCenter := room.GetCenter()
 			distToRoom := pather.DistanceFromPoint(roomCenter, m.Position)
-			nearRoom = distToRoom < room.Width/2+15 || distToRoom < room.Height/2+15
+			if distToRoom < room.Width/2+15 || distToRoom < room.Height/2+15 {
+				monstersInRoom = append(monstersInRoom, m)
+				continue
+			}
 		}
 
-		if inRoom || nearPlayer || nearRoom {
+		if inRoom || nearPlayer {
 			monstersInRoom = append(monstersInRoom, m)
 		}
 	}

@@ -33,7 +33,7 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	}
 
 	// If direct path fails, try to find nearby walkable position
-	if walkableTo, found := pf.findNearbyWalkablePosition(to); found {
+	if walkableTo, found := pf.FindNearbyWalkablePosition(to); found {
 		return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkableTo)
 	}
 
@@ -186,7 +186,7 @@ func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path
 	return nil, 0, false
 }
 
-func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
 	// Search in expanding squares around the target position
 	for radius := 1; radius <= 3; radius++ {
 		for x := -radius; x <= radius; x++ {
