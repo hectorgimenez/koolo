@@ -5,8 +5,10 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
+	"math"
 	"sort"
 	"time"
+	
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -274,7 +276,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 
 		// Check for monsters close to player
 		closestMonster := data.Monster{}
-		closestMonsterDistance := 9999999
+		closestMonsterDistance :=  math.MaxInt
 		targetedNormalEnemies := make([]data.Monster, 0)
 		targetedElites := make([]data.Monster, 0)
 		minDistance := 6
