@@ -153,7 +153,7 @@ func (s BlizzardSorceress) KillCountess() error {
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeNone, nil)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillSummoner() error {
