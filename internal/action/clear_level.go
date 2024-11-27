@@ -56,6 +56,8 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	for _, point := range getClearPoints(&room) {
 		if ctx.Data.AreaData.IsInside(point) {
 			if ctx.Data.AreaData.IsWalkable(point) {
+
+				// Let MoveToCoords handle the pathing (it uses GetPath)
 				if err := MoveToCoords(point); err == nil {
 					goto ClearMonsters //means we have a path inside the room
 				}
@@ -63,6 +65,8 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 			}
 			// look for a nearby walkable position to the point
 			if walkablePoint, found := ctx.PathFinder.FindNearbyWalkablePosition(point); found {
+
+				// Let MoveToCoords handle the pathing (it uses GetPath)
 				if err := MoveToCoords(walkablePoint); err == nil {
 					goto ClearMonsters //means we have a path inside the room
 				}
@@ -90,6 +94,21 @@ ClearMonsters:
 		for _, monster := range monsters {
 			if !ctx.Data.AreaData.IsInside(monster.Position) {
 				continue
+			}
+
+			// Check for door obstacles for non-teleporting characters
+			if !ctx.Data.CanTeleport() {
+				path, _, found := ctx.PathFinder.GetPath(monster.Position)
+				if found {
+					for _, o := range ctx.Data.Objects {
+						if o.IsDoor() && o.Selectable && path.Intersects(*ctx.Data, o.Position, 4) {
+							ctx.Logger.Debug("Door is blocking the path to the monster, moving closer")
+							if err := MoveToCoords(monster.Position); err != nil {
+								continue
+							}
+						}
+					}
+				}
 			}
 
 			if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position) {
