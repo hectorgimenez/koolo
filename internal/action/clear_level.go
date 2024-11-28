@@ -19,7 +19,7 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 	rooms := ctx.PathFinder.OptimizeRoomsTraverseOrder()
 	for _, r := range rooms {
 		err := clearRoom(r, filter)
-		if err != nil {
+		if err != nil && err.Error() != "" {
 			ctx.Logger.Warn("Failed to clear room: %v", err)
 		}
 
@@ -80,7 +80,7 @@ func moveToRoomPosition(room data.Room) error {
 		}
 	}
 
-	return fmt.Errorf("no walkable position found in room")
+	return fmt.Errorf("") // No walkable position found in room but don't log it.
 }
 
 func clearRoomMonsters(room data.Room, filter data.MonsterFilter) error {
