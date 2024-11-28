@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -52,30 +53,39 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("clearRoom")
 
-	// Get points and check if its walkable already
-	for _, point := range getClearPoints(&room) {
-		if ctx.Data.AreaData.IsInside(point) {
-			if ctx.Data.AreaData.IsWalkable(point) {
-
-				// Let MoveToCoords handle the pathing (it uses GetPath)
-				if err := MoveToCoords(point); err == nil {
-					goto ClearMonsters //means we have a path inside the room
-				}
-				continue
-			}
-			// look for a nearby walkable position to the point
-			if walkablePoint, found := ctx.PathFinder.FindNearbyWalkablePosition(point); found {
-
-				// Let MoveToCoords handle the pathing (it uses GetPath)
-				if err := MoveToCoords(walkablePoint); err == nil {
-					goto ClearMonsters //means we have a path inside the room
-				}
-			}
-		}
-		//try with next point until we find a position
+	if err := moveToRoomPosition(room); err != nil {
+		return err
 	}
 
-ClearMonsters:
+	return clearRoomMonsters(room, filter)
+}
+
+func moveToRoomPosition(room data.Room) error {
+	ctx := context.Get()
+
+	center := room.GetCenter()
+
+	// Try center position first
+	if ctx.Data.AreaData.IsWalkable(center) {
+		if err := MoveToCoords(center); err == nil {
+			return nil
+		}
+	}
+
+	// For room clearing, use larger radius bounded by room size
+	maxRadius := min(room.Width/2, room.Height/2)
+	if walkablePoint, found := ctx.PathFinder.FindNearbyWalkablePosition(center, maxRadius); found {
+		if err := MoveToCoords(walkablePoint); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no walkable position found in room")
+}
+
+func clearRoomMonsters(room data.Room, filter data.MonsterFilter) error {
+	ctx := context.Get()
+
 	for {
 		monsters := getMonstersInRoom(room, filter)
 		if len(monsters) == 0 {
@@ -127,29 +137,6 @@ ClearMonsters:
 			}, nil)
 		}
 	}
-}
-
-func getClearPoints(room *data.Room) []data.Position {
-	points := make([]data.Position, 0, 10)
-	center := room.GetCenter()
-	points = append(points, center)
-
-	edges := []struct{ x, y float64 }{
-		{0.2, 0.2}, {0.8, 0.2}, // Top edge
-		{0.2, 0.8}, {0.8, 0.8}, // Bottom edge
-		{0.5, 0.5},             // Middle
-		{0.5, 0.2}, {0.5, 0.8}, // Additional middle points
-		{0.2, 0.5}, {0.8, 0.5},
-	}
-
-	for _, edge := range edges {
-		points = append(points, data.Position{
-			X: room.Position.X + int(float64(room.Width)*edge.x),
-			Y: room.Position.Y + int(float64(room.Height)*edge.y),
-		})
-	}
-
-	return points
 }
 
 func getMonstersInRoom(room data.Room, filter data.MonsterFilter) []data.Monster {

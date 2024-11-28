@@ -7,7 +7,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather/astar"
-	"math"
 )
 
 type PathFinder struct {
@@ -32,8 +31,8 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 		return path, distance, true
 	}
 
-	// If direct path fails, try to find nearby walkable position
-	if walkableTo, found := pf.FindNearbyWalkablePosition(to); found {
+	// If direct path fails, try to find nearby walkable position with default radius for pathing
+	if walkableTo, found := pf.FindNearbyWalkablePosition(to, 0); found {
 		return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkableTo)
 	}
 
@@ -148,58 +147,46 @@ func copyGrid(dest [][]game.CollisionType, src [][]game.CollisionType, offsetX, 
 	}
 }
 
-func (pf *PathFinder) GetClosestWalkablePath(dest data.Position) (Path, int, bool) {
-	return pf.GetClosestWalkablePathFrom(pf.data.PlayerUnit.Position, dest)
-}
-
-func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path, int, bool) {
-	a := pf.data.AreaData
-	if a.IsWalkable(dest) || !a.IsInside(dest) {
-		path, distance, found := pf.GetPath(dest)
-		if found {
-			return path, distance, found
-		}
+func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position, radius int) (data.Position, bool) {
+	// Use default radius of 3 if none specified
+	searchRadius := 3
+	if radius > 0 {
+		searchRadius = radius
 	}
 
-	maxRange := 20
-	step := 4
-	dst := 1
+	// Convert target to grid coordinates
+	gridTarget := pf.data.AreaData.Grid.RelativePosition(target)
 
-	for dst < maxRange {
-		for i := -dst; i < dst; i += 1 {
-			for j := -dst; j < dst; j += 1 {
-				if math.Abs(float64(i)) >= math.Abs(float64(dst)) || math.Abs(float64(j)) >= math.Abs(float64(dst)) {
-					cgY := dest.Y - pf.data.AreaOrigin.Y + j
-					cgX := dest.X - pf.data.AreaOrigin.X + i
-					if cgX > 0 && cgY > 0 && a.Height > cgY && a.Width > cgX && a.CollisionGrid[cgY][cgX] == game.CollisionTypeWalkable {
-						return pf.GetPathFrom(from, data.Position{
-							X: dest.X + i,
-							Y: dest.Y + j,
-						})
-					}
-				}
-			}
-		}
-		dst += step
-	}
-
-	return nil, 0, false
-}
-
-func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
 	// Search in expanding squares around the target position
-	for radius := 1; radius <= 3; radius++ {
-		for x := -radius; x <= radius; x++ {
-			for y := -radius; y <= radius; y++ {
+	for r := 1; r <= searchRadius; r++ {
+		for x := -r; x <= r; x++ {
+			for y := -r; y <= r; y++ {
 				if x == 0 && y == 0 {
 					continue
 				}
-				pos := data.Position{X: target.X + x, Y: target.Y + y}
-				if pf.data.AreaData.IsWalkable(pos) {
-					return pos, true
+
+				// Work in grid coordinates
+				gridPos := data.Position{
+					X: gridTarget.X + x,
+					Y: gridTarget.Y + y,
 				}
+
+				// Check boundaries and walkability in grid coordinates
+				if gridPos.X < 0 || gridPos.X >= pf.data.AreaData.Width ||
+					gridPos.Y < 0 || gridPos.Y >= pf.data.AreaData.Height ||
+					pf.data.AreaData.CollisionGrid[gridPos.Y][gridPos.X] == game.CollisionTypeNonWalkable {
+					continue
+				}
+
+				// Convert back to world coordinates before returning
+				worldPos := data.Position{
+					X: gridPos.X + pf.data.AreaData.OffsetX,
+					Y: gridPos.Y + pf.data.AreaData.OffsetY,
+				}
+				return worldPos, true
 			}
 		}
 	}
+
 	return data.Position{}, false
 }
