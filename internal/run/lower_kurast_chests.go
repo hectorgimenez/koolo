@@ -28,28 +28,42 @@ func NewLowerKurastChest() *LowerKurastChests {
 }
 
 func (run LowerKurastChests) Name() string {
-	return string(config.LowerKurastRun)
+	return string(config.LowerKurastChestRun)
 }
 
 func (run LowerKurastChests) Run() error {
 	run.ctx.Logger.Debug("Running a Lower Kurast Chest run")
-	var bonFirePositions []data.Position
+
 	// Use Waypoint to Lower Kurast
 	err := action.WayPoint(area.LowerKurast)
 	if err != nil {
 		return err
 	}
 
-	// Find the bonfires
-	for _, o := range run.ctx.Data.Objects {
-		if o.Name == object.SmallFire {
-			bonFirePositions = append(bonFirePositions, o.Position)
+	// Get bonfires from cached map data
+	var bonFirePositions []data.Position
+	if areaData, ok := run.ctx.GameReader.GetData().Areas[area.LowerKurast]; ok {
+		for _, obj := range areaData.Objects {
+			if obj.Name == object.Name(160) { // SmallFire
+				run.ctx.Logger.Debug("Found bonfire at:", "position", obj.Position)
+				bonFirePositions = append(bonFirePositions, obj.Position)
+			}
 		}
 	}
 
-	run.ctx.Logger.Debug("Found bonfires", "bonfires", bonFirePositions)
+	run.ctx.Logger.Debug("Total bonfires found", "count", len(bonFirePositions))
 
-	var chestsIds = []object.Name{object.JungleMediumChestLeft, object.JungleChest}
+	// Define objects to interact with : chests + weapon racks/armor stands (if enabled)
+	interactableObjects := []object.Name{object.JungleMediumChestLeft, object.JungleChest}
+
+	if run.ctx.CharacterCfg.Game.LowerKurastChest.OpenRacks {
+		interactableObjects = append(interactableObjects,
+			object.ArmorStandRight,
+			object.ArmorStandLeft,
+			object.WeaponRackRight,
+			object.WeaponRackLeft,
+		)
+	}
 
 	// Move to each of the bonfires one by one
 	for _, bonfirePos := range bonFirePositions {
@@ -58,38 +72,38 @@ func (run LowerKurastChests) Run() error {
 		if err != nil {
 			return err
 		}
-		// Find the chests
-		var chests []data.Object
+
+		// Find the interactable objects
+		var objects []data.Object
 		for _, o := range run.ctx.Data.Objects {
-			if slices.Contains(chestsIds, o.Name) && isChestWithinBonfireRange(o, bonfirePos) {
-				chests = append(chests, o)
+			if slices.Contains(interactableObjects, o.Name) && isChestWithinBonfireRange(o, bonfirePos) {
+				objects = append(objects, o)
 			}
 		}
 
-		// Interact with chests in the order of shortest travel
-		for len(chests) > 0 {
-			// Get the player's current position
+		// Interact with objects in the order of shortest travel
+		for len(objects) > 0 {
+
 			playerPos := run.ctx.Data.PlayerUnit.Position
 
-			// Sort chests by distance from the player
-			sort.Slice(chests, func(i, j int) bool {
-				return pather.DistanceFromPoint(chests[i].Position, playerPos) <
-					pather.DistanceFromPoint(chests[j].Position, playerPos)
+			sort.Slice(objects, func(i, j int) bool {
+				return pather.DistanceFromPoint(objects[i].Position, playerPos) <
+					pather.DistanceFromPoint(objects[j].Position, playerPos)
 			})
 
-			// Interact with the closest chest
-			closestChest := chests[0]
-			err = action.InteractObject(closestChest, func() bool {
-				chest, _ := run.ctx.Data.Objects.FindByID(closestChest.ID)
-				return !chest.Selectable
+			// Interact with the closest object
+			closestObject := objects[0]
+			err = action.InteractObject(closestObject, func() bool {
+				object, _ := run.ctx.Data.Objects.FindByID(closestObject.ID)
+				return !object.Selectable
 			})
 			if err != nil {
-				run.ctx.Logger.Warn("Failed interacting with chest: %v", err)
+				run.ctx.Logger.Warn("Failed interacting with object: %v", err)
 			}
-			utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
+			utils.Sleep(500) // Add small delay to allow the game to open the object and drop the content
 
-			// Remove the interacted chest from the list
-			chests = chests[1:]
+			// Remove the interacted container from the list
+			objects = objects[1:]
 		}
 	}
 
