@@ -33,7 +33,7 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	}
 
 	// If direct path fails, try to find nearby walkable position
-	if walkableTo, found := pf.findNearbyWalkablePosition(to); found {
+	if walkableTo, found := pf.FindNearbyWalkablePosition(to); found {
 		return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkableTo)
 	}
 
@@ -42,11 +42,8 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
-
-	// We don't want to modify the original grid
 	grid := a.Grid.Copy()
 
-	// Lut Gholein map is a bit bugged, we should close this fake path to avoid pathing issues
 	if a.Area == area.LutGholein {
 		a.CollisionGrid[13][210] = game.CollisionTypeNonWalkable
 	}
@@ -62,7 +59,7 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	from = grid.RelativePosition(from)
 	to = grid.RelativePosition(to)
 
-	// Add objects to the collision grid as obstacles
+	// Add objects and their surrounding areas as low priority
 	for _, o := range pf.data.AreaData.Objects {
 		if !grid.IsWalkable(o.Position) {
 			continue
@@ -74,18 +71,18 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 				if i == 0 && j == 0 {
 					continue
 				}
-				if relativePos.Y+i < 0 || relativePos.Y+i >= len(grid.CollisionGrid) || relativePos.X+j < 0 || relativePos.X+j >= len(grid.CollisionGrid[relativePos.Y]) {
+				if relativePos.Y+i < 0 || relativePos.Y+i >= len(grid.CollisionGrid) ||
+					relativePos.X+j < 0 || relativePos.X+j >= len(grid.CollisionGrid[relativePos.Y]) {
 					continue
 				}
 				if grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] == game.CollisionTypeWalkable {
 					grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] = game.CollisionTypeLowPriority
-
 				}
 			}
 		}
 	}
 
-	// Add monsters to the collision grid as obstacles
+	// Add monsters as obstacles
 	for _, m := range pf.data.Monsters {
 		if !grid.IsWalkable(m.Position) {
 			continue
@@ -94,13 +91,20 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
 	}
 
-	path, distance, found := astar.CalculatePath(grid, from, to)
-
-	if config.Koolo.Debug.RenderMap {
-		pf.renderMap(grid, from, to, path)
+	path, _, found := astar.CalculatePath(grid, from, to)
+	if !found {
+		return nil, 0, false
 	}
 
-	return path, distance, found
+	// Apply path smoothing
+	smoothedPath := pf.smoothPath(path)
+	smoothedDistance := len(smoothedPath)
+
+	if config.Koolo.Debug.RenderMap {
+		pf.renderMap(grid, from, to, smoothedPath)
+	}
+
+	return smoothedPath, smoothedDistance, true
 }
 
 func (pf *PathFinder) mergeGrids(to data.Position) (*game.Grid, error) {
@@ -186,7 +190,7 @@ func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path
 	return nil, 0, false
 }
 
-func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
 	// Search in expanding squares around the target position
 	for radius := 1; radius <= 3; radius++ {
 		for x := -radius; x <= radius; x++ {
@@ -202,4 +206,35 @@ func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Pos
 		}
 	}
 	return data.Position{}, false
+}
+func (pf *PathFinder) smoothPath(path Path) Path {
+	if len(path) < 3 {
+		return path
+	}
+
+	smoothed := make(Path, 0, len(path))
+	smoothed = append(smoothed, path[0])
+
+	current := 0
+	for current < len(path)-1 {
+		furthest := current + 1
+		for i := current + 2; i < len(path); i++ {
+			if pf.LineOfSight(path[current], path[i]) {
+				furthest = i
+			} else {
+				break
+			}
+		}
+
+		if furthest < len(path) {
+			smoothed = append(smoothed, path[furthest])
+		}
+		current = furthest
+	}
+
+	if len(smoothed) == 0 || smoothed[len(smoothed)-1] != path[len(path)-1] {
+		smoothed = append(smoothed, path[len(path)-1])
+	}
+
+	return smoothed
 }
