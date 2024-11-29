@@ -20,6 +20,10 @@ type SorceressLeveling struct {
 	BaseCharacter
 }
 
+func (s SorceressLeveling) MainSkill() skill.ID {
+	return skill.Blizzard
+}
+
 const (
 	SorceressLevelingMaxAttacksLoop = 10
 	SorceressLevelingMinDistance    = 25

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/event"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
@@ -19,6 +19,13 @@ const (
 )
 
 type SupervisorStatus string
+
+func (ss SupervisorStatus) IsStarted() bool {
+	if ss == NotStarted || ss == "" {
+		return false
+	}
+	return true
+}
 
 type StatsHandler struct {
 	stats  *Stats
@@ -79,7 +86,10 @@ func (h *StatsHandler) Handle(_ context.Context, e event.Event) error {
 		}
 
 	case event.ItemStashedEvent:
-		h.stats.Drops = append(h.stats.Drops, evt.Item)
+		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
+			lastRun := &h.stats.Games[len(h.stats.Games)-1].Runs[len(h.stats.Games[len(h.stats.Games)-1].Runs)-1]
+			lastRun.Drops = append(lastRun.Drops, evt.Item)
+		}
 
 	case event.UsedPotionEvent:
 		if len(h.stats.Games) > 0 && len(h.stats.Games[len(h.stats.Games)-1].Runs) > 0 {
@@ -99,7 +109,6 @@ type Stats struct {
 	StartedAt        time.Time
 	SupervisorStatus SupervisorStatus
 	Details          string
-	Drops            []data.Drop
 	Games            []GameStats
 }
 
@@ -114,7 +123,7 @@ type RunStats struct {
 	Name        string
 	Reason      event.FinishReason
 	StartedAt   time.Time
-	Items       []data.Item
+	Drops       []game.Drop
 	FinishedAt  time.Time
 	UsedPotions []event.UsedPotionEvent
 }
@@ -133,6 +142,17 @@ func (s Stats) TotalChickens() int {
 
 func (s Stats) TotalErrors() int {
 	return s.totalRunsByReason(event.FinishedError)
+}
+
+func (s Stats) TotalDrops() int {
+	drops := 0
+	for _, g := range s.Games {
+		for _, r := range g.Runs {
+			drops += len(r.Drops)
+		}
+	}
+
+	return drops
 }
 
 func (s Stats) totalRunsByReason(reason event.FinishReason) int {

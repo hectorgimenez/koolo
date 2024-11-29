@@ -1,0 +1,167 @@
+{{define "content"}}
+    <h2 class="text-3xl mb-5 font-extrabold dark:text-white">Settings</h2>
+
+    {{ if ne .ErrorMessage "" }}
+        <div id="alert-2"
+             class="flex items-center p-4 mb-4 text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+             role="alert">
+            <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                 viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <span class="sr-only">Info</span>
+            <div class="ms-3 text-sm font-medium">
+                {{ .ErrorMessage }}
+            </div>
+        </div>
+    {{ end }}
+
+    <form method="post" class="mx-auto">
+        <div class="mb-5">
+            <label for="d2rpath" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                Diablo II Resurrected Path
+            </label>
+            <input type="text"
+                   id="d2rpath"
+                   name="d2rpath"
+                   class="w-2/4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                   placeholder="C:\Program Files (x86)\Diablo II Resurrected"
+                   value="{{.D2RPath}}"
+            >
+        </div>
+        <div class="mb-5">
+            <label for="d2lodpath" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                Diablo II: LoD 1.13c Path (MUST BE 1.13c, otherwise it won't work)
+            </label>
+            <input type="text" id="d2lodpath" name="d2lodpath"
+                   class="w-2/4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                   placeholder="E:\games\Diablo II"
+                   value="{{.D2LoDPath}}"
+            >
+        </div>
+        <div class="flex mb-4">
+            <div class="flex items-center h-5">
+                <input id="use-custom-settings" name="use_custom_settings"
+                        {{ if .UseCustomSettings }}
+                            checked="checked"
+                        {{ end }}
+                       aria-describedby="use-custom-settings-text" type="checkbox" value="true"
+                       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            </div>
+            <div class="ms-2 text-sm">
+                <label for="use-custom-settings" class="font-medium text-gray-900 dark:text-gray-300">Use custom game
+                    settings</label>
+                <p id="use-custom-settings-text" class="text-xs font-normal text-gray-500 dark:text-gray-400">Override
+                    game settings with predefined Koolo settings for better performance and compatibility</p>
+            </div>
+        </div>
+        <div class="flex mb-4">
+            <div class="flex items-center h-5">
+                <input id="auto-reposition" name="game_window_arrangement"
+                        {{ if .GameWindowArrangement }}
+                            checked="checked"
+                        {{ end }}
+                       aria-describedby="auto-reposition-text" type="checkbox" value="true"
+                       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            </div>
+            <div class="ms-2 text-sm">
+                <label for="auto-reposition" class="font-medium text-gray-900 dark:text-gray-300">Auto reposition game
+                    windows</label>
+                <p id="auto-reposition-text" class="text-xs font-normal text-gray-500 dark:text-gray-400">Disable if you
+                    want to arrange game windows manually</p>
+            </div>
+        </div>
+        <h3 class="text-xl mb-2 font-extrabold dark:text-white">Debug</h3>
+        <div class="flex mb-4">
+            <div class="flex items-center h-5">
+                <input id="debug-mode" name="debug_log"
+                        {{ if .Debug.Log }}
+                            checked="checked"
+                        {{ end }}
+                       aria-describedby="debug-mode-text" type="checkbox" value="true"
+                       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            </div>
+            <div class="ms-2 text-sm">
+                <label for="debug-mode" class="font-medium text-gray-900 dark:text-gray-300">Debug Level in logs</label>
+                <p id="debug-mode-text" class="text-xs font-normal text-gray-500 dark:text-gray-400">This will show more
+                    info in the log file, but will introduce more noise too</p>
+            </div>
+        </div>
+        <div class="flex items-center mb-2">
+            <input id="debug-mode-screenshot" name="debug_screenshots"
+                    {{ if .Debug.Screenshots }}
+                        checked="checked"
+                    {{ end }}
+                   type="checkbox" value="true"
+                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            <label for="debug-mode-screenshot" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Save screenshot on error</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <h3 class="text-xl mt-5 font-extrabold dark:text-white">Discord integration</h3>
+                <input id="discord-enabled" name="discord_enabled"
+                        {{ if .Discord.Enabled }}
+                            checked="checked"
+                        {{ end }}
+                       type="checkbox" value="true"
+                       class="w-4 h-4 my-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                <label for="discord-enabled"
+                       class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enabled</label>
+                <label for="discord_token" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Token</label>
+                <input type="text" name="discord_token" id="discord_token" aria-describedby="helper-text-explanation" class="w-3/4 mb-4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{.Discord.Token}}">
+                <label for="discord_channel_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Channel ID</label>
+                <input type="text" name="discord_channel_id" id="discord_channel_id" aria-describedby="helper-text-explanation" class="w-3/4 mb-4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{.Discord.ChannelID}}">
+                <label for="discord_admins" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Bot Admins</label>
+                <input type="text" name="discord_admins" id="discord_admins" aria-describedby="helper-text-explanation" class="w-3/4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{.Discord.BotAdmins}}">
+                <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Discord User IDs who can use bot commands separated by commas.</p>
+                <fieldset class="mt-4">
+                    <div class="flex items-center mb-4">
+                        <input id="enable_game_created_messages" name="enable_game_created_messages" type="checkbox" value="{{ .Discord.EnableGameCreatedMessages }}" {{ if .Discord.EnableGameCreatedMessages }} checked="checked" {{ end }} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" >
+                        <label for="enable_game_created_messages" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enable Game Create Messages</label>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <input id="enable_new_run_messages" name="enable_new_run_messages" type="checkbox" value="{{ .Discord.EnableNewRunMessages }}" {{ if .Discord.EnableNewRunMessages }} checked="checked" {{ end }} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" >
+                        <label for="enable_new_run_messages" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enable New Run Messages</label>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <input id="enable_run_finish_messages" name="enable_run_finish_messages" type="checkbox" value="{{ .Discord.EnableRunFinishMessages }}" {{ if .Discord.EnableRunFinishMessages }} checked="checked" {{ end }} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" >
+                        <label for="enable_run_finish_messages" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enable Run Finish Messages</label>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <input id="enable_discord_chicken_messages" name="enable_discord_chicken_messages" type="checkbox" value="{{ .Discord.EnableDiscordChickenMessages }}" {{ if .Discord.EnableDiscordChickenMessages }} checked="checked" {{ end }} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" >
+                        <label for="enable_discord_chicken_messages" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enable Chicken/Death Messages</label>
+                    </div>
+                </fieldset>
+            </div>
+            <div>
+                <h3 class="text-xl mt-5 font-extrabold dark:text-white">Telegram integration</h3>
+                <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">If you don't have a Token/Chat ID <a target="_blank" class="font-medium text-blue-600 hover:underline dark:text-blue-500" href="https://gist.github.com/nafiesl/4ad622f344cd1dc3bb1ecbe468ff9f8a">you can refer to this documentation</a>.</p>
+                <input id="telegram-enabled" name="telegram_enabled"
+                        {{ if .Telegram.Enabled }}
+                            checked="checked"
+                        {{ end }}
+                       type="checkbox" value="true"
+                       class="w-4 h-4 my-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                <label for="telegram-enabled"
+                       class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enabled</label>
+
+                <label for="telegram_token" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Token</label>
+                <input type="text" name="telegram_token" id="telegram_token" aria-describedby="helper-text-explanation" class="bg-gray-50 border mb-4 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-3/4 block p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{.Telegram.Token}}">
+                <label for="telegram_chat_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Chat ID</label>
+                <input type="text" name="telegram_chat_id" id="telegram_chat_id" aria-describedby="helper-text-explanation" class="bg-gray-50 mb-4 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-3/4  p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{.Telegram.ChatID}}">
+            </div>
+        </div>
+
+        {{ if not .FirstRun }}
+            <a href="/">
+                <button type="button"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                    Discard
+                </button>
+            </a>
+        {{ end }}
+        <input type="submit"
+                class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" value="Save"/>
+    </form>
+{{end}}

@@ -23,6 +23,10 @@ type PaladinLeveling struct {
 	BaseCharacter
 }
 
+func (s PaladinLeveling) MainSkill() skill.ID {
+	return skill.BlessedHammer
+}
+
 func (s PaladinLeveling) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}

@@ -25,6 +25,10 @@ type Trapsin struct {
 	BaseCharacter
 }
 
+func (s Trapsin) MainSkill() skill.ID {
+	return skill.LightningSentry
+}
+
 func (s Trapsin) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.DeathSentry, skill.LightningSentry, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}

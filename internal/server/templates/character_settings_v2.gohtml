@@ -1,0 +1,85 @@
+{{ define "content" }}
+    <h2 class="text-3xl mb-5 font-extrabold dark:text-white">Character Settings</h2>
+    <form method="post" autocomplete="off">
+        <div class="mb-5 {{ if ne .Supervisor "" }}hidden {{ end }}">
+            <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Configuration name</label>
+            <input type="text" id="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ .Supervisor }}" required>
+            <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">You can use the name you want, it will be used only to identify this configuration in the app, not related to in-game character.</p>
+        </div>
+        <div class="grid grid-cols-4">
+            <div>
+                <label for="characterClass" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Select character class</label>
+                <select name="characterClass" id="characterClass" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="sorceress" {{ if eq .Config.Character.Class
+                    "sorceress" }}selected{{ end }}>Blizzard Sorceress
+                    </option>
+                    <option value="hammerdin" {{ if eq .Config.Character.Class
+                    "hammerdin" }}selected{{ end }}>Hammer Paladin
+                    </option>
+                    <option value="foh" {{ if eq .Config.Character.Class
+                    "foh" }}selected{{ end }}>FOH Paladin
+                    </option>
+                    <option value="nova" {{ if eq .Config.Character.Class
+                    "nova" }}selected{{ end }}>Nova Sorceress
+                    </option>
+                    <option value="hydraorb" {{ if eq .Config.Character.Class
+                    "hydraorb" }}selected{{ end }}>Hydra Orb Sorceress
+                    </option>
+                    <option value="paladin" {{ if eq .Config.Character.Class
+                    "paladin" }}selected{{ end }}>Paladin (Leveling)
+                    </option>
+                    <option value="sorceress_leveling_lightning" {{ if eq .Config.Character.Class
+                    "sorceress_leveling_lightning" }}selected{{ end }}>Sorc (Leveling as Lightning)
+                    </option>
+                    <option value="sorceress_leveling" {{ if eq .Config.Character.Class
+                    "sorceress_leveling" }}selected{{ end }}>Sorc (Leveling as Fire)
+                    </option>
+                    <option value="trapsin" {{ if eq .Config.Character.Class
+                    "trapsin" }}selected{{ end }}>Lightning Trapsin
+                    </option>
+                    <option value="mosaic" {{ if eq .Config.Character.Class
+                    "mosaic" }}selected{{ end }}>Mosaic Assassin
+                    </option>
+                    <option value="winddruid" {{ if eq .Config.Character.Class
+                    "winddruid" }}selected{{ end }}>Tornado Druid
+                    </option>
+                    <option value="javazon" {{ if eq .Config.Character.Class
+                    "javazon" }}selected{{ end }}>Javazon
+                    </option>
+                    <option value="berserker" {{ if eq .Config.Character.Class
+                    "berserker" }}selected{{ end }}>Berserk Barbarian
+                    </option>
+                </select>
+            </div>
+            <div class="mx-5">
+                <label for="characterName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">In-game character name</label>
+                <input type="text" id="characterName" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ .Config.CharacterName }}" required>
+            </div>
+            <div class="mr-5">
+                <label for="gameMinGoldPickupThreshold" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Minimum Gold</label>
+                <input type="text" id="gameMinGoldPickupThreshold" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ .Config.Game.MinGoldPickupThreshold }}" required>
+                <p id="helper-text-explanation" class="mt-2 text-xs text-gray-500 dark:text-gray-400">Will pick up Magic+ to sell for gold if below</p>
+            </div>
+            <div class="mt-5">
+                <div class="flex items-center mb-4">
+                    <input name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }} id="characterUseTeleport" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="characterUseTeleport" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Use Teleport when available</label>
+                </div>
+                <div class="flex items-center mb-4">
+                    <input name="characterStashToShared" id="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }} type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="characterStashToShared" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Always stash to shared tab</label>
+                </div>
+            </div>
+        </div>
+        <!-- TODO: Add character specific settings -->
+
+        <h3 class="text-xl mb-5 font-extrabold dark:text-white">Client Settings</h3><br>
+        <div class="grid grid-cols-2">
+            <div class="mr-5">
+                <label for="commandLineArgs" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Client launch options (arguments)</label>
+                <input type="text" id="commandLineArgs" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ .Config.CommandLineArgs }}">
+                <p id="helper-text-explanation" class="mt-2 text-xs text-gray-500 dark:text-gray-400">You can use it to load mods or any other CLI argument</p>
+            </div>
+        </div>
+    </form>
+{{end}}

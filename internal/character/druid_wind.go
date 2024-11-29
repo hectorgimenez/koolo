@@ -22,9 +22,15 @@ const (
 	druMaxDistance    = 8
 )
 
+var lastRavenAt = map[string]time.Time{}
+
 type WindDruid struct {
 	BaseCharacter
 	*game.HID
+}
+
+func (s WindDruid) MainSkill() skill.ID {
+	return skill.Tornado
 }
 
 func (s WindDruid) CheckKeyBindings() []skill.ID {

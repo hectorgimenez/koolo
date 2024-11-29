@@ -8,6 +8,7 @@ import (
 )
 
 type Character interface {
+	MainSkill() skill.ID
 	CheckKeyBindings() []skill.ID
 	BuffSkills() []skill.ID
 	PreCTABuffSkills() []skill.ID

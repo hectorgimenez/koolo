@@ -131,7 +131,7 @@ func (b *Bot) handleStatsRequest(s *discordgo.Session, m *discordgo.MessageCreat
 				Title: fmt.Sprintf("Stats for %s", supervisor),
 				Fields: []*discordgo.MessageEmbedField{
 					{
-						Name:   "Status",
+						Name:   "Supervisors",
 						Value:  supStatus,
 						Inline: true,
 					},
@@ -150,7 +150,7 @@ func (b *Bot) handleStatsRequest(s *discordgo.Session, m *discordgo.MessageCreat
 					},
 					{
 						Name:   "Drops",
-						Value:  fmt.Sprintf("%d", len(b.manager.GetSupervisorStats(supervisor).Drops)),
+						Value:  fmt.Sprintf("%d", b.manager.GetSupervisorStats(supervisor).TotalDrops()),
 						Inline: true,
 					},
 					{

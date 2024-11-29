@@ -72,7 +72,7 @@ func (b *Bot) getLatestOffset() (int, error) {
 func (b *Bot) publishStats() error {
 	return nil
 	//msg := "Run | Items | Deaths | Chickens | Merc Chickens | Errors | Healing Pots | Mana Pots | Reju Pots | Merc Pots \n"
-	//for run, st := range stat.Status.RunStats {
+	//for run, st := range stat.Supervisors.RunStats {
 	//	msg += fmt.Sprintf(
 	//		"%s | %d | %d | %d | %d | %d | %d | %d| %d | %d | %d \n",
 	//		run,

@@ -50,3 +50,10 @@ func (d Data) MonsterFilterAnyReachable() data.MonsterFilter {
 		return filtered
 	}
 }
+
+type Drop struct {
+	Item     data.Item
+	Area     area.ID
+	Rule     string
+	RuleFile string
+}

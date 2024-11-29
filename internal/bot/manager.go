@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"syscall"
 	"time"
@@ -44,6 +45,8 @@ func (mng *SupervisorManager) AvailableSupervisors() []string {
 			availableSupervisors = append(availableSupervisors, name)
 		}
 	}
+
+	slices.Sort(availableSupervisors)
 
 	return availableSupervisors
 }

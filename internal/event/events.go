@@ -2,6 +2,7 @@ package event
 
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
@@ -72,10 +73,10 @@ func RunFinished(be BaseEvent, runName string, reason FinishReason) RunFinishedE
 
 type ItemStashedEvent struct {
 	BaseEvent
-	Item data.Drop
+	Item game.Drop
 }
 
-func ItemStashed(be BaseEvent, drop data.Drop) ItemStashedEvent {
+func ItemStashed(be BaseEvent, drop game.Drop) ItemStashedEvent {
 	return ItemStashedEvent{
 		BaseEvent: be,
 		Item:      drop,

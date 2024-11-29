@@ -5,14 +5,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
-	"github.com/hectorgimenez/koolo/internal/action"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
+	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -30,6 +29,10 @@ const (
 type Foh struct {
 	BaseCharacter
 	lastCastTime time.Time
+}
+
+func (f Foh) MainSkill() skill.ID {
+	return skill.FistOfTheHeavens
 }
 
 func (f Foh) CheckKeyBindings() []skill.ID {
@@ -100,7 +103,7 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 
 		// Count initial valid targets
 		validTargets := 0
-		//monstersInRange := make([]data.Monster, 0)
+		monstersInRange := make([]data.Monster, 0)
 		monster, found := f.Data.Monsters.FindByID(id)
 		if !found {
 			return 0, false, false
@@ -111,7 +114,7 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 				dist := ctx.PathFinder.DistanceFromMe(m.Position)
 				if dist <= fohMaxDistance && dist >= fohMinDistance && m.Stats[stat.Life] > 0 {
 					validTargets++
-					//monstersInRange = append(monstersInRange, m)
+					monstersInRange = append(monstersInRange, m)
 				}
 			}
 		}

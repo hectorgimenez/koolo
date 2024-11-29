@@ -278,7 +278,7 @@ func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool
 
 	// Don't log items that we already have in inventory during first run
 	if !skipLogging {
-		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
+		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), game.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
 	}
 
 	return true

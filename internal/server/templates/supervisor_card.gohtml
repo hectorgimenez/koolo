@@ -1,0 +1,149 @@
+{{ define "supervisorCardStopped" }}
+    <div class="flex flex-row h-18 rounded card-background border shadow dark:border-gray-700">
+        <div class="flex-initial me-0 m-2">
+            <img class="w-10 h-10" src="/assets/img/skills/{{ .SkillID }}.webp" alt="profile image">
+            <span class="top-0 start-7 absolute w-3.5 h-3.5 {{ if .SupervisorStatus.IsStarted }}bg-green-500{{ else }}bg-gray-500{{ end }} border-2 border-white dark:border-gray-800 rounded-full"></span>
+        </div>
+        <div class="flex-auto min-w-0 m-2">
+            <p class="text-sm font-medium text-gray-900 truncate dark:text-white">
+                {{ .Name }}
+            </p>
+        </div>
+        <div class="flex-auto content-center right-0 text-center text-right mr-2">
+            <div class="inline-flex rounded-md shadow-sm" role="group">
+                <a href="/supervisorSettings?supervisor={{ .Name }}">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
+                        Settings
+                    </button>
+                </a>
+                <a href="/start?characterName={{ .Name }}">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-green-600 dark:border-green-600 dark:text-white dark:hover:text-white dark:hover:bg-green-500 dark:focus:ring-blue-500 dark:focus:text-white">
+                        Start
+                    </button>
+                </a>
+                <button onclick="showAttachPopup('{{ .Name }}')" type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-e-lg hover:bg-blue-600 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-blue-700 dark:border-blue-700 dark:text-white dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                    Attach
+                </button>
+            </div>
+        </div>
+    </div>
+{{ end }}
+
+{{ define "supervisorCardStarted" }}
+    <div class="rounded card-background border shadow dark:border-gray-700" data-accordion="collapse">
+        <div class="flex flex-row h-20">
+            <div class="flex-initial me-0 m-2 content-center">
+                <img class="w-10 h-10" src="/assets/img/skills/{{ .SkillID }}.webp" alt="profile image">
+                <span class="top-0 start-7 absolute w-3.5 h-3.5 {{ if .SupervisorStatus.IsStarted }}bg-green-500{{ else }}bg-gray-500{{ end }} border-2 border-white dark:border-gray-800 rounded-full"></span>
+            </div>
+            <div class="flex-auto min-w-0 m-2 content-center">
+                <p class="text-sm font-medium text-gray-900 truncate dark:text-white w-28">
+                    {{ .Name }}
+                </p>
+                <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                    <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
+                    {{ .SupervisorStatus }}
+                </span>
+            </div>
+            <div class="flex-auto grid grid-cols-5 gap-1 content-center">
+                <div class="w-20 p-1 card-background-second-level dark:border-gray-500 text-center text-white rounded-lg">
+                    Drops<p class="font-bold">{{ .TotalDrops }}</p>
+                </div>
+                <div class="w-20 p-1 card-background-second-level dark:border-gray-500 text-center text-white rounded-lg">
+                    Chickens<p class="font-bold">{{ .TotalChickens }}</p>
+                </div>
+                <div class="w-20 p-1 card-background-second-level dark:border-gray-500 text-center text-white rounded-lg">
+                    Deaths<p class="font-bold">{{ .TotalDeaths }}</p>
+                </div>
+                <div class="w-20 p-1 card-background-second-level dark:border-gray-500 text-center text-white rounded-lg">
+                    Errors<p class="font-bold">{{ .TotalErrors }}</p>
+                </div>
+                <div class="w-20 p-1 card-background-second-level dark:border-gray-500 text-center text-white rounded-lg">
+                    Runs<p class="font-bold">{{ .TotalGames }}</p>
+                </div>
+            </div>
+            <div class="flex-auto content-center right-0 text-center">
+                <div class="inline-flex rounded-md shadow-sm" role="group">
+                    <a href="/supervisorSettings?supervisor={{ .Name }}">
+                        <button type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
+                            Settings
+                        </button>
+                    </a>
+                    <a href="/debug?characterName={{ .Name }}">
+                        <button type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
+                            Debug
+                        </button>
+                    </a>
+                    <a href="/togglePause?characterName={{ .Name }}">
+                        <button type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-yellow-600 dark:border-yellow-600 dark:text-white dark:hover:text-white dark:hover:bg-yellow-500 dark:focus:ring-blue-500 dark:focus:text-white">
+                            Pause
+                        </button>
+                    </a>
+                    <a href="/stop?characterName={{ .Name }}">
+                        <button type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-e-lg hover:bg-red-600 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-red-700 focus:text-blue-700 dark:bg-red-700 dark:border-red-700 dark:text-white dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                            Stop
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div id="supervisor-details-{{ .Name }}" class="w-full hidden">
+            <h2 class="text-center font-bold text-blue-400 text-xl mt-5">Statistics</h2>
+            <div class="grid grid-cols-2 gap-7 mx-7">
+                {{ range .Statistics }}
+                    <div class="my-3 px-5 py-3 text-white card-background-second-level dark:border-gray-500 rounded-lg">
+                        <h4 class="text-center font-bold text-blue-400 text-lg">{{ .Name }}</h4>
+                        <div class="grid grid-cols-2">
+                            <div>
+                                <div class="flex justify-between">
+                                    <span>Fastest:</span>
+                                    <span>{{ .Fastest | formatDuration }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Average:</span>
+                                    <span>{{ .Average | formatDuration }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Errors:</span>
+                                    <span>{{ .Errors }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Deaths:</span>
+                                    <span>{{ .Deaths }}</span>
+                                </div>
+                            </div>
+                            <div class="ml-5">
+                                <div class="flex justify-between">
+                                    <span>Slowest:</span>
+                                    <span>{{ .Slowest | formatDuration }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Runs:</span>
+                                    <span>{{ .Total }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Chickens:</span>
+                                    <span>{{ .Chickens }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Drops:</span>
+                                    <span>{{ .Drops }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{end}}
+            </div>
+        </div>
+        <div class="w-full">
+            <button type="button"
+                    data-accordion-target="#supervisor-details-{{ .Name }}" aria-expanded="false" aria-controls="supervisor-details-{{ .Name }}"
+                    class="w-full flex justify-center items-center gap-2 px-4 py-1 text-white hover:dark:bg-gray-600 dark:border-gray-600 border-t">
+                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
+                </svg>
+                Show details
+            </button>
+        </div>
+    </div>
+{{ end }}

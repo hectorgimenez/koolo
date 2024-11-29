@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -19,14 +18,15 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/gorilla/websocket"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
 	ctx "github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/hectorgimenez/koolo/internal/utils/winproc"
@@ -35,11 +35,11 @@ import (
 )
 
 type HttpServer struct {
-	logger    *slog.Logger
-	server    *http.Server
-	manager   *bot.SupervisorManager
-	templates *template.Template
-	wsServer  *WebSocketServer
+	logger         *slog.Logger
+	server         *http.Server
+	manager        *bot.SupervisorManager
+	templates      *template.Template
+	versionChecker *VersionChecker
 }
 
 var (
@@ -47,34 +47,7 @@ var (
 	assetsFS embed.FS
 	//go:embed all:templates
 	templatesFS embed.FS
-
-	upgrader = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
 )
-
-type Client struct {
-	conn *websocket.Conn
-	send chan []byte
-}
-
-type WebSocketServer struct {
-	clients    map[*Client]bool
-	broadcast  chan []byte
-	register   chan *Client
-	unregister chan *Client
-}
-
-func NewWebSocketServer() *WebSocketServer {
-	return &WebSocketServer{
-		clients:    make(map[*Client]bool),
-		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-	}
-}
 
 type Process struct {
 	WindowTitle string `json:"windowTitle"`
@@ -82,103 +55,8 @@ type Process struct {
 	PID         uint32 `json:"pid"`
 }
 
-func (s *WebSocketServer) Run() {
-	for {
-		select {
-		case client := <-s.register:
-			s.clients[client] = true
-		case client := <-s.unregister:
-			if _, ok := s.clients[client]; ok {
-				delete(s.clients, client)
-				close(client.send)
-			}
-		case message := <-s.broadcast:
-			for client := range s.clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(s.clients, client)
-				}
-			}
-		}
-	}
-}
-
-func (s *WebSocketServer) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		slog.Error("Failed to upgrade connection to WebSocket", "error", err)
-		return
-	}
-
-	client := &Client{conn: conn, send: make(chan []byte, 256)}
-	s.register <- client
-
-	go s.writePump(client)
-	go s.readPump(client)
-}
-
-func (s *WebSocketServer) writePump(client *Client) {
-	defer func() {
-		client.conn.Close()
-	}()
-
-	for {
-		select {
-		case message, ok := <-client.send:
-			if !ok {
-				client.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-
-			w, err := client.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-
-			if err := w.Close(); err != nil {
-				return
-			}
-		}
-	}
-}
-
-func (s *WebSocketServer) readPump(client *Client) {
-	defer func() {
-		s.unregister <- client
-		client.conn.Close()
-	}()
-
-	for {
-		_, _, err := client.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				slog.Error("WebSocket read error", "error", err)
-			}
-			break
-		}
-	}
-}
-
-func (s *HttpServer) BroadcastStatus() {
-	for {
-		data := s.getStatusData()
-		jsonData, err := json.Marshal(data)
-		if err != nil {
-			slog.Error("Failed to marshal status data", "error", err)
-			continue
-		}
-
-		s.wsServer.broadcast <- jsonData
-		time.Sleep(1 * time.Second)
-	}
-}
-
-func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, error) {
-	var templates *template.Template
-	helperFuncs := template.FuncMap{
+func (s *HttpServer) helperFuncs() template.FuncMap {
+	return template.FuncMap{
 		"isInSlice": func(slice []stat.Resist, value string) bool {
 			return slices.Contains(slice, stat.Resist(value))
 		},
@@ -186,18 +64,19 @@ func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, erro
 			return slices.Contains(slice, area.ID(value))
 		},
 		"executeTemplateByName": func(name string, data interface{}) template.HTML {
-			tmpl := templates.Lookup(name)
-			var buf bytes.Buffer
-			if tmpl == nil {
-				return "This run is not configurable."
-			}
-
-			tmpl.Execute(&buf, data)
-			return template.HTML(buf.String())
+			return template.HTML("This run is not configurable.")
+			//tmpl := templates.Lookup(name)
+			//var buf bytes.Buffer
+			//if tmpl == nil {
+			//	return "This run is not configurable."
+			//}
+			//
+			//tmpl.Execute(&buf, data)
+			//return template.HTML(buf.String())
 		},
 		"qualityClass": qualityClass,
 		"statIDToText": statIDToText,
-		"contains":     containss,
+		"contains":     contains,
 		"seq": func(start, end int) []int {
 			var result []int
 			for i := start; i <= end; i++ {
@@ -205,16 +84,21 @@ func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, erro
 			}
 			return result
 		},
+		"version": func() string {
+			return config.Version
+		},
+		"latestVersion": func() string {
+			return s.versionChecker.Check()
+		},
+		"formatDuration": formatDuration,
 	}
-	templates, err := template.New("").Funcs(helperFuncs).ParseFS(templatesFS, "templates/*.gohtml")
-	if err != nil {
-		return nil, err
-	}
+}
 
+func New(logger *slog.Logger, manager *bot.SupervisorManager) (*HttpServer, error) {
 	return &HttpServer{
-		logger:    logger,
-		manager:   manager,
-		templates: templates,
+		logger:         logger,
+		manager:        manager,
+		versionChecker: NewVersionChecker(),
 	}, nil
 }
 
@@ -341,84 +225,18 @@ func getWindowTitle(pid uint32) (string, error) {
 
 }
 
-func qualityClass(quality string) string {
-	switch quality {
-	case "LowQuality":
-		return "low-quality"
-	case "Normal":
-		return "normal-quality"
-	case "Superior":
-		return "superior-quality"
-	case "Magic":
-		return "magic-quality"
-	case "Set":
-		return "set-quality"
-	case "Rare":
-		return "rare-quality"
-	case "Unique":
-		return "unique-quality"
-	default:
-		return "unknown-quality"
-	}
-}
-
-func statIDToText(id stat.ID) string {
-	return stat.StringStats[id]
-}
-
-func containss(slice []string, item string) bool {
-	for _, v := range slice {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *HttpServer) initialData(w http.ResponseWriter, r *http.Request) {
-	data := s.getStatusData()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
-}
-
-func (s *HttpServer) getStatusData() IndexData {
-	status := make(map[string]bot.Stats)
-	drops := make(map[string]int)
-
-	for _, supervisorName := range s.manager.AvailableSupervisors() {
-		status[supervisorName] = s.manager.Status(supervisorName)
-		if s.manager.GetSupervisorStats(supervisorName).Drops != nil {
-			drops[supervisorName] = len(s.manager.GetSupervisorStats(supervisorName).Drops)
-		} else {
-			drops[supervisorName] = 0
-		}
-	}
-
-	return IndexData{
-		Version:   config.Version,
-		Status:    status,
-		DropCount: drops,
-	}
-}
-
 func (s *HttpServer) Listen(port int) error {
-	s.wsServer = NewWebSocketServer()
-	go s.wsServer.Run()
-	go s.BroadcastStatus()
-
 	http.HandleFunc("/", s.getRoot)
-	http.HandleFunc("/config", s.config)
+	http.HandleFunc("/settings", s.settings)
+	http.HandleFunc("/drops", s.drops)
 	http.HandleFunc("/supervisorSettings", s.characterSettings)
 	http.HandleFunc("/start", s.startSupervisor)
 	http.HandleFunc("/stop", s.stopSupervisor)
 	http.HandleFunc("/togglePause", s.togglePause)
 	http.HandleFunc("/debug", s.debugHandler)
 	http.HandleFunc("/debug-data", s.debugData)
-	http.HandleFunc("/drops", s.drops)
 	http.HandleFunc("/process-list", s.getProcessList)
 	http.HandleFunc("/attach-process", s.attachProcess)
-	http.HandleFunc("/ws", s.wsServer.HandleWebSocket) // Web socket
-	http.HandleFunc("/initial-data", s.initialData)    // Web socket data
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -448,7 +266,7 @@ func (s *HttpServer) getRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if config.Koolo.FirstRun {
-		http.Redirect(w, r, "/config", http.StatusSeeOther)
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
 		return
 	}
 
@@ -494,7 +312,7 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 	// Get the current auth method for the supervisor we wanna start
 	supCfg, currFound := config.Characters[Supervisor]
 	if !currFound {
-		// There's no config for the current supervisor. THIS SHOULDN'T HAPPEN
+		// There's no settings for the current supervisor. THIS SHOULDN'T HAPPEN
 		return
 	}
 
@@ -524,65 +342,82 @@ func (s *HttpServer) startSupervisor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.manager.Start(Supervisor, false)
-	s.initialData(w, r)
 }
 
 func (s *HttpServer) stopSupervisor(w http.ResponseWriter, r *http.Request) {
 	s.manager.Stop(r.URL.Query().Get("characterName"))
-	s.initialData(w, r)
 }
 
 func (s *HttpServer) togglePause(w http.ResponseWriter, r *http.Request) {
 	s.manager.TogglePause(r.URL.Query().Get("characterName"))
-	s.initialData(w, r)
 }
 
 func (s *HttpServer) index(w http.ResponseWriter) {
-	status := make(map[string]bot.Stats)
-	drops := make(map[string]int)
+	startedSupervisors := make([]SupervisorCard, 0)
+	stoppedSupervisors := make([]SupervisorCard, 0)
 
 	for _, supervisorName := range s.manager.AvailableSupervisors() {
-		status[supervisorName] = bot.Stats{
-			SupervisorStatus: bot.NotStarted,
-		}
+		supervisor := s.manager.Status(supervisorName)
 
-		status[supervisorName] = s.manager.Status(supervisorName)
+		if supervisor.SupervisorStatus.IsStarted() {
+			statistics := make(map[string]RunStatistics)
+			for _, g := range supervisor.Games {
+				for _, run := range g.Runs {
+					runStats, found := statistics[run.Name]
+					if !found {
+						runStats = RunStatistics{
+							Name: run.Name,
+						}
+					}
 
-		if s.manager.GetSupervisorStats(supervisorName).Drops != nil {
-			drops[supervisorName] = len(s.manager.GetSupervisorStats(supervisorName).Drops)
+					runStats.Drops += len(run.Drops)
+					runStats.Total++
+
+					switch run.Reason {
+					case event.FinishedError:
+						runStats.Errors++
+					case event.FinishedDied:
+						runStats.Deaths++
+					case event.FinishedChicken, event.FinishedMercChicken:
+						runStats.Chickens++
+					case event.FinishedOK:
+						if run.FinishedAt.Sub(run.StartedAt) < statistics[run.Name].Fastest || statistics[run.Name].Fastest == 0 {
+							runStats.Fastest = run.FinishedAt.Sub(run.StartedAt)
+						}
+						if run.FinishedAt.Sub(run.StartedAt) > statistics[run.Name].Slowest {
+							runStats.Slowest = run.FinishedAt.Sub(run.StartedAt)
+						}
+					}
+
+					statistics[run.Name] = runStats
+				}
+			}
+
+			statisticsSlice := make([]RunStatistics, 0, len(statistics))
+			for _, runStats := range statistics {
+				statisticsSlice = append(statisticsSlice, runStats)
+			}
+
+			startedSupervisors = append(startedSupervisors, SupervisorCard{
+				Stats:      supervisor,
+				Name:       supervisorName,
+				SkillID:    s.manager.GetContext(supervisorName).Char.MainSkill(),
+				Statistics: statisticsSlice,
+			})
 		} else {
-			drops[supervisorName] = 0
+			stoppedSupervisors = append(stoppedSupervisors, SupervisorCard{
+				Stats:   supervisor,
+				Name:    supervisorName,
+				SkillID: 254,
+			})
 		}
-
 	}
 
-	s.templates.ExecuteTemplate(w, "index.gohtml", IndexData{
-		Version:   config.Version,
-		Status:    status,
-		DropCount: drops,
-	})
-}
-
-func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
-	sup := r.URL.Query().Get("supervisor")
-	cfg, found := config.Characters[sup]
-	if !found {
-		http.Error(w, "Can't fetch drop data because the configuration "+sup+" wasn't found", http.StatusNotFound)
-		return
-	}
-
-	var Drops []data.Drop
-
-	if s.manager.GetSupervisorStats(sup).Drops == nil {
-		Drops = make([]data.Drop, 0)
-	} else {
-		Drops = s.manager.GetSupervisorStats(sup).Drops
-	}
-
-	s.templates.ExecuteTemplate(w, "drops.gohtml", DropData{
-		NumberOfDrops: len(Drops),
-		Character:     cfg.CharacterName,
-		Drops:         Drops,
+	tpl := template.Must(template.New("").Funcs(s.helperFuncs()).ParseFS(templatesFS, "templates/layout.gohtml", "templates/dashboard.gohtml", "templates/supervisor_card.gohtml"))
+	tpl.ExecuteTemplate(w, "layout.gohtml", IndexData{
+		Version:            config.Version,
+		StartedSupervisors: startedSupervisors,
+		StoppedSupervisors: stoppedSupervisors,
 	})
 }
 
@@ -615,11 +450,12 @@ func validateSchedulerData(cfg *config.CharacterCfg) error {
 	return nil
 }
 
-func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) settings(w http.ResponseWriter, r *http.Request) {
+	tpl := template.Must(template.New("").Funcs(s.helperFuncs()).ParseFS(templatesFS, "templates/layout.gohtml", "templates/settings.gohtml"))
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
 		if err != nil {
-			s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: "Error parsing form"})
+			tpl.ExecuteTemplate(w, "layout.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: "Error parsing form"})
 			return
 		}
 
@@ -655,14 +491,14 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.Telegram.Token = r.Form.Get("telegram_token")
 		telegramChatId, err := strconv.ParseInt(r.Form.Get("telegram_chat_id"), 10, 64)
 		if err != nil {
-			s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: &newConfig, ErrorMessage: "Invalid Telegram Chat ID"})
+			tpl.ExecuteTemplate(w, "layout.gohtml", ConfigData{KooloCfg: &newConfig, ErrorMessage: "Invalid Telegram Chat ID"})
 			return
 		}
 		newConfig.Telegram.ChatID = telegramChatId
 
 		err = config.ValidateAndSaveConfig(newConfig)
 		if err != nil {
-			s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: &newConfig, ErrorMessage: err.Error()})
+			tpl.ExecuteTemplate(w, "layout.gohtml", ConfigData{KooloCfg: &newConfig, ErrorMessage: err.Error()})
 			return
 		}
 
@@ -670,15 +506,44 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.templates.ExecuteTemplate(w, "config.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: ""})
+	tpl.ExecuteTemplate(w, "layout.gohtml", ConfigData{KooloCfg: config.Koolo, ErrorMessage: ""})
+}
+
+func (s *HttpServer) drops(w http.ResponseWriter, r *http.Request) {
+	tpl := template.Must(template.New("").Funcs(s.helperFuncs()).ParseFS(templatesFS, "templates/layout.gohtml", "templates/drops.gohtml"))
+
+	drops := make([]Drop, 0)
+	for i := range 10 {
+		drops = append(drops, Drop{
+			Drop: game.Drop{
+				Item: data.Item{
+					ID:         i,
+					UnitID:     data.UnitID(i),
+					Name:       "The Stone of Jordan",
+					Quality:    item.QualityUnique,
+					Ethereal:   false,
+					BaseStats:  nil,
+					Identified: false,
+					IsRuneword: false,
+				},
+				Area:     1,
+				Rule:     "smallcharm && [quality] == unique",
+				RuleFile: "E:\\projects\\koolo\\config\\Daniel\\pickit\\MexPickit.nip:2",
+			},
+			Supervisor: "SorcNova",
+			Run:        "andariel",
+		})
+	}
+	tpl.ExecuteTemplate(w, "layout.gohtml", DropPage{Drops: drops})
 }
 
 func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
+	tpl := template.Must(template.New("").Funcs(s.helperFuncs()).ParseFS(templatesFS, "templates/layout.gohtml", "templates/character_settings_v2.gohtml"))
 	var err error
 	if r.Method == http.MethodPost {
 		err = r.ParseForm()
 		if err != nil {
-			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+			tpl.ExecuteTemplate(w, "layout.gohtml", CharacterSettings{
 				ErrorMessage: err.Error(),
 			})
 
@@ -690,7 +555,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		if !found {
 			err = config.CreateFromTemplate(supervisorName)
 			if err != nil {
-				s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+				tpl.ExecuteTemplate(w, "layout.gohtml", CharacterSettings{
 					ErrorMessage: err.Error(),
 					Supervisor:   supervisorName,
 				})
@@ -707,14 +572,14 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.ClassicMode = r.Form.Has("classic_mode")
 		cfg.CloseMiniPanel = r.Form.Has("close_mini_panel")
 
-		// Bnet config
+		// Bnet settings
 		cfg.Username = r.Form.Get("username")
 		cfg.Password = r.Form.Get("password")
 		cfg.Realm = r.Form.Get("realm")
 		cfg.AuthMethod = r.Form.Get("authmethod")
 		cfg.AuthToken = r.Form.Get("AuthToken")
 
-		// Scheduler config
+		// Scheduler settings
 		cfg.Scheduler.Enabled = r.Form.Has("schedulerEnabled")
 
 		for day := 0; day < 7; day++ {
@@ -728,7 +593,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			for i := 0; i < len(starts); i++ {
 				start, err := time.Parse("15:04", starts[i])
 				if err != nil {
-					s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+					tpl.ExecuteTemplate(w, "layout.gohtml", CharacterSettings{
 						ErrorMessage: fmt.Sprintf("Invalid start time format for day %d: %s", day, starts[i]),
 						// ... (other fields)
 					})
@@ -737,7 +602,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 				end, err := time.Parse("15:04", ends[i])
 				if err != nil {
-					s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+					tpl.ExecuteTemplate(w, "layout.gohtml", CharacterSettings{
 						ErrorMessage: fmt.Sprintf("Invalid end time format for day %d: %s", day, ends[i]),
 					})
 					return
@@ -756,14 +621,14 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		// Validate scheduler data
 		err := validateSchedulerData(cfg)
 		if err != nil {
-			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+			tpl.ExecuteTemplate(w, "layout.gohtml", CharacterSettings{
 				ErrorMessage: err.Error(),
 				// ... (other fields)
 			})
 			return
 		}
 
-		// Health config
+		// Health settings
 		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))
 		cfg.Health.ManaPotionAt, _ = strconv.Atoi(r.Form.Get("manaPotionAt"))
 		cfg.Health.RejuvPotionAtLife, _ = strconv.Atoi(r.Form.Get("rejuvPotionAtLife"))
@@ -829,7 +694,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))
 		cfg.Game.RandomizeRuns = r.Form.Has("gameRandomizeRuns")
 
-		// Runs specific config
+		// Runs specific settings
 
 		enabledRuns := make([]config.Run, 0)
 		// we don't like errors, so we ignore them
@@ -933,13 +798,13 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.CubeRecipes.EnabledRecipes = enabledRecipes
 		// Companion
 
-		// Companion config
+		// Companion settings
 		cfg.Companion.Leader = r.Form.Has("companionLeader")
 		cfg.Companion.LeaderName = r.Form.Get("companionLeaderName")
 		cfg.Companion.GameNameTemplate = r.Form.Get("companionGameNameTemplate")
 		cfg.Companion.GamePassword = r.Form.Get("companionGamePassword")
 
-		// Back to town config
+		// Back to town settings
 		cfg.BackToTown.NoHpPotions = r.Form.Has("noHpPotions")
 		cfg.BackToTown.NoMpPotions = r.Form.Has("noMpPotions")
 		cfg.BackToTown.MercDied = r.Form.Has("mercDied")
@@ -985,7 +850,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 	dayNames := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 
-	s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
+	tpl.ExecuteTemplate(w, "layout.gohtml", CharacterSettings{
 		Supervisor:   supervisor,
 		Config:       cfg,
 		DayNames:     dayNames,

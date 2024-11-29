@@ -26,6 +26,10 @@ type NovaSorceress struct {
 	BaseCharacter
 }
 
+func (s NovaSorceress) MainSkill() skill.ID {
+	return skill.Nova
+}
+
 func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 	requiredKeybindings := []skill.ID{skill.Nova, skill.Teleport, skill.TomeOfTownPortal, skill.StaticField}
 	missingKeybindings := []skill.ID{}
@@ -151,7 +155,7 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 	}
 }
 
-func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
+func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
@@ -229,11 +233,11 @@ func (s NovaSorceress) KillBaal() error {
 }
 
 func (s NovaSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, NovaMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, NovaMaxDistance, false, nil)
 }
 
 func (s NovaSorceress) KillIzual() error {
@@ -252,9 +256,9 @@ func (s NovaSorceress) KillCouncil() error {
 }
 
 func (s NovaSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (s NovaSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, NovaMaxDistance, false, nil)
 }

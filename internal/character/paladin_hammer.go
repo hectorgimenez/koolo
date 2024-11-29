@@ -23,6 +23,10 @@ type Hammerdin struct {
 	BaseCharacter
 }
 
+func (s Hammerdin) MainSkill() skill.ID {
+	return skill.BlessedHammer
+}
+
 func (s Hammerdin) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.Concentration, skill.HolyShield, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}

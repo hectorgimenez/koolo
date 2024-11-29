@@ -20,6 +20,10 @@ type MosaicSin struct {
 	BaseCharacter
 }
 
+func (s MosaicSin) MainSkill() skill.ID {
+	return skill.TigerStrike
+}
+
 func (s MosaicSin) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.TigerStrike, skill.CobraStrike, skill.PhoenixStrike, skill.ClawsOfThunder, skill.BladesOfIce, skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}

@@ -24,6 +24,10 @@ type SorceressLevelingLightning struct {
 	BaseCharacter
 }
 
+func (s SorceressLevelingLightning) MainSkill() skill.ID {
+	return skill.Nova
+}
+
 func (s SorceressLevelingLightning) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
 	missingKeybindings := []skill.ID{}
