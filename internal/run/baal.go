@@ -119,9 +119,7 @@ func (s Baal) Run() error {
 		utils.Sleep(15000)
 		action.Buff()
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		err = action.InteractObjectByID(baalPortal.ID, func() bool {
-			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
-		})
+		err = action.InteractObjectByID(baalPortal.ID, nil)
 		if err != nil {
 			return err
 		}

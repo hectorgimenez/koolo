@@ -2,15 +2,12 @@ package action
 
 import (
 	"errors"
-	"fmt"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 func ReturnTown() error {
@@ -35,34 +32,7 @@ func ReturnTown() error {
 		ctx.Logger.Warn("Error clearing area around portal", "error", err)
 	}
 
-	// Now that it is safe, interact with portal
-	err = InteractObject(portal, func() bool {
-		return ctx.Data.PlayerUnit.Area.IsTown()
-	})
-	if err != nil {
-		return err
-	}
-
-	// Wait for area transition and data sync
-	utils.Sleep(1000)
-	ctx.RefreshGameData()
-
-	// Wait for town area data to be fully loaded
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if ctx.Data.PlayerUnit.Area.IsTown() {
-			// Verify area data exists and is loaded
-			if townData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
-				if townData.IsInside(ctx.Data.PlayerUnit.Position) {
-					return nil
-				}
-			}
-		}
-		utils.Sleep(100)
-		ctx.RefreshGameData()
-	}
-
-	return fmt.Errorf("failed to verify town area data after portal transition")
+	return InteractObject(portal, nil)
 }
 
 func UsePortalInTown() error {
@@ -77,21 +47,7 @@ func UsePortalInTown() error {
 		return err
 	}
 
-	// Wait for area sync before attempting any movement
-	utils.Sleep(500)
-	ctx.RefreshGameData()
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-		return err
-	}
-
-	// Ensure we're not in town
-	if ctx.Data.PlayerUnit.Area.IsTown() {
-		return fmt.Errorf("failed to leave town area")
-	}
-
-	// Perform item pickup after re-entering the portal
-	err = ItemPickup(40)
-	if err != nil {
+	if err = ItemPickup(40); err != nil {
 		ctx.Logger.Warn("Error during item pickup after portal use", "error", err)
 	}
 
@@ -108,19 +64,7 @@ func UsePortalFrom(owner string) error {
 
 	for _, obj := range ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == owner {
-			return InteractObjectByID(obj.ID, func() bool {
-				if !ctx.Data.PlayerUnit.Area.IsTown() {
-					// Ensure area data is synced after portal transition
-					utils.Sleep(500)
-					ctx.RefreshGameData()
-
-					if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-						return false
-					}
-					return true
-				}
-				return false
-			})
+			return InteractObjectByID(obj.ID, nil)
 		}
 	}
 
