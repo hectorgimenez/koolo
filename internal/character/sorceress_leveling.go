@@ -158,7 +158,8 @@ func (s SorceressLeveling) ShouldResetSkills() bool {
 func (s SorceressLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 	level, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	skillBindings := []skill.ID{
-		skill.TomeOfTownPortal,
+		//skill.TomeOfTownPortal,
+		skill.FireBolt,
 	}
 
 	if level.Value >= 4 {
