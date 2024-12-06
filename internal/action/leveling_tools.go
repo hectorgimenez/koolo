@@ -306,13 +306,13 @@ func EnsureSkillBindings() error {
 }
 
 func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position, bool) {
-	d := context.Get().Data
+	ctx := context.Get()
 
 	var scrolls = []skill.ID{
-		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
+		skill.ScrollOfIdentify, skill.TomeOfIdentify, skill.ScrollOfTownPortal, skill.TomeOfTownPortal,
 	}
 
-	if _, found := d.PlayerUnit.Skills[skillID]; !found {
+	if _, found := ctx.Data.PlayerUnit.Skills[skillID]; !found {
 		return data.Position{}, false
 	}
 
@@ -322,7 +322,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 	totalRows := make([]int, 0)
 	column := 0
 	skillsWithCharges := 0
-	for skID, points := range d.PlayerUnit.Skills {
+	for skID, points := range ctx.Data.PlayerUnit.Skills {
 		sk := skill.Skills[skID]
 		// Skip skills that can not be bind
 		if sk.Desc().ListRow < 0 {
@@ -345,17 +345,14 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 		descs[skID] = sk
 
 		if skID != targetSkill.ID && sk.Desc().Page == targetSkill.Desc().Page {
-			if sk.Desc().ListRow > targetSkill.Desc().ListRow {
+			if sk.Desc().Row < targetSkill.Desc().Row {
 				column++
-			} else if sk.Desc().ListRow == targetSkill.Desc().ListRow && sk.Desc().Column > targetSkill.Desc().Column {
+			} else if sk.Desc().Row == targetSkill.Desc().Row && sk.Desc().Column < targetSkill.Desc().Column {
 				column++
 			}
 		}
 
-		totalRows = append(totalRows, sk.Desc().ListRow)
-		if row == targetSkill.Desc().ListRow {
-			continue
-		}
+		totalRows = append(totalRows, sk.Desc().Page)
 
 		row++
 	}
@@ -365,7 +362,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 
 	// If we don't have any skill of a specific tree, the entire row gets one line down
 	for i, currentRow := range totalRows {
-		if currentRow == row {
+		if currentRow == targetSkill.Desc().Page {
 			row = i
 			break
 		}
@@ -374,9 +371,9 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 	// Scrolls and charges are not in the same list
 	if slices.Contains(scrolls, skillID) {
 		column = skillsWithCharges
-		row = len(totalRows)
+		row = len(totalRows) + 1
 		for _, skID := range scrolls {
-			if d.PlayerUnit.Skills[skID].Quantity > 0 {
+			if ctx.Data.PlayerUnit.Skills[skID].Quantity > 0 {
 				if skID == skillID {
 					break
 				}
