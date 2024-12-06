@@ -382,6 +382,17 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 		}
 	}
 
+	if ctx.GameReader.LegacyGraphics() {
+		skillOffsetX := ui.MainSkillListFirstSkillXClassic - (ui.SkillListSkillOffsetClassic * column)
+		if !mainSkill {
+			skillOffsetX = ui.SecondarySkillListFirstSkillXClassic - (ui.SkillListSkillOffsetClassic * column)
+		}
+
+		return data.Position{
+			X: skillOffsetX,
+			Y: ui.SkillListFirstSkillYClassic - ui.SkillListSkillOffsetClassic*row,
+		}, true
+	} else {
 	skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
 	if !mainSkill {
 		skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
@@ -391,6 +402,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 		X: skillOffsetX,
 		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
 	}, true
+	}
 }
 
 func HireMerc() error {
