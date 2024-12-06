@@ -38,19 +38,10 @@ func (a Leveling) act1() error {
 		a.denOfEvil()
 		fmt.Errorf("den of Evil finished")
 	}
-
-	// clear Stony Field until level 9
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 9 {
+	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
+		a.ctx.Logger.Debug("Current lvl %s under 6 - Leveling in Stony Field")
 		a.stonyField()
-	}
-
-	if !a.isCainInTown() && !a.ctx.Data.Quests[quest.Act1TheSearchForCain].Completed() {
-		a.deckardCain()
-	}
-
-	// do Tristram Runs until level 14
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 14 {
-		a.tristram()
+		fmt.Errorf("stony field finished")
 	}
 
 	// do Countess Runs until level 17
