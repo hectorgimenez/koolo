@@ -21,14 +21,16 @@ type SorceressLeveling struct {
 }
 
 const (
-	SorceressLevelingMaxAttacksLoop = 10
-	SorceressLevelingMinDistance    = 25
-	SorceressLevelingMaxDistance    = 30
-	SorceressLevelingMeleeDistance  = 3
+	SorceressLevelingMaxAttacksLoop    = 10
+	SorceressLevelingMinDistance       = 25
+	SorceressLevelingMaxDistance       = 30
+	SorceressLevelingMeleeDistance     = 3
+	SorceressLevelingStaticMinDistance = 2
+	SorceressLevelingStaticMaxDistance = 2
 )
 
 func (s SorceressLeveling) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -50,6 +52,7 @@ func (s SorceressLeveling) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	staticFieldCast := false
 
 	for {
 		id, found := monsterSelector(*s.Data)
@@ -72,6 +75,18 @@ func (s SorceressLeveling) KillMonsterSequence(
 		if !found {
 			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
+		}
+
+		// Cast Static Field first if needed
+		if !staticFieldCast && s.shouldCastStaticField(monster) {
+			staticOpts := []step.AttackOption{
+				step.RangedDistance(SorceressLevelingStaticMinDistance, SorceressLevelingStaticMaxDistance),
+			}
+
+			if err := step.SecondaryAttack(skill.StaticField, monster.UnitID, 1, staticOpts...); err == nil {
+				staticFieldCast = true
+				continue
+			}
 		}
 
 		lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
@@ -103,6 +118,51 @@ func (s SorceressLeveling) KillMonsterSequence(
 
 		completedAttackLoops++
 		previousUnitID = int(id)
+	}
+}
+
+func (s SorceressLeveling) shouldCastStaticField(monster data.Monster) bool {
+	// Only cast Static Field if monster HP is above threshold
+	maxLife := float64(monster.Stats[stat.MaxLife])
+	if maxLife == 0 {
+		return false
+	}
+
+	hpPercentage := (float64(monster.Stats[stat.Life]) / maxLife) * 100
+	return hpPercentage > StaticFieldThreshold
+}
+
+func (s SorceressLeveling) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
+	ctx := context.Get()
+
+	for {
+		ctx.PauseIfNotPriority()
+
+		boss, found := s.Data.Monsters.FindOne(bossID, monsterType)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil
+		}
+
+		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
+		// TODO Remove this hardcoding
+		thresholdFloat := float64(52)
+
+		// Cast Static Field until boss HP is below threshold
+		if bossHPPercent > thresholdFloat {
+			staticOpts := []step.AttackOption{
+				step.Distance(SorceressLevelingStaticMinDistance, SorceressLevelingStaticMaxDistance),
+			}
+			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, staticOpts...)
+			if err != nil {
+				s.Logger.Warn("Failed to cast Static Field", slog.String("error", err.Error()))
+			}
+			continue
+		}
+
+		// Switch to Nova once boss HP is low enough
+		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			return boss.UnitID, true
+		}, nil)
 	}
 }
 
