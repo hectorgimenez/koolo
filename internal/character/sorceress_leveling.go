@@ -91,6 +91,10 @@ func (s SorceressLeveling) KillMonsterSequence(
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.IceBolt); found {
 				s.Logger.Debug("Using IceBolt")
 				step.SecondaryAttack(skill.IceBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
+				s.Logger.Debug("Using FireBolt")
+				step.SecondaryAttack(skill.FireBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+
 			} else {
 				s.Logger.Debug("No secondary skills available, using primary attack")
 				step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
