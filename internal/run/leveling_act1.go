@@ -45,8 +45,9 @@ func (a Leveling) act1() error {
 	}
 
 	// do Countess Runs until level 17
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 17 {
+	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 18 {
 		a.countess()
+		fmt.Errorf("Countess run finished")
 	}
 
 	return a.andariel()
@@ -163,7 +164,60 @@ func (a Leveling) tristram() error {
 }
 
 func (a Leveling) countess() error {
-	return Countess{}.Run()
+	a.ctx.Logger.Debug("Current lvl %s under 19 - Leveling in Countess")
+	err := action.WayPoint(area.BlackMarsh)
+	if err != nil {
+		return err
+	}
+
+	areas := []area.ID{
+		area.ForgottenTower,
+		area.TowerCellarLevel1,
+	}
+
+	for _, a := range areas {
+		err = action.MoveToArea(a)
+		if err != nil {
+			return err
+		}
+	}
+
+	currentAreaID := a.ctx.Data.PlayerUnit.Area.Area().ID
+
+	for currentAreaID != area.TowerCellarLevel5 {
+		pos1 := func() data.Position {
+			for _, al := range a.ctx.Data.AdjacentLevels {
+				if al.Area > currentAreaID {
+					return al.Position // Return the actual position
+				}
+			}
+			return data.Position{} // Return zero value if not found
+		}
+
+		err := action.ClearThroughPath(pos1(), 10, data.MonsterAnyFilter())
+		if err != nil {
+			return err
+		}
+
+		moved := false
+		for _, al := range a.ctx.Data.AdjacentLevels {
+			if al.Area > currentAreaID {
+				err = action.MoveToArea(al.Area.Area().ID)
+				if err != nil {
+					return err
+				}
+				currentAreaID = al.Area.Area().ID
+				moved = true
+				break
+			}
+		}
+
+		if !moved {
+			return fmt.Errorf("No adjacent level found to move to from area %d", currentAreaID)
+		}
+	}
+
+	return nil
 }
 
 func (a Leveling) andariel() error {

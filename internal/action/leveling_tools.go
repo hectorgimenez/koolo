@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -10,19 +11,13 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
-
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 )
 
 var uiStatButtonPosition = map[stat.ID]data.Position{
@@ -73,12 +68,12 @@ func EnsureStatPoints() error {
 		for st, targetPoints := range char.StatPoints() {
 			currentPoints, found := ctx.Data.PlayerUnit.FindStat(st, 0)
 			if !found || currentPoints.Value >= targetPoints {
-	return nil
+				return nil
 			}
 
 			if !ctx.Data.OpenMenus.Character {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
-	//	return nil
+				//	return nil
 			}
 
 			var statBtnPosition data.Position
@@ -123,7 +118,7 @@ func EnsureSkillPoints() error {
 		if !found || int(characterPoints.Level) < assignedPoints[sk] {
 			skillDesc, skFound := skill.Desc[sk]
 			if !skFound {
-				ctx.Logger.Error("skill not found for character", slog.Any("skill", sk))
+				ctx.Logger.Error(fmt.Sprintf("skill not found for character: %v", sk))
 				return nil
 			}
 
@@ -233,7 +228,7 @@ func EnsureSkillBindings() error {
 
 	mainSkill, skillsToBind := char.SkillsToBind()
 	if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); found {
-	skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+		skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
 	}
 	if _, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); found {
 		skillsToBind = append(skillsToBind, skill.TomeOfIdentify)
@@ -255,7 +250,7 @@ func EnsureSkillBindings() error {
 		if ctx.GameReader.LegacyGraphics() {
 			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic)
 		} else {
-		ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
 		}
 
 		utils.Sleep(300)
@@ -265,15 +260,15 @@ func EnsureSkillBindings() error {
 		availableKB := getAvailableSkillKB()
 		ctx.Logger.Debug(fmt.Sprintf("Available KB: %v", availableKB))
 		if len(notBoundSkills) > 0 {
-		for i, sk := range notBoundSkills {
-			skillPosition, found := calculateSkillPositionInUI(false, sk)
-			if !found {
-				continue
-			}
+			for i, sk := range notBoundSkills {
+				skillPosition, found := calculateSkillPositionInUI(false, sk)
+				if !found {
+					continue
+				}
 				ctx.Logger.Debug(fmt.Sprintf("Skill position: %v", skillPosition))
-			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(availableKB[i])
+				ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(availableKB[i])
 				ctx.Logger.Debug(fmt.Sprintf("Tried to assign skill to key: %v", availableKB[i]))
 				utils.Sleep(300)
 			}
@@ -287,10 +282,10 @@ func EnsureSkillBindings() error {
 				}
 				utils.Sleep(100)
 				ctx.HID.PressKeyBinding(availableKB[0])
-			utils.Sleep(300)
+				utils.Sleep(300)
 			}
 		}
-		}
+
 	}
 
 	if ctx.Data.PlayerUnit.LeftSkill != mainSkill {
@@ -399,15 +394,15 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 			Y: ui.SkillListFirstSkillYClassic - ui.SkillListSkillOffsetClassic*row,
 		}, true
 	} else {
-	skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
-	if !mainSkill {
-		skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
-	}
+		skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
+		if !mainSkill {
+			skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
+		}
 
-	return data.Position{
-		X: skillOffsetX,
-		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
-	}, true
+		return data.Position{
+			X: skillOffsetX,
+			Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
+		}, true
 	}
 }
 
