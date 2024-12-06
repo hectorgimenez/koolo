@@ -23,14 +23,13 @@ func (a Leveling) act1() error {
 
 	running = true
 
-	// clear Blood Moor until level 3
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
-		a.bloodMoor()
-	}
 
-	// clear Cold Plains until level 6
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
-		a.coldPlains()
+	if a.ctx.Data.PlayerUnit.TotalPlayerGold() < 2000 {
+		a.ctx.CharacterCfg.BackToTown.NoHpPotions = false
+		a.ctx.CharacterCfg.BackToTown.NoMpPotions = false
+	} else {
+		a.ctx.CharacterCfg.BackToTown.NoHpPotions = true
+		a.ctx.CharacterCfg.BackToTown.NoMpPotions = true
 	}
 
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !a.ctx.Data.Quests[quest.Act1DenOfEvil].Completed() {
