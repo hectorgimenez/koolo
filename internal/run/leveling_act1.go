@@ -1,12 +1,13 @@
 package run
 
 import (
+	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -22,7 +23,6 @@ func (a Leveling) act1() error {
 	}
 
 	running = true
-
 
 	if a.ctx.Data.PlayerUnit.TotalPlayerGold() < 2000 {
 		a.ctx.CharacterCfg.BackToTown.NoHpPotions = false
