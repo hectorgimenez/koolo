@@ -240,8 +240,18 @@ func EnsureSkillBindings() error {
 		}
 	}
 
-	if len(notBoundSkills) > 0 {
+	clvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0)
+	//Hacky way to find if we're lvling a sorc at clvl 1
+	str, _ := ctx.Data.PlayerUnit.FindStat(stat.Strength, 0)
+
+	if len(notBoundSkills) > 0 || (clvl.Value == 1 && str.Value == 10) {
+		ctx.Logger.Debug("Unbound skills found, trying to bind")
+		if ctx.GameReader.LegacyGraphics() {
+			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic)
+		} else {
 		ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+		}
+
 		utils.Sleep(300)
 		ctx.HID.MovePointer(10, 10)
 		utils.Sleep(300)
@@ -257,7 +267,17 @@ func EnsureSkillBindings() error {
 			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
 			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(availableKB[i])
+			if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); !found {
+				ctx.Logger.Debug("Lvl 1 sorc found - forcing fire bolt bind")
+				if ctx.GameReader.LegacyGraphics() {
+					ctx.HID.MovePointer(1000, 530)
+				} else {
+					ctx.HID.MovePointer(685, 545)
+				}
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(availableKB[0])
 			utils.Sleep(300)
+			}
 		}
 
 	}
