@@ -92,7 +92,56 @@ func EnsureStatPoints() error {
 }
 
 func EnsureSkillPoints() error {
-	// TODO finish this
+	ctx := context.Get()
+
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	_, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+
+	if !isLevelingChar || !unusedSkillPoints {
+		if ctx.Data.OpenMenus.SkillTree {
+			ctx.HID.PressKey(win.VK_ESCAPE)
+
+		}
+		return nil
+	}
+	assignedPoints := make(map[skill.ID]int)
+	for _, sk := range char.SkillPoints() {
+		currentPoints, found := assignedPoints[sk]
+		if !found {
+			currentPoints = 0
+		}
+
+		assignedPoints[sk] = currentPoints + 1
+
+		characterPoints, found := ctx.Data.PlayerUnit.Skills[sk]
+		if !found || int(characterPoints.Level) < assignedPoints[sk] {
+			skillDesc, skFound := skill.Desc[sk]
+			if !skFound {
+				ctx.Logger.Error("skill not found for character", slog.Any("skill", sk))
+				return nil
+			}
+
+			if !ctx.Data.OpenMenus.SkillTree {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+			}
+
+			utils.Sleep(100)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+			}
+			utils.Sleep(200)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+			}
+			utils.Sleep(500)
+			return step.CloseAllMenus()
+		}
+	}
+
 	return nil
 	//ctx := context.Get()
 	//
