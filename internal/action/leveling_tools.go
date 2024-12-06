@@ -52,58 +52,43 @@ var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
 func EnsureStatPoints() error {
-	// TODO finish this
+	ctx := context.Get()
+
+	for {
+		char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+		_, unusedStatPoints := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+		ctx.Logger.Debug(fmt.Sprintf("Checking stat points for %v", char.StatPoints()))
+		if !isLevelingChar || !unusedStatPoints {
+			if ctx.Data.OpenMenus.Character {
+				return step.CloseAllMenus()
+			}
+			return nil
+		}
+		for st, targetPoints := range char.StatPoints() {
+			currentPoints, found := ctx.Data.PlayerUnit.FindStat(st, 0)
+			if !found || currentPoints.Value >= targetPoints {
 	return nil
-	//return NewStepChain(func(d game.Data) []step.Step {
-	//	char, isLevelingChar := b.ch.(LevelingCharacter)
-	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-	//	if !isLevelingChar || !unusedStatPoints {
-	//		if d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKey(win.VK_ESCAPE)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		return nil
-	//	}
-	//
-	//	for st, targetPoints := range char.StatPoints(d) {
-	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-	//		if !found || currentPoints.Value >= targetPoints {
-	//			continue
-	//		}
-	//
-	//		if !d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		var statBtnPosition data.Position
-	//		if d.LegacyGraphics {
-	//			statBtnPosition = uiStatButtonPositionLegacy[st]
-	//		} else {
-	//			statBtnPosition = uiStatButtonPosition[st]
-	//		}
-	//
-	//		return []step.Step{
-	//			step.SyncStep(func(_ game.Data) error {
-	//				utils.Sleep(100)
-	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				utils.Sleep(500)
-	//				return nil
-	//			}),
-	//		}
-	//	}
-	//
+			}
+
+			if !ctx.Data.OpenMenus.Character {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
 	//	return nil
-	//}, RepeatUntilNoSteps())
+			}
+
+			var statBtnPosition data.Position
+			if ctx.Data.LegacyGraphics {
+				statBtnPosition = uiStatButtonPositionLegacy[st]
+			} else {
+				statBtnPosition = uiStatButtonPosition[st]
+			}
+
+			utils.Sleep(100)
+			ctx.Logger.Debug(fmt.Sprintf("Adding stat points to %v", st))
+			ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+			utils.Sleep(500)
+
+		}
+	}
 }
 
 func EnsureSkillPoints() error {
