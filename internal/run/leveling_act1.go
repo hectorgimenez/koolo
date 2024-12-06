@@ -217,7 +217,7 @@ func (a Leveling) countess() error {
 		}
 	}
 
-	return nil
+	return action.ClearCurrentLevel(false, data.MonsterEliteFilter())
 }
 
 func (a Leveling) andariel() error {
