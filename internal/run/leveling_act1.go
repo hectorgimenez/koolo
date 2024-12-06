@@ -32,8 +32,11 @@ func (a Leveling) act1() error {
 		a.ctx.CharacterCfg.BackToTown.NoMpPotions = true
 	}
 
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !a.ctx.Data.Quests[quest.Act1DenOfEvil].Completed() {
+	// clear den of evil
+	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 4 {
+		a.ctx.Logger.Debug("Current lvl %s under 3 - Leveling in Den of Evil")
 		a.denOfEvil()
+		fmt.Errorf("den of Evil finished")
 	}
 
 	// clear Stony Field until level 9
