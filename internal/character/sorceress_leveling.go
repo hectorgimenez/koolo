@@ -196,8 +196,10 @@ func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
-	if lvl.Value < 20 {
+	if lvl.Value < 11 {
 		statPoints[stat.Vitality] = 9999
+	} else if lvl.Value < 13 {
+		statPoints[stat.Strength] = 25
 	} else {
 		statPoints[stat.Energy] = 80
 		statPoints[stat.Strength] = 60
@@ -218,25 +220,26 @@ func (s SorceressLeveling) SkillPoints() []skill.ID {
 			skill.FireBolt,
 			skill.FireBolt,
 			skill.FrozenArmor,
-			skill.FireBolt,
 			skill.StaticField,
-			skill.FireBolt,
 			skill.Warmth,
 			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
 			skill.Telekinesis,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
 			skill.Teleport,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
 		}
 	} else {
 		skillPoints = []skill.ID{
