@@ -257,16 +257,21 @@ func EnsureSkillBindings() error {
 		utils.Sleep(300)
 
 		availableKB := getAvailableSkillKB()
-
+		ctx.Logger.Debug(fmt.Sprintf("Available KB: %v", availableKB))
+		if len(notBoundSkills) > 0 {
 		for i, sk := range notBoundSkills {
 			skillPosition, found := calculateSkillPositionInUI(false, sk)
 			if !found {
 				continue
 			}
-
+				ctx.Logger.Debug(fmt.Sprintf("Skill position: %v", skillPosition))
 			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
 			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(availableKB[i])
+				ctx.Logger.Debug(fmt.Sprintf("Tried to assign skill to key: %v", availableKB[i]))
+				utils.Sleep(300)
+			}
+		} else {
 			if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); !found {
 				ctx.Logger.Debug("Lvl 1 sorc found - forcing fire bolt bind")
 				if ctx.GameReader.LegacyGraphics() {
@@ -279,7 +284,7 @@ func EnsureSkillBindings() error {
 			utils.Sleep(300)
 			}
 		}
-
+		}
 	}
 
 	if ctx.Data.PlayerUnit.LeftSkill != mainSkill {
