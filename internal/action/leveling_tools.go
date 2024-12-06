@@ -226,11 +226,17 @@ func EnsureSkillBindings() error {
 	}
 
 	mainSkill, skillsToBind := char.SkillsToBind()
+	if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); found {
 	skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+	}
+	if _, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); found {
+		skillsToBind = append(skillsToBind, skill.TomeOfIdentify)
+	}
 	notBoundSkills := make([]skill.ID, 0)
 	for _, sk := range skillsToBind {
-		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && ctx.Data.PlayerUnit.Skills[sk].Level > 0 {
+		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && (sk == skill.TomeOfTownPortal || ctx.Data.PlayerUnit.Skills[sk].Level > 0) {
 			notBoundSkills = append(notBoundSkills, sk)
+			ctx.Logger.Debug(fmt.Sprintf("Skill %v not bound", skill.SkillNames[sk]))
 		}
 	}
 
