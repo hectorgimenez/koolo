@@ -127,7 +127,6 @@ func (s SorceressLeveling) BuffSkills() []skill.ID {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
 
-	s.Logger.Info("Buff skills", "skills", skillsList)
 	return skillsList
 }
 
