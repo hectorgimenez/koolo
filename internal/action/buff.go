@@ -45,6 +45,11 @@ func Buff() {
 		return
 	}
 
+	// Check if we're in loading screen
+	if ctx.Data.OpenMenus.LoadingScreen {
+		ctx.WaitForGameToLoad()
+	}
+
 	preKeys := make([]data.KeyBinding, 0)
 	for _, buff := range ctx.Char.PreCTABuffSkills() {
 		kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
