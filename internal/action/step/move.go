@@ -2,7 +2,6 @@ package step
 
 import (
 	"errors"
-	"log/slog"
 	"math"
 	"time"
 
@@ -80,10 +79,7 @@ func MoveTo(dest data.Position) error {
 			if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
 				return nil
 			}
-			ctx.Logger.Error("Path could not be calculated",
-				slog.Any("destination", dest),
-				slog.Any("player_position", ctx.Data.PlayerUnit.Position),
-				slog.String("area", ctx.Data.PlayerUnit.Area.Area().Name))
+
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
 		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
