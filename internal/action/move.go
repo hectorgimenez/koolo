@@ -83,6 +83,27 @@ func MoveToArea(dst area.ID) error {
 			return data.Position{}, false
 		}
 
+		if ctx.Data.PlayerUnit.Area == area.TamoeHighland && dst == area.MonasteryGate {
+			ctx.Logger.Debug("Monastery Gate detected, moving to static coords")
+			return data.Position{X: 15139, Y: 5056}, true
+		}
+
+		if ctx.Data.PlayerUnit.Area == area.MonasteryGate && dst == area.TamoeHighland {
+			ctx.Logger.Debug("Monastery Gate detected, moving to static coords")
+			return data.Position{X: 15142, Y: 5118}, true
+		}
+
+		// To correctly detect the two possible exits from Lut Gholein
+		if dst == area.RockyWaste && ctx.Data.PlayerUnit.Area == area.LutGholein {
+			if _, _, found := ctx.PathFinder.GetPath(data.Position{X: 5004, Y: 5065}); found {
+				return data.Position{X: 4989, Y: 5063}, true
+			} else {
+				return data.Position{X: 5096, Y: 4997}, true
+			}
+		}
+
+		// This means it's a cave, we don't want to load the map, just find the entrance and interact
+
 		if lvl.IsEntrance {
 			return lvl.Position, true
 		}
