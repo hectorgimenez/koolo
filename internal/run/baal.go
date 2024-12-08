@@ -118,8 +118,10 @@ func (s Baal) Run() error {
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		utils.Sleep(15000)
 		action.Buff()
+
+		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		err = action.InteractObjectByID(baalPortal.ID, func() bool {
+		err = action.InteractObject(baalPortal, func() bool {
 			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
 		})
 		if err != nil {

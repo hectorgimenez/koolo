@@ -2,6 +2,7 @@ package run
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
@@ -100,9 +101,8 @@ func (d Duriel) Run() error {
 		return errors.New("failed to find Duriel's portal after multiple attempts")
 	}
 
-	err = action.InteractObject(portal, func() bool {
-		return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
-	})
+	err = action.InteractObject(portal, nil)
+
 	if err != nil {
 		return err
 	}
