@@ -10,6 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/utils"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -268,6 +269,8 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	ctx := context.Get()
 	ctx.SetLastStep("ensureEnemyIsInRange")
 
+	// TODO: Add an option for telestomp based on the char configuration
+
 	path, distance, found := ctx.PathFinder.GetPath(monster.Position)
 	if !found {
 		// We cannot reach the enemy, let's skip the attack sequence
@@ -277,20 +280,23 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	hasLoS := ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position)
 
 	// We have line of sight, and we are inside the attack range, we can skip
-	if hasLoS && distance < maxDistance {
+	if hasLoS && distance <= maxDistance && distance >= minDistance {
 		return nil
 	}
 
-	for i, pos := range path {
-		distance = len(path) - i
-		if distance > maxDistance {
+	for _, pos := range path {
+
+		// Calculate distance btween the monster and the the position from the path
+		distance = utils.DistanceFromPoint(monster.Position, pos)
+
+		if distance > maxDistance || distance < minDistance {
 			continue
 		}
 
 		// In this case something weird is happening, just telestomp
-		if distance < 2 {
-			return MoveTo(monster.Position)
-		}
+		//if distance < 2 {
+		//	return MoveTo(monster.Position)
+		//}
 
 		if ctx.PathFinder.LineOfSight(pos, monster.Position) {
 			return MoveTo(pos)
