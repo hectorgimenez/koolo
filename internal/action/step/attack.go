@@ -287,7 +287,7 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	for _, pos := range path {
 
 		// Calculate distance btween the monster and the the position from the path
-		distance = utils.DistanceFromPoint(monster.Position, pos)
+		distance = utils.DistanceFromPoint(ctx.Data.AreaData.RelativePosition(monster.Position), pos)
 
 		if distance > maxDistance || distance < minDistance {
 			continue
