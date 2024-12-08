@@ -54,22 +54,25 @@ func MoveToArea(dst area.ID) error {
 	// Disable area correction while intentionally moving between areas
 	ctx.CurrentGame.AreaCorrection.Enabled = false
 
-	// No need to re-enable area correction after - we want it to trigger
-	// only on accidental transitions, not planned one
-
-	// Exception for Arcane Sanctuary portal
+	// Exception for Arcane Sanctuary
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
+		ctx.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
 		portal, _ := ctx.Data.Objects.FindOne(object.ArcaneSanctuaryPortal)
 		MoveToCoords(portal.Position)
-		return step.InteractObject(portal, nil)
+
+		return step.InteractObject(portal, func() bool {
+			return ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary
+		})
 	}
 
-	// Find the level transition
 	lvl := data.Level{}
+	found := false // Track if we've found a valid transition
+
 	for _, a := range ctx.Data.AdjacentLevels {
-		if a.Area == dst {
+		if a.Area == dst && !found { // Only pick the first entrance
 			lvl = a
-			break
+			found = true
+			break // Break immediately after finding first valid entrance
 		}
 	}
 
@@ -103,7 +106,6 @@ func MoveToArea(dst area.ID) error {
 		}
 
 		// This means it's a cave, we don't want to load the map, just find the entrance and interact
-
 		if lvl.IsEntrance {
 			return lvl.Position, true
 		}
@@ -136,10 +138,7 @@ func MoveToArea(dst area.ID) error {
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
 
-	// Store current area to detect unintended transitions
-	startingArea := ctx.Data.PlayerUnit.Area
-
-	if err := ensureAreaSync(ctx, startingArea); err != nil {
+	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 		return err
 	}
 
