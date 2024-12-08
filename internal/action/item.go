@@ -93,3 +93,28 @@ func DropInventoryItem(i data.Item) error {
 
 	return nil
 }
+func IsInLockedInventorySlot(itm data.Item) bool {
+	// Check if item is in inventory
+	if itm.Location.LocationType != item.LocationInventory {
+		return false
+	}
+
+	// Get the lock configuration from character config
+	ctx := context.Get()
+	lockConfig := ctx.CharacterCfg.Inventory.InventoryLock
+	if len(lockConfig) == 0 {
+		return false
+	}
+
+	// Calculate row and column in inventory
+	row := itm.Position.Y
+	col := itm.Position.X
+
+	// Check if position is within bounds
+	if row >= len(lockConfig) || col >= len(lockConfig[0]) {
+		return false
+	}
+
+	// 0 means locked, 1 means unlocked
+	return lockConfig[row][col] == 0
+}
