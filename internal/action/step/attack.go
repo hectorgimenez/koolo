@@ -293,13 +293,13 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 			continue
 		}
 
-		// In this case something weird is happening, just telestomp
-		//if distance < 2 {
-		//	return MoveTo(monster.Position)
-		//}
+		dest := data.Position{
+			X: pos.X + ctx.Data.AreaData.OffsetX,
+			Y: pos.Y + ctx.Data.AreaData.OffsetY,
+		}
 
-		if ctx.PathFinder.LineOfSight(pos, monster.Position) {
-			return MoveTo(pos)
+		if ctx.PathFinder.LineOfSight(dest, monster.Position) {
+			return MoveTo(dest)
 		}
 	}
 
