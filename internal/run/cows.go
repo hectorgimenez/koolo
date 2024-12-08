@@ -142,21 +142,9 @@ func (a Cows) getWirtsLeg() error {
 	if !found {
 		return errors.New("wirt corpse not found")
 	}
-
 	err = action.InteractObject(wirtCorpse, func() bool {
 		return a.hasWirtsLeg()
 	})
-
-	wirtPosition := wirtCorpse.Position
-
-	notOnGoldStacksPos := data.Position{
-		X: wirtPosition.X - 8,
-		Y: wirtPosition.Y + 8,
-	}
-	err = action.MoveToCoords(notOnGoldStacksPos)
-	if err != nil {
-		return err
-	}
 
 	return action.ReturnTown()
 }
