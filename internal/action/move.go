@@ -50,13 +50,12 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	var isEntrance bool
 
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-		ctx.CurrentGame.AreaCorrection.Enabled = !isEntrance
-	}()
+	// Disable area correction while intentionally moving between areas
+	ctx.CurrentGame.AreaCorrection.Enabled = false
+
+	// No need to re-enable area correction after - we want it to trigger
+	// only on accidental transitions, not planned one
 
 	// Exception for Arcane Sanctuary portal
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
@@ -70,7 +69,6 @@ func MoveToArea(dst area.ID) error {
 	for _, a := range ctx.Data.AdjacentLevels {
 		if a.Area == dst {
 			lvl = a
-			isEntrance = a.IsEntrance
 			break
 		}
 	}
@@ -116,13 +114,11 @@ func MoveToArea(dst area.ID) error {
 
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-	}()
 
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+	// Store current area to detect unintended transitions
+	startingArea := ctx.Data.PlayerUnit.Area
+
+	if err := ensureAreaSync(ctx, startingArea); err != nil {
 		return err
 	}
 

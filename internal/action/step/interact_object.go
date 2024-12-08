@@ -24,7 +24,8 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	mouseOverAttempts := 0
 	waitingForInteraction := false
 	currentMouseCoords := data.Position{}
-	lastRun := time.Time{}
+	lastHoverCoords := data.Position{} // Track last successful hover position for portals
+	lastRun := time.Now()
 
 	ctx := context.Get()
 	ctx.SetLastStep("InteractObject")
@@ -45,6 +46,13 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 	for !isCompletedFn() {
 		ctx.PauseIfNotPriority()
+
+		// Check if we're in loading screen
+		if ctx.Data.OpenMenus.LoadingScreen {
+			ctx.Logger.Debug("Loading screen detected, waiting for game to load...")
+			ctx.WaitForGameToLoad()
+			continue
+		}
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
 			return fmt.Errorf("failed interacting with object")
@@ -77,6 +85,11 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			}
 		}
 
+		// Store successful hover position for portals
+		if o.IsHovered && currentMouseCoords != (data.Position{}) && (o.IsPortal() || o.IsRedPortal()) {
+			lastHoverCoords = currentMouseCoords
+		}
+
 		if o.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 			waitingForInteraction = true
@@ -86,6 +99,13 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			if (o.IsPortal() || o.IsRedPortal()) && o.PortalData.DestArea != 0 {
 				startTime := time.Now()
 				for time.Since(startTime) < time.Second*2 {
+					// Check for loading screen during portal transition
+					if ctx.Data.OpenMenus.LoadingScreen {
+						ctx.Logger.Debug("Loading screen detected during portal transition...")
+						ctx.WaitForGameToLoad()
+						break
+					}
+
 					if ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
 						break
 					}
@@ -94,6 +114,12 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 				utils.Sleep(500)
 				for attempts := 0; attempts < maxPortalSyncAttempts; attempts++ {
+					if ctx.Data.OpenMenus.LoadingScreen {
+						ctx.Logger.Debug("Loading screen detected during area sync...")
+						ctx.WaitForGameToLoad()
+						continue
+					}
+
 					if ctx.Data.PlayerUnit.Area == o.PortalData.DestArea {
 						if areaData, ok := ctx.Data.Areas[o.PortalData.DestArea]; ok {
 							if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
@@ -120,15 +146,39 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
 		}
 
+		// Try last successful hover position first for portals
+		if mouseOverAttempts == 0 && lastHoverCoords != (data.Position{}) && (o.IsPortal() || o.IsRedPortal()) {
+			currentMouseCoords = lastHoverCoords
+			ctx.HID.MovePointer(lastHoverCoords.X, lastHoverCoords.Y)
+			mouseOverAttempts++
+			utils.Sleep(100)
+			continue
+		}
+
 		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-		if mouseOverAttempts == 2 && o.IsPortal() {
+		if mouseOverAttempts == 2 && (o.IsPortal() || o.IsRedPortal()) {
 			mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
 		}
 
 		x, y := utils.Spiral(mouseOverAttempts)
+		x = x / 3 // Tighter spiral for better precision
+		y = y / 3
 		currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 		ctx.HID.MovePointer(mX+x, mY+y)
 		mouseOverAttempts++
+		utils.Sleep(100)
+	}
+
+	// After successful portal transition
+	if (obj.IsPortal() || obj.IsRedPortal()) && ctx.Data.PlayerUnit.Area == obj.PortalData.DestArea {
+		if areaData, ok := ctx.Data.Areas[obj.PortalData.DestArea]; ok {
+			if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+				// Enable area correction with this area as expected
+				ctx.CurrentGame.AreaCorrection.Enabled = true
+				ctx.CurrentGame.AreaCorrection.ExpectedArea = obj.PortalData.DestArea
+				return nil
+			}
+		}
 	}
 
 	return nil
