@@ -2,12 +2,13 @@ package pather
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather/astar"
-	"math"
 )
 
 type PathFinder struct {
