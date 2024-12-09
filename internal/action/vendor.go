@@ -48,6 +48,7 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 	if sellJunk {
 		town.SellJunk()
 	}
+	town.BuyConsumables(forceRefill)
 
 	return step.CloseAllMenus()
 }
