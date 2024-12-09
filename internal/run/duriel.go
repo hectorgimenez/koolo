@@ -101,7 +101,10 @@ func (d Duriel) Run() error {
 		return errors.New("failed to find Duriel's portal after multiple attempts")
 	}
 
-	err = action.InteractObject(portal, nil)
+	//Exception: Duriel Lair portal has no destination in memory
+	err = action.InteractObject(portal, func() bool {
+		return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
+	})
 
 	if err != nil {
 		return err

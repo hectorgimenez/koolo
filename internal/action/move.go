@@ -110,7 +110,7 @@ func MoveToArea(dst area.ID) error {
 			return lvl.Position, true
 		}
 
-		// Use objects as destination points for non-entrance areas
+		// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
 		for _, obj := range ctx.Data.Areas[lvl.Area].Objects {
 			if _, _, found := ctx.PathFinder.GetPath(obj.Position); found {
 				return obj.Position, true

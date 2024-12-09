@@ -47,6 +47,7 @@ func UsePortalInTown() error {
 		return err
 	}
 
+	// Perform item pickup after re-entering the portal
 	if err = ItemPickup(40); err != nil {
 		ctx.Logger.Warn("Error during item pickup after portal use", "error", err)
 	}
