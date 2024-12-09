@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -20,6 +21,9 @@ const (
 )
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
+	ctx := context.Get()
+	ctx.SetLastStep("InteractObject")
+
 	interactionAttempts := 0
 	mouseOverAttempts := 0
 	waitingForInteraction := false
@@ -27,12 +31,25 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	lastHoverCoords := data.Position{} // Track last successful hover position for portals
 	lastRun := time.Now()
 
-	ctx := context.Get()
-	ctx.SetLastStep("InteractObject")
-
 	// If no completion check provided, default to waiting for interaction
 	if isCompletedFn == nil {
 		isCompletedFn = func() bool {
+
+			if strings.EqualFold(string(obj.Name), "Bank") {
+				return ctx.Data.OpenMenus.Stash
+			}
+			// For chests, check mode and selectability
+			if obj.IsChest() {
+				chest, found := ctx.Data.Objects.FindByID(obj.ID)
+				// Since opening a chest is immediate and the mode changes right away,
+				// we can return true as soon as we see these states
+				if !found || chest.Mode == mode.ObjectModeOperating || chest.Mode == mode.ObjectModeOpened {
+					return true
+				}
+				// Also return true if no longer selectable (as a fallback)
+				return !chest.Selectable
+			}
+
 			return waitingForInteraction
 		}
 	}
@@ -47,13 +64,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	for !isCompletedFn() {
 		ctx.PauseIfNotPriority()
 
-		// Check if we're in loading screen
-		if ctx.Data.OpenMenus.LoadingScreen {
-			ctx.Logger.Debug("Loading screen detected, waiting for game to load...")
-			ctx.WaitForGameToLoad()
-			continue
-		}
-
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
 			return fmt.Errorf("failed interacting with object")
 		}
@@ -61,7 +71,10 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.RefreshGameData()
 
 		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
-			continue
+			// For chests, we can check more frequently since the state changes fast
+			if !obj.IsChest() || time.Since(lastRun) < time.Millisecond*50 {
+				continue
+			}
 		}
 
 		var o data.Object
@@ -82,6 +95,12 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			if o.Mode == mode.ObjectModeOperating || o.Mode != mode.ObjectModeOpened {
 				utils.Sleep(100)
 				continue
+			}
+		}
+
+		if o.IsChest() {
+			if o.Mode == mode.ObjectModeOperating {
+				continue // Skip if chest is already being opened
 			}
 		}
 
@@ -114,11 +133,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 				utils.Sleep(500)
 				for attempts := 0; attempts < maxPortalSyncAttempts; attempts++ {
-					if ctx.Data.OpenMenus.LoadingScreen {
-						ctx.Logger.Debug("Loading screen detected during area sync...")
-						ctx.WaitForGameToLoad()
-						continue
-					}
 
 					if ctx.Data.PlayerUnit.Area == o.PortalData.DestArea {
 						if areaData, ok := ctx.Data.Areas[o.PortalData.DestArea]; ok {
@@ -161,7 +175,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		}
 
 		x, y := utils.Spiral(mouseOverAttempts)
-		x = x / 3 // Tighter spiral for better precision
+		x = x / 3
 		y = y / 3
 		currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 		ctx.HID.MovePointer(mX+x, mY+y)
