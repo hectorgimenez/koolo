@@ -20,14 +20,15 @@ type DropData struct {
 }
 
 type CharacterSettings struct {
-	ErrorMessage string
-	Supervisor   string
-	Config       *config.CharacterCfg
-	DayNames     []string
-	EnabledRuns  []string
-	DisabledRuns []string
-	AvailableTZs map[int]string
-	RecipeList   []string
+	ErrorMessage     string
+	Supervisor       string
+	Config           *config.CharacterCfg
+	DayNames         []string
+	EnabledRuns      []string
+	DisabledRuns     []string
+	AvailableTZs     map[int]string
+	RecipeList       []string
+	SocketRecipeList []string
 }
 
 type ConfigData struct {
