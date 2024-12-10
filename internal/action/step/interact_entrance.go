@@ -36,22 +36,6 @@ func InteractEntrance(area area.ID) error {
 	lastAttempt := time.Time{}
 	useOriginalSpiral := false
 
-	// Find the entrance object at the target position
-	var entranceObj data.Object
-	var foundEntranceObj bool
-	for _, obj := range ctx.Data.Objects {
-		if obj.Position == targetLevel.Position {
-			entranceObj = obj
-			foundEntranceObj = true
-			break
-		}
-	}
-
-	// If we can't find the entrance object, we'll only use the original spiral
-	if !foundEntranceObj {
-		useOriginalSpiral = true
-	}
-
 	for {
 		ctx.PauseIfNotPriority()
 
@@ -105,15 +89,14 @@ func InteractEntrance(area area.ID) error {
 			continue
 		}
 
-		baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X-2, targetLevel.Position.Y-2)
+		baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X, targetLevel.Position.Y)
 		var x, y int
 		if useOriginalSpiral {
 			x, y = utils.Spiral(attempts)
 			x = x / 3
 			y = y / 3
 		} else {
-			desc := entranceObj.Desc()
-			x, y = entranceSpiral(attempts, desc.SizeX, desc.SizeY)
+			x, y = entranceSpiral(attempts)
 		}
 
 		currentMouseCoords = data.Position{X: baseX + x, Y: baseY + y}
@@ -188,44 +171,24 @@ func attemptInteraction(ctx *context.Status, pos data.Position) {
 	}
 	utils.Sleep(200)
 }
-func entranceSpiral(attempt int, sizeX, sizeY int) (x, y int) {
-	// Use golden ratio angle distribution for all cases
-	baseRadius := float64(attempt) * 3.0
+func entranceSpiral(attempt int) (x, y int) {
+	// Entrance hitbox is wider than tall and higher up than center
+	baseRadius := float64(attempt) * 2.5
 	angle := float64(attempt) * math.Pi * (3.0 - math.Sqrt(5.0))
 
-	// If entrance has no dimensions (size 0), use default entrance pattern
-	if sizeX == 0 || sizeY == 0 {
-		xScale := 1.2 // Wider search pattern
-		yScale := 0.8 // Shorter vertical search
+	// Scale x/y to match entrance hitbox shape
+	xScale := 1.2 // Wider search pattern
+	yScale := 0.8 // Shorter vertical search
 
-		x = int(baseRadius * math.Cos(angle) * xScale)
-		y = int(baseRadius * math.Sin(angle) * yScale)
-
-		// Add a slight upward bias for entrances
-		y -= 35
-
-		// Use fixed bounds for zero-dimension entrances
-		x = utils.Clamp(x, -30, 30)
-		y = utils.Clamp(y, -50, 10)
-
-		return x, y
-	}
-
-	// For entrances with dimensions, use size-based scaling
-	xScale := 1.2
-	yScale := 0.8
-	if sizeY > sizeX {
-		// Adjust scales for vertical entrances
-		xScale = 1.4
-		yScale = 0.7
-	}
+	// Offset y upward since clickable area is above visual center
+	yOffset := -35
 
 	x = int(baseRadius * math.Cos(angle) * xScale)
-	y = int(baseRadius * math.Sin(angle) * yScale)
-	y -= 40
+	y = int(baseRadius*math.Sin(angle)*yScale) + yOffset
 
-	x = utils.Clamp(x, -35, 35)
-	y = utils.Clamp(y, -60, 0)
+	// Clamp to entrance clickable bounds
+	x = utils.Clamp(x, -30, 30)
+	y = utils.Clamp(y, -50, 10)
 
 	return x, y
 }
