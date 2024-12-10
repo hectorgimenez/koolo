@@ -107,12 +107,11 @@ func alreadyFilled(item data.Item) bool {
 		stat.AllSkills,
 	}
 
-	// Check each stat on the item
 	for _, itemStat := range item.Stats {
 
-		// Special case for Auric Shields with ColdResist
+		// White pala shields can have all resist
 		if (itemStat.ID == stat.ColdResist || itemStat.ID == stat.FireResist || itemStat.ID == stat.LightningResist || itemStat.ID == stat.PoisonResist) && item.Type().Name == "Auric Shields" {
-			continue // Allow AllResists on Auric Shields
+			continue
 		}
 
 		statAllowed := false
@@ -124,17 +123,16 @@ func alreadyFilled(item data.Item) bool {
 		}
 
 		if !statAllowed {
-			return true // Item has unwanted stats
+			return true // item sockets probably already filled
 		}
 	}
 
-	return false // All stats are allowed
+	return false
 }
 
 func hasBaseForSocketRecipe(items []data.Item, sockrecipe SocketRecipe) (data.Item, bool) {
-	// Iterate through items to find matching base
+
 	for _, item := range items {
-		// Get item type
 		itemType := item.Type().Name
 
 		// Check if item type matches any of the allowed base types
@@ -150,7 +148,6 @@ func hasBaseForSocketRecipe(items []data.Item, sockrecipe SocketRecipe) (data.It
 			continue
 		}
 
-		// Check socket count
 		sockets, found := item.FindStat(stat.NumSockets, 0)
 		if !found || sockets.Value != sockrecipe.BaseSockets {
 			continue
@@ -160,11 +157,9 @@ func hasBaseForSocketRecipe(items []data.Item, sockrecipe SocketRecipe) (data.It
 		if alreadyFilled(item) {
 			continue
 		}
-		// Found valid base item
 		return item, true
 	}
 
-	// No valid base found
 	return data.Item{}, false
 }
 
@@ -196,7 +191,6 @@ func hasItemsForSocketRecipe(items []data.Item, sockrecipe SocketRecipe) ([]data
 		}
 	}
 
-	// We don't have all the items for the recipie.
 	return nil, false
 }
 func SetSocketRecipes() error {
@@ -207,7 +201,6 @@ func SetSocketRecipes() error {
 	basesInStash := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
 
 	for _, recipe := range SocketRecipes {
-		// Check if the current recipe is Enabled
 		if !slices.Contains(ctx.CharacterCfg.Game.Leveling.EnabledSocketRecipes, recipe.Name) {
 			continue
 		}
@@ -222,7 +215,6 @@ func SetSocketRecipes() error {
 					if inserts, hasInserts := hasItemsForSocketRecipe(insertsInStash, recipe); hasInserts {
 
 						TakeItemsFromStash([]data.Item{baseItems})
-						// Refresh game state
 						baseToUse, _ := ctx.Data.Inventory.FindByID(baseItems.UnitID)
 						TakeItemsFromStash(inserts)
 						itemsToUse := inserts
@@ -235,7 +227,6 @@ func SetSocketRecipes() error {
 					} else {
 						continueProcessing = false
 					}
-					// Remove or decrement the used items from basesInStash
 					basesInStash = RemoveUsedItems(basesInStash, []data.Item{baseItems})
 				} else {
 					continueProcessing = false
@@ -251,13 +242,11 @@ func SocketItems(ctx *context.Status, recipe SocketRecipe, base data.Item, items
 	ctx.SetLastAction("SocketItem")
 	itemsInInv := ctx.Data.Inventory.ByLocation(item.LocationInventory)
 
-	// Count required inserts
 	requiredCounts := make(map[string]int)
 	for _, insert := range recipe.Inserts {
 		requiredCounts[insert]++
 	}
 
-	// Track which items we've used
 	usedItems := make(map[*data.Item]bool)
 	orderedItems := make([]data.Item, 0)
 
@@ -273,7 +262,6 @@ func SocketItems(ctx *context.Status, recipe SocketRecipe, base data.Item, items
 		}
 	}
 
-	// Process items in correct order
 	for _, itm := range orderedItems {
 
 		basescreenPos := ui.GetScreenCoordsForItem(base)
