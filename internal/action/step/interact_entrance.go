@@ -134,18 +134,22 @@ func ensureInRange(ctx *context.Status, pos data.Position) error {
 		return nil
 	}
 
+	// Direct MoveTo for longer distances
+	if distance >= 7 {
+		return MoveTo(pos)
+	}
+
+	// For shorter distances, try clicking
 	for retry := 0; retry < maxMoveRetries; retry++ {
 		if ctx.Data.OpenMenus.LoadingScreen {
 			ctx.WaitForGameToLoad()
 			break
 		}
 
-		if err := MoveTo(pos); err != nil {
-			screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(pos.X-2, pos.Y-2)
-			ctx.HID.Click(game.LeftButton, screenX, screenY)
-			utils.Sleep(800)
-			ctx.RefreshGameData()
-		}
+		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(pos.X-2, pos.Y-2)
+		ctx.HID.Click(game.LeftButton, screenX, screenY)
+		utils.Sleep(800)
+		ctx.RefreshGameData()
 
 		if ctx.PathFinder.DistanceFromMe(pos) <= maxEntranceDistance {
 			return nil
