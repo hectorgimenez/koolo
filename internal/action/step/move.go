@@ -79,7 +79,6 @@ func MoveTo(dest data.Position) error {
 			if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
 				return nil
 			}
-
 			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
 		}
 		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
