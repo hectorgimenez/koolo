@@ -195,8 +195,10 @@ type CharacterCfg struct {
 			Areas             []area.ID     `yaml:"areas"`
 		} `yaml:"terror_zone"`
 		Leveling struct {
-			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
-			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
+			EnsurePointsAllocation bool     `yaml:"ensurePointsAllocation"`
+			EnsureKeyBinding       bool     `yaml:"ensureKeyBinding"`
+			EnableSocketing        bool     `yaml:"enableSocketing"`
+			EnabledSocketRecipes   []string `yaml:"enabledSocketRecipes"`
 		} `yaml:"leveling"`
 		Quests struct {
 			ClearDen       bool `yaml:"clearDen"`

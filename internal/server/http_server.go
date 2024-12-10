@@ -893,6 +893,11 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 
+		// Socket Recipes
+		cfg.Game.Leveling.EnableSocketing = r.Form.Has("gameLevelingEnableSocketing")
+		enabledSocketRecipes := r.Form["gameLevelingEnabledSocketRecipes"]
+		cfg.Game.Leveling.EnabledSocketRecipes = enabledSocketRecipes
+
 		// Quests options for Act 1
 		cfg.Game.Quests.ClearDen = r.Form.Has("gameQuestsClearDen")
 		cfg.Game.Quests.RescueCain = r.Form.Has("gameQuestsRescueCain")
@@ -986,12 +991,13 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 	dayNames := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 
 	s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
-		Supervisor:   supervisor,
-		Config:       cfg,
-		DayNames:     dayNames,
-		EnabledRuns:  enabledRuns,
-		DisabledRuns: disabledRuns,
-		AvailableTZs: availableTZs,
-		RecipeList:   config.AvailableRecipes,
+		Supervisor:       supervisor,
+		Config:           cfg,
+		DayNames:         dayNames,
+		EnabledRuns:      enabledRuns,
+		DisabledRuns:     disabledRuns,
+		AvailableTZs:     availableTZs,
+		RecipeList:       config.AvailableRecipes,
+		SocketRecipeList: config.AvailableSocketRecipes,
 	})
 }
