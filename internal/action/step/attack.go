@@ -270,17 +270,19 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	ctx := context.Get()
 	ctx.SetLastStep("ensureEnemyIsInRange")
 
+	// TODO: Add an option for telestomp based on the char configuration
 	currentPos := ctx.Data.PlayerUnit.Position
 	distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
 	hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
 
-	// Standard distance and LOS check first
+	// We have line of sight, and we are inside the attack range, we can skip
 	if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance {
 		return nil
 	}
 
 	// Get path to monster
 	path, _, found := ctx.PathFinder.GetPath(monster.Position)
+	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
 		return errors.New("path could not be calculated")
 	}
