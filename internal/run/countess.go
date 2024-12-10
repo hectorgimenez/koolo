@@ -49,9 +49,11 @@ func (c Countess) Run() error {
 
 	// Try to move around Countess area
 	action.MoveTo(func() (data.Position, bool) {
-		for _, o := range c.ctx.Data.Objects {
-			if o.Name == object.GoodChest {
-				return o.Position, true
+		if areaData, ok := context.Get().GameReader.GetData().Areas[area.TowerCellarLevel5]; ok {
+			for _, o := range areaData.Objects {
+				if o.Name == object.GoodChest {
+					return o.Position, true
+				} // Countess Chest position from 1.13c fetch
 			}
 		}
 
