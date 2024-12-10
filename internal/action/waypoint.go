@@ -62,8 +62,10 @@ func WayPoint(dest area.ID) error {
 		return err
 	}
 
-	// Set ExpectedArea after successful waypoint use, but only if it's not a town
+	// Area Correction will work after using waypoint or interacting with entrance.
+	// if MoveToArea then we dont need because its intended trip
 	ctx.CurrentGame.AreaCorrection.ExpectedArea = dest
+	ctx.CurrentGame.AreaCorrection.Enabled = true
 
 	// Wait for the game to load after using the waypoint
 	ctx.WaitForGameToLoad()
