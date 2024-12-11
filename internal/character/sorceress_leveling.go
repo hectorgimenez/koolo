@@ -21,14 +21,16 @@ type SorceressLeveling struct {
 }
 
 const (
-	SorceressLevelingMaxAttacksLoop = 10
-	SorceressLevelingMinDistance    = 25
-	SorceressLevelingMaxDistance    = 30
-	SorceressLevelingMeleeDistance  = 3
+	SorceressLevelingMaxAttacksLoop    = 10
+	SorceressLevelingMinDistance       = 25
+	SorceressLevelingMaxDistance       = 30
+	SorceressLevelingMeleeDistance     = 3
+	SorceressLevelingStaticMinDistance = 2
+	SorceressLevelingStaticMaxDistance = 2
 )
 
 func (s SorceressLeveling) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -50,6 +52,7 @@ func (s SorceressLeveling) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	staticFieldCast := false
 
 	for {
 		id, found := monsterSelector(*s.Data)
@@ -74,6 +77,18 @@ func (s SorceressLeveling) KillMonsterSequence(
 			return nil
 		}
 
+		// Cast Static Field first if needed
+		if !staticFieldCast && s.shouldCastStaticField(monster) {
+			staticOpts := []step.AttackOption{
+				step.RangedDistance(SorceressLevelingStaticMinDistance, SorceressLevelingStaticMaxDistance),
+			}
+
+			if err := step.SecondaryAttack(skill.StaticField, monster.UnitID, 1, staticOpts...); err == nil {
+				staticFieldCast = true
+				continue
+			}
+		}
+
 		lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 		if s.Data.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
 			s.Logger.Debug("Low mana, using primary attack")
@@ -91,6 +106,10 @@ func (s SorceressLeveling) KillMonsterSequence(
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.IceBolt); found {
 				s.Logger.Debug("Using IceBolt")
 				step.SecondaryAttack(skill.IceBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
+				s.Logger.Debug("Using FireBolt")
+				step.SecondaryAttack(skill.FireBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+
 			} else {
 				s.Logger.Debug("No secondary skills available, using primary attack")
 				step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
@@ -99,6 +118,51 @@ func (s SorceressLeveling) KillMonsterSequence(
 
 		completedAttackLoops++
 		previousUnitID = int(id)
+	}
+}
+
+func (s SorceressLeveling) shouldCastStaticField(monster data.Monster) bool {
+	// Only cast Static Field if monster HP is above threshold
+	maxLife := float64(monster.Stats[stat.MaxLife])
+	if maxLife == 0 {
+		return false
+	}
+
+	hpPercentage := (float64(monster.Stats[stat.Life]) / maxLife) * 100
+	return hpPercentage > StaticFieldThreshold
+}
+
+func (s SorceressLeveling) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
+	ctx := context.Get()
+
+	for {
+		ctx.PauseIfNotPriority()
+
+		boss, found := s.Data.Monsters.FindOne(bossID, monsterType)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil
+		}
+
+		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
+		// TODO Remove this hardcoding
+		thresholdFloat := float64(52)
+
+		// Cast Static Field until boss HP is below threshold
+		if bossHPPercent > thresholdFloat {
+			staticOpts := []step.AttackOption{
+				step.Distance(SorceressLevelingStaticMinDistance, SorceressLevelingStaticMaxDistance),
+			}
+			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, staticOpts...)
+			if err != nil {
+				s.Logger.Warn("Failed to cast Static Field", slog.String("error", err.Error()))
+			}
+			continue
+		}
+
+		// Switch to Nova once boss HP is low enough
+		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			return boss.UnitID, true
+		}, nil)
 	}
 }
 
@@ -123,7 +187,6 @@ func (s SorceressLeveling) BuffSkills() []skill.ID {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
 
-	s.Logger.Info("Buff skills", "skills", skillsList)
 	return skillsList
 }
 
@@ -155,7 +218,8 @@ func (s SorceressLeveling) ShouldResetSkills() bool {
 func (s SorceressLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 	level, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	skillBindings := []skill.ID{
-		skill.TomeOfTownPortal,
+		//skill.TomeOfTownPortal,
+		skill.FireBolt,
 	}
 
 	if level.Value >= 4 {
@@ -193,8 +257,10 @@ func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
-	if lvl.Value < 20 {
+	if lvl.Value < 11 {
 		statPoints[stat.Vitality] = 9999
+	} else if lvl.Value < 13 {
+		statPoints[stat.Strength] = 25
 	} else {
 		statPoints[stat.Energy] = 80
 		statPoints[stat.Strength] = 60
@@ -215,25 +281,26 @@ func (s SorceressLeveling) SkillPoints() []skill.ID {
 			skill.FireBolt,
 			skill.FireBolt,
 			skill.FrozenArmor,
-			skill.FireBolt,
 			skill.StaticField,
-			skill.FireBolt,
 			skill.Warmth,
 			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBolt,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
 			skill.Telekinesis,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
 			skill.Teleport,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
 		}
 	} else {
 		skillPoints = []skill.ID{

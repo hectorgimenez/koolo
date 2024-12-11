@@ -1,8 +1,16 @@
 package action
 
 import (
+	"fmt"
 	"slices"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -10,13 +18,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/lxn/win"
-
-	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 )
 
 var uiStatButtonPosition = map[stat.ID]data.Position{
@@ -52,62 +53,96 @@ var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
 func EnsureStatPoints() error {
-	// TODO finish this
-	return nil
-	//return NewStepChain(func(d game.Data) []step.Step {
-	//	char, isLevelingChar := b.ch.(LevelingCharacter)
-	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-	//	if !isLevelingChar || !unusedStatPoints {
-	//		if d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKey(win.VK_ESCAPE)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		return nil
-	//	}
-	//
-	//	for st, targetPoints := range char.StatPoints(d) {
-	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-	//		if !found || currentPoints.Value >= targetPoints {
-	//			continue
-	//		}
-	//
-	//		if !d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		var statBtnPosition data.Position
-	//		if d.LegacyGraphics {
-	//			statBtnPosition = uiStatButtonPositionLegacy[st]
-	//		} else {
-	//			statBtnPosition = uiStatButtonPosition[st]
-	//		}
-	//
-	//		return []step.Step{
-	//			step.SyncStep(func(_ game.Data) error {
-	//				utils.Sleep(100)
-	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				utils.Sleep(500)
-	//				return nil
-	//			}),
-	//		}
-	//	}
-	//
-	//	return nil
-	//}, RepeatUntilNoSteps())
+	ctx := context.Get()
+
+	for {
+		char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+		_, unusedStatPoints := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+		ctx.Logger.Debug(fmt.Sprintf("Checking stat points for %v", char.StatPoints()))
+		if !isLevelingChar || !unusedStatPoints {
+			if ctx.Data.OpenMenus.Character {
+				return step.CloseAllMenus()
+			}
+			return nil
+		}
+		for st, targetPoints := range char.StatPoints() {
+			currentPoints, found := ctx.Data.PlayerUnit.FindStat(st, 0)
+			if !found || currentPoints.Value >= targetPoints {
+				return nil
+			}
+
+			if !ctx.Data.OpenMenus.Character {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
+				//	return nil
+			}
+
+			var statBtnPosition data.Position
+			if ctx.Data.LegacyGraphics {
+				statBtnPosition = uiStatButtonPositionLegacy[st]
+			} else {
+				statBtnPosition = uiStatButtonPosition[st]
+			}
+
+			utils.Sleep(100)
+			ctx.Logger.Debug(fmt.Sprintf("Adding stat points to %v", st))
+			ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+			utils.Sleep(500)
+
+		}
+	}
 }
 
 func EnsureSkillPoints() error {
-	// TODO finish this
+	ctx := context.Get()
+
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	_, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+
+	if !isLevelingChar || !unusedSkillPoints {
+		if ctx.Data.OpenMenus.SkillTree {
+			ctx.HID.PressKey(win.VK_ESCAPE)
+
+		}
+		return nil
+	}
+	assignedPoints := make(map[skill.ID]int)
+	for _, sk := range char.SkillPoints() {
+		currentPoints, found := assignedPoints[sk]
+		if !found {
+			currentPoints = 0
+		}
+
+		assignedPoints[sk] = currentPoints + 1
+
+		characterPoints, found := ctx.Data.PlayerUnit.Skills[sk]
+		if !found || int(characterPoints.Level) < assignedPoints[sk] {
+			skillDesc, skFound := skill.Desc[sk]
+			if !skFound {
+				ctx.Logger.Error(fmt.Sprintf("skill not found for character: %v", sk))
+				return nil
+			}
+
+			if !ctx.Data.OpenMenus.SkillTree {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+			}
+
+			utils.Sleep(100)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+			}
+			utils.Sleep(200)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+			}
+			utils.Sleep(500)
+			return step.CloseAllMenus()
+		}
+	}
+
 	return nil
 	//ctx := context.Get()
 	//
@@ -192,32 +227,61 @@ func EnsureSkillBindings() error {
 	}
 
 	mainSkill, skillsToBind := char.SkillsToBind()
-	skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+	if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); found {
+		skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+	}
+
 	notBoundSkills := make([]skill.ID, 0)
 	for _, sk := range skillsToBind {
-		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && ctx.Data.PlayerUnit.Skills[sk].Level > 0 {
+		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && (sk == skill.TomeOfTownPortal || ctx.Data.PlayerUnit.Skills[sk].Level > 0) {
 			notBoundSkills = append(notBoundSkills, sk)
+			ctx.Logger.Debug(fmt.Sprintf("Skill %v not bound", skill.SkillNames[sk]))
 		}
 	}
 
-	if len(notBoundSkills) > 0 {
-		ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+	clvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0)
+	//Hacky way to find if we're lvling a sorc at clvl 1
+	str, _ := ctx.Data.PlayerUnit.FindStat(stat.Strength, 0)
+
+	if len(notBoundSkills) > 0 || (clvl.Value == 1 && str.Value == 10) {
+		ctx.Logger.Debug("Unbound skills found, trying to bind")
+		if ctx.GameReader.LegacyGraphics() {
+			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic)
+		} else {
+			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+		}
+
 		utils.Sleep(300)
 		ctx.HID.MovePointer(10, 10)
 		utils.Sleep(300)
 
 		availableKB := getAvailableSkillKB()
-
-		for i, sk := range notBoundSkills {
-			skillPosition, found := calculateSkillPositionInUI(false, sk)
-			if !found {
-				continue
+		ctx.Logger.Debug(fmt.Sprintf("Available KB: %v", availableKB))
+		if len(notBoundSkills) > 0 {
+			for i, sk := range notBoundSkills {
+				skillPosition, found := calculateSkillPositionInUI(false, sk)
+				if !found {
+					continue
+				}
+				ctx.Logger.Debug(fmt.Sprintf("Skill position: %v", skillPosition))
+				ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(availableKB[i])
+				ctx.Logger.Debug(fmt.Sprintf("Tried to assign skill to key: %v", availableKB[i]))
+				utils.Sleep(300)
 			}
-
-			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(availableKB[i])
-			utils.Sleep(300)
+		} else {
+			if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); !found {
+				ctx.Logger.Debug("Lvl 1 sorc found - forcing fire bolt bind")
+				if ctx.GameReader.LegacyGraphics() {
+					ctx.HID.MovePointer(1000, 530)
+				} else {
+					ctx.HID.MovePointer(685, 545)
+				}
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(availableKB[0])
+				utils.Sleep(300)
+			}
 		}
 
 	}
@@ -241,13 +305,13 @@ func EnsureSkillBindings() error {
 }
 
 func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position, bool) {
-	d := context.Get().Data
+	ctx := context.Get()
 
 	var scrolls = []skill.ID{
-		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
+		skill.ScrollOfIdentify, skill.TomeOfIdentify, skill.ScrollOfTownPortal, skill.TomeOfTownPortal,
 	}
 
-	if _, found := d.PlayerUnit.Skills[skillID]; !found {
+	if _, found := ctx.Data.PlayerUnit.Skills[skillID]; !found {
 		return data.Position{}, false
 	}
 
@@ -257,7 +321,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 	totalRows := make([]int, 0)
 	column := 0
 	skillsWithCharges := 0
-	for skID, points := range d.PlayerUnit.Skills {
+	for skID, points := range ctx.Data.PlayerUnit.Skills {
 		sk := skill.Skills[skID]
 		// Skip skills that can not be bind
 		if sk.Desc().ListRow < 0 {
@@ -280,17 +344,14 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 		descs[skID] = sk
 
 		if skID != targetSkill.ID && sk.Desc().Page == targetSkill.Desc().Page {
-			if sk.Desc().ListRow > targetSkill.Desc().ListRow {
+			if sk.Desc().Row < targetSkill.Desc().Row {
 				column++
-			} else if sk.Desc().ListRow == targetSkill.Desc().ListRow && sk.Desc().Column > targetSkill.Desc().Column {
+			} else if sk.Desc().Row == targetSkill.Desc().Row && sk.Desc().Column < targetSkill.Desc().Column {
 				column++
 			}
 		}
 
-		totalRows = append(totalRows, sk.Desc().ListRow)
-		if row == targetSkill.Desc().ListRow {
-			continue
-		}
+		totalRows = append(totalRows, sk.Desc().Page)
 
 		row++
 	}
@@ -300,7 +361,7 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 
 	// If we don't have any skill of a specific tree, the entire row gets one line down
 	for i, currentRow := range totalRows {
-		if currentRow == row {
+		if currentRow == targetSkill.Desc().Page {
 			row = i
 			break
 		}
@@ -309,9 +370,9 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 	// Scrolls and charges are not in the same list
 	if slices.Contains(scrolls, skillID) {
 		column = skillsWithCharges
-		row = len(totalRows)
+		row = len(totalRows) + 1
 		for _, skID := range scrolls {
-			if d.PlayerUnit.Skills[skID].Quantity > 0 {
+			if ctx.Data.PlayerUnit.Skills[skID].Quantity > 0 {
 				if skID == skillID {
 					break
 				}
@@ -320,15 +381,27 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 		}
 	}
 
-	skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
-	if !mainSkill {
-		skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
-	}
+	if ctx.GameReader.LegacyGraphics() {
+		skillOffsetX := ui.MainSkillListFirstSkillXClassic - (ui.SkillListSkillOffsetClassic * column)
+		if !mainSkill {
+			skillOffsetX = ui.SecondarySkillListFirstSkillXClassic - (ui.SkillListSkillOffsetClassic * column)
+		}
 
-	return data.Position{
-		X: skillOffsetX,
-		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
-	}, true
+		return data.Position{
+			X: skillOffsetX,
+			Y: ui.SkillListFirstSkillYClassic - ui.SkillListSkillOffsetClassic*row,
+		}, true
+	} else {
+		skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
+		if !mainSkill {
+			skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
+		}
+
+		return data.Position{
+			X: skillOffsetX,
+			Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
+		}, true
+	}
 }
 
 func HireMerc() error {
