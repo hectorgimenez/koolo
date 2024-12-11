@@ -14,20 +14,20 @@ import (
 )
 
 const (
-	NovaMinDistance      = 3
-	NovaMaxDistance      = 7
-	StaticMinDistance    = 1
-	StaticMaxDistance    = 3
-	NovaMaxAttacksLoop   = 40
-	StaticFieldThreshold = 67 // Cast Static Field if monster HP is above this percentage
+	LightningMinDistance          = 5
+	LightningMaxDistance          = 15
+	LightningStaticMinDistance    = 1
+	LightningStaticMaxDistance    = 3
+	LightningMaxAttacksLoop       = 40
+	LightningStaticFieldThreshold = 67 // Cast Static Field if monster HP is above this percentage
 )
 
-type NovaSorceress struct {
+type LightningSorceress struct {
 	BaseCharacter
 }
 
-func (s NovaSorceress) CheckKeyBindings() []skill.ID {
-	requiredKeybindings := []skill.ID{skill.Nova, skill.Teleport, skill.TomeOfTownPortal, skill.StaticField}
+func (s LightningSorceress) CheckKeyBindings() []skill.ID {
+	requiredKeybindings := []skill.ID{skill.ChainLightning, skill.Teleport, skill.TomeOfTownPortal, skill.StaticField, skill.ShiverArmor}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requiredKeybindings {
@@ -56,13 +56,17 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
-func (s NovaSorceress) KillMonsterSequence(
+func (s LightningSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
 	ctx := context.Get()
 	completedAttackLoops := 0
 	staticFieldCast := false
+	ldOpts := step.Distance(LightningMinDistance, LightningMaxDistance)
+	lightningOpts := []step.AttackOption{
+		step.RangedDistance(LightningMinDistance, LightningMaxDistance),
+	}
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -84,7 +88,7 @@ func (s NovaSorceress) KillMonsterSequence(
 		// Cast Static Field first if needed
 		if !staticFieldCast && s.shouldCastStaticField(monster) {
 			staticOpts := []step.AttackOption{
-				step.RangedDistance(StaticMinDistance, StaticMaxDistance),
+				step.RangedDistance(LightningStaticMinDistance, LightningStaticMaxDistance),
 			}
 
 			if err := step.SecondaryAttack(skill.StaticField, monster.UnitID, 1, staticOpts...); err == nil {
@@ -93,21 +97,29 @@ func (s NovaSorceress) KillMonsterSequence(
 			}
 		}
 
-		novaOpts := []step.AttackOption{
-			step.RangedDistance(NovaMinDistance, NovaMaxDistance),
+		if monster.Name == npc.Andariel ||
+			monster.Name == npc.Duriel ||
+			monster.Name == npc.Mephisto ||
+			monster.Name == npc.Diablo ||
+			monster.Name == npc.BaalCrab ||
+			monster.Name == npc.Izual {
+			if err := step.PrimaryAttack(monster.UnitID, 1, true, ldOpts); err == nil {
+				completedAttackLoops++
+			}
+		} else {
+			if err := step.SecondaryAttack(skill.ChainLightning, monster.UnitID, 1, lightningOpts...); err == nil {
+				completedAttackLoops++
+			}
 		}
 
-		if err := step.SecondaryAttack(skill.Nova, monster.UnitID, 1, novaOpts...); err == nil {
-			completedAttackLoops++
-		}
-
-		if completedAttackLoops >= NovaMaxAttacksLoop {
+		if completedAttackLoops >= LightningMaxAttacksLoop {
 			completedAttackLoops = 0
 			staticFieldCast = false
 		}
 	}
 }
-func (s NovaSorceress) shouldCastStaticField(monster data.Monster) bool {
+
+func (s LightningSorceress) shouldCastStaticField(monster data.Monster) bool {
 	// Only cast Static Field if monster HP is above threshold
 	maxLife := float64(monster.Stats[stat.MaxLife])
 	if maxLife == 0 {
@@ -115,10 +127,10 @@ func (s NovaSorceress) shouldCastStaticField(monster data.Monster) bool {
 	}
 
 	hpPercentage := (float64(monster.Stats[stat.Life]) / maxLife) * 100
-	return hpPercentage > StaticFieldThreshold
+	return hpPercentage > LightningStaticFieldThreshold
 }
 
-func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
+func (s LightningSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
 	ctx := context.Get()
 
 	for {
@@ -135,7 +147,7 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 		// Cast Static Field until boss HP is below threshold
 		if bossHPPercent > thresholdFloat {
 			staticOpts := []step.AttackOption{
-				step.Distance(StaticMinDistance, StaticMaxDistance),
+				step.Distance(LightningStaticMinDistance, LightningStaticMaxDistance),
 			}
 			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, staticOpts...)
 			if err != nil {
@@ -144,14 +156,14 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 			continue
 		}
 
-		// Switch to Nova once boss HP is low enough
+		// Switch to Lightning once boss HP is low enough
 		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 			return boss.UnitID, true
 		}, nil)
 	}
 }
 
-func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
+func (s LightningSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
@@ -161,7 +173,7 @@ func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType
 	}, skipOnImmunities)
 }
 
-func (s NovaSorceress) BuffSkills() []skill.ID {
+func (s LightningSorceress) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
 	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
@@ -181,23 +193,23 @@ func (s NovaSorceress) BuffSkills() []skill.ID {
 	return skillsList
 }
 
-func (s NovaSorceress) PreCTABuffSkills() []skill.ID {
+func (s LightningSorceress) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
-func (s NovaSorceress) KillAndariel() error {
+func (s LightningSorceress) KillAndariel() error {
 	return s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
 }
 
-func (s NovaSorceress) KillDuriel() error {
+func (s LightningSorceress) KillDuriel() error {
 	return s.killBossWithStatic(npc.Duriel, data.MonsterTypeUnique)
 }
 
-func (s NovaSorceress) KillMephisto() error {
+func (s LightningSorceress) KillMephisto() error {
 	return s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
 }
 
-func (s NovaSorceress) KillDiablo() error {
+func (s LightningSorceress) KillDiablo() error {
 	timeout := time.Second * 20
 	startTime := time.Now()
 	diabloFound := false
@@ -224,23 +236,23 @@ func (s NovaSorceress) KillDiablo() error {
 	}
 }
 
-func (s NovaSorceress) KillBaal() error {
+func (s LightningSorceress) KillBaal() error {
 	return s.killBossWithStatic(npc.BaalCrab, data.MonsterTypeUnique)
 }
 
-func (s NovaSorceress) KillCountess() error {
+func (s LightningSorceress) KillCountess() error {
 	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
 }
 
-func (s NovaSorceress) KillSummoner() error {
+func (s LightningSorceress) KillSummoner() error {
 	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
 }
 
-func (s NovaSorceress) KillIzual() error {
+func (s LightningSorceress) KillIzual() error {
 	return s.killBossWithStatic(npc.Izual, data.MonsterTypeUnique)
 }
 
-func (s NovaSorceress) KillCouncil() error {
+func (s LightningSorceress) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		for _, m := range d.Monsters.Enemies() {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
@@ -251,10 +263,10 @@ func (s NovaSorceress) KillCouncil() error {
 	}, nil)
 }
 
-func (s NovaSorceress) KillPindle() error {
+func (s LightningSorceress) KillPindle() error {
 	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
-func (s NovaSorceress) KillNihlathak() error {
+func (s LightningSorceress) KillNihlathak() error {
 	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
 }

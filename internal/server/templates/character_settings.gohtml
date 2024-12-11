@@ -36,14 +36,17 @@
                 <label>
                     Class
                     <select name="characterClass">
-                        <option value="sorceress" {{ if eq .Config.Character.Class
-                        "sorceress" }}selected{{ end }}>Blizzard Sorceress
-                        </option>
                         <option value="hammerdin" {{ if eq .Config.Character.Class
                         "hammerdin" }}selected{{ end }}>Hammer Paladin
                         </option>
                         <option value="foh" {{ if eq .Config.Character.Class
                         "foh" }}selected{{ end }}>FOH Paladin
+                        </option>
+                        <option value="sorceress" {{ if eq .Config.Character.Class
+                        "sorceress" }}selected{{ end }}>Blizzard Sorceress
+                        </option>
+                        <option value="lightsorc" {{ if eq .Config.Character.Class
+                        "lightsorc" }}selected{{ end }}>Lightning Sorceress
                         </option>
                         <option value="nova" {{ if eq .Config.Character.Class
                         "nova" }}selected{{ end }}>Nova Sorceress
