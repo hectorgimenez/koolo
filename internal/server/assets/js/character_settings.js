@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show relevant options based on class
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
-        } else if (selectedClass === 'nova') {
+        } else if (selectedClass === 'nova' || selectedClass === 'lightsorc' || selectedClass === 'sorceress' || selectedClass === 'hydraorb') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
         } else {
