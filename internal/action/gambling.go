@@ -159,6 +159,10 @@ func gambleItems() error {
 			return step.CloseAllMenus()
 		}
 
+		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
+			lastStep = true
+		}
+
 		if itemBought.Name != "" {
 			for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 				if itm.UnitID == itemBought.UnitID {
@@ -177,11 +181,6 @@ func gambleItems() error {
 				town.SellItem(itemBought)
 			}
 			itemBought = data.Item{} // Reset itemBought after processing
-			continue
-		}
-
-		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
-			lastStep = true
 			continue
 		}
 
