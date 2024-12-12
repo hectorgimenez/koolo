@@ -70,7 +70,7 @@ func (d *Diablo) Run() error {
 
 		for _, sealID := range sealGroups[bossName] {
 			seal, found := d.ctx.Data.Objects.FindOne(sealID)
-			if !foundi {
+			if !found {
 				return fmt.Errorf("seal not found: %d", sealID)
 			}
 
