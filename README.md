@@ -75,7 +75,7 @@ There are some considerations to take into account:
 Setting the development environment is pretty straightforward, but the following dependencies are **required** to build the project.
 
 ### Dependencies
-- [Download Go >= 1.22](https://go.dev/dl/)
+- [Download Go >= 1.23](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
 ### Building from source
