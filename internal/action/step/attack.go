@@ -1,7 +1,6 @@
 package step
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"math"
