@@ -130,7 +130,6 @@ func (d *Diablo) Run() error {
 
 	return nil
 }
-
 func (d *Diablo) killSealElite(boss string) error {
     d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
     startTime := time.Now()
@@ -144,6 +143,8 @@ func (d *Diablo) killSealElite(boss string) error {
                 // Check if we should disable item pickup during boss fights
                 if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
                     d.ctx.DisableItemPickup()
+                    // Re-enable item pickup after this elite fight
+                    defer d.ctx.EnableItemPickup()
                 }
 
                 return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
