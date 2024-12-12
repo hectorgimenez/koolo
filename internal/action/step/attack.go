@@ -265,69 +265,46 @@ func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
 		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 	}
 }
+  func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
+    ctx := context.Get()
+    ctx.SetLastStep("ensureEnemyIsInRange")
 
-func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
-	ctx := context.Get()
-	ctx.SetLastStep("ensureEnemyIsInRange")
+    currentPos := ctx.Data.PlayerUnit.Position
+    distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
+    
+    // Basic checks
+    hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
+    if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance {
+        return nil
+    }
+    
+    // We want to reposition if too close OR too far, only skip if we're in good range
+    if distanceToMonster >= minDistance && distanceToMonster <= maxDistance {
+        return nil
+    }
 
-	// TODO: Add an option for telestomp based on the char configuration
-	currentPos := ctx.Data.PlayerUnit.Position
-	distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
-	hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
+    // Try 8 different angles around monster
+    for angle := 0; angle < 360; angle += 45 {
+        // Try different distances between min and max
+        for dist := minDistance; dist <= maxDistance; dist++ {
+            angleRad := float64(angle) * math.Pi / 180.0
+            dest := data.Position{
+                X: monster.Position.X + int(float64(dist) * math.Cos(angleRad)),
+                Y: monster.Position.Y + int(float64(dist) * math.Sin(angleRad)),
+            }
 
-	// We have line of sight, and we are inside the attack range, we can skip
-	if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance {
-		return nil
-	}
+            moveDistance := utils.DistanceFromPoint(currentPos, dest)
+            monsterDistance := utils.DistanceFromPoint(dest, monster.Position)
 
-	// Get path to monster
-	path, _, found := ctx.PathFinder.GetPath(monster.Position)
-	// We cannot reach the enemy, let's skip the attack sequence
-	if !found {
-		return errors.New("path could not be calculated")
-	}
+            if moveDistance >= 7 && // Can MoveTo
+               monsterDistance >= minDistance && // Not too close to monster
+               monsterDistance <= maxDistance && // Not too far from monster
+               ctx.Data.AreaData.IsWalkable(dest) && // Valid position
+               ctx.PathFinder.LineOfSight(dest, monster.Position) { // Can attack from here
+                return MoveTo(dest)
+            }
+        }
+    }
 
-	// Look for suitable position along path
-	for _, pos := range path {
-		monsterDistance := utils.DistanceFromPoint(ctx.Data.AreaData.RelativePosition(monster.Position), pos)
-		if monsterDistance > maxDistance || monsterDistance < minDistance {
-			continue
-		}
-
-		dest := data.Position{
-			X: pos.X + ctx.Data.AreaData.OffsetX,
-			Y: pos.Y + ctx.Data.AreaData.OffsetY,
-		}
-
-		// Calculate how far we need to move to reach this position
-		distanceToMove := ctx.PathFinder.DistanceFromMe(dest)
-
-		// If we need to move less than 7 units, we need to overshoot
-		if distanceToMove <= 7 {
-			// Calculate vector from current pos to destination
-			dx := float64(dest.X - currentPos.X)
-			dy := float64(dest.Y - currentPos.Y)
-
-			// Normalize and extend to 9 units (beyond the 7 unit minimum)
-			length := math.Sqrt(dx*dx + dy*dy)
-			if length == 0 {
-				dx = 1
-				length = 1
-			}
-			dx = dx / length * 9
-			dy = dy / length * 9
-
-			// Create new overshooting destination
-			dest = data.Position{
-				X: currentPos.X + int(dx),
-				Y: currentPos.Y + int(dy),
-			}
-		}
-
-		if ctx.PathFinder.LineOfSight(dest, monster.Position) {
-			return MoveTo(dest)
-		}
-	}
-
-	return nil
+    return nil
 }
