@@ -45,6 +45,7 @@ func (b *Bot) shouldPublish(e event.Event) bool {
 		if evt.Reason == event.FinishedChicken || evt.Reason == event.FinishedMercChicken || evt.Reason == event.FinishedDied {
 			return config.Koolo.Discord.EnableDiscordChickenMessages
 		}
+		return true
 	case event.GameCreatedEvent:
 		return config.Koolo.Discord.EnableGameCreatedMessages
 	case event.RunStartedEvent:
