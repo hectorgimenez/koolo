@@ -130,6 +130,12 @@
                        placeholder="{{ .Config.Game.MinGoldPickupThreshold }}"
                        value="{{ .Config.Game.MinGoldPickupThreshold }}"/>
             </label>
+            <fieldset class="grid">
+                <label>
+                    <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
+                    Use Cain for Identify (will stash items that should not be identified first) 
+                </label>
+            </fieldset>
             <h3>Client Settings</h3><br>
             <fieldset class="grid">
                 <label>
