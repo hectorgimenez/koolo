@@ -151,6 +151,8 @@ func buffCTA() {
 
 	if ctaFound(*ctx.Data) {
 		ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
+		
+		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 
 		if _, found := ctx.Data.PlayerUnit.Skills[skill.BattleCommand]; !found {
 			step.SwapToCTA()
