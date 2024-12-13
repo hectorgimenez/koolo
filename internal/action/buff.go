@@ -22,8 +22,6 @@ func BuffIfRequired() {
 		return
 	}
 
-	// Don't buff if we have 2 or more monsters close to the character.
-	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
 	closeMonsters := 0
 	for _, m := range ctx.Data.Monsters {
 		if ctx.PathFinder.DistanceFromMe(m.Position) < 15 {
@@ -45,12 +43,9 @@ func Buff() {
 		return
 	}
 
-	// Check if we're in loading screen
 	if ctx.Data.OpenMenus.LoadingScreen {
 		ctx.Logger.Debug("Loading screen detected. Waiting for game to load before buffing...")
 		ctx.WaitForGameToLoad()
-
-		// Give it half a second more
 		utils.Sleep(500)
 	}
 
@@ -69,9 +64,9 @@ func Buff() {
 		for _, kb := range preKeys {
 			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
+			utils.Sleep(300)
 			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
+			utils.Sleep(300)
 		}
 	}
 
@@ -89,13 +84,22 @@ func Buff() {
 
 	if len(postKeys) > 0 {
 		ctx.Logger.Debug("Post CTA Buffing...")
+		initialStatesLength := len(ctx.Data.PlayerUnit.States)
 
 		for _, kb := range postKeys {
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
-			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
+			for attempt := 0; attempt < 3; attempt++ {
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(kb)
+				utils.Sleep(300)
+				ctx.HID.Click(game.RightButton, 640, 340)
+				utils.Sleep(500)
+				
+				ctx.RefreshGameData()
+				if len(ctx.Data.PlayerUnit.States) != initialStatesLength {
+					break
+				}
+				utils.Sleep(200)
+			}
 		}
 		ctx.LastBuffAt = time.Now()
 	}
@@ -105,7 +109,6 @@ func IsRebuffRequired() bool {
 	ctx := context.Get()
 	ctx.SetLastAction("IsRebuffRequired")
 
-	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
 	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
 		return false
 	}
@@ -114,7 +117,6 @@ func IsRebuffRequired() bool {
 		return true
 	}
 
-	// TODO: Find a better way to convert skill to state
 	buffs := ctx.Char.BuffSkills()
 	for _, buff := range buffs {
 		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
@@ -130,6 +132,9 @@ func IsRebuffRequired() bool {
 			if buff == skill.CycloneArmor && !ctx.Data.PlayerUnit.States.HasState(state.Cyclonearmor) {
 				return true
 			}
+			if buff == skill.Fade && !ctx.Data.PlayerUnit.States.HasState(state.Fade) {
+				return true
+			}
 		}
 	}
 
@@ -143,19 +148,18 @@ func buffCTA() {
 	if ctaFound(*ctx.Data) {
 		ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
-		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
 		if _, found := ctx.Data.PlayerUnit.Skills[skill.BattleCommand]; !found {
 			step.SwapToCTA()
 		}
 
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
-		utils.Sleep(180)
+		utils.Sleep(300)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(300)
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
-		utils.Sleep(180)
+		utils.Sleep(300)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(300)
 
 		utils.Sleep(500)
 		step.SwapToMainWeapon()
