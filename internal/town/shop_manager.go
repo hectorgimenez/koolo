@@ -51,7 +51,7 @@ func BuyConsumables(forceRefill bool) {
 		}
 	}
 
-	if ShouldBuyIDs() || forceRefill {
+	if (ShouldBuyIDs() || forceRefill) && !ctx.Data.CharacterCfg.Game.UseCainIdentify {
 		if _, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); !found {
 			ctx.Logger.Info("ID Tome not found, buying one...")
 			if itm, itmFound := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
@@ -100,6 +100,9 @@ func ShouldBuyTPs() bool {
 }
 
 func ShouldBuyIDs() bool {
+	if context.Get().Data.CharacterCfg.Game.UseCainIdentify {
+		return false
+	}
 	idTome, found := context.Get().Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
 		return true
