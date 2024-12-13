@@ -28,6 +28,9 @@ func BuffIfRequired() {
 			closeMonsters++
 		}
 	}
+        // Don't buff if we have 2 or more monsters close to the character.
+	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
+	
 	if closeMonsters >= 2 {
 		return
 	}
@@ -108,6 +111,7 @@ func Buff() {
 func IsRebuffRequired() bool {
 	ctx := context.Get()
 	ctx.SetLastAction("IsRebuffRequired")
+	// Don't buff if we are in town, or we did it recently (it prevents double buffing because of network lag)
 
 	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
 		return false
@@ -116,6 +120,7 @@ func IsRebuffRequired() bool {
 	if ctaFound(*ctx.Data) && (!ctx.Data.PlayerUnit.States.HasState(state.Battleorders) || !ctx.Data.PlayerUnit.States.HasState(state.Battlecommand)) {
 		return true
 	}
+	// TODO: Find a better way to convert skill to state
 
 	buffs := ctx.Char.BuffSkills()
 	for _, buff := range buffs {
