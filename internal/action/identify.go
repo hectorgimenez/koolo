@@ -28,6 +28,11 @@ func IdentifyAll(skipIdentify bool) error {
 		return nil
 	}
 
+	if ctx.CharacterCfg.Game.UseCainIdentify {
+		ctx.Logger.Debug("Identifying all item with Cain...")
+		return CainIdentify()
+	}
+
 	idTome, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
 		ctx.Logger.Warn("ID Tome not found, not identifying items")
