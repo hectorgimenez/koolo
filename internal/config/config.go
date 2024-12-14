@@ -105,6 +105,12 @@ type CharacterCfg struct {
 		UseMerc       bool   `yaml:"useMerc"`
 		StashToShared bool   `yaml:"stashToShared"`
 		UseTeleport   bool   `yaml:"useTeleport"`
+		SkipImmune    struct {
+			Cold      bool `yaml:"skipColdImmune"`
+			Poison    bool `yaml:"skipPoisonImmune"`
+			Fire      bool `yaml:"skipFireImmune"`
+			Lightning bool `yaml:"skipLightningImmune"`
+		}
 		BerserkerBarb struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
@@ -122,10 +128,7 @@ type CharacterCfg struct {
 		Runs                   []Run                 `yaml:"runs"`
 		CreateLobbyGames       bool                  `yaml:"createLobbyGames"`
 		PublicGameCounter      int                   `yaml:"-"`
-		Pindleskin             struct {
-			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
-		} `yaml:"pindleskin"`
-		Cows struct {
+		Cows                   struct {
 			OpenChests bool `yaml:"openChests"`
 		}
 		Pit struct {
@@ -232,8 +235,9 @@ type CharacterCfg struct {
 		EquipmentBroken bool `yaml:"equipmentBroken"`
 	} `yaml:"backtotown"`
 	Runtime struct {
-		Rules nip.Rules   `yaml:"-"`
-		Drops []data.Item `yaml:"-"`
+		ImmunityFilter []stat.Resist `yaml:"-"`
+		Rules          nip.Rules     `yaml:"-"`
+		Drops          []data.Item   `yaml:"-"`
 	} `yaml:"-"`
 }
 
@@ -327,6 +331,21 @@ func Load() error {
 		}
 
 		charCfg.Runtime.Rules = rules
+
+		// Parse the immunities selected
+		charCfg.Runtime.ImmunityFilter = make([]stat.Resist, 0, 4)
+		if charCfg.Character.SkipImmune.Cold {
+			charCfg.Runtime.ImmunityFilter = append(charCfg.Runtime.ImmunityFilter, stat.ColdImmune)
+		}
+		if charCfg.Character.SkipImmune.Fire {
+			charCfg.Runtime.ImmunityFilter = append(charCfg.Runtime.ImmunityFilter, stat.FireImmune)
+		}
+		if charCfg.Character.SkipImmune.Lightning {
+			charCfg.Runtime.ImmunityFilter = append(charCfg.Runtime.ImmunityFilter, stat.LightImmune)
+		}
+		if charCfg.Character.SkipImmune.Poison {
+			charCfg.Runtime.ImmunityFilter = append(charCfg.Runtime.ImmunityFilter, stat.PoisonImmune)
+		}
 
 		Characters[entry.Name()] = &charCfg
 	}

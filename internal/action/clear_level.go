@@ -93,11 +93,24 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 
 			ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 				m, found := d.Monsters.FindByID(targetMonster.UnitID)
+
+				monsterIsImmune := false
+				for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+					if m.IsImmune(resist) {
+						monsterIsImmune = true
+						break
+					}
+				}
+
+				if monsterIsImmune {
+					return 0, false
+				}
+
 				if found && m.Stats[stat.Life] > 0 {
 					return targetMonster.UnitID, true
 				}
 				return 0, false
-			}, nil)
+			})
 		}
 	}
 }

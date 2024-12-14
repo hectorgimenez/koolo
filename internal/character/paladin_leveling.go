@@ -42,7 +42,6 @@ func (s PaladinLeveling) CheckKeyBindings() []skill.ID {
 
 func (s PaladinLeveling) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -56,7 +55,7 @@ func (s PaladinLeveling) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -105,7 +104,7 @@ func (s PaladinLeveling) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s PaladinLeveling) BuffSkills() []skill.ID {
@@ -359,7 +358,7 @@ func (s PaladinLeveling) KillCouncil() error {
 
 		s.Logger.Debug("No Council members found")
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s PaladinLeveling) KillMephisto() error {

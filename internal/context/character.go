@@ -24,7 +24,6 @@ type Character interface {
 	KillBaal() error
 	KillMonsterSequence(
 		monsterSelector func(d game.Data) (data.UnitID, bool),
-		skipOnImmunities []stat.Resist,
 	) error
 }
 

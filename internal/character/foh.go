@@ -68,7 +68,7 @@ func (f Foh) waitForCastComplete() bool {
 
 	return false
 }
-func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {
+func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool)) error {
 	ctx := context.Get()
 	lastRefresh := time.Now()
 	completedAttackLoops := 0
@@ -107,6 +107,7 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 		}
 
 		for _, m := range ctx.Data.Monsters.Enemies() {
+
 			if ctx.Data.AreaData.IsInside(m.Position) {
 				dist := ctx.PathFinder.DistanceFromMe(m.Position)
 				if dist <= fohMaxDistance && dist >= fohMinDistance && m.Stats[stat.Life] > 0 {
@@ -152,7 +153,7 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 			continue
 		}
 
-		if !f.preBattleChecks(currentTargetID, skipOnImmunities) {
+		if !f.preBattleChecks(currentTargetID) {
 			return nil
 		}
 
@@ -257,7 +258,7 @@ func (f Foh) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID, bo
 		if !found {
 			return nil
 		}
-		if !f.preBattleChecks(id, skipOnImmunities) {
+		if !f.preBattleChecks(id) {
 			return nil
 		}
 		monster, found := f.Data.Monsters.FindByID(id)
@@ -288,13 +289,27 @@ func (f Foh) PreCTABuffSkills() []skill.ID {
 }
 
 func (f Foh) killBoss(npc npc.ID, t data.MonsterType) error {
+	ctx := context.Get()
 	return f.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found || m.Stats[stat.Life] <= 0 {
 			return 0, false
 		}
+
+		monsterIsImmune := false
+		for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+			if m.IsImmune(resist) {
+				monsterIsImmune = true
+				break
+			}
+		}
+
+		if monsterIsImmune {
+			return 0, false
+		}
+
 		return m.UnitID, true
-	}, nil)
+	}, ctx.CharacterCfg.Runtime.ImmunityFilter)
 }
 
 func (f Foh) KillCountess() error {
@@ -347,7 +362,7 @@ func (f Foh) killAllCouncilMembers() error {
 				}
 			}
 			return 0, false
-		}, nil)
+		})
 
 		if err != nil {
 			return err

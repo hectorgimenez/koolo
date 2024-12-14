@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -55,7 +56,6 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 
 func (s BlizzardSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -73,7 +73,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -109,24 +109,50 @@ func (s BlizzardSorceress) KillMonsterSequence(
 }
 
 func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
+	ctx := context.Get()
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false
 		}
 
+		monsterIsImmune := false
+		for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+			if m.IsImmune(resist) {
+				monsterIsImmune = true
+				break
+			}
+		}
+
+		if monsterIsImmune {
+			return 0, false
+		}
+
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
-func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
+func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType) error {
+	ctx := context.Get()
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
+			monsterIsImmune := false
+			for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+				if m.IsImmune(resist) {
+					monsterIsImmune = true
+					break
+				}
+			}
+
+			if monsterIsImmune {
+				return 0, false
+			}
+
 			return m.UnitID, true
 		}
 
 		return 0, false
-	}, skipOnImmunities)
+	})
 }
 
 func (s BlizzardSorceress) BuffSkills() []skill.ID {
@@ -151,19 +177,19 @@ func (s BlizzardSorceress) PreCTABuffSkills() []skill.ID {
 }
 
 func (s BlizzardSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillCouncil() error {
@@ -188,11 +214,11 @@ func (s BlizzardSorceress) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s BlizzardSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillIzual() error {
@@ -235,11 +261,11 @@ func (s BlizzardSorceress) KillDiablo() error {
 }
 
 func (s BlizzardSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s BlizzardSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
 func (s BlizzardSorceress) KillBaal() error {

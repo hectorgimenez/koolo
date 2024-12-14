@@ -20,6 +20,19 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 
 	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		for _, m := range d.Monsters.Enemies(filter) {
+
+			monsterIsImmune := false
+			for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+				if m.IsImmune(resist) {
+					monsterIsImmune = true
+					break
+				}
+			}
+
+			if monsterIsImmune {
+				continue
+			}
+
 			distanceToTarget := pather.DistanceFromPoint(pos, m.Position)
 			if ctx.Data.AreaData.IsWalkable(m.Position) && distanceToTarget <= radius {
 				return m.UnitID, true
@@ -27,7 +40,7 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) error {

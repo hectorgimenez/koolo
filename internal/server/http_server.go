@@ -777,6 +777,13 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
+
+		// Immunity
+		cfg.Character.SkipImmune.Cold = r.Form.Has("skipColdImmune")
+		cfg.Character.SkipImmune.Fire = r.Form.Has("skipFireImmune")
+		cfg.Character.SkipImmune.Poison = r.Form.Has("skipPoisonImmune")
+		cfg.Character.SkipImmune.Lightning = r.Form.Has("skipLightImmune")
+
 		// Berserker Barb specific options
 		if cfg.Character.Class == "berserker" {
 			cfg.Character.BerserkerBarb.SkipPotionPickupInTravincal = r.Form.Has("barbSkipPotionPickupInTravincal")
@@ -844,11 +851,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Pit.OnlyClearLevel2 = r.Form.Has("gamePitOnlyClearLevel2")
 
 		cfg.Game.Andariel.ClearRoom = r.Form.Has("gameAndarielClearRoom")
-
-		cfg.Game.Pindleskin.SkipOnImmunities = []stat.Resist{}
-		for _, i := range r.Form["gamePindleskinSkipOnImmunities[]"] {
-			cfg.Game.Pindleskin.SkipOnImmunities = append(cfg.Game.Pindleskin.SkipOnImmunities, stat.Resist(i))
-		}
 
 		cfg.Game.StonyTomb.OpenChests = r.Form.Has("gameStonytombOpenChests")
 		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")

@@ -46,7 +46,6 @@ func (s WindDruid) CheckKeyBindings() []skill.ID {
 
 func (s WindDruid) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -60,7 +59,7 @@ func (s WindDruid) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -104,7 +103,7 @@ func (s WindDruid) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s WindDruid) RecastBuffs() {
@@ -248,7 +247,7 @@ func (s WindDruid) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s WindDruid) KillMephisto() error {

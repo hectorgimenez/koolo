@@ -44,7 +44,6 @@ func (s Trapsin) CheckKeyBindings() []skill.ID {
 
 func (s Trapsin) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -58,7 +57,7 @@ func (s Trapsin) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -92,7 +91,7 @@ func (s Trapsin) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s Trapsin) BuffSkills() []skill.ID {
@@ -168,7 +167,7 @@ func (s Trapsin) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s Trapsin) KillMephisto() error {
