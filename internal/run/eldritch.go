@@ -28,7 +28,14 @@ func (e Eldritch) Name() string {
 }
 
 func (e Eldritch) Run() error {
-	// Travel to FrigidHighlands
+	// First return to town if we're not already there
+	if !e.ctx.Data.PlayerUnit.Area.IsTown() {
+		if err := action.ReturnTown(); err != nil {
+			return err
+		}
+	}
+
+	// Travel to FrigidHighlands using waypoint
 	err := action.WayPoint(area.FrigidHighlands)
 	if err != nil {
 		return err
@@ -51,7 +58,7 @@ func (e Eldritch) Run() error {
 		}
 
 		// Kill Shenk
-		return e.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		err := e.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 			if m, found := d.Monsters.FindOne(npc.OverSeer, data.MonsterTypeSuperUnique); found {
 				if m.Stats[stat.Life] > 0 {
 					return m.UnitID, true
@@ -61,7 +68,15 @@ func (e Eldritch) Run() error {
 
 			return 0, false
 		}, nil)
+
+		// After killing Shenk, explicitly return to town to avoid pathing issues
+		if err := action.ReturnTown(); err != nil {
+			return err
+		}
+
+		return err
 	}
 
-	return nil
+	// Return to town after Eldritch (if we didn't do Shenk)
+	return action.ReturnTown()
 }
