@@ -69,14 +69,26 @@ func (e Eldritch) Run() error {
 			return 0, false
 		}, nil)
 
-		// After killing Shenk, explicitly return to town to avoid pathing issues
-		if err := action.ReturnTown(); err != nil {
-			return err
+		// We don't want to return to town if this is the last run
+		if !isLastRun(e.ctx) {
+			if err := action.ReturnTown(); err != nil {
+				return err
+			}
 		}
 
 		return err
 	}
 
-	// Return to town after Eldritch (if we didn't do Shenk)
-	return action.ReturnTown()
+	// Return to town after Eldritch (if we didn't do Shenk) and it's not the last run
+	if !isLastRun(e.ctx) {
+		return action.ReturnTown()
+	}
+
+	return nil
+}
+
+// Helper function to check if this is the last run
+func isLastRun(ctx *context.Status) bool {
+	runs := ctx.CharacterCfg.Game.Runs
+	return len(runs) > 0 && runs[len(runs)-1] == config.EldritchRun
 }
