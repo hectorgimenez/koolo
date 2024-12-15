@@ -3,6 +3,7 @@ package pather
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -213,7 +214,10 @@ func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Pos
 }
 
 func isBaalTentacle(name object.Name) bool {
-    // Convert the name to string for comparison since object.Name is a custom type
     nameStr := string(name)
-    return strings.HasPrefix(nameStr, "BaalTentacle")
+    return strings.EqualFold(nameStr, "BaalTentacle") ||
+           strings.EqualFold(nameStr, "BaalTentacle2") ||
+           strings.EqualFold(nameStr, "BaalTentacle3") ||
+           strings.EqualFold(nameStr, "BaalTentacle4") ||
+           strings.EqualFold(nameStr, "BaalTentacle5")
 }
