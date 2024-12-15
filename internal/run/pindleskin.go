@@ -32,6 +32,13 @@ func (p Pindleskin) Name() string {
 }
 
 func (p Pindleskin) Run() error {
+    // First return to town if we're not already there
+    if !p.ctx.Data.PlayerUnit.Area.IsTown() {
+        if err := action.ReturnTown(); err != nil {
+            return err
+        }
+    }
+
     // Get to Harrogath
     err := action.WayPoint(area.Harrogath)
     if err != nil {
