@@ -213,18 +213,7 @@ func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Pos
 }
 
 func isBaalTentacle(name object.Name) bool {
-	tentacles := []object.Name{
-		"BaalTentacle",
-		"BaalTentacle2",
-		"BaalTentacle3",
-		"BaalTentacle4",
-		"BaalTentacle5",
-	}
-
-	for _, tentacle := range tentacles {
-		if name == tentacle {
-			return true
-		}
-	}
-	return false
+    // Convert the name to string for comparison since object.Name is a custom type
+    nameStr := string(name)
+    return strings.HasPrefix(nameStr, "BaalTentacle")
 }
