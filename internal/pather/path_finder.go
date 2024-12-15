@@ -6,6 +6,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather/astar"
@@ -69,6 +70,12 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 			continue
 		}
 		relativePos := grid.RelativePosition(o.Position)
+
+		// Skip marking Baal tentacles as obstacles
+		if isBaalTentacle(o.Name) {
+			continue
+		}
+
 		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeObject
 		for i := -2; i <= 2; i++ {
 			for j := -2; j <= 2; j++ {
@@ -203,4 +210,21 @@ func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Pos
 		}
 	}
 	return data.Position{}, false
+}
+
+func isBaalTentacle(name object.Name) bool {
+	tentacles := []object.Name{
+		"BaalTentacle",
+		"BaalTentacle2",
+		"BaalTentacle3",
+		"BaalTentacle4",
+		"BaalTentacle5",
+	}
+
+	for _, tentacle := range tentacles {
+		if name == tentacle {
+			return true
+		}
+	}
+	return false
 }
