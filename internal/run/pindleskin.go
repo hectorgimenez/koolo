@@ -2,7 +2,6 @@ package run
 
 import (
     "errors"
-    "time"
 
     "github.com/hectorgimenez/d2go/pkg/data"
     "github.com/hectorgimenez/d2go/pkg/data/area"
