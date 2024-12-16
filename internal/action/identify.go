@@ -40,11 +40,14 @@ func IdentifyAll(skipIdentify bool) error {
 	}
 
 	ctx.Logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
+
+	// Close all menus to prevent issues
 	step.CloseAllMenus()
 	for !ctx.Data.OpenMenus.Inventory {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
-		utils.Sleep(300)
+		utils.Sleep(1000) // Add small delay to allow the game to open the inventory
 	}
+
 	for _, i := range items {
 		identifyItem(idTome, i)
 	}

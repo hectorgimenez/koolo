@@ -18,7 +18,7 @@ import (
 func BuffIfRequired() {
 	ctx := context.Get()
 
-	if !IsRebuffRequired() {
+	if !IsRebuffRequired() || ctx.Data.PlayerUnit.Area.IsTown() {
 		return
 	}
 

@@ -1,7 +1,6 @@
 package run
 
 import (
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
@@ -24,18 +23,21 @@ func (s Summoner) Name() string {
 }
 
 func (s Summoner) Run() error {
-
-	// Use the waypoint
+	// Use the waypoint to get to Arcane Sanctuary
 	err := action.WayPoint(area.ArcaneSanctuary)
 	if err != nil {
 		return err
 	}
 
-	// Move to boss position
-	if err = action.MoveTo(func() (data.Position, bool) {
-		m, found := s.ctx.Data.NPCs.FindOne(npc.Summoner)
-		return m.Positions[0], found
-	}); err != nil {
+	// Get the Summoner's position from the cached map data
+	areaData := s.ctx.Data.Areas[area.ArcaneSanctuary]
+	summonerNPC, found := areaData.NPCs.FindOne(npc.Summoner)
+	if !found || len(summonerNPC.Positions) == 0 {
+		return err
+	}
+
+	// Move to the Summoner's position using the static coordinates from map data
+	if err = action.MoveToCoords(summonerNPC.Positions[0]); err != nil {
 		return err
 	}
 
