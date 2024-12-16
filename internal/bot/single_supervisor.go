@@ -67,17 +67,22 @@ func (s *SinglePlayerSupervisor) Start() error {
 			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
 				// Create the game
-				if err = s.HandleOutOfGameFlow(); err != nil {
-					// Ignore loading screen errors or unhandled errors (for now) and try again
-					if err.Error() == "loading screen" || err.Error() == "" {
-						utils.Sleep(100)
-						continue
-					}
-
-					s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-					continue
-				}
-			}
+		           if err = s.HandleOutOfGameFlow(); err != nil {
+                               // Even if we got an error, verify if we're actually in game
+                               s.bot.ctx.RefreshGameData()
+                              if s.bot.ctx.Manager.InGame() {
+			      s.bot.ctx.Logger.Info("Game creation reported error but we are in game, continuing...")
+                              err = nil
+                             } else {
+                           // Ignore loading screen errors or unhandled errors (for now) and try again
+                                  if err.Error() == "loading screen" || err.Error() == "" {
+                                     utils.Sleep(100)
+                                     continue
+                                     }
+                                  s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+                                  continue
+                                }
+                        }
 
 			runs := run.BuildRuns(s.bot.ctx.CharacterCfg)
 			gameStart := time.Now()
