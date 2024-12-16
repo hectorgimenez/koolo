@@ -2,6 +2,7 @@ package step
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -80,7 +81,7 @@ func MoveTo(dest data.Position) error {
 				return nil
 			}
 
-			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+			return errors.New("path could not be calculated. Current area: [" + ctx.Data.PlayerUnit.Area.Area().Name + "]. Trying to path to Destination: [" + fmt.Sprintf("%d,%d", dest.X, dest.Y) + "]")
 		}
 		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
 			return nil
