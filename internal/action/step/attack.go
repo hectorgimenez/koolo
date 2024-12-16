@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/utils"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -268,32 +270,62 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	ctx := context.Get()
 	ctx.SetLastStep("ensureEnemyIsInRange")
 
-	path, distance, found := ctx.PathFinder.GetPath(monster.Position)
-	if !found {
-		// We cannot reach the enemy, let's skip the attack sequence
-		return errors.New("path could not be calculated")
-	}
-
-	hasLoS := ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monster.Position)
+	// TODO: Add an option for telestomp based on the char configuration
+	currentPos := ctx.Data.PlayerUnit.Position
+	distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
+	hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
 
 	// We have line of sight, and we are inside the attack range, we can skip
-	if hasLoS && distance < maxDistance {
+	if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance {
 		return nil
 	}
 
-	for i, pos := range path {
-		distance = len(path) - i
-		if distance > maxDistance {
+	// Get path to monster
+	path, _, found := ctx.PathFinder.GetPath(monster.Position)
+	// We cannot reach the enemy, let's skip the attack sequence
+	if !found {
+		return errors.New("path could not be calculated")
+	}
+
+	// Look for suitable position along path
+	for _, pos := range path {
+		monsterDistance := utils.DistanceFromPoint(ctx.Data.AreaData.RelativePosition(monster.Position), pos)
+		if monsterDistance > maxDistance || monsterDistance < minDistance {
 			continue
 		}
 
-		// In this case something weird is happening, just telestomp
-		if distance < 2 {
-			return MoveTo(monster.Position)
+		dest := data.Position{
+			X: pos.X + ctx.Data.AreaData.OffsetX,
+			Y: pos.Y + ctx.Data.AreaData.OffsetY,
 		}
 
-		if ctx.PathFinder.LineOfSight(pos, monster.Position) {
-			return MoveTo(pos)
+		// Calculate how far we need to move to reach this position
+		distanceToMove := ctx.PathFinder.DistanceFromMe(dest)
+
+		// If we need to move less than 7 units, we need to overshoot
+		if distanceToMove <= 7 {
+			// Calculate vector from current pos to destination
+			dx := float64(dest.X - currentPos.X)
+			dy := float64(dest.Y - currentPos.Y)
+
+			// Normalize and extend to 9 units (beyond the 7 unit minimum)
+			length := math.Sqrt(dx*dx + dy*dy)
+			if length == 0 {
+				dx = 1
+				length = 1
+			}
+			dx = dx / length * 9
+			dy = dy / length * 9
+
+			// Create new overshooting destination
+			dest = data.Position{
+				X: currentPos.X + int(dx),
+				Y: currentPos.Y + int(dy),
+			}
+		}
+
+		if ctx.PathFinder.LineOfSight(dest, monster.Position) {
+			return MoveTo(dest)
 		}
 	}
 

@@ -18,7 +18,7 @@ import (
 func BuffIfRequired() {
 	ctx := context.Get()
 
-	if !IsRebuffRequired() {
+	if !IsRebuffRequired() || ctx.Data.PlayerUnit.Area.IsTown() {
 		return
 	}
 
@@ -29,9 +29,11 @@ func BuffIfRequired() {
 		if ctx.PathFinder.DistanceFromMe(m.Position) < 15 {
 			closeMonsters++
 		}
-	}
-	if closeMonsters >= 2 {
-		return
+		// cheaper to check here and end function if say first 2 already < 15
+		// so no need to compute the rest
+		if closeMonsters >= 2 {
+			return
+		}
 	}
 
 	Buff()
@@ -43,6 +45,15 @@ func Buff() {
 
 	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
 		return
+	}
+
+	// Check if we're in loading screen
+	if ctx.Data.OpenMenus.LoadingScreen {
+		ctx.Logger.Debug("Loading screen detected. Waiting for game to load before buffing...")
+		ctx.WaitForGameToLoad()
+
+		// Give it half a second more
+		utils.Sleep(500)
 	}
 
 	preKeys := make([]data.KeyBinding, 0)

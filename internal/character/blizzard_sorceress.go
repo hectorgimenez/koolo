@@ -16,8 +16,10 @@ import (
 
 const (
 	sorceressMaxAttacksLoop = 40
-	sorceressMinDistance    = 25
-	sorceressMaxDistance    = 30
+	blizzMinDistance        = 8
+	blizzMaxDistance        = 20
+	LSMinDistance           = 6
+	LSMaxDistance           = 15 // Left skill
 )
 
 type BlizzardSorceress struct {
@@ -59,6 +61,9 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
 
+	blizzOpts := step.StationaryDistance(blizzMinDistance, blizzMaxDistance)
+	lsOpts := step.Distance(LSMinDistance, LSMaxDistance)
+
 	for {
 		id, found := monsterSelector(*s.Data)
 		if !found {
@@ -82,24 +87,21 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		opts := step.Distance(sorceressMinDistance, sorceressMaxDistance)
-
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
 		if time.Since(previousSelfBlizzard) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			for _, m := range s.Data.Monsters.Enemies() {
 				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
-					s.Logger.Debug("Monster detected close to the player, casting Blizzard over it")
 					previousSelfBlizzard = time.Now()
-					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, opts)
+					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, blizzOpts)
 				}
 			}
 		}
 
 		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			step.PrimaryAttack(id, 2, true, opts)
+			step.PrimaryAttack(id, 2, true, lsOpts)
 		}
 
-		step.SecondaryAttack(skill.Blizzard, id, 1, opts)
+		step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -153,7 +155,7 @@ func (s BlizzardSorceress) KillCountess() error {
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeNone, nil)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillSummoner() error {

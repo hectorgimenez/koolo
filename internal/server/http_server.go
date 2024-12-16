@@ -873,6 +873,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Baal.OnlyElites = r.Form.Has("gameBaalOnlyElites")
 
 		cfg.Game.Eldritch.KillShenk = r.Form.Has("gameEldritchKillShenk")
+		cfg.Game.LowerKurastChest.OpenRacks = r.Form.Has("gameLowerKurastChestOpenRacks")
 		cfg.Game.Diablo.StartFromStar = r.Form.Has("gameDiabloStartFromStar")
 		cfg.Game.Diablo.KillDiablo = r.Form.Has("gameDiabloKillDiablo")
 		cfg.Game.Diablo.FocusOnElitePacks = r.Form.Has("gameDiabloFocusOnElitePacks")
