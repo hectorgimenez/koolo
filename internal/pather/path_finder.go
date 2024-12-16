@@ -2,7 +2,6 @@ package pather
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
