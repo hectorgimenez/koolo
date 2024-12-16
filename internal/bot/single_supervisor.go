@@ -67,22 +67,23 @@ func (s *SinglePlayerSupervisor) Start() error {
 			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
 				// Create the game
-		           if err = s.HandleOutOfGameFlow(); err != nil {
-                               // Even if we got an error, verify if we're actually in game
-                               s.bot.ctx.RefreshGameData()
-                              if s.bot.ctx.Manager.InGame() {
-			      s.bot.ctx.Logger.Info("Game creation reported error but we are in game, continuing...")
-                              err = nil
-                             } else {
-                           // Ignore loading screen errors or unhandled errors (for now) and try again
-                                  if err.Error() == "loading screen" || err.Error() == "" {
-                                     utils.Sleep(100)
-                                     continue
-                                     }
-                                  s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
-                                  continue
-                                }
-                        }
+				if err = s.HandleOutOfGameFlow(); err != nil {
+					// Even if we got an error, verify if we're actually in game
+					s.bot.ctx.RefreshGameData()
+					if s.bot.ctx.Manager.InGame() {
+						s.bot.ctx.Logger.Info("Game creation reported error but we are in game, continuing...")
+						err = nil
+					} else {
+						// Ignore loading screen errors or unhandled errors (for now) and try again
+						if err.Error() == "loading screen" || err.Error() == "" {
+							utils.Sleep(100)
+							continue
+						}
+						s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+						continue
+					}
+				}
+			}
 
 			runs := run.BuildRuns(s.bot.ctx.CharacterCfg)
 			gameStart := time.Now()
@@ -153,7 +154,6 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 
 	// Catch-all
 	if s.bot.ctx.CharacterCfg.AuthMethod != "None" && s.bot.ctx.GameReader.IsInCharacterSelectionScreen() && !s.bot.ctx.GameReader.IsOnline() {
-
 		// Try and click the online tab to re-connect to bnet
 		s.bot.ctx.HID.Click(game.LeftButton, 1090, 32) // click the online button
 
@@ -162,12 +162,10 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 
 		// Check if we're online again, if not, kill the client
 		if !s.bot.ctx.GameReader.IsOnline() {
-
 			// Kill the client so the crash detector will restart it
 			if err := s.KillClient(); err != nil {
 				return err
 			}
-
 			return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
 		}
 	}
@@ -175,11 +173,9 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// We're either in the in the Lobby or Character selection screen. Let's check
 	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
 		// TODO: Add Joining Games
-
 		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
 			retryCount := 0
 			for !s.bot.ctx.GameReader.IsInLobby() {
-
 				// Prevent an infinite loop
 				if retryCount >= 5 && !s.bot.ctx.Data.IsInLobby {
 					return fmt.Errorf("failed to enter bnet lobby after 5 retries")
@@ -193,7 +189,6 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
 				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
 				return fmt.Errorf("failed to create an online game")
-
 			} else {
 				// We created the game successfully!
 				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
@@ -202,7 +197,6 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 		} else {
 			// TODO: Add logic to check if we're on the online or offline tab and handle it accordingly.
 			if !s.bot.ctx.GameReader.IsOnline() && s.bot.ctx.CharacterCfg.AuthMethod != "None" {
-
 				// Try and click the online tab to re-connect to bnet
 				s.bot.ctx.HID.Click(game.LeftButton, 1090, 32) // click the online button
 
@@ -221,20 +215,22 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 
 			// Create the game
 			if err := s.bot.ctx.Manager.NewGame(); err != nil {
+				// Double check if we're actually in game despite the error
+				s.bot.ctx.RefreshGameData()
+				if s.bot.ctx.Manager.InGame() {
+					s.bot.ctx.Logger.Info("Game creation reported error but actually succeeded")
+					return nil
+				}
 				return fmt.Errorf("failed to create game")
 			}
-
 			return nil
 		}
 	} else if s.bot.ctx.GameReader.IsInLobby() {
 		// TODO: Add Joining Games
-
 		// Check if we are suppose to create lobby games and enter lobby.
 		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
-
 			retryCount := 0
 			for !s.bot.ctx.GameReader.IsInLobby() {
-
 				// Prevent an infinite loop
 				if retryCount >= 5 && !s.bot.ctx.GameReader.IsInLobby() {
 					return fmt.Errorf("failed to enter bnet lobby after 5 retries")
@@ -248,7 +244,6 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
 				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
 				return fmt.Errorf("failed to create an online game")
-
 			} else {
 				// We created the game successfully!
 				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
@@ -277,6 +272,12 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 
 			// Create the game
 			if err := s.bot.ctx.Manager.NewGame(); err != nil {
+				// Double check if we're actually in game despite the error
+				s.bot.ctx.RefreshGameData()
+				if s.bot.ctx.Manager.InGame() {
+					s.bot.ctx.Logger.Info("Game creation reported error but actually succeeded")
+					return nil
+				}
 				return fmt.Errorf("failed to create game")
 			}
 		}
@@ -289,6 +290,5 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	}
 
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)
-
 	return nil
 }
