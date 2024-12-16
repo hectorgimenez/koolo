@@ -130,6 +130,15 @@
     <fieldset>
         <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
         <label><input type="checkbox" name="gameLevelingEnsureKeyBinding" {{ if .Config.Game.Leveling.EnsureKeyBinding }}checked{{ end }}> Automatically bind skills</label>
+        <label><input type="checkbox" name="gameLevelingEnableSocketing" {{ if .Config.Game.Leveling.EnableSocketing  }}checked{{ end }}> Socket items </label>
+            <div class="recipe-grid" style="margin-left: 20px;">
+                {{ range $index, $recipe := .SocketRecipeList }}
+                    <label>
+                        <input type="checkbox" name="gameLevelingEnabledSocketRecipes" value="{{ $recipe }}" {{ if contains $.Config.Game.Leveling.EnabledSocketRecipes $recipe }}checked{{ end }}>
+                        {{ $recipe }}
+                    </label>
+                {{ end }}
+            </div>   
     </fieldset>
 {{ end }}
 

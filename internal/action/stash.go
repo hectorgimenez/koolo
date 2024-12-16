@@ -357,7 +357,7 @@ func TakeItemsFromStash(stashedItems []data.Item) error {
 	ctx := context.Get()
 	ctx.SetLastAction("TakeItemsFromStash")
 
-	if ctx.Data.OpenMenus.Stash {
+	if !ctx.Data.OpenMenus.Stash {
 		err := OpenStash()
 		if err != nil {
 			return err
