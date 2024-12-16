@@ -82,36 +82,31 @@ func Repair() error {
 }
 
 func RepairRequired() bool {
-	ctx := context.Get()
-	ctx.SetLastAction("RepairRequired")
+    ctx := context.Get()
+    ctx.SetLastAction("RepairRequired")
 
-	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+    for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+        // Check indestructible first
+        _, indestructible := i.FindStat(stat.Indestructible, 0)
+        if i.Ethereal || indestructible {
+            continue
+        }
 
-		_, indestructible := i.FindStat(stat.Indestructible, 0)
+        currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
+        maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
-		if i.Ethereal || indestructible {
-			continue
-		}
+        // Skip if we don't have both stats
+        if !maxDurabilityFound || !currentDurabilityFound {
+            continue  // Don't trigger repair if we can't properly check durability
+        }
 
-		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
-		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+        durabilityPercent := int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
 
-		durabilityPercent := -1
+        // Only return true if we have valid durability values and they're low
+        if durabilityPercent <= 20 || currentDurability.Value <= 5 {
+            return true
+        }
+    }
 
-		if maxDurabilityFound && currentDurabilityFound {
-			durabilityPercent = int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
-		}
-
-		// If we don't find the stats just continue
-		if !currentDurabilityFound && !maxDurabilityFound {
-			continue
-		}
-
-		// Let's check if the item requires repair plus a few fail-safes
-		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 5 {
-			return true
-		}
-	}
-
-	return false
+    return false
 }
