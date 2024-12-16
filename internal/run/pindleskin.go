@@ -2,6 +2,7 @@ package run
 
 import (
     "errors"
+    "time"
 
     "github.com/hectorgimenez/d2go/pkg/data"
     "github.com/hectorgimenez/d2go/pkg/data/area"
@@ -10,6 +11,7 @@ import (
     "github.com/hectorgimenez/koolo/internal/action"
     "github.com/hectorgimenez/koolo/internal/config"
     "github.com/hectorgimenez/koolo/internal/context"
+    "github.com/hectorgimenez/koolo/internal/utils"
 )
 
 var fixedPlaceNearRedPortal = data.Position{
@@ -65,7 +67,15 @@ func (p Pindleskin) Run() error {
     for _, npcData := range p.ctx.Data.Areas[area.NihlathaksTemple].NPCs {
         if npcData.ID == npc.DefiledWarrior {
             // Let the character implementation handle the actual attack
-            return p.ctx.Char.KillPindle()
+            err := p.ctx.Char.KillPindle()
+            if err != nil {
+                return err
+            }
+            
+            // Add small delay to ensure items are detected
+            utils.Sleep(200)
+            
+            return nil
         }
     }
 
