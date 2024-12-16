@@ -2,8 +2,6 @@ package action
 
 import (
 	"fmt"
-	"log/slog"
-	"sort"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/pather"
