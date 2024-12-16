@@ -29,7 +29,6 @@ func (n Nihlathak) Name() string {
 }
 
 func (n Nihlathak) Run() error {
-
 	// Use the waypoint to HallsOfPain
 	err := action.WayPoint(area.HallsOfPain)
 	if err != nil {
@@ -54,10 +53,18 @@ func (n Nihlathak) Run() error {
 	// Try to position in the safest corner
 	action.MoveToCoords(n.findBestCorner(o.Position))
 
+	// Disable item pickup before the fight
+	n.ctx.DisableItemPickup()
+
 	// Kill Nihlathak
 	if err = n.ctx.Char.KillNihlathak(); err != nil {
+		// Re-enable item pickup even if kill fails
+		n.ctx.EnableItemPickup()
 		return err
 	}
+
+	// Re-enable item pickup after kill
+	n.ctx.EnableItemPickup()
 
 	// Clear monsters around the area, sometimes it makes difficult to pickup items if there are many monsters around the area
 	if n.ctx.CharacterCfg.Game.Nihlathak.ClearArea {

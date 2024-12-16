@@ -18,20 +18,22 @@ import (
 func BuffIfRequired() {
 	ctx := context.Get()
 
-	if !IsRebuffRequired() {
+	if !IsRebuffRequired() || ctx.Data.PlayerUnit.Area.IsTown() {
 		return
 	}
-        // Don't buff if we have 2 or more monsters close to the character.
+
+	// Don't buff if we have 2 or more monsters close to the character.
 	// Don't merge with the previous if, because we want to avoid this expensive check if we don't need to buff
 	closeMonsters := 0
 	for _, m := range ctx.Data.Monsters {
 		if ctx.PathFinder.DistanceFromMe(m.Position) < 15 {
 			closeMonsters++
 		}
-	}
-	
-	if closeMonsters >= 2 {
-		return
+		// cheaper to check here and end function if say first 2 already < 15
+		// so no need to compute the rest
+		if closeMonsters >= 2 {
+			return
+		}
 	}
 
 	Buff()
