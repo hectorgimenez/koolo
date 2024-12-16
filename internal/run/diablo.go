@@ -130,32 +130,37 @@ func (d *Diablo) Run() error {
 
 	return nil
 }
-
 func (d *Diablo) killSealElite(boss string) error {
-	d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
-	startTime := time.Now()
-	timeout := 4 * time.Second
+    d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
+    startTime := time.Now()
+    timeout := 4 * time.Second
 
-	for time.Since(startTime) < timeout {
-		for _, m := range d.ctx.Data.Monsters.Enemies(d.ctx.Data.MonsterFilterAnyReachable()) {
-			if action.IsMonsterSealElite(m) {
-				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
+    for time.Since(startTime) < timeout {
+        for _, m := range d.ctx.Data.Monsters.Enemies(d.ctx.Data.MonsterFilterAnyReachable()) {
+            if action.IsMonsterSealElite(m) {
+                d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
 
-				return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
-					if action.IsMonsterSealElite(m) {
-						filteredMonsters = append(filteredMonsters, m)
-					}
+                // Check if we should disable item pickup during boss fights
+                if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
+                    d.ctx.DisableItemPickup()
+                    // Re-enable item pickup after this elite fight
+                    defer d.ctx.EnableItemPickup()
+                }
 
-					return filteredMonsters
-				})
-			}
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
+                return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
+                    if action.IsMonsterSealElite(m) {
+                        filteredMonsters = append(filteredMonsters, m)
+                    }
 
-	return fmt.Errorf("no seal elite found for %s within %v seconds", boss, timeout.Seconds())
+                    return filteredMonsters
+                })
+            }
+        }
+        time.Sleep(100 * time.Millisecond)
+    }
+
+    return fmt.Errorf("no seal elite found for %s within %v seconds", boss, timeout.Seconds())
 }
-
 func (d *Diablo) getMonsterFilter() data.MonsterFilter {
 	return func(monsters data.Monsters) (filteredMonsters []data.Monster) {
 		for _, m := range monsters {
