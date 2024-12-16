@@ -29,9 +29,11 @@ func BuffIfRequired() {
 		if ctx.PathFinder.DistanceFromMe(m.Position) < 15 {
 			closeMonsters++
 		}
-	}
-	if closeMonsters >= 2 {
-		return
+		// cheaper to check here and end function if say first 2 already < 15
+		// so no need to compute the rest
+		if closeMonsters >= 2 {
+			return
+		}
 	}
 
 	Buff()
