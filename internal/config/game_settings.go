@@ -20,7 +20,7 @@ func ReplaceGameSettings(modName string) error {
 	}
 
 	if _, err := os.Stat(modDirPath); os.IsNotExist(err) {
-		err = os.Mkdir(modDirPath, os.ModePerm)
+		err = os.MkdirAll(modDirPath, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error creating mod folder to store settings: %w", err)
 		}
