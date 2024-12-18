@@ -269,7 +269,6 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
     ctx := context.Get()
     ctx.SetLastStep("ensureEnemyIsInRange")
 
-    // TODO: Add an option for telestomp based on the char configuration
     currentPos := ctx.Data.PlayerUnit.Position
     distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
     hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
@@ -286,10 +285,19 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
         return errors.New("path could not be calculated")
     }
 
-    // Special case for Mosaic melee and stack building:
-    // - Regular melee (min=1,max=2)
-    // - Stack building (min=0,max=0)
-    if (minDistance == 1 && maxDistance == 2) || (minDistance == 0 && maxDistance == 0) {
+    // Special case for Mosaic stack building (min=0,max=0)
+    if minDistance == 0 && maxDistance == 0 {
+        // Temporarily disable teleport during stack building
+        useTeleport := ctx.Data.CharacterCfg.Character.UseTeleport
+        ctx.Data.CharacterCfg.Character.UseTeleport = false
+        defer func() {
+            ctx.Data.CharacterCfg.Character.UseTeleport = useTeleport
+        }()
+        return MoveTo(monster.Position)
+    }
+
+    // Regular melee range (min=1,max=2)
+    if minDistance == 1 && maxDistance == 2 {
         return MoveTo(monster.Position)
     }
 
