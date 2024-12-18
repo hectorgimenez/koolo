@@ -80,8 +80,8 @@ func MoveTo(dest data.Position) error {
 			if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
 				return nil
 			}
-
 			return errors.New("path could not be calculated. Current area: [" + ctx.Data.PlayerUnit.Area.Area().Name + "]. Trying to path to Destination: [" + fmt.Sprintf("%d,%d", dest.X, dest.Y) + "]")
+
 		}
 		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
 			return nil

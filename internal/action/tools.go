@@ -1,7 +1,10 @@
 package action
 
 import (
+	"slices"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -51,6 +54,22 @@ func AreaCorrection() error {
 		return nil
 	}
 
+	// Define pairs of areas that are openly connected (no entrance/portal required)
+	openAreaPairs := map[area.ID][]area.ID{
+		area.FrigidHighlands: {area.BloodyFoothills, area.ArreatPlateau},
+		area.BloodyFoothills: {area.FrigidHighlands},
+		area.ArreatPlateau:   {area.FrigidHighlands},
+		// We only need to add open areas where we use movetocoords to change area like eldritch
+	}
+
+	// Skip correction if we're between openly connected areas
+	if connectedAreas, exists := openAreaPairs[expectedArea]; exists {
+		if slices.Contains(connectedAreas, currentArea) {
+			return nil
+		}
+	}
+
+	// Only correct if area correction is enabled and we're in an unexpected area
 	if ctx.CurrentGame.AreaCorrection.Enabled && ctx.CurrentGame.AreaCorrection.ExpectedArea != ctx.Data.AreaData.Area {
 		ctx.Logger.Info("Accidentally went to adjacent area, returning to expected area",
 			"current", ctx.Data.AreaData.Area.Area().Name,
