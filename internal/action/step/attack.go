@@ -285,7 +285,11 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
 		return errors.New("path could not be calculated")
-	}
+	} 
+        // Special case for Mosaic
+       if minDistance == 1 && maxDistance == 2 {
+                return MoveTo(monster.Position)
+       }
 
 	// Look for suitable position along path
 	for _, pos := range path {
