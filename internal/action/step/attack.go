@@ -265,7 +265,6 @@ func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
 		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 	}
 }
-
 func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
     ctx := context.Get()
     ctx.SetLastStep("ensureEnemyIsInRange")
@@ -280,60 +279,61 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
         return nil
     }
 
-    // Special case for Mosaic after checking if already in range:
+    // Get path to monster
+    path, _, found := ctx.PathFinder.GetPath(monster.Position)
+    // We cannot reach the enemy, let's skip the attack sequence
+    if !found {
+        return errors.New("path could not be calculated")
+    }
+
+    // Special case for Mosaic melee and stack building:
     // - Regular melee (min=1,max=2)
     // - Stack building (min=0,max=0)
     if (minDistance == 1 && maxDistance == 2) || (minDistance == 0 && maxDistance == 0) {
         return MoveTo(monster.Position)
     }
-   // Get path to monster
-   path, _, found := ctx.PathFinder.GetPath(monster.Position)
-   // We cannot reach the enemy, let's skip the attack sequence
-   if !found {
-       return errors.New("path could not be calculated")
-   }
 
-   // Look for suitable position along path
-   for _, pos := range path {
-       monsterDistance := utils.DistanceFromPoint(ctx.Data.AreaData.RelativePosition(monster.Position), pos)
-       if monsterDistance > maxDistance || monsterDistance < minDistance {
-           continue
-       }
+    // Look for suitable position along path
+    for _, pos := range path {
+        monsterDistance := utils.DistanceFromPoint(ctx.Data.AreaData.RelativePosition(monster.Position), pos)
+        if monsterDistance > maxDistance || monsterDistance < minDistance {
+            continue
+        }
 
-       dest := data.Position{
-           X: pos.X + ctx.Data.AreaData.OffsetX,
-           Y: pos.Y + ctx.Data.AreaData.OffsetY,
-       }
+        dest := data.Position{
+            X: pos.X + ctx.Data.AreaData.OffsetX,
+            Y: pos.Y + ctx.Data.AreaData.OffsetY,
+        }
 
-       // Calculate how far we need to move to reach this position
-       distanceToMove := ctx.PathFinder.DistanceFromMe(dest)
+        // Calculate how far we need to move to reach this position
+        distanceToMove := ctx.PathFinder.DistanceFromMe(dest)
 
-       // If we need to move less than 7 units, we need to overshoot
-       if distanceToMove <= 7 {
-           // Calculate vector from current pos to destination
-           dx := float64(dest.X - currentPos.X)
-           dy := float64(dest.Y - currentPos.Y)
+        // If we need to move less than 7 units, we need to overshoot
+        if distanceToMove <= 7 {
+            // Calculate vector from current pos to destination
+            dx := float64(dest.X - currentPos.X)
+            dy := float64(dest.Y - currentPos.Y)
 
-           // Normalize and extend to 9 units (beyond the 7 unit minimum)
-           length := math.Sqrt(dx*dx + dy*dy)
-           if length == 0 {
-               dx = 1
-               length = 1
-           }
-           dx = dx / length * 9
-           dy = dy / length * 9
+            // Normalize and extend to 9 units (beyond the 7 unit minimum)
+            length := math.Sqrt(dx*dx + dy*dy)
+            if length == 0 {
+                dx = 1
+                length = 1
+            }
+            dx = dx / length * 9
+            dy = dy / length * 9
 
-           // Create new overshooting destination
-           dest = data.Position{
-               X: currentPos.X + int(dx),
-               Y: currentPos.Y + int(dy),
-           }
-       }
+            // Create new overshooting destination
+            dest = data.Position{
+                X: currentPos.X + int(dx),
+                Y: currentPos.Y + int(dy),
+            }
+        }
 
-       if ctx.PathFinder.LineOfSight(dest, monster.Position) {
-           return MoveTo(dest)
-       }
-   }
+        if ctx.PathFinder.LineOfSight(dest, monster.Position) {
+            return MoveTo(dest)
+        }
+    }
 
-   return nil
+    return nil
 }
