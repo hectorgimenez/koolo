@@ -287,6 +287,11 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 		return errors.New("path could not be calculated")
 	}
 
+	// Any close-range combat (mosaic,barb...) should move directly to target
+	if maxDistance <= 3 {
+		return MoveTo(monster.Position)
+	}
+
 	// Look for suitable position along path
 	for _, pos := range path {
 		monsterDistance := utils.DistanceFromPoint(ctx.Data.AreaData.RelativePosition(monster.Position), pos)
