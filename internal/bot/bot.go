@@ -16,14 +16,17 @@ import (
 )
 
 type Bot struct {
-	ctx *botCtx.Context
+	ctx            *botCtx.Context
+	lastTownReturn time.Time
 }
 
 func NewBot(ctx *botCtx.Context) *Bot {
 	return &Bot{
-		ctx: ctx,
+		ctx:            ctx,
+		lastTownReturn: time.Time{},
 	}
 }
+
 func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -31,7 +34,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	gameStartedAt := time.Now()
 	b.ctx.SwitchPriority(botCtx.PriorityNormal) // Restore priority to normal, in case it was stopped in previous game
-	b.ctx.CurrentGame = botCtx.NewGameHelper()  // Reset current game helper structure
+	b.ctx.CurrentGame = botCtx.NewGameHelper()   // Reset current game helper structure
 
 	err := b.ctx.GameReader.FetchMapData()
 	if err != nil {
@@ -93,6 +96,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			}
 		}
 	})
+
 	// High priority loop, this will interrupt (pause) low priority loop
 	g.Go(func() error {
 		defer func() {
@@ -144,7 +148,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
-					!b.ctx.Data.PlayerUnit.Area.IsTown() {
+					!b.ctx.Data.PlayerUnit.Area.IsTown() &&
+					time.Since(b.lastTownReturn) > 5*time.Second {
 
 					// Log the exact reason for going back to town
 					var reason string
@@ -158,8 +163,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 						reason = "Mercenary is dead"
 					}
 
+					b.lastTownReturn = time.Now()
 					b.ctx.Logger.Info("Going back to town", "reason", reason)
-
 					action.InRunReturnTownRoutine()
 				}
 
