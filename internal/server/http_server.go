@@ -773,15 +773,18 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Health.MercHealingPotionAt, _ = strconv.Atoi(r.Form.Get("mercHealingPotionAt"))
 		cfg.Health.MercRejuvPotionAt, _ = strconv.Atoi(r.Form.Get("mercRejuvPotionAt"))
 		cfg.Health.MercChickenAt, _ = strconv.Atoi(r.Form.Get("mercChickenAt"))
+
 		// Character
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
+
 		// Berserker Barb specific options
 		if cfg.Character.Class == "berserker" {
 			cfg.Character.BerserkerBarb.SkipPotionPickupInTravincal = r.Form.Has("barbSkipPotionPickupInTravincal")
 			cfg.Character.BerserkerBarb.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
 		}
+
 		// Nova Sorceress specific options
 		if cfg.Character.Class == "nova" {
 			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))
@@ -807,6 +810,15 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 				cfg.Character.NovaSorceress.BossStaticThreshold = 65 // Default value
 				s.logger.Warn("Invalid Boss Static Threshold input, setting to default", slog.Int("default", 65))
 			}
+		}
+
+		// Mosaic specific options
+		if cfg.Character.Class == "mosaic" {
+			cfg.Character.MosaicSin.UseTigerStrike = r.Form.Has("mosaicUseTigerStrike")
+			cfg.Character.MosaicSin.UseCobraStrike = r.Form.Has("mosaicUseCobraStrike")
+			cfg.Character.MosaicSin.UseClawsOfThunder = r.Form.Has("mosaicUseClawsOfThunder")
+			cfg.Character.MosaicSin.UseBladesOfIce = r.Form.Has("mosaicUseBladesOfIce")
+			cfg.Character.MosaicSin.UseFistsOfFire = r.Form.Has("mosaicUseFistsOfFire")
 		}
 
 		for y, row := range cfg.Inventory.InventoryLock {

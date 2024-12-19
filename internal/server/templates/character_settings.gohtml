@@ -112,6 +112,31 @@
                         </label>
                     </fieldset>
                 </div>
+
+                <div class="mosaic-assassin-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            <input type="checkbox" name="mosaicUseTigerStrike" {{ if .Config.Character.MosaicSin.UseTigerStrike }}checked{{ end }}/>
+                            Use Tiger Strike
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseCobraStrike" {{ if .Config.Character.MosaicSin.UseCobraStrike }}checked{{ end }}/>
+                            Use Cobra Strike
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseClawsOfThunder" {{ if .Config.Character.MosaicSin.UseClawsOfThunder }}checked{{ end }}/>
+                            Use Claws of Thunder
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseBladesOfIce" {{ if .Config.Character.MosaicSin.UseBladesOfIce }}checked{{ end }}/>
+                            Use Blades of Ice
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseFistsOfFire" {{ if .Config.Character.MosaicSin.UseFistsOfFire }}checked{{ end }}/>
+                            Use Fists of Fire
+                        </label>
+                    </fieldset>
+                </div>
             </div>
 
             <fieldset class="grid">
