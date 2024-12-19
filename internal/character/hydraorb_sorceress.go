@@ -53,7 +53,6 @@ func (s HydraOrbSorceress) CheckKeyBindings() []skill.ID {
 
 func (s HydraOrbSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -68,11 +67,11 @@ func (s HydraOrbSorceress) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
-		if completedAttackLoops >= sorceressMaxAttacksLoop {
+		if completedAttackLoops >= ho_sorceressMaxAttacksLoop {
 			return nil
 		}
 
@@ -114,17 +113,17 @@ func (s HydraOrbSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
-func (s HydraOrbSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ int, _ bool, skipOnImmunities []stat.Resist) error {
+func (s HydraOrbSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ int, _ bool) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
 		}
 
 		return 0, false
-	}, skipOnImmunities)
+	})
 }
 
 func (s HydraOrbSorceress) BuffSkills() []skill.ID {
@@ -149,18 +148,18 @@ func (s HydraOrbSorceress) PreCTABuffSkills() []skill.ID {
 }
 
 func (s HydraOrbSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false)
 }
 
 func (s HydraOrbSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, ho_sorceressMaxDistance, false)
 }
 func (s HydraOrbSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, ho_sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, ho_sorceressMaxDistance, false)
 }
 
 func (s HydraOrbSorceress) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, ho_sorceressMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, ho_sorceressMaxDistance, true)
 }
 
 func (s HydraOrbSorceress) KillCouncil() error {
@@ -185,11 +184,11 @@ func (s HydraOrbSorceress) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s HydraOrbSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, blizzMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, blizzMaxDistance, true)
 }
 
 func (s HydraOrbSorceress) KillIzual() error {
@@ -232,11 +231,11 @@ func (s HydraOrbSorceress) KillDiablo() error {
 }
 
 func (s HydraOrbSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false)
 }
 
 func (s HydraOrbSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, ho_sorceressMaxDistance, false)
 }
 
 func (s HydraOrbSorceress) KillBaal() error {

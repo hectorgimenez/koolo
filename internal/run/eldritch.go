@@ -28,6 +28,7 @@ func (e Eldritch) Name() string {
 }
 
 func (e Eldritch) Run() error {
+	ctx := context.Get()
 	// Travel to FrigidHighlands
 	err := action.WayPoint(area.FrigidHighlands)
 	if err != nil {
@@ -37,11 +38,23 @@ func (e Eldritch) Run() error {
 	// Kill Eldritch
 	e.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(npc.MinionExp, data.MonsterTypeSuperUnique); found {
+			monsterIsImmune := false
+			for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+				if m.IsImmune(resist) {
+					monsterIsImmune = true
+					break
+				}
+			}
+
+			if monsterIsImmune {
+				return 0, false
+			}
+
 			return m.UnitID, true
 		}
 
 		return 0, false
-	}, nil)
+	})
 
 	// Move to Shenk and kill him, if enabled
 	if e.ctx.CharacterCfg.Game.Eldritch.KillShenk {
@@ -60,7 +73,7 @@ func (e Eldritch) Run() error {
 			}
 
 			return 0, false
-		}, nil)
+		})
 	}
 
 	return nil

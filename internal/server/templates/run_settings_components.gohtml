@@ -19,18 +19,6 @@
     </fieldset>
 {{ end }}
 
-{{ define "pindleskin" }}
-    <fieldset>
-        <label>Skip on immunities</label>
-        <fieldset class="grid">
-            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="cold" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "cold" }}checked{{ end }}> Cold</label>
-            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="fire" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "fire" }}checked{{ end }}> Fire</label>
-            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="light" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "light" }}checked{{ end }}> Light</label>
-            <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="poison" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "poison" }}checked{{ end }}> Poison</label>
-        </fieldset>
-    </fieldset>
-{{ end }}
-
 {{ define "stony_tomb" }}
     <fieldset>
         <label><input type="checkbox" name="gameStonytombOpenChests" {{ if .Config.Game.StonyTomb.OpenChests }}checked{{ end }}> Open chests</label>

@@ -39,7 +39,6 @@ func (s MosaicSin) CheckKeyBindings() []skill.ID {
 
 func (s MosaicSin) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	ctx := context.Get()
 	ctx.RefreshGameData()
@@ -70,7 +69,7 @@ func (s MosaicSin) KillMonsterSequence(
 			return nil
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -177,7 +176,7 @@ func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
 			return 0, false
 		}
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s MosaicSin) KillCountess() error {
@@ -216,7 +215,7 @@ func (s MosaicSin) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s MosaicSin) KillMephisto() error {

@@ -42,7 +42,6 @@ func (s Hammerdin) CheckKeyBindings() []skill.ID {
 
 func (s Hammerdin) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -56,7 +55,7 @@ func (s Hammerdin) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -99,7 +98,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ bool) error {
@@ -109,7 +108,7 @@ func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ 
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s Hammerdin) BuffSkills() []skill.ID {
@@ -161,7 +160,7 @@ func (s Hammerdin) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s Hammerdin) KillMephisto() error {

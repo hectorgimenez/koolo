@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
 
@@ -58,12 +57,12 @@ type BaseCharacter struct {
 	*context.Context
 }
 
-func (bc BaseCharacter) preBattleChecks(id data.UnitID, skipOnImmunities []stat.Resist) bool {
+func (bc BaseCharacter) preBattleChecks(id data.UnitID) bool {
 	monster, found := bc.Data.Monsters.FindByID(id)
 	if !found {
 		return false
 	}
-	for _, i := range skipOnImmunities {
+	for _, i := range bc.CharacterCfg.Runtime.ImmunityFilter {
 		if monster.IsImmune(i) {
 			bc.Logger.Info("Monster is immune! skipping", slog.String("immuneTo", string(i)))
 			return false

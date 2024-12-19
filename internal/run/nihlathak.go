@@ -29,6 +29,8 @@ func (n Nihlathak) Name() string {
 }
 
 func (n Nihlathak) Run() error {
+	ctx := context.Get()
+
 	// Use the waypoint to HallsOfPain
 	err := action.WayPoint(area.HallsOfPain)
 	if err != nil {
@@ -72,13 +74,26 @@ func (n Nihlathak) Run() error {
 
 		n.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 			for _, m := range d.Monsters.Enemies() {
+				monsterIsImmune := false
+
+				for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+					if m.IsImmune(resist) {
+						monsterIsImmune = true
+						break
+					}
+				}
+
+				if monsterIsImmune {
+					continue
+				}
+
 				if d := pather.DistanceFromPoint(nihlaObject.Position, m.Position); d < 15 {
 					return m.UnitID, true
 				}
 			}
 
 			return 0, false
-		}, nil)
+		})
 	}
 
 	return nil

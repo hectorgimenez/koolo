@@ -113,7 +113,26 @@
                     </fieldset>
                 </div>
             </div>
-
+            <label>Skip Monsters with Immunity to:</label>
+            <fieldset class="grid" style="width: 50%">
+                <label>
+                    <input type="checkbox" name="skipColdImmune" {{ if .Config.Character.SkipImmune.Cold }}checked{{ end }}/>
+                    Cold
+                </label>
+                <label>
+                    <input type="checkbox" name="skipFireImmune" {{ if .Config.Character.SkipImmune.Fire }}checked{{ end }}/>
+                    Fire
+                </label>
+                <label>
+                    <input type="checkbox" name="skipPoisonImmune" {{ if .Config.Character.SkipImmune.Poison }}checked{{ end }}/>
+                    Poison
+                </label>
+                <label>
+                    <input type="checkbox" name="skipLightImmune" {{ if .Config.Character.SkipImmune.Lightning }}checked{{ end }}/>
+                    Lightning
+                </label>
+                
+            </fieldset>
             <fieldset class="grid">
                 <label>
                     Use teleport when available

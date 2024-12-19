@@ -25,6 +25,7 @@ func (t Threshsocket) Name() string {
 }
 
 func (t Threshsocket) Run() error {
+	ctx := context.Get()
 
 	// Use waypoint to crystalinepassage
 	err := action.WayPoint(area.CrystallinePassage)
@@ -40,9 +41,21 @@ func (t Threshsocket) Run() error {
 	// Kill Threshsocket
 	return t.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(npc.BloodBringer, data.MonsterTypeSuperUnique); found {
+			monsterIsImmune := false
+			for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+				if m.IsImmune(resist) {
+					monsterIsImmune = true
+					break
+				}
+			}
+
+			if monsterIsImmune {
+				return 0, false
+			}
+
 			return m.UnitID, true
 		}
 
 		return 0, false
-	}, nil)
+	})
 }

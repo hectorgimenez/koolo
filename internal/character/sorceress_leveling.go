@@ -46,7 +46,6 @@ func (s SorceressLeveling) CheckKeyBindings() []skill.ID {
 
 func (s SorceressLeveling) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -60,7 +59,7 @@ func (s SorceressLeveling) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -110,7 +109,7 @@ func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s SorceressLeveling) BuffSkills() []skill.ID {
@@ -345,7 +344,7 @@ func (s SorceressLeveling) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s SorceressLeveling) KillMephisto() error {

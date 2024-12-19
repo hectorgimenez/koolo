@@ -52,7 +52,6 @@ func (s *Berserker) IsKillingCouncil() bool {
 
 func (s *Berserker) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 
 	for attackAttempts := 0; attackAttempts < maxAttackAttempts; attackAttempts++ {
@@ -64,7 +63,7 @@ func (s *Berserker) KillMonsterSequence(
 			return nil
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -229,13 +228,27 @@ func (s *Berserker) PreCTABuffSkills() []skill.ID {
 }
 
 func (s *Berserker) killMonster(npc npc.ID, t data.MonsterType) error {
+	ctx := context.Get()
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false
 		}
+
+		monsterIsImmune := false
+		for _, resist := range ctx.Data.CharacterCfg.Runtime.ImmunityFilter {
+			if m.IsImmune(resist) {
+				monsterIsImmune = true
+				break
+			}
+		}
+
+		if monsterIsImmune {
+			return 0, false
+		}
+
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s *Berserker) KillCountess() error {
@@ -326,7 +339,9 @@ func (s *Berserker) KillCouncil() error {
 }
 
 func (s *Berserker) killAllCouncilMembers() error {
-	context.Get().DisableItemPickup()
+	ctx := context.Get()
+	ctx.DisableItemPickup()
+
 	for {
 		if !s.anyCouncilMemberAlive() {
 			return nil
@@ -339,7 +354,7 @@ func (s *Berserker) killAllCouncilMembers() error {
 				}
 			}
 			return 0, false
-		}, nil)
+		})
 
 		if err != nil {
 			return err

@@ -44,7 +44,6 @@ func (s Javazon) CheckKeyBindings() []skill.ID {
 
 func (s Javazon) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -59,7 +58,7 @@ func (s Javazon) KillMonsterSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -99,7 +98,6 @@ func (s Javazon) KillMonsterSequence(
 
 func (s Javazon) KillBossSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
@@ -114,7 +112,7 @@ func (s Javazon) KillBossSequence(
 			completedAttackLoops = 0
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -137,7 +135,7 @@ func (s Javazon) killMonster(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s Javazon) killBoss(npc npc.ID, t data.MonsterType) error {
@@ -148,7 +146,7 @@ func (s Javazon) killBoss(npc npc.ID, t data.MonsterType) error {
 		}
 
 		return m.UnitID, true
-	}, nil)
+	})
 }
 
 func (s Javazon) PreCTABuffSkills() []skill.ID {
@@ -202,7 +200,7 @@ func (s Javazon) KillCouncil() error {
 		}
 
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s Javazon) KillMephisto() error {

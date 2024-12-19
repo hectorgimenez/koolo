@@ -58,7 +58,6 @@ func (s NovaSorceress) CheckKeyBindings() []skill.ID {
 
 func (s NovaSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-	skipOnImmunities []stat.Resist,
 ) error {
 	ctx := context.Get()
 	completedAttackLoops := 0
@@ -72,7 +71,7 @@ func (s NovaSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if !s.preBattleChecks(id, skipOnImmunities) {
+		if !s.preBattleChecks(id) {
 			return nil
 		}
 
@@ -147,18 +146,18 @@ func (s NovaSorceress) killBossWithStatic(bossID npc.ID, monsterType data.Monste
 		// Switch to Nova once boss HP is low enough
 		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 			return boss.UnitID, true
-		}, nil)
+		})
 	}
 }
 
-func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
+func (s NovaSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
 		}
 
 		return 0, false
-	}, skipOnImmunities)
+	})
 }
 
 func (s NovaSorceress) BuffSkills() []skill.ID {
@@ -229,11 +228,11 @@ func (s NovaSorceress) KillBaal() error {
 }
 
 func (s NovaSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
 func (s NovaSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s NovaSorceress) KillIzual() error {
@@ -248,13 +247,13 @@ func (s NovaSorceress) KillCouncil() error {
 			}
 		}
 		return 0, false
-	}, nil)
+	})
 }
 
 func (s NovaSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s NovaSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
