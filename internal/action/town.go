@@ -51,14 +51,10 @@ func InRunReturnTownRoutine() error {
 	RecoverCorpse()
 	ManageBelt()
 
-	/*
-		This will be added when option for cain Identify is added
-
-		// Let's stash items that need to be left unidentified
-		if HaveItemsToStashUnidentified() {
-			Stash(false)
-		}
-	*/
+	// Let's stash items that need to be left unidentified
+	if ctx.CharacterCfg.Game.UseCainIdentify && HaveItemsToStashUnidentified() {
+		Stash(false)
+	}
 
 	IdentifyAll(false)
 

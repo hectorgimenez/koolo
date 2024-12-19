@@ -826,6 +826,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		// Game
 		cfg.Game.CreateLobbyGames = r.Form.Has("createLobbyGames")
 		cfg.Game.MinGoldPickupThreshold, _ = strconv.Atoi(r.Form.Get("gameMinGoldPickupThreshold"))
+		cfg.Game.UseCainIdentify = r.Form.Has("useCainIdentify")
 		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))
 		cfg.Game.RandomizeRuns = r.Form.Has("gameRandomizeRuns")
 
