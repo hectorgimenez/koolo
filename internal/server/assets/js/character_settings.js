@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show relevant options based on class
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
-        } else if (selectedClass === 'nova') {
+        } else if (selectedClass === 'nova' || selectedClass === 'lightsorc') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
         } else {
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     characterClassSelect.addEventListener('change', updateCharacterOptions);
     document.getElementById('gameDifficulty').addEventListener('change', function() {
-        if (characterClassSelect.value === 'nova') {
+        if (characterClassSelect.value === 'nova' || characterClassSelect.value === 'lightsorc') {
             updateNovaSorceressOptions();
         }
     });

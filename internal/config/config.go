@@ -398,7 +398,7 @@ func SaveSupervisorConfig(supervisorName string, config *CharacterCfg) error {
 }
 
 func (c *CharacterCfg) Validate() {
-	if c.Character.Class == "nova" {
+	if c.Character.Class == "nova" || c.Character.Class == "lightsorc" {
 		minThreshold := 65 // Default
 		switch c.Game.Difficulty {
 		case difficulty.Normal:
