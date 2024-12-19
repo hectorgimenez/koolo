@@ -20,8 +20,8 @@ func PreRun(firstRun bool) error {
 
 	UpdateQuestLog()
 	IdentifyAll(firstRun)
-	VendorRefill(false, true)
 	Stash(firstRun)
+	VendorRefill(false, true)
 	Gamble()
 	Stash(false)
 	CubeRecipes()
