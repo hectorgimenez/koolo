@@ -10,6 +10,7 @@ commandLineArgs: '' # Command line arguments for D2
 killD2OnStop: true # Terminate D2 process on bot stop
 classicMode: false # Set to true to use legacy graphics
 closeMiniPanel: false # Set to true to close the mini panel at start of game in legacy graphics
+hidePortraits: true  # Set to true to hide mercenary and other players portraits (avatar)
 enableCubeRecipes: true # Enable cubing of flawlesses and tokens
 
 health: # Healing configuration, all values in %
@@ -63,7 +64,7 @@ game:
     focusOnElitePacks: false
   spider_cavern:
     openChests: true
-    focusOnElitePacks: false    
+    focusOnElitePacks: false
   pit:
     # default - Outer Cloister -> Monastery Gates -> Tamoe Highland
     moveThroughBlackMarsh: false # Use Black Marsh -> Tamoe Highland route
@@ -187,6 +188,6 @@ gambling:
   items: [ coronet, amulet, ring ] # Items to gamble, same value as [name] in pickit files.
 
 backtotown:
-    noHpPotions: true
-    noMpPotions: false
-    mercDied: true
+  noHpPotions: true
+  noMpPotions: false
+  mercDied: true

@@ -84,6 +84,7 @@ type CharacterCfg struct {
 	KillD2OnStop    bool   `yaml:"killD2OnStop"`
 	ClassicMode     bool   `yaml:"classicMode"`
 	CloseMiniPanel  bool   `yaml:"closeMiniPanel"`
+	HidePortraits   bool   `yaml:"hidePortraits"`
 
 	Scheduler Scheduler `yaml:"scheduler"`
 	Health    struct {
