@@ -19,13 +19,31 @@ func PreRun(firstRun bool) error {
 	}
 
 	UpdateQuestLog()
+
+	// Store items that need to be left unidentified
+	if HaveItemsToStashUnidentified() {
+		Stash(firstRun)
+	}
+
+	// Identify - either via Cain or Tome
 	IdentifyAll(firstRun)
-	VendorRefill(false, true)
+
+	// Stash before vendor
 	Stash(firstRun)
+
+	// Refill pots, sell, buy etc
+	VendorRefill(false, true)
+
+	// Gamble
 	Gamble()
+
+	// Stash again if needed
 	Stash(false)
+
+	// Perform cube recipes
 	CubeRecipes()
 
+	// Leveling related checks
 	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
 		ResetStats()
 		EnsureStatPoints()
@@ -51,14 +69,10 @@ func InRunReturnTownRoutine() error {
 	RecoverCorpse()
 	ManageBelt()
 
-	/*
-		This will be added when option for cain Identify is added
-
-		// Let's stash items that need to be left unidentified
-		if HaveItemsToStashUnidentified() {
-			Stash(false)
-		}
-	*/
+	// Let's stash items that need to be left unidentified
+	if ctx.CharacterCfg.Game.UseCainIdentify && HaveItemsToStashUnidentified() {
+		Stash(false)
+	}
 
 	IdentifyAll(false)
 

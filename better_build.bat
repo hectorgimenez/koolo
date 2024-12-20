@@ -11,6 +11,10 @@ call :check_go_installation
 
 :: Main script execution
 call :main
+if !errorlevel! neq 0 (
+    call :print_error "Build process failed with error code !errorlevel!"
+    exit /b !errorlevel!
+)
 echo.
 powershell -Command "Write-Host 'Press any key to exit...' -ForegroundColor Yellow"
 pause > nul
@@ -54,65 +58,45 @@ if %errorlevel% neq 0 (
 goto :eof
 
 :main
+:: Initial validation checks
+call :validate_environment
+if !errorlevel! neq 0 exit /b !errorlevel!
 
-:: Check if build folder exists
-if not exist build (
-    call :print_step "Creating build folder"
-    mkdir build
-    if !errorlevel! equ 0 (
-        call :print_success "Build folder created at %cd%\build"
-        
-        :: Copy Settings.json to the new build folder
-        call :print_step "Copying Settings.json to build folder"
-        if exist config\Settings.json (
-            copy /y config\Settings.json build\config\Settings.json > nul
-            if !errorlevel! equ 0 (
-                call :print_success "Settings.json successfully copied to %cd%\build\config"
-            ) else (
-                call :print_error "Failed to copy Settings.json from %cd%\config\ to %cd%\build\config"
-                call :check_file_permissions "config\Settings.json"
-            )
-        ) else (
-            call :print_error "Settings.json not found in %cd%\config folder"
-        )
-    ) else (
-        call :print_error "Failed to create build folder"
-        call :check_folder_permissions "%cd%"
+:: Build Koolo binary
+call :print_header "Building Koolo Binary"
+call :print_step "Compiling Koolo"
+if "%1"=="" (set VERSION=dev) else (set VERSION=%1)
+go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w -H windowsgui -X 'github.com/hectorgimenez/koolo/internal/config.Version=%VERSION%'" -o build/koolo.exe ./cmd/koolo
+if !errorlevel! neq 0 (
+    call :print_error "Failed to build Koolo binary"
+    exit /b 1
+)
+call :print_success "Successfully built koolo.exe"
+
+:: Handle tools folder first
+call :print_header "Handling Tools"
+if exist build\tools (
+    call :print_step "Removing existing tools folder"
+    rmdir /s /q build\tools
+    if exist build\tools (
+        call :print_error "Failed to delete tools folder"
+        call :check_folder_permissions "build\tools"
         exit /b 1
     )
-) else (
-    call :print_step "Checking build folder"
-    call :print_info "Build folder already exists at %cd%\build"
-    
-    :: Check and delete koolo.exe if it exists
-    if exist build\koolo.exe (
-        call :print_step "Removing existing koolo.exe"
-        del /f /q build\koolo.exe
-        if not exist build\koolo.exe (
-            call :print_success "koolo.exe successfully deleted"
-        ) else (
-            call :print_error "Failed to delete koolo.exe"
-            call :check_file_permissions "build\koolo.exe"
-            exit /b 1
-        )
-    )
-    
-    :: Check and delete tools folder if it exists
-    if exist build\tools (
-        call :print_step "Removing existing tools folder"
-        rmdir /s /q build\tools
-        if not exist build\tools (
-            call :print_success "Tools folder successfully deleted"
-        ) else (
-            call :print_error "Failed to delete tools folder"
-            call :check_folder_permissions "build\tools"
-            exit /b 1
-        )
-    )
 )
+call :print_step "Copying tools folder"
+xcopy /q /E /I /y tools build\tools > nul
+if !errorlevel! neq 0 (
+    call :print_error "Failed to copy tools folder"
+    call :check_folder_permissions "tools"
+    call :check_folder_permissions "build"
+    exit /b 1
+)
+call :print_success "Tools folder successfully copied"
 
 :: Handle Settings.json
 call :print_header "Handling Configuration Files"
+if not exist build\config mkdir build\config
 if exist build\config\Settings.json (
     call :print_step "Checking Settings.json"
     call :print_info "Settings.json found in %cd%\build\config"
@@ -124,8 +108,7 @@ if exist build\config\Settings.json (
             call :print_success "Settings.json successfully replaced"
         ) else (
             call :print_error "Failed to copy Settings.json"
-            call :check_file_permissions "config\Settings.json"
-            call :check_file_permissions "build\config\Settings.json"
+            exit /b 1
         )
     ) else (
         call :print_info "Keeping existing Settings.json"
@@ -133,83 +116,45 @@ if exist build\config\Settings.json (
 ) else (
     call :print_info "No existing Settings.json found in %cd%\build\config"
     call :print_step "Copying Settings.json"
-    if not exist build\config mkdir build\config
     copy /y config\Settings.json build\config\Settings.json > nul
-    if !errorlevel! equ 0 (
-        call :print_success "Settings.json successfully copied to build\config"
-    ) else (
-        call :print_error "Failed to copy Settings.json to build\config"
-        call :check_file_permissions "config\Settings.json"
-        call :check_folder_permissions "build\config"
+    if !errorlevel! neq 0 (
+        call :print_error "Failed to copy Settings.json"
+        exit /b 1
     )
+    call :print_success "Settings.json successfully copied"
 )
-
-:: Handle tools folder
-call :print_header "Handling Tools"
-if not exist build\tools (
-    call :print_step "Copying tools folder"
-    xcopy /q /E /I /y tools build\tools > nul
-    if !errorlevel! equ 0 (
-        call :print_success "Tools folder successfully copied"
-    ) else (
-        call :print_error "Failed to copy tools folder"
-        call :check_folder_permissions "tools"
-        call :check_folder_permissions "build"
-    )
-) else (
-    call :print_info "Tools folder already exists in %cd%\build\tools"
-)
-
-:: Build Koolo binary
-call :print_header "Building Koolo Binary"
-call :print_step "Compiling Koolo"
-if "%1"=="" (set VERSION=dev) else (set VERSION=%1)
-go build -trimpath -tags static --ldflags -extldflags="-static" -ldflags="-s -w -H windowsgui -X 'github.com/hectorgimenez/koolo/internal/config.Version=%VERSION%'" -o build/koolo.exe ./cmd/koolo
-if !errorlevel! equ 0 (
-    call :print_success "Koolo binary successfully built at %cd%\build\koolo.exe"
-) else (
-    call :print_error "Failed to build Koolo binary"
-    goto :error
-)
-
-:: Copy remaining assets
-call :print_header "Copying Additional Assets"
-if not exist build\config mkdir build\config
 
 :: Handle koolo.yaml
 if not exist build\config\koolo.yaml (
     call :print_step "Copying koolo.yaml.dist"
     copy config\koolo.yaml.dist build\config\koolo.yaml > nul
-    if !errorlevel! equ 0 (
-        call :print_success "koolo.yaml.dist successfully copied to build\config\koolo.yaml"
-    ) else (
+    if !errorlevel! neq 0 (
         call :print_error "Failed to copy koolo.yaml.dist"
-        call :check_file_permissions "config\koolo.yaml.dist"
-        call :check_folder_permissions "build\config"
+        exit /b 1
     )
+    call :print_success "koolo.yaml.dist successfully copied"
 ) else (
     call :print_info "koolo.yaml already exists in build\config, skipping copy"
 )
 
+:: Copy template folder
 call :print_step "Copying template folder"
+if exist build\config\template rmdir /s /q build\config\template
 xcopy /q /E /I /y config\template build\config\template > nul
-if !errorlevel! equ 0 (
-    call :print_success "Template folder successfully copied"
-) else (
+if !errorlevel! neq 0 (
     call :print_error "Failed to copy template folder"
-    call :check_folder_permissions "config\template"
-    call :check_folder_permissions "build\config"
+    exit /b 1
 )
+call :print_success "Template folder successfully copied"
 
+:: Copy README
 call :print_step "Copying README.md"
 copy README.md build > nul
-if !errorlevel! equ 0 (
-    call :print_success "README.md successfully copied"
-) else (
+if !errorlevel! neq 0 (
     call :print_error "Failed to copy README.md"
-    call :check_file_permissions "README.md"
-    call :check_folder_permissions "build"
+    exit /b 1
 )
+call :print_success "README.md successfully copied"
 
 call :print_header "Build Process Completed"
 call :print_success "Artifacts are in the build directory"
@@ -262,10 +207,81 @@ goto :eof
 
 :: Function to check file permissions
 :check_file_permissions
-powershell -Command "$acl = Get-Acl '%~1'; $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent(); $principal = New-Object System.Security.Principal.WindowsPrincipal($identity); $adminRole = [System.Security.Principal.WindowsBuiltInRole]::Administrator; if ($principal.IsInRole($adminRole)) { Write-Host '    INFO: Script is running with administrator privileges' -ForegroundColor Yellow } else { Write-Host '    WARNING: Script is not running with administrator privileges' -ForegroundColor Yellow }; Write-Host ('    INFO: Current user: ' + $identity.Name) -ForegroundColor Yellow; Write-Host ('    INFO: File owner: ' + $acl.Owner) -ForegroundColor Yellow; $acl.Access | ForEach-Object { Write-Host ('    INFO: ' + $_.IdentityReference + ' has ' + $_.FileSystemRights + ' rights') -ForegroundColor Yellow }"
+dir "%~1" >nul 2>&1
+if !errorlevel! neq 0 (
+    call :print_error "Cannot access file: %~1"
+) else (
+    call :print_info "File %~1 is accessible"
+)
 goto :eof
 
 :: Function to check folder permissions
 :check_folder_permissions
-powershell -Command "$acl = Get-Acl '%~1'; $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent(); $principal = New-Object System.Security.Principal.WindowsPrincipal($identity); $adminRole = [System.Security.Principal.WindowsBuiltInRole]::Administrator; if ($principal.IsInRole($adminRole)) { Write-Host '    INFO: Script is running with administrator privileges' -ForegroundColor Yellow } else { Write-Host '    WARNING: Script is not running with administrator privileges' -ForegroundColor Yellow }; Write-Host ('    INFO: Current user: ' + $identity.Name) -ForegroundColor Yellow; Write-Host ('    INFO: Folder owner: ' + $acl.Owner) -ForegroundColor Yellow; $acl.Access | ForEach-Object { Write-Host ('    INFO: ' + $_.IdentityReference + ' has ' + $_.FileSystemRights + ' rights') -ForegroundColor Yellow }"
+dir "%~1\*" >nul 2>&1
+if !errorlevel! neq 0 (
+    call :print_error "Cannot access directory: %~1"
+) else (
+    call :print_info "Directory %~1 is accessible"
+)
+goto :eof
+
+:: Function to validate environment
+:validate_environment
+call :print_header "Validating Environment"
+
+:: Check for required source files and folders
+if not exist config (
+    call :print_error "Config directory is missing"
+    exit /b 1
+)
+
+if not exist config\koolo.yaml.dist (
+    call :print_error "koolo.yaml.dist is missing from config directory"
+    exit /b 1
+)
+
+if not exist config\Settings.json (
+    call :print_error "Settings.json is missing from config directory"
+    exit /b 1
+)
+
+if not exist tools (
+    call :print_error "Tools directory is missing"
+    exit /b 1
+)
+
+:: Check for required tools
+if not exist tools\handle64.exe (
+    call :print_error "handle64.exe is missing from tools directory"
+    exit /b 1
+)
+
+if not exist tools\koolo-map.exe (
+    call :print_error "koolo-map.exe is missing from tools directory"
+    exit /b 1
+)
+
+:: Check for required build dependencies
+call :print_step "Checking build dependencies"
+go version >nul 2>&1
+if !errorlevel! neq 0 (
+    call :print_error "Go is not installed or not in PATH"
+    exit /b 1
+)
+
+:: Verify write permissions in current directory
+call :print_step "Checking write permissions"
+echo. > test_write.tmp 2>nul
+if !errorlevel! neq 0 (
+    call :print_error "No write permissions in current directory"
+    exit /b 1
+)
+del test_write.tmp >nul 2>&1
+
+call :print_success "Environment validation completed"
+goto :eof
+
+:: Function to print a warning message
+:print_warning
+powershell -Command "Write-Host '    WARNING: %~1' -ForegroundColor Yellow"
 goto :eof

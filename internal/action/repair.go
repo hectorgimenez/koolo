@@ -82,36 +82,40 @@ func Repair() error {
 }
 
 func RepairRequired() bool {
-	ctx := context.Get()
-	ctx.SetLastAction("RepairRequired")
+    ctx := context.Get()
+    ctx.SetLastAction("RepairRequired")
 
-	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+    for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+        // Skip indestructible items
+        _, indestructible := i.FindStat(stat.Indestructible, 0)
+        if i.Ethereal || indestructible {
+            continue
+        }
 
-		_, indestructible := i.FindStat(stat.Indestructible, 0)
+        currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
+        maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
-		if i.Ethereal || indestructible {
-			continue
-		}
+        // If we have both stats, check percentage
+        if currentDurabilityFound && maxDurabilityFound {
+            durabilityPercent := int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
+            if durabilityPercent <= 20 {
+                return true
+            }
+        }
 
-		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
-		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+        // If we only have current durability, check absolute value
+        if currentDurabilityFound {
+            if currentDurability.Value <= 5 {
+                return true
+            }
+        }
 
-		durabilityPercent := -1
+        // Handle case where durability stat is missing but max durability exists
+        // This likely indicates the item needs repair
+        if maxDurabilityFound && !currentDurabilityFound {
+            return true
+        }
+    }
 
-		if maxDurabilityFound && currentDurabilityFound {
-			durabilityPercent = int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
-		}
-
-		// If we don't find the stats just continue
-		if !currentDurabilityFound && !maxDurabilityFound {
-			continue
-		}
-
-		// Let's check if the item requires repair plus a few fail-safes
-		if maxDurabilityFound && !currentDurabilityFound || durabilityPercent != -1 && currentDurabilityFound && durabilityPercent <= 20 || currentDurabilityFound && currentDurability.Value <= 5 {
-			return true
-		}
-	}
-
-	return false
+    return false
 }
