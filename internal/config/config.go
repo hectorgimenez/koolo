@@ -112,10 +112,18 @@ type CharacterCfg struct {
 		NovaSorceress struct {
 			BossStaticThreshold int `yaml:"boss_static_threshold"`
 		} `yaml:"nova_sorceress"`
+		MosaicSin struct {
+			UseTigerStrike    bool `yaml:"useTigerStrike"`
+			UseCobraStrike    bool `yaml:"useCobraStrike"`
+			UseClawsOfThunder bool `yaml:"useClawsOfThunder"`
+			UseBladesOfIce    bool `yaml:"useBladesOfIce"`
+			UseFistsOfFire    bool `yaml:"useFistsOfFire"`
+		} `yaml:"mosaic_sin"`
 	} `yaml:"character"`
 
 	Game struct {
 		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
+		UseCainIdentify        bool                  `yaml:"useCainIdentify"`
 		ClearTPArea            bool                  `yaml:"clearTPArea"`
 		Difficulty             difficulty.Difficulty `yaml:"difficulty"`
 		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
