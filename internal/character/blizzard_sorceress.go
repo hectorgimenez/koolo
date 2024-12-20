@@ -16,8 +16,10 @@ import (
 
 const (
 	sorceressMaxAttacksLoop = 40
-	sorceressMinDistance    = 25
-	sorceressMaxDistance    = 30
+	blizzMinDistance        = 8
+	blizzMaxDistance        = 20
+	LSMinDistance           = 6
+	LSMaxDistance           = 15 // Left skill
 )
 
 type BlizzardSorceress struct {
@@ -59,6 +61,9 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
 
+	blizzOpts := step.StationaryDistance(blizzMinDistance, blizzMaxDistance)
+	lsOpts := step.Distance(LSMinDistance, LSMaxDistance)
+
 	for {
 		id, found := monsterSelector(*s.Data)
 		if !found {
@@ -82,24 +87,21 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		opts := step.Distance(sorceressMinDistance, sorceressMaxDistance)
-
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
 		if time.Since(previousSelfBlizzard) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			for _, m := range s.Data.Monsters.Enemies() {
 				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
-					s.Logger.Debug("Monster detected close to the player, casting Blizzard over it")
 					previousSelfBlizzard = time.Now()
-					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, opts)
+					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, blizzOpts)
 				}
 			}
 		}
 
 		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			step.PrimaryAttack(id, 2, true, opts)
+			step.PrimaryAttack(id, 2, true, lsOpts)
 		}
 
-		step.SecondaryAttack(skill.Blizzard, id, 1, opts)
+		step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -117,7 +119,7 @@ func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 	}, nil)
 }
 
-func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, maxDistance int, _ bool, skipOnImmunities []stat.Resist) error {
+func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
@@ -149,19 +151,19 @@ func (s BlizzardSorceress) PreCTABuffSkills() []skill.ID {
 }
 
 func (s BlizzardSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeNone, sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillCouncil() error {
@@ -190,7 +192,7 @@ func (s BlizzardSorceress) KillCouncil() error {
 }
 
 func (s BlizzardSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, sorceressMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillIzual() error {
@@ -233,11 +235,11 @@ func (s BlizzardSorceress) KillDiablo() error {
 }
 
 func (s BlizzardSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (s BlizzardSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, sorceressMaxDistance, false, nil)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
 }
 
 func (s BlizzardSorceress) KillBaal() error {

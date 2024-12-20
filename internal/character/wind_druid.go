@@ -22,8 +22,6 @@ const (
 	druMaxDistance    = 8
 )
 
-var lastRavenAt = map[string]time.Time{}
-
 type WindDruid struct {
 	BaseCharacter
 	*game.HID

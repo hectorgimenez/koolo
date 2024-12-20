@@ -5,7 +5,7 @@
 
 ---
 
-Koolo is a small bot for Diablo II: Resurrected. Koolo project was built for informational and educational purposes
+Koolo is a small bot for Diablo II: Resurrected (Expension). Koolo project was built for informational and educational purposes
 only, it's not intended for online usage. Feel free to contribute opening pull requests with new features or bugfixes.
 Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window. As good as it can.
 
@@ -16,13 +16,12 @@ Can I get banned for using Koolo? The answer is a crystal clear yes, you can get
 not aware of any ban for using it. I'm not responsible for any ban or any other consequence that may arise from it.
 
 ## Features
-- Blizzard Sorceress, Nova Sorceress, Hammerdin and FoH are currently supported
-- Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch, Pindleskin, Nihlathak,
-  Tristram, Lower Kurast, Stony Tomb, The Pit, Arachnid Lair, Baal, Tal Rasha Tombs, Diablo, Cows
+- Blizzard Sorceress, Nova Sorceress, FoH, Berserk Barbarian Hork (Travincal), Mosaic are currently supported. Hammerdin, Javazon and Winddruid are WIP
+- Supported runs: Countess, Andariel, Ancient Tunnels, Summoner, Mephisto, Council, Eldritch-Shenk, Endugu, Drifter Cavern, Pindleskin, Nihlathak,
+  Tristram, Lower Kurast and Superchests, Stony Tomb, The Pit, Arachnid Lair, Baal, Duriel, Tal Rasha Tombs, Diablo, Cows, Treshsocket
 - Multi window support (run multiple bots at the same time)
 - Bot integration for Discord and Telegram
-- "Companion mode" one leader bot will be creating games and the rest of the bots will join the game... and sometimes it
-  works
+- "Companion mode" one leader bot will be creating games and the rest of the bots will join the game... (not working currently)
 - Pickit based on NIP files
 - Auto potion for health and mana (also mercenary)
 - Chicken when low health
@@ -31,10 +30,11 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 - CTA buff and class buffs
 - Auto repair
 - Skip on immune
-- Auto leveling sorceress and paladin (WIP)
+- Auto leveling sorceress and paladin (WIP) this feature is not finished.
 - Auto gambling
-- Auto cubing (WIP)
+- Auto cubing and crafting (WIP)
 - Terror Zones (WIP)
+- Classic is not supported
 
 ## Requirements
 - Diablo II: Resurrected (1280x720 required, windowed mode, ensure accessibility large fonts disabled)
@@ -44,6 +44,8 @@ not aware of any ban for using it. I'm not responsible for any ban or any other 
 ### Preparing the character
 - Koolo will read game keybindings in order to use the skills, doesn't matter what key is used, but the skills for the build must be set.
 - For blizzard sorceress, set the **left** skill to Glacial Spike or Ice Blast, and for Hammerdin to Blessed Hammer.
+- Foh set keybind for FOH and holybolt on left skill, conviction on right skill
+- Berserk barb set berserk as left skill. Also to use FindItem you need higher goldfind on secondary weapons slot. Alibaba + anything will work.
 - Buy TP and ID tomes and one stack of keys and keep them in the inventory, additionally set the TP tome to a key binding, this is **required**.
 - Horadric Cube can be stashed or kept in inventory, Koolo will use it to cube recipes if enabled.
 - Keep the charms in the inventory, Koolo can be configured to lock specific inventory slots.
@@ -73,7 +75,7 @@ There are some considerations to take into account:
 Setting the development environment is pretty straightforward, but the following dependencies are **required** to build the project.
 
 ### Dependencies
-- [Download Go >= 1.22](https://go.dev/dl/)
+- [Download Go >= 1.23](https://go.dev/dl/)
 - [Install git](https://gitforwindows.org/)
 
 ### Building from source

@@ -83,6 +83,62 @@
                         value="{{ .Config.CharacterName }}"/>
                 </label>
             </fieldset>
+
+            <h5>Class-Specific Settings</h5>
+            <div id="class-specific-settings">
+               
+                <div id="no-settings-message" style="display: none;">
+                    No custom settings available for this class.
+                </div>
+                
+                <div class="berserker-barb-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.BerserkerBarb.FindItemSwitch }}checked{{ end }}/>
+                            Find Item Switch
+                        </label>
+                        <label>
+                            <input type="checkbox" name="barbSkipPotionPickupInTravincal" {{if .Config.Character.BerserkerBarb.SkipPotionPickupInTravincal}}checked{{end}}>
+                            Skip potion pickup during Travincal
+                        </label>
+                    </fieldset>
+                </div>
+                
+                <div class="nova-sorceress-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            Boss Static HP (%)
+                            <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
+                        </label>
+                    </fieldset>
+                </div>
+
+                <div class="mosaic-assassin-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            <input type="checkbox" name="mosaicUseTigerStrike" {{ if .Config.Character.MosaicSin.UseTigerStrike }}checked{{ end }}/>
+                            Use Tiger Strike
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseCobraStrike" {{ if .Config.Character.MosaicSin.UseCobraStrike }}checked{{ end }}/>
+                            Use Cobra Strike
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseClawsOfThunder" {{ if .Config.Character.MosaicSin.UseClawsOfThunder }}checked{{ end }}/>
+                            Use Claws of Thunder
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseBladesOfIce" {{ if .Config.Character.MosaicSin.UseBladesOfIce }}checked{{ end }}/>
+                            Use Blades of Ice
+                        </label>
+                        <label>
+                            <input type="checkbox" name="mosaicUseFistsOfFire" {{ if .Config.Character.MosaicSin.UseFistsOfFire }}checked{{ end }}/>
+                            Use Fists of Fire
+                        </label>
+                    </fieldset>
+                </div>
+            </div>
+
             <fieldset class="grid">
                 <label>
                     Use teleport when available
@@ -92,23 +148,12 @@
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
                 </label>
-                <div class="berserker-barb-options" style="display: none;">
-                    <label>
-                        <input type="checkbox" name="characterFindItemSwitch" {{ if .Config.Character.BerserkerBarb.FindItemSwitch }}checked{{ end }}/>
-                        Find Item Switch
-                    </label>
-                    <label>
-                        <input type="checkbox" name="barbSkipPotionPickupInTravincal" {{if .Config.Character.BerserkerBarb.SkipPotionPickupInTravincal}}checked{{end}}>
-                        Skip potion pickup during Travincal
-                    </label>
-                </div>
-                <div class="nova-sorceress-options" style="display: none;">
-                    <label>
-                        Boss Static HP (%)
-                        <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
-                    </label>
-                    <small>(100% to disable)</small>
-                </div>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
+                    <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
+                    Identify with Cain 
+                </label>
             </fieldset>
             <label>
                 Minimum Gold (will pick up Magic+ to sell for gold if below)
@@ -137,6 +182,7 @@
                     <input id="close_mini_panel" type="checkbox" name="close_mini_panel" {{ if .Config.CloseMiniPanel }}checked{{ end }}/>
                     Close the mini panel at game start (Legacy Graphics)
                 </label>
+
             </fieldset>
             <h3>Battle.net settings</h3><br>
             <fieldset class="grid">

@@ -18,18 +18,26 @@ type Data struct {
 }
 
 func (d Data) CanTeleport() bool {
-	if !d.CharacterCfg.Character.UseTeleport {
-		return false
-	}
+    if !d.CharacterCfg.Character.UseTeleport {
+        return false
+    }
+// In Duriel Lair we can teleport only in boss room
+// Only enable Teleport in largest room where is Duriel
+    if d.PlayerUnit.Area == area.DurielsLair {
+        if len(d.AreaData.Rooms) > 0 {
+            bossRoom := d.AreaData.Rooms[0]
+            for _, room := range d.AreaData.Rooms {
+                if (room.Width * room.Height) > (bossRoom.Width * bossRoom.Height) {
+                    bossRoom = room
+                }
+            }
+            return bossRoom.IsInside(d.PlayerUnit.Position)
+        }
+        return false
+    }
 
-	// Duriel's Lair is bugged and teleport doesn't work here
-	if d.PlayerUnit.Area == area.DurielsLair {
-		return false
-	}
-
-	_, isTpBound := d.KeyBindings.KeyBindingForSkill(skill.Teleport)
-
-	return isTpBound && !d.PlayerUnit.Area.IsTown()
+    _, isTpBound := d.KeyBindings.KeyBindingForSkill(skill.Teleport)
+    return isTpBound && !d.PlayerUnit.Area.IsTown()
 }
 
 func (d Data) PlayerCastDuration() time.Duration {
