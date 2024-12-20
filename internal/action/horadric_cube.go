@@ -100,13 +100,15 @@ func CubeTransmute() error {
 
 	utils.Sleep(2000)
 
-	if ctx.Data.LegacyGraphics {
-		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
-	} else {
-		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
-	}
+	// Take the items out of the cube
+	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationCube) {
+		ctx.Logger.Debug("Moving Item to the inventory", slog.String("Item", string(itm.Name)))
 
-	utils.Sleep(300)
+		screenPos := ui.GetScreenCoordsForItem(itm)
+
+		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		utils.Sleep(500)
+	}
 
 	return step.CloseAllMenus()
 }
