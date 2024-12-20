@@ -19,13 +19,31 @@ func PreRun(firstRun bool) error {
 	}
 
 	UpdateQuestLog()
+
+	// Store items that need to be left unidentified
+	if HaveItemsToStashUnidentified() {
+		Stash(firstRun)
+	}
+
+	// Identify - either via Cain or Tome
 	IdentifyAll(firstRun)
+
+	// Stash before vendor
 	Stash(firstRun)
+
+	// Refill pots, sell, buy etc
 	VendorRefill(false, true)
+
+	// Gamble
 	Gamble()
+
+	// Stash again if needed
 	Stash(false)
+
+	// Perform cube recipes
 	CubeRecipes()
 
+	// Leveling related checks
 	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
 		ResetStats()
 		EnsureStatPoints()
