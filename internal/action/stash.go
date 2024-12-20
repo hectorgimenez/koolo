@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -204,7 +205,7 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	}
 
 	// Let's stash everything during first run, we don't want to sell items from the user
-	if firstRun {
+	if firstRun && config.Koolo.StashOnFirstRun {
 		return true, "FirstRun", ""
 	}
 

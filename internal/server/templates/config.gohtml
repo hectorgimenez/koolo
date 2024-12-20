@@ -63,6 +63,17 @@
                     />
                     Auto reposition game windows
                 </label>
+                <label>
+                    <input
+                            {{ if .StashOnFirstRun }}
+                                checked="checked"
+                            {{ end }}
+                            type="checkbox"
+                            name="stash_on_first_run"
+                            value="true"
+                    />
+                    Stash on first run
+                </label>
                 <h4>Debug</h4>
                 <fieldset class="grid">
                     <label>

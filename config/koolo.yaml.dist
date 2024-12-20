@@ -1,6 +1,7 @@
 firstRun: true # If set to true next time the bot starts it will show the setup wizard
 useCustomSettings: true # If set to true, koolo will use config/Settings.json file to load game settings instead of default one.
 gameWindowArrangement: true # If set to true, game windows will be automatically repositioned to avoid overlapping
+stashOnFirstRun: true # If set to true, stash all items found in unlocked inventory slots before first run
 debug:
   log: true # Prints extra log information
   screenshots: false # Saves screenshots of the game in case of errors
