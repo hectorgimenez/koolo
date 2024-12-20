@@ -130,7 +130,6 @@ func (d *Diablo) Run() error {
 
 	return nil
 }
-
 func (d *Diablo) killSealElite(boss string) error {
 	d.ctx.Logger.Debug(fmt.Sprintf("Starting kill sequence for %s", boss))
 	startTime := time.Now()
@@ -140,6 +139,13 @@ func (d *Diablo) killSealElite(boss string) error {
 		for _, m := range d.ctx.Data.Monsters.Enemies(d.ctx.Data.MonsterFilterAnyReachable()) {
 			if action.IsMonsterSealElite(m) {
 				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
+
+				// Check if we should disable item pickup during boss fights
+				if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
+					d.ctx.DisableItemPickup()
+					// Re-enable item pickup after this elite fight
+					defer d.ctx.EnableItemPickup()
+				}
 
 				return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
 					if action.IsMonsterSealElite(m) {
@@ -155,7 +161,6 @@ func (d *Diablo) killSealElite(boss string) error {
 
 	return fmt.Errorf("no seal elite found for %s within %v seconds", boss, timeout.Seconds())
 }
-
 func (d *Diablo) getMonsterFilter() data.MonsterFilter {
 	return func(monsters data.Monsters) (filteredMonsters []data.Monster) {
 		for _, m := range monsters {
