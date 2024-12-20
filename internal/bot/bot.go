@@ -123,6 +123,9 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					b.ctx.RefreshGameData()
 				}
 
+				// Hide merc/other players portraits if enabled
+				action.HidePortraits()
+
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
 				// Area correction
