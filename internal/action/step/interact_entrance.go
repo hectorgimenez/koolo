@@ -104,9 +104,10 @@ func InteractEntrance(targetArea area.ID) error {
 				Yoffset: -35, // Upward bias for entrances
 			}
 
-			// Try to find the actual object description if possible
+			// Try to find the actual object description for the entrance
+			// We know it's a proper entrance because targetLevel.IsEntrance was verified in findClosestEntrance
 			for _, obj := range ctx.Data.Objects {
-				if obj.Position == targetLevel.Position {
+				if obj.Position == targetLevel.Position && targetLevel.IsEntrance {
 					entranceDesc = obj.Desc()
 					break
 				}

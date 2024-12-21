@@ -21,24 +21,39 @@ func AdaptiveSpiral(attempt int, desc object.Description) (x, y int) {
 	baseRadius := float64(attempt) * 3.0
 	angle := float64(attempt) * math.Pi * (3.0 - math.Sqrt(5.0))
 
-	// If object has no dimensions (like entrances), use fixed spiral pattern
+	// If object has no dimensions (like entrances), use entrance-specific pattern
 	if desc.Width == 0 && desc.Height == 0 {
+		// Detect cellar/tower/underground entrance by checking the Top offset
+		// These entrances typically have a higher negative Top value
+		isTallEntrance := desc.Top < -45
+
 		xScale := 1.2
 		yScale := 0.8
+		yOffset := -35
+
+		if isTallEntrance {
+			// Make the pattern taller and narrower for vertical entrances
+			xScale = 0.9
+			yScale = 1.1
+			yOffset = -45 // Search higher up
+		}
 
 		x = int(baseRadius * math.Cos(angle) * xScale)
 		y = int(baseRadius * math.Sin(angle) * yScale)
 
-		// Add a slight upward bias for entrances
-		y -= 35
+		y += yOffset
 
-		// Use fixed boundaries for entrances
-		x = Clamp(x, -30, 30)
-		y = Clamp(y, -50, 10)
+		// Adjust boundaries for vertical entrances
+		if isTallEntrance {
+			x = Clamp(x, -25, 25) // Narrower X range
+			y = Clamp(y, -60, 0)  // Higher Y range
+		} else {
+			x = Clamp(x, -30, 30)
+			y = Clamp(y, -50, 10)
+		}
 
 		return x, y
 	}
-
 	// For portal-like objects (similar dimensions)
 	if desc.Width == 80 && desc.Height == 110 {
 		xScale := 1.0
