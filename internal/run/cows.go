@@ -122,10 +122,16 @@ func (a Cows) getWirtsLeg() error {
 		return errors.New("cain stones not found")
 	}
 	err = action.MoveToCoords(cainStone.Position)
+
 	if err != nil {
 		return err
 	}
-	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+	// Kill Rakanishu before entering Tristam if enabled
+	if a.ctx.CharacterCfg.Game.Cows.KillRakanishu {
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+	} else {
+		utils.Sleep(1000) // Add delay when skipping to allow portal to load
+	}
 
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
@@ -145,6 +151,17 @@ func (a Cows) getWirtsLeg() error {
 	err = action.InteractObject(wirtCorpse, func() bool {
 		return a.hasWirtsLeg()
 	})
+	wirtPosition := wirtCorpse.Position
+
+	// lets move away from gold piles
+	notOnGoldStacksPos := data.Position{
+		X: wirtPosition.X - 8,
+		Y: wirtPosition.Y - 8,
+	}
+	err = action.MoveToCoords(notOnGoldStacksPos)
+	if err != nil {
+		return err
+	}
 
 	return action.ReturnTown()
 }

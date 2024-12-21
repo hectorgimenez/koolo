@@ -3,8 +3,6 @@ package action
 import (
 	"fmt"
 	"log/slog"
-	"sort"
-	"time"
 
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -19,59 +17,9 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-const (
-	maxAreaSyncAttempts = 10
-	areaSyncDelay       = 100 * time.Millisecond
-)
-
-func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
-	// Skip sync check if we're already in the expected area and have valid area data
-	if ctx.Data.PlayerUnit.Area == expectedArea {
-		if areaData, ok := ctx.Data.Areas[expectedArea]; ok && areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-			return nil
-		}
-	}
-
-	// Wait for area data to sync
-	for attempts := 0; attempts < maxAreaSyncAttempts; attempts++ {
-		ctx.RefreshGameData()
-
-		if ctx.Data.PlayerUnit.Area == expectedArea {
-			if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
-				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-					return nil
-				}
-			}
-		}
-
-		time.Sleep(areaSyncDelay)
-	}
-
-	return fmt.Errorf("area sync timeout - expected: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
-}
-
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	var isEntrance bool
-
-	defer func() {
-		// For open areas (non-entrance transitions), disable area correction
-		if !isEntrance {
-			if ctx.Data.PlayerUnit.Area == dst {
-				ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-				ctx.CurrentGame.AreaCorrection.Enabled = false
-			}
-		} else {
-			// For entrances
-			ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-			ctx.CurrentGame.AreaCorrection.Enabled = true
-		}
-	}()
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-		return err
-	}
 
 	// Exception for Arcane Sanctuary
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
@@ -85,11 +33,12 @@ func MoveToArea(dst area.ID) error {
 	}
 
 	lvl := data.Level{}
+	found := false // Track if we've found a valid transition
 	for _, a := range ctx.Data.AdjacentLevels {
-		if a.Area == dst {
+		if a.Area == dst && !found { // Only pick the first entrance
 			lvl = a
-			isEntrance = a.IsEntrance
-			break
+			found = true
+			break // Break immediately after finding first valid entrance
 		}
 	}
 
@@ -99,7 +48,7 @@ func MoveToArea(dst area.ID) error {
 
 	toFun := func() (data.Position, bool) {
 		if ctx.Data.PlayerUnit.Area == dst {
-			ctx.Logger.Debug("Reached area", slog.String("area", dst.Area().Name))
+			ctx.Logger.Debug("Reached area", "area", dst.Area().Name)
 			return data.Position{}, false
 		}
 
@@ -127,19 +76,9 @@ func MoveToArea(dst area.ID) error {
 			return lvl.Position, true
 		}
 
-		objects := ctx.Data.Areas[lvl.Area].Objects
-		// Sort objects by the distance from me
-		sort.Slice(objects, func(i, j int) bool {
-			distanceI := ctx.PathFinder.DistanceFromMe(objects[i].Position)
-			distanceJ := ctx.PathFinder.DistanceFromMe(objects[j].Position)
-
-			return distanceI < distanceJ
-		})
-
 		// Let's try to find any random object to use as a destination point, once we enter the level we will exit this flow
-		for _, obj := range objects {
-			_, _, found := ctx.PathFinder.GetPath(obj.Position)
-			if found {
+		for _, obj := range ctx.Data.Areas[lvl.Area].Objects {
+			if _, _, found := ctx.PathFinder.GetPath(obj.Position); found {
 				return obj.Position, true
 			}
 		}
@@ -147,76 +86,27 @@ func MoveToArea(dst area.ID) error {
 		return lvl.Position, true
 	}
 
-	err := MoveTo(toFun)
-	if err != nil {
+	if err := MoveTo(toFun); err != nil {
 		ctx.Logger.Warn("error moving to area, will try to continue", slog.String("error", err.Error()))
 	}
 
 	if lvl.IsEntrance {
-		maxAttempts := 3
-		for attempt := 0; attempt < maxAttempts; attempt++ {
-			// Check current distance
-			currentDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
-
-			if currentDistance > 7 {
-				// For distances > 7, recursively call MoveToArea as it includes the entrance interaction
-				return MoveToArea(dst)
-			} else if currentDistance > 3 && currentDistance <= 7 {
-				// For distances between 4 and 7, use direct click
-				screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
-					lvl.Position.X-2,
-					lvl.Position.Y-2,
-				)
-				ctx.HID.Click(game.LeftButton, screenX, screenY)
-				utils.Sleep(800)
-			}
-
-			// Try to interact with the entrance
-			err = step.InteractEntrance(dst)
-			if err == nil {
-				break
-			}
-
-			if attempt < maxAttempts-1 {
-				ctx.Logger.Debug("Entrance interaction failed, retrying",
-					slog.Int("attempt", attempt+1),
-					slog.String("error", err.Error()))
-				utils.Sleep(1000)
-			}
-		}
-
+		err := step.InteractEntrance(dst)
 		if err != nil {
-			return fmt.Errorf("failed to interact with area %s after %d attempts: %v", dst.Area().Name, maxAttempts, err)
-		}
-
-		// Wait for area transition to complete
-		if err := ensureAreaSync(ctx, dst); err != nil {
-			return err
+			return fmt.Errorf("failed to interact with area %s: %v", dst.Area().Name, err)
 		}
 	}
-
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
 	return nil
 }
 
 func MoveToCoords(to data.Position) error {
-	ctx := context.Get()
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-	}()
-
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-		return err
-	}
-
 	return MoveTo(func() (data.Position, bool) {
 		return to, true
 	})
 }
 
-func MoveTo(toFunc func() (data.Position, bool)) error {
+func MoveTo(toFun func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveTo")
 
@@ -234,14 +124,9 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 	previousIterationPosition := data.Position{}
 	lastMovement := false
 
-	// Initial sync check
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-		return err
-	}
-
 	for {
 		ctx.RefreshGameData()
-		to, found := toFunc()
+		to, found := toFun()
 		if !found {
 			return nil
 		}

@@ -15,11 +15,6 @@ import (
 func WayPoint(dest area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("WayPoint")
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = dest
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-	}()
 
 	if !ctx.Data.PlayerUnit.Area.IsTown() {
 		if err := ReturnTown(); err != nil {
@@ -61,9 +56,6 @@ func WayPoint(dest area.ID) error {
 	if err != nil {
 		return err
 	}
-
-	// Set ExpectedArea after successful waypoint use, but only if it's not a town
-	ctx.CurrentGame.AreaCorrection.ExpectedArea = dest
 
 	// Wait for the game to load after using the waypoint
 	ctx.WaitForGameToLoad()
