@@ -6,6 +6,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -93,12 +94,26 @@ func InteractEntrance(targetArea area.ID) error {
 			x = x / 3
 			y = y / 3
 		} else {
+			// Create a generic entrance description
+			entranceDesc := object.Description{
+				Width:   0, // Use 0 to trigger the entrance-specific pattern
+				Height:  0, // Use 0 to trigger the entrance-specific pattern
+				Left:    -30,
+				Top:     -50,
+				Xoffset: 0,
+				Yoffset: -35, // Upward bias for entrances
+			}
+
+			// Try to find the actual object description if possible
 			for _, obj := range ctx.Data.Objects {
 				if obj.Position == targetLevel.Position {
-					x, y = utils.AdaptiveSpiral(attempts, obj.Desc())
+					entranceDesc = obj.Desc()
 					break
 				}
 			}
+
+			// Use AdaptiveSpiral with the entrance description
+			x, y = utils.AdaptiveSpiral(attempts, entranceDesc)
 		}
 
 		currentMouseCoords = data.Position{X: baseX + x, Y: baseY + y}
