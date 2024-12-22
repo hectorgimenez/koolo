@@ -336,7 +336,7 @@ func Load() error {
 				// Set the pickit path to the current dir/config/{charName}/pickit
 				pickitPath = getAbsPath(filepath.Join("config", entry.Name(), "pickit")) + "\\"
 			} else {
-				pickitPath = Koolo.CentralizedPickitPath
+				pickitPath = Koolo.CentralizedPickitPath + "\\"
 			}
 		} else {
 			// Set the pickit path to the current dir/config/{charName}/pickit

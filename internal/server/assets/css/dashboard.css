@@ -513,3 +513,16 @@ stat-value {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.rotate {
+    animation: rotation 1s infinite linear;
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}

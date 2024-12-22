@@ -417,8 +417,9 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/drops", s.drops)
 	http.HandleFunc("/process-list", s.getProcessList)
 	http.HandleFunc("/attach-process", s.attachProcess)
-	http.HandleFunc("/ws", s.wsServer.HandleWebSocket) // Web socket
-	http.HandleFunc("/initial-data", s.initialData)    // Web socket data
+	http.HandleFunc("/ws", s.wsServer.HandleWebSocket)    // Web socket
+	http.HandleFunc("/initial-data", s.initialData)       // Web socket data
+	http.HandleFunc("/api/reload-config", s.reloadConfig) // New handler
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -432,6 +433,16 @@ func (s *HttpServer) Listen(port int) error {
 	}
 
 	return nil
+}
+
+func (s *HttpServer) reloadConfig(w http.ResponseWriter, r *http.Request) {
+	if err := config.Load(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	s.logger.Info("Config reloaded")
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *HttpServer) Stop() error {
