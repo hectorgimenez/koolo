@@ -20,51 +20,60 @@ func PreRun(firstRun bool) error {
 
 	UpdateQuestLog()
 
-	// Store items that need to be left unidentified
 	if HaveItemsToStashUnidentified() {
 		Stash(firstRun)
 	}
 
-	// Identify - either via Cain or Tome
-	IdentifyAll(firstRun)
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		// Identify - either via Cain or Tome
+		IdentifyAll(firstRun)
 
-	// Stash before vendor
-	Stash(firstRun)
+		// Stash before vendor
+		Stash(firstRun)
 
-	// Refill pots, sell, buy etc
-	VendorRefill(false, true)
+		// Refill pots, sell, buy etc
+		VendorRefill(false, true)
+		Gamble()
 
-	// Gamble
-	Gamble()
+		// Stash again if needed
+		Stash(false)
 
-	// Stash again if needed
-	Stash(false)
+		// Perform cube recipes
+		CubeRecipes()
 
-	// Perform cube recipes
-	CubeRecipes()
+		// Leveling related checks
+		if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+			ResetStats()
+			EnsureStatPoints()
+			EnsureSkillPoints()
+		}
 
-	// Leveling related checks
-	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
-		ResetStats()
-		EnsureStatPoints()
-		EnsureSkillPoints()
+		if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+			EnsureSkillBindings()
+		}
+
+		HealAtNPC()
+		ReviveMerc()
+		HireMerc()
+		if RepairRequired() {
+			Repair()
+		}
 	}
 
-	if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
-		EnsureSkillBindings()
-	}
-
-	HealAtNPC()
-	ReviveMerc()
-	HireMerc()
-
-	return Repair()
+	return nil
 }
 
 func InRunReturnTownRoutine() error {
 	ctx := context.Get()
 
+	needsRepair := RepairRequired()
 	ReturnTown()
+
+	// Only proceed with town actions if we actually made it to town
+	if !ctx.Data.PlayerUnit.Area.IsTown() {
+		return nil
+	}
+
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
 	ManageBelt()
@@ -75,7 +84,6 @@ func InRunReturnTownRoutine() error {
 	}
 
 	IdentifyAll(false)
-
 	VendorRefill(false, true)
 	Stash(false)
 	Gamble()
@@ -94,7 +102,18 @@ func InRunReturnTownRoutine() error {
 	HealAtNPC()
 	ReviveMerc()
 	HireMerc()
-	Repair()
+
+	// if we came to town for repairs
+	if needsRepair || RepairRequired() {
+		if err := Repair(); err != nil {
+			ctx.Logger.Warn("Failed to repair items", "error", err)
+			return nil // Don't try to use portal if repair failed
+		}
+	}
+
+	if needsRepair && RepairRequired() {
+		return nil // Stay in town if items still need repair
+	}
 
 	return UsePortalInTown()
 }
