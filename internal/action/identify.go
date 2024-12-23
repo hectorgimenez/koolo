@@ -80,6 +80,8 @@ func CainIdentify() error {
 
 	// Select the identify option
 	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+	utils.Sleep(500)
+
 	if len(itemsToIdentify()) > 0 {
 
 		// Close the NPC interact menu if it's open
