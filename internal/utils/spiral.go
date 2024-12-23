@@ -3,6 +3,7 @@ package utils
 import (
 	"math"
 
+	"github.com/hectorgimenez/d2go/pkg/data/entrance"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 )
 
@@ -17,44 +18,12 @@ func Spiral(position int) (int, int) {
 	return int(x), int(y)
 }
 
-func AdaptiveSpiral(attempt int, desc object.Description) (x, y int) {
+// ObjectSpiral calculates spiral pattern for objects (portals, chests, etc)
+func ObjectSpiral(attempt int, desc object.Description) (x, y int) {
 	baseRadius := float64(attempt) * 3.0
 	angle := float64(attempt) * math.Pi * (3.0 - math.Sqrt(5.0))
 
-	// If object has no dimensions (like entrances), use entrance-specific pattern
-	if desc.Width == 0 && desc.Height == 0 {
-		// Detect cellar/tower/underground entrance by checking the Top offset
-		// These entrances typically have a higher negative Top value
-		isTallEntrance := desc.Top < -45
-
-		xScale := 1.2
-		yScale := 0.8
-		yOffset := -35
-
-		if isTallEntrance {
-			// Make the pattern taller and narrower for vertical entrances
-			xScale = 0.9
-			yScale = 1.1
-			yOffset = -45 // Search higher up
-		}
-
-		x = int(baseRadius * math.Cos(angle) * xScale)
-		y = int(baseRadius * math.Sin(angle) * yScale)
-
-		y += yOffset
-
-		// Adjust boundaries for vertical entrances
-		if isTallEntrance {
-			x = Clamp(x, -25, 25) // Narrower X range
-			y = Clamp(y, -60, 0)  // Higher Y range
-		} else {
-			x = Clamp(x, -30, 30)
-			y = Clamp(y, -50, 10)
-		}
-
-		return x, y
-	}
-	// For portal-like objects (similar dimensions)
+	// Special handling for portals
 	if desc.Width == 80 && desc.Height == 110 {
 		xScale := 1.0
 		yScale := 110.0 / 80.0
@@ -68,17 +37,62 @@ func AdaptiveSpiral(attempt int, desc object.Description) (x, y int) {
 		return x, y
 	}
 
-	// For other objects with dimensions, scale based on their actual size
-	xScale := float64(desc.Width) / 80.0
-	yScale := float64(desc.Height) / 80.0
+	// For other objects with dimensions
+	if desc.Width > 0 && desc.Height > 0 {
+		xScale := float64(desc.Width) / 80.0
+		yScale := float64(desc.Height) / 80.0
 
+		x = int(baseRadius * math.Cos(angle) * xScale)
+		y = int(baseRadius * math.Sin(angle) * yScale)
+
+		x += desc.Xoffset
+		y += desc.Yoffset
+		x = Clamp(x, desc.Left, desc.Left+desc.Width)
+		y = Clamp(y, desc.Top, desc.Top+desc.Height)
+
+		return x, y
+	}
+
+	// Basic object pattern
+	x = int(baseRadius * math.Cos(angle))
+	y = int(baseRadius * math.Sin(angle))
+	return x, y
+}
+
+// EntranceSpiral calculates spiral pattern specifically for entrances/stairs
+func EntranceSpiral(attempt int, desc entrance.Description) (x, y int) {
+	baseRadius := float64(attempt) * 3.0
+	angle := float64(attempt) * math.Pi * (3.0 - math.Sqrt(5.0))
+
+	// Scale based on entrance dimensions
+	xScale := float64(desc.SelectDX) / 100.0
+	yScale := float64(desc.SelectDY) / 100.0
+
+	// Calculate base position
 	x = int(baseRadius * math.Cos(angle) * xScale)
 	y = int(baseRadius * math.Sin(angle) * yScale)
 
-	x += desc.Xoffset
-	y += desc.Yoffset
-	x = Clamp(x, desc.Left, desc.Left+desc.Width)
-	y = Clamp(y, desc.Top, desc.Top+desc.Height)
+	// Apply entrance-specific offsets
+	x += desc.SelectX
+	y += desc.SelectY
+
+	// Apply direction-specific adjustments
+	switch desc.Direction {
+	case "l": // left
+		x -= 10
+	case "r": // right
+		x += 10
+	}
+
+	// Apply final offsets
+	x += desc.OffsetX
+	y += desc.OffsetY
+
+	// Clamp values to reasonable ranges based on SelectDX/DY
+	maxX := desc.SelectDX / 2
+	maxY := desc.SelectDY / 2
+	x = Clamp(x, -maxX, maxX)
+	y = Clamp(y, -maxY, maxY)
 
 	return x, y
 }

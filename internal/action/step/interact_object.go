@@ -7,6 +7,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -28,7 +29,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	mouseOverAttempts := 0
 	waitingForInteraction := false
 	currentMouseCoords := data.Position{}
-	lastHoverCoords := data.Position{}
 	lastRun := time.Now()
 
 	// If no completion check provided and not defined here default to waiting for interaction
@@ -51,6 +51,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			return waitingForInteraction
 		}
 	}
+
 	// State JustPortaled is instant, when detected we can consider it completed.
 	if obj.IsPortal() || obj.IsRedPortal() {
 		isCompletedFn = func() bool {
@@ -98,11 +99,8 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		if o.IsChest() && o.Mode == mode.ObjectModeOperating {
 			continue // Skip if chest is already being opened
 		}
-		//if we hovered the portal once then we have exact hitbox, lets store and reuse it
-		if o.IsHovered && currentMouseCoords != (data.Position{}) && (o.IsPortal() || o.IsRedPortal()) {
-			lastHoverCoords = currentMouseCoords
-		}
 
+		// Handle hover interaction for portal or red portal
 		if o.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 			waitingForInteraction = true
@@ -149,31 +147,13 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
 		}
 
-		if mouseOverAttempts == 0 && lastHoverCoords != (data.Position{}) && (o.IsPortal() || o.IsRedPortal()) {
-			currentMouseCoords = lastHoverCoords
-			ctx.HID.MovePointer(lastHoverCoords.X, lastHoverCoords.Y)
-			mouseOverAttempts++
-			utils.Sleep(100)
-			continue
-		}
+		// Get object description for spiral
+		desc := object.Desc[int(o.Name)]
 
-		objectX := o.Position.X
-		objectY := o.Position.Y
+		mX, mY := ui.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
+		x, y := utils.ObjectSpiral(mouseOverAttempts, desc)
 
-		if o.IsPortal() || o.IsRedPortal() {
-			mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-			x, y := utils.AdaptiveSpiral(mouseOverAttempts, obj.Desc())
-			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
-		} else {
-			objectX -= 2
-			objectY -= 2
-			mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-			x, y := utils.AdaptiveSpiral(mouseOverAttempts, obj.Desc())
-			x = x / 3
-			y = y / 3
-			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
-		}
-
+		currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
 		ctx.HID.MovePointer(currentMouseCoords.X, currentMouseCoords.Y)
 		mouseOverAttempts++
 		utils.Sleep(100)

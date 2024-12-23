@@ -6,7 +6,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/entrance"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -15,9 +15,9 @@ import (
 const (
 	maxEntranceDistance = 6
 	maxMoveRetries      = 3
-	maxAttempts         = 5
+	maxAttempts         = 10
 	hoverDelay          = 100
-	interactDelay       = 500
+	interactDelay       = 250
 )
 
 func InteractEntrance(targetArea area.ID) error {
@@ -30,11 +30,38 @@ func InteractEntrance(targetArea area.ID) error {
 		return fmt.Errorf("no entrance found for area %s [%d]", targetArea.Area().Name, targetArea)
 	}
 
+	// Find entrance descriptor through 1.13c map data
+	var entranceDesc entrance.Description
+	var descFound bool
+
+	if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+		// Get entrances for current area
+		entrances := ctx.GameReader.Entrances(ctx.Data.PlayerUnit.Position, ctx.Data.HoverData)
+
+		// For each adjacent level that matches our target
+		for _, lvl := range areaData.AdjacentLevels {
+			if lvl.Position == targetLevel.Position {
+				// Find matching entrance by position
+				for _, e := range entrances {
+					if e.Position == lvl.Position {
+						// Use the entrance Name to get the proper description
+						entranceDesc = entrance.Desc[int(e.Name)]
+						descFound = true
+						break
+					}
+				}
+				break
+			}
+		}
+	}
+
+	if !descFound {
+		return fmt.Errorf("could not find entrance descriptor for area %s [%d]", targetArea.Area().Name, targetArea)
+	}
+
 	attempts := 0
 	currentMouseCoords := data.Position{}
-	lastHoverCoords := data.Position{}
 	lastAttempt := time.Time{}
-	useOriginalSpiral := false
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -50,13 +77,6 @@ func InteractEntrance(targetArea area.ID) error {
 		}
 
 		if attempts >= maxAttempts {
-			if !useOriginalSpiral {
-				// Switch to original spiral pattern and reset attempts
-				useOriginalSpiral = true
-				attempts = 0
-				lastHoverCoords = data.Position{}
-				continue
-			}
 			return fmt.Errorf("failed to enter area %s after all attempts", targetArea.Area().Name)
 		}
 
@@ -71,54 +91,19 @@ func InteractEntrance(targetArea area.ID) error {
 		}
 
 		// Handle hovering and interaction
-		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
-			lastHoverCoords = currentMouseCoords
+		if ctx.Data.HoverData.UnitType == 5 && ctx.Data.HoverData.IsHovered {
 			attemptInteraction(ctx, currentMouseCoords)
 			attempts++
 			continue
 		}
 
-		// Try last successful hover position first (if we hovered it once then we have exact interaction point)
-		if attempts == 0 && lastHoverCoords != (data.Position{}) {
-			currentMouseCoords = lastHoverCoords
-			ctx.HID.MovePointer(lastHoverCoords.X, lastHoverCoords.Y)
-			attempts++
-			utils.Sleep(hoverDelay)
-			continue
-		}
-
+		// Calculate the mouse position for interaction
 		baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X, targetLevel.Position.Y)
-		var x, y int
-		if useOriginalSpiral {
-			x, y = utils.Spiral(attempts)
-			x = x / 3
-			y = y / 3
-		} else {
-			// Create a generic entrance description
-			entranceDesc := object.Description{
-				Width:   0, // Use 0 to trigger the entrance-specific pattern
-				Height:  0, // Use 0 to trigger the entrance-specific pattern
-				Left:    -30,
-				Top:     -50,
-				Xoffset: 0,
-				Yoffset: -35, // Upward bias for entrances
-			}
-
-			// Try to find the actual object description for the entrance
-			// We know it's a proper entrance because targetLevel.IsEntrance was verified in findClosestEntrance
-			for _, obj := range ctx.Data.Objects {
-				if obj.Position == targetLevel.Position && targetLevel.IsEntrance {
-					entranceDesc = obj.Desc()
-					break
-				}
-			}
-
-			// Use AdaptiveSpiral with the entrance description
-			x, y = utils.AdaptiveSpiral(attempts, entranceDesc)
-		}
-
+		x, y := utils.EntranceSpiral(attempts, entranceDesc)
 		currentMouseCoords = data.Position{X: baseX + x, Y: baseY + y}
 		ctx.HID.MovePointer(currentMouseCoords.X, currentMouseCoords.Y)
+
+		// Increment attempt count and wait before retrying
 		attempts++
 		utils.Sleep(hoverDelay)
 	}
@@ -164,7 +149,7 @@ func ensureInRange(ctx *context.Status, pos data.Position) error {
 			break
 		}
 
-		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(pos.X-2, pos.Y-2)
+		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(pos.X, pos.Y)
 		ctx.HID.Click(game.LeftButton, screenX, screenY)
 		utils.Sleep(800)
 		ctx.RefreshGameData()
