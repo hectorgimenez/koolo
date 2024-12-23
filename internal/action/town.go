@@ -11,10 +11,7 @@ func PreRun(firstRun bool) error {
 
 	DropMouseItem()
 	step.SetSkill(skill.Vigor)
-
-	// Always recover corpse, regardless of town status
 	RecoverCorpse()
-
 	ManageBelt()
 
 	if firstRun {
@@ -69,65 +66,54 @@ func PreRun(firstRun bool) error {
 func InRunReturnTownRoutine() error {
 	ctx := context.Get()
 
-	// Track if we need repair before we even start the return
 	needsRepair := RepairRequired()
+	ReturnTown()
 
-	// If not in town, initiate return to town logic
+	// Only proceed with town actions if we actually made it to town
 	if !ctx.Data.PlayerUnit.Area.IsTown() {
-		ReturnTown()
 		return nil
 	}
 
-	// Always recover corpse, regardless of town status
+	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
+	ManageBelt()
 
-	// Only proceed with town actions if we actually made it to town
-	if ctx.Data.PlayerUnit.Area.IsTown() {
-		step.SetSkill(skill.Vigor)
-		ManageBelt()
-
-		// Let's stash items that need to be left unidentified
-		if ctx.CharacterCfg.Game.UseCainIdentify && HaveItemsToStashUnidentified() {
-			Stash(false)
-		}
-
-		IdentifyAll(false)
-		VendorRefill(false, true)
+	// Let's stash items that need to be left unidentified
+	if ctx.CharacterCfg.Game.UseCainIdentify && HaveItemsToStashUnidentified() {
 		Stash(false)
-		Gamble()
-		Stash(false)
-		CubeRecipes()
-
-		if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
-			EnsureStatPoints()
-			EnsureSkillPoints()
-		}
-
-		if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
-			EnsureSkillBindings()
-		}
-
-		HealAtNPC()
-		ReviveMerc()
-		HireMerc()
-
-		// if we came to town for repairs
-		if needsRepair || RepairRequired() {
-			if err := Repair(); err != nil {
-				ctx.Logger.Warn("Failed to repair items", "error", err)
-				return nil // Don't try to use portal if repair failed
-			}
-		}
-
-		// If repairs are still needed, stay in town
-		if needsRepair && RepairRequired() {
-			return nil // Stay in town if items still need repair
-		}
-
-		// If everything is fine, return via portal
-		return UsePortalInTown()
 	}
 
-	// Return nothing if none of the above checks pass
-	return nil
+	IdentifyAll(false)
+	VendorRefill(false, true)
+	Stash(false)
+	Gamble()
+	Stash(false)
+	CubeRecipes()
+
+	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
+		EnsureStatPoints()
+		EnsureSkillPoints()
+	}
+
+	if ctx.CharacterCfg.Game.Leveling.EnsureKeyBinding {
+		EnsureSkillBindings()
+	}
+
+	HealAtNPC()
+	ReviveMerc()
+	HireMerc()
+
+	// if we came to town for repairs
+	if needsRepair || RepairRequired() {
+		if err := Repair(); err != nil {
+			ctx.Logger.Warn("Failed to repair items", "error", err)
+			return nil // Don't try to use portal if repair failed
+		}
+	}
+
+	if needsRepair && RepairRequired() {
+		return nil // Stay in town if items still need repair
+	}
+
+	return UsePortalInTown()
 }
