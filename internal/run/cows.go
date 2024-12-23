@@ -155,8 +155,8 @@ func (a Cows) getWirtsLeg() error {
 
 	// lets move away from gold piles
 	notOnGoldStacksPos := data.Position{
-		X: wirtPosition.X - 8,
-		Y: wirtPosition.Y - 8,
+		X: wirtPosition.X - 4,
+		Y: wirtPosition.Y - 4,
 	}
 	err = action.MoveToCoords(notOnGoldStacksPos)
 	if err != nil {

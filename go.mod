@@ -2,12 +2,14 @@ module github.com/hectorgimenez/koolo
 
 go 1.23
 
+replace github.com/hectorgimenez/d2go => C:\Users\elb\Desktop\d2go
+
 require (
 	github.com/billgraziano/dpapi v0.5.0
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/hectorgimenez/d2go v0.0.0-20241221182511-8a1f7e1a1734
+	github.com/hectorgimenez/d2go v0.0.0-20241223175150-8203394c9fc1
 	github.com/inkeliz/gowebview v1.0.1
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 	github.com/otiai10/copy v1.14.0

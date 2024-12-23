@@ -138,7 +138,7 @@ type CharacterCfg struct {
 		} `yaml:"pindleskin"`
 		Cows struct {
 			OpenChests    bool `yaml:"openChests"`
-			KillRakanishu bool `yaml:"killRaknishu"`
+			KillRakanishu bool `yaml:"killRakanishu"`
 		}
 		Pit struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`

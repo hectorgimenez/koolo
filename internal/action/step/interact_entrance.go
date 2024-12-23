@@ -90,8 +90,8 @@ func InteractEntrance(targetArea area.ID) error {
 			return err
 		}
 
-		// Handle hovering and interaction
-		if ctx.Data.HoverData.UnitType == 5 && ctx.Data.HoverData.IsHovered {
+		// Handle hovering and interaction .  We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
+		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
 			attemptInteraction(ctx, currentMouseCoords)
 			attempts++
 			continue
