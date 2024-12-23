@@ -152,7 +152,17 @@ func (gd *MemoryReader) GetData() Data {
 		d.Objects = memObjects
 	}
 
-	return Data{Data: d, CharacterCfg: *gd.cfg, AreaData: currentArea, Areas: gd.cachedMapData}
+	var cfgCopy config.CharacterCfg
+	if gd.cfg != nil {
+		cfgCopy = *gd.cfg
+	}
+
+	return Data{
+		Data:         d,
+		CharacterCfg: cfgCopy,
+		AreaData:     currentArea,
+		Areas:        gd.cachedMapData,
+	}
 }
 
 func (gd *MemoryReader) getMapSeed(playerUnit uintptr) (uint, error) {

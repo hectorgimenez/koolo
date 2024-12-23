@@ -436,8 +436,9 @@ func (s *HttpServer) Listen(port int) error {
 }
 
 func (s *HttpServer) reloadConfig(w http.ResponseWriter, r *http.Request) {
-	if err := config.Load(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	result := s.manager.ReloadConfig()
+	if result != nil {
+		http.Error(w, result.Error(), http.StatusInternalServerError)
 		return
 	}
 
