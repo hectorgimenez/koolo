@@ -42,6 +42,14 @@
                     />
                 </label>
                 <label>
+                    Centralized Pickit Path (leave blank if you don't want to use a single location for all pickit files)
+                    <input
+                            name="centralized_pickit_path"
+                            placeholder="E:\games\mypickits"
+                            value="{{.CentralizedPickitPath}}"
+                    />
+                </label>
+                <label>
                     <input
                             {{ if .UseCustomSettings }}
                                 checked="checked"
