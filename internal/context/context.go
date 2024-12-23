@@ -56,8 +56,8 @@ type Context struct {
 }
 
 type Debug struct {
-	LastAction string
-	LastStep   string
+	LastAction string `json:"lastAction"`
+	LastStep   string `json:"lastStep"`
 }
 
 type CurrentGameHelper struct {

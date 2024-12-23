@@ -141,8 +141,8 @@
 
             <fieldset class="grid">
                 <label>
-                    Use teleport when available
                     <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
+                    Use teleport when available
                 </label>
                 <label>
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
@@ -150,6 +150,10 @@
                 </label>
             </fieldset>
             <fieldset class="grid">
+                <label>
+                    <input type="checkbox" name="useCentralizedPickit" {{ if .Config.UseCentralizedPickit }}checked{{ end }}/>
+                    Use centralized pickit 
+                </label>
                 <label>
                     <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
                     Identify with Cain 
