@@ -8,12 +8,18 @@ import (
 )
 
 func Spiral(position int) (int, int) {
-	t := position * 40
-	a := 4.0
-	b := -2.0
+	t := position * 25
+
+	a := 3.0  // - a controls the starting radius
+	b := -1.5 // - b controls how quickly the spiral expands
+
+	// Convert to radians and calculate position
 	trad := float64(t) * math.Pi / 180.0
+
+	// Calculate spiral coordinates with a slight vertical bias since
+	// D2 uses isometric projection (items appear higher than their actual position)
 	x := (a + b*trad) * math.Cos(trad)
-	y := (a + b*trad) * math.Sin(trad)
+	y := (a + b*trad) * math.Sin(trad) * 0.9 // Slight vertical compression
 
 	return int(x), int(y)
 }
@@ -25,14 +31,16 @@ func ObjectSpiral(attempt int, desc object.Description) (x, y int) {
 
 	// Special handling for portals
 	if desc.Width == 80 && desc.Height == 110 {
-		xScale := 1.0
-		yScale := 110.0 / 80.0
+
+		xScale := 1.2
+		yScale := 1.4
 
 		x = int(baseRadius * math.Cos(angle) * xScale)
-		y = int(baseRadius*math.Sin(angle)*yScale) - 50
+		y = int(baseRadius*math.Sin(angle)*yScale) - 40
 
-		x = Clamp(x, -40, 40)
-		y = Clamp(y, -100, 10)
+		// Ensure we stay within reasonable bounds while providing wider coverage
+		x = Clamp(x, -50, 50)
+		y = Clamp(y, -110, 20)
 
 		return x, y
 	}

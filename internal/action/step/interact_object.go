@@ -131,7 +131,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 					utils.Sleep(50)
 				}
 
-				utils.Sleep(500)
 				for attempts := 0; attempts < maxPortalSyncAttempts; attempts++ {
 					if ctx.Data.PlayerUnit.Area == o.PortalData.DestArea {
 						if areaData, ok := ctx.Data.Areas[o.PortalData.DestArea]; ok {

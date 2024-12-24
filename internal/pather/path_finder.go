@@ -33,8 +33,8 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 		return path, distance, true
 	}
 
-	// If direct path fails, try to find nearby walkable position
-	if walkableTo, found := pf.findNearbyWalkablePosition(to); found {
+	// If direct path fails, try to find nearby walkable position with default radius for pathing
+	if walkableTo, found := pf.FindNearbyWalkablePosition(to, 0); found {
 		return pf.GetPathFrom(pf.data.PlayerUnit.Position, walkableTo)
 	}
 
@@ -148,7 +148,6 @@ func copyGrid(dest [][]game.CollisionType, src [][]game.CollisionType, offsetX, 
 		}
 	}
 }
-
 func (pf *PathFinder) GetClosestWalkablePath(dest data.Position) (Path, int, bool) {
 	return pf.GetClosestWalkablePathFrom(pf.data.PlayerUnit.Position, dest)
 }
@@ -187,20 +186,46 @@ func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path
 	return nil, 0, false
 }
 
-func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position, radius int) (data.Position, bool) {
+	// Use default radius of 3 if none specified
+	searchRadius := 3
+	if radius > 0 {
+		searchRadius = radius
+	}
+
+	// Convert target to grid coordinates
+	gridTarget := pf.data.AreaData.Grid.RelativePosition(target)
+
 	// Search in expanding squares around the target position
-	for radius := 1; radius <= 3; radius++ {
-		for x := -radius; x <= radius; x++ {
-			for y := -radius; y <= radius; y++ {
+	for r := 1; r <= searchRadius; r++ {
+		for x := -r; x <= r; x++ {
+			for y := -r; y <= r; y++ {
 				if x == 0 && y == 0 {
 					continue
 				}
-				pos := data.Position{X: target.X + x, Y: target.Y + y}
-				if pf.data.AreaData.IsWalkable(pos) {
-					return pos, true
+
+				// Work in grid coordinates
+				gridPos := data.Position{
+					X: gridTarget.X + x,
+					Y: gridTarget.Y + y,
 				}
+
+				// Check boundaries and walkability in grid coordinates
+				if gridPos.X < 0 || gridPos.X >= pf.data.AreaData.Width ||
+					gridPos.Y < 0 || gridPos.Y >= pf.data.AreaData.Height ||
+					pf.data.AreaData.CollisionGrid[gridPos.Y][gridPos.X] == game.CollisionTypeNonWalkable {
+					continue
+				}
+
+				// Convert back to world coordinates before returning
+				worldPos := data.Position{
+					X: gridPos.X + pf.data.AreaData.OffsetX,
+					Y: gridPos.Y + pf.data.AreaData.OffsetY,
+				}
+				return worldPos, true
 			}
 		}
 	}
+
 	return data.Position{}, false
 }

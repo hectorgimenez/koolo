@@ -15,8 +15,8 @@ import (
 const (
 	maxMoveRetries = 3
 	maxAttempts    = 15
-	hoverDelay     = 100
-	interactDelay  = 300
+	hoverDelay     = 25
+	interactDelay  = 100
 )
 
 func InteractEntrance(targetArea area.ID) error {
@@ -36,45 +36,63 @@ func InteractEntrance(targetArea area.ID) error {
 
 	attempts := 0
 	currentMouseCoords := data.Position{}
-	lastAttempt := time.Time{}
+	lastAttempt := time.Now()
 
 	for {
 		ctx.PauseIfNotPriority()
+		ctx.RefreshGameData()
 
+		// Handle loading screen early
 		if ctx.Data.OpenMenus.LoadingScreen {
 			ctx.WaitForGameToLoad()
 			continue
 		}
 
-		if hasReachedArea(ctx, targetArea, lastAttempt) {
+		// Check if we've reached the target area
+		if ctx.Data.AreaData.Area == targetArea &&
+			time.Since(lastAttempt) > interactDelay &&
+			ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
 			return nil
 		}
 
 		if attempts >= maxAttempts {
-			return fmt.Errorf("failed to enter area %s after all attempts", targetArea.Area().Name)
+			return fmt.Errorf("failed to enter area %s after %d attempts", targetArea.Area().Name, maxAttempts)
 		}
 
 		if time.Since(lastAttempt) < interactDelay {
+			time.Sleep(50 * time.Millisecond)
 			continue
 		}
-		lastAttempt = time.Now()
 
+		// Ensure we're in range of the entrance
 		if err := ensureInRange(ctx, targetLevel.Position); err != nil {
 			return err
 		}
 
 		// Handle hovering and interaction .  We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
 		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
-			attemptInteraction(ctx, currentMouseCoords)
+			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+			lastAttempt = time.Now()
 			attempts++
+
+			// Wait for loading screen after click
+			startTime := time.Now()
+			for time.Since(startTime) < time.Second {
+				if ctx.Data.OpenMenus.LoadingScreen {
+					ctx.WaitForGameToLoad()
+					break
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
 			continue
 		}
 
-		// Calculate and set new mouse position using spiral pattern
+		// Calculate new mouse position using spiral pattern
 		currentMouseCoords = calculateMouseCoords(ctx, targetLevel.Position, attempts, entranceDesc)
 		ctx.HID.MovePointer(currentMouseCoords.X, currentMouseCoords.Y)
 		attempts++
-		utils.Sleep(hoverDelay)
+
+		time.Sleep(hoverDelay * time.Millisecond)
 	}
 }
 
@@ -111,18 +129,6 @@ func findClosestEntrance(ctx *context.Status, targetArea area.ID) *data.Level {
 	return closest
 }
 
-func hasReachedArea(ctx *context.Status, targetArea area.ID, lastAttempt time.Time) bool {
-	return ctx.Data.AreaData.Area == targetArea &&
-		time.Since(lastAttempt) > interactDelay &&
-		ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position)
-}
-
-func calculateMouseCoords(ctx *context.Status, pos data.Position, attempts int, desc entrance.Description) data.Position {
-	baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(pos.X, pos.Y)
-	x, y := utils.EntranceSpiral(attempts, desc)
-	return data.Position{X: baseX + x, Y: baseY + y}
-}
-
 func ensureInRange(ctx *context.Status, pos data.Position) error {
 	for retry := 0; retry < maxMoveRetries; retry++ {
 		distance := ctx.PathFinder.DistanceFromMe(pos)
@@ -134,23 +140,16 @@ func ensureInRange(ctx *context.Status, pos data.Position) error {
 			continue
 		}
 
+		// Check distance after movement
 		if ctx.PathFinder.DistanceFromMe(pos) <= DistanceToFinishMoving {
 			return nil
 		}
-		utils.Sleep(200)
 	}
 	return fmt.Errorf("failed to get in range of entrance after %d attempts", maxMoveRetries)
 }
 
-func attemptInteraction(ctx *context.Status, pos data.Position) {
-	ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
-	startTime := time.Now()
-	for time.Since(startTime) < 2*time.Second {
-		if ctx.Data.OpenMenus.LoadingScreen {
-			ctx.WaitForGameToLoad()
-			break
-		}
-		utils.Sleep(50)
-	}
-	utils.Sleep(200)
+func calculateMouseCoords(ctx *context.Status, pos data.Position, attempts int, desc entrance.Description) data.Position {
+	baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(pos.X, pos.Y)
+	x, y := utils.EntranceSpiral(attempts, desc)
+	return data.Position{X: baseX + x, Y: baseY + y}
 }
