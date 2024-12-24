@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	maxInteractionAttempts = 5
+	maxInteractionAttempts = 10
 	portalSyncDelay        = 200
 	maxPortalSyncAttempts  = 15
 )
@@ -34,7 +34,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	// If no completion check provided and not defined here default to waiting for interaction
 	if isCompletedFn == nil {
 		isCompletedFn = func() bool {
-			//For stash if we have open menu we can return early
+			// For stash if we have open menu we can return early
 			if strings.EqualFold(string(obj.Name), "Bank") {
 				return ctx.Data.OpenMenus.Stash
 			}
@@ -48,14 +48,19 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 				// Also return true if no longer selectable (as a fallback)
 				return !chest.Selectable
 			}
-			return waitingForInteraction
-		}
-	}
 
-	// State JustPortaled is instant, when detected we can consider it completed.
-	if obj.IsPortal() || obj.IsRedPortal() {
-		isCompletedFn = func() bool {
-			return ctx.Data.PlayerUnit.States.HasState(state.JustPortaled)
+			// For portals, check if the player has entered the portal's destination area
+			if obj.IsPortal() || obj.IsRedPortal() {
+				if ctx.Data.PlayerUnit.Area == obj.PortalData.DestArea {
+					if areaData, ok := ctx.Data.Areas[obj.PortalData.DestArea]; ok {
+						if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+							return true
+						}
+					}
+				}
+			}
+
+			return waitingForInteraction
 		}
 	}
 
@@ -69,7 +74,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.RefreshGameData()
 		// Give some time before retrying the interaction
 		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
-			//for chest we can check more often status is almost instant
+			// for chest we can check more often status is almost instant
 			if !obj.IsChest() || time.Since(lastRun) < time.Millisecond*50 {
 				continue
 			}
@@ -90,6 +95,15 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 		// If portal is still being created, wait
 		if o.IsPortal() || o.IsRedPortal() {
+			// Detect JustPortaled state and wait for loading screen if it's active
+			if ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
+				// Check for loading screen during portal transition
+				if ctx.Data.OpenMenus.LoadingScreen {
+					ctx.WaitForGameToLoad()
+					break
+				}
+			}
+
 			if o.Mode == mode.ObjectModeOperating || o.Mode != mode.ObjectModeOpened {
 				utils.Sleep(100)
 				continue
@@ -112,9 +126,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 					// Check for loading screen during portal transition
 					if ctx.Data.OpenMenus.LoadingScreen {
 						ctx.WaitForGameToLoad()
-						break
-					}
-					if ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
 						break
 					}
 					utils.Sleep(50)
@@ -157,14 +168,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.HID.MovePointer(currentMouseCoords.X, currentMouseCoords.Y)
 		mouseOverAttempts++
 		utils.Sleep(100)
-	}
-
-	if (obj.IsPortal() || obj.IsRedPortal()) && ctx.Data.PlayerUnit.Area == obj.PortalData.DestArea {
-		if areaData, ok := ctx.Data.Areas[obj.PortalData.DestArea]; ok {
-			if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-				return nil
-			}
-		}
 	}
 
 	return nil

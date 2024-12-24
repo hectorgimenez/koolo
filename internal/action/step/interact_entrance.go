@@ -13,11 +13,10 @@ import (
 )
 
 const (
-	maxEntranceDistance = 6
-	maxMoveRetries      = 3
-	maxAttempts         = 10
-	hoverDelay          = 100
-	interactDelay       = 250
+	maxMoveRetries = 3
+	maxAttempts    = 15
+	hoverDelay     = 100
+	interactDelay  = 300
 )
 
 func InteractEntrance(targetArea area.ID) error {
@@ -30,32 +29,8 @@ func InteractEntrance(targetArea area.ID) error {
 		return fmt.Errorf("no entrance found for area %s [%d]", targetArea.Area().Name, targetArea)
 	}
 
-	// Find entrance descriptor through 1.13c map data
-	var entranceDesc entrance.Description
-	var descFound bool
-
-	if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
-		// Get entrances for current area
-		entrances := ctx.GameReader.Entrances(ctx.Data.PlayerUnit.Position, ctx.Data.HoverData)
-
-		// For each adjacent level that matches our target
-		for _, lvl := range areaData.AdjacentLevels {
-			if lvl.Position == targetLevel.Position {
-				// Find matching entrance by position
-				for _, e := range entrances {
-					if e.Position == lvl.Position {
-						// Use the entrance Name to get the proper description
-						entranceDesc = entrance.Desc[int(e.Name)]
-						descFound = true
-						break
-					}
-				}
-				break
-			}
-		}
-	}
-
-	if !descFound {
+	entranceDesc, found := findEntranceDescriptor(ctx, targetLevel)
+	if !found {
 		return fmt.Errorf("could not find entrance descriptor for area %s [%d]", targetArea.Area().Name, targetArea)
 	}
 
@@ -66,7 +41,6 @@ func InteractEntrance(targetArea area.ID) error {
 	for {
 		ctx.PauseIfNotPriority()
 
-		// Handle loading screens
 		if ctx.Data.OpenMenus.LoadingScreen {
 			ctx.WaitForGameToLoad()
 			continue
@@ -85,7 +59,6 @@ func InteractEntrance(targetArea area.ID) error {
 		}
 		lastAttempt = time.Now()
 
-		// Move closer if needed
 		if err := ensureInRange(ctx, targetLevel.Position); err != nil {
 			return err
 		}
@@ -97,16 +70,29 @@ func InteractEntrance(targetArea area.ID) error {
 			continue
 		}
 
-		// Calculate the mouse position for interaction
-		baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X, targetLevel.Position.Y)
-		x, y := utils.EntranceSpiral(attempts, entranceDesc)
-		currentMouseCoords = data.Position{X: baseX + x, Y: baseY + y}
+		// Calculate and set new mouse position using spiral pattern
+		currentMouseCoords = calculateMouseCoords(ctx, targetLevel.Position, attempts, entranceDesc)
 		ctx.HID.MovePointer(currentMouseCoords.X, currentMouseCoords.Y)
-
-		// Increment attempt count and wait before retrying
 		attempts++
 		utils.Sleep(hoverDelay)
 	}
+}
+
+func findEntranceDescriptor(ctx *context.Status, targetLevel *data.Level) (entrance.Description, bool) {
+	if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+		entrances := ctx.GameReader.Entrances(ctx.Data.PlayerUnit.Position, ctx.Data.HoverData)
+
+		for _, lvl := range areaData.AdjacentLevels {
+			if lvl.Position == targetLevel.Position {
+				for _, e := range entrances {
+					if e.Position == lvl.Position {
+						return entrance.Desc[int(e.Name)], true
+					}
+				}
+			}
+		}
+	}
+	return entrance.Description{}, false
 }
 
 func findClosestEntrance(ctx *context.Status, targetArea area.ID) *data.Level {
@@ -131,35 +117,29 @@ func hasReachedArea(ctx *context.Status, targetArea area.ID, lastAttempt time.Ti
 		ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position)
 }
 
+func calculateMouseCoords(ctx *context.Status, pos data.Position, attempts int, desc entrance.Description) data.Position {
+	baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(pos.X, pos.Y)
+	x, y := utils.EntranceSpiral(attempts, desc)
+	return data.Position{X: baseX + x, Y: baseY + y}
+}
+
 func ensureInRange(ctx *context.Status, pos data.Position) error {
-	distance := ctx.PathFinder.DistanceFromMe(pos)
-	if distance <= maxEntranceDistance {
-		return nil
-	}
-
-	// Direct MoveTo for longer distances
-	if distance >= 7 {
-		return MoveTo(pos)
-	}
-
-	// For shorter distances, try clicking
 	for retry := 0; retry < maxMoveRetries; retry++ {
-		if ctx.Data.OpenMenus.LoadingScreen {
-			ctx.WaitForGameToLoad()
-			break
-		}
-
-		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(pos.X, pos.Y)
-		ctx.HID.Click(game.LeftButton, screenX, screenY)
-		utils.Sleep(800)
-		ctx.RefreshGameData()
-
-		if ctx.PathFinder.DistanceFromMe(pos) <= maxEntranceDistance {
+		distance := ctx.PathFinder.DistanceFromMe(pos)
+		if distance <= DistanceToFinishMoving {
 			return nil
 		}
-	}
 
-	return fmt.Errorf("failed to get in range of entrance (distance: %d)", distance)
+		if err := MoveTo(pos); err != nil {
+			continue
+		}
+
+		if ctx.PathFinder.DistanceFromMe(pos) <= DistanceToFinishMoving {
+			return nil
+		}
+		utils.Sleep(200)
+	}
+	return fmt.Errorf("failed to get in range of entrance after %d attempts", maxMoveRetries)
 }
 
 func attemptInteraction(ctx *context.Status, pos data.Position) {
