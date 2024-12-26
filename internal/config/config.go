@@ -308,7 +308,7 @@ func Load() error {
 
 	// Read character configs
 	for _, entry := range entries {
-		if !entry.IsDir() || entry.Name() == "template" {
+		if !entry.IsDir() {
 			continue
 		}
 
