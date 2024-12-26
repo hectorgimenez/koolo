@@ -435,6 +435,14 @@
                 <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
                 Enable the bot to automatically cube item recipes.
             </label><br>
+            <label>
+                <input type="checkbox" name="skipPerfectAmethysts" {{ if .Config.CubeRecipes.SkipPerfectAmethysts }}checked{{ end }}/>
+                Don't use Perfect Amethysts when rolling charms
+            </label><br>
+            <label>
+                <input type="checkbox" name="skipPerfectRubies" {{ if .Config.CubeRecipes.SkipPerfectRubies }}checked{{ end }}/>
+                Don't use Perfect Rubies when rolling charms
+            </label><br>
 
             <div class="recipe-grid">
                 {{ range $index, $recipe := .RecipeList }}
