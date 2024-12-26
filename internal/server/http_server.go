@@ -958,6 +958,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.CubeRecipes.Enabled = r.Form.Has("enableCubeRecipes")
 		enabledRecipes := r.Form["enabledRecipes"]
 		cfg.CubeRecipes.EnabledRecipes = enabledRecipes
+		cfg.CubeRecipes.SkipPerfectAmethysts = r.Form.Has("skipPerfectAmethysts")
+		cfg.CubeRecipes.SkipPerfectRubies = r.Form.Has("skipPerfectRubies")
 		// Companion
 
 		// Companion config
