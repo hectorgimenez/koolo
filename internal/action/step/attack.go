@@ -3,7 +3,6 @@ package step
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"time"
 
@@ -127,9 +126,6 @@ func isValidEnemy(monster data.Monster, ctx *context.Status) bool {
 
 	// Skip monsters in invalid positions
 	if !ctx.Data.AreaData.IsWalkable(monster.Position) {
-		ctx.Logger.Debug("Skipping monster in unwalkable position",
-			slog.Any("monster", monster.Name),
-			slog.Any("position", monster.Position))
 		return false
 	}
 

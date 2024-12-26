@@ -13,7 +13,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-const DistanceToFinishMoving = 7
+const DistanceToFinishMoving = 4
 
 func MoveTo(dest data.Position) error {
 	minDistanceToFinishMoving := DistanceToFinishMoving
@@ -112,8 +112,8 @@ func MoveTo(dest data.Position) error {
 		}
 
 		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
-		if distance < 20 && math.Abs(float64(previousDistance-distance)) < 5 {
-			minDistanceToFinishMoving += 5
+		if distance < 20 && math.Abs(float64(previousDistance-distance)) < 4 {
+			minDistanceToFinishMoving += 4
 		} else {
 			minDistanceToFinishMoving = DistanceToFinishMoving
 		}
