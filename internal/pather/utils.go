@@ -157,10 +157,15 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 	}
 
 	err := dx - dy
-
 	x, y := origin.X, origin.Y
 
 	for {
+		// Check for closed doors
+		for _, obj := range pf.data.Objects {
+			if obj.IsDoor() && obj.Selectable && obj.Position.X == x && obj.Position.Y == y {
+				return false
+			}
+		}
 		if !pf.data.AreaData.Grid.IsWalkable(data.Position{X: x, Y: y}) {
 			return false
 		}
