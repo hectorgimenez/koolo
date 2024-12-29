@@ -68,7 +68,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.PauseIfNotPriority()
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
-			return fmt.Errorf("failed interacting with object")
+			return fmt.Errorf("failed interacting with object: %s [ID: %d] after %d attempts", obj.Name, obj.ID, interactionAttempts)
 		}
 
 		ctx.RefreshGameData()
@@ -104,7 +104,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 				}
 			}
 
-			if o.Mode == mode.ObjectModeOperating || o.Mode != mode.ObjectModeOpened {
+			if o.Mode != mode.ObjectModeOpened {
 				utils.Sleep(100)
 				continue
 			}
@@ -152,9 +152,22 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			continue
 		}
 
+		// Ensure we're in interaction range before attempting to interact
 		distance := ctx.PathFinder.DistanceFromMe(o.Position)
-		if distance > 15 {
-			return fmt.Errorf("object is too far away: %d. Current distance: %d", o.Name, distance)
+		if distance > DistanceToFinishMoving {
+			// Try to move into range
+			for retry := 0; retry < maxMoveRetries; retry++ {
+				if err := MoveTo(o.Position); err != nil {
+					continue
+				}
+				if ctx.PathFinder.DistanceFromMe(o.Position) <= DistanceToFinishMoving {
+					break
+				}
+			}
+			// Check distance again after movement attempts
+			if ctx.PathFinder.DistanceFromMe(o.Position) > DistanceToFinishMoving {
+				return fmt.Errorf("failed to get in range of object: %s [ID: %d] at position [%d, %d]", o.Name, o.ID, o.Position.X, o.Position.Y)
+			}
 		}
 
 		// Get object description for spiral

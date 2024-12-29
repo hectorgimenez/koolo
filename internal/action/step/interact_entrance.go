@@ -2,6 +2,8 @@ package step
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -13,9 +15,9 @@ import (
 )
 
 const (
-	maxMoveRetries = 3
-	maxAttempts    = 15
-	hoverDelay     = 25
+	maxMoveRetries = 6
+	maxAttempts    = 20
+	hoverDelay     = 50
 	interactDelay  = 100
 )
 
@@ -97,19 +99,44 @@ func InteractEntrance(targetArea area.ID) error {
 }
 
 func findEntranceDescriptor(ctx *context.Status, targetLevel *data.Level) (entrance.Description, bool) {
-	if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
-		entrances := ctx.GameReader.Entrances(ctx.Data.PlayerUnit.Position, ctx.Data.HoverData)
+	maxRetries := 5
+	baseDelay := 500 * time.Millisecond
 
-		for _, lvl := range areaData.AdjacentLevels {
-			if lvl.Position == targetLevel.Position {
-				for _, e := range entrances {
-					if e.Position == lvl.Position {
-						return entrance.Desc[int(e.Name)], true
+	for retry := 0; retry < maxRetries; retry++ {
+		if retry > 0 {
+			sleepTime := time.Duration(retry)*baseDelay + time.Duration(rand.Intn(200))*time.Millisecond
+			time.Sleep(sleepTime)
+			ctx.RefreshGameData()
+			ctx.Logger.Debug("Retrying to find entrance descriptor",
+				"attempt", retry+1,
+				"area", targetLevel.Area.Area().Name,
+				"sleep", sleepTime.String())
+		}
+
+		if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+			entrances := ctx.GameReader.Entrances(ctx.Data.PlayerUnit.Position, ctx.Data.HoverData)
+
+			// First check if we have any entrances at all
+			if len(entrances) == 0 {
+				continue
+			}
+
+			// Then look for our specific entrance
+			for _, lvl := range areaData.AdjacentLevels {
+				if lvl.Position == targetLevel.Position {
+					for _, e := range entrances {
+						if e.Position == lvl.Position {
+							desc, exists := entrance.Desc[int(e.Name)]
+							if exists {
+								return desc, true
+							}
+						}
 					}
 				}
 			}
 		}
 	}
+
 	return entrance.Description{}, false
 }
 
@@ -130,21 +157,61 @@ func findClosestEntrance(ctx *context.Status, targetArea area.ID) *data.Level {
 }
 
 func ensureInRange(ctx *context.Status, pos data.Position) error {
+	requiredDistance := 3 // We need to be at distance 3 or less to interact with entrances
+
 	for retry := 0; retry < maxMoveRetries; retry++ {
 		distance := ctx.PathFinder.DistanceFromMe(pos)
-		if distance <= DistanceToFinishMoving {
+		if distance <= requiredDistance {
 			return nil
 		}
 
-		if err := MoveTo(pos); err != nil {
+		var moveOpts []MoveOption
+		// Gradually reduce target distance on each attempt
+		if retry >= 4 {
+			moveOpts = append(moveOpts, WithDistanceToFinish(1))
+		} else if retry >= 2 {
+			moveOpts = append(moveOpts, WithDistanceToFinish(2))
+		} else if distance == 4 {
+			moveOpts = append(moveOpts, WithDistanceToFinish(3))
+		}
+
+		if err := MoveTo(pos, moveOpts...); err != nil {
+			// On error, if we've tried a few times, check for and kill blocking monsters
+			if retry >= 2 {
+				entrancePos := pos // Capture for closure
+				ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+					var closestMonster data.Monster
+					shortestDistance := 999999
+					found := false
+
+					for _, m := range d.Monsters {
+						// Calculate distance from monster to entrance
+						dx := float64(m.Position.X - entrancePos.X)
+						dy := float64(m.Position.Y - entrancePos.Y)
+						monsterToEntranceDist := int(math.Sqrt(dx*dx + dy*dy))
+
+						if monsterToEntranceDist <= 5 {
+							dist := ctx.PathFinder.DistanceFromMe(m.Position)
+							if dist < shortestDistance {
+								shortestDistance = dist
+								closestMonster = m
+								found = true
+							}
+						}
+					}
+					return closestMonster.UnitID, found
+				}, nil)
+			}
+			time.Sleep(200 * time.Millisecond)
 			continue
 		}
 
-		// Check distance after movement
-		if ctx.PathFinder.DistanceFromMe(pos) <= DistanceToFinishMoving {
+		// Check if we succeeded at getting to required distance
+		if ctx.PathFinder.DistanceFromMe(pos) <= requiredDistance {
 			return nil
 		}
 	}
+
 	return fmt.Errorf("failed to get in range of entrance after %d attempts", maxMoveRetries)
 }
 

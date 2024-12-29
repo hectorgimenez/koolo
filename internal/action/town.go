@@ -66,14 +66,27 @@ func PreRun(firstRun bool) error {
 func InRunReturnTownRoutine() error {
 	ctx := context.Get()
 
+	// Store current priority state
+	oldExecutionPriority := ctx.ExecutionPriority
+	oldPriority := ctx.Priority
+
+	// Set execution priority to match current priority to prevent pauses
+	ctx.ExecutionPriority = ctx.Priority
+
 	needsRepair := RepairRequired()
-	ReturnTown()
+	if err := ReturnTown(); err != nil {
+		// Restore priority state before returning
+		ctx.ExecutionPriority = oldExecutionPriority
+		ctx.Priority = oldPriority
+		return err
+	}
 
 	// Only proceed with town actions if we actually made it to town
 	if !ctx.Data.PlayerUnit.Area.IsTown() {
+		ctx.ExecutionPriority = oldExecutionPriority
+		ctx.Priority = oldPriority
 		return nil
 	}
-
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
 	ManageBelt()
@@ -115,5 +128,12 @@ func InRunReturnTownRoutine() error {
 		return nil // Stay in town if items still need repair
 	}
 
-	return UsePortalInTown()
+	// Use portal before restoring priority state
+	err := UsePortalInTown()
+
+	// Restore priority state
+	ctx.ExecutionPriority = oldExecutionPriority
+	ctx.Priority = oldPriority
+
+	return err
 }

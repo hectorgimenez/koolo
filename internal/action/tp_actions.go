@@ -2,7 +2,9 @@ package action
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -16,6 +18,24 @@ func ReturnTown() error {
 
 	if ctx.Data.PlayerUnit.Area.IsTown() {
 		return nil
+	}
+
+	// Move slightly if we're right next to a waypoint to prevent fail to hover portal
+	for _, obj := range ctx.Data.Objects {
+		if obj.IsWaypoint() && ctx.PathFinder.DistanceFromMe(obj.Position) < 3 {
+			// Try a few different positions until we find one that works
+			for i := 0; i < 4; i++ {
+				newPos := data.Position{
+					X: ctx.Data.PlayerUnit.Position.X + 3 - i,
+					Y: ctx.Data.PlayerUnit.Position.Y + 3 - i,
+				}
+				if ctx.Data.AreaData.IsWalkable(newPos) && ctx.PathFinder.DistanceFromMe(obj.Position) >= 3 {
+					MoveToCoords(newPos)
+					break
+				}
+			}
+			break
+		}
 	}
 
 	err := step.OpenPortal()
@@ -36,11 +56,17 @@ func UsePortalInTown() error {
 	ctx.SetLastAction("UsePortalInTown")
 
 	tpArea := town.GetTownByArea(ctx.Data.PlayerUnit.Area).TPWaitingArea(*ctx.Data)
-	_ = MoveToCoords(tpArea)
+	if err := MoveToCoords(tpArea); err != nil {
+		return err
+	}
 
 	err := UsePortalFrom(ctx.Data.PlayerUnit.Name)
 	if err != nil {
 		return err
+	}
+
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		return fmt.Errorf("failed to leave town through portal")
 	}
 
 	// Perform item pickup after re-entering the portal

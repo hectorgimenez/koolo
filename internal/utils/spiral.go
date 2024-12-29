@@ -31,16 +31,14 @@ func ObjectSpiral(attempt int, desc object.Description) (x, y int) {
 
 	// Special handling for portals
 	if desc.Width == 80 && desc.Height == 110 {
-
-		xScale := 1.2
-		yScale := 1.4
+		xScale := 1.0
+		yScale := 110.0 / 80.0
 
 		x = int(baseRadius * math.Cos(angle) * xScale)
-		y = int(baseRadius*math.Sin(angle)*yScale) - 40
+		y = int(baseRadius*math.Sin(angle)*yScale) - 50
 
-		// Ensure we stay within reasonable bounds while providing wider coverage
-		x = Clamp(x, -50, 50)
-		y = Clamp(y, -110, 20)
+		x = Clamp(x, -40, 40)
+		y = Clamp(y, -100, 10)
 
 		return x, y
 	}
