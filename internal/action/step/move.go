@@ -15,8 +15,32 @@ import (
 
 const DistanceToFinishMoving = 4
 
-func MoveTo(dest data.Position) error {
+type MoveOpts struct {
+	distanceOverride *int
+}
+
+type MoveOption func(*MoveOpts)
+
+// WithDistanceToFinish overrides the default DistanceToFinishMoving
+func WithDistanceToFinish(distance int) MoveOption {
+	return func(opts *MoveOpts) {
+		opts.distanceOverride = &distance
+	}
+}
+
+func MoveTo(dest data.Position, options ...MoveOption) error {
+	// Initialize options
+	opts := &MoveOpts{}
+
+	// Apply any provided options
+	for _, o := range options {
+		o(opts)
+	}
+
 	minDistanceToFinishMoving := DistanceToFinishMoving
+	if opts.distanceOverride != nil {
+		minDistanceToFinishMoving = *opts.distanceOverride
+	}
 
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
@@ -44,7 +68,6 @@ func MoveTo(dest data.Position) error {
 	previousDistance := 0
 
 	for {
-		ctx.RefreshGameData()
 
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
@@ -112,8 +135,10 @@ func MoveTo(dest data.Position) error {
 		}
 
 		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
-		if distance < 20 && math.Abs(float64(previousDistance-distance)) < 4 {
-			minDistanceToFinishMoving += 4
+		if distance < 20 && math.Abs(float64(previousDistance-distance)) < DistanceToFinishMoving {
+			minDistanceToFinishMoving += DistanceToFinishMoving
+		} else if opts.distanceOverride != nil {
+			minDistanceToFinishMoving = *opts.distanceOverride
 		} else {
 			minDistanceToFinishMoving = DistanceToFinishMoving
 		}
