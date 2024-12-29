@@ -3,7 +3,6 @@ package step
 import (
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -240,6 +239,12 @@ func burstAttack(settings attackSettings) error {
 }
 
 func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
+	// First verify we actually have line of sight before attacking
+	monsterPos := data.Position{X: x, Y: y}
+	if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monsterPos) {
+		return // Skip attack if no line of sight
+	}
+
 	// Ensure we have the skill selected
 	if settings.skill != 0 && ctx.Data.PlayerUnit.RightSkill != settings.skill {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
@@ -250,11 +255,11 @@ func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
 		ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
 	}
 
-	x, y = ctx.PathFinder.GameCoordsToScreenCords(x, y)
+	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(x, y)
 	if settings.primaryAttack {
-		ctx.HID.Click(game.LeftButton, x, y)
+		ctx.HID.Click(game.LeftButton, screenX, screenY)
 	} else {
-		ctx.HID.Click(game.RightButton, x, y)
+		ctx.HID.Click(game.RightButton, screenX, screenY)
 	}
 
 	if settings.shouldStandStill {
@@ -303,32 +308,23 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 		// Calculate how far we need to move to reach this position
 		distanceToMove := ctx.PathFinder.DistanceFromMe(dest)
 
-		// If we need to move less than 7 units, we need to overshoot
-		if distanceToMove <= 7 {
-			// Calculate vector from current pos to destination
-			dx := float64(dest.X - currentPos.X)
-			dy := float64(dest.Y - currentPos.Y)
+		var moveOpts []MoveOption
 
-			// Normalize and extend to 9 units (beyond the 7 unit minimum)
-			length := math.Sqrt(dx*dx + dy*dy)
-			if length == 0 {
-				dx = 1
-				length = 1
-			}
-			dx = dx / length * 9
-			dy = dy / length * 9
-
-			// Create new overshooting destination
-			dest = data.Position{
-				X: currentPos.X + int(dx),
-				Y: currentPos.Y + int(dy),
-			}
+		// Adaptive distance handling
+		switch {
+		case distanceToMove <= 2:
+			moveOpts = append(moveOpts, WithDistanceToFinish(1))
+		case distanceToMove <= 4:
+			moveOpts = append(moveOpts, WithDistanceToFinish(2))
+		case distanceToMove <= 6:
+			moveOpts = append(moveOpts, WithDistanceToFinish(3))
 		}
 
+		// Only use this position if we actually have line of sight from it
 		if ctx.PathFinder.LineOfSight(dest, monster.Position) {
-			return MoveTo(dest)
+			return MoveTo(dest, moveOpts...)
 		}
 	}
 
-	return nil
+	return MoveTo(monster.Position, WithDistanceToFinish(minDistance))
 }
