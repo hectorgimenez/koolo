@@ -235,8 +235,10 @@ type CharacterCfg struct {
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
 	CubeRecipes struct {
-		Enabled        bool     `yaml:"enabled"`
-		EnabledRecipes []string `yaml:"enabledRecipes"`
+		Enabled              bool     `yaml:"enabled"`
+		EnabledRecipes       []string `yaml:"enabledRecipes"`
+		SkipPerfectAmethysts bool     `yaml:"skipPerfectAmethysts"`
+		SkipPerfectRubies    bool     `yaml:"skipPerfectRubies"`
 	} `yaml:"cubing"`
 	BackToTown struct {
 		NoHpPotions     bool `yaml:"noHpPotions"`
@@ -308,7 +310,7 @@ func Load() error {
 
 	// Read character configs
 	for _, entry := range entries {
-		if !entry.IsDir() || entry.Name() == "template" {
+		if !entry.IsDir() {
 			continue
 		}
 

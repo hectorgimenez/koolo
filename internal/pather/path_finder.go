@@ -47,6 +47,17 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	// We don't want to modify the original grid
 	grid := a.Grid.Copy()
 
+	// Special handling for Arcane Sanctuary (to allow pathing with platforms)
+	if pf.data.PlayerUnit.Area == area.ArcaneSanctuary && pf.data.CanTeleport() {
+		// Make all non-walkable tiles into low priority tiles for teleport pathing
+		for y := 0; y < len(grid.CollisionGrid); y++ {
+			for x := 0; x < len(grid.CollisionGrid[y]); x++ {
+				if grid.CollisionGrid[y][x] == game.CollisionTypeNonWalkable {
+					grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
+				}
+			}
+		}
+	}
 	// Lut Gholein map is a bit bugged, we should close this fake path to avoid pathing issues
 	if a.Area == area.LutGholein {
 		a.CollisionGrid[13][210] = game.CollisionTypeNonWalkable
