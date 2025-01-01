@@ -800,7 +800,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Nova Sorceress specific options
-		if cfg.Character.Class == "nova" {
+		if cfg.Character.Class == "nova" || cfg.Character.Class == "lightsorc" {
 			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))
 			if err == nil {
 				minThreshold := 65 // Default
