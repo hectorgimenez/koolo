@@ -122,6 +122,8 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					action.SwitchToLegacyMode()
 					b.ctx.RefreshGameData()
 				}
+				// Hide merc/other players portraits if enabled
+				action.HidePortraits()
 
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
@@ -178,40 +180,45 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for _, r := range runs {
-			event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
-			err = action.PreRun(firstRun)
-			if err != nil {
-				return err
-			}
-
-			firstRun = false
-			err = r.Run()
-
-			var runFinishReason event.FinishReason
-			if err != nil {
-				switch {
-				case errors.Is(err, health.ErrChicken):
-					runFinishReason = event.FinishedChicken
-				case errors.Is(err, health.ErrMercChicken):
-					runFinishReason = event.FinishedMercChicken
-				case errors.Is(err, health.ErrDied):
-					runFinishReason = event.FinishedDied
-				default:
-					runFinishReason = event.FinishedError
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+				event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
+				err = action.PreRun(firstRun)
+				if err != nil {
+					return err
 				}
-			} else {
-				runFinishReason = event.FinishedOK
-			}
 
-			event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+				firstRun = false
+				err = r.Run()
 
-			if err != nil {
-				return err
-			}
+				var runFinishReason event.FinishReason
+				if err != nil {
+					switch {
+					case errors.Is(err, health.ErrChicken):
+						runFinishReason = event.FinishedChicken
+					case errors.Is(err, health.ErrMercChicken):
+						runFinishReason = event.FinishedMercChicken
+					case errors.Is(err, health.ErrDied):
+						runFinishReason = event.FinishedDied
+					default:
+						runFinishReason = event.FinishedError
+					}
+				} else {
+					runFinishReason = event.FinishedOK
+				}
 
-			err = action.PostRun(r == runs[len(runs)-1])
-			if err != nil {
-				return err
+				event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+
+				if err != nil {
+					return err
+				}
+
+				err = action.PostRun(r == runs[len(runs)-1])
+				if err != nil {
+					return err
+				}
 			}
 		}
 		return nil

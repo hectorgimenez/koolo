@@ -87,6 +87,8 @@ type CharacterCfg struct {
 	ClassicMode          bool   `yaml:"classicMode"`
 	CloseMiniPanel       bool   `yaml:"closeMiniPanel"`
 	UseCentralizedPickit bool   `yaml:"useCentralizedPickit"`
+        HidePortraits        bool   `yaml:"hidePortraits"`
+
 
 	Scheduler Scheduler `yaml:"scheduler"`
 	Health    struct {
