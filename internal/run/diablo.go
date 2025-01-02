@@ -66,7 +66,7 @@ func (d *Diablo) Run() error {
 
 	// Thanks Go for the lack of ordered maps
 	for _, bossName := range []string{"Vizier", "Lord De Seis", "Infector"} {
-		d.ctx.Logger.Debug("Heading to", bossName)
+		d.ctx.Logger.Debug("Heading to" + bossName)
 
 		for _, sealID := range sealGroups[bossName] {
 			seal, found := d.ctx.Data.Objects.FindOne(sealID)
@@ -139,15 +139,13 @@ func (d *Diablo) killSealElite(boss string) error {
 	for time.Since(startTime) < timeout {
 		for _, m := range d.ctx.Data.Monsters.Enemies(d.ctx.Data.MonsterFilterAnyReachable()) {
 			if action.IsMonsterSealElite(m) {
-				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
+				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %v at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
 
-				return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
-					if action.IsMonsterSealElite(m) {
-						filteredMonsters = append(filteredMonsters, m)
-					}
-
-					return filteredMonsters
-				})
+				return action.ClearThroughPath(
+					m.Position,
+					15,
+					data.MonsterAnyFilter(),
+				)
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
