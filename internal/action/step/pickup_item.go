@@ -59,6 +59,7 @@ func PickupItem(it data.Item) error {
 		mX, mY := ui.GameCoordsToScreenCords(it.Position.X-1, it.Position.Y-1)
 		x, y := utils.ItemSpiral(mouseOverAttempts)
 		ctx.HID.MovePointer(mX+x, mY+y)
+		ctx.RefreshGameData() // until we rework that refresh thing
 
 		time.Sleep(50 * time.Millisecond)
 
