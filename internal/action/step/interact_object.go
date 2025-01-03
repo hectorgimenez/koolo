@@ -2,16 +2,17 @@ package step
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
-	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/town"
+
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 const (
@@ -30,43 +31,36 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	ctx := context.Get()
 	ctx.SetLastStep("InteractObject")
 
-	// If there is no completion check, just assume the interaction is completed after clicking
+	// If no completion check provided and not defined here default to waiting for interaction
 	if isCompletedFn == nil {
 		isCompletedFn = func() bool {
-			return waitingForInteraction
-		}
-	}
-
-	// For portals, we need to ensure proper area sync
-	expectedArea := area.ID(0)
-	if obj.IsRedPortal() {
-		// For red portals, we need to determine the expected destination
-		switch {
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.StonyField:
-			expectedArea = area.Tristram
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.RogueEncampment:
-			expectedArea = area.MooMooFarm
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.Harrogath:
-			expectedArea = area.NihlathaksTemple
-		case obj.Name == object.PermanentTownPortal && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary:
-			expectedArea = area.CanyonOfTheMagi
-		case obj.Name == object.BaalsPortal && ctx.Data.PlayerUnit.Area == area.ThroneOfDestruction:
-			expectedArea = area.TheWorldstoneChamber
-		case obj.Name == object.DurielsLairPortal && (ctx.Data.PlayerUnit.Area >= area.TalRashasTomb1 && ctx.Data.PlayerUnit.Area <= area.TalRashasTomb7):
-			expectedArea = area.DurielsLair
-		}
-	} else if obj.IsPortal() {
-		// For blue town portals, determine the town area based on current area
-		fromArea := ctx.Data.PlayerUnit.Area
-		if !fromArea.IsTown() {
-			expectedArea = town.GetTownByArea(fromArea).TownArea()
-		} else {
-			// When using portal from town, we need to wait for any non-town area
-			isCompletedFn = func() bool {
-				return !ctx.Data.PlayerUnit.Area.IsTown() &&
-					ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) &&
-					len(ctx.Data.Objects) > 0
+			// For stash if we have open menu we can return early
+			if strings.EqualFold(string(obj.Name), "Bank") {
+				return ctx.Data.OpenMenus.Stash
 			}
+			if obj.IsChest() {
+				chest, found := ctx.Data.Objects.FindByID(obj.ID)
+				// Since opening a chest is immediate and the mode changes right away,
+				// we can return true as soon as we see these states
+				if !found || chest.Mode == mode.ObjectModeOperating || chest.Mode == mode.ObjectModeOpened {
+					return true
+				}
+				// Also return true if no longer selectable (as a fallback)
+				return !chest.Selectable
+			}
+
+			// For portals, check if the player has entered the portal's destination area
+			if obj.IsPortal() || obj.IsRedPortal() {
+				if ctx.Data.PlayerUnit.Area == obj.PortalData.DestArea {
+					if areaData, ok := ctx.Data.Areas[obj.PortalData.DestArea]; ok {
+						if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
+							return true
+						}
+					}
+				}
+			}
+
+			return waitingForInteraction
 		}
 	}
 
@@ -81,38 +75,44 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 		// Give some time before retrying the interaction
 		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
-			continue
+			// for chest we can check more often status is almost instant
+			if !obj.IsChest() || time.Since(lastRun) < time.Millisecond*50 {
+				continue
+			}
 		}
 
 		var o data.Object
 		var found bool
 		if obj.ID != 0 {
 			o, found = ctx.Data.Objects.FindByID(obj.ID)
-			if !found {
-				return fmt.Errorf("object %v not found", obj)
-			}
 		} else {
 			o, found = ctx.Data.Objects.FindOne(obj.Name)
-			if !found {
-				return fmt.Errorf("object %v not found", obj)
-			}
+		}
+		if !found {
+			return fmt.Errorf("object %v not found", obj)
 		}
 
 		lastRun = time.Now()
 
-		// Check portal states
+		// If portal is still being created, wait
 		if o.IsPortal() || o.IsRedPortal() {
-			// If portal is still being created, wait
-			if o.Mode == mode.ObjectModeOperating {
-				utils.Sleep(100)
-				continue
+			// Detect JustPortaled state and wait for loading screen if it's active
+			if ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
+				// Check for loading screen during portal transition
+				if ctx.Data.OpenMenus.LoadingScreen {
+					ctx.WaitForGameToLoad()
+					break
+				}
 			}
 
-			// Only interact when portal is fully opened
 			if o.Mode != mode.ObjectModeOpened {
 				utils.Sleep(100)
 				continue
 			}
+		}
+
+		if o.IsChest() && o.Mode == mode.ObjectModeOperating {
+			continue // Skip if chest is already being opened
 		}
 
 		if o.IsHovered {
@@ -120,16 +120,23 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			waitingForInteraction = true
 			interactionAttempts++
 
-			// For portals with expected area, we need to wait for proper area sync
-			if expectedArea != 0 {
-				utils.Sleep(500) // Initial delay for area transition
+			if (o.IsPortal() || o.IsRedPortal()) && o.PortalData.DestArea != 0 {
+				startTime := time.Now()
+				for time.Since(startTime) < time.Second*2 {
+					// Check for loading screen during portal transition
+					if ctx.Data.OpenMenus.LoadingScreen {
+						ctx.WaitForGameToLoad()
+						break
+					}
+					utils.Sleep(50)
+				}
+
 				for attempts := 0; attempts < maxPortalSyncAttempts; attempts++ {
-					ctx.RefreshGameData()
-					if ctx.Data.PlayerUnit.Area == expectedArea {
-						if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
+					if ctx.Data.PlayerUnit.Area == o.PortalData.DestArea {
+						if areaData, ok := ctx.Data.Areas[o.PortalData.DestArea]; ok {
 							if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-								if expectedArea.IsTown() {
-									return nil // For town areas, we can return immediately
+								if o.PortalData.DestArea.IsTown() {
+									return nil
 								}
 								// For special areas, ensure we have proper object data loaded
 								if len(ctx.Data.Objects) > 0 {
@@ -140,10 +147,11 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 					}
 					utils.Sleep(portalSyncDelay)
 				}
-				return fmt.Errorf("portal sync timeout - expected area: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
+				return fmt.Errorf("portal sync timeout - expected area: %v, current: %v", o.PortalData.DestArea, ctx.Data.PlayerUnit.Area)
 			}
 			continue
 		} else {
+
 			objectX := o.Position.X - 2
 			objectY := o.Position.Y - 2
 			distance := ctx.PathFinder.DistanceFromMe(o.Position)

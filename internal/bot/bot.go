@@ -47,7 +47,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
-		ticker := time.NewTicker(10 * time.Millisecond)
+		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
 			case <-ctx.Done():
