@@ -53,6 +53,10 @@ type Context struct {
 	LastBuffAt        time.Time
 	ContextDebug      map[Priority]*Debug
 	CurrentGame       *CurrentGameHelper
+
+	// for game data refreshes
+	reqRefresh chan chan bool
+	stop       chan struct{}
 }
 
 type Debug struct {
@@ -82,7 +86,11 @@ func NewContext(name string) *Status {
 			PriorityStop:       {},
 		},
 		CurrentGame: &CurrentGameHelper{},
+		reqRefresh:  make(chan chan bool),
+		stop:        make(chan struct{}),
 	}
+	go ctx.refreshTracker()
+
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 
 	return botContexts[getGoroutineID()]
@@ -119,12 +127,36 @@ func getGoroutineID() uint64 {
 }
 
 func (ctx *Context) RefreshGameData() {
+	done := make(chan bool)
+	ctx.reqRefresh <- done
+	<-done
+}
+
+func (ctx *Context) refreshTracker() {
+	last := time.Now()
+	for {
+		select {
+		case <-ctx.stop:
+			return
+		case done := <-ctx.reqRefresh:
+			if time.Since(last) > 2*time.Millisecond {
+				ctx.refreshGameData()
+				last = time.Now()
+			}
+			done <- true
+		}
+
+	}
+}
+
+func (ctx *Context) refreshGameData() {
 	*ctx.Data = ctx.GameReader.GetData()
 }
 
 func (ctx *Context) Detach() {
 	mu.Lock()
 	defer mu.Unlock()
+	close(ctx.stop) // force refresh tracker goroutine to exit
 	delete(botContexts, getGoroutineID())
 }
 
