@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -281,9 +282,32 @@ func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool
 		}
 	}
 
-	// Don't log items that we already have in inventory during first run
-	if !skipLogging {
+	// Don't log items that we already have in inventory during first run or that we don't want to notify about (gems, low runes .. etc)
+	if !skipLogging && shouldNotifyAboutStashing(i) && ruleFile != "" {
 		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
+	}
+
+	return true
+}
+
+func shouldNotifyAboutStashing(i data.Item) bool {
+	ctx := context.Get()
+
+	ctx.Logger.Debug(fmt.Sprintf("Checking if we should notify about stashing %s %v", i.Name, i.Desc()))
+	// Don't notify about gems
+	if strings.Contains(i.Desc().Type, "gem") {
+		return false
+	}
+
+	// Skip low runes (below lem)
+	lowRunes := []string{"elrune", "eldrune", "tirrune", "nefrune", "ethrune", "ithrune", "talrune", "ralrune", "ortrune", "thulrune", "amnrune", "solrune", "shaelrune", "dolrune", "helrune", "iorune", "lumrune", "korune", "falrune"}
+	if i.Desc().Type == item.TypeRune {
+		itemName := strings.ToLower(string(i.Name))
+		for _, runeName := range lowRunes {
+			if itemName == runeName {
+				return false
+			}
+		}
 	}
 
 	return true
