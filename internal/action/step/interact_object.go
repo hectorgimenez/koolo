@@ -68,7 +68,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.PauseIfNotPriority()
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
-			return fmt.Errorf("failed interacting with object")
+			return fmt.Errorf("[%s] failed interacting with object [%v] in Area: [%s]", ctx.Name, obj.Name, ctx.Data.PlayerUnit.Area.Area().Name)
 		}
 
 		ctx.RefreshGameData()
