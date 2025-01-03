@@ -122,21 +122,24 @@ func (a Cows) getWirtsLeg() error {
 		return errors.New("cain stones not found")
 	}
 	err = action.MoveToCoords(cainStone.Position)
+
 	if err != nil {
 		return err
 	}
+
 	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
 		return errors.New("tristram not found")
 	}
-	err = action.InteractObject(portal, func() bool {
-		return a.ctx.Data.AreaData.Area == area.Tristram && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
-	})
+
+	err = action.InteractObject(portal, nil)
 	if err != nil {
 		return err
 	}
+	// To allow time for object to load in memory
+	utils.Sleep(500)
 
 	wirtCorpse, found := a.ctx.Data.Objects.FindOne(object.WirtCorpse)
 	if !found {
@@ -145,6 +148,17 @@ func (a Cows) getWirtsLeg() error {
 	err = action.InteractObject(wirtCorpse, func() bool {
 		return a.hasWirtsLeg()
 	})
+	wirtPosition := wirtCorpse.Position
+
+	// lets move away from gold piles
+	notOnGoldStacksPos := data.Position{
+		X: wirtPosition.X - 4,
+		Y: wirtPosition.Y - 4,
+	}
+	err = action.MoveToCoords(notOnGoldStacksPos)
+	if err != nil {
+		return err
+	}
 
 	return action.ReturnTown()
 }

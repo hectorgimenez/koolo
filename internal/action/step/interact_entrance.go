@@ -2,12 +2,13 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 const (
@@ -25,9 +26,22 @@ func InteractEntrance(area area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastStep("InteractEntrance")
 
+	// Find the closest entrance(if there are 2 entrances for same destination like harem/palace cellar)
+	targetLevel := findClosestEntrance(ctx, area)
+	if targetLevel == nil {
+		return fmt.Errorf("no entrance found for area %s [%d]", area.Area().Name, area)
+	}
+
 	for {
 		ctx.PauseIfNotPriority()
 
+		// Handle loading screen early
+		if ctx.Data.OpenMenus.LoadingScreen {
+			ctx.WaitForGameToLoad()
+			continue
+		}
+
+		// Check if we've reached the target area
 		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
 			return nil
 		}
@@ -71,7 +85,7 @@ func InteractEntrance(area area.ID) error {
 				}
 
 				if l.IsEntrance {
-					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
+					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X-1, targetLevel.Position.Y-1)
 					if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
 						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 						waitingForInteraction = true
@@ -92,4 +106,19 @@ func InteractEntrance(area area.ID) error {
 			}
 		}
 	}
+}
+func findClosestEntrance(ctx *context.Status, targetArea area.ID) *data.Level {
+	var closest *data.Level
+	shortestDistance := 999999
+	for _, l := range ctx.Data.AdjacentLevels {
+		if l.Area == targetArea && l.IsEntrance {
+			distance := ctx.PathFinder.DistanceFromMe(l.Position)
+			if distance < shortestDistance {
+				shortestDistance = distance
+				lvl := l
+				closest = &lvl
+			}
+		}
+	}
+	return closest
 }
