@@ -17,8 +17,8 @@ import (
 
 const (
 	maxInteractionAttempts = 5
-	portalSyncDelay        = 200
-	maxPortalSyncAttempts  = 15
+	portalSyncDelay        = 100
+	maxPortalSyncAttempts  = 25
 )
 
 func InteractObject(obj data.Object, isCompletedFn func() bool) error {
@@ -73,12 +73,16 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 		ctx.RefreshGameData()
 
+		interactionDelay := 200 * time.Millisecond
+		if obj.IsChest() {
+			interactionDelay = 50 * time.Millisecond // Chests can be checked more frequently
+		} else if obj.IsPortal() || obj.IsRedPortal() {
+			interactionDelay = 100 * time.Millisecond // Reduce portal interaction delay
+		}
+
 		// Give some time before retrying the interaction
-		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*200 {
-			// for chest we can check more often status is almost instant
-			if !obj.IsChest() || time.Since(lastRun) < time.Millisecond*50 {
-				continue
-			}
+		if waitingForInteraction && time.Since(lastRun) < interactionDelay {
+			continue
 		}
 
 		var o data.Object
@@ -106,7 +110,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			}
 
 			if o.Mode != mode.ObjectModeOpened {
-				utils.Sleep(100)
+				utils.Sleep(50)
 				continue
 			}
 		}
@@ -151,7 +155,6 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			}
 			continue
 		} else {
-
 			objectX := o.Position.X - 2
 			objectY := o.Position.Y - 2
 			distance := ctx.PathFinder.DistanceFromMe(o.Position)
