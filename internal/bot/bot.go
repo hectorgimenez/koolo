@@ -120,16 +120,20 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				if b.ctx.CharacterCfg.ClassicMode && !b.ctx.Data.LegacyGraphics {
 					action.SwitchToLegacyMode()
-					b.ctx.RefreshGameData()
+					time.Sleep(150 * time.Millisecond)
 				}
 				// Hide merc/other players portraits if enabled
-				action.HidePortraits()
-
+				if b.ctx.CharacterCfg.HidePortraits && b.ctx.Data.OpenMenus.PortraitsShown {
+					action.HidePortraits()
+					time.Sleep(150 * time.Millisecond)
+				}
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
 				// Area correction
-				if err = action.AreaCorrection(); err != nil {
-					b.ctx.Logger.Warn("Area correction failed", "error", err)
+				if b.ctx.CurrentGame.AreaCorrection.Enabled {
+					if err = action.AreaCorrection(); err != nil {
+						b.ctx.Logger.Warn("Area correction failed", "error", err)
+					}
 				}
 
 				// Perform item pickup if enabled

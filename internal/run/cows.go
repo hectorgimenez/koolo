@@ -138,6 +138,8 @@ func (a Cows) getWirtsLeg() error {
 	if err != nil {
 		return err
 	}
+	// To allow time for object to load in memory
+	utils.Sleep(500)
 
 	wirtCorpse, found := a.ctx.Data.Objects.FindOne(object.WirtCorpse)
 	if !found {
