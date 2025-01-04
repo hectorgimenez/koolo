@@ -83,6 +83,7 @@
 {{ define "nihlathak" }}
     <fieldset>
         <label><input type="checkbox" name="gameNihlathakClearArea" {{ if .Config.Game.Nihlathak.ClearArea }}checked{{ end }}> Clear area</label>
+        <label><input type="checkbox" name="gameNihlathakCorner" {{ if .Config.Game.Nihlathak.Corner }}checked{{ end }}> Attack from safest corner</label>
     </fieldset>
 {{ end }}
 
