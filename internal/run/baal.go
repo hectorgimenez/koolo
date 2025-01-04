@@ -2,8 +2,6 @@ package run
 
 import (
 	"errors"
-	"math"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -12,6 +10,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -147,16 +146,10 @@ func (s Baal) Run() error {
 	return nil
 }
 
-func (s Baal) distanceFromPoint(from, to data.Position) int {
-	first := math.Pow(float64(to.X-from.X), 2)
-	second := math.Pow(float64(to.Y-from.Y), 2)
-	return int(math.Sqrt(first + second))
-}
-
 func (s Baal) clearWave() error {
 	return s.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
-			dist := s.distanceFromPoint(baalThronePosition, m.Position)
+			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
 			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
 				return m.UnitID, true
 			}
