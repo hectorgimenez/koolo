@@ -893,6 +893,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Tristram.ClearPortal = r.Form.Has("gameTristramClearPortal")
 		cfg.Game.Tristram.FocusOnElitePacks = r.Form.Has("gameTristramFocusOnElitePacks")
 		cfg.Game.Nihlathak.ClearArea = r.Form.Has("gameNihlathakClearArea")
+		cfg.Game.Nihlathak.Corner = r.Form.Has("gameNihlathakCorner")
 
 		cfg.Game.Baal.KillBaal = r.Form.Has("gameBaalKillBaal")
 		cfg.Game.Baal.DollQuit = r.Form.Has("gameBaalDollQuit")
