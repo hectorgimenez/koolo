@@ -23,83 +23,58 @@ func PickupItem(it data.Item) error {
 
 	ctx.Logger.Debug(fmt.Sprintf("Picking up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
 
-	waitingForInteraction := time.Time{}
 	mouseOverAttempts := 0
-	currentMouseCoords := data.Position{}
 	lastRun := time.Now()
-	itemToPickup := it
 
-	for {
-		// Pause the execution if the priority is not the same as the execution priority
+	for mouseOverAttempts < maxInteractions {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
 
-		// Reset item to empty
-		it = data.Item{}
-
+		// Check if item was picked up
+		found := false
 		for _, i := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
-			if i.UnitID == itemToPickup.UnitID {
+			if i.UnitID == it.UnitID {
 				it = i
+				found = true
+				break
 			}
 		}
-
-		if it.UnitID != itemToPickup.UnitID {
-			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", itemToPickup.Desc().Name, itemToPickup.Quality.ToString()))
+		if !found {
+			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", it.Desc().Name, it.Quality.ToString()))
 			return nil
 		}
 
-		if mouseOverAttempts > maxInteractions || !waitingForInteraction.IsZero() && time.Since(waitingForInteraction) > time.Second*3 {
-			return fmt.Errorf("item %s [%s] could not be picked up: mouseover attempts limit reached", it.Desc().Name, it.Quality.ToString())
-		}
-
+		// Rate limit attempts
 		if time.Since(lastRun) < utils.RandomDurationMs(120, 320) {
 			continue
 		}
+		lastRun = time.Now()
 
-		if !waitingForInteraction.IsZero() && time.Since(lastRun) < time.Second {
-			continue
+		// Check distance to item
+		distance := ctx.PathFinder.DistanceFromMe(it.Position)
+		if distance > 10 {
+			return fmt.Errorf("%w (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
 		}
 
-		lastRun = time.Now()
-		objectX := it.Position.X - 1
-		objectY := it.Position.Y - 1
+		// Calculate screen coordinates for item
+		mX, mY := ui.GameCoordsToScreenCords(it.Position.X-1, it.Position.Y-1)
+		x, y := utils.ItemSpiral(mouseOverAttempts)
+		ctx.HID.MovePointer(mX+x, mY+y)
 
-		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-
-		// Move the mouse to the coords
-		ctx.HID.MovePointer(mX, mY)
-
-		// Refresh game data to update the item hover status
-		mouseOverAttempts++
-		time.Sleep(time.Millisecond * 100)
-		ctx.RefreshGameData()
+		time.Sleep(50 * time.Millisecond)
 
 		if it.IsHovered {
-			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
-			if waitingForInteraction.IsZero() {
-				waitingForInteraction = time.Now()
-			}
-			continue
-		} else {
+			ctx.HID.Click(game.LeftButton, mX+x, mY+y)
 			// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 			// on Andariel, so we open it
-			if isChestHovered() {
-				ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
-			}
-
-			distance := ctx.PathFinder.DistanceFromMe(it.Position)
-			if distance > 10 {
-				return fmt.Errorf("%w (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
-			}
-
-			x, y := utils.Spiral(mouseOverAttempts)
-			currentMouseCoords = data.Position{X: mX + x, Y: mY + y}
-			ctx.HID.MovePointer(mX+x, mY+y)
-			mouseOverAttempts++
+		} else if isChestHovered() {
+			ctx.HID.Click(game.LeftButton, mX+x, mY+y)
 		}
-	}
-}
 
+		mouseOverAttempts++
+	}
+
+	return fmt.Errorf("item %s [%s] could not be picked up: mouseover attempts limit reached", it.Desc().Name, it.Quality.ToString())
+}
 func isChestHovered() bool {
 	for _, o := range context.Get().Data.Objects {
 		if o.IsChest() && o.IsHovered {

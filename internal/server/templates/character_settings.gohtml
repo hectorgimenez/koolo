@@ -80,17 +80,17 @@
                 <label>
                     Character name
                     <input name="characterName" placeholder="{{ .Config.CharacterName }}"
-                        value="{{ .Config.CharacterName }}"/>
+                           value="{{ .Config.CharacterName }}"/>
                 </label>
             </fieldset>
 
             <h5>Class-Specific Settings</h5>
             <div id="class-specific-settings">
-               
+
                 <div id="no-settings-message" style="display: none;">
                     No custom settings available for this class.
                 </div>
-                
+
                 <div class="berserker-barb-options" style="display: none;">
                     <fieldset class="grid">
                         <label>
@@ -103,7 +103,7 @@
                         </label>
                     </fieldset>
                 </div>
-                
+
                 <div class="nova-sorceress-options" style="display: none;">
                     <fieldset class="grid">
                         <label>
@@ -156,7 +156,7 @@
                 </label>
                 <label>
                     <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
-                    Identify with Cain 
+                    Identify with Cain
                 </label>
             </fieldset>
             <label>
@@ -170,7 +170,7 @@
                 <label>
                     Client launch options (arguments)
                     <input name="commandLineArgs" placeholder="{{ .Config.CommandLineArgs }}"
-                        value="{{ .Config.CommandLineArgs }}"/>
+                           value="{{ .Config.CommandLineArgs }}"/>
                 </label>
             </fieldset>
             <fieldset class="grid">
@@ -185,6 +185,10 @@
                 <label>
                     <input id="close_mini_panel" type="checkbox" name="close_mini_panel" {{ if .Config.CloseMiniPanel }}checked{{ end }}/>
                     Close the mini panel at game start (Legacy Graphics)
+                </label>
+                <label>
+                    <input id="hide_portraits" type="checkbox" name="hide_portraits" {{ if .Config.HidePortraits }}checked{{ end }}/>
+                    Hide Portraits
                 </label>
 
             </fieldset>
@@ -234,7 +238,7 @@
                     <input type="password" name="AuthToken" placeholder="{{ .Config.AuthToken }}" value="{{ .Config.AuthToken }}"/>
                 </label>
             </fieldset>
-            
+
             <h3>Scheduler</h3><br>
             <label>Set the time ranges when the bot should Start and Stop automatically. Multiple time ranges can be set for the same day if you want to simulate breaks. This will enforce killing of the game client on Stop.</label><br>
             <fieldset class="grid">
@@ -341,10 +345,10 @@
                 {{ range $rowIndex, $row := .Config.Inventory.InventoryLock }}
                     <tr>
                         {{ range $columnIndex, $unlocked := $row }}
-                        <td>
-                            <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
-                                   {{ if not $unlocked }}checked{{ end }}/>
-                        </td>
+                            <td>
+                                <input type="checkbox" name="inventoryLock[{{ $rowIndex }}][{{ $columnIndex }}]"
+                                       {{ if not $unlocked }}checked{{ end }}/>
+                            </td>
                         {{ end }}
                     </tr>
                 {{ end }}
@@ -375,10 +379,10 @@
                         <option value="hell" {{ if eq .Config.Game.Difficulty "hell" }}selected{{ end }}>Hell</option>
                     </select>
                 </label>
-            <label>
-                Max game length (seconds)
-                <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
-                    value="{{ .Config.MaxGameLength }}"/>
+                <label>
+                    Max game length (seconds)
+                    <input name="maxGameLength" min="50" type="number" placeholder="{{ .Config.MaxGameLength }}"
+                           value="{{ .Config.MaxGameLength }}"/>
                 </label>
             </fieldset>
             <h4>Run Settings</h4><br>
@@ -392,7 +396,7 @@
             <input type="hidden" id="gameRuns" name="gameRuns" value="">
             <div class="grid">
                 <div>
-                    <h6>Enabled Runs:</h6>                    
+                    <h6>Enabled Runs:</h6>
                     <ul style="padding-top: 52px" class="run-list" id="enabled_runs">
                         {{ range $index, $run := .EnabledRuns }}
                             <li value="{{ $run }}">
@@ -458,27 +462,27 @@
                 Leader
             </label>
             <label>
-                    Leader Name
-                    <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
-                           value="{{ .Config.Companion.LeaderName }}"/>
-                </label>
+                Leader Name
+                <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
+                       value="{{ .Config.Companion.LeaderName }}"/>
+            </label>
             <h3>Back to Town Settings:</h3>
-            <fieldset class="grid">    
+            <fieldset class="grid">
                 <label>
-                <input id="no_hp_potions" type="checkbox" name="noHpPotions" {{ if .Config.BackToTown.NoHpPotions }}checked{{ end }}/>
-                No HP potions
+                    <input id="no_hp_potions" type="checkbox" name="noHpPotions" {{ if .Config.BackToTown.NoHpPotions }}checked{{ end }}/>
+                    No HP potions
                 </label>
                 <label>
-                <input id="no_mp_potions" type="checkbox" name="noMpPotions" {{ if .Config.BackToTown.NoMpPotions }}checked{{ end }}/>
-                No MP potions
+                    <input id="no_mp_potions" type="checkbox" name="noMpPotions" {{ if .Config.BackToTown.NoMpPotions }}checked{{ end }}/>
+                    No MP potions
                 </label>
                 <label>
-                <input id="merc_died" type="checkbox" name="mercDied" {{ if .Config.BackToTown.MercDied }}checked{{ end }}/>
-                Mercenary is dead
+                    <input id="merc_died" type="checkbox" name="mercDied" {{ if .Config.BackToTown.MercDied }}checked{{ end }}/>
+                    Mercenary is dead
                 </label>
                 <label>
-                <input id="equip_broken" type="checkbox" name="equipmentBroken" {{ if .Config.BackToTown.EquipmentBroken }}checked{{ end }}/>
-                Equipment Broken
+                    <input id="equip_broken" type="checkbox" name="equipmentBroken" {{ if .Config.BackToTown.EquipmentBroken }}checked{{ end }}/>
+                    Equipment Broken
                 </label>
             </fieldset>
             <fieldset class="grid">

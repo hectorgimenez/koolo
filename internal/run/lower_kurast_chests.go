@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"slices"
 	"sort"
 
@@ -98,7 +99,7 @@ func (run LowerKurastChests) Run() error {
 				return !object.Selectable
 			})
 			if err != nil {
-				run.ctx.Logger.Warn("Failed interacting with object: %v", err)
+				run.ctx.Logger.Warn(fmt.Sprintf("[%s] failed interacting with object [%v] in Area: [%s]", run.ctx.Name, closestObject.Name, run.ctx.Data.PlayerUnit.Area.Area().Name), err)
 			}
 			utils.Sleep(500) // Add small delay to allow the game to open the object and drop the content
 

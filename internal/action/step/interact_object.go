@@ -2,6 +2,8 @@ package step
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
@@ -11,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 const (
@@ -74,7 +75,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.PauseIfNotPriority()
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
-			return fmt.Errorf("failed interacting with object")
+			return fmt.Errorf("[%s] failed interacting with object [%v] in Area: [%s]", ctx.Name, obj.Name, ctx.Data.PlayerUnit.Area.Area().Name)
 		}
 
 		ctx.RefreshGameData()
