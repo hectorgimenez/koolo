@@ -2,7 +2,6 @@ package run
 
 import (
 	"errors"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -10,6 +9,8 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -97,29 +98,40 @@ func (s Baal) Run() error {
 		return err
 	}
 
+	// Handle Baal waves
 	lastWave := false
 	for !lastWave {
+		// Check for last wave
 		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
 			lastWave = true
 		}
 
-		err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+		// Clear current wave
+		err = s.clearWave()
 		if err != nil {
 			return err
 		}
 
-		action.MoveToCoords(baalThronePosition)
-	}
+		// Return to throne position between waves
+		err = action.MoveToCoords(baalThronePosition)
+		if err != nil {
+			return err
+		}
 
-	// Let's be sure everything is dead
-	err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+		// Small delay to allow next wave to spawn if not last wave
+		if !lastWave {
+			utils.Sleep(500)
+		}
+	}
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		utils.Sleep(15000)
 		action.Buff()
+
+		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		err = action.InteractObjectByID(baalPortal.ID, func() bool {
+		err = action.InteractObject(baalPortal, func() bool {
 			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
 		})
 		if err != nil {
@@ -132,6 +144,18 @@ func (s Baal) Run() error {
 	}
 
 	return nil
+}
+
+func (s Baal) clearWave() error {
+	return s.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
+			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
+			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
+				return m.UnitID, true
+			}
+		}
+		return 0, false
+	}, nil)
 }
 
 func (s Baal) checkForSoulsOrDolls() bool {
