@@ -44,7 +44,8 @@ func PickupItem(it data.Item) error {
 
 	for {
 		ctx.PauseIfNotPriority()
-
+		ctx.RefreshGameData()
+		
 		// Reset item to empty
 		it = data.Item{}
 
