@@ -47,6 +47,8 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 		return WindDruid{BaseCharacter: bc}, nil
 	case "javazon":
 		return Javazon{BaseCharacter: bc}, nil
+	case "bowazon":
+		return Bowazon{BaseCharacter: bc}, nil
 	case "berserker":
 		return &Berserker{BaseCharacter: bc}, nil // Return a pointer to Berserker
 	}

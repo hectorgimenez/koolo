@@ -95,6 +95,7 @@ func InRunReturnTownRoutine() error {
 	ReviveMerc()
 	HireMerc()
 	Repair()
+	RestockArrowsOrBolts()
 
 	return UsePortalInTown()
 }
