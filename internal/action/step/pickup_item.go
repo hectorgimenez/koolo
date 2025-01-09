@@ -7,30 +7,38 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-const maxInteractions = 45
-
 var (
-	ErrItemTooFar  = errors.New("item is too far away")
-	ErrNoLOSToItem = errors.New("no line of sight to item")
+	ErrItemTooFar        = errors.New("item is too far away")
+	ErrNoLOSToItem       = errors.New("no line of sight to item")
+	ErrMonsterAroundItem = errors.New("monsters detected around item")
 )
 
 func PickupItem(it data.Item) error {
 	ctx := context.Get()
 	ctx.SetLastStep("PickupItem")
 
+	// Double check for monsters around the item
+	for _, monster := range ctx.Data.Monsters.Enemies() {
+		if monster.Stats[stat.Life] > 0 && pather.DistanceFromPoint(it.Position, monster.Position) <= 4 {
+			return ErrMonsterAroundItem
+		}
+	}
+	// Check if we have line of sight to item, maybe is behind a wall.
 	if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, it.Position) {
 		return ErrNoLOSToItem
 	}
 
 	// Check distance to item
 	distance := ctx.PathFinder.DistanceFromMe(it.Position)
-	if distance > 10 {
+	if distance >= 6 {
 		return fmt.Errorf("%w (%d): %s", ErrItemTooFar, distance, it.Desc().Name)
 	}
 
@@ -40,57 +48,24 @@ func PickupItem(it data.Item) error {
 	mouseOverAttempts := 0
 	lastRun := time.Now()
 	itemToPickup := it
-	var currentX, currentY int
+
+	// Base click position  -1 offset (Resurrected item drop spacing)
+	baseX := it.Position.X - 1
+	baseY := it.Position.Y - 1
+	mX, mY := ui.GameCoordsToScreenCords(baseX, baseY)
 
 	for {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
-		
-		// Reset item to empty
-		it = data.Item{}
 
-		for _, i := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
-			if i.UnitID == itemToPickup.UnitID {
-				it = i
-			}
-		}
-
-		if it.UnitID != itemToPickup.UnitID {
-			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", itemToPickup.Desc().Name, itemToPickup.Quality.ToString()))
-			return nil
-		}
-
-		if mouseOverAttempts > maxInteractions || (!waitingForInteraction.IsZero() && time.Since(waitingForInteraction) > time.Second*3) {
-			return fmt.Errorf("item %s [%s] could not be picked up: mouseover attempts limit reached", it.Desc().Name, it.Quality.ToString())
-		}
-		// Rate limit attempts
-		if time.Since(lastRun) < utils.RandomDurationMs(100, 250) {
+		if time.Since(lastRun) < 30*time.Millisecond {
+			time.Sleep(10 * time.Millisecond)
 			continue
 		}
 
-		lastRun = time.Now()
-		objectX := it.Position.X - 1
-		objectY := it.Position.Y - 1
-
-		// Calculate screen coordinates for item
-		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
-
-		if mouseOverAttempts == 0 {
-			// First attempt - try direct center
-			currentX, currentY = mX, mY
-			ctx.HID.MovePointer(currentX, currentY)
-		} else {
-			// Subsequent attempts - use spiral pattern
-			x, y := utils.ItemSpiral(mouseOverAttempts)
-			currentX, currentY = mX+x, mY+y
-			ctx.HID.MovePointer(currentX, currentY)
-		}
-
-		// Wait a bit and get fresh data to check hover state
-		time.Sleep(50 * time.Millisecond)
 		ctx.RefreshGameData()
+		lastRun = time.Now()
 
-		// Find our item again with fresh data
+		// Verify item still exists
 		var currentItem data.Item
 		for _, i := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
 			if i.UnitID == itemToPickup.UnitID {
@@ -99,9 +74,30 @@ func PickupItem(it data.Item) error {
 			}
 		}
 
+		if currentItem.UnitID != itemToPickup.UnitID {
+			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", itemToPickup.Desc().Name, itemToPickup.Quality.ToString()))
+			return nil // Item picked up
+		}
+
+		if mouseOverAttempts > 45 || (!waitingForInteraction.IsZero() && time.Since(waitingForInteraction) > time.Second*3) {
+			return fmt.Errorf("couldn't hover item %s after %d attempts", it.Desc().Name, mouseOverAttempts)
+		}
+
+		// Calculate click position
+		offsetX, offsetY := utils.ItemSpiral(mouseOverAttempts)
+		currentX := mX + offsetX
+		currentY := mY + offsetY
+
+		// Move and check hover
+		ctx.HID.MovePointer(currentX, currentY)
+		time.Sleep(75 * time.Millisecond)
+
+		ctx.RefreshGameData()
+
 		if currentItem.IsHovered {
-			// Click at exact coordinates where mouse is currently positioned
 			ctx.HID.Click(game.LeftButton, currentX, currentY)
+			time.Sleep(25 * time.Millisecond)
+
 			if waitingForInteraction.IsZero() {
 				waitingForInteraction = time.Now()
 			}
@@ -112,6 +108,7 @@ func PickupItem(it data.Item) error {
 		// on Andariel, so we open it
 		if isChestHovered() {
 			ctx.HID.Click(game.LeftButton, currentX, currentY)
+			time.Sleep(50 * time.Millisecond)
 		}
 
 		mouseOverAttempts++
