@@ -16,7 +16,7 @@ import (
 
 const (
 	maxInteractions = 45
-	spiralDelay     = 75 * time.Millisecond
+	spiralDelay     = 50 * time.Millisecond
 	clickDelay      = 25 * time.Millisecond
 	pickupTimeout   = 3 * time.Second
 )
@@ -79,7 +79,7 @@ func PickupItem(it data.Item) error {
 		currentItem, exists := findItemOnGround(targetItem.UnitID)
 		if !exists {
 			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", targetItem.Desc().Name, targetItem.Quality.ToString()))
-			return nil // Success !
+			return nil // Success!
 		}
 
 		// Check timeout conditions
@@ -89,14 +89,11 @@ func PickupItem(it data.Item) error {
 			return fmt.Errorf("failed to pick up %s after %d attempts", it.Desc().Name, spiralAttempt)
 		}
 
-		offsetX, offsetY := utils.ItemPickupPattern(spiralAttempt)
+		offsetX, offsetY := utils.ItemSpiral(spiralAttempt)
 		cursorX := baseScreenX + offsetX
 		cursorY := baseScreenY + offsetY
 
-		// First move cursor to base position
-		ctx.HID.MovePointer(baseScreenX, baseScreenY)
-		time.Sleep(25 * time.Millisecond)
-
+		// Move cursor directly to target position
 		ctx.HID.MovePointer(cursorX, cursorY)
 		time.Sleep(spiralDelay)
 

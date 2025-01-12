@@ -86,10 +86,32 @@ func ItemPickup(maxDistance int) error {
 			// Clear monsters on each attempt
 			ClearAreaAroundPosition(itemToPickup.Position, 4, data.MonsterAnyFilter())
 
-			// Move to item if needed
+			// Calculate position to move to based on attempt number
+			// on 2nd and 3rd attempt try position left/right of item
+			pickupPosition := itemToPickup.Position
+			moveDistance := 3
+			if attempt > 1 {
+				switch attempt {
+				case 2:
+					pickupPosition = data.Position{
+						X: itemToPickup.Position.X + moveDistance,
+						Y: itemToPickup.Position.Y - 1,
+					}
+				case 3:
+					pickupPosition = data.Position{
+						X: itemToPickup.Position.X - moveDistance,
+						Y: itemToPickup.Position.Y + 1,
+					}
+				}
+			}
+
 			distance := ctx.PathFinder.DistanceFromMe(itemToPickup.Position)
-			if distance >= 7 {
-				if err := step.MoveTo(itemToPickup.Position, step.WithDistanceToFinish(3)); err != nil {
+			if distance >= 7 || attempt > 1 {
+				distanceToFinish := 3
+				if attempt > 1 {
+					distanceToFinish = 2
+				}
+				if err := step.MoveTo(pickupPosition, step.WithDistanceToFinish(distanceToFinish)); err != nil {
 					ctx.Logger.Debug(fmt.Sprintf("Failed moving to item on attempt %d: %v", attempt, err))
 					lastError = err
 					attempt++
@@ -147,7 +169,6 @@ func ItemPickup(maxDistance int) error {
 		}
 	}
 }
-
 func GetItemsToPickup(maxDistance int) []data.Item {
 	ctx := context.Get()
 	ctx.SetLastAction("GetItemsToPickup")
