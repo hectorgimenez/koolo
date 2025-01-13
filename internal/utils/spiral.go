@@ -1,6 +1,8 @@
 package utils
 
-import "math"
+import (
+	"math"
+)
 
 func Spiral(position int) (int, int) {
 	t := position * 40
@@ -12,6 +14,7 @@ func Spiral(position int) (int, int) {
 
 	return int(x), int(y)
 }
+
 func ItemSpiral(position int) (int, int) {
 	t := position * 25
 
@@ -21,10 +24,8 @@ func ItemSpiral(position int) (int, int) {
 	// Convert to radians and calculate position
 	trad := float64(t) * math.Pi / 180.0
 
-	// Calculate spiral coordinates with a slight vertical bias since
-	// D2 uses isometric projection (items appear higher than their actual position)
 	x := (a + b*trad) * math.Cos(trad)
-	y := (a + b*trad) * math.Sin(trad) * 0.9 // Slight vertical compression
+	y := (a + b*trad) * math.Sin(trad)
 
 	return int(x), int(y)
 }
