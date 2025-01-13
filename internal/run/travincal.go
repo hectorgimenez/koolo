@@ -24,6 +24,10 @@ func (t *Travincal) Name() string {
 }
 
 func (t *Travincal) Run() error {
+	defer func() {
+		t.ctx.CurrentGame.AreaCorrection.Enabled = false
+	}()
+
 	// Check if the character is a Berserker and swap to combat gear
 	if berserker, ok := t.ctx.Char.(*character.Berserker); ok {
 		if t.ctx.CharacterCfg.Character.BerserkerBarb.FindItemSwitch {
@@ -35,7 +39,12 @@ func (t *Travincal) Run() error {
 	if err != nil {
 		return err
 	}
-	//this is temporary needed for barb because have no cta; isrebuffrequired not working for him
+
+	// Only Enable Area Correction for Travincal
+	t.ctx.CurrentGame.AreaCorrection.ExpectedArea = area.Travincal
+	t.ctx.CurrentGame.AreaCorrection.Enabled = true
+
+	//TODO This is temporary needed for barb because have no cta; isrebuffrequired not working for him. We have ActiveWeaponSlot in d2go ready for that
 	action.Buff()
 
 	councilPosition := t.findCouncilPosition()

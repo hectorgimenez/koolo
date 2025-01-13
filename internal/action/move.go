@@ -53,22 +53,7 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	var isEntrance bool
 
-	defer func() {
-		// For open areas (non-entrance transitions), disable area correction
-		if !isEntrance {
-			if ctx.Data.PlayerUnit.Area == dst {
-				ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-				ctx.CurrentGame.AreaCorrection.Enabled = false
-			}
-		} else {
-			// For entrances
-			ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-			ctx.CurrentGame.AreaCorrection.Enabled = true
-		}
-	}()
 	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 		return err
 	}
@@ -88,7 +73,6 @@ func MoveToArea(dst area.ID) error {
 	for _, a := range ctx.Data.AdjacentLevels {
 		if a.Area == dst {
 			lvl = a
-			isEntrance = a.IsEntrance
 			break
 		}
 	}
@@ -201,11 +185,6 @@ func MoveToArea(dst area.ID) error {
 
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-	}()
 
 	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 		return err
