@@ -66,6 +66,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "arachnid_lair" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameArachnidLairOpenChests" {{ if .Config.Game.ArachnidLair.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameArachnidLairFocusOnElitePacks" {{ if .Config.Game.ArachnidLair.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
 {{ define "mephisto" }}
     <fieldset>
         <label><input type="checkbox" name="gameMephistoKillCouncilMembers" {{ if .Config.Game.Mephisto.KillCouncilMembers }}checked{{ end }}> Kill council members</label>

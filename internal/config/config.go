@@ -87,8 +87,7 @@ type CharacterCfg struct {
 	ClassicMode          bool   `yaml:"classicMode"`
 	CloseMiniPanel       bool   `yaml:"closeMiniPanel"`
 	UseCentralizedPickit bool   `yaml:"useCentralizedPickit"`
-        HidePortraits        bool   `yaml:"hidePortraits"`
-
+	HidePortraits        bool   `yaml:"hidePortraits"`
 
 	Scheduler Scheduler `yaml:"scheduler"`
 	Health    struct {
@@ -170,6 +169,10 @@ type CharacterCfg struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"spider_cavern"`
+		ArachnidLair struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"arachnid_lair"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
