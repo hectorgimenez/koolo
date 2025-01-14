@@ -41,5 +41,5 @@ func (a ArachnidLair) Run() error {
 	action.OpenTPIfLeader()
 
 	// Clear ArachnidLair
-	return action.ClearCurrentLevel(true, filter)
+	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.ArachnidLair.OpenChests, filter)
 }
