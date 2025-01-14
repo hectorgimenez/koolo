@@ -24,7 +24,7 @@ func (a ArachnidLair) Name() string {
 
 func (a ArachnidLair) Run() error {
 	filter := data.MonsterAnyFilter()
-	if !a.ctx.CharacterCfg.Game.ArachnidLair.FocusOnElitePacks {
+	if a.ctx.CharacterCfg.Game.ArachnidLair.FocusOnElitePacks {
 		filter = data.MonsterEliteFilter()
 	}
 
