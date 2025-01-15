@@ -146,7 +146,7 @@ func stashInventory(firstRun bool) {
 		}
 
 		// Always stash unique charms to the shared stash
-		if (i.Name == "grandcharm" || i.Name == "charm" || i.Name == "largecharm") && i.Quality == item.QualityUnique {
+		if (i.Name == "grandcharm" || i.Name == "smallcharm" || i.Name == "largecharm") && i.Quality == item.QualityUnique {
 			currentTab = 2
 			SwitchStashTab(currentTab)
 		}
