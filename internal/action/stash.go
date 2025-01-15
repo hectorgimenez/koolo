@@ -144,6 +144,13 @@ func stashInventory(firstRun bool) {
 		if !stashIt {
 			continue
 		}
+
+		// Always stash unique charms to the shared stash
+		if (i.Name == "grandcharm" || i.Name == "charm" || i.Name == "largecharm") && i.Quality == item.QualityUnique {
+			currentTab = 2
+			SwitchStashTab(currentTab)
+		}
+
 		for currentTab < 5 {
 			if stashItemAction(i, matchedRule, ruleFile, firstRun) {
 				r, res := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i)
