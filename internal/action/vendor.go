@@ -15,6 +15,57 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 )
 
+func openTradeWindow(vendorNPC npc.ID) error {
+	ctx := context.Get()
+
+	err := InteractNPC(vendorNPC)
+	if err != nil {
+		return err
+	}
+
+	// Jamella trade button is the first one
+	if vendorNPC == npc.Jamella {
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_RETURN)
+	} else {
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+	}
+
+	SwitchStashTab(4)
+	ctx.RefreshGameData()
+
+	return nil
+}
+
+// Act 1 Vendors:
+//  Potions: Akara
+//  Keys: Akara
+//  Scrolls: Akara
+//  Arrows/Bolts: Charsi
+
+// Act 2 Vendors:
+//  Potions: Lysander
+//  Keys: Lysander
+//  Scrolls: Drognan
+//  Arrows/Bolts: Fara
+
+// Act 3 Vendors:
+//  Potions: Ormus
+//  Keys: Hratli
+//  Scrolls: Ormus
+//  Arrows/Bolts: Hratli
+
+// Act 4 Vendors:
+//  Potions: Jamella
+//  Keys: Jamella
+//  Scrolls: Jamella
+//  Arrows/Bolts: Halbu
+
+// Act 5 Vendors:
+//  Potions: Malah
+//  Keys: Malah
+//  Scrolls: Malah
+//  Arrows/Bolts: Larzuk
+
 func VendorRefill(forceRefill, sellJunk bool) error {
 	ctx := context.Get()
 	ctx.SetLastAction("VendorRefill")
@@ -32,32 +83,37 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 			vendorNPC = npc.Lysander
 		}
 	}
-	err := InteractNPC(vendorNPC)
+
+	err := openTradeWindow(vendorNPC)
 	if err != nil {
 		return err
 	}
 
-	// Jamella trade button is the first one
-	if vendorNPC == npc.Jamella {
-		ctx.HID.KeySequence(win.VK_HOME, win.VK_RETURN)
-	} else {
-		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
-	}
-
-	SwitchStashTab(4)
-	ctx.RefreshGameData()
 	town.BuyConsumables(forceRefill)
 
 	if sellJunk {
 		town.SellJunk()
 	}
 
+	// At this point we are guaranteed to have purchased potions, as the selected vendorNPC will always have these.
+	// Depending on the act, we may still need keys or scrolls.
+
+	if town.ShouldBuyTPs() || town.ShouldBuyIDs() {
+		restockTomes()
+	}
+
+	if ctx.Data.PlayerUnit.Class != data.Assassin {
+		_, shouldBuyKeys := town.ShouldBuyKeys()
+		if shouldBuyKeys {
+			restockKeys()
+		}
+	}
+
 	return step.CloseAllMenus()
 }
 
-func RestockTomes() error {
+func restockTomes() error {
 	ctx := context.Get()
-	ctx.SetLastAction("RestockTomes")
 
 	shouldBuyTPs := town.ShouldBuyTPs()
 	shouldBuyIDs := town.ShouldBuyIDs()
@@ -88,15 +144,10 @@ func RestockTomes() error {
 		return nil
 	}
 
-	err := InteractNPC(vendorNPC)
+	err := openTradeWindow(vendorNPC)
 	if err != nil {
 		return err
 	}
-
-	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
-
-	SwitchStashTab(4)
-	ctx.RefreshGameData()
 
 	if shouldBuyTPs {
 		town.BuyTPs()
@@ -109,9 +160,8 @@ func RestockTomes() error {
 	return nil
 }
 
-func RestockKeys() error {
+func restockKeys() error {
 	ctx := context.Get()
-	ctx.SetLastAction("RestockKeys")
 
 	if ctx.Data.PlayerUnit.Class == data.Assassin {
 		return nil
@@ -145,15 +195,11 @@ func RestockKeys() error {
 		return nil
 	}
 
-	err := InteractNPC(vendorNPC)
+	err := openTradeWindow(vendorNPC)
 	if err != nil {
+		ctx.Logger.Info("Unable to interact with keys vendor", "error", err)
 		return err
 	}
-
-	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
-
-	SwitchStashTab(4)
-	ctx.RefreshGameData()
 
 	if itm, found := ctx.Data.Inventory.Find(item.Key, item.LocationVendor); found {
 		ctx.Logger.Debug("Vendor with keys detected, provisioning...")
@@ -217,5 +263,11 @@ func shouldVisitVendor() bool {
 		return false
 	}
 
-	return ctx.BeltManager.ShouldBuyPotions() || town.ShouldBuyTPs() || town.ShouldBuyIDs()
+	shouldVisit := ctx.BeltManager.ShouldBuyPotions() || town.ShouldBuyTPs() || town.ShouldBuyIDs()
+	if shouldVisit {
+		return true
+	}
+
+	_, shouldBuyKeys := town.ShouldBuyKeys()
+	return shouldBuyKeys
 }

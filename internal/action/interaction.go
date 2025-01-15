@@ -12,13 +12,18 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-func InteractNPC(npc npc.ID) error {
+func InteractNPC(NPC npc.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("InteractNPC")
 
-	pos, found := getNPCPosition(npc, ctx.Data)
+	pos, found := getNPCPosition(NPC, ctx.Data)
 	if !found {
-		return fmt.Errorf("npc with ID %d not found", npc)
+
+		if NPC == npc.Hratli {
+			pos = data.Position{X: 5224, Y: 5039}
+		} else {
+			return fmt.Errorf("npc with ID %d not found", NPC)
+		}
 	}
 
 	var err error
@@ -28,7 +33,7 @@ func InteractNPC(npc npc.ID) error {
 			continue
 		}
 
-		err = step.InteractNPC(npc)
+		err = step.InteractNPC(NPC)
 		if err != nil {
 			continue
 		}
@@ -38,7 +43,7 @@ func InteractNPC(npc npc.ID) error {
 		return err
 	}
 
-	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(npc), event.InteractionTypeNPC))
+	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(NPC), event.InteractionTypeNPC))
 
 	return nil
 }
