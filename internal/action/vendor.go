@@ -8,8 +8,11 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 )
 
 func VendorRefill(forceRefill, sellJunk bool) error {
@@ -47,6 +50,118 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 
 	if sellJunk {
 		town.SellJunk()
+	}
+
+	return step.CloseAllMenus()
+}
+
+func RestockTomes() error {
+	ctx := context.Get()
+	ctx.SetLastAction("RestockTomes")
+
+	shouldBuyTPs := town.ShouldBuyTPs()
+	shouldBuyIDs := town.ShouldBuyIDs()
+
+	if !shouldBuyTPs && !shouldBuyIDs {
+		return nil
+	}
+
+	ctx.Logger.Info("Visiting vendor to buy scrolls...")
+
+	var vendorNPC npc.ID
+	currentArea := ctx.Data.PlayerUnit.Area
+	if currentArea == area.RogueEncampment {
+		vendorNPC = npc.Akara
+	} else if currentArea == area.LutGholein {
+		vendorNPC = npc.Drognan
+	} else if currentArea == area.KurastDocks {
+		vendorNPC = npc.Ormus
+	} else if currentArea == area.ThePandemoniumFortress {
+		vendorNPC = npc.Jamella
+	} else if currentArea == area.Harrogath {
+		vendorNPC = npc.Malah
+	}
+
+	if vendorNPC == 0 {
+		ctx.Logger.Info("Unable to find scroll vendor...")
+
+		return nil
+	}
+
+	err := InteractNPC(vendorNPC)
+	if err != nil {
+		return err
+	}
+
+	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+
+	SwitchStashTab(4)
+	ctx.RefreshGameData()
+
+	if shouldBuyTPs {
+		town.BuyTPs()
+	}
+
+	if shouldBuyIDs {
+		town.BuyIDs()
+	}
+
+	return nil
+}
+
+func RestockKeys() error {
+	ctx := context.Get()
+	ctx.SetLastAction("RestockKeys")
+
+	if ctx.Data.PlayerUnit.Class == data.Assassin {
+		return nil
+	}
+
+	keyQuantity, needsBuy := town.ShouldBuyKeys()
+
+	if !needsBuy {
+		return nil
+	}
+
+	ctx.Logger.Info("Visiting vendor to buy keys...")
+
+	var vendorNPC npc.ID
+	currentArea := ctx.Data.PlayerUnit.Area
+	if currentArea == area.RogueEncampment {
+		vendorNPC = npc.Akara
+	} else if currentArea == area.LutGholein {
+		vendorNPC = npc.Lysander
+	} else if currentArea == area.KurastDocks {
+		vendorNPC = npc.Hratli
+	} else if currentArea == area.ThePandemoniumFortress {
+		vendorNPC = npc.Jamella
+	} else if currentArea == area.Harrogath {
+		vendorNPC = npc.Malah
+	}
+
+	if vendorNPC == 0 {
+		ctx.Logger.Info("Unable to find keys vendor...")
+
+		return nil
+	}
+
+	err := InteractNPC(vendorNPC)
+	if err != nil {
+		return err
+	}
+
+	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+
+	SwitchStashTab(4)
+	ctx.RefreshGameData()
+
+	if itm, found := ctx.Data.Inventory.Find(item.Key, item.LocationVendor); found {
+		ctx.Logger.Debug("Vendor with keys detected, provisioning...")
+
+		qty, _ := itm.FindStat(stat.Quantity, 0)
+		if (qty.Value + keyQuantity) <= 12 {
+			town.BuyFullStack(itm)
+		}
 	}
 
 	return step.CloseAllMenus()

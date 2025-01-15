@@ -34,6 +34,12 @@ func PreRun(firstRun bool) error {
 	// Refill pots, sell, buy etc
 	VendorRefill(false, true)
 
+	// Restock keys if the above VendorRefill missed them
+	RestockKeys()
+
+	// Restock tomes if the above VendorRefill missed them
+	RestockTomes()
+
 	// Gamble
 	Gamble()
 
@@ -77,6 +83,8 @@ func InRunReturnTownRoutine() error {
 	IdentifyAll(false)
 
 	VendorRefill(false, true)
+	RestockKeys()
+	RestockTomes()
 	Stash(false)
 	Gamble()
 	Stash(false)
