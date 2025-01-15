@@ -112,4 +112,14 @@ const (
 
 	CloseMiniPanelClassicX = 639
 	CloseMiniPanelClassicY = 686
+
+	// Vendor tab 1 - On the left
+	VendorTab1X = 148
+	VendorTab1Y = 133
+	VendorTab2X = 235
+	VendorTab2Y = 133
+	VendorTab3X = 318
+	VendorTab3Y = 133
+	VendorTab4X = 399
+	VendorTab4Y = 133
 )

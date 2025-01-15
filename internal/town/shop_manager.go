@@ -13,6 +13,19 @@ import (
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
+func BuyArrows() {
+	ctx := context.Get()
+
+	ctx.Logger.Debug("Attempting to buy arrows...")
+
+	arrows, found := findFirstMatch("arrows")
+	if found {
+		ctx.Logger.Debug("Buying arrows...")
+
+		BuyItem(arrows, 1)
+	}
+}
+
 func BuyConsumables(forceRefill bool) {
 	ctx := context.Get()
 
