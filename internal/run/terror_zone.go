@@ -91,7 +91,7 @@ func (tz TerrorZone) Run() error {
 				}
 			}
 			if slices.Contains(availableTzs, tzArea) {
-				action.ClearCurrentLevel(false, tz.customTZEnemyFilter())
+				action.ClearCurrentLevel(tz.ctx.CharacterCfg.Game.TerrorZone.OpenChests, tz.customTZEnemyFilter())
 			} else {
 				tz.ctx.Logger.Debug("Skipping area %v", tzArea.Area().Name)
 			}
