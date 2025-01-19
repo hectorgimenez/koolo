@@ -183,6 +183,7 @@ type CharacterCfg struct {
 		} `yaml:"tristram"`
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
+			Corner    bool `yaml:"corner"`
 		} `yaml:"nihlathak"`
 		Diablo struct {
 			KillDiablo                    bool `yaml:"killDiablo"`
