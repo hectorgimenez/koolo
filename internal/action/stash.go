@@ -50,7 +50,8 @@ func Stash(forceStash bool) error {
 			return ctx.Data.OpenMenus.Stash
 		},
 	)
-
+	// Clear messages like TZ change or public game spam.  Prevent bot from clicking on messages
+	ClearMessages()
 	stashGold()
 	orderInventoryPotions()
 	stashInventory(forceStash)
