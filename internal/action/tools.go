@@ -70,3 +70,9 @@ func HidePortraits() error {
 	}
 	return nil
 }
+func ClearMessages() error {
+	ctx := context.Get()
+	ctx.SetLastAction("ClearMessages")
+	ctx.HID.PressKey(ctx.Data.KeyBindings.ClearMessages.Key1[0])
+	return nil
+}

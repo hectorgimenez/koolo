@@ -129,6 +129,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					action.HidePortraits()
 					time.Sleep(150 * time.Millisecond)
 				}
+				// Close chat if somehow was opened (prevention)
+				if b.ctx.Data.OpenMenus.ChatOpen {
+					b.ctx.HID.PressKey(b.ctx.Data.KeyBindings.Chat.Key1[0])
+					time.Sleep(150 * time.Millisecond)
+				}
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
 				// Area correction (only check if enabled)
