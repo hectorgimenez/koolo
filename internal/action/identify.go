@@ -106,7 +106,7 @@ func CainIdentify() error {
 
 	// Close menu if still open
 	if ctx.Data.OpenMenus.NPCInteract {
-		ctx.HID.PressKey(win.VK_ESCAPE)
+		step.CloseAllMenus()
 	}
 
 	return nil
