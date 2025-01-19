@@ -30,7 +30,8 @@ func CubeAddItems(items ...data.Item) error {
 			return err
 		}
 	}
-
+	// Clear messages like TZ change or public game spam.  Prevent bot from clicking on messages
+	ClearMessages()
 	ctx.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
 
 	// If items are on the Stash, pickup them to the inventory
