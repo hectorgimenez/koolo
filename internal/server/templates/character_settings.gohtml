@@ -360,6 +360,14 @@
             </label><br>
             <fieldset class="grid">
                 <label>
+                    Game Number
+                    <input type="number" name="gameInitialGameCount" placeholder="{{ .Config.Game.InitialGameCount }}"
+                        value="{{ .Config.Game.InitialGameCount }}"/>
+                </label>
+                <div></div>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
                     Game name pattern
                     <input name="companionGameNameTemplate" placeholder="{{ .Config.Companion.GameNameTemplate }}"
                            value="{{ .Config.Companion.GameNameTemplate }}"/>

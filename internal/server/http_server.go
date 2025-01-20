@@ -856,6 +856,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.UseCainIdentify = r.Form.Has("useCainIdentify")
 		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))
 		cfg.Game.RandomizeRuns = r.Form.Has("gameRandomizeRuns")
+		cfg.Game.InitialGameCount, _ = strconv.Atoi(r.Form.Get("gameInitialGameCount"))
 
 		// Runs specific config
 		enabledRuns := make([]config.Run, 0)
