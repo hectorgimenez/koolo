@@ -4,6 +4,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -66,6 +67,16 @@ func (m Mephisto) Run() error {
 	if m.ctx.CharacterCfg.Game.Mephisto.OpenChests || m.ctx.CharacterCfg.Game.Mephisto.KillCouncilMembers {
 		// Clear the area with the selected options
 		return action.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.CouncilMemberFilter())
+	}
+
+	if m.ctx.CharacterCfg.Game.Mephisto.ExitToA4 {
+		m.ctx.Logger.Info("Moving to red portal")
+		portal, _ := m.ctx.Data.Objects.FindOne(object.HellGate)
+		action.MoveToCoords(portal.Position)
+
+		action.InteractObject(portal, func() bool {
+			return m.ctx.Data.PlayerUnit.Area == area.ThePandemoniumFortress
+		})
 	}
 
 	return nil
