@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 type Mephisto struct {
@@ -70,7 +71,12 @@ func (m Mephisto) Run() error {
 	}
 
 	if m.ctx.CharacterCfg.Game.Mephisto.ExitToA4 {
-		m.ctx.Logger.Info("Moving to red portal")
+		m.ctx.Logger.Debug("Moving to bridge")
+		action.MoveToCoords(data.Position{X: 17588, Y: 8068})
+		//Wait for bridge to rise
+		utils.Sleep(1000)
+
+		m.ctx.Logger.Debug("Moving to red portal")
 		portal, _ := m.ctx.Data.Objects.FindOne(object.HellGate)
 		action.MoveToCoords(portal.Position)
 
