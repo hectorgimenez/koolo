@@ -240,6 +240,10 @@ func burstAttack(settings attackSettings) error {
 }
 
 func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
+	monsterPos := data.Position{X: x, Y: y}
+	if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monsterPos) {
+		return // Skip attack if no line of sight
+	}
 	// Ensure we have the skill selected
 	if settings.skill != 0 && ctx.Data.PlayerUnit.RightSkill != settings.skill {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
