@@ -178,3 +178,12 @@
         {{ end }}
     </fieldset>
 {{ end }}
+
+{{ define "blood_moor" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameBloodMoorMoveThroughBlackMarsh" {{ if .Config.Game.BloodMoor.ClearDenOfEvil }}checked{{ end }}> Clear Den of Evil</label>
+        <label><input type="checkbox" name="gameBloodMoorOnlyClearLevel2" {{ if .Config.Game.BloodMoor.OnlyClearDenOfEvil }}checked{{ end }}> Only clear Den of Evil</label>
+        <label><input type="checkbox" name="gameBloodMoorOpenChests" {{ if .Config.Game.BloodMoor.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameBloodMoorFocusOnElitePacks" {{ if .Config.Game.BloodMoor.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
