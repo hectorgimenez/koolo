@@ -19,7 +19,7 @@ func NewBloodMoor() *BloodMoor {
 }
 
 func (b BloodMoor) Name() string {
-	return string(config.BloodMoorRun)
+   return string(config.BloodMoorRun)
 }
 
 func (b BloodMoor) Run() error {
