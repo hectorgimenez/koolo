@@ -9,7 +9,7 @@ import (
 )
 
 type BloodMoor struct {
-	ctx *context.Status
+   ctx *context.Status
 }
 
 func NewBloodMoor() *BloodMoor {
