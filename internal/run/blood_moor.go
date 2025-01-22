@@ -38,13 +38,13 @@ func (b BloodMoor) Run() error {
     action.Buff()
 	
 	// Moving to the Blood Moor
-    if err = action.MoveToArea(area.BloodMoor); err != nil {
+    if err := action.MoveToArea(area.BloodMoor); err != nil {
     	return err
     }
     
     // If we don't want to just do the Den of Evil, we clear the area
     if !b.ctx.CharacterCfg.Game.BloodMoor.OnlyClearDenOfEvil {
-        if err = action.ClearCurrentLevel(openChests, monsterFilter); err != nil {
+        if err := action.ClearCurrentLevel(openChests, monsterFilter); err != nil {
             return err
         }
     }
@@ -55,14 +55,14 @@ func (b BloodMoor) Run() error {
     }
     
     // else, we go to the den of evil and clear it
-    if err = action.MoveToArea(area.DenOfEvil); err != nil {
+    if err := action.MoveToArea(area.DenOfEvil); err != nil {
     	return err
     }
     
     // Buff before we start
     action.Buff()
     
-    if err = action.ClearCurrentLevel(openChests, monsterFilter); err != nil {
+    if err := action.ClearCurrentLevel(openChests, monsterFilter); err != nil {
         return err
     }
 
