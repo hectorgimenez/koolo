@@ -37,7 +37,7 @@ func (b BloodMoor) Run() error {
    // Buff before we start
     action.Buff()
 	
-	// Moving to the Blood Moor
+   // Moving to the Blood Moor
     if err := action.MoveToArea(area.BloodMoor); err != nil {
     	return err
     }
