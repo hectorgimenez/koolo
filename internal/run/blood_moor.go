@@ -13,9 +13,9 @@ type BloodMoor struct {
 }
 
 func NewBloodMoor() *BloodMoor {
-	return &BloodMoor{
-		ctx: context.Get(),
-	}
+   return &BloodMoor{
+      ctx: context.Get(),
+   }
 }
 
 func (b BloodMoor) Name() string {
