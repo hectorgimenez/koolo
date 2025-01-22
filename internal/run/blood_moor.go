@@ -34,7 +34,7 @@ func (b BloodMoor) Run() error {
     	return err
     }
 	
-	// Buff before we start
+   // Buff before we start
     action.Buff()
 	
 	// Moving to the Blood Moor
