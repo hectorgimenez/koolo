@@ -34,13 +34,13 @@ func WayPoint(dest area.ID) error {
 
 	for _, o := range ctx.Data.Objects {
 		if o.IsWaypoint() {
+
 			err := InteractObject(o, func() bool {
 				return ctx.Data.OpenMenus.Waypoint
 			})
 			if err != nil {
 				return err
 			}
-
 			if ctx.Data.LegacyGraphics {
 				actTabX := ui.WpTabStartXClassic + (wpCoords.Tab-1)*ui.WpTabSizeXClassic + (ui.WpTabSizeXClassic / 2)
 				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic)
@@ -49,6 +49,8 @@ func WayPoint(dest area.ID) error {
 				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
 			}
 			utils.Sleep(200)
+			// Just to make sure no message like TZ change or public game spam prevent bot from clicking on waypoint
+			ClearMessages()
 		}
 	}
 

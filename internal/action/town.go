@@ -13,6 +13,8 @@ func PreRun(firstRun bool) error {
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
 	ManageBelt()
+	// Just to make sure messages like TZ change or public game spam arent on the way
+	ClearMessages()
 
 	if firstRun {
 		Stash(firstRun)
@@ -40,7 +42,6 @@ func PreRun(firstRun bool) error {
 	// Stash again if needed
 	Stash(false)
 
-	// Perform cube recipes
 	CubeRecipes()
 
 	// Leveling related checks
