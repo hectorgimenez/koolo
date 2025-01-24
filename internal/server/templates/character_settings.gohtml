@@ -145,6 +145,10 @@
                     Use teleport when available
                 </label>
                 <label>
+                    <input type="checkbox" name="characterUseTeleStomp" {{ if .Config.Character.UseTeleStomp }}checked{{ end }}/>
+                    Use telestomp attack
+                </label>
+                <label>
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
                 </label>
@@ -153,6 +157,8 @@
                 <label>
                     <input type="checkbox" name="useCentralizedPickit" {{ if .Config.UseCentralizedPickit }}checked{{ end }}/>
                     Use centralized pickit 
+                </label>
+                <label>
                 </label>
                 <label>
                     <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
