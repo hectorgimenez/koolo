@@ -1,0 +1,22 @@
+firstRun: true # If set to true next time the bot starts it will show the setup wizard
+useCustomSettings: true # If set to true, koolo will use config/Settings.json file to load game settings instead of default one.
+gameWindowArrangement: true # If set to true, game windows will be automatically repositioned to avoid overlapping
+debug:
+  log: true # Prints extra log information
+  screenshots: false # Saves screenshots of the game in case of errors
+  renderMap: false # Render current map data into 'cg.png' file
+
+logSaveDirectory: logs
+D2LoDPath: 'E:\games\Diablo II' # Path to Diablo II Lord of Destruction 1.13c directory
+D2RPath: 'C:\Program Files (x86)\Diablo II Resurrected' # Path to Diablo II Resurrected directory
+
+# In order to use to Discord Bot, you need the Application Token. https://discord.com/developers/docs/intro
+discord:
+  enabled: false
+  channelId: ''
+  token: ''
+
+telegram:
+  enabled: false
+  chatId: 0
+  token: ''

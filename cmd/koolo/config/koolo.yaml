@@ -1,0 +1,25 @@
+debug:
+    log: true
+    screenshots: true
+    renderMap: false
+firstRun: false
+useCustomSettings: true
+gameWindowArrangement: true
+logSaveDirectory: logs
+D2LoDPath: c:\program files (x86)\diablo ii
+D2RPath: c:\program files (x86)\diablo ii resurrected
+centralizedPickitPath: ""
+discord:
+    enabled: false
+    enableGameCreatedMessages: false
+    enableNewRunMessages: false
+    enableRunFinishMessages: false
+    enableDiscordChickenMessages: false
+    botAdmins:
+        - ""
+    channelId: ""
+    token: ""
+telegram:
+    enabled: true
+    chatId: 8007752038
+    token: 7924869673:AAG80gjqjixR9Nc5S1XVrlWGhdf4kzd3ZR8
