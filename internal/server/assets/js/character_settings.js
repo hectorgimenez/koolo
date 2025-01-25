@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set initial state
     toggleSchedulerVisibility();
     updateNovaSorceressOptions();
-    toggleTeleStompVisibility()
+    toggleTeleStompVisibility();
 
     schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
     teleportEnabled.addEventListener('change', toggleTeleStompVisibility);
