@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math"
 	"slices"
 	"time"
 
@@ -138,7 +137,7 @@ func ItemPickup(maxDistance int) error {
 					slog.String("item", itemToPickup.Desc().Name))
 
 				// Try moving beyond the item for better line of sight
-				beyondPos := moveBeyondItem(itemToPickup.Position, 2+attempt)
+				beyondPos := ctx.PathFinder.BeyondPosition(ctx.Data.PlayerUnit.Position, itemToPickup.Position, 2+attempt)
 				if mvErr := MoveToCoords(beyondPos); mvErr == nil {
 					err = step.PickupItem(itemToPickup)
 					if err == nil {
@@ -292,29 +291,4 @@ func shouldBePickedUp(i data.Item) bool {
 		return true
 	}
 	return !doesExceedQuantity(matchedRule)
-}
-
-// TODO refactor this since its similar to the one in attack.go(ensureenemyisinrange) and put in move package.
-func moveBeyondItem(itemPos data.Position, distance int) data.Position {
-	ctx := context.Get()
-	playerPos := ctx.Data.PlayerUnit.Position
-
-	// Calculate direction vector
-	dx := float64(itemPos.X - playerPos.X)
-	dy := float64(itemPos.Y - playerPos.Y)
-
-	// Normalize
-	length := math.Sqrt(dx*dx + dy*dy)
-	if length == 0 {
-		return itemPos
-	}
-
-	dx = dx / length
-	dy = dy / length
-
-	// Extend beyond item position
-	return data.Position{
-		X: itemPos.X + int(dx*float64(distance)),
-		Y: itemPos.Y + int(dy*float64(distance)),
-	}
 }

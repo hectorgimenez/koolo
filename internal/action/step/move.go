@@ -68,9 +68,10 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	previousDistance := 0
 
 	for {
-
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
+		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
+		ctx.RefreshGameData()
 
 		// Check for idle state outside town
 		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {

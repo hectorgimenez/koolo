@@ -145,6 +145,29 @@ func DistanceFromPoint(from data.Position, to data.Position) int {
 }
 
 func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Position) bool {
+	// Pre-calculate door collision boxes
+	var doorBoxes []struct {
+		minX, maxX, minY, maxY int
+	}
+	for _, obj := range pf.data.Objects {
+		if obj.IsDoor() && obj.Selectable {
+			desc := obj.Desc()
+			halfSizeX := desc.SizeX / 2
+			halfSizeY := desc.SizeY / 2
+			doorX := obj.Position.X + desc.Xoffset
+			doorY := obj.Position.Y + desc.Yoffset
+
+			doorBoxes = append(doorBoxes, struct {
+				minX, maxX, minY, maxY int
+			}{
+				minX: doorX - halfSizeX,
+				maxX: doorX + halfSizeX,
+				minY: doorY - halfSizeY,
+				maxY: doorY + halfSizeY,
+			})
+		}
+	}
+
 	dx := int(math.Abs(float64(destination.X - origin.X)))
 	dy := int(math.Abs(float64(destination.Y - origin.Y)))
 	sx, sy := 1, 1
@@ -157,7 +180,6 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 	}
 
 	err := dx - dy
-
 	x, y := origin.X, origin.Y
 
 	for {
@@ -167,6 +189,15 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 		if x == destination.X && y == destination.Y {
 			break
 		}
+
+		// Check pre-calculated door boxes
+		for _, box := range doorBoxes {
+			if x >= box.minX && x <= box.maxX &&
+				y >= box.minY && y <= box.maxY {
+				return false
+			}
+		}
+
 		e2 := 2 * err
 		if e2 > -dy {
 			err -= dy
@@ -179,4 +210,28 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 	}
 
 	return true
+}
+
+// BeyondPosition calculates a new position that is a specified distance beyond the target position when viewed from the start position
+func (pf *PathFinder) BeyondPosition(start, target data.Position, distance int) data.Position {
+	// Calculate direction vector
+	dx := float64(target.X - start.X)
+	dy := float64(target.Y - start.Y)
+
+	// Normalize
+	length := math.Sqrt(dx*dx + dy*dy)
+	if length == 0 {
+		// If positions are identical, pick arbitrary direction
+		dx = 1
+		dy = 0
+	} else {
+		dx = dx / length
+		dy = dy / length
+	}
+
+	// Return position extended beyond target
+	return data.Position{
+		X: target.X + int(dx*float64(distance)),
+		Y: target.Y + int(dy*float64(distance)),
+	}
 }
