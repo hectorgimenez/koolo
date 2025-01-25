@@ -1,7 +1,6 @@
 package step
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -18,53 +16,22 @@ func InteractNPC(npcID npc.ID) error {
 	ctx.SetLastStep("InteractNPC")
 
 	const (
-		maxAttempts        = 8
-		interactionTimeout = 3 * time.Second
-		minMenuOpenWait    = 300 * time.Millisecond
-		maxDistance        = 15
-		hoverTimeout       = 800 * time.Millisecond
+		maxAttempts     = 8
+		minMenuOpenWait = 300 * time.Millisecond
+		maxDistance     = 15
+		hoverWait       = 800 * time.Millisecond
 	)
 
-	var lastInteractionTime time.Time
-	var targetNPCID data.UnitID
-
 	for attempts := 0; attempts < maxAttempts; attempts++ {
+		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		// Clear last interaction if we've waited too long
-		if !lastInteractionTime.IsZero() && time.Since(lastInteractionTime) > interactionTimeout {
-			lastInteractionTime = time.Time{}
-			targetNPCID = 0
-		}
-
-		// Check if interaction succeeded and menu is open
+		// If menu is already open and distance is good, we're done
 		if ctx.Data.OpenMenus.NPCInteract || ctx.Data.OpenMenus.NPCShop {
-			// Find current NPC position
-			if targetNPCID != 0 {
-				if currentNPC, found := ctx.Data.Monsters.FindByID(targetNPCID); found {
-					currentDistance := pather.DistanceFromPoint(currentNPC.Position, ctx.Data.PlayerUnit.Position)
-					if currentDistance <= maxDistance {
-						// Success - wait minimum time for menu to fully open
-						time.Sleep(minMenuOpenWait)
-						return nil
-					}
-				}
-			}
-
-			// Wrong NPC, too far, or NPC moved away - close menu and retry
-			CloseAllMenus()
-			time.Sleep(200 * time.Millisecond)
-			targetNPCID = 0
-			continue
+			time.Sleep(minMenuOpenWait)
+			return nil
 		}
 
-		// Don't attempt new interaction if we're waiting for previous one
-		if !lastInteractionTime.IsZero() && time.Since(lastInteractionTime) < minMenuOpenWait {
-			time.Sleep(50 * time.Millisecond)
-			continue
-		}
-
-		// Find and validate target NPC
 		townNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone)
 		if !found {
 			if attempts == maxAttempts-1 {
@@ -79,54 +46,25 @@ func InteractNPC(npcID npc.ID) error {
 			return fmt.Errorf("NPC %d is too far away (distance: %d)", npcID, distance)
 		}
 
-		// Calculate screen coordinates based on current NPC position
+		// Calculate click position
 		x, y := ui.GameCoordsToScreenCords(townNPC.Position.X, townNPC.Position.Y)
-		// Special case for Tyrael's hitbox
-		if npcID == npc.ID(240) {
-			y = y - 40
+		if npcID == npc.Tyrael2 {
+			y = y - 40 // Act 4 Tyrael has a super weird hitbox
 		}
 
+		// Move mouse and wait for hover
 		ctx.HID.MovePointer(x, y)
+		hoverStart := time.Now()
 
-		// Wait for hover before clicking
-		hoverWaitStart := time.Now()
-		hoverFound := false
-		var hoveredNPC data.Monster
-
-		for time.Since(hoverWaitStart) < hoverTimeout {
-			// Get fresh NPC position in case they moved
-			if currentNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone); found {
-				if currentNPC.IsHovered {
-					hoveredNPC = currentNPC
-					hoverFound = true
-					break
-				}
-
-				// Update mouse position if NPC moved
-				newX, newY := ui.GameCoordsToScreenCords(currentNPC.Position.X, currentNPC.Position.Y)
-				if newX != x || newY != y {
-					if npcID == npc.ID(240) {
-						newY = newY - 40
-					}
-					ctx.HID.MovePointer(newX, newY)
-					x, y = newX, newY
-				}
+		for time.Since(hoverStart) < hoverWait {
+			if currentNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone); found && currentNPC.IsHovered {
+				ctx.HID.Click(game.LeftButton, x, y)
+				time.Sleep(minMenuOpenWait)
+				break
 			}
 			time.Sleep(50 * time.Millisecond)
 		}
-
-		if !hoverFound {
-			continue
-		}
-
-		// Store the NPC ID we're interacting with
-		targetNPCID = hoveredNPC.UnitID
-		ctx.HID.Click(game.LeftButton, x, y)
-		lastInteractionTime = time.Now()
-
-		// Wait a bit for the menu to open
-		time.Sleep(minMenuOpenWait)
 	}
 
-	return errors.New("failed to interact with NPC after all attempts")
+	return fmt.Errorf("failed to interact with NPC after %d attempts", maxAttempts)
 }

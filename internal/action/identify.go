@@ -89,6 +89,7 @@ func CainIdentify() error {
 	// Verify menu opened
 	menuWait := time.Now().Add(2 * time.Second)
 	for time.Now().Before(menuWait) {
+		ctx.PauseIfNotPriority()
 		ctx.RefreshGameData()
 		if ctx.Data.OpenMenus.NPCInteract {
 			break
