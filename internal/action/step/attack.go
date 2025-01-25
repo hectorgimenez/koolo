@@ -3,7 +3,6 @@ package step
 import (
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -34,6 +33,15 @@ type attackSettings struct {
 
 // AttackOption defines a function type for configuring attack settings
 type AttackOption func(step *attackSettings)
+
+type attackState struct {
+	lastHealth             int
+	lastHealthCheckTime    time.Time
+	failedAttemptStartTime time.Time
+	position               data.Position
+}
+
+var monsterAttackStates = make(map[data.UnitID]*attackState)
 
 // Distance configures attack to follow enemy within specified range
 func Distance(minimum, maximum int) AttackOption {
@@ -148,8 +156,8 @@ func attack(settings attackSettings) error {
 	defer keyCleanup(ctx) // cleanup possible pressed keys/buttons
 
 	numOfAttacksRemaining := settings.numOfAttacks
-
 	lastRunAt := time.Time{}
+
 	for {
 		ctx.PauseIfNotPriority()
 
@@ -167,8 +175,13 @@ func attack(settings attackSettings) error {
 			return nil // Enemy is out of range and followEnemy is disabled, we cannot attack
 		}
 
+		// Check if we need to reposition if we aren't doing any damage (prevent attacking through doors etc.)
+		_, state := checkMonsterDamage(monster)
+		needsRepositioning := !state.failedAttemptStartTime.IsZero() &&
+			time.Since(state.failedAttemptStartTime) > 3*time.Second
+
 		// Be sure we stay in range of the enemy
-		err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance)
+		err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance, needsRepositioning)
 		if err != nil {
 			return fmt.Errorf("enemy is out of range and cannot be reached: %w", err)
 		}
@@ -201,12 +214,12 @@ func burstAttack(settings attackSettings) error {
 	}
 
 	// Initially we try to move to the enemy, later we will check for closer enemies to keep attacking
-	err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance)
+	err := ensureEnemyIsInRange(monster, settings.maxDistance, settings.minDistance, false)
 	if err != nil {
 		return fmt.Errorf("enemy is out of range and cannot be reached: %w", err)
 	}
 
-	startedAt := time.Time{}
+	startedAt := time.Now()
 	for {
 		ctx.PauseIfNotPriority()
 
@@ -227,12 +240,18 @@ func burstAttack(settings attackSettings) error {
 			return nil // We have no valid targets in range, finish attack sequence
 		}
 
+		// Check if we need to reposition if we aren't doing any damage (prevent attacking through doors etc.
+		_, state := checkMonsterDamage(target)
+		needsRepositioning := !state.failedAttemptStartTime.IsZero() &&
+			time.Since(state.failedAttemptStartTime) > 3*time.Second
+
 		// If we don't have LoS we will need to interrupt and move :(
-		if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, target.Position) {
-			err = ensureEnemyIsInRange(target, settings.maxDistance, settings.minDistance)
+		if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, target.Position) || needsRepositioning {
+			err = ensureEnemyIsInRange(target, settings.maxDistance, settings.minDistance, needsRepositioning)
 			if err != nil {
 				return fmt.Errorf("enemy is out of range and cannot be reached: %w", err)
 			}
+			continue
 		}
 
 		performAttack(ctx, settings, target.Position.X, target.Position.Y)
@@ -240,6 +259,11 @@ func burstAttack(settings attackSettings) error {
 }
 
 func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
+	monsterPos := data.Position{X: x, Y: y}
+	if !ctx.PathFinder.LineOfSight(ctx.Data.PlayerUnit.Position, monsterPos) {
+		return // Skip attack if no line of sight
+	}
+
 	// Ensure we have the skill selected
 	if settings.skill != 0 && ctx.Data.PlayerUnit.RightSkill != settings.skill {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
@@ -262,18 +286,33 @@ func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
 	}
 }
 
-func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) error {
+func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int, needsRepositioning bool) error {
 	ctx := context.Get()
 	ctx.SetLastStep("ensureEnemyIsInRange")
 
-	// TODO: Add an option for telestomp based on the char configuration
+	// TODO: Add an option for telestomp based on the char configuration and kite
 	currentPos := ctx.Data.PlayerUnit.Position
 	distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
 	hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
 
 	// We have line of sight, and we are inside the attack range, we can skip
-	if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance {
+	if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance && !needsRepositioning {
 		return nil
+	}
+	// Handle repositioning if needed
+	if needsRepositioning {
+		ctx.Logger.Info(fmt.Sprintf(
+			"No damage taken by target monster [%d] in area [%s] for more than 3 seconds. Trying to re-position",
+			monster.Name, // No mapped string value for npc names in d2go, only id
+			ctx.Data.PlayerUnit.Area.Area().Name,
+		))
+		dest := ctx.PathFinder.BeyondPosition(currentPos, monster.Position, 4)
+		return MoveTo(dest)
+	}
+
+	// Any close-range combat (mosaic,barb...) should move directly to target
+	if maxDistance <= 3 {
+		return MoveTo(monster.Position)
 	}
 
 	// Get path to monster
@@ -281,11 +320,6 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	// We cannot reach the enemy, let's skip the attack sequence
 	if !found {
 		return errors.New("path could not be calculated")
-	}
-
-	// Any close-range combat (mosaic,barb...) should move directly to target
-	if maxDistance <= 3 {
-		return MoveTo(monster.Position)
 	}
 
 	// Look for suitable position along path
@@ -300,29 +334,10 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 			Y: pos.Y + ctx.Data.AreaData.OffsetY,
 		}
 
-		// Calculate how far we need to move to reach this position
+		// Handle overshooting for short distances (Nova distances)
 		distanceToMove := ctx.PathFinder.DistanceFromMe(dest)
-
-		// If we need to move less than 7 units, we need to overshoot
-		if distanceToMove <= 7 {
-			// Calculate vector from current pos to destination
-			dx := float64(dest.X - currentPos.X)
-			dy := float64(dest.Y - currentPos.Y)
-
-			// Normalize and extend to 9 units (beyond the 7 unit minimum)
-			length := math.Sqrt(dx*dx + dy*dy)
-			if length == 0 {
-				dx = 1
-				length = 1
-			}
-			dx = dx / length * 9
-			dy = dy / length * 9
-
-			// Create new overshooting destination
-			dest = data.Position{
-				X: currentPos.X + int(dx),
-				Y: currentPos.Y + int(dy),
-			}
+		if distanceToMove <= DistanceToFinishMoving {
+			dest = ctx.PathFinder.BeyondPosition(currentPos, dest, 9)
 		}
 
 		if ctx.PathFinder.LineOfSight(dest, monster.Position) {
@@ -331,4 +346,41 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int) er
 	}
 
 	return nil
+}
+
+func checkMonsterDamage(monster data.Monster) (bool, *attackState) {
+	state, exists := monsterAttackStates[monster.UnitID]
+	if !exists {
+		state = &attackState{
+			lastHealth:          monster.Stats[stat.Life],
+			lastHealthCheckTime: time.Now(),
+			position:            monster.Position,
+		}
+		monsterAttackStates[monster.UnitID] = state
+	}
+
+	didDamage := false
+	currentHealth := monster.Stats[stat.Life]
+
+	// Only update health check if some time has passed
+	if time.Since(state.lastHealthCheckTime) > 100*time.Millisecond {
+		if currentHealth < state.lastHealth {
+			didDamage = true
+			state.failedAttemptStartTime = time.Time{}
+		} else if state.failedAttemptStartTime.IsZero() &&
+			monster.Position == state.position { // only start failing if monster hasn't moved
+			state.failedAttemptStartTime = time.Now()
+		}
+
+		state.lastHealth = currentHealth
+		state.lastHealthCheckTime = time.Now()
+		state.position = monster.Position
+	}
+
+	// Clean up state map occasionally
+	if len(monsterAttackStates) > 100 {
+		monsterAttackStates = make(map[data.UnitID]*attackState)
+	}
+
+	return didDamage, state
 }
