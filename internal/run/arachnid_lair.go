@@ -23,6 +23,11 @@ func (a ArachnidLair) Name() string {
 }
 
 func (a ArachnidLair) Run() error {
+	filter := data.MonsterAnyFilter()
+	if a.ctx.CharacterCfg.Game.ArachnidLair.FocusOnElitePacks {
+		filter = data.MonsterEliteFilter()
+	}
+
 	err := action.WayPoint(area.SpiderForest)
 	if err != nil {
 		return err
@@ -36,5 +41,5 @@ func (a ArachnidLair) Run() error {
 	action.OpenTPIfLeader()
 
 	// Clear ArachnidLair
-	return action.ClearCurrentLevel(true, data.MonsterAnyFilter())
+	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.ArachnidLair.OpenChests, filter)
 }

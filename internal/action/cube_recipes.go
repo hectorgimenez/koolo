@@ -259,7 +259,7 @@ var (
 		// Safety Shield
 		{
 			Name:             "Safety Shield",
-			Items:            []string{"EthRune", "PerfectEmerald", "Jewel"},
+			Items:            []string{"NefRune", "PerfectEmerald", "Jewel"},
 			PurchaseRequired: true,
 			PurchaseItems:    []string{"KiteShield", "DragonShield", "Monarch"},
 		},
@@ -267,7 +267,7 @@ var (
 		// Safety Armor
 		{
 			Name:             "Safety Armor",
-			Items:            []string{"NefRune", "PerfectEmerald", "Jewel"},
+			Items:            []string{"EthRune", "PerfectEmerald", "Jewel"},
 			PurchaseRequired: true,
 			PurchaseItems:    []string{"BreastPlate", "Curiass", "GreatHauberk"},
 		},

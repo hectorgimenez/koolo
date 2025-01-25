@@ -50,7 +50,8 @@ func Stash(forceStash bool) error {
 			return ctx.Data.OpenMenus.Stash
 		},
 	)
-
+	// Clear messages like TZ change or public game spam.  Prevent bot from clicking on messages
+	ClearMessages()
 	stashGold()
 	orderInventoryPotions()
 	stashInventory(forceStash)
@@ -144,6 +145,13 @@ func stashInventory(firstRun bool) {
 		if !stashIt {
 			continue
 		}
+
+		// Always stash unique charms to the shared stash
+		if (i.Name == "grandcharm" || i.Name == "smallcharm" || i.Name == "largecharm") && i.Quality == item.QualityUnique {
+			currentTab = 2
+			SwitchStashTab(currentTab)
+		}
+
 		for currentTab < 5 {
 			if stashItemAction(i, matchedRule, ruleFile, firstRun) {
 				r, res := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i)
