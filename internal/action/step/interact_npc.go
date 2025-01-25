@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
 
@@ -22,14 +23,30 @@ func InteractNPC(npcID npc.ID) error {
 		hoverWait       = 800 * time.Millisecond
 	)
 
+	var targetNPCID data.UnitID
+
 	for attempts := 0; attempts < maxAttempts; attempts++ {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		// If menu is already open and distance is good, we're done
+		// Check if interaction succeeded and menu is open
 		if ctx.Data.OpenMenus.NPCInteract || ctx.Data.OpenMenus.NPCShop {
-			time.Sleep(minMenuOpenWait)
-			return nil
+			// Find current NPC position
+			if targetNPCID != 0 {
+				if currentNPC, found := ctx.Data.Monsters.FindByID(targetNPCID); found {
+					currentDistance := pather.DistanceFromPoint(currentNPC.Position, ctx.Data.PlayerUnit.Position)
+					if currentDistance <= maxDistance {
+						time.Sleep(minMenuOpenWait)
+						return nil
+					}
+				}
+			}
+
+			// Wrong NPC, too far, or NPC moved - close menu and retry
+			CloseAllMenus()
+			time.Sleep(200 * time.Millisecond)
+			targetNPCID = 0
+			continue
 		}
 
 		townNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone)
@@ -58,6 +75,7 @@ func InteractNPC(npcID npc.ID) error {
 
 		for time.Since(hoverStart) < hoverWait {
 			if currentNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone); found && currentNPC.IsHovered {
+				targetNPCID = currentNPC.UnitID
 				ctx.HID.Click(game.LeftButton, x, y)
 				time.Sleep(minMenuOpenWait)
 				break
