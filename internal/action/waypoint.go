@@ -63,7 +63,7 @@ func WayPoint(dest area.ID) error {
 				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
 			}
 			// increase to same as usewp function, without increase sometimes clicking fails
-			utils.Sleep(1000)
+			utils.Sleep(500)
 			// Just to make sure no message like TZ change or public game spam prevent bot from clicking on waypoint
 			ClearMessages()
 		}
