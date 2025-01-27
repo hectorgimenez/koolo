@@ -99,6 +99,12 @@ func (d *Diablo) Run() error {
 			// Check for seal pop config and if this is the last seal
 			if d.ctx.CharacterCfg.Game.Diablo.SealPop && sealID == object.DiabloSeal2 {
 
+				// Buff so bot doesnt buff before opening last seal
+				action.Buff()
+
+				// Extra clear so bot doesnt target when coming back
+				action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+				
 				// Disable item pickup before traversing since we will be going back after seal pop
 				d.ctx.DisableItemPickup()
 
