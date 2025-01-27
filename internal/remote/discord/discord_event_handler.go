@@ -30,7 +30,7 @@ func (b *Bot) Handle(_ context.Context, e event.Event) error {
 
 		_, err = b.discordSession.ChannelMessageSendComplex(b.channelID, &discordgo.MessageSend{
 			File:    &discordgo.File{Name: "Screenshot.jpeg", ContentType: "image/jpeg", Reader: buf},
-			Content: e.Message(),
+			Content: fmt.Sprintf("%s: %s", e.Supervisor(), e.Message()),
 		})
 
 		return err
