@@ -17,7 +17,7 @@ func PreRun(firstRun bool) error {
 	ClearMessages()
 
 	if firstRun {
-		Stash(firstRun)
+		Stash(false)
 	}
 
 	UpdateQuestLog()
