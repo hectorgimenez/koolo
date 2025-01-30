@@ -176,6 +176,7 @@ type CharacterCfg struct {
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
+			ExitToA4           bool `yaml:"exitToA4"`
 		} `yaml:"mephisto"`
 		Tristram struct {
 			ClearPortal       bool `yaml:"clearPortal"`
