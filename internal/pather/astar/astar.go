@@ -5,19 +5,28 @@ import (
 	"math"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-var directions = []data.Position{
-	{0, 1},   // Down
-	{1, 0},   // Right
-	{0, -1},  // Up
-	{-1, 0},  // Left
-	{1, 1},   // Down-Right (Southeast)
-	{-1, 1},  // Down-Left (Southwest)
-	{1, -1},  // Up-Right (Northeast)
-	{-1, -1}, // Up-Left (Northwest)
-}
+var (
+	cardinalDirections = []data.Position{
+		{0, 1},  // Down
+		{1, 0},  // Right
+		{0, -1}, // Up
+		{-1, 0}, // Left
+	}
+	allDirections = []data.Position{
+		{0, 1},   // Down
+		{1, 0},   // Right
+		{0, -1},  // Up
+		{-1, 0},  // Left
+		{1, 1},   // Down-Right
+		{-1, 1},  // Down-Left
+		{1, -1},  // Up-Right
+		{-1, -1}, // Up-Left
+	}
+)
 
 type Node struct {
 	data.Position
@@ -26,17 +35,10 @@ type Node struct {
 	Index    int
 }
 
-func direction(from, to data.Position) (dx, dy int) {
-	dx = to.X - from.X
-	dy = to.Y - from.Y
-	return
-}
-
-func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, int, bool) {
+func CalculatePath(g *game.Grid, areaID area.ID, start, goal data.Position) ([]data.Position, int, bool) {
 	pq := make(PriorityQueue, 0)
 	heap.Init(&pq)
 
-	// Use a 2D slice to store the cost of each node
 	costSoFar := make([][]int, g.Width)
 	cameFrom := make([][]data.Position, g.Width)
 	for i := range costSoFar {
@@ -52,35 +54,32 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 	costSoFar[start.X][start.Y] = 0
 
 	neighbors := make([]data.Position, 0, 8)
+	nodesExplored := 0
+
+	directions := allDirections
+	if IsNarrowMap(areaID) {
+		directions = cardinalDirections
+	}
 
 	for pq.Len() > 0 {
 		current := heap.Pop(&pq).(*Node)
+		nodesExplored++
 
-		// Let's build the path if we reached the goal
 		if current.Position == goal {
-			var path []data.Position
-			for p := goal; p != start; p = cameFrom[p.X][p.Y] {
-				path = append([]data.Position{p}, path...)
-			}
-			path = append([]data.Position{start}, path...)
-			return path, len(path), true
+			return reconstructPath(cameFrom, start, goal), nodesExplored, true
 		}
 
-		updateNeighbors(g, current, &neighbors)
-
+		updateNeighbors(g, current, directions, &neighbors)
 		for _, neighbor := range neighbors {
-			newCost := costSoFar[current.X][current.Y] + getCost(g.CollisionGrid[neighbor.Y][neighbor.X])
+			tileCost := getCost(g.CollisionGrid[neighbor.Y][neighbor.X])
+			if tileCost == math.MaxInt32 {
+				continue // Skip completely blocked tiles
+			}
 
-			// Handicap for changing direction, this prevents zig-zagging around obstacles
-			//curDirX, curDirY := direction(cameFrom[current.X][current.Y], current.Position)
-			//newDirX, newDirY := direction(current.Position, neighbor)
-			//if curDirX != newDirX || curDirY != newDirY {
-			//	newCost++
-			//}
-
+			newCost := costSoFar[current.X][current.Y] + tileCost
 			if newCost < costSoFar[neighbor.X][neighbor.Y] {
 				costSoFar[neighbor.X][neighbor.Y] = newCost
-				priority := newCost + int(0.5*float64(heuristic(neighbor, goal)))
+				priority := newCost + heuristic(neighbor, goal)
 				heap.Push(&pq, &Node{Position: neighbor, Cost: newCost, Priority: priority})
 				cameFrom[neighbor.X][neighbor.Y] = current.Position
 			}
@@ -90,39 +89,59 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 	return nil, 0, false
 }
 
-// Get walkable neighbors of a given node
-func updateNeighbors(grid *game.Grid, node *Node, neighbors *[]data.Position) {
-	*neighbors = (*neighbors)[:0]
+func reconstructPath(cameFrom [][]data.Position, start, goal data.Position) []data.Position {
+	var path []data.Position
+	for p := goal; p != start; p = cameFrom[p.X][p.Y] {
+		path = append([]data.Position{p}, path...)
+	}
+	return append([]data.Position{start}, path...)
+}
 
+func updateNeighbors(grid *game.Grid, node *Node, directions []data.Position, neighbors *[]data.Position) {
+	*neighbors = (*neighbors)[:0]
 	x, y := node.X, node.Y
-	gridWidth, gridHeight := grid.Width, grid.Height
 
 	for _, d := range directions {
 		newX, newY := x+d.X, y+d.Y
-		// Check if the new neighbor is within grid bounds
-		if newX >= 0 && newX < gridWidth && newY >= 0 && newY < gridHeight {
+		if newX >= 0 && newX < grid.Width && newY >= 0 && newY < grid.Height {
+			tileType := grid.CollisionGrid[newY][newX]
+			if tileType == game.CollisionTypeNonWalkable {
+				continue // Skip non-walkable tiles
+			}
 			*neighbors = append(*neighbors, data.Position{X: newX, Y: newY})
 		}
 	}
 }
 
+var tileCost = map[game.CollisionType]int{
+	game.CollisionTypeWalkable:    1,
+	game.CollisionTypeMonster:     16,
+	game.CollisionTypeObject:      4,
+	game.CollisionTypeLowPriority: 20,
+	game.CollisionTypeNonWalkable: math.MaxInt32, // Completely block non-walkable
+}
+
 func getCost(tileType game.CollisionType) int {
-	switch tileType {
-	case game.CollisionTypeWalkable:
-		return 1 // Walkable
-	case game.CollisionTypeMonster:
-		return 16
-	case game.CollisionTypeObject:
-		return 4 // Soft blocker
-	case game.CollisionTypeLowPriority:
-		return 20
-	default:
-		return math.MaxInt32
-	}
+	return tileCost[tileType]
 }
 
 func heuristic(a, b data.Position) int {
-	dx := math.Abs(float64(a.X - b.X))
-	dy := math.Abs(float64(a.Y - b.Y))
-	return int(dx + dy + (math.Sqrt(2)-2)*math.Min(dx, dy))
+	dx := abs(a.X - b.X)
+	dy := abs(a.Y - b.Y)
+	return dx + dy
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func IsNarrowMap(a area.ID) bool {
+	switch a {
+	case area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3, area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame, area.ChaosSanctuary:
+		return true
+	}
+	return false
 }
