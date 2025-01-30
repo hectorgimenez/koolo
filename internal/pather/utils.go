@@ -32,7 +32,7 @@ func (pf *PathFinder) DistanceFromMe(p data.Position) int {
 	return DistanceFromPoint(pf.data.PlayerUnit.Position, p)
 }
 
-func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
 	key := fmt.Sprintf("%d:%d", target.X, target.Y)
 	walkablePosLock.RLock()
 	if pos, exists := walkablePosCache[key]; exists {
