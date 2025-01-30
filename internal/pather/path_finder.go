@@ -107,6 +107,11 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid) {
 	}
 
 	for _, o := range pf.data.AreaData.Objects {
+		// Skip Hidden Stash objects (IDs 125, 127, 128)
+		if string(o.Name) == "hidden stash" {
+			continue
+		}
+
 		if !grid.IsWalkable(o.Position) {
 			continue
 		}
