@@ -1,14 +1,21 @@
 package pather
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
+)
+
+var (
+	walkablePosCache = make(map[string]data.Position)
+	walkablePosLock  sync.RWMutex
 )
 
 func (pf *PathFinder) RandomMovement() {
@@ -23,6 +30,34 @@ func (pf *PathFinder) RandomMovement() {
 
 func (pf *PathFinder) DistanceFromMe(p data.Position) int {
 	return DistanceFromPoint(pf.data.PlayerUnit.Position, p)
+}
+
+func (pf *PathFinder) findNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+	key := fmt.Sprintf("%d:%d", target.X, target.Y)
+	walkablePosLock.RLock()
+	if pos, exists := walkablePosCache[key]; exists {
+		walkablePosLock.RUnlock()
+		return pos, true
+	}
+	walkablePosLock.RUnlock()
+
+	for radius := 1; radius <= 3; radius++ {
+		for x := -radius; x <= radius; x++ {
+			for y := -radius; y <= radius; y++ {
+				if x == 0 && y == 0 {
+					continue
+				}
+				pos := data.Position{X: target.X + x, Y: target.Y + y}
+				if pf.data.AreaData.IsWalkable(pos) {
+					walkablePosLock.Lock()
+					walkablePosCache[key] = pos
+					walkablePosLock.Unlock()
+					return pos, true
+				}
+			}
+		}
+	}
+	return data.Position{}, false
 }
 
 func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
@@ -55,7 +90,6 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 		nextRoom := data.Room{}
 		minDistance := math.MaxInt
 
-		// Find the nearest unvisited room
 		for _, room := range pf.data.Rooms {
 			if !visited[room] && distanceMatrix[currentRoom][room] < minDistance {
 				nextRoom = room
@@ -63,7 +97,6 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 			}
 		}
 
-		// Add the next room to the order of visit
 		order = append(order, nextRoom)
 		visited[nextRoom] = true
 		currentRoom = nextRoom
@@ -73,25 +106,20 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 }
 
 func (pf *PathFinder) MoveThroughPath(p Path, walkDuration time.Duration) {
-	// Calculate the max distance we can walk in the given duration
 	maxDistance := int(float64(25) * walkDuration.Seconds())
-
-	// Let's try to calculate how close to the window border we can go
 	screenCords := data.Position{}
+
 	for distance, pos := range p {
 		screenX, screenY := pf.gameCoordsToScreenCords(p.From().X, p.From().Y, pos.X, pos.Y)
 
-		// We reached max distance, let's stop (if we are not teleporting)
 		if !pf.data.CanTeleport() && maxDistance > 0 && distance > maxDistance {
 			break
 		}
 
-		// Prevent mouse overlap the HUD
 		if screenY > int(float32(pf.gr.GameAreaSizeY)/1.21) {
 			break
 		}
 
-		// We are getting out of the window, let's stop
 		if screenX < 0 || screenY < 0 || screenX > pf.gr.GameAreaSizeX || screenY > pf.gr.GameAreaSizeY {
 			break
 		}
@@ -112,19 +140,19 @@ func (pf *PathFinder) MoveCharacter(x, y int) {
 }
 
 func (pf *PathFinder) GameCoordsToScreenCords(destinationX, destinationY int) (int, int) {
-	return pf.gameCoordsToScreenCords(pf.data.PlayerUnit.Position.X, pf.data.PlayerUnit.Position.Y, destinationX, destinationY)
+	return pf.gameCoordsToScreenCords(
+		pf.data.PlayerUnit.Position.X,
+		pf.data.PlayerUnit.Position.Y,
+		destinationX,
+		destinationY,
+	)
 }
 
 func (pf *PathFinder) gameCoordsToScreenCords(playerX, playerY, destinationX, destinationY int) (int, int) {
-	// Calculate diff between current player position and destination
 	diffX := destinationX - playerX
 	diffY := destinationY - playerY
-
-	// Transform cartesian movement (World) to isometric (screen)
-	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	screenX := int((float32(diffX-diffY) * 19.8) + float32(pf.gr.GameAreaSizeX/2))
-	screenY := int((float32(diffX+diffY) * 9.9) + float32(pf.gr.GameAreaSizeY/2))
-
+	screenX := int((float32(diffX-diffY)*19.8)+float32(pf.gr.GameAreaSizeX/2))
+	screenY := int((float32(diffX+diffY)*9.9)+float32(pf.gr.GameAreaSizeY/2))
 	return screenX, screenY
 }
 
