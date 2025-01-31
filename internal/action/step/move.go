@@ -79,7 +79,7 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		ctx.PauseIfNotPriority()
 
 		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
-		ctx.RefreshGameData()
+		//ctx.RefreshGameData()
 
 		// Check for idle state outside town
 		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
@@ -120,8 +120,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			return nil
 		}
 
-		// Exit on timeout
-		if timeout > 0 && time.Since(startedAt) > timeout {
+		// Exit on timeout modification
+		if time.Since(startedAt) > timeout {
 			return nil
 		}
 
