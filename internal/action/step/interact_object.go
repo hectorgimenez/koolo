@@ -2,6 +2,7 @@ package step
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -156,6 +157,11 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			// In order to avoid the spiral (super slow and shitty) let's try to point the mouse to the top of the portal directly
 			if mouseOverAttempts == 2 && o.IsPortal() {
 				mX, mY = ui.GameCoordsToScreenCords(objectX-4, objectY-4)
+			}
+			
+			// Added attempt to trying before spiraling with random x and y's
+			if mouseOverAttempts > 2 && mouseOverAttempts < 10 {
+				mX, mY = ui.GameCoordsToScreenCords(objectX+rand.Intn(obj.Desc().Width), objectY+rand.Intn(obj.Desc().Height))
 			}
 
 			x, y := utils.Spiral(mouseOverAttempts)
