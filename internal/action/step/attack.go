@@ -3,6 +3,7 @@ package step
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -15,6 +16,11 @@ import (
 )
 
 const attackCycleDuration = 120 * time.Millisecond
+
+var (
+	statesMutex   sync.RWMutex
+	monsterStates = make(map[data.UnitID]*attackState)
+)
 
 // Contains all configuration for an attack sequence
 type attackSettings struct {
@@ -40,8 +46,6 @@ type attackState struct {
 	failedAttemptStartTime time.Time
 	position               data.Position
 }
-
-var monsterAttackStates = make(map[data.UnitID]*attackState)
 
 // Distance configures attack to follow enemy within specified range
 func Distance(minimum, maximum int) AttackOption {
@@ -296,7 +300,7 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int, ne
 	hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
 
 	// We have line of sight, and we are inside the attack range, we can skip
-	if hasLoS && distanceToMonster <= maxDistance && distanceToMonster >= minDistance && !needsRepositioning {
+	if hasLoS && distanceToMonster <= maxDistance && !needsRepositioning {
 		return nil
 	}
 	// Handle repositioning if needed
@@ -349,14 +353,17 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int, ne
 }
 
 func checkMonsterDamage(monster data.Monster) (bool, *attackState) {
-	state, exists := monsterAttackStates[monster.UnitID]
+	statesMutex.Lock()
+	defer statesMutex.Unlock()
+
+	state, exists := monsterStates[monster.UnitID]
 	if !exists {
 		state = &attackState{
 			lastHealth:          monster.Stats[stat.Life],
 			lastHealthCheckTime: time.Now(),
 			position:            monster.Position,
 		}
-		monsterAttackStates[monster.UnitID] = state
+		monsterStates[monster.UnitID] = state
 	}
 
 	didDamage := false
@@ -375,11 +382,16 @@ func checkMonsterDamage(monster data.Monster) (bool, *attackState) {
 		state.lastHealth = currentHealth
 		state.lastHealthCheckTime = time.Now()
 		state.position = monster.Position
-	}
 
-	// Clean up state map occasionally
-	if len(monsterAttackStates) > 100 {
-		monsterAttackStates = make(map[data.UnitID]*attackState)
+		// Clean up old entries periodically
+		if len(monsterStates) > 100 {
+			now := time.Now()
+			for id, s := range monsterStates {
+				if now.Sub(s.lastHealthCheckTime) > 5*time.Minute {
+					delete(monsterStates, id)
+				}
+			}
+		}
 	}
 
 	return didDamage, state
