@@ -865,6 +865,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Runs = enabledRuns
 
 		cfg.Game.Cows.OpenChests = r.Form.Has("gameCowsOpenChests")
+		cfg.Game.Cows.KillRakanishu = r.Form.Has("gameKillRakanishu")
 
 		cfg.Game.Pit.MoveThroughBlackMarsh = r.Form.Has("gamePitMoveThroughBlackMarsh")
 		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")

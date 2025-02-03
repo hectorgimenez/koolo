@@ -2,94 +2,139 @@ package step
 
 import (
 	"fmt"
+	"math"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/entrance"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 const (
-	maxEntranceDistance = 6
-	maxMoveRetries      = 3
+	maxAttempts      = 30
+	requiredDistance = 3
 )
 
-func InteractEntrance(area area.ID) error {
-	maxInteractionAttempts := 5
-	interactionAttempts := 0
-	waitingForInteraction := false
-	currentMouseCoords := data.Position{}
-	lastRun := time.Time{}
-
+func InteractEntrance(targetArea area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastStep("InteractEntrance")
 
+	// Find the closest entrance(if there are 2 entrances for same destination like harem/palace cellar)
+	targetLevel := findClosestEntrance(ctx, targetArea)
+	if targetLevel == nil {
+		return fmt.Errorf("no entrance found for area %s [%d]", targetArea.Area().Name, targetArea)
+	}
+	// link adjacentlvl to entrance unit and return its description ( entrance.desc )
+	desc, found := findEntranceDescriptor(ctx, targetLevel)
+	if !found {
+		return fmt.Errorf("could not find entrance descriptor for area %s", targetArea.Area().Name)
+	}
+
+	attempts := 0
+	lastAttempt := time.Now()
+	currentMousePos := data.Position{}
+
 	for {
 		ctx.PauseIfNotPriority()
+		ctx.RefreshGameData()
 
-		if ctx.Data.AreaData.Area == area && time.Since(lastRun) > time.Millisecond*500 && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
-			return nil
-		}
-
-		if interactionAttempts > maxInteractionAttempts {
-			return fmt.Errorf("area %s [%d] could not be interacted", area.Area().Name, area)
-		}
-
-		if waitingForInteraction && time.Since(lastRun) < time.Millisecond*500 {
+		// Handle loading screen early
+		if ctx.Data.OpenMenus.LoadingScreen {
+			ctx.WaitForGameToLoad()
 			continue
 		}
 
-		lastRun = time.Now()
-		for _, l := range ctx.Data.AdjacentLevels {
-			if l.Area == area {
-				distance := ctx.PathFinder.DistanceFromMe(l.Position)
-				if distance > maxEntranceDistance {
-					// Try to move closer with retries
-					for retry := 0; retry < maxMoveRetries; retry++ {
-						if err := MoveTo(l.Position); err != nil {
-							// If MoveTo fails, try direct movement
-							screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
-								l.Position.X-2,
-								l.Position.Y-2,
-							)
-							ctx.HID.Click(game.LeftButton, screenX, screenY)
-							utils.Sleep(800)
-							ctx.RefreshGameData()
-						}
+		// Check if we've reached target area
+		if ctx.Data.AreaData.Area == targetArea && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
+			return nil
+		}
 
-						// Check if we're close enough now
-						newDistance := ctx.PathFinder.DistanceFromMe(l.Position)
-						if newDistance <= maxEntranceDistance {
-							break
-						}
+		if attempts >= maxAttempts {
+			return fmt.Errorf("failed to enter area %s after %d attempts", targetArea.Area().Name, maxAttempts)
+		}
 
-						if retry == maxMoveRetries-1 {
-							return fmt.Errorf("entrance too far away (distance: %d)", distance)
-						}
-					}
-				}
+		if attempts > 0 && attempts%5 == 0 {
+			time.Sleep(200 * time.Millisecond)
+			currentMousePos = data.Position{} // Reset mouse position
+		}
 
-				if l.IsEntrance {
-					lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
-					if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
-						ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
-						waitingForInteraction = true
-						utils.Sleep(200)
-					}
+		if time.Since(lastAttempt) < 100*time.Millisecond {
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
 
-					x, y := utils.Spiral(interactionAttempts)
-					x = x / 3
-					y = y / 3
-					currentMouseCoords = data.Position{X: lx + x, Y: ly + y}
-					ctx.HID.MovePointer(lx+x, ly+y)
-					interactionAttempts++
-					utils.Sleep(100)
-					continue
-				}
+		// Move to entrance if needed
+		if err := moveToEntrance(ctx, targetLevel.Position); err != nil {
+			return err
+		}
 
-				return fmt.Errorf("area %s [%d] is not an entrance", area.Area().Name, area)
+		// Handle hovering and interaction .  We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
+		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
+			ctx.HID.Click(game.LeftButton, currentMousePos.X, currentMousePos.Y)
+			lastAttempt = time.Now()
+			attempts++
+			continue
+		}
+
+		// Try new hover position
+		baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X, targetLevel.Position.Y)
+		offsetX, offsetY := utils.EntranceSpiral(attempts, desc)
+		currentMousePos = data.Position{X: baseX + offsetX, Y: baseY + offsetY}
+		ctx.HID.MovePointer(currentMousePos.X, currentMousePos.Y)
+		attempts++
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func moveToEntrance(ctx *context.Status, pos data.Position) error {
+	distance := ctx.PathFinder.DistanceFromMe(pos)
+	if distance <= requiredDistance {
+		return nil
+	}
+
+	var moveOpts []MoveOption
+	moveOpts = append(moveOpts, WithDistanceToFinish(1))
+
+	err := MoveTo(pos, moveOpts...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func findClosestEntrance(ctx *context.Status, targetArea area.ID) *data.Level {
+	var closest *data.Level
+	shortestDist := math.MaxInt32
+
+	for _, l := range ctx.Data.AdjacentLevels {
+		if l.Area == targetArea && l.IsEntrance {
+			dist := ctx.PathFinder.DistanceFromMe(l.Position)
+			if dist < shortestDist {
+				shortestDist = dist
+				lvl := l
+				closest = &lvl
 			}
 		}
 	}
+	return closest
+}
+
+func findEntranceDescriptor(ctx *context.Status, targetLevel *data.Level) (entrance.Description, bool) {
+	if areaData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+		entrances := ctx.GameReader.Entrances(ctx.Data.PlayerUnit.Position, ctx.Data.HoverData)
+		for _, lvl := range areaData.AdjacentLevels {
+			if lvl.Position == targetLevel.Position {
+				for _, e := range entrances {
+					if e.Position == lvl.Position {
+						desc, exists := entrance.Desc[int(e.Name)]
+						return desc, exists
+					}
+				}
+			}
+		}
+	}
+	return entrance.Description{}, false
 }
