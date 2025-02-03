@@ -26,14 +26,14 @@ func PreRun(firstRun bool) error {
 
 	// Store items that need to be left unidentified
 	if HaveItemsToStashUnidentified() {
-		Stash(firstRun)
+		Stash(false)
 	}
 
 	// Identify - either via Cain or Tome
-	IdentifyAll(firstRun)
+	IdentifyAll(false)
 
 	// Stash before vendor
-	Stash(firstRun)
+	Stash(false)
 
 	// Refill pots, sell, buy etc
 	VendorRefill(false, true)
