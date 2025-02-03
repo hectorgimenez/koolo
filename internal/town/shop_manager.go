@@ -124,6 +124,10 @@ func ShouldBuyIDs() bool {
 }
 
 func ShouldBuyKeys() (int, bool) {
+	if !context.Get().CharacterCfg.BackToTown.NoKeys {
+		return 0, false
+	}
+
 	keys, found := context.Get().Data.Inventory.Find(item.Key, item.LocationInventory)
 	if !found {
 		return 0, true

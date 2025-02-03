@@ -253,6 +253,10 @@ func shouldBePickedUp(i data.Item) bool {
 
 	// Check if we should pick up some keys. The goal is to have 12 keys in total (single stack)
 	if i.Name == "Key" {
+		if !ctx.CharacterCfg.BackToTown.NoKeys {
+			return false
+		}
+
 		quantityOnGround := 0
 		st, statFound := i.FindStat(stat.Quantity, 0)
 		if statFound {
