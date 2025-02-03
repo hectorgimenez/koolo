@@ -253,10 +253,6 @@ func shouldBePickedUp(i data.Item) bool {
 
 	// Check if we should pick up some keys. The goal is to have 12 keys in total (single stack)
 	if i.Name == "Key" {
-		if !ctx.CharacterCfg.BackToTown.NoKeys {
-			return false
-		}
-
 		quantityOnGround := 0
 		st, statFound := i.FindStat(stat.Quantity, 0)
 		if statFound {
@@ -271,7 +267,10 @@ func shouldBePickedUp(i data.Item) bool {
 			}
 		}
 
-		if quantityOnGround+quantityInInventory <= 12 {
+		// We only want to pick them up if either:
+		// 1. They have the option to return to town enabled or
+		// 2. They already had some keys in inventory, so we just want to get closer to 12
+		if (ctx.CharacterCfg.BackToTown.NoKeys || quantityInInventory > 0) && quantityOnGround+quantityInInventory <= 12 {
 			return true
 		}
 	}
