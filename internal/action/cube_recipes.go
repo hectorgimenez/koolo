@@ -416,7 +416,10 @@ func CubeRecipes() error {
 				for _, item := range itemsInInv {
 					// If item is not in the protected slots, check if it should be stashed
 					if ctx.CharacterCfg.Inventory.InventoryLock[item.Position.Y][item.Position.X] == 1 {
-
+						if item.Name == "Key" {
+							continue
+						}
+						
 						shouldStash, reason, _ := shouldStashIt(item, false)
 
 						if shouldStash {
