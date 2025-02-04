@@ -62,8 +62,13 @@ func WayPoint(dest area.ID) error {
 				actTabX := ui.WpTabStartX + (wpCoords.Tab-1)*ui.WpTabSizeX + (ui.WpTabSizeX / 2)
 				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
 			}
-			// increase to same as usewp function, without increase sometimes clicking fails
-			utils.Sleep(500)
+			// Keep existing in town sleep option
+			if ctx.Data.PlayerUnit.Area.IsTown() {
+				utils.Sleep(200)
+			} else {
+				// Longer sleep needed outside of town for loading
+				utils.Sleep(500)
+			}
 			// Just to make sure no message like TZ change or public game spam prevent bot from clicking on waypoint
 			ClearMessages()
 		}
