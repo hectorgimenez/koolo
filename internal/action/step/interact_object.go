@@ -38,6 +38,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			if strings.EqualFold(string(obj.Name), "Bank") {
 				return ctx.Data.OpenMenus.Stash
 			}
+
 			if obj.IsChest() {
 				chest, found := ctx.Data.Objects.FindByID(obj.ID)
 				// Since opening a chest is immediate and the mode changes right away,
@@ -51,12 +52,18 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 			// For portals, check if the player has entered the portal's destination area
 			if obj.IsPortal() || obj.IsRedPortal() {
+				// If in loading screen or just portaled state, consider interaction incomplete
+				if ctx.Data.OpenMenus.LoadingScreen || ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
+					return false
+				}
+
+				// Check if we're in the destination area
 				if ctx.Data.PlayerUnit.Area == obj.PortalData.DestArea {
 					if areaData, ok := ctx.Data.Areas[obj.PortalData.DestArea]; ok {
-						if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-							return true
-						}
+						return areaData.IsInside(ctx.Data.PlayerUnit.Position)
 					}
+					// If area data not available but we're in correct area, consider it complete
+					return true
 				}
 			}
 
@@ -68,6 +75,11 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.PauseIfNotPriority()
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
+			if obj.IsPortal() {
+				// For portals, log warning and continue instead of erroring . It will retry
+				ctx.Logger.Warn(fmt.Sprintf("Portal interaction attempts exceeded for %s [ID: %d], continuing...", obj.Name, obj.ID))
+				return nil
+			}
 			return fmt.Errorf("failed interacting with object: %s [ID: %d] after %d attempts", obj.Name, obj.ID, interactionAttempts)
 		}
 
@@ -88,19 +100,24 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			o, found = ctx.Data.Objects.FindOne(obj.Name)
 		}
 		if !found {
+			if obj.IsPortal() || obj.IsRedPortal() {
+				// For portals, missing object may mean we're transitioning - continue
+				utils.Sleep(100)
+				continue
+			}
 			return fmt.Errorf("object %v not found", obj)
 		}
 
 		lastRun = time.Now()
 
-		// If portal is still being created, wait
+		// Handle portal states
 		if o.IsPortal() || o.IsRedPortal() {
 			// Detect JustPortaled state and wait for loading screen if it's active
 			if ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
 				// Check for loading screen during portal transition
 				if ctx.Data.OpenMenus.LoadingScreen {
 					ctx.WaitForGameToLoad()
-					break
+					continue
 				}
 			}
 
@@ -110,11 +127,12 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 			}
 		}
 
+		// Handle chest states
 		if o.IsChest() && o.Mode == mode.ObjectModeOperating {
 			continue // Skip if chest is already being opened
 		}
 
-		// Handle hover interaction for portal or red portal
+		// Handle object interaction
 		if o.IsHovered {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 			waitingForInteraction = true
@@ -135,26 +153,22 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 					if ctx.Data.PlayerUnit.Area == o.PortalData.DestArea {
 						if areaData, ok := ctx.Data.Areas[o.PortalData.DestArea]; ok {
 							if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-								if o.PortalData.DestArea.IsTown() {
-									return nil
-								}
-								// For special areas, ensure we have proper object data loaded
-								if len(ctx.Data.Objects) > 0 {
-									return nil
-								}
+								return nil
 							}
+						} else if o.PortalData.DestArea.IsTown() {
+							return nil
 						}
 					}
 					utils.Sleep(portalSyncDelay)
 				}
-				return fmt.Errorf("portal sync timeout - expected area: %v, current: %v", o.PortalData.DestArea, ctx.Data.PlayerUnit.Area)
+				ctx.Logger.Warn(fmt.Sprintf("Portal sync timeout - expected area: %v, current: %v", o.PortalData.DestArea, ctx.Data.PlayerUnit.Area))
+				continue
 			}
 			continue
 		}
 
 		// Get object description for spiral
 		desc := object.Desc[int(o.Name)]
-
 		mX, mY := ui.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
 		x, y := utils.ObjectSpiral(mouseOverAttempts, desc)
 
