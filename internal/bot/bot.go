@@ -173,9 +173,26 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 					b.ctx.Logger.Info("Going back to town", "reason", reason)
 
-					action.InRunReturnTownRoutine()
-				}
+					// Try to return to town up to 3 times
+					maxRetries := 3
+					var lastError error
+					for attempt := 0; attempt < maxRetries; attempt++ {
+						if err := action.InRunReturnTownRoutine(); err != nil {
+							lastError = err
+							b.ctx.Logger.Warn("Failed to return to town", "error", err, "attempt", attempt+1)
+							// Wait a bit before retrying
+							time.Sleep(500 * time.Millisecond)
+							continue
+						}
+						lastError = nil
+						break
+					}
 
+					// If we still failed after retries, log it but continue running
+					if lastError != nil {
+						b.ctx.Logger.Error("Failed to return to town after all retries", "error", lastError)
+					}
+				}
 				b.ctx.SwitchPriority(botCtx.PriorityNormal)
 			}
 		}
