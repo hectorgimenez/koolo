@@ -36,6 +36,7 @@ func InteractEntrance(targetArea area.ID) error {
 	attempts := 0
 	lastAttempt := time.Now()
 	currentMousePos := data.Position{}
+	hasTriedClick := false
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -56,11 +57,6 @@ func InteractEntrance(targetArea area.ID) error {
 			return fmt.Errorf("failed to enter area %s after %d attempts", targetArea.Area().Name, maxAttempts)
 		}
 
-		if attempts > 0 && attempts%5 == 0 {
-			time.Sleep(200 * time.Millisecond)
-			currentMousePos = data.Position{} // Reset mouse position
-		}
-
 		if time.Since(lastAttempt) < 100*time.Millisecond {
 			time.Sleep(50 * time.Millisecond)
 			continue
@@ -71,7 +67,18 @@ func InteractEntrance(targetArea area.ID) error {
 			return err
 		}
 
-		// Handle hovering and interaction .  We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
+		// If we're in range but can't interact, try clicking once to get closer.
+		// Sometimes pathfinder end up at an angle where it cant hover the entrance
+		dist := ctx.PathFinder.DistanceFromMe(targetLevel.Position)
+		if !hasTriedClick && dist <= 4 && attempts > 10 {
+			baseX, baseY := ctx.PathFinder.GameCoordsToScreenCords(targetLevel.Position.X-2, targetLevel.Position.Y-2)
+			ctx.HID.Click(game.LeftButton, baseX, baseY)
+			hasTriedClick = true
+			time.Sleep(800 * time.Millisecond)
+			continue
+		}
+
+		// Handle hovering and interaction. We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
 		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
 			ctx.HID.Click(game.LeftButton, currentMousePos.X, currentMousePos.Y)
 			lastAttempt = time.Now()
@@ -88,7 +95,6 @@ func InteractEntrance(targetArea area.ID) error {
 		time.Sleep(50 * time.Millisecond)
 	}
 }
-
 func moveToEntrance(ctx *context.Status, pos data.Position) error {
 	distance := ctx.PathFinder.DistanceFromMe(pos)
 	if distance <= requiredDistance {
@@ -96,7 +102,7 @@ func moveToEntrance(ctx *context.Status, pos data.Position) error {
 	}
 
 	var moveOpts []MoveOption
-	moveOpts = append(moveOpts, WithDistanceToFinish(1))
+	moveOpts = append(moveOpts, WithDistanceToFinish(2))
 
 	err := MoveTo(pos, moveOpts...)
 	if err != nil {
