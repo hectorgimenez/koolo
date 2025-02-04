@@ -75,7 +75,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		ctx.PauseIfNotPriority()
 
 		if interactionAttempts >= maxInteractionAttempts || mouseOverAttempts >= 20 {
-			if obj.IsPortal() {
+			if obj.IsPortal() || obj.IsRedPortal() {
 				// For portals, log warning and continue instead of erroring . It will retry
 				ctx.Logger.Warn(fmt.Sprintf("Portal interaction attempts exceeded for %s [ID: %d], continuing...", obj.Name, obj.ID))
 				return nil
