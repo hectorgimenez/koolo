@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
     <title>Koolo Dashboard</title>
-
+       
 </head>
 <body>
 <main class="container">
@@ -22,6 +22,9 @@
             <div class="dashboard-controls">
                 <button class="btn btn-outline" onclick="location.href='/config'">
                     <i class="bi bi-gear btn-icon"></i>Settings
+                </button>
+                <button id="reloadConfigBtn" class="btn btn-outline" onclick="reloadConfig()">
+                    <i class="bi bi-arrow-clockwise btn-icon"></i>Reload Configs
                 </button>
                 <button class="btn btn-start" onclick="location.href='/supervisorSettings'">
                     <i class="bi bi-plus btn-icon"></i>Add Character

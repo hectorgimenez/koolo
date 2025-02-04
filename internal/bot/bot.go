@@ -47,7 +47,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 	// This routine is in charge of refreshing the game data and handling cancellation, will work in parallel with any other execution
 	g.Go(func() error {
 		b.ctx.AttachRoutine(botCtx.PriorityBackground)
-		ticker := time.NewTicker(10 * time.Millisecond)
+		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
 			case <-ctx.Done():
@@ -118,16 +118,29 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					time.Sleep(200 * time.Millisecond)
 				}
 
+				// extra RefreshGameData not needed for Legacygraphics/Portraits since Background loop will automatically refresh after 100ms
 				if b.ctx.CharacterCfg.ClassicMode && !b.ctx.Data.LegacyGraphics {
+					// Toggle Legacy if enabled
 					action.SwitchToLegacyMode()
-					b.ctx.RefreshGameData()
+					time.Sleep(150 * time.Millisecond)
 				}
-
+				// Hide merc/other players portraits if enabled
+				if b.ctx.CharacterCfg.HidePortraits && b.ctx.Data.OpenMenus.PortraitsShown {
+					action.HidePortraits()
+					time.Sleep(150 * time.Millisecond)
+				}
+				// Close chat if somehow was opened (prevention)
+				if b.ctx.Data.OpenMenus.ChatOpen {
+					b.ctx.HID.PressKey(b.ctx.Data.KeyBindings.Chat.Key1[0])
+					time.Sleep(150 * time.Millisecond)
+				}
 				b.ctx.SwitchPriority(botCtx.PriorityHigh)
 
-				// Area correction
-				if err = action.AreaCorrection(); err != nil {
-					b.ctx.Logger.Warn("Area correction failed", "error", err)
+				// Area correction (only check if enabled)
+				if b.ctx.CurrentGame.AreaCorrection.Enabled {
+					if err = action.AreaCorrection(); err != nil {
+						b.ctx.Logger.Warn("Area correction failed", "error", err)
+					}
 				}
 
 				// Perform item pickup if enabled
@@ -138,13 +151,47 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				_, healingPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.HealingPotion)
 				_, manaPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.ManaPotion)
+
 				// Check if we need to go back to town (no pots or merc died)
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
 					!b.ctx.Data.PlayerUnit.Area.IsTown() {
-					action.InRunReturnTownRoutine()
+
+					// Log the exact reason for going back to town
+					var reason string
+					if b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound {
+						reason = "No healing potions found"
+					} else if b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() {
+						reason = "Equipment broken"
+					} else if b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound {
+						reason = "No mana potions found"
+					} else if b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc {
+						reason = "Mercenary is dead"
+					}
+
+					b.ctx.Logger.Info("Going back to town", "reason", reason)
+
+					// Try to return to town up to 3 times
+					maxRetries := 3
+					var lastError error
+					for attempt := 0; attempt < maxRetries; attempt++ {
+						if err := action.InRunReturnTownRoutine(); err != nil {
+							lastError = err
+							b.ctx.Logger.Warn("Failed to return to town", "error", err, "attempt", attempt+1)
+							// Wait a bit before retrying
+							time.Sleep(500 * time.Millisecond)
+							continue
+						}
+						lastError = nil
+						break
+					}
+
+					// If we still failed after retries, log it but continue running
+					if lastError != nil {
+						b.ctx.Logger.Error("Failed to return to town after all retries", "error", lastError)
+					}
 				}
 				b.ctx.SwitchPriority(botCtx.PriorityNormal)
 			}
@@ -161,40 +208,45 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 		b.ctx.AttachRoutine(botCtx.PriorityNormal)
 		for _, r := range runs {
-			event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
-			err = action.PreRun(firstRun)
-			if err != nil {
-				return err
-			}
-
-			firstRun = false
-			err = r.Run()
-
-			var runFinishReason event.FinishReason
-			if err != nil {
-				switch {
-				case errors.Is(err, health.ErrChicken):
-					runFinishReason = event.FinishedChicken
-				case errors.Is(err, health.ErrMercChicken):
-					runFinishReason = event.FinishedMercChicken
-				case errors.Is(err, health.ErrDied):
-					runFinishReason = event.FinishedDied
-				default:
-					runFinishReason = event.FinishedError
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+				event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
+				err = action.PreRun(firstRun)
+				if err != nil {
+					return err
 				}
-			} else {
-				runFinishReason = event.FinishedOK
-			}
 
-			event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+				firstRun = false
+				err = r.Run()
 
-			if err != nil {
-				return err
-			}
+				var runFinishReason event.FinishReason
+				if err != nil {
+					switch {
+					case errors.Is(err, health.ErrChicken):
+						runFinishReason = event.FinishedChicken
+					case errors.Is(err, health.ErrMercChicken):
+						runFinishReason = event.FinishedMercChicken
+					case errors.Is(err, health.ErrDied):
+						runFinishReason = event.FinishedDied
+					default:
+						runFinishReason = event.FinishedError
+					}
+				} else {
+					runFinishReason = event.FinishedOK
+				}
 
-			err = action.PostRun(r == runs[len(runs)-1])
-			if err != nil {
-				return err
+				event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
+
+				if err != nil {
+					return err
+				}
+
+				err = action.PostRun(r == runs[len(runs)-1])
+				if err != nil {
+					return err
+				}
 			}
 		}
 		return nil

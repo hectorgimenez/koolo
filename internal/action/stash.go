@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -49,7 +50,8 @@ func Stash(forceStash bool) error {
 			return ctx.Data.OpenMenus.Stash
 		},
 	)
-
+	// Clear messages like TZ change or public game spam.  Prevent bot from clicking on messages
+	ClearMessages()
 	stashGold()
 	orderInventoryPotions()
 	stashInventory(forceStash)
@@ -143,6 +145,13 @@ func stashInventory(firstRun bool) {
 		if !stashIt {
 			continue
 		}
+
+		// Always stash unique charms to the shared stash
+		if (i.Name == "grandcharm" || i.Name == "smallcharm" || i.Name == "largecharm") && i.Quality == item.QualityUnique {
+			currentTab = 2
+			SwitchStashTab(currentTab)
+		}
+
 		for currentTab < 5 {
 			if stashItemAction(i, matchedRule, ruleFile, firstRun) {
 				r, res := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(i)
@@ -175,6 +184,11 @@ func stashInventory(firstRun bool) {
 func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	ctx := context.Get()
 	ctx.SetLastStep("shouldStashIt")
+
+	// Don't stash items in protected slots
+	if ctx.CharacterCfg.Inventory.InventoryLock[i.Position.Y][i.Position.X] == 0 {
+		return false, "", ""
+	}
 
 	// Don't stash items from quests during leveling process, it makes things easier to track
 	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); isLevelingChar && i.IsFromQuest() {
@@ -276,9 +290,32 @@ func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool
 		}
 	}
 
-	// Don't log items that we already have in inventory during first run
-	if !skipLogging {
+	// Don't log items that we already have in inventory during first run or that we don't want to notify about (gems, low runes .. etc)
+	if !skipLogging && shouldNotifyAboutStashing(i) && ruleFile != "" {
 		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
+	}
+
+	return true
+}
+
+func shouldNotifyAboutStashing(i data.Item) bool {
+	ctx := context.Get()
+
+	ctx.Logger.Debug(fmt.Sprintf("Checking if we should notify about stashing %s %v", i.Name, i.Desc()))
+	// Don't notify about gems
+	if strings.Contains(i.Desc().Type, "gem") {
+		return false
+	}
+
+	// Skip low runes (below lem)
+	lowRunes := []string{"elrune", "eldrune", "tirrune", "nefrune", "ethrune", "ithrune", "talrune", "ralrune", "ortrune", "thulrune", "amnrune", "solrune", "shaelrune", "dolrune", "helrune", "iorune", "lumrune", "korune", "falrune"}
+	if i.Desc().Type == item.TypeRune {
+		itemName := strings.ToLower(string(i.Name))
+		for _, runeName := range lowRunes {
+			if itemName == runeName {
+				return false
+			}
+		}
 	}
 
 	return true

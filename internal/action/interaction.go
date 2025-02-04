@@ -52,11 +52,6 @@ func InteractObject(o data.Object, isCompletedFn func() bool) error {
 		pos = data.Position{X: 7800, Y: 5919}
 	}
 
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
-	}()
-
 	var err error
 	for range 5 {
 		err = step.MoveTo(pos)

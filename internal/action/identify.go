@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -28,6 +29,20 @@ func IdentifyAll(skipIdentify bool) error {
 		return nil
 	}
 
+	if ctx.CharacterCfg.Game.UseCainIdentify {
+		ctx.Logger.Debug("Identifying all item with Cain...")
+		// Close any open menus first
+		step.CloseAllMenus()
+		utils.Sleep(500)
+
+		err := CainIdentify()
+		// if identifying with cain fails then we should continue to identify using tome
+		if err == nil {
+			return nil
+		}
+		ctx.Logger.Debug("Identifying with Cain failed, continuing with identifying with tome", "err", err)
+	}
+
 	idTome, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory)
 	if !found {
 		ctx.Logger.Warn("ID Tome not found, not identifying items")
@@ -40,11 +55,14 @@ func IdentifyAll(skipIdentify bool) error {
 	}
 
 	ctx.Logger.Info(fmt.Sprintf("Identifying %d items...", len(items)))
+
+	// Close all menus to prevent issues
 	step.CloseAllMenus()
 	for !ctx.Data.OpenMenus.Inventory {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
-		utils.Sleep(300)
+		utils.Sleep(1000) // Add small delay to allow the game to open the inventory
 	}
+
 	for _, i := range items {
 		identifyItem(idTome, i)
 	}
@@ -59,27 +77,40 @@ func CainIdentify() error {
 
 	stayAwhileAndListen := town.GetTownByArea(ctx.Data.PlayerUnit.Area).IdentifyNPC()
 
+	// Close any open menus first
+	step.CloseAllMenus()
+	utils.Sleep(200)
+
 	err := InteractNPC(stayAwhileAndListen)
 	if err != nil {
-		ctx.Logger.Error("Error interacting with Cain: ", "error", err.Error())
-		return err
+		return fmt.Errorf("error interacting with Cain: %w", err)
 	}
 
-	// Select the identify option
-	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
-	if len(itemsToIdentify()) > 0 {
-
-		// Close the NPC interact menu if it's open
+	// Verify menu opened
+	menuWait := time.Now().Add(2 * time.Second)
+	for time.Now().Before(menuWait) {
+		ctx.PauseIfNotPriority()
+		ctx.RefreshGameData()
 		if ctx.Data.OpenMenus.NPCInteract {
-			ctx.HID.KeySequence(win.VK_ESCAPE)
+			break
 		}
-
-		return fmt.Errorf("failed to identify items")
+		utils.Sleep(100)
 	}
 
-	utils.Sleep(500)
+	if !ctx.Data.OpenMenus.NPCInteract {
+		return fmt.Errorf("NPC menu did not open")
+	}
 
-	return step.CloseAllMenus()
+	// Select identify option
+	ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+	utils.Sleep(800)
+
+	// Close menu if still open
+	if ctx.Data.OpenMenus.NPCInteract {
+		step.CloseAllMenus()
+	}
+
+	return nil
 }
 
 func itemsToIdentify() (items []data.Item) {

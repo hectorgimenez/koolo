@@ -2,11 +2,12 @@ package action
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/pather"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 	"time"
+
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -52,22 +53,7 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	var isEntrance bool
 
-	defer func() {
-		// For open areas (non-entrance transitions), disable area correction
-		if !isEntrance {
-			if ctx.Data.PlayerUnit.Area == dst {
-				ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-				ctx.CurrentGame.AreaCorrection.Enabled = false
-			}
-		} else {
-			// For entrances
-			ctx.CurrentGame.AreaCorrection.ExpectedArea = dst
-			ctx.CurrentGame.AreaCorrection.Enabled = true
-		}
-	}()
 	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 		return err
 	}
@@ -87,7 +73,6 @@ func MoveToArea(dst area.ID) error {
 	for _, a := range ctx.Data.AdjacentLevels {
 		if a.Area == dst {
 			lvl = a
-			isEntrance = a.IsEntrance
 			break
 		}
 	}
@@ -200,11 +185,6 @@ func MoveToArea(dst area.ID) error {
 
 func MoveToCoords(to data.Position) error {
 	ctx := context.Get()
-	ctx.CurrentGame.AreaCorrection.Enabled = false
-	defer func() {
-		ctx.CurrentGame.AreaCorrection.ExpectedArea = ctx.Data.AreaData.Area
-		ctx.CurrentGame.AreaCorrection.Enabled = true
-	}()
 
 	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 		return err
@@ -218,6 +198,16 @@ func MoveToCoords(to data.Position) error {
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveTo")
+
+	// Ensure no menus are open that might block movement
+	for ctx.Data.OpenMenus.IsMenuOpen() {
+		ctx.Logger.Debug("Found open menus while moving, closing them...")
+		if err := step.CloseAllMenus(); err != nil {
+			return err
+		}
+
+		utils.Sleep(500)
+	}
 
 	openedDoors := make(map[object.Name]data.Position)
 	previousIterationPosition := data.Position{}

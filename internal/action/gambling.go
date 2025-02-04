@@ -23,7 +23,7 @@ func Gamble() error {
 	ctx.SetLastAction("Gamble")
 
 	stashedGold, _ := ctx.Data.PlayerUnit.FindStat(stat.StashGold, 0)
-	if ctx.CharacterCfg.Gambling.Enabled && stashedGold.Value >= 2500000 {
+	if ctx.CharacterCfg.Gambling.Enabled && stashedGold.Value >= 2480000 {
 		ctx.Logger.Info("Time to gamble! Visiting vendor...")
 
 		vendorNPC := town.GetTownByArea(ctx.Data.PlayerUnit.Area).GamblingNPC()
@@ -150,16 +150,24 @@ func gambleItems() error {
 	ctx.SetLastAction("gambleItems")
 
 	var itemBought data.Item
-	currentIdx := 0
-	lastStep := false
+	var refreshAttempts int
+	var currentItemIndex int
+	const maxRefreshAttempts = 11
+
 	for {
-		if lastStep {
-			utils.Sleep(200)
-			ctx.Logger.Info("Finished gambling", slog.Int("currentGold", ctx.Data.PlayerUnit.TotalPlayerGold()))
+		ctx.PauseIfNotPriority()
+		ctx.RefreshGameData()
+
+		// Check if we should stop gambling due to low gold
+		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
+			ctx.Logger.Info("Finished gambling - gold below 500k",
+				slog.Int("currentGold", ctx.Data.PlayerUnit.TotalPlayerGold()))
 			return step.CloseAllMenus()
 		}
 
+		// Process bought item if we have one
 		if itemBought.Name != "" {
+			// Find the bought item in inventory
 			for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
 				if itm.UnitID == itemBought.UnitID {
 					itemBought = itm
@@ -168,48 +176,71 @@ func gambleItems() error {
 				}
 			}
 
+			// Check if item matches NIP rules
 			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itemBought); result == nip.RuleResultFullMatch {
 				ctx.Logger.Info("Found item matching NIP rules, keeping", slog.Any("item", itemBought))
-				lastStep = true
 			} else {
 				// Filter not pass, selling the item
 				ctx.Logger.Debug("Item doesn't match NIP rules, selling", slog.Any("item", itemBought))
 				town.SellItem(itemBought)
 			}
+
 			itemBought = data.Item{} // Reset itemBought after processing
+			refreshAttempts = 0      // Reset refresh counter after successful purchase
+
+			// Move to next item in the gambling list
+			currentItemIndex = (currentItemIndex + 1) % len(ctx.Data.CharacterCfg.Gambling.Items)
 			continue
 		}
 
-		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
-			lastStep = true
-			continue
-		}
-
-		for idx, itmName := range ctx.Data.CharacterCfg.Gambling.Items {
-			if currentIdx == len(ctx.CharacterCfg.Gambling.Items) {
-				currentIdx = 0
+		// Try to find and buy items
+		itemFound := false
+		if len(ctx.Data.CharacterCfg.Gambling.Items) > 0 {
+			// Get current item to gamble for
+			currentItem := ctx.Data.CharacterCfg.Gambling.Items[currentItemIndex]
+			itm, found := ctx.Data.Inventory.Find(currentItem, item.LocationVendor)
+			if found {
+				town.BuyItem(itm, 1)
+				itemBought = itm
+				itemFound = true
 			}
+		}
 
-			if currentIdx > idx {
+		// If no items found, try refreshing the gambling window
+		if !itemFound {
+			refreshAttempts++
+			if refreshAttempts >= maxRefreshAttempts {
+				ctx.Logger.Info("Too many refresh attempts without finding items, reopening gambling window")
+				// Close and reopen gambling window
+				if err := step.CloseAllMenus(); err != nil {
+					return err
+				}
+				utils.Sleep(200)
+
+				vendorNPC := town.GetTownByArea(ctx.Data.PlayerUnit.Area).GamblingNPC()
+				if err := InteractNPC(vendorNPC); err != nil {
+					return err
+				}
+
+				// Select gamble option
+				if vendorNPC == npc.Jamella {
+					ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+				} else {
+					ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_DOWN, win.VK_RETURN)
+				}
+
+				refreshAttempts = 0
 				continue
 			}
 
-			itm, found := ctx.Data.Inventory.Find(itmName, item.LocationVendor)
-			if !found {
-				ctx.Logger.Debug("Item not found in gambling window, refreshing...", slog.String("item", string(itmName)))
-				RefreshGamblingWindow(ctx)
-				utils.Sleep(500)
-				break // Exit the inner loop to re-check inventory after refresh
-			}
-
-			town.BuyItem(itm, 1)
-			itemBought = itm
-			currentIdx++
-			break // Exit the inner loop after buying an item
+			ctx.Logger.Debug("Refreshing.. ",
+				slog.Int("Attempt", refreshAttempts),
+				slog.String("Looking For ", string(ctx.Data.CharacterCfg.Gambling.Items[currentItemIndex])))
+			RefreshGamblingWindow(ctx)
+			utils.Sleep(500)
 		}
 	}
 }
-
 func RefreshGamblingWindow(ctx *context.Status) {
 	if ctx.Data.LegacyGraphics {
 		ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
