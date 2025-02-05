@@ -30,7 +30,8 @@ func CubeAddItems(items ...data.Item) error {
 			return err
 		}
 	}
-
+	// Clear messages like TZ change or public game spam.  Prevent bot from clicking on messages
+	ClearMessages()
 	ctx.Logger.Info("Adding items to the Horadric Cube", slog.Any("items", items))
 
 	// If items are on the Stash, pickup them to the inventory
@@ -100,13 +101,15 @@ func CubeTransmute() error {
 
 	utils.Sleep(2000)
 
-	if ctx.Data.LegacyGraphics {
-		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemXClassic, ui.CubeTakeItemYClassic, game.CtrlKey)
-	} else {
-		ctx.HID.ClickWithModifier(game.LeftButton, ui.CubeTakeItemX, ui.CubeTakeItemY, game.CtrlKey)
-	}
+	// Take the items out of the cube
+	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationCube) {
+		ctx.Logger.Debug("Moving Item to the inventory", slog.String("Item", string(itm.Name)))
 
-	utils.Sleep(300)
+		screenPos := ui.GetScreenCoordsForItem(itm)
+
+		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		utils.Sleep(500)
+	}
 
 	return step.CloseAllMenus()
 }

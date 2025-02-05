@@ -110,6 +110,36 @@ func (mng *SupervisorManager) Start(supervisorName string, attachToExisting bool
 	return nil
 }
 
+func (mng *SupervisorManager) ReloadConfig() error {
+
+	// Load fresh configs
+	if err := config.Load(); err != nil {
+		return err
+	}
+
+	// Apply new configs to running supervisors
+	for name, sup := range mng.supervisors {
+		newCfg, exists := config.Characters[name]
+		if !exists {
+			continue
+		}
+
+		ctx := sup.GetContext()
+		if ctx == nil {
+			continue
+		}
+
+		// Preserve runtime data
+		//oldRuntimeData := ctx.CharacterCfg.Runtime
+
+		// Update the config
+		*ctx.CharacterCfg = *newCfg
+		//ctx.CharacterCfg.Runtime = oldRuntimeData
+	}
+
+	return nil
+}
+
 func (mng *SupervisorManager) StopAll() {
 	for _, s := range mng.supervisors {
 		s.Stop()

@@ -60,3 +60,19 @@ func AreaCorrection() error {
 
 	return nil
 }
+func HidePortraits() error {
+	ctx := context.Get()
+	ctx.SetLastAction("HidePortraits")
+
+	// Hide portraits if configured
+	if ctx.CharacterCfg.HidePortraits && ctx.Data.OpenMenus.PortraitsShown {
+		ctx.HID.PressKey(ctx.Data.KeyBindings.ShowPortraits.Key1[0])
+	}
+	return nil
+}
+func ClearMessages() error {
+	ctx := context.Get()
+	ctx.SetLastAction("ClearMessages")
+	ctx.HID.PressKey(ctx.Data.KeyBindings.ClearMessages.Key1[0])
+	return nil
+}

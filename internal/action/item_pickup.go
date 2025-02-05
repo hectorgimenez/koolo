@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -46,13 +47,16 @@ func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.SetLastAction("ItemPickup")
 
+	const maxRetries = 3
+
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
 		if len(itemsToPickup) == 0 {
 			return nil
 		}
 
-		itemToPickup := data.Item{}
+		// Find first item that fits in inventory
+		var itemToPickup data.Item
 		for _, i := range itemsToPickup {
 			if itemFitsInventory(i) {
 				itemToPickup = i
@@ -66,9 +70,6 @@ func ItemPickup(maxDistance int) error {
 			continue
 		}
 
-		// Clear enemy monsters near the item
-		ClearAreaAroundPosition(itemToPickup.Position, 3, data.MonsterAnyFilter())
-
 		ctx.Logger.Debug(fmt.Sprintf(
 			"Item Detected: %s [%d] at X:%d Y:%d",
 			itemToPickup.Name,
@@ -77,28 +78,94 @@ func ItemPickup(maxDistance int) error {
 			itemToPickup.Position.Y,
 		))
 
-		err := MoveToCoords(itemToPickup.Position)
-		if err != nil {
-			ctx.Logger.Warn("Failed moving closer to item, trying to pickup anyway")
+		// Try to pick up the item with retries
+		var lastError error
+		attempt := 1
+		for attempt <= maxRetries {
+			// Clear monsters on each attempt
+			ClearAreaAroundPosition(itemToPickup.Position, 4, data.MonsterAnyFilter())
+
+			// Calculate position to move to based on attempt number
+			// on 2nd and 3rd attempt try position left/right of item
+			pickupPosition := itemToPickup.Position
+			moveDistance := 3
+			if attempt > 1 {
+				switch attempt {
+				case 2:
+					pickupPosition = data.Position{
+						X: itemToPickup.Position.X + moveDistance,
+						Y: itemToPickup.Position.Y - 1,
+					}
+				case 3:
+					pickupPosition = data.Position{
+						X: itemToPickup.Position.X - moveDistance,
+						Y: itemToPickup.Position.Y + 1,
+					}
+				}
+			}
+
+			distance := ctx.PathFinder.DistanceFromMe(itemToPickup.Position)
+			if distance >= 7 || attempt > 1 {
+				distanceToFinish := 3
+				if attempt > 1 {
+					distanceToFinish = 2
+				}
+				if err := step.MoveTo(pickupPosition, step.WithDistanceToFinish(distanceToFinish)); err != nil {
+					ctx.Logger.Debug(fmt.Sprintf("Failed moving to item on attempt %d: %v", attempt, err))
+					lastError = err
+					attempt++
+					continue
+				}
+			}
+
+			// Try to pick up the item
+			err := step.PickupItem(itemToPickup)
+			if err == nil {
+				break // Success!
+			}
+
+			lastError = err
+			ctx.Logger.Debug(fmt.Sprintf("Pickup attempt %d failed: %v", attempt, err))
+
+			// Don't count these specific errors as retry attempts
+			if errors.Is(err, step.ErrMonsterAroundItem) || errors.Is(err, step.ErrItemTooFar) {
+				continue
+			}
+
+			if errors.Is(err, step.ErrNoLOSToItem) {
+				ctx.Logger.Debug("No line of sight to item, moving closer",
+					slog.String("item", itemToPickup.Desc().Name))
+
+				// Try moving beyond the item for better line of sight
+				beyondPos := ctx.PathFinder.BeyondPosition(ctx.Data.PlayerUnit.Position, itemToPickup.Position, 2+attempt)
+				if mvErr := MoveToCoords(beyondPos); mvErr == nil {
+					err = step.PickupItem(itemToPickup)
+					if err == nil {
+						break
+					}
+					lastError = err
+				} else {
+					lastError = mvErr
+				}
+			}
+
+			attempt++
+
+			if attempt <= maxRetries {
+				time.Sleep(150 * time.Duration(attempt-1) * time.Millisecond)
+			}
 		}
 
-		err = step.PickupItem(itemToPickup)
-		if err == nil {
-			continue // Item picked up successfully, move to next item
+		// If all attempts failed, blacklist the item
+		if attempt > maxRetries && lastError != nil {
+			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
+			ctx.Logger.Warn(
+				"Failed picking up item after all attempts, blacklisting it",
+				slog.String("itemName", itemToPickup.Desc().Name),
+				slog.Int("unitID", int(itemToPickup.UnitID)),
+				slog.String("lastError", lastError.Error()),
+			)
 		}
-
-		if errors.Is(err, step.ErrItemTooFar) {
-			ctx.Logger.Debug("Item is too far away, retrying...")
-			continue
-		}
-
-		// If it's any other error, blacklist the item
-		ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
-		ctx.Logger.Warn(
-			"Failed picking up item, blacklisting it",
-			slog.String("itemName", itemToPickup.Desc().Name),
-			slog.Int("unitID", int(itemToPickup.UnitID)),
-		)
 	}
 }
 func GetItemsToPickup(maxDistance int) []data.Item {

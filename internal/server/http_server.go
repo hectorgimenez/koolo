@@ -417,8 +417,9 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/drops", s.drops)
 	http.HandleFunc("/process-list", s.getProcessList)
 	http.HandleFunc("/attach-process", s.attachProcess)
-	http.HandleFunc("/ws", s.wsServer.HandleWebSocket) // Web socket
-	http.HandleFunc("/initial-data", s.initialData)    // Web socket data
+	http.HandleFunc("/ws", s.wsServer.HandleWebSocket)    // Web socket
+	http.HandleFunc("/initial-data", s.initialData)       // Web socket data
+	http.HandleFunc("/api/reload-config", s.reloadConfig) // New handler
 
 	assets, _ := fs.Sub(assetsFS, "assets")
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
@@ -432,6 +433,17 @@ func (s *HttpServer) Listen(port int) error {
 	}
 
 	return nil
+}
+
+func (s *HttpServer) reloadConfig(w http.ResponseWriter, r *http.Request) {
+	result := s.manager.ReloadConfig()
+	if result != nil {
+		http.Error(w, result.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	s.logger.Info("Config reloaded")
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *HttpServer) Stop() error {
@@ -627,6 +639,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.FirstRun = false // Disable the welcome assistant
 		newConfig.D2RPath = r.Form.Get("d2rpath")
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
+		newConfig.CentralizedPickitPath = r.Form.Get("centralized_pickit_path")
 		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
 		newConfig.GameWindowArrangement = r.Form.Get("game_window_arrangement") == "true"
 		// Debug
@@ -706,6 +719,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.KillD2OnStop = r.Form.Has("kill_d2_process")
 		cfg.ClassicMode = r.Form.Has("classic_mode")
 		cfg.CloseMiniPanel = r.Form.Has("close_mini_panel")
+		cfg.HidePortraits = r.Form.Has("hide_portraits")
 
 		// Bnet config
 		cfg.Username = r.Form.Get("username")
@@ -773,15 +787,18 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Health.MercHealingPotionAt, _ = strconv.Atoi(r.Form.Get("mercHealingPotionAt"))
 		cfg.Health.MercRejuvPotionAt, _ = strconv.Atoi(r.Form.Get("mercRejuvPotionAt"))
 		cfg.Health.MercChickenAt, _ = strconv.Atoi(r.Form.Get("mercChickenAt"))
+
 		// Character
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
+
 		// Berserker Barb specific options
 		if cfg.Character.Class == "berserker" {
 			cfg.Character.BerserkerBarb.SkipPotionPickupInTravincal = r.Form.Has("barbSkipPotionPickupInTravincal")
 			cfg.Character.BerserkerBarb.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
 		}
+
 		// Nova Sorceress specific options
 		if cfg.Character.Class == "nova" || cfg.Character.Class == "lightsorc" {
 			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))
@@ -809,6 +826,15 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// Mosaic specific options
+		if cfg.Character.Class == "mosaic" {
+			cfg.Character.MosaicSin.UseTigerStrike = r.Form.Has("mosaicUseTigerStrike")
+			cfg.Character.MosaicSin.UseCobraStrike = r.Form.Has("mosaicUseCobraStrike")
+			cfg.Character.MosaicSin.UseClawsOfThunder = r.Form.Has("mosaicUseClawsOfThunder")
+			cfg.Character.MosaicSin.UseBladesOfIce = r.Form.Has("mosaicUseBladesOfIce")
+			cfg.Character.MosaicSin.UseFistsOfFire = r.Form.Has("mosaicUseFistsOfFire")
+		}
+
 		for y, row := range cfg.Inventory.InventoryLock {
 			for x := range row {
 				if r.Form.Has(fmt.Sprintf("inventoryLock[%d][%d]", y, x)) {
@@ -826,12 +852,14 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		// Game
 		cfg.Game.CreateLobbyGames = r.Form.Has("createLobbyGames")
 		cfg.Game.MinGoldPickupThreshold, _ = strconv.Atoi(r.Form.Get("gameMinGoldPickupThreshold"))
+		cfg.UseCentralizedPickit = r.Form.Has("useCentralizedPickit")
+		cfg.Game.UseCainIdentify = r.Form.Has("useCainIdentify")
 		cfg.Game.Difficulty = difficulty.Difficulty(r.Form.Get("gameDifficulty"))
 		cfg.Game.RandomizeRuns = r.Form.Has("gameRandomizeRuns")
 
 		// Runs specific config
-
 		enabledRuns := make([]config.Run, 0)
+
 		// we don't like errors, so we ignore them
 		json.Unmarshal([]byte(r.FormValue("gameRuns")), &enabledRuns)
 		cfg.Game.Runs = enabledRuns
@@ -860,8 +888,11 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.DrifterCavern.FocusOnElitePacks = r.Form.Has("gameDrifterCavernFocusOnElitePacks")
 		cfg.Game.SpiderCavern.OpenChests = r.Form.Has("gameSpiderCavernOpenChests")
 		cfg.Game.SpiderCavern.FocusOnElitePacks = r.Form.Has("gameSpiderCavernFocusOnElitePacks")
+		cfg.Game.ArachnidLair.OpenChests = r.Form.Has("gameArachnidLairOpenChests")
+		cfg.Game.ArachnidLair.FocusOnElitePacks = r.Form.Has("gameArachnidLairFocusOnElitePacks")
 		cfg.Game.Mephisto.KillCouncilMembers = r.Form.Has("gameMephistoKillCouncilMembers")
 		cfg.Game.Mephisto.OpenChests = r.Form.Has("gameMephistoOpenChests")
+		cfg.Game.Mephisto.ExitToA4 = r.Form.Has("gameMephistoExitToA4")
 		cfg.Game.Tristram.ClearPortal = r.Form.Has("gameTristramClearPortal")
 		cfg.Game.Tristram.FocusOnElitePacks = r.Form.Has("gameTristramFocusOnElitePacks")
 		cfg.Game.Nihlathak.ClearArea = r.Form.Has("gameNihlathakClearArea")
@@ -931,6 +962,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.CubeRecipes.Enabled = r.Form.Has("enableCubeRecipes")
 		enabledRecipes := r.Form["enabledRecipes"]
 		cfg.CubeRecipes.EnabledRecipes = enabledRecipes
+		cfg.CubeRecipes.SkipPerfectAmethysts = r.Form.Has("skipPerfectAmethysts")
+		cfg.CubeRecipes.SkipPerfectRubies = r.Form.Has("skipPerfectRubies")
 		// Companion
 
 		// Companion config

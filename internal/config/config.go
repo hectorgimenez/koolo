@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"os"
 	"strings"
@@ -40,6 +41,7 @@ type KooloCfg struct {
 	LogSaveDirectory      string `yaml:"logSaveDirectory"`
 	D2LoDPath             string `yaml:"D2LoDPath"`
 	D2RPath               string `yaml:"D2RPath"`
+	CentralizedPickitPath string `yaml:"centralizedPickitPath"`
 	Discord               struct {
 		Enabled                      bool     `yaml:"enabled"`
 		EnableGameCreatedMessages    bool     `yaml:"enableGameCreatedMessages"`
@@ -73,17 +75,19 @@ type TimeRange struct {
 }
 
 type CharacterCfg struct {
-	MaxGameLength   int    `yaml:"maxGameLength"`
-	Username        string `yaml:"username"`
-	Password        string `yaml:"password"`
-	AuthMethod      string `yaml:"authMethod"`
-	AuthToken       string `yaml:"authToken"`
-	Realm           string `yaml:"realm"`
-	CharacterName   string `yaml:"characterName"`
-	CommandLineArgs string `yaml:"commandLineArgs"`
-	KillD2OnStop    bool   `yaml:"killD2OnStop"`
-	ClassicMode     bool   `yaml:"classicMode"`
-	CloseMiniPanel  bool   `yaml:"closeMiniPanel"`
+	MaxGameLength        int    `yaml:"maxGameLength"`
+	Username             string `yaml:"username"`
+	Password             string `yaml:"password"`
+	AuthMethod           string `yaml:"authMethod"`
+	AuthToken            string `yaml:"authToken"`
+	Realm                string `yaml:"realm"`
+	CharacterName        string `yaml:"characterName"`
+	CommandLineArgs      string `yaml:"commandLineArgs"`
+	KillD2OnStop         bool   `yaml:"killD2OnStop"`
+	ClassicMode          bool   `yaml:"classicMode"`
+	CloseMiniPanel       bool   `yaml:"closeMiniPanel"`
+	UseCentralizedPickit bool   `yaml:"useCentralizedPickit"`
+	HidePortraits        bool   `yaml:"hidePortraits"`
 
 	Scheduler Scheduler `yaml:"scheduler"`
 	Health    struct {
@@ -112,10 +116,18 @@ type CharacterCfg struct {
 		NovaSorceress struct {
 			BossStaticThreshold int `yaml:"boss_static_threshold"`
 		} `yaml:"nova_sorceress"`
+		MosaicSin struct {
+			UseTigerStrike    bool `yaml:"useTigerStrike"`
+			UseCobraStrike    bool `yaml:"useCobraStrike"`
+			UseClawsOfThunder bool `yaml:"useClawsOfThunder"`
+			UseBladesOfIce    bool `yaml:"useBladesOfIce"`
+			UseFistsOfFire    bool `yaml:"useFistsOfFire"`
+		} `yaml:"mosaic_sin"`
 	} `yaml:"character"`
 
 	Game struct {
 		MinGoldPickupThreshold int                   `yaml:"minGoldPickupThreshold"`
+		UseCainIdentify        bool                  `yaml:"useCainIdentify"`
 		ClearTPArea            bool                  `yaml:"clearTPArea"`
 		Difficulty             difficulty.Difficulty `yaml:"difficulty"`
 		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
@@ -157,9 +169,14 @@ type CharacterCfg struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"spider_cavern"`
+		ArachnidLair struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"arachnid_lair"`
 		Mephisto struct {
 			KillCouncilMembers bool `yaml:"killCouncilMembers"`
 			OpenChests         bool `yaml:"openChests"`
+			ExitToA4           bool `yaml:"exitToA4"`
 		} `yaml:"mephisto"`
 		Tristram struct {
 			ClearPortal       bool `yaml:"clearPortal"`
@@ -222,8 +239,10 @@ type CharacterCfg struct {
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
 	CubeRecipes struct {
-		Enabled        bool     `yaml:"enabled"`
-		EnabledRecipes []string `yaml:"enabledRecipes"`
+		Enabled              bool     `yaml:"enabled"`
+		EnabledRecipes       []string `yaml:"enabledRecipes"`
+		SkipPerfectAmethysts bool     `yaml:"skipPerfectAmethysts"`
+		SkipPerfectRubies    bool     `yaml:"skipPerfectRubies"`
 	} `yaml:"cubing"`
 	BackToTown struct {
 		NoHpPotions     bool `yaml:"noHpPotions"`
@@ -293,12 +312,15 @@ func Load() error {
 		return fmt.Errorf("error reading config directory %s: %w", configDir, err)
 	}
 
+	// Read character configs
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
 
 		charCfg := CharacterCfg{}
+
+		// Load character config from the current working directory/config/{charName}/config.yaml
 		charConfigPath := getAbsPath(filepath.Join("config", entry.Name(), "config.yaml"))
 		r, err = os.Open(charConfigPath)
 		if err != nil {
@@ -306,17 +328,36 @@ func Load() error {
 		}
 		defer r.Close()
 
+		// Load character config
 		d := yaml.NewDecoder(r)
 		if err = d.Decode(&charCfg); err != nil {
 			return fmt.Errorf("error reading %s character config: %w", charConfigPath, err)
 		}
 
-		pickitPath := getAbsPath(filepath.Join("config", entry.Name(), "pickit")) + "\\"
+		var pickitPath string
+
+		if Koolo.CentralizedPickitPath != "" && charCfg.UseCentralizedPickit {
+			// Validate centralized pickit path
+			if _, err := os.Stat(Koolo.CentralizedPickitPath); os.IsNotExist(err) {
+				utils.ShowDialog("Error loading pickit rules for "+entry.Name(), "The centralized pickit path does not exist: "+Koolo.CentralizedPickitPath+"\nPlease check your Koolo settings.\nFalling back to local pickit.")
+
+				// Set the pickit path to the current dir/config/{charName}/pickit
+				pickitPath = getAbsPath(filepath.Join("config", entry.Name(), "pickit")) + "\\"
+			} else {
+				pickitPath = Koolo.CentralizedPickitPath + "\\"
+			}
+		} else {
+			// Set the pickit path to the current dir/config/{charName}/pickit
+			pickitPath = getAbsPath(filepath.Join("config", entry.Name(), "pickit")) + "\\"
+		}
+
+		// Load the pickit rules from the directory
 		rules, err := nip.ReadDir(pickitPath)
 		if err != nil {
 			return fmt.Errorf("error reading pickit directory %s: %w", pickitPath, err)
 		}
 
+		// Load the leveling pickit rules
 		if len(charCfg.Game.Runs) > 0 && charCfg.Game.Runs[0] == "leveling" {
 			levelingPickitPath := getAbsPath(filepath.Join("config", entry.Name(), "pickit_leveling")) + "\\"
 			levelingRules, err := nip.ReadDir(levelingPickitPath)
@@ -327,9 +368,10 @@ func Load() error {
 		}
 
 		charCfg.Runtime.Rules = rules
-
 		Characters[entry.Name()] = &charCfg
 	}
+
+	// Validate configs
 	for _, charCfg := range Characters {
 		charCfg.Validate()
 	}

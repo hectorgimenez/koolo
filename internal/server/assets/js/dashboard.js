@@ -619,6 +619,28 @@ function updateButtons(startPauseBtn, stopBtn, attachBtn, status) {
         }
     }
 
+    async function reloadConfig() {
+        const btn = document.getElementById('reloadConfigBtn');
+        const icon = btn.querySelector('i');
+        
+        // Disable button and start rotation
+        btn.disabled = true;
+        icon.classList.add('rotate');
+        
+        try {
+            const response = await fetch('/api/reload-config');
+            if (!response.ok) {
+                throw new Error('Failed to reload config');
+            }
+        } catch (error) {
+            console.error('Error reloading config:', error);
+        } finally {
+            // Re-enable button and stop rotation
+            btn.disabled = false;
+            icon.classList.remove('rotate');
+        }
+    }
+
     function closeAttachPopup() {
         const popup = document.querySelector('.attach-popup');
         if (popup) {

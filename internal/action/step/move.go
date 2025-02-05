@@ -2,6 +2,7 @@ package step
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -12,10 +13,34 @@ import (
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-const DistanceToFinishMoving = 7
+const DistanceToFinishMoving = 4
 
-func MoveTo(dest data.Position) error {
+type MoveOpts struct {
+	distanceOverride *int
+}
+
+type MoveOption func(*MoveOpts)
+
+// WithDistanceToFinish overrides the default DistanceToFinishMoving
+func WithDistanceToFinish(distance int) MoveOption {
+	return func(opts *MoveOpts) {
+		opts.distanceOverride = &distance
+	}
+}
+
+func MoveTo(dest data.Position, options ...MoveOption) error {
+	// Initialize options
+	opts := &MoveOpts{}
+
+	// Apply any provided options
+	for _, o := range options {
+		o(opts)
+	}
+
 	minDistanceToFinishMoving := DistanceToFinishMoving
+	if opts.distanceOverride != nil {
+		minDistanceToFinishMoving = *opts.distanceOverride
+	}
 
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
@@ -43,10 +68,10 @@ func MoveTo(dest data.Position) error {
 	previousDistance := 0
 
 	for {
-		ctx.RefreshGameData()
-
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
+		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
+		ctx.RefreshGameData()
 
 		// Check for idle state outside town
 		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
@@ -80,7 +105,7 @@ func MoveTo(dest data.Position) error {
 				return nil
 			}
 
-			return errors.New("path could not be calculated, maybe there is an obstacle or a flying platform (arcane sanctuary)")
+			return errors.New("path could not be calculated. Current area: [" + ctx.Data.PlayerUnit.Area.Area().Name + "]. Trying to path to Destination: [" + fmt.Sprintf("%d,%d", dest.X, dest.Y) + "]")
 		}
 		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
 			return nil
@@ -111,8 +136,10 @@ func MoveTo(dest data.Position) error {
 		}
 
 		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
-		if distance < 20 && math.Abs(float64(previousDistance-distance)) < 5 {
-			minDistanceToFinishMoving += 5
+		if distance < 20 && math.Abs(float64(previousDistance-distance)) < DistanceToFinishMoving {
+			minDistanceToFinishMoving += DistanceToFinishMoving
+		} else if opts.distanceOverride != nil {
+			minDistanceToFinishMoving = *opts.distanceOverride
 		} else {
 			minDistanceToFinishMoving = DistanceToFinishMoving
 		}

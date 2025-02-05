@@ -1,9 +1,12 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 func PreRun(firstRun bool) error {
@@ -13,19 +16,38 @@ func PreRun(firstRun bool) error {
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
 	ManageBelt()
+	// Just to make sure messages like TZ change or public game spam arent on the way
+	ClearMessages()
 
 	if firstRun {
-		Stash(firstRun)
+		Stash(false)
 	}
 
 	UpdateQuestLog()
-	IdentifyAll(firstRun)
-	VendorRefill(false, true)
-	Stash(firstRun)
-	Gamble()
+
+	// Store items that need to be left unidentified
+	if HaveItemsToStashUnidentified() {
+		Stash(false)
+	}
+
+	// Identify - either via Cain or Tome
+	IdentifyAll(false)
+
+	// Stash before vendor
 	Stash(false)
+
+	// Refill pots, sell, buy etc
+	VendorRefill(false, true)
+
+	// Gamble
+	Gamble()
+
+	// Stash again if needed
+	Stash(false)
+
 	CubeRecipes()
 
+	// Leveling related checks
 	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
 		ResetStats()
 		EnsureStatPoints()
@@ -46,19 +68,23 @@ func PreRun(firstRun bool) error {
 func InRunReturnTownRoutine() error {
 	ctx := context.Get()
 
-	ReturnTown()
+	if err := ReturnTown(); err != nil {
+		return fmt.Errorf("failed to return to town: %w", err)
+	}
+
+	// Validate we're actually in town before proceeding
+	if !ctx.Data.PlayerUnit.Area.IsTown() {
+		return fmt.Errorf("failed to verify town location after portal")
+	}
+
 	step.SetSkill(skill.Vigor)
 	RecoverCorpse()
 	ManageBelt()
 
-	/*
-		This will be added when option for cain Identify is added
-
-		// Let's stash items that need to be left unidentified
-		if HaveItemsToStashUnidentified() {
-			Stash(false)
-		}
-	*/
+	// Let's stash items that need to be left unidentified
+	if ctx.CharacterCfg.Game.UseCainIdentify && HaveItemsToStashUnidentified() {
+		Stash(false)
+	}
 
 	IdentifyAll(false)
 
@@ -81,6 +107,12 @@ func InRunReturnTownRoutine() error {
 	ReviveMerc()
 	HireMerc()
 	Repair()
-
+	
+	if (ctx.CharacterCfg.Companion.Leader) {
+		UsePortalInTown()
+		utils.Sleep(500)
+		return OpenTPIfLeader()
+	}
+	
 	return UsePortalInTown()
 }
