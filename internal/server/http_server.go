@@ -800,7 +800,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Nova Sorceress specific options
-		if cfg.Character.Class == "nova" {
+		if cfg.Character.Class == "nova" || cfg.Character.Class == "lightsorc" {
 			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))
 			if err == nil {
 				minThreshold := 65 // Default
@@ -942,6 +942,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
 		cfg.Game.TerrorZone.SkipOtherRuns = r.Form.Has("gameTerrorZoneSkipOtherRuns")
+		cfg.Game.TerrorZone.OpenChests = r.Form.Has("gameTerrorZoneOpenChests")
 
 		cfg.Game.TerrorZone.SkipOnImmunities = []stat.Resist{}
 		for _, i := range r.Form["gameTerrorZoneSkipOnImmunities[]"] {
