@@ -942,6 +942,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
 		cfg.Game.TerrorZone.SkipOtherRuns = r.Form.Has("gameTerrorZoneSkipOtherRuns")
+		cfg.Game.TerrorZone.OpenChests = r.Form.Has("gameTerrorZoneOpenChests")
 
 		cfg.Game.TerrorZone.SkipOnImmunities = []stat.Resist{}
 		for _, i := range r.Form["gameTerrorZoneSkipOnImmunities[]"] {

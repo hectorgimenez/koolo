@@ -210,6 +210,7 @@ type CharacterCfg struct {
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
 			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
 			Areas             []area.ID     `yaml:"areas"`
+			OpenChests        bool          `yaml:"openChests"`
 		} `yaml:"terror_zone"`
 		Leveling struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
