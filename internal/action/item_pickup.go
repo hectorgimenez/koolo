@@ -274,7 +274,7 @@ func shouldBePickedUp(i data.Item) bool {
 			return true
 		}
 	}
-	
+
 	// Pick up quest items if we're in leveling or questing run
 	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
 	if specialRuns {
