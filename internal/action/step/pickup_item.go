@@ -35,7 +35,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 
 	// Casting skill/moving return back
 	for ctx.Data.PlayerUnit.Mode == mode.CastingSkill || ctx.Data.PlayerUnit.Mode == mode.Running || ctx.Data.PlayerUnit.Mode == mode.Walking || ctx.Data.PlayerUnit.Mode == mode.WalkingInTown {
-		time.Sleep(clickDelay)
+		time.Sleep(25 * time.Millisecond)
 		return ErrCastingMoving
 	}
 
@@ -104,7 +104,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 		// Move cursor directly to target position
 		ctx.HID.MovePointer(cursorX, cursorY)
 		ctx.RefreshGameData()
-		time.Sleep(spiralDelay)
+		time.Sleep(50 * time.Millisecond)
 
 		// Click on item if mouse is hovering over
 		if currentItem.IsHovered {
