@@ -124,7 +124,7 @@ func ItemPickup(maxDistance int) error {
 			}
 
 			lastError = err
-			// Skip logging when casting moving error, fills debug log
+			// Skip logging when casting moving error and don't count these specific errors as retry attempts
 			if errors.Is(err, step.ErrCastingMoving) {
 				continue
 			}
