@@ -67,7 +67,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 	spiralAttempt := 0
 	targetItem := it
 	lastMonsterCheck := time.Now()
-	const monsterCheckInterval = 250 * time.Millisecond
+	const monsterCheckInterval = 150 * time.Millisecond
 
 	startTime := time.Now()
 
