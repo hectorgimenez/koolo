@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -119,12 +118,16 @@ func ItemPickup(maxDistance int) error {
 			}
 
 			// Try to pick up the item
-			err := step.PickupItem(itemToPickup)
+			err := step.PickupItem(itemToPickup, attempt)
 			if err == nil {
 				break // Success!
 			}
 
 			lastError = err
+			// Skip logging when casting moving error, fills debug log
+			if errors.Is(err, step.ErrCastingMoving) {
+				continue
+			}
 			ctx.Logger.Debug(fmt.Sprintf("Pickup attempt %d failed: %v", attempt, err))
 
 			// Don't count these specific errors as retry attempts
@@ -139,7 +142,7 @@ func ItemPickup(maxDistance int) error {
 				// Try moving beyond the item for better line of sight
 				beyondPos := ctx.PathFinder.BeyondPosition(ctx.Data.PlayerUnit.Position, itemToPickup.Position, 2+attempt)
 				if mvErr := MoveToCoords(beyondPos); mvErr == nil {
-					err = step.PickupItem(itemToPickup)
+					err = step.PickupItem(itemToPickup, attempt)
 					if err == nil {
 						break
 					}
@@ -151,9 +154,6 @@ func ItemPickup(maxDistance int) error {
 
 			attempt++
 
-			if attempt <= maxRetries {
-				time.Sleep(150 * time.Duration(attempt-1) * time.Millisecond)
-			}
 		}
 
 		// If all attempts failed, blacklist the item
@@ -249,30 +249,6 @@ func shouldBePickedUp(i data.Item) bool {
 	// Always pickup Runewords and Wirt's Leg
 	if i.IsRuneword || i.Name == "WirtsLeg" {
 		return true
-	}
-
-	// Check if we should pick up some keys. The goal is to have 12 keys in total (single stack)
-	if i.Name == "Key" {
-		quantityOnGround := 0
-		st, statFound := i.FindStat(stat.Quantity, 0)
-		if statFound {
-			quantityOnGround = st.Value
-		}
-
-		quantityInInventory := 0
-		for _, item := range ctx.Data.Inventory.AllItems {
-			if item.Name == "Key" {
-				qty, _ := item.FindStat(stat.Quantity, 0)
-				quantityInInventory += qty.Value
-			}
-		}
-
-		// We only want to pick them up if either:
-		// 1. They have the option to return to town enabled or
-		// 2. They already had some keys in inventory, so we just want to get closer to 12
-		if (ctx.CharacterCfg.BackToTown.NoKeys || quantityInInventory > 0) && quantityOnGround+quantityInInventory <= 12 {
-			return true
-		}
 	}
 
 	// Pick up quest items if we're in leveling or questing run
