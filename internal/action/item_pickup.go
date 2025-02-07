@@ -100,6 +100,13 @@ func ItemPickup(maxDistance int) error {
 						X: itemToPickup.Position.X - moveDistance,
 						Y: itemToPickup.Position.Y + 1,
 					}
+				case 4:
+					pickupPosition = data.Position{
+						X: itemToPickup.Position.X + moveDistance + 2,
+						Y: itemToPickup.Position.Y - 3,
+					}
+				case 5:
+					ctx.PathFinder.BeyondPosition(ctx.Data.PlayerUnit.Position, itemToPickup.Position, 4)
 				}
 			}
 
