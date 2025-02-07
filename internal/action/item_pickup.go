@@ -46,7 +46,7 @@ func ItemPickup(maxDistance int) error {
 	ctx := context.Get()
 	ctx.SetLastAction("ItemPickup")
 
-	const maxRetries = 3
+	const maxRetries = 5
 
 	for {
 		itemsToPickup := GetItemsToPickup(maxDistance)
