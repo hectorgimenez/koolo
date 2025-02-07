@@ -100,15 +100,21 @@ func (m Mephisto) Run() error {
 
 			// Interact with the closest object
 			closestObject := crs[0]
+			
 			// Move to the chest/rack
 			err = action.MoveToCoords(closestObject.Position)
 			if err != nil {
 				return err
 			}
+			// Clear around chest for clean interaction
+			action.ClearAreaAroundPlayer(7, m.ctx.Data.MonsterFilterAnyReachable())
+
+			// Interact with chest/rack/stand
 			err = action.InteractObject(closestObject, func() bool {
 				object, _ := m.ctx.Data.Objects.FindByID(closestObject.ID)
 				return !object.Selectable
 			})
+			
 			if err != nil {
 				m.ctx.Logger.Warn(fmt.Sprintf("[%s] failed interacting with object [%v] in Area: [%s]", m.ctx.Name, closestObject.Name, m.ctx.Data.PlayerUnit.Area.Area().Name), err)
 			}
