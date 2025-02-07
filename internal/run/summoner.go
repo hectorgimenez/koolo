@@ -54,6 +54,9 @@ func (s Summoner) Run() error {
 		tome, _ := s.ctx.Data.Objects.FindOne(object.YetAnotherTome)
 		action.MoveToCoords(tome.Position)
 
+		// Clear around tome and where red portal will spawn, monster can block tome or red portal interaction
+		action.ClearAreaAroundPlayer(10, s.ctx.Data.MonsterFilterAnyReachable())
+
 		// interact with tome to open red portal
 		action.InteractObject(tome, func() bool {
 			if _, found := s.ctx.Data.Objects.FindOne(object.PermanentTownPortal); found {
