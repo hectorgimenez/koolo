@@ -49,6 +49,8 @@ func ItemPickup(maxDistance int) error {
 	const maxRetries = 5
 
 	for {
+		ctx.PauseIfNotPriority()
+		
 		itemsToPickup := GetItemsToPickup(maxDistance)
 		if len(itemsToPickup) == 0 {
 			return nil
