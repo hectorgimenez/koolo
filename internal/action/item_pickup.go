@@ -140,7 +140,7 @@ func ItemPickup(maxDistance int) error {
 			ctx.Logger.Debug(fmt.Sprintf("Pickup attempt %d failed: %v", attempt, err))
 
 			// Don't count these specific errors as retry attempts
-			if errors.Is(err, step.ErrMonsterAroundItem) || errors.Is(err, step.ErrItemTooFar) {
+			if errors.Is(err, step.ErrMonsterAroundItem) {
 				continue
 			}
 
