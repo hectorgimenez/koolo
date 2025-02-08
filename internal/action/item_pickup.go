@@ -47,6 +47,7 @@ func ItemPickup(maxDistance int) error {
 	ctx.SetLastAction("ItemPickup")
 
 	const maxRetries = 5
+	const maxItemTooFarAttempts = 5
 
 	for {
 		ctx.PauseIfNotPriority()
@@ -82,6 +83,7 @@ func ItemPickup(maxDistance int) error {
 		// Try to pick up the item with retries
 		var lastError error
 		attempt := 1
+		attemptItemTooFar := 1
 		for attempt <= maxRetries {
 			// Clear monsters on each attempt
 			ClearAreaAroundPosition(itemToPickup.Position, 4, data.MonsterAnyFilter())
@@ -142,6 +144,17 @@ func ItemPickup(maxDistance int) error {
 			// Don't count these specific errors as retry attempts
 			if errors.Is(err, step.ErrMonsterAroundItem) {
 				continue
+			}
+
+			// Item too far retry logic
+			if errors.Is(err, step.ErrItemTooFar) {
+				// Use default retries first, if we hit last attempt retry add random movement and continue until maxItemTooFarAttempts
+				if attempt >= maxRetries && attemptItemTooFar <= maxItemTooFarAttempts {
+					ctx.Logger.Debug(fmt.Sprintf("Item too far pickup attempt %d", attemptItemTooFar))
+					attemptItemTooFar++
+					ctx.PathFinder.RandomMovement()
+					continue
+				}
 			}
 
 			if errors.Is(err, step.ErrNoLOSToItem) {
