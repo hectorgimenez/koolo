@@ -58,12 +58,6 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		}
 	}()
 
-	if !ctx.Data.AreaData.IsWalkable(dest) {
-		if walkablePoint, found := ctx.PathFinder.FindNearbyWalkablePosition(dest); found {
-			dest = walkablePoint
-		}
-	}
-
 	timeout := time.Second * 30
 	idleThreshold := time.Second * 3
 	idleStartTime := time.Time{}
@@ -74,12 +68,10 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	previousDistance := 0
 
 	for {
-
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
-
 		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
-		ctx.RefreshGameData() 
+		ctx.RefreshGameData()
 
 		// Check for idle state outside town
 		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
@@ -115,13 +107,12 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 
 			return errors.New("path could not be calculated. Current area: [" + ctx.Data.PlayerUnit.Area.Area().Name + "]. Trying to path to Destination: [" + fmt.Sprintf("%d,%d", dest.X, dest.Y) + "]")
 		}
-
 		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
 			return nil
 		}
 
-		// Exit on timeout modification
-		if time.Since(startedAt) > timeout {
+		// Exit on timeout
+		if timeout > 0 && time.Since(startedAt) > timeout {
 			return nil
 		}
 
