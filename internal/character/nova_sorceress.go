@@ -2,7 +2,6 @@ package character
 
 import (
 	"log/slog"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -23,7 +22,7 @@ const (
 )
 
 type NovaSorceress struct {
-	BaseCharacter
+	CharacterBuild
 }
 
 func (s NovaSorceress) CheckKeyBindings() []skill.ID {
@@ -181,65 +180,6 @@ func (s NovaSorceress) BuffSkills() []skill.ID {
 	return skillsList
 }
 
-func (s NovaSorceress) PreCTABuffSkills() []skill.ID {
-	return []skill.ID{}
-}
-
-func (s NovaSorceress) KillAndariel() error {
-	return s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
-}
-
-func (s NovaSorceress) KillDuriel() error {
-	return s.killBossWithStatic(npc.Duriel, data.MonsterTypeUnique)
-}
-
-func (s NovaSorceress) KillMephisto() error {
-	return s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
-}
-
-func (s NovaSorceress) KillDiablo() error {
-	timeout := time.Second * 20
-	startTime := time.Now()
-	diabloFound := false
-
-	for {
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.Logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			if diabloFound {
-				return nil
-			}
-			time.Sleep(200 * time.Millisecond)
-			continue
-		}
-
-		diabloFound = true
-		s.Logger.Info("Diablo detected, attacking")
-
-		return s.killBossWithStatic(npc.Diablo, data.MonsterTypeUnique)
-	}
-}
-
-func (s NovaSorceress) KillBaal() error {
-	return s.killBossWithStatic(npc.BaalCrab, data.MonsterTypeUnique)
-}
-
-func (s NovaSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
-}
-
-func (s NovaSorceress) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
-}
-
-func (s NovaSorceress) KillIzual() error {
-	return s.killBossWithStatic(npc.Izual, data.MonsterTypeUnique)
-}
-
 func (s NovaSorceress) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		for _, m := range d.Monsters.Enemies() {
@@ -249,12 +189,4 @@ func (s NovaSorceress) KillCouncil() error {
 		}
 		return 0, false
 	}, nil)
-}
-
-func (s NovaSorceress) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
-}
-
-func (s NovaSorceress) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
 }

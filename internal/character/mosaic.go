@@ -17,7 +17,7 @@ import (
 )
 
 type MosaicSin struct {
-	BaseCharacter
+	CharacterBuild
 }
 
 func (s MosaicSin) CheckKeyBindings() []skill.ID {
@@ -188,32 +188,6 @@ func (s MosaicSin) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
-func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return 0, false
-		}
-		return m.UnitID, true
-	}, nil)
-}
-
-func (s MosaicSin) KillCountess() error {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
-}
-
-func (s MosaicSin) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
-}
-
-func (s MosaicSin) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
-}
-
-func (s MosaicSin) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
-}
-
 func (s MosaicSin) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		var councilMembers []data.Monster
@@ -243,42 +217,4 @@ func (s MosaicSin) KillMephisto() error {
 
 func (s MosaicSin) KillIzual() error {
 	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
-}
-
-func (s MosaicSin) KillDiablo() error {
-	timeout := time.Second * 20
-	startTime := time.Now()
-	diabloFound := false
-
-	for {
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.Logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			if diabloFound {
-				return nil
-			}
-			time.Sleep(200 * time.Millisecond)
-			continue
-		}
-
-		diabloFound = true
-		s.Logger.Info("Diablo detected, attacking")
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
-	}
-}
-
-func (s MosaicSin) KillPindle() error {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (s MosaicSin) KillNihlathak() error {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (s MosaicSin) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

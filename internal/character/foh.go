@@ -28,7 +28,7 @@ const (
 )
 
 type Foh struct {
-	BaseCharacter
+	CharacterBuild
 	lastCastTime time.Time
 }
 
@@ -283,10 +283,6 @@ func (f Foh) BuffSkills() []skill.ID {
 	return make([]skill.ID, 0)
 }
 
-func (f Foh) PreCTABuffSkills() []skill.ID {
-	return make([]skill.ID, 0)
-}
-
 func (f Foh) killBoss(npc npc.ID, t data.MonsterType) error {
 	return f.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
@@ -295,22 +291,6 @@ func (f Foh) killBoss(npc npc.ID, t data.MonsterType) error {
 		}
 		return m.UnitID, true
 	}, nil)
-}
-
-func (f Foh) KillCountess() error {
-	return f.killBoss(npc.DarkStalker, data.MonsterTypeSuperUnique)
-}
-
-func (f Foh) KillAndariel() error {
-	return f.killBoss(npc.Andariel, data.MonsterTypeUnique)
-}
-
-func (f Foh) KillSummoner() error {
-	return f.killBoss(npc.Summoner, data.MonsterTypeUnique)
-}
-
-func (f Foh) KillDuriel() error {
-	return f.killBoss(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (f Foh) KillCouncil() error {
@@ -363,51 +343,4 @@ func (f Foh) anyCouncilMemberAlive() bool {
 
 	}
 	return false
-}
-
-func (f Foh) KillMephisto() error {
-	return f.killBoss(npc.Mephisto, data.MonsterTypeUnique)
-}
-
-func (f Foh) KillIzual() error {
-	return f.killBoss(npc.Izual, data.MonsterTypeUnique)
-}
-
-func (f Foh) KillDiablo() error {
-	timeout := time.Second * 20
-	startTime := time.Now()
-	diabloFound := false
-
-	for {
-		if time.Since(startTime) > timeout && !diabloFound {
-			f.Logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := f.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			if diabloFound {
-				return nil
-			}
-			time.Sleep(200 * time.Millisecond)
-			continue
-		}
-
-		diabloFound = true
-		f.Logger.Info("Diablo detected, attacking")
-
-		return f.killBoss(npc.Diablo, data.MonsterTypeUnique)
-	}
-}
-
-func (f Foh) KillPindle() error {
-	return f.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (f Foh) KillNihlathak() error {
-	return f.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (f Foh) KillBaal() error {
-	return f.killBoss(npc.BaalCrab, data.MonsterTypeUnique)
 }
