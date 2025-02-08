@@ -210,6 +210,7 @@ type CharacterCfg struct {
 			SkipOnImmunities  []stat.Resist `yaml:"skipOnImmunities"`
 			SkipOtherRuns     bool          `yaml:"skipOtherRuns"`
 			Areas             []area.ID     `yaml:"areas"`
+			OpenChests        bool          `yaml:"openChests"`
 		} `yaml:"terror_zone"`
 		Leveling struct {
 			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
@@ -249,6 +250,7 @@ type CharacterCfg struct {
 		NoMpPotions     bool `yaml:"noMpPotions"`
 		MercDied        bool `yaml:"mercDied"`
 		EquipmentBroken bool `yaml:"equipmentBroken"`
+		NoKeys          bool `yaml:"noKeys"`
 	} `yaml:"backtotown"`
 	Runtime struct {
 		Rules nip.Rules   `yaml:"-"`
@@ -440,7 +442,7 @@ func SaveSupervisorConfig(supervisorName string, config *CharacterCfg) error {
 }
 
 func (c *CharacterCfg) Validate() {
-	if c.Character.Class == "nova" {
+	if c.Character.Class == "nova" || c.Character.Class == "lightsorc" {
 		minThreshold := 65 // Default
 		switch c.Game.Difficulty {
 		case difficulty.Normal:

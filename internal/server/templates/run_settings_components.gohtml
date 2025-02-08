@@ -77,7 +77,7 @@
     <fieldset>
         <label><input type="checkbox" name="gameMephistoKillCouncilMembers" {{ if .Config.Game.Mephisto.KillCouncilMembers }}checked{{ end }}> Kill council members</label>
         <label><input type="checkbox" name="gameMephistoOpenChests" {{ if .Config.Game.Mephisto.OpenChests }}checked{{ end }}> Open chests</label>
-        <label><input type="checkbox" name="gameMephistoOpenChests" {{ if .Config.Game.Mephisto.ExitToA4 }}checked{{ end }}> Leave through red portal</label>
+        <label><input type="checkbox" name="gameMephistoExitToA4" {{ if .Config.Game.Mephisto.ExitToA4 }}checked{{ end }}> Leave through red portal</label>
     </fieldset>
 {{ end }}
 
@@ -166,6 +166,7 @@
     <fieldset>
         <label><input type="checkbox" name="gameTerrorZoneFocusOnElitePacks" {{ if .Config.Game.TerrorZone.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
         <label><input type="checkbox" name="gameTerrorZoneSkipOtherRuns" {{ if .Config.Game.TerrorZone.SkipOtherRuns }}checked{{ end }}> Skip all runs and only do TZ when available</label>
+        <label><input type="checkbox" name="gameTerrorZoneOpenChests" {{ if .Config.Game.TerrorZone.OpenChests }}checked{{ end }}> Open chests</label>
         <label>Skip on immunities</label>
         <fieldset class="grid">
             <label><input type="checkbox" name="gameTerrorZoneSkipOnImmunities[]" value="cold" {{ if isInSlice .Config.Game.TerrorZone.SkipOnImmunities "cold" }}checked{{ end }}> Cold</label>
