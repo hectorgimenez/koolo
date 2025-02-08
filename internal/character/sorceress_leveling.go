@@ -3,8 +3,6 @@ package character
 import (
 	"fmt"
 	"log/slog"
-	"sort"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
@@ -17,7 +15,7 @@ import (
 )
 
 type SorceressLeveling struct {
-	BaseCharacter
+	CharacterBuild
 }
 
 const (
@@ -302,118 +300,4 @@ func (s SorceressLeveling) SkillPoints() []skill.ID {
 
 	s.Logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
 	return skillPoints
-}
-
-func (s SorceressLeveling) KillCountess() error {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
-}
-
-func (s SorceressLeveling) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
-}
-func (s SorceressLeveling) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
-}
-
-func (s SorceressLeveling) KillDuriel() error {
-	m, _ := s.Data.Monsters.FindOne(npc.Duriel, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
-
-	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
-}
-
-func (s SorceressLeveling) KillCouncil() error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
-		var councilMembers []data.Monster
-		for _, m := range d.Monsters {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				councilMembers = append(councilMembers, m)
-			}
-		}
-
-		// Order council members by distance
-		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
-
-			return distanceI < distanceJ
-		})
-
-		for _, m := range councilMembers {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, nil)
-}
-
-func (s SorceressLeveling) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
-}
-func (s SorceressLeveling) KillIzual() error {
-	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
-
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
-}
-
-func (s SorceressLeveling) KillDiablo() error {
-	timeout := time.Second * 20
-	startTime := time.Now()
-	diabloFound := false
-
-	for {
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.Logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
-			if diabloFound {
-				return nil
-			}
-
-			// Keep waiting...
-			time.Sleep(200)
-			continue
-		}
-
-		diabloFound = true
-		s.Logger.Info("Diablo detected, attacking")
-
-		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
-
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
-	}
-}
-
-func (s SorceressLeveling) KillPindle() error {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (s SorceressLeveling) KillNihlathak() error {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (s SorceressLeveling) KillAncients() error {
-	for _, m := range s.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
-		m, _ := s.Data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
-
-		step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10))
-
-		step.MoveTo(data.Position{X: 10062, Y: 12639})
-
-		s.killMonster(m.Name, data.MonsterTypeSuperUnique)
-	}
-	return nil
-}
-
-func (s SorceressLeveling) KillBaal() error {
-	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
-	step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 4))
-
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

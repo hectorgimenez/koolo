@@ -19,7 +19,7 @@ import (
 )
 
 type Berserker struct {
-	BaseCharacter
+	CharacterBuild
 	isKillingCouncil atomic.Bool
 }
 

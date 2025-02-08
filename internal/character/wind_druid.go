@@ -3,8 +3,6 @@ package character
 import (
 	"fmt"
 	"log/slog"
-	"sort"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -23,7 +21,7 @@ const (
 )
 
 type WindDruid struct {
-	BaseCharacter
+	CharacterBuild
 	*game.HID
 }
 
@@ -208,95 +206,4 @@ func (s WindDruid) PreCTABuffSkills() (skills []skill.ID) {
 	}
 
 	return skills
-}
-
-func (s WindDruid) KillCountess() error {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
-}
-
-func (s WindDruid) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
-}
-func (s WindDruid) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
-}
-
-func (s WindDruid) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
-}
-
-func (s WindDruid) KillCouncil() error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
-		var councilMembers []data.Monster
-		for _, m := range d.Monsters {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				councilMembers = append(councilMembers, m)
-			}
-		}
-
-		// Order council members by distance
-		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
-
-			return distanceI < distanceJ
-		})
-
-		for _, m := range councilMembers {
-			return m.UnitID, true
-		}
-
-		return 0, false
-	}, nil)
-}
-
-func (s WindDruid) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
-}
-
-func (s WindDruid) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
-}
-
-func (s WindDruid) KillDiablo() error {
-	timeout := time.Second * 20
-	startTime := time.Now()
-	diabloFound := false
-
-	for {
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.Logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
-			if diabloFound {
-				return nil
-			}
-
-			// Keep waiting...
-			time.Sleep(200)
-			continue
-		}
-
-		diabloFound = true
-		s.Logger.Info("Diablo detected, attacking")
-
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
-	}
-}
-
-func (s WindDruid) KillPindle() error {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (s WindDruid) KillNihlathak() error {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (s WindDruid) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
 }

@@ -14,15 +14,16 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 	bc := BaseCharacter{
 		Context: ctx,
 	}
+	characterBuild := CharacterBuild{BaseCharacter: bc}
 
 	if len(ctx.CharacterCfg.Game.Runs) > 0 && ctx.CharacterCfg.Game.Runs[0] == "leveling" {
 		switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
 		case "sorceress_leveling_lightning":
-			return SorceressLevelingLightning{BaseCharacter: bc}, nil
+			return SorceressLevelingLightning{CharacterBuild: characterBuild}, nil
 		case "sorceress_leveling":
-			return SorceressLeveling{BaseCharacter: bc}, nil
+			return SorceressLeveling{CharacterBuild: characterBuild}, nil
 		case "paladin":
-			return PaladinLeveling{BaseCharacter: bc}, nil
+			return PaladinLeveling{CharacterBuild: characterBuild}, nil
 		}
 
 		return nil, fmt.Errorf("leveling only available for sorceress and paladin")
@@ -30,27 +31,27 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 
 	switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
 	case "sorceress":
-		return BlizzardSorceress{BaseCharacter: bc}, nil
+		return BlizzardSorceress{CharacterBuild: characterBuild}, nil
 	case "nova":
-		return NovaSorceress{BaseCharacter: bc}, nil
+		return NovaSorceress{CharacterBuild: characterBuild}, nil
 	case "hydraorb":
-		return HydraOrbSorceress{BaseCharacter: bc}, nil
+		return HydraOrbSorceress{CharacterBuild: characterBuild}, nil
 	case "lightsorc":
-		return LightningSorceress{BaseCharacter: bc}, nil
+		return LightningSorceress{CharacterBuild: characterBuild}, nil
 	case "hammerdin":
-		return Hammerdin{BaseCharacter: bc}, nil
+		return Hammerdin{CharacterBuild: characterBuild}, nil
 	case "foh":
-		return Foh{BaseCharacter: bc}, nil
+		return Foh{CharacterBuild: characterBuild}, nil
 	case "trapsin":
-		return Trapsin{BaseCharacter: bc}, nil
+		return Trapsin{CharacterBuild: characterBuild}, nil
 	case "mosaic":
-		return MosaicSin{BaseCharacter: bc}, nil
+		return MosaicSin{CharacterBuild: characterBuild}, nil
 	case "winddruid":
-		return WindDruid{BaseCharacter: bc}, nil
+		return WindDruid{CharacterBuild: characterBuild}, nil
 	case "javazon":
-		return Javazon{BaseCharacter: bc}, nil
+		return Javazon{CharacterBuild: characterBuild}, nil
 	case "berserker":
-		return &Berserker{BaseCharacter: bc}, nil // Return a pointer to Berserker
+		return &Berserker{CharacterBuild: characterBuild}, nil // Return a pointer to Berserker
 	}
 
 	return nil, fmt.Errorf("class %s not implemented", ctx.CharacterCfg.Character.Class)

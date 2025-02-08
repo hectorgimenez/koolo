@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
-	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -22,7 +21,7 @@ const (
 )
 
 type Javazon struct {
-	BaseCharacter
+	CharacterBuild
 }
 
 func (s Javazon) CheckKeyBindings() []skill.ID {
@@ -159,26 +158,6 @@ func (s Javazon) PreCTABuffSkills() []skill.ID {
 	}
 }
 
-func (s Javazon) BuffSkills() []skill.ID {
-	return []skill.ID{}
-}
-
-func (s Javazon) KillCountess() error {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
-}
-
-func (s Javazon) KillAndariel() error {
-	return s.killBoss(npc.Andariel, data.MonsterTypeUnique)
-}
-
-func (s Javazon) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
-}
-
-func (s Javazon) KillDuriel() error {
-	return s.killBoss(npc.Duriel, data.MonsterTypeUnique)
-}
-
 func (s Javazon) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		// Exclude monsters that are not council members
@@ -203,54 +182,4 @@ func (s Javazon) KillCouncil() error {
 
 		return 0, false
 	}, nil)
-}
-
-func (s Javazon) KillMephisto() error {
-	return s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
-}
-
-func (s Javazon) KillIzual() error {
-	return s.killBoss(npc.Izual, data.MonsterTypeUnique)
-}
-
-func (s Javazon) KillDiablo() error {
-	timeout := time.Second * 20
-	startTime := time.Now()
-	diabloFound := false
-
-	for {
-		if time.Since(startTime) > timeout && !diabloFound {
-			s.Logger.Error("Diablo was not found, timeout reached")
-			return nil
-		}
-
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
-			// Already dead
-			if diabloFound {
-				return nil
-			}
-
-			// Keep waiting...
-			time.Sleep(200)
-			continue
-		}
-
-		diabloFound = true
-		s.Logger.Info("Diablo detected, attacking")
-
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
-	}
-}
-
-func (s Javazon) KillPindle() error {
-	return s.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
-}
-
-func (s Javazon) KillNihlathak() error {
-	return s.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
-}
-
-func (s Javazon) KillBaal() error {
-	return s.killBoss(npc.BaalCrab, data.MonsterTypeUnique)
 }
