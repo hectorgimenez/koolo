@@ -57,7 +57,7 @@ var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
 func EnsureStatPoints() error {
-	// This function will allocate stat points to the character based on the settings in the character configuration file, and in that order.
+	// This function will allocate stat points to the character based on the settings in the character configuration file.
 
 	ctx := context.Get()
 	ctx.SetLastAction("EnsureStatPoints")
@@ -70,7 +70,7 @@ func EnsureStatPoints() error {
 
 		settingsStatPoints := ch.StatPoints() // complete list of statpoints to be leveled per character settings
 
-		// This section sorts the settingsStatPoints map in the order set by the character config files. Go iterates over maps in a random order, so this is necessary.
+		// This section sorts the settingsStatPoints map in the order set by the character config files. Go iterates over maps in a random order, so this is necessary to avoid random ordering.
 		// Collect stats from the map
 		sortedStats := make([]stat.ID, 0, len(settingsStatPoints))
 		for st := range settingsStatPoints {
@@ -82,18 +82,13 @@ func EnsureStatPoints() error {
 			return sortedStats[i] < sortedStats[j]
 		})
 
-		// Iterate over the sorted stats, then allocate the stat points in the order of STR, ENERGY, DEX, VIT
-		i := 0                               // this is the index for the sortedStats slice, which will iterate from 0 upwards to return the stat ID in the order of STR, ENERGY, DEX, VIT
 		unusedStats := findUnusedStats.Value // This has to be outside the for loops, so that is can be reduced for each stat that is allocated within the 2 for loops below, without resetting for each stat.
 
-		for _, points := range sortedStats {
-
-			targetPoints, found := settingsStatPoints[points]
-			if !found {
-				continue
-			}
-
+		// this runs through only the included stats from the character config files, in the order STR, ENG, DEX, VIT per d2go definitions
+		for i := range sortedStats {
+			targetPoints := settingsStatPoints[sortedStats[i]]
 			currentPoints, _ := ctx.Data.PlayerUnit.FindStat(sortedStats[i], 0)
+
 			if currentPoints.Value >= targetPoints {
 				continue
 			}
@@ -119,12 +114,11 @@ func EnsureStatPoints() error {
 				ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
 				utils.Sleep(300)
 
-				// reduce the stats to allocate after clicking once
+				// reduce the remaining stats to allocate after clicking
 				unusedStats = unusedStats - 1
 				statsToAllocate = statsToAllocate - 1
 
 			}
-			i = i + 1
 		}
 	}
 
@@ -141,7 +135,6 @@ func EnsureSkillPoints() error {
 		ctx.Logger.Info("Allocating skill points...")
 
 		ctx := context.Get()
-		ch, _ := ctx.Char.(context.LevelingCharacter) //// REMOVE?
 		lvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0)
 		settingsSkillPoints := ch.SkillPoints() // this is a complete list of skills to be leveled per character settings
 
