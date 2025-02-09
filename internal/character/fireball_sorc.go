@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	fireballSorceressMaxAttacksLoop = 20
+	fireballSorceressMaxAttacksLoop = 40
 	fireballSorceressMinDistance    = 8
 	fireballSorceressMaxDistance    = 16
 	fireballSorceressLSMinDistance  = 6
