@@ -34,7 +34,6 @@ func InteractEntrance(targetArea area.ID) error {
 	}
 
 	attempts := 0
-	lastAttempt := time.Now()
 	currentMousePos := data.Position{}
 	hasTriedClick := false
 
@@ -57,11 +56,6 @@ func InteractEntrance(targetArea area.ID) error {
 			return fmt.Errorf("failed to enter area %s after %d attempts", targetArea.Area().Name, maxAttempts)
 		}
 
-		if time.Since(lastAttempt) < 100*time.Millisecond {
-			time.Sleep(50 * time.Millisecond)
-			continue
-		}
-
 		// Move to entrance if needed
 		if err := moveToEntrance(ctx, targetLevel.Position); err != nil {
 			return err
@@ -81,7 +75,6 @@ func InteractEntrance(targetArea area.ID) error {
 		// Handle hovering and interaction. We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
 		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
 			ctx.HID.Click(game.LeftButton, currentMousePos.X, currentMousePos.Y)
-			lastAttempt = time.Now()
 			attempts++
 			continue
 		}

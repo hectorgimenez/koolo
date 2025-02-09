@@ -24,47 +24,50 @@ func ItemSpiral(position int) (int, int) {
 
 // EntranceSpiral calculates spiral pattern specifically for entrances/stairs
 func EntranceSpiral(attempt int, desc entrance.Description) (x, y int) {
-	// Calculate base spiral position using golden angle
+	// Use golden angle for even distribution
 	angle := float64(attempt) * math.Pi * (3.0 - math.Sqrt(5.0))
-	radius := float64(attempt) * 3.0
 
-	// Get entrance dimensions, defaulting to reasonable values if unspecified
-	width := 80.0
-	height := 100.0
-	if desc.SelectDX > 0 {
-		width = float64(desc.SelectDX)
-	}
-	if desc.SelectDY > 0 {
-		height = float64(desc.SelectDY)
-	}
+	// Start with a smaller radius and gradually increase
+	// Using exponential growth for better early coverage
+	baseRadius := math.Pow(1.2, float64(attempt)) * 2.0
 
-	// Calculate scaled x,y coordinates
-	x = int(radius * math.Cos(angle) * (width / 100.0))
-	y = int(radius * math.Sin(angle) * (height / 100.0))
+	// Calculate base spiral position
+	x = int(baseRadius * math.Cos(angle))
+	y = int(baseRadius * math.Sin(angle))
+
+	// Scale based on entrance dimensions, preserving aspect ratio
+	if desc.SelectDX > 0 && desc.SelectDY > 0 {
+		aspectRatio := float64(desc.SelectDY) / float64(desc.SelectDX)
+		y = int(float64(y) * aspectRatio)
+	}
 
 	// Apply entrance offsets
 	x += desc.SelectX
 	y += desc.SelectY
 
-	// Directional adjustments
+	// Apply directional adjustments
 	switch desc.Direction {
 	case "l":
-		x -= 10
+		x -= 15
 	case "r":
-		x += 10
+		x += 15
 	case "b":
-		y += 10
+		y += 15
 	}
 
-	// Clamp values to entrance bounds
-	if width > 0 {
-		maxX := int(width / 2)
+	// Respect entrance bounds
+	if desc.SelectDX > 0 {
+		maxX := desc.SelectDX / 2
 		x = Clamp(x, -maxX, maxX)
 	}
-	if height > 0 {
-		maxY := int(height / 2)
+	if desc.SelectDY > 0 {
+		maxY := desc.SelectDY / 2
 		y = Clamp(y, -maxY, maxY)
 	}
+
+	// Apply offset corrections from descriptor
+	x += desc.OffsetX
+	y += desc.OffsetY
 
 	return x, y
 }
