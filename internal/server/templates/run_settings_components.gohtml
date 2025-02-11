@@ -16,6 +16,7 @@
 {{ define "cows" }}
     <fieldset>
         <label><input type="checkbox" name="gameCowsOpenChests" {{ if .Config.Game.Cows.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameKillRakanishu" {{ if .Config.Game.Cows.KillRakanishu }}checked{{ end }}> Kill Rakanishu</label>
     </fieldset>
 {{ end }}
 
