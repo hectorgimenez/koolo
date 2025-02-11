@@ -5,18 +5,32 @@ import (
 	"log/slog"
 	"slices"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
+
+var maxWPDistanceFromCharacter = 45
 
 func WayPoint(dest area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("WayPoint")
 
-	if !ctx.Data.PlayerUnit.Area.IsTown() {
+	//check if wp is close in current area
+	var closeWP []data.Object
+	for _, o := range ctx.Data.Objects {
+		if o.IsWaypoint() {
+			if isWPWithinMaxDistance(o, ctx.Data.PlayerUnit.Position) {
+				closeWP = append(closeWP, o)
+			}
+		}
+	}
+
+	if !ctx.Data.PlayerUnit.Area.IsTown() && len(closeWP) == 0 {
 		if err := ReturnTown(); err != nil {
 			return err
 		}
@@ -48,7 +62,13 @@ func WayPoint(dest area.ID) error {
 				actTabX := ui.WpTabStartX + (wpCoords.Tab-1)*ui.WpTabSizeX + (ui.WpTabSizeX / 2)
 				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
 			}
-			utils.Sleep(200)
+			// Keep existing in town sleep option
+			if ctx.Data.PlayerUnit.Area.IsTown() {
+				utils.Sleep(200)
+			} else {
+				// Longer sleep needed outside of town for loading
+				utils.Sleep(500)
+			}
 			// Just to make sure no message like TZ change or public game spam prevent bot from clicking on waypoint
 			ClearMessages()
 		}
@@ -130,4 +150,9 @@ func useWP(dest area.ID) error {
 	}
 
 	return nil
+}
+
+func isWPWithinMaxDistance(wp data.Object, playerPosition data.Position) bool {
+	distance := pather.DistanceFromPoint(wp.Position, playerPosition)
+	return distance <= maxWPDistanceFromCharacter
 }
