@@ -5,7 +5,7 @@
 
 ---
 
-Koolo is a small bot for Diablo II: Resurrected (Expension). Koolo project was built for informational and educational purposes
+Koolo is a small bot for Diablo II: Resurrected (Expansion). Koolo project was built for informational and educational purposes
 only, it's not intended for online usage. Feel free to contribute opening pull requests with new features or bugfixes.
 Koolo reads game memory and interacts with the game injecting clicks/keystrokes to the game window. As good as it can.
 
