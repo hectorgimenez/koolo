@@ -141,11 +141,8 @@ func MoveToArea(dst area.ID) error {
 		for attempt := 0; attempt < maxAttempts; attempt++ {
 			// Check current distance
 			currentDistance := ctx.PathFinder.DistanceFromMe(lvl.Position)
-
-			if currentDistance > 7 {
-				// For distances > 7, recursively call MoveToArea as it includes the entrance interaction
-				return MoveToArea(dst)
-			} else if currentDistance > 3 && currentDistance <= 7 {
+			ctx.Logger.Debug("Distance from entrance:", slog.Int("currentDistance", currentDistance), slog.Any("dst", dst), slog.Any("lvl", lvl))
+			if currentDistance > 3 && currentDistance <= 7 {
 				// For distances between 4 and 7, use direct click
 				screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(
 					lvl.Position.X-2,
@@ -153,7 +150,16 @@ func MoveToArea(dst area.ID) error {
 				)
 				ctx.HID.Click(game.LeftButton, screenX, screenY)
 				utils.Sleep(800)
+			} else if currentDistance > 7 {
+				// For distances > 7, recursively call MoveToArea as it includes the entrance interaction
+				return MoveToArea(dst)
 			}
+
+			// We're close enough
+			// Fix to be able to enter all kinds of holes and trap doors
+			x, y := ctx.PathFinder.GameCoordsToScreenCords(lvl.Position.X, lvl.Position.Y)
+			ctx.HID.Click(game.LeftButton, x, y)
+			utils.Sleep(500)
 
 			// Try to interact with the entrance
 			err = step.InteractEntrance(dst)
@@ -165,6 +171,7 @@ func MoveToArea(dst area.ID) error {
 				ctx.Logger.Debug("Entrance interaction failed, retrying",
 					slog.Int("attempt", attempt+1),
 					slog.String("error", err.Error()))
+
 				utils.Sleep(1000)
 			}
 		}
