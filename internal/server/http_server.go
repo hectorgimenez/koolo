@@ -921,6 +921,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			}
 			cfg.Game.Diablo.AttackFromDistance = attackFromDistance
 		}
+		cfg.Game.Diablo.SealPop = r.Form.Has("gameDiabloSealPop")
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 
