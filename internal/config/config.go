@@ -250,7 +250,6 @@ type CharacterCfg struct {
 		NoMpPotions     bool `yaml:"noMpPotions"`
 		MercDied        bool `yaml:"mercDied"`
 		EquipmentBroken bool `yaml:"equipmentBroken"`
-		NoKeys          bool `yaml:"noKeys"`
 	} `yaml:"backtotown"`
 	Runtime struct {
 		Rules nip.Rules   `yaml:"-"`
