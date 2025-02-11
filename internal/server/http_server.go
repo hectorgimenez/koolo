@@ -978,7 +978,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.BackToTown.NoMpPotions = r.Form.Has("noMpPotions")
 		cfg.BackToTown.MercDied = r.Form.Has("mercDied")
 		cfg.BackToTown.EquipmentBroken = r.Form.Has("equipmentBroken")
-		cfg.BackToTown.NoKeys = r.Form.Has("noKeys")
 
 		config.SaveSupervisorConfig(supervisorName, cfg)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
