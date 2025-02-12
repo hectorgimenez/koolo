@@ -31,6 +31,8 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 	switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
 	case "sorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
+	case "fireballsorc":
+		return FireballSorceress{BaseCharacter: bc}, nil
 	case "nova":
 		return NovaSorceress{BaseCharacter: bc}, nil
 	case "hydraorb":
