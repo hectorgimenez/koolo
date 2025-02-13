@@ -2,7 +2,9 @@ package pather
 
 import (
 	"fmt"
+	"math"
 	"sync"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -12,41 +14,88 @@ import (
 type Path []data.Position
 
 var (
-	// Path cache with LRU eviction policy
-	pathCache    = make(map[string]Path)
+	// Spatial grid size for position normalization (5x5 tiles)
+	gridSize = 5
+	
+	// Cache with timestamp-based eviction
+	pathCache    = make(map[string]cacheEntry)
 	cacheOrder   []string          // Maintains access order for LRU eviction
 	cacheLock    sync.RWMutex      // Protects concurrent access to cache
-	maxCacheSize = 100             // Maximum number of paths to cache
+	maxCacheSize = 500             // Maximum number of paths to cache (increased from 100 for adaptive eviction)
 )
 
-// Generates unique cache key based on positions and area
-func cacheKey(from, to data.Position, area area.ID) string {
-	return fmt.Sprintf("%d:%d:%d:%d:%d", from.X, from.Y, to.X, to.Y, area)
+type cacheEntry struct {
+	path     Path
+	lastUsed int64 // Unix nano timestamp
 }
 
-// Retrieves cached path if exists, with read lock
-func getCachedPath(from, to data.Position, area area.ID) (Path, bool) {
-	key := cacheKey(from, to, area)
+// Generates normalized cache key using spatial partitioning
+func cacheKey(from, to data.Position, area area.ID, teleport bool) string {
+	// Quantize positions to grid cells to group similar paths
+	normFromX := (from.X / gridSize) * gridSize
+	normFromY := (from.Y / gridSize) * gridSize
+	normToX := (to.X / gridSize) * gridSize
+	normToY := (to.Y / gridSize) * gridSize
+	
+	return fmt.Sprintf("%d:%d:%d:%d:%d:%t", 
+		normFromX, normFromY, 
+		normToX, normToY, 
+		area, teleport)
+}
+
+// Retrieves cached path with reverse path check
+func getCachedPath(from, to data.Position, area area.ID, teleport bool) (Path, bool) {
+	key := cacheKey(from, to, area, teleport)
+	
 	cacheLock.RLock()
 	defer cacheLock.RUnlock()
-	return pathCache[key], pathCache[key] != nil
+	
+	// Check direct path
+	if entry, exists := pathCache[key]; exists {
+		return entry.path, true
+	}
+	
+	// Check reverse path
+	reverseKey := cacheKey(to, from, area, teleport)
+	if entry, exists := pathCache[reverseKey]; exists {
+		// Return reversed path if available
+		reversed := make(Path, len(entry.path))
+		for i, p := range entry.path {
+			reversed[len(entry.path)-1-i] = p
+		}
+		return reversed, true
+	}
+	
+	return nil, false
 }
 
-// Stores path in cache with write lock, evicts oldest entry if cache full
-func cachePath(from, to data.Position, area area.ID, path Path) {
-	key := cacheKey(from, to, area)
+// Stores path with usage timestamp
+func cachePath(from, to data.Position, area area.ID, teleport bool, path Path) {
+	key := cacheKey(from, to, area, teleport)
+	
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
-
-	// LRU eviction logic
-	if len(pathCache) >= maxCacheSize {
-		evictKey := cacheOrder[len(cacheOrder)-1]
-		delete(pathCache, evictKey)
-		cacheOrder = cacheOrder[:len(cacheOrder)-1]
+	
+	// Update existing entry or create new
+	pathCache[key] = cacheEntry{
+		path:     path,
+		lastUsed: time.Now().UnixNano(),
 	}
-
-	pathCache[key] = path
-	cacheOrder = append([]string{key}, cacheOrder...)
+	
+	// Adaptive eviction when exceeding capacity
+	if len(pathCache) >= maxCacheSize { // LRU eviction logic
+		var oldestKey string
+		var oldestTime int64 = math.MaxInt64
+		
+		// Find least recently used entry
+		for k, v := range pathCache {
+			if v.lastUsed < oldestTime {
+				oldestTime = v.lastUsed
+				oldestKey = k
+			}
+		}
+		delete(pathCache, oldestKey)
+	}
 }
 
 // Return the ending position of the path
@@ -71,7 +120,7 @@ func (p Path) From() data.Position {
 	}
 }
 
-// Intersects checks if the given position intersects with the path, padding parameter is used to increase the area
+// Intersects checks if the given position intersects with the path
 func (p Path) Intersects(d game.Data, position data.Position, padding int) bool {
 	position = data.Position{
 		X: position.X - d.AreaOrigin.X,
