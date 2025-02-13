@@ -39,7 +39,7 @@ type Node struct {
 }
 
 // Find the shortest path between two points using A* algorithm with optimizations for specific game areas
-func CalculatePath(g *game.Grid, areaID area.ID, start, goal data.Position) ([]data.Position, int, bool) {
+func CalculatePath(g *game.Grid, areaID area.ID, start, goal data.Position, teleport bool) ([]data.Position, int, bool) {
 	pq := make(PriorityQueue, 0)
 	heap.Init(&pq)
 
