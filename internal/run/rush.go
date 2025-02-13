@@ -1437,7 +1437,10 @@ func (a Rush) finishAct5Quest() error {
 		return err
 	}
 
-	err = action.MoveToCoords(tpPosition)
+	err = action.MoveToCoords(data.Position{
+		X: 15116,
+		Y: 5071,
+	})
 	if err != nil {
 		return err
 	}
