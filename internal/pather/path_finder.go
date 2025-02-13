@@ -20,6 +20,7 @@ type PathFinder struct {
 	gridLock     sync.Mutex    // Protects grid state from concurrent access
 	lastGrid     *game.Grid    // Cache last processed grid
 	lastGridArea area.ID       // Track area for grid cache validation
+	lastTeleport bool // Track last teleport state for cache validation
 }
 
 func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *config.CharacterCfg) *PathFinder {
@@ -34,44 +35,47 @@ func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *c
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	currentPos := pf.data.PlayerUnit.Position
 	currentArea := pf.data.PlayerUnit.Area
+	teleportEnabled := pf.data.CanTeleport()
 
-	// Check cache first for existing paths
-	if path, found := getCachedPath(currentPos, to, currentArea); found {
+	// Check cache with teleport status
+	if path, found := getCachedPath(currentPos, to, currentArea, teleportEnabled); found {
 		return path, len(path), true
 	}
 
-	// Calculate new path and cache it if found
+	// Calculate and cache new path
 	path, distance, found := pf.GetPathFrom(currentPos, to)
 	if found {
-		cachePath(currentPos, to, currentArea, path)
+		cachePath(currentPos, to, currentArea, teleportEnabled, path)
 	}
 	return path, distance, found
 }
 
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
-
+	
+	teleportEnabled := pf.data.CanTeleport()
 	pf.gridLock.Lock()
 	defer pf.gridLock.Unlock()
 
-	// Use cached grid if available and still valid
+	// Regenerate grid if teleport status changed
 	var grid *game.Grid
-	if pf.lastGrid != nil && pf.lastGridArea == a.Area {
+	if pf.lastGrid != nil && pf.lastGridArea == a.Area && pf.lastTeleport == teleportEnabled {
 		grid = pf.lastGrid
 	} else {
 		grid = a.Grid.Copy()
-		pf.preprocessGrid(grid)
+		pf.preprocessGrid(grid, teleportEnabled)
 		pf.lastGrid = grid
 		pf.lastGridArea = a.Area
+		pf.lastTeleport = teleportEnabled
 	}
 
-	// Handle cross-area pathing by merging grids
+	// Handle cross-area pathing using grids & teleport status
 	if !a.IsInside(to) {
 		expandedGrid, err := pf.mergeGrids(to)
 		if err != nil {
 			return nil, 0, false
 		}
-		pf.preprocessGrid(expandedGrid)
+		pf.preprocessGrid(expandedGrid, teleportEnabled)
 		grid = expandedGrid
 		pf.lastGrid = grid
 		pf.lastGridArea = a.Area
@@ -86,7 +90,7 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 		return nil, 0, false
 	}
 
-	path, _, found := astar.CalculatePath(grid, a.Area, from, to)
+	path, _, found := astar.CalculatePath(grid, a.Area, from, to, teleportEnabled)
 
 	if config.Koolo.Debug.RenderMap {
 		pf.renderMap(grid, from, to, path)
@@ -95,73 +99,76 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	return path, len(path), found
 }
 
-func (pf *PathFinder) preprocessGrid(grid *game.Grid) {
-    a := pf.data.AreaData
-	// Special handling for Arcane Sanctuary (allow teleport pathing over voids)
-    if a.Area == area.ArcaneSanctuary && pf.data.CanTeleport() {
-		// Make all non-walkable tiles into low priority tiles for teleport pathing
-        for y := 0; y < len(grid.CollisionGrid); y++ {
-            for x := 0; x < len(grid.CollisionGrid[y]); x++ {
-                if grid.CollisionGrid[y][x] == game.CollisionTypeNonWalkable {
-                    grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
-                }
-            }
-        }
-    }
+// Enhanced grid preprocessing with teleport optimizations
+func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
+	a := pf.data.AreaData
 
-	// Fix for broken path in Lut Gholein
-    if a.Area == area.LutGholein {
-        grid.CollisionGrid[13][210] = game.CollisionTypeNonWalkable
-    }
+	// Teleport pathing optimizations
+	if teleportEnabled {
+		for y := 0; y < len(grid.CollisionGrid); y++ {
+			for x := 0; x < len(grid.CollisionGrid[y]); x++ {
+				switch grid.CollisionGrid[y][x] {
 
-	// Add objects to the collision grid as obstacles
-    for _, o := range pf.data.AreaData.Objects {
-        // Enhanced Hidden Stash handling with 5x5 collision blocking
-        if string(o.Name) == "hidden stash" {
-            relativePos := grid.RelativePosition(o.Position)
-            // Block 5x5 area around stashes
-            for dy := -2; dy <= 2; dy++ {
-                for dx := -2; dx <= 2; dx++ {
-                    y := relativePos.Y + dy
-                    x := relativePos.X + dx
-                    if y >= 0 && y < len(grid.CollisionGrid) && 
-                       x >= 0 && x < len(grid.CollisionGrid[y]) {
-                        grid.CollisionGrid[y][x] = game.CollisionTypeNonWalkable
-                    }
-                }
-            }
-            continue
-        }
+				case game.CollisionTypeNonWalkable:
+					// Allow teleport through non-walkable areas with higher cost
+					grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
+				case game.CollisionTypeObject:
+					// Reduce object collision penalty for teleport
+					grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
+				}
+			}
+		}
+	}
 
-        // Existing object handling
-        if !grid.IsWalkable(o.Position) {
-            continue
-        }
-        relativePos := grid.RelativePosition(o.Position)
-		// Mark object position and create low priority area around it
-        grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeObject
-        for i := -2; i <= 2; i++ {
-            for j := -2; j <= 2; j++ {
-                if i == 0 && j == 0 || relativePos.Y+i < 0 || 
-                   relativePos.Y+i >= len(grid.CollisionGrid) || 
-                   relativePos.X+j < 0 || relativePos.X+j >= len(grid.CollisionGrid[relativePos.Y]) {
-                    continue
-                }
-                if grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] == game.CollisionTypeWalkable {
-                    grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] = game.CollisionTypeLowPriority
-                }
-            }
-        }
-    }
+	// Special area handling
+	if a.Area == area.LutGholein {
+		grid.CollisionGrid[13][210] = game.CollisionTypeNonWalkable
+	}
 
-    // Add monsters to the collision grid as high-cost obstacles
-    for _, m := range pf.data.Monsters {
-        if !grid.IsWalkable(m.Position) {
-            continue
-        }
-        relativePos := grid.RelativePosition(m.Position)
-        grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
-    }
+	// Dynamic obstacle handling
+	for _, o := range pf.data.AreaData.Objects {
+		if string(o.Name) == "hidden stash" {
+			relativePos := grid.RelativePosition(o.Position)
+			for dy := -2; dy <= 2; dy++ {
+				for dx := -2; dx <= 2; dx++ {
+					y := relativePos.Y + dy
+					x := relativePos.X + dx
+					if y >= 0 && y < len(grid.CollisionGrid) && x >= 0 && x < len(grid.CollisionGrid[y]) {
+						grid.CollisionGrid[y][x] = game.CollisionTypeNonWalkable
+					}
+				}
+			}
+			continue
+		}
+
+		if !grid.IsWalkable(o.Position) {
+			continue
+		}
+
+		relativePos := grid.RelativePosition(o.Position)
+		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeObject
+		for i := -2; i <= 2; i++ {
+			for j := -2; j <= 2; j++ {
+				if i == 0 && j == 0 || relativePos.Y+i < 0 || 
+				   relativePos.Y+i >= len(grid.CollisionGrid) || 
+				   relativePos.X+j < 0 || relativePos.X+j >= len(grid.CollisionGrid[relativePos.Y]) {
+					continue
+				}
+				if grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] == game.CollisionTypeWalkable {
+					grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] = game.CollisionTypeLowPriority
+				}
+			}
+		}
+	}
+
+	for _, m := range pf.data.Monsters {
+		if !grid.IsWalkable(m.Position) {
+			continue
+		}
+		relativePos := grid.RelativePosition(m.Position)
+		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
+	}
+
 }
 
 // Combine adjacent level grids for cross-area pathfinding
@@ -209,6 +216,7 @@ func copyGrid(dest [][]game.CollisionType, src [][]game.CollisionType, offsetX, 
 	}
 }
 
+// Enhanced path recovery with teleport adjustments
 func (pf *PathFinder) GetClosestWalkablePath(dest data.Position) (Path, int, bool) {
 	return pf.GetClosestWalkablePathFrom(pf.data.PlayerUnit.Position, dest)
 }
@@ -216,6 +224,7 @@ func (pf *PathFinder) GetClosestWalkablePath(dest data.Position) (Path, int, boo
 // Find nearest accessible position when direct path is blocked
 func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
+	teleportEnabled := pf.data.CanTeleport()
 	// First try direct path if destination is walkable or outside known area
 	if a.IsWalkable(dest) || !a.IsInside(dest) {
 		path, distance, found := pf.GetPath(dest)
@@ -225,27 +234,39 @@ func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path
 	}
 
 	// Search in expanding squares around target position
-	maxRange := 20
-	step := 4
-	dst := 1
-
-	for dst < maxRange {
+	maxRange := 25
+	step := 5
+	if teleportEnabled {
+		maxRange = 40
+		step = 8
+	}
+	
+	for dst := 1; dst < maxRange; dst += step {
 		for i := -dst; i < dst; i += 1 {
 			for j := -dst; j < dst; j += 1 {
 				// Check perimeter of current search radius
 				if math.Abs(float64(i)) >= math.Abs(float64(dst)) || math.Abs(float64(j)) >= math.Abs(float64(dst)) {
 					cgY := dest.Y - pf.data.AreaOrigin.Y + j
 					cgX := dest.X - pf.data.AreaOrigin.X + i
-					if cgX > 0 && cgY > 0 && a.Height > cgY && a.Width > cgX && a.CollisionGrid[cgY][cgX] == game.CollisionTypeWalkable {
-						return pf.GetPathFrom(from, data.Position{
-							X: dest.X + i,
-							Y: dest.Y + j,
-						})
+					if cgX > 0 && cgY > 0 && a.Height > cgY && a.Width > cgX {
+						collisionType := a.CollisionGrid[cgY][cgX]
+						// Adjust collision checks for teleport
+						if teleportEnabled && collisionType == game.CollisionTypeLowPriority {
+							return pf.GetPathFrom(from, data.Position{
+								X: dest.X + i,
+								Y: dest.Y + j,
+							})
+						}
+						if collisionType == game.CollisionTypeWalkable {
+							return pf.GetPathFrom(from, data.Position{
+								X: dest.X + i,
+								Y: dest.Y + j,
+							})
+						}
 					}
 				}
 			}
 		}
-		dst += step
 	}
 
 	return nil, 0, false
