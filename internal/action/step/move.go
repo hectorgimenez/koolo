@@ -109,6 +109,22 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		var found bool
 		if time.Since(lastPathCheck) > 100*time.Millisecond {
 			path, distance, found = ctx.PathFinder.GetPath(dest)
+			
+			// Attempt progressive teleport steps when path is blocked
+			if !found && ctx.Data.CanTeleport() {
+				if intermediatePath, _, intermediateFound := ctx.PathFinder.GetClosestWalkablePath(dest); intermediateFound {
+					if len(intermediatePath) > 0 {
+						intermediatePos := intermediatePath[len(intermediatePath)-1]
+						if ctx.PathFinder.DistanceFromMe(intermediatePos) < 15 {
+							ctx.Logger.Debug("Taking intermediate teleport step to bypass obstacle")
+							if err := MoveTo(intermediatePos, WithDistanceToFinish(2)); err == nil {
+								continue // Retry original destination after intermediate move
+							}
+						}
+					}
+				}
+			}
+			
 			lastPathCheck = time.Now()
 			cachedPath = path
 			cachedDistance = distance
