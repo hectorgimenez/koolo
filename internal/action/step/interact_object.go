@@ -115,7 +115,7 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 		}
 
 		// Handle hover interaction for portal or red portal
-		if o.IsHovered {
+		if o.ID == ctx.GameReader.GameReader.GetData().HoverData.UnitID {
 			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
 			waitingForInteraction = true
 			interactionAttempts++

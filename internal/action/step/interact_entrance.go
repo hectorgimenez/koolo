@@ -27,6 +27,7 @@ func InteractEntrance(targetArea area.ID) error {
 	if targetLevel == nil {
 		return fmt.Errorf("no entrance found for area %s [%d]", targetArea.Area().Name, targetArea)
 	}
+
 	// link adjacentlvl to entrance unit and return its description ( entrance.desc )
 	desc, found := findEntranceDescriptor(ctx, targetLevel)
 	if !found {
@@ -37,18 +38,39 @@ func InteractEntrance(targetArea area.ID) error {
 	currentMousePos := data.Position{}
 	hasTriedClick := false
 
+	// Initial state setup
+	lastPlayerPos := ctx.Data.PlayerUnit.Position
+	lastArea := ctx.Data.PlayerUnit.Area
+	lastAreaData := ctx.Data.AreaData
+
 	for {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
 
 		// Handle loading screen early
-		if ctx.Data.OpenMenus.LoadingScreen {
+		if ctx.GameReader.GetData().OpenMenus.LoadingScreen {
 			ctx.WaitForGameToLoad()
 			continue
 		}
 
+		// Get minimal required state updates
+		gr := ctx.GameReader.GameReader
+		hover := gr.GetData().HoverData
+
+		// Check current area - only update if loading screen was seen
+		if gr.InGame() {
+			rawPlayerUnits := gr.GetRawPlayerUnits()
+			mainPlayer := rawPlayerUnits.GetMainPlayer()
+			if mainPlayer.Area != lastArea {
+				// Full refresh needed for area transition
+				ctx.RefreshGameData()
+				lastArea = ctx.Data.PlayerUnit.Area
+				lastAreaData = ctx.Data.AreaData
+				lastPlayerPos = ctx.Data.PlayerUnit.Position
+			}
+		}
+
 		// Check if we've reached target area
-		if ctx.Data.AreaData.Area == targetArea && ctx.Data.AreaData.IsInside(ctx.Data.PlayerUnit.Position) {
+		if lastArea == targetArea && lastAreaData.IsInside(lastPlayerPos) {
 			return nil
 		}
 
@@ -73,7 +95,7 @@ func InteractEntrance(targetArea area.ID) error {
 		}
 
 		// Handle hovering and interaction. We also need UnitType 2 here because sometimes entrances like ancient tunnel is both (unittype 2 the trap, unittype 5 to enter area)
-		if ctx.Data.HoverData.UnitType == 5 || (ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered) {
+		if hover.UnitType == 5 || (hover.UnitType == 2 && hover.IsHovered) {
 			ctx.HID.Click(game.LeftButton, currentMousePos.X, currentMousePos.Y)
 			attempts++
 			continue
