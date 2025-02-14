@@ -18,6 +18,7 @@ import (
 const (
 	maxInteractions = 24 // 25 attempts since we start at 0
 	clickDelay      = 25 * time.Millisecond
+	spiralDelay     = 25 * time.Millisecond
 	pickupTimeout   = 3 * time.Second
 )
 
@@ -102,6 +103,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 
 		// Move cursor directly to target position
 		ctx.HID.MovePointer(cursorX, cursorY)
+		time.Sleep(spiralDelay)
 
 		// Click on item if mouse is hovering over
 		if currentItem.UnitID == ctx.GameReader.GameReader.GetData().HoverData.UnitID {
