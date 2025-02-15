@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/nip"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/event"
 )
 
 func itemFitsInventory(i data.Item) bool {
