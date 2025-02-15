@@ -181,6 +181,13 @@ func ItemPickup(maxDistance int) error {
 		// If all attempts failed, blacklist the item
 		if attempt > maxRetries && lastError != nil {
 			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
+			
+			// Screenshot with show items on
+			ctx.HID.KeyDown(ctx.Data.KeyBindings.ShowItems)
+			screenshot := ctx.GameReader.Screenshot()
+			event.Send(event.ItemBlackListed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%s] BlackListed in Area:%s", itemToPickup.Name, itemToPickup.Quality.ToString(), ctx.Data.PlayerUnit.Area.Area().Name), screenshot), data.Drop{Item: itemToPickup}))
+			ctx.HID.KeyUp(ctx.Data.KeyBindings.ShowItems)
+			
 			ctx.Logger.Warn(
 				"Failed picking up item after all attempts, blacklisting it",
 				slog.String("itemName", itemToPickup.Desc().Name),
