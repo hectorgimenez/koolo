@@ -251,30 +251,6 @@ func shouldBePickedUp(i data.Item) bool {
 		return true
 	}
 
-	// Check if we should pick up some keys. The goal is to have 12 keys in total (single stack)
-	if i.Name == "Key" {
-		quantityOnGround := 0
-		st, statFound := i.FindStat(stat.Quantity, 0)
-		if statFound {
-			quantityOnGround = st.Value
-		}
-
-		quantityInInventory := 0
-		for _, item := range ctx.Data.Inventory.AllItems {
-			if item.Name == "Key" {
-				qty, _ := item.FindStat(stat.Quantity, 0)
-				quantityInInventory += qty.Value
-			}
-		}
-
-		// We only want to pick them up if either:
-		// 1. They have the option to return to town enabled or
-		// 2. They already had some keys in inventory, so we just want to get closer to 12
-		if (ctx.CharacterCfg.BackToTown.NoKeys || quantityInInventory > 0) && quantityOnGround+quantityInInventory <= 12 {
-			return true
-		}
-	}
-
 	// Pick up quest items if we're in leveling or questing run
 	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
 	if specialRuns {

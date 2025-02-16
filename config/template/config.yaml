@@ -196,4 +196,3 @@ backtotown:
   noHpPotions: true
   noMpPotions: false
   mercDied: true
-  noKeys: false
