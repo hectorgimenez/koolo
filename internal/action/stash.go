@@ -290,9 +290,23 @@ func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool
 		}
 	}
 
+	dropLocation := "unknown"
+
+	// log the contents of picked up items
+	ctx.Logger.Info(fmt.Sprintf("Picked up items: %v", ctx.CurrentGame.PickedUpItems))
+
+	if _, found := ctx.CurrentGame.PickedUpItems[int(i.UnitID)]; found {
+		areaId := ctx.CurrentGame.PickedUpItems[int(i.UnitID)]
+		dropLocation = area.ID(ctx.CurrentGame.PickedUpItems[int(i.UnitID)]).Area().Name
+
+		if slices.Contains(ctx.Data.TerrorZones, area.ID(areaId)) {
+			dropLocation += " (terrorized)"
+		}
+	}
+
 	// Don't log items that we already have in inventory during first run or that we don't want to notify about (gems, low runes .. etc)
 	if !skipLogging && shouldNotifyAboutStashing(i) && ruleFile != "" {
-		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
+		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile, DropLocation: dropLocation}))
 	}
 
 	return true
