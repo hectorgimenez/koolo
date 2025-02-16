@@ -16,13 +16,13 @@ import (
 )
 
 const (
-	maxInteractions = 24 // 25 attempts since we start at 0
-	clickDelay      = 25 * time.Millisecond
-	spiralDelay     = 25 * time.Millisecond
-	pickupTimeout   = 3 * time.Second
+	clickDelay    = 25 * time.Millisecond
+	spiralDelay   = 25 * time.Millisecond
+	pickupTimeout = 3 * time.Second
 )
 
 var (
+	maxInteractions      = 24 // 25 attempts since we start at 0
 	ErrItemTooFar        = errors.New("item is too far away")
 	ErrNoLOSToItem       = errors.New("no line of sight to item")
 	ErrMonsterAroundItem = errors.New("monsters detected around item")
@@ -42,6 +42,17 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 	// Calculate base screen position for item
 	baseX := it.Position.X - 1
 	baseY := it.Position.Y - 1
+	switch itemPickupAttempt {
+	case 3:
+		baseX = baseX + 1
+	case 4:
+		maxInteractions = 45
+		baseY = baseY + 1
+	case 5:
+		maxInteractions = 45
+		baseX = baseX - 1
+		baseY = baseY - 1
+	}
 	baseScreenX, baseScreenY := ctx.PathFinder.GameCoordsToScreenCords(baseX, baseY)
 
 	// Check for monsters first
