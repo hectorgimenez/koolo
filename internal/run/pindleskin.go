@@ -54,7 +54,7 @@ func (p Pindleskin) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.Buff()
 	_ = action.MoveToCoords(pindleSafePosition)
 
 	return p.ctx.Char.KillPindle()
