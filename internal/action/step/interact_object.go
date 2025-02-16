@@ -2,6 +2,8 @@ package step
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"strings"
 	"time"
 
@@ -95,6 +97,9 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 
 		// If portal is still being created, wait
 		if o.IsPortal() || o.IsRedPortal() {
+			if ctx.CharacterCfg.Game.ClearTPArea {
+				ClearAreaAroundTp(o)
+			}
 			// Detect JustPortaled state and wait for loading screen if it's active
 			if ctx.Data.PlayerUnit.States.HasState(state.JustPortaled) {
 				// Check for loading screen during portal transition
@@ -165,4 +170,28 @@ func InteractObject(obj data.Object, isCompletedFn func() bool) error {
 	}
 
 	return nil
+}
+
+func ClearAreaAroundTp(tp data.Object) {
+	ctx := context.Get()
+
+	for {
+		var filtered []data.Monster
+
+		for _, m := range ctx.Data.Monsters {
+			if !m.IsMerc() && !m.IsSkip() && !m.IsGoodNPC() && !m.IsPet() && m.Stats[stat.Life] > 0 && pather.DistanceFromPoint(m.Position, tp.Position) <= 15 && ctx.Data.AreaData.IsWalkable(m.Position) {
+				filtered = append(filtered, m)
+			}
+		}
+
+		if len(filtered) <= 0 {
+			break
+		}
+
+		for _, m := range filtered {
+			_ = ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				return m.UnitID, true
+			}, nil)
+		}
+	}
 }
