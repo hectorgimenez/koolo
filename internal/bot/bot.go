@@ -40,6 +40,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	// Let's make sure we have updated game data also fully loaded before performing anything
 	b.ctx.WaitForGameToLoad()
+
+	// Cleanup the current game helper structure
+	b.ctx.Cleanup()
+
 	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
