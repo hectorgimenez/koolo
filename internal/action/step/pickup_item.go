@@ -97,7 +97,11 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 		// Check if item still exists
 		currentItem, exists := findItemOnGround(targetItem.UnitID)
 		if !exists {
+
 			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s] | Item Pickup Attempt:%d | Spiral Attempt:%d", targetItem.Desc().Name, targetItem.Quality.ToString(), itemPickupAttempt, spiralAttempt))
+
+			ctx.CurrentGame.PickedUpItems[int(targetItem.UnitID)] = int(ctx.Data.PlayerUnit.Area.Area().ID)
+
 			return nil // Success!
 		}
 
