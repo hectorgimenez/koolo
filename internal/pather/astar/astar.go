@@ -17,7 +17,7 @@ var (
 		{0, -1}, // Up
 		{-1, 0}, // Left
 	}
-	
+
 	// All possible movement directions including diagonals
 	allDirections = []data.Position{
 		{0, 1},   // Down
@@ -74,12 +74,13 @@ func CalculatePath(g *game.Grid, areaID area.ID, start, goal data.Position, tele
 
 		// Early exit if we reach the goal
 		if current.Position == goal {
-			return reconstructPath(cameFrom, start, goal), nodesExplored, true
+			// Validate and smooth path before returning
+			return validateAndSmoothPath(reconstructPath(cameFrom, start, goal)), nodesExplored, true
 		}
 
-		updateNeighbors(g, current, directions, &neighbors)
+		updateNeighbors(g, current, directions, &neighbors, teleport)
 		for _, neighbor := range neighbors {
-			tileCost := getCost(g.CollisionGrid[neighbor.Y][neighbor.X])
+			tileCost := getCost(g.CollisionGrid[neighbor.Y][neighbor.X], teleport)
 			if tileCost == math.MaxInt32 {
 				continue // Skip completely blocked tiles
 			}
@@ -106,33 +107,72 @@ func reconstructPath(cameFrom [][]data.Position, start, goal data.Position) []da
 	return append([]data.Position{start}, path...)
 }
 
+// validateAndSmoothPath ensures teleport paths skip unwalkable middle nodes
+func validateAndSmoothPath(path []data.Position) []data.Position {
+	if len(path) < 3 {
+		return path
+	}
+
+	smoothed := make([]data.Position, 0, len(path))
+	smoothed = append(smoothed, path[0])
+
+	// Remove unnecessary intermediate nodes that can be skipped
+	for i := 1; i < len(path)-1; i++ {
+		if canSkipNode(path[i-1], path[i+1]) {
+			continue
+		}
+		smoothed = append(smoothed, path[i])
+	}
+
+	smoothed = append(smoothed, path[len(path)-1])
+	return smoothed
+}
+
+// canSkipNode checks if two nodes are adjacent enough to skip intermediate nodes
+func canSkipNode(prev, next data.Position) bool {
+	dx := abs(next.X - prev.X)
+	dy := abs(next.Y - prev.Y)
+	return dx <= 1 && dy <= 1
+}
+
 // Find valid adjacent nodes considering collision detection
-func updateNeighbors(grid *game.Grid, node *Node, directions []data.Position, neighbors *[]data.Position) {
+func updateNeighbors(grid *game.Grid, node *Node, directions []data.Position, neighbors *[]data.Position, teleport bool) {
 	*neighbors = (*neighbors)[:0]
 	x, y := node.X, node.Y
 
+	// Check all possible directions for valid neighbors
 	for _, d := range directions {
 		newX, newY := x+d.X, y+d.Y
 		if newX >= 0 && newX < grid.Width && newY >= 0 && newY < grid.Height {
 			tileType := grid.CollisionGrid[newY][newX]
-			if tileType == game.CollisionTypeNonWalkable {
-				continue // Skip non-walkable tiles
+			// Include non-walkable nodes when teleporting
+			if !teleport && tileType == game.CollisionTypeNonWalkable {
+				continue // Skip non-walkable tiles when not teleporting
 			}
 			*neighbors = append(*neighbors, data.Position{X: newX, Y: newY})
 		}
 	}
 }
 
-// Define movement cost for different collision types
+// Define movement cost for different collision types with teleport consideration
 var tileCost = map[game.CollisionType]int{
-	game.CollisionTypeWalkable:    1,  // Walkable
-	game.CollisionTypeMonster:     16, 
-	game.CollisionTypeObject:      4,  // Soft blocker
-	game.CollisionTypeLowPriority: 20,
+	game.CollisionTypeWalkable:    1,             // Walkable
+	game.CollisionTypeMonster:     16,            // Monster blocking penalty
+	game.CollisionTypeObject:      4,             // Soft blocker (barrels, etc)
+	game.CollisionTypeLowPriority: 20,            // Preferred walkable areas
 	game.CollisionTypeNonWalkable: math.MaxInt32, // Completely block non-walkable
 }
 
-func getCost(tileType game.CollisionType) int {
+// getCost returns movement cost for tile type with teleport adjustments
+func getCost(tileType game.CollisionType, teleport bool) int {
+	if teleport {
+		switch tileType {
+		case game.CollisionTypeNonWalkable:
+			return 20 // Reduced cost for teleport through walls
+		case game.CollisionTypeObject:
+			return 10 // Lower penalty for objects when teleporting
+		}
+	}
 	return tileCost[tileType]
 }
 
@@ -153,7 +193,8 @@ func abs(x int) int {
 // Identify areas that require restricted movement directions to prevent pathfinding issues in tight spaces
 func IsNarrowMap(a area.ID) bool {
 	switch a {
-	case area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3,
+	case area.TowerCellarLevel4,
+		area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3,
 		area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame,
 		area.ChaosSanctuary:
 		return true
