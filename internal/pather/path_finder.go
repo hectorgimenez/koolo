@@ -17,10 +17,10 @@ type PathFinder struct {
 	data         *game.Data
 	hid          *game.HID
 	cfg          *config.CharacterCfg
-	gridLock     sync.Mutex    // Protects grid state from concurrent access
-	lastGrid     *game.Grid    // Cache last processed grid
-	lastGridArea area.ID       // Track area for grid cache validation
-	lastTeleport bool // Track last teleport state for cache validation
+	gridLock     sync.Mutex // Protects grid state from concurrent access
+	lastGrid     *game.Grid // Cache last processed grid
+	lastGridArea area.ID    // Track area for grid cache validation
+	lastTeleport bool       // Track last teleport state for cache validation
 }
 
 func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *config.CharacterCfg) *PathFinder {
@@ -52,7 +52,7 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
-	
+
 	teleportEnabled := pf.data.CanTeleport()
 	pf.gridLock.Lock()
 	defer pf.gridLock.Unlock()
@@ -104,21 +104,17 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 	a := pf.data.AreaData
 
 	// Teleport pathing optimizations
-	if teleportEnabled {
-		for y := 0; y < len(grid.CollisionGrid); y++ {
-			for x := 0; x < len(grid.CollisionGrid[y]); x++ {
-				switch grid.CollisionGrid[y][x] {
-
-				case game.CollisionTypeNonWalkable:
-					// Allow teleport through non-walkable areas with higher cost
-					grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
-				case game.CollisionTypeObject:
-					// Reduce object collision penalty for teleport
-					grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
-				}
-			}
-		}
-	}
+	// if teleportEnabled {
+	// 	for y := 0; y < len(grid.CollisionGrid); y++ {
+	// 		for x := 0; x < len(grid.CollisionGrid[y]); x++ {
+	// 			// Only allow low priority for objects, keep walls blocked
+	// 			switch grid.CollisionGrid[y][x] {
+	// 			case game.CollisionTypeObject:
+	// 				grid.CollisionGrid[y][x] = game.CollisionTypeLowPriority
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	// Special area handling
 	if a.Area == area.LutGholein {
@@ -127,7 +123,7 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 
 	// Dynamic obstacle handling
 	for _, o := range pf.data.AreaData.Objects {
-		if string(o.Name) == "hidden stash" {
+		if o.IsChest() {
 			relativePos := grid.RelativePosition(o.Position)
 			for dy := -2; dy <= 2; dy++ {
 				for dx := -2; dx <= 2; dx++ {
@@ -149,9 +145,9 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeObject
 		for i := -2; i <= 2; i++ {
 			for j := -2; j <= 2; j++ {
-				if i == 0 && j == 0 || relativePos.Y+i < 0 || 
-				   relativePos.Y+i >= len(grid.CollisionGrid) || 
-				   relativePos.X+j < 0 || relativePos.X+j >= len(grid.CollisionGrid[relativePos.Y]) {
+				if i == 0 && j == 0 || relativePos.Y+i < 0 ||
+					relativePos.Y+i >= len(grid.CollisionGrid) ||
+					relativePos.X+j < 0 || relativePos.X+j >= len(grid.CollisionGrid[relativePos.Y]) {
 					continue
 				}
 				if grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] == game.CollisionTypeWalkable {
@@ -240,7 +236,7 @@ func (pf *PathFinder) GetClosestWalkablePathFrom(from, dest data.Position) (Path
 		maxRange = 40
 		step = 8
 	}
-	
+
 	for dst := 1; dst < maxRange; dst += step {
 		for i := -dst; i < dst; i += 1 {
 			for j := -dst; j < dst; j += 1 {
