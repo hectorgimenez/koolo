@@ -193,7 +193,7 @@ func abs(x int) int {
 // Identify areas that require restricted movement directions to prevent pathfinding issues in tight spaces
 func IsNarrowMap(a area.ID) bool {
 	switch a {
-	case area.TowerCellarLevel4,
+	case area.TowerCellarLevel2, area.TowerCellarLevel3, area.TowerCellarLevel4,
 		area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3,
 		area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame,
 		area.ChaosSanctuary:
