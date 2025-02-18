@@ -2,6 +2,7 @@ package astar
 
 import (
 	"container/heap"
+	"log"
 	"math"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -40,6 +41,11 @@ type Node struct {
 
 // Find the shortest path between two points using A* algorithm with optimizations for specific game areas
 func CalculatePath(g *game.Grid, areaID area.ID, start, goal data.Position, teleport bool) ([]data.Position, int, bool) {
+	log.Printf("DEBUG: A* calculation start from %d:%d to %d:%d in area %d",
+		start.X, start.Y,
+		goal.X, goal.Y,
+		areaID,
+	)
 	pq := make(PriorityQueue, 0)
 	heap.Init(&pq)
 
