@@ -2,6 +2,7 @@ package pather
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"sync"
 
@@ -39,12 +40,14 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 
 	// Check cache with teleport status
 	if path, found := getCachedPath(currentPos, to, currentArea, teleportEnabled); found {
+		log.Printf("DEBUG: Using cached path from %v to %v", currentPos, to)
 		return path, len(path), true
 	}
 
 	// Calculate and cache new path
 	path, distance, found := pf.GetPathFrom(currentPos, to)
 	if found {
+		log.Printf("DEBUG: Caching new path from %v to %v (length: %d)", currentPos, to, len(path))
 		cachePath(currentPos, to, currentArea, teleportEnabled, path)
 	}
 	return path, distance, found
@@ -60,8 +63,10 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	// Regenerate grid if teleport status changed
 	var grid *game.Grid
 	if pf.lastGrid != nil && pf.lastGridArea == a.Area && pf.lastTeleport == teleportEnabled {
+		log.Printf("DEBUG: Using cached grid for area %d (teleport: %t)", a.Area, teleportEnabled)
 		grid = pf.lastGrid
 	} else {
+		log.Printf("DEBUG: Regenerating grid for area %d (teleport: %t)", a.Area, teleportEnabled)
 		grid = a.Grid.Copy()
 		pf.preprocessGrid(grid, teleportEnabled)
 		pf.lastGrid = grid
@@ -71,8 +76,10 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 
 	// Handle cross-area pathing using grids & teleport status
 	if !a.IsInside(to) {
+		log.Printf("DEBUG: Handling cross-area pathing to %v", to)
 		expandedGrid, err := pf.mergeGrids(to)
 		if err != nil {
+			log.Printf("ERROR: Failed to merge grids: %v", err)
 			return nil, 0, false
 		}
 		pf.preprocessGrid(expandedGrid, teleportEnabled)
@@ -87,10 +94,12 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	// Validate positions are within grid bounds
 	if from.X < 0 || from.X >= grid.Width || from.Y < 0 || from.Y >= grid.Height ||
 		to.X < 0 || to.X >= grid.Width || to.Y < 0 || to.Y >= grid.Height {
+		log.Printf("WARN: Positions out of grid bounds (from: %v, to: %v)", from, to)
 		return nil, 0, false
 	}
 
 	path, _, found := astar.CalculatePath(grid, a.Area, from, to, teleportEnabled)
+	log.Printf("DEBUG: Path calculation result (found: %t, length: %d)", found, len(path))
 
 	if config.Koolo.Debug.RenderMap {
 		pf.renderMap(grid, from, to, path)
@@ -102,6 +111,7 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 // Enhanced grid preprocessing with teleport optimizations
 func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 	a := pf.data.AreaData
+	log.Printf("DEBUG: Preprocessing grid for area %d (teleport: %t)", a.Area, teleportEnabled)
 
 	// Teleport pathing optimizations
 	// if teleportEnabled {
@@ -118,12 +128,15 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 
 	// Special area handling
 	if a.Area == area.LutGholein {
+		log.Printf("DEBUG: Applying Lut Gholein collision override")
 		grid.CollisionGrid[13][210] = game.CollisionTypeNonWalkable
 	}
 
 	// Dynamic obstacle handling
+	log.Printf("DEBUG: Processing %d objects", len(pf.data.AreaData.Objects))
 	for _, o := range pf.data.AreaData.Objects {
 		if o.IsChest() {
+			log.Printf("DEBUG: Marking chest area around %v as non-walkable", o.Position)
 			relativePos := grid.RelativePosition(o.Position)
 			for dy := -2; dy <= 2; dy++ {
 				for dx := -2; dx <= 2; dx++ {
@@ -138,6 +151,7 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 		}
 
 		if !grid.IsWalkable(o.Position) {
+			log.Printf("DEBUG: Skipping non-walkable object %d at %v", o.Name, o.Position)
 			continue
 		}
 
@@ -157,18 +171,24 @@ func (pf *PathFinder) preprocessGrid(grid *game.Grid, teleportEnabled bool) {
 		}
 	}
 
+	log.Printf("DEBUG: Processing %d monsters", len(pf.data.Monsters))
 	for _, m := range pf.data.Monsters {
 		if !grid.IsWalkable(m.Position) {
+			log.Printf("DEBUG: Skipping non-walkable monster %d at %d:%d",
+				m.Name,
+				m.Position.X,
+				m.Position.Y,
+			)
 			continue
 		}
 		relativePos := grid.RelativePosition(m.Position)
 		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
 	}
-
 }
 
 // Combine adjacent level grids for cross-area pathfinding
 func (pf *PathFinder) mergeGrids(to data.Position) (*game.Grid, error) {
+	log.Printf("DEBUG: Merging grids for position %v", to)
 	for _, a := range pf.data.AreaData.AdjacentLevels {
 		destination := pf.data.Areas[a.Area]
 		if destination.IsInside(to) {
@@ -198,6 +218,7 @@ func (pf *PathFinder) mergeGrids(to data.Position) (*game.Grid, error) {
 			copyGrid(resultGrid, destination.CollisionGrid, destination.OffsetX-minX, destination.OffsetY-minY)
 
 			grid := game.NewGrid(resultGrid, minX, minY)
+			log.Printf("DEBUG: Created merged grid size %dx%d", width, height)
 			return grid, nil
 		}
 	}
