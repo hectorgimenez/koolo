@@ -2,6 +2,7 @@ package pather
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"sync"
@@ -35,13 +36,20 @@ func (pf *PathFinder) DistanceFromMe(p data.Position) int {
 
 // Search in expanding squares around target position with caching
 func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Position, bool) {
+	log.Printf("DEBUG: Finding walkable near %d:%d", target.X, target.Y)
 	key := fmt.Sprintf("%d:%d", target.X, target.Y)
 	// Check cache first with read lock
 	walkablePosLock.RLock()
 	if pos, exists := walkablePosCache[key]; exists {
 		walkablePosLock.RUnlock()
+		log.Printf("DEBUG: Walkable cache hit for %d:%d -> %d:%d",
+			target.X, target.Y,
+			pos.X, pos.Y,
+		)
 		return pos, true
 	}
+	log.Printf("DEBUG: Walkable cache miss for %d:%d", target.X, target.Y)
+
 	walkablePosLock.RUnlock()
 
 	// Search in expanding squares around target position
@@ -67,6 +75,7 @@ func (pf *PathFinder) FindNearbyWalkablePosition(target data.Position) (data.Pos
 
 // Create optimal room visiting order using nearest neighbor algorithm
 func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
+	log.Printf("INFO: Optimizing room traversal order (%d rooms)", len(pf.data.Rooms))
 	distanceMatrix := make(map[data.Room]map[data.Room]int)
 
 	// Build distance matrix between all rooms
@@ -112,6 +121,7 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 		currentRoom = nextRoom
 	}
 
+	log.Printf("DEBUG: Optimized room order calculated (%d rooms)", len(order))
 	return order
 }
 
@@ -172,18 +182,19 @@ func (pf *PathFinder) gameCoordsToScreenCords(playerX, playerY, destinationX, de
 	diffY := destinationY - playerY
 	// Transform cartesian movement (World) to isometric (screen)
 	// Helpful documentation: https://clintbellanger.net/articles/isometric_math/
-	screenX := int((float32(diffX-diffY)*19.8)+float32(pf.gr.GameAreaSizeX/2))
-	screenY := int((float32(diffX+diffY)*9.9)+float32(pf.gr.GameAreaSizeY/2))
+	screenX := int((float32(diffX-diffY) * 19.8) + float32(pf.gr.GameAreaSizeX/2))
+	screenY := int((float32(diffX+diffY) * 9.9) + float32(pf.gr.GameAreaSizeY/2))
 	return screenX, screenY
 }
 
 // Identify areas requiring restricted movement directions
 func IsNarrowMap(a area.ID) bool {
 	switch a {
-	case area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3, area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame, area.ChaosSanctuary:
+	case area.MaggotLairLevel1, area.MaggotLairLevel2, area.MaggotLairLevel3,
+		area.ArcaneSanctuary, area.ClawViperTempleLevel2, area.RiverOfFlame,
+		area.ChaosSanctuary:
 		return true
 	}
-
 	return false
 }
 
@@ -195,8 +206,12 @@ func DistanceFromPoint(from data.Position, to data.Position) int {
 	return int(math.Sqrt(first + second))
 }
 
-// Check if there's unobstructed path between two points 
+// Check if there's unobstructed path between two points
 func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Position) bool {
+	log.Printf("DEBUG: LineOfSight check from %d:%d to %d:%d",
+		origin.X, origin.Y,
+		destination.X, destination.Y,
+	)
 	// Pre-calculate door collision boxes
 	var doorBoxes []struct {
 		minX, maxX, minY, maxY int
