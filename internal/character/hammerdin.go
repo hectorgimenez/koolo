@@ -2,6 +2,10 @@ package character
 
 import (
 	"fmt"
+	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"sort"
 	"time"
@@ -40,11 +44,10 @@ func (s Hammerdin) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
-func (s Hammerdin) KillMonsterSequence(
+func (s Hammerdin) KillBossSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
-	completedAttackLoops := 0
 	previousUnitID := 0
 
 	for {
@@ -52,15 +55,8 @@ func (s Hammerdin) KillMonsterSequence(
 		if !found {
 			return nil
 		}
-		if previousUnitID != int(id) {
-			completedAttackLoops = 0
-		}
 
 		if !s.preBattleChecks(id, skipOnImmunities) {
-			return nil
-		}
-
-		if completedAttackLoops >= hammerdinMaxAttacksLoop {
 			return nil
 		}
 
@@ -70,23 +66,90 @@ func (s Hammerdin) KillMonsterSequence(
 			return nil
 		}
 
-		// Add a random movement, maybe hammer is not hitting the target
+		// Reposition right under for perfect hammer hit
 		if previousUnitID == int(id) {
 			if monster.Stats[stat.Life] > 0 {
-				s.PathFinder.RandomMovement()
+				s.PathFinder.RandomTeleport() // will walk if can't teleport
+				utils.Sleep(400)
+				action.MoveToCoords(data.Position{monster.Position.X - 2, monster.Position.Y - 2})
 			}
-			return nil
 		}
 
 		step.PrimaryAttack(
 			id,
-			3,
+			4,
 			true,
 			step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 			step.EnsureAura(skill.Concentration),
 		)
 
-		completedAttackLoops++
+		previousUnitID = int(id)
+	}
+}
+
+func (s Hammerdin) KillMonsterSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
+	previousUnitID := 0
+	attackSequenceLoop := 0
+
+	for {
+		id, found := monsterSelector(*s.Data)
+		if !found {
+			return nil
+		}
+
+		if !s.preBattleChecks(id, skipOnImmunities) {
+			return nil
+		}
+
+		monster, found := s.Data.Monsters.FindByID(id)
+		if !found {
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
+		// If area is unreachable, or monster is dead, skip.
+		if previousUnitID == int(id) {
+			if monster.Stats[stat.Life] > 0 {
+				if s.Data.AreaData.IsWalkable(monster.Position) {
+					ctx := context.Get()
+					otherMonsterLoopCounter := 0
+					for _, otherMonster := range ctx.Data.Monsters.Enemies() {
+						if otherMonster.Stats[stat.Life] > 0 && pather.DistanceFromPoint(s.Data.PlayerUnit.Position, otherMonster.Position) <= 30 && ctx.Data.AreaData.IsWalkable(otherMonster.Position) {
+							otherMonsterLoopCounter++
+							step.PrimaryAttack(
+								otherMonster.UnitID,
+								4,
+								true,
+								step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+								step.EnsureAura(skill.Concentration),
+							)
+						}
+					}
+					if otherMonsterLoopCounter == 0 {
+						s.PathFinder.RandomTeleport() // will walk if can't teleport
+						utils.Sleep(400)
+					}
+				} else {
+					continue
+				}
+			}
+		}
+
+		step.PrimaryAttack(
+			id,
+			4,
+			true,
+			step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+			step.EnsureAura(skill.Concentration),
+		)
+
+		if attackSequenceLoop >= hammerdinMaxAttacksLoop {
+			return nil
+		}
+		attackSequenceLoop++
 		previousUnitID = int(id)
 	}
 }
@@ -103,7 +166,7 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) error {
 }
 
 func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ bool) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
 		}
@@ -113,9 +176,15 @@ func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ 
 }
 
 func (s Hammerdin) BuffSkills() []skill.ID {
+
 	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.HolyShield); found {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.OakSage); found {
+
+			return []skill.ID{skill.HolyShield, skill.OakSage}
+		}
 		return []skill.ID{skill.HolyShield}
 	}
+
 	return []skill.ID{}
 }
 
@@ -168,7 +237,7 @@ func (s Hammerdin) KillMephisto() error {
 	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, false)
 }
 func (s Hammerdin) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, false)
 }
 
 func (s Hammerdin) KillDiablo() error {
@@ -197,7 +266,7 @@ func (s Hammerdin) KillDiablo() error {
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, false)
 	}
 }
 
@@ -210,5 +279,5 @@ func (s Hammerdin) KillNihlathak() error {
 }
 
 func (s Hammerdin) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, false)
 }
