@@ -62,6 +62,7 @@ type Debug struct {
 
 type CurrentGameHelper struct {
 	BlacklistedItems []data.Item
+	PickedUpItems    map[int]int
 	AreaCorrection   struct {
 		Enabled      bool
 		ExpectedArea area.ID
@@ -81,7 +82,7 @@ func NewContext(name string) *Status {
 			PriorityPause:      {},
 			PriorityStop:       {},
 		},
-		CurrentGame: &CurrentGameHelper{},
+		CurrentGame: NewGameHelper(),
 	}
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 
@@ -90,7 +91,9 @@ func NewContext(name string) *Status {
 
 func NewGameHelper() *CurrentGameHelper {
 	return &CurrentGameHelper{
-		PickupItems: true,
+		PickupItems:      true,
+		PickedUpItems:    make(map[int]int),
+		BlacklistedItems: []data.Item{},
 	}
 }
 
@@ -167,4 +170,17 @@ func (ctx *Context) WaitForGameToLoad() {
 	}
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)
+}
+
+func (ctx *Context) Cleanup() {
+	ctx.Logger.Debug("Resetting blacklisted items")
+
+	// Remove all items from the blacklisted items list
+	ctx.CurrentGame.BlacklistedItems = []data.Item{}
+
+	// Remove all items from the picked up items map if it exceeds 200 items
+	if len(ctx.CurrentGame.PickedUpItems) > 200 {
+		ctx.Logger.Debug("Resetting picked up items map due to exceeding 200 items")
+		ctx.CurrentGame.PickedUpItems = make(map[int]int)
+	}
 }

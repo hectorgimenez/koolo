@@ -27,7 +27,7 @@ func (run SpiderCavern) Run() error {
 	monsterFilter := data.MonsterAnyFilter()
 
 	// Update filter if we selected to clear only elites
-	if run.ctx.CharacterCfg.Game.DrifterCavern.FocusOnElitePacks {
+	if run.ctx.CharacterCfg.Game.SpiderCavern.FocusOnElitePacks {
 		monsterFilter = data.MonsterEliteFilter()
 	}
 
