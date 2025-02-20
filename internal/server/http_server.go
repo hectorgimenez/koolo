@@ -878,6 +878,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			cfg.Game.Pindleskin.SkipOnImmunities = append(cfg.Game.Pindleskin.SkipOnImmunities, stat.Resist(i))
 		}
 
+		cfg.Game.Palace.OpenChests = r.Form.Has("gamePalaceOpenChests")
+		cfg.Game.Palace.FocusOnElitePacks = r.Form.Has("gamePalaceFocusOnElitePacks")
 		cfg.Game.StonyTomb.OpenChests = r.Form.Has("gameStonytombOpenChests")
 		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")
 		cfg.Game.AncientTunnels.OpenChests = r.Form.Has("gameAncientTunnelsOpenChests")
