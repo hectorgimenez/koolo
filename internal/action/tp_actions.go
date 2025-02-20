@@ -130,24 +130,20 @@ func UsePortalFrom(owner string) error {
 	return errors.New("portal not found")
 }
 
-func ReturnToTownWithFreshPortal() error {
+func ReturnToTownWithSelfPortal() error {
 	ctx := context.Get()
 	ctx.SetLastStep("OpenPortal")
 
 	lastRun := time.Time{}
 
-	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
-	utils.Sleep(350)
-	ctx.HID.Click(game.RightButton, 300, 300)
-	lastRun = time.Now()
-
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
-		_, found := ctx.Data.Objects.FindOne(object.TownPortal)
-		if found {
-			return nil
+		for _, o := range ctx.Data.Objects {
+			if o.IsPortal() && o.Owner == ctx.Data.PlayerUnit.Name {
+				return nil
+			}
 		}
 
 		// Give some time to portal to popup before retrying...
