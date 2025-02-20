@@ -52,7 +52,7 @@ func ItemPickup(maxDistance int) error {
 
 	for {
 		ctx.PauseIfNotPriority()
-		
+
 		itemsToPickup := GetItemsToPickup(maxDistance)
 		if len(itemsToPickup) == 0 {
 			return nil
@@ -91,6 +91,7 @@ func ItemPickup(maxDistance int) error {
 
 			// Calculate position to move to based on attempt number
 			// on 2nd and 3rd attempt try position left/right of item
+			// on 4th and 5th attempt try position further away
 			pickupPosition := itemToPickup.Position
 			moveDistance := 3
 			if attempt > 1 {
@@ -111,7 +112,7 @@ func ItemPickup(maxDistance int) error {
 						Y: itemToPickup.Position.Y - 3,
 					}
 				case 5:
-					ctx.PathFinder.BeyondPosition(ctx.Data.PlayerUnit.Position, itemToPickup.Position, 4)
+					MoveToCoords(ctx.PathFinder.BeyondPosition(ctx.Data.PlayerUnit.Position, itemToPickup.Position, 4))
 				}
 			}
 
@@ -182,13 +183,13 @@ func ItemPickup(maxDistance int) error {
 		// If all attempts failed, blacklist the item
 		if attempt > maxRetries && lastError != nil {
 			ctx.CurrentGame.BlacklistedItems = append(ctx.CurrentGame.BlacklistedItems, itemToPickup)
-			
+
 			// Screenshot with show items on
 			ctx.HID.KeyDown(ctx.Data.KeyBindings.ShowItems)
 			screenshot := ctx.GameReader.Screenshot()
 			event.Send(event.ItemBlackListed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%s] BlackListed in Area:%s", itemToPickup.Name, itemToPickup.Quality.ToString(), ctx.Data.PlayerUnit.Area.Area().Name), screenshot), data.Drop{Item: itemToPickup}))
 			ctx.HID.KeyUp(ctx.Data.KeyBindings.ShowItems)
-			
+
 			ctx.Logger.Warn(
 				"Failed picking up item after all attempts, blacklisting it",
 				slog.String("itemName", itemToPickup.Desc().Name),

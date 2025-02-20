@@ -46,12 +46,14 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 	case 3:
 		baseX = baseX + 1
 	case 4:
-		maxInteractions = 45
+		maxInteractions = 44
 		baseY = baseY + 1
 	case 5:
-		maxInteractions = 45
+		maxInteractions = 44
 		baseX = baseX - 1
 		baseY = baseY - 1
+	default:
+		maxInteractions = 24
 	}
 	baseScreenX, baseScreenY := ctx.PathFinder.GameCoordsToScreenCords(baseX, baseY)
 
@@ -133,7 +135,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 
 		// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 		// on Andariel, so we open it
-		if isChestHovered() {
+		if isChestorShrineHovered() {
 			ctx.HID.Click(game.LeftButton, cursorX, cursorY)
 			time.Sleep(50 * time.Millisecond)
 		}
@@ -163,11 +165,11 @@ func findItemOnGround(targetID data.UnitID) (data.Item, bool) {
 	return data.Item{}, false
 }
 
-func isChestHovered() bool {
+func isChestorShrineHovered() bool {
 	ctx := context.Get()
 
 	for _, o := range ctx.Data.Objects {
-		if o.IsChest() && o.IsHovered {
+		if (o.IsChest() || o.IsShrine()) && o.IsHovered {
 			return true
 		}
 	}
