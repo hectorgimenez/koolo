@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
