@@ -23,7 +23,7 @@ const (
 	fohMaxDistance    = 15
 	hbMinDistance     = 6
 	hbMaxDistance     = 12
-	fohMaxAttacksLoop = 35              // Maximum attack attempts before resetting
+	fohMaxAttacksLoop = 42              // Maximum attack attempts before resetting
 	castingTimeout    = 3 * time.Second // Maximum time to wait for a cast to complete
 )
 
@@ -164,7 +164,7 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 		}
 
 		// Cast appropriate skill
-		if useHolyBolt {
+		if useHolyBolt || completedAttackLoops%6 == 0 {
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
 				ctx.HID.PressKeyBinding(kb)
 				if err := step.PrimaryAttack(currentTargetID, 1, true, hbOpts...); err == nil {
