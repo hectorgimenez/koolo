@@ -178,8 +178,14 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	}
 	gm.hid.PressKey(win.VK_RETURN)
 
-	for !gm.gr.InGame() {
+	waitingToJoinLoopCounter := 0
+	for !gm.gr.InGame() && waitingToJoinLoopCounter < 15 {
 		utils.Sleep(1000)
+		waitingToJoinLoopCounter++
+	}
+	
+	if waitingToJoinLoopCounter == 15 {
+		return errors.New("Couldn't join game! Timeout")
 	}
 
 	return nil

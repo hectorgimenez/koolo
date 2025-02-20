@@ -194,9 +194,15 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 					s.bot.ctx.Logger.Info("Waiting for game join")
 					utils.Sleep(1000)
 				}
+
+				for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil; err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
+					s.bot.ctx.HID.PressKey(0x1B)
+					utils.Sleep(15000)
+				}
+
 				LastGameJoined = config.LastGameName
 				LastGamePassJoined = config.LastGamePassword
-				return s.bot.ctx.Manager.JoinOnlineGame(LastGameJoined, LastGamePassJoined)
+				return nil
 			}
 
 			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
@@ -260,9 +266,15 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 					s.bot.ctx.Logger.Info("Waiting for game join")
 					utils.Sleep(1000)
 				}
+
+				for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil; err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
+					s.bot.ctx.HID.PressKey(0x1B)
+					utils.Sleep(15000)
+				}
+
 				LastGameJoined = config.LastGameName
 				LastGamePassJoined = config.LastGamePassword
-				return s.bot.ctx.Manager.JoinOnlineGame(LastGameJoined, LastGamePassJoined)
+				return nil
 
 			}
 
