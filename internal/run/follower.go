@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"math"
@@ -62,7 +63,7 @@ func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
 	if leader.Area.IsTown() {
 		f.ctx.Logger.Info("Leader is in town. Let's go wait there.")
 		_ = action.ReturnTown()
-		action.VendorRefill(false, true)
+		_ = f.InTownRoutine()
 		f.goToCorrectTown(leader)
 		utils.Sleep(200)
 		return
@@ -112,7 +113,7 @@ func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
 func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
 	f.ctx.Logger.Info("Leader is not in a connecting area, returning to the correct town to use his portal.")
 	_ = action.ReturnTown()
-	action.VendorRefill(false, true)
+	_ = f.InTownRoutine()
 	f.goToCorrectTown(leader)
 
 	err := f.UseCorrectPortalFromLeader(leader)
@@ -158,16 +159,19 @@ func (f *Follower) goToCorrectTown(leader data.RosterMember) {
 	switch act := leader.Area.Act(); act {
 	case 1:
 		_ = action.WayPoint(area.RogueEncampment)
-		_ = action.MoveTo(f.getKashyaPosition)
+		_ = action.MoveToCoords(town.A1{}.TPWaitingArea(*f.ctx.Data))
 	case 2:
 		_ = action.WayPoint(area.LutGholein)
-		_ = action.MoveTo(f.getAtmaPosition)
+		_ = action.MoveToCoords(town.A2{}.TPWaitingArea(*f.ctx.Data))
 	case 3:
 		_ = action.WayPoint(area.KurastDocks)
+		_ = action.MoveToCoords(town.A3{}.TPWaitingArea(*f.ctx.Data))
 	case 4:
 		_ = action.WayPoint(area.ThePandemoniumFortress)
+		_ = action.MoveToCoords(town.A4{}.TPWaitingArea(*f.ctx.Data))
 	case 5:
 		_ = action.WayPoint(area.Harrogath)
+		_ = action.MoveToCoords(town.A5{}.TPWaitingArea(*f.ctx.Data))
 	default:
 		f.ctx.Logger.Info("Could not find the Leader's current Act location.")
 	}
@@ -218,4 +222,13 @@ func (f *Follower) UseCorrectPortalFromLeader(leader data.RosterMember) error {
 	}
 
 	return errors.New("Waiting for corrected portal")
+}
+
+func (f *Follower) InTownRoutine() error {
+	action.VendorRefill(false, true)
+	action.Stash(false)
+	action.ReviveMerc()
+	action.Repair()
+	action.CubeRecipes()
+	return nil
 }
