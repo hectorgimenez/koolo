@@ -24,9 +24,11 @@ import (
 )
 
 var (
-	Koolo      *KooloCfg
-	Characters map[string]*CharacterCfg
-	Version    = "dev"
+	Koolo            *KooloCfg
+	Characters       map[string]*CharacterCfg
+	Version          = "dev"
+	LastGameName     = ""
+	LastGamePassword = ""
 )
 
 type KooloCfg struct {
@@ -134,7 +136,13 @@ type CharacterCfg struct {
 		Runs                   []Run                 `yaml:"runs"`
 		CreateLobbyGames       bool                  `yaml:"createLobbyGames"`
 		PublicGameCounter      int                   `yaml:"-"`
-		Pindleskin             struct {
+		BloodMoor              struct {
+			ClearDenOfEvil     bool `yaml:"clearDenOfEvil"`
+			OpenChests         bool `yaml:"openChests"`
+			FocusOnElitePacks  bool `yaml:"focusOnElitePacks"`
+			OnlyClearDenOfEvil bool `yaml:"onlyClearDenOfEvil"`
+		} `yaml:"blood_moor"`
+		Pindleskin struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
 		Cows struct {
