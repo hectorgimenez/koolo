@@ -142,18 +142,14 @@ func (i *MemoryInjector) OverrideGetKeyState(key byte) error {
 		return nil
 	}
 	/*
-		xor rax, rax
-		cmp rcx, key
-		ret
-		jne +7
-		mov rax, 0x8000
-		ret
+		Assembly: Compare key byte, set al if match, shift left to create 0x8000 if matched (4 cycles)
+		cmp cl, key    -> Compare key byte
+		sete al        -> Set al to 1 if equal
+		shl ax, 15     -> Shift left by 15 to create 0x8000 if was 1, else 0
+		ret            -> Return with result in ax
 	*/
-	// Assembly code that returns -32768 (0x8000) for shift key
-	// only sets rax to 0x8000 if the key matches, otherwise it returns 0 (due to the initial xor).
-	// starts by zeroing rax, which provides a default "key not pressed" state.
-	// use single-byte comparisons
-	bytes := []byte{0x48, 0x31, 0xC0, 0x48, 0x83, 0xF9, key, 0x75, 0x07, 0x48, 0xC7, 0xC0, 0x00, 0x80, 0x00, 0x00, 0xC3}
+
+	bytes := []byte{0x80, 0xF9, key, 0x0F, 0x94, 0xC0, 0x66, 0xC1, 0xE0, 0x0F, 0xC3}
 
 	return windows.WriteProcessMemory(i.handle, i.getKeyStateAddr, &bytes[0], uintptr(len(bytes)), nil)
 }
