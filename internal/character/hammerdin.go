@@ -69,7 +69,7 @@ func (s Hammerdin) KillBossSequence(
 		// Reposition right under for perfect hammer hit
 		if previousUnitID == int(id) {
 			if monster.Stats[stat.Life] > 0 {
-				s.PathFinder.RandomMovement()
+				s.PathFinder.RandomTeleport() // will walk if can't teleport
 				utils.Sleep(400)
 				action.MoveToCoords(data.Position{monster.Position.X - 2, monster.Position.Y - 2})
 			}
@@ -92,6 +92,7 @@ func (s Hammerdin) KillMonsterSequence(
 	skipOnImmunities []stat.Resist,
 ) error {
 	previousUnitID := 0
+	attackSequenceLoop := 0
 
 	for {
 		id, found := monsterSelector(*s.Data)
@@ -114,10 +115,10 @@ func (s Hammerdin) KillMonsterSequence(
 			if monster.Stats[stat.Life] > 0 {
 				if s.Data.AreaData.IsWalkable(monster.Position) {
 					ctx := context.Get()
-					loopCounter := 0
+					otherMonsterLoopCounter := 0
 					for _, otherMonster := range ctx.Data.Monsters.Enemies() {
 						if otherMonster.Stats[stat.Life] > 0 && pather.DistanceFromPoint(s.Data.PlayerUnit.Position, otherMonster.Position) <= 30 && ctx.Data.AreaData.IsWalkable(otherMonster.Position) {
-							loopCounter++
+							otherMonsterLoopCounter++
 							step.PrimaryAttack(
 								otherMonster.UnitID,
 								4,
@@ -127,8 +128,8 @@ func (s Hammerdin) KillMonsterSequence(
 							)
 						}
 					}
-					if loopCounter == 0 {
-						s.PathFinder.RandomMovement()
+					if otherMonsterLoopCounter == 0 {
+						s.PathFinder.RandomTeleport() // will walk if can't teleport
 						utils.Sleep(400)
 					}
 				} else {
@@ -145,6 +146,10 @@ func (s Hammerdin) KillMonsterSequence(
 			step.EnsureAura(skill.Concentration),
 		)
 
+		if attackSequenceLoop >= hammerdinMaxAttacksLoop {
+			return nil
+		}
+		attackSequenceLoop++
 		previousUnitID = int(id)
 	}
 }
