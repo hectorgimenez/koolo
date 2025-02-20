@@ -940,6 +940,29 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Quests.RescueAnya = r.Form.Has("gameQuestsRescueAnya")
 		cfg.Game.Quests.KillAncients = r.Form.Has("gameQuestsKillAncients")
 
+		// Rush mode configuration
+		// Rush options for Act 1
+		cfg.Game.Rush.ClearAct1 = r.Form.Has("gameRushClearAct1")
+		cfg.Game.Rush.ClearDen = r.Form.Has("gameRushClearDen")
+		cfg.Game.Rush.RescueCain = r.Form.Has("gameRushRescueCain")
+		cfg.Game.Rush.RetrieveHammer = r.Form.Has("gameRushRetrieveHammer")
+		// Rush options for Act 2
+		cfg.Game.Rush.ClearAct2 = r.Form.Has("gameRushClearAct2")
+		cfg.Game.Rush.KillRadament = r.Form.Has("gameRushKillRadament")
+		cfg.Game.Rush.GetCube = r.Form.Has("gameRushGetCube")
+		// Rush options for Act 3
+		cfg.Game.Rush.ClearAct3 = r.Form.Has("gameRushClearAct3")
+		cfg.Game.Rush.RetrieveBook = r.Form.Has("gameRushRetrieveBook")
+		// Rush options for Act 4
+		cfg.Game.Rush.ClearAct4 = r.Form.Has("gameRushClearAct4")
+		cfg.Game.Rush.KillIzual = r.Form.Has("gameRushKillIzual")
+		// Rush options for Act 5
+		cfg.Game.Rush.ClearAct5 = r.Form.Has("gameRushClearAct5")
+		cfg.Game.Rush.KillShenk = r.Form.Has("gameRushKillShenk")
+		cfg.Game.Rush.RescueAnya = r.Form.Has("gameRushRescueAnya")
+		cfg.Game.Rush.KillAncients = r.Form.Has("gameRushKillAncients")
+
+		// Terror Zone Configuration
 		cfg.Game.TerrorZone.FocusOnElitePacks = r.Form.Has("gameTerrorZoneFocusOnElitePacks")
 		cfg.Game.TerrorZone.SkipOtherRuns = r.Form.Has("gameTerrorZoneSkipOtherRuns")
 		cfg.Game.TerrorZone.OpenChests = r.Form.Has("gameTerrorZoneOpenChests")
