@@ -141,9 +141,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 	}
 }
 
-var LastGameJoined = ""
-var LastGamePassJoined = ""
-
 // This function is responsible for handling all interactions with joining/creating games
 func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// Refresh the data
@@ -170,50 +167,14 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 		}
 	}
 
-	// We're either in the in the Lobby or Character selection screen. Let's check
+	// We're either in the Lobby or Character selection screen. Let's check
 	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
-		// TODO: Add Joining Games
+		if s.bot.ctx.CharacterCfg.Game.JoinLobbyGames {
+			return startJoinerRoutine(s)
+		}
 
 		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
-			retryCount := 0
-			for !s.bot.ctx.GameReader.IsInLobby() {
-
-				// Prevent an infinite loop
-				if retryCount >= 5 && !s.bot.ctx.Data.IsInLobby {
-					return fmt.Errorf("failed to enter bnet lobby after 5 retries")
-				}
-
-				// Try to enter bnet lobby
-				s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
-				utils.Sleep(1000)
-			}
-
-			// TODO: Refactor this to a single prop: isJoiner
-			if s.bot.ctx.CharacterCfg.Companion.GameNameTemplate == "" {
-				for LastGameJoined == config.LastGameName {
-					s.bot.ctx.Logger.Info("Waiting for game join")
-					utils.Sleep(1000)
-				}
-
-				for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil; err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
-					s.bot.ctx.HID.PressKey(0x1B)
-					utils.Sleep(15000)
-				}
-
-				LastGameJoined = config.LastGameName
-				LastGamePassJoined = config.LastGamePassword
-				return nil
-			}
-
-			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
-				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-				return fmt.Errorf("failed to create an online game")
-
-			} else {
-				// We created the game successfully!
-				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-				return nil
-			}
+			return startGameCreationRoutine(s)
 		} else {
 			// TODO: Add logic to check if we're on the online or offline tab and handle it accordingly.
 			if !s.bot.ctx.GameReader.IsOnline() && s.bot.ctx.CharacterCfg.AuthMethod != "None" {
@@ -242,51 +203,13 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 			return nil
 		}
 	} else if s.bot.ctx.GameReader.IsInLobby() {
-		// TODO: Add Joining Games
+		// Check if we are suppose to create lobby games and enter lobby.or join games
+		if s.bot.ctx.CharacterCfg.Game.JoinLobbyGames {
+			return startJoinerRoutine(s)
+		}
 
-		// Check if we are suppose to create lobby games and enter lobby.
 		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
-
-			retryCount := 0
-			for !s.bot.ctx.GameReader.IsInLobby() {
-
-				// Prevent an infinite loop
-				if retryCount >= 5 && !s.bot.ctx.GameReader.IsInLobby() {
-					return fmt.Errorf("failed to enter bnet lobby after 5 retries")
-				}
-
-				// Try to enter bnet lobby
-				s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
-				utils.Sleep(2000)
-			}
-
-			// TODO: Refactor this to a single prop: isJoiner
-			if s.bot.ctx.CharacterCfg.Companion.GameNameTemplate == "" {
-				for LastGameJoined == config.LastGameName {
-					s.bot.ctx.Logger.Info("Waiting for game join")
-					utils.Sleep(1000)
-				}
-
-				for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil; err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
-					s.bot.ctx.HID.PressKey(0x1B)
-					utils.Sleep(15000)
-				}
-
-				LastGameJoined = config.LastGameName
-				LastGamePassJoined = config.LastGamePassword
-				return nil
-
-			}
-
-			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
-				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-				return fmt.Errorf("failed to create an online game")
-
-			} else {
-				// We created the game successfully!
-				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-				return nil
-			}
+			return startGameCreationRoutine(s)
 		} else {
 			// Press escape to exit the lobby
 			s.bot.ctx.HID.PressKey(0x1B) // ESC - to avoid importing win here as well
@@ -322,6 +245,72 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	}
 
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)
+
+	return nil
+}
+
+func startGameCreationRoutine(s *SinglePlayerSupervisor) error {
+	err := goToLobby(s)
+
+	if err != nil {
+		_ = s.KillClient()
+		utils.Sleep(60000)
+		return err
+	}
+
+	if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
+		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
+		return fmt.Errorf("failed to create an online game")
+
+	} else {
+		// We created the game successfully!
+		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
+		return nil
+	}
+}
+
+var (
+	LastGameJoined = ""
+)
+
+func startJoinerRoutine(s *SinglePlayerSupervisor) error {
+	err := goToLobby(s)
+
+	if err != nil {
+		_ = s.KillClient()
+		utils.Sleep(60000)
+		return err
+	}
+
+	for LastGameJoined == config.LastGameName {
+		s.bot.ctx.Logger.Info("Waiting for game join")
+		utils.Sleep(1000)
+	}
+
+	for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil; err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
+		s.bot.ctx.HID.PressKey(0x1B)
+		utils.Sleep(15000)
+	}
+
+	LastGameJoined = config.LastGameName
+
+	return nil
+}
+
+func goToLobby(s *SinglePlayerSupervisor) error {
+	retryCount := 0
+	for !s.bot.ctx.GameReader.IsInLobby() {
+
+		// Prevent an infinite loop
+		if retryCount >= 5 && !s.bot.ctx.Data.IsInLobby {
+			return fmt.Errorf("failed to enter bnet lobby after 5 retries")
+		}
+
+		// Try to enter bnet lobby
+		s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
+		utils.Sleep(1000)
+		retryCount++
+	}
 
 	return nil
 }
