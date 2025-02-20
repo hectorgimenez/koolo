@@ -3,17 +3,11 @@ package action
 import (
 	"errors"
 	"fmt"
-	"time"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
-
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/town"
-	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 func ReturnTown() error {
@@ -130,30 +124,42 @@ func UsePortalFrom(owner string) error {
 	return errors.New("portal not found")
 }
 
-func ReturnToTownWithSelfPortal() error {
+func ReturnToTownWithOwnedPortal() error {
 	ctx := context.Get()
-	ctx.SetLastStep("OpenPortal")
+	ctx.SetLastAction("ReturnTown")
+	ctx.PauseIfNotPriority()
 
-	lastRun := time.Time{}
-
-	for {
-		// Pause the execution if the priority is not the same as the execution priority
-		ctx.PauseIfNotPriority()
-
-		for _, o := range ctx.Data.Objects {
-			if o.IsPortal() && o.Owner == ctx.Data.PlayerUnit.Name {
-				return nil
-			}
-		}
-
-		// Give some time to portal to popup before retrying...
-		if time.Since(lastRun) < time.Second*2 {
-			continue
-		}
-
-		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
-		utils.Sleep(250)
-		ctx.HID.Click(game.RightButton, 300, 300)
-		lastRun = time.Now()
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		return nil
 	}
+
+	// Move slightly if we're right next to a waypoint to prevent fail to hover portal
+	for _, obj := range ctx.Data.Objects {
+		if obj.IsWaypoint() && ctx.PathFinder.DistanceFromMe(obj.Position) < 3 {
+			// Try a few different positions until we find one that works
+			for i := 0; i < 4; i++ {
+				newPos := data.Position{
+					X: ctx.Data.PlayerUnit.Position.X + 3 - i,
+					Y: ctx.Data.PlayerUnit.Position.Y + 3 - i,
+				}
+				if ctx.Data.AreaData.IsWalkable(newPos) && ctx.PathFinder.DistanceFromMe(obj.Position) >= 3 {
+					MoveToCoords(newPos)
+					break
+				}
+			}
+			break
+		}
+	}
+
+	err := step.OpenNewPortal()
+	if err != nil {
+		return err
+	}
+
+	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
+	if !found {
+		return errors.New("portal not found")
+	}
+
+	return InteractObject(portal, nil)
 }

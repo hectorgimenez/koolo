@@ -68,7 +68,7 @@ func PreRun(firstRun bool) error {
 func InRunReturnTownRoutine() error {
 	ctx := context.Get()
 
-	if err := ReturnToTownWithSelfPortal(); err != nil {
+	if err := ReturnToTownWithOwnedPortal(); err != nil {
 		return fmt.Errorf("failed to return to town: %w", err)
 	}
 
