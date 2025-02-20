@@ -6,6 +6,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -30,12 +31,13 @@ func (f *Follower) Name() string {
 }
 
 func (f *Follower) Run() error {
+	f.ctx.RefreshGameData()
 	leader, leaderFound := f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
 	if !leaderFound {
 		return nil
 	}
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
-
+	f.goToCorrectTown(leader)
 	for leaderFound {
 		if leader.Area != f.ctx.Data.AreaData.Area {
 			f.handleLeaderNotInSameArea(leader)
@@ -60,6 +62,7 @@ func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
 	if leader.Area.IsTown() {
 		f.ctx.Logger.Info("Leader is in town. Let's go wait there.")
 		_ = action.ReturnTown()
+		action.VendorRefill(false, true)
 		f.goToCorrectTown(leader)
 		utils.Sleep(200)
 		return
@@ -74,6 +77,11 @@ func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
 	} else {
 		f.ctx.Logger.Info("Leader is in a connection area. Moving to area ID", slog.Any("area", lvl.Area))
 		_ = action.MoveToCoords(lvl.Position)
+
+		if lvl.IsEntrance {
+			_ = step.InteractEntrance(lvl.Area)
+		}
+		_ = action.MoveToCoords(leader.Position)
 	}
 }
 
@@ -104,6 +112,7 @@ func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
 func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
 	f.ctx.Logger.Info("Leader is not in a connecting area, returning to the correct town to use his portal.")
 	_ = action.ReturnTown()
+	action.VendorRefill(false, true)
 	f.goToCorrectTown(leader)
 
 	err := f.UseCorrectPortalFromLeader(leader)
@@ -122,6 +131,7 @@ func (f *Follower) handleLeaderInSameArea(leader data.RosterMember) {
 func (f *Follower) interactWithChests() {
 	for _, o := range f.ctx.Data.Objects {
 		if o.IsChest() && o.Selectable && f.isChestInRange(o) {
+			action.ClearAreaAroundPosition(o.Position, 10, data.MonsterAnyFilter())
 			if err := f.moveToChestAndInteract(o); err != nil {
 				f.ctx.Logger.Warn("Failed interacting with chest: %v", err)
 			}
@@ -148,6 +158,7 @@ func (f *Follower) goToCorrectTown(leader data.RosterMember) {
 	switch act := leader.Area.Act(); act {
 	case 1:
 		_ = action.WayPoint(area.RogueEncampment)
+		_ = action.MoveTo(f.getKashyaPosition)
 	case 2:
 		_ = action.WayPoint(area.LutGholein)
 		_ = action.MoveTo(f.getAtmaPosition)
@@ -166,6 +177,14 @@ func (f *Follower) getAtmaPosition() (data.Position, bool) {
 	atma, found := f.ctx.Data.NPCs.FindOne(npc.Atma)
 	if found {
 		return atma.Positions[0], true
+	}
+	return data.Position{}, false
+}
+
+func (f *Follower) getKashyaPosition() (data.Position, bool) {
+	cain, found := f.ctx.Data.NPCs.FindOne(npc.Kashya)
+	if found {
+		return cain.Positions[0], true
 	}
 	return data.Position{}, false
 }

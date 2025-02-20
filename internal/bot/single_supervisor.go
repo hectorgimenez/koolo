@@ -84,7 +84,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
-			event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
+			event.Send(event.GameCreated(event.Text(s.name, "ng"), s.bot.ctx.GameReader.LastGameName(), s.bot.ctx.GameReader.LastGamePass()))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
@@ -141,6 +141,9 @@ func (s *SinglePlayerSupervisor) Start() error {
 	}
 }
 
+var LastGameJoined = ""
+var LastGamePassJoined = ""
+
 // This function is responsible for handling all interactions with joining/creating games
 func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// Refresh the data
@@ -183,6 +186,17 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 				// Try to enter bnet lobby
 				s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
 				utils.Sleep(1000)
+			}
+
+			// TODO: Refactor this to a single prop: isJoiner
+			if s.bot.ctx.CharacterCfg.Companion.GameNameTemplate == "" {
+				for LastGameJoined == config.LastGameName {
+					s.bot.ctx.Logger.Info("Waiting for game join")
+					utils.Sleep(1000)
+				}
+				LastGameJoined = config.LastGameName
+				LastGamePassJoined = config.LastGamePassword
+				return s.bot.ctx.Manager.JoinOnlineGame(LastGameJoined, LastGamePassJoined)
 			}
 
 			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
@@ -237,7 +251,19 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 
 				// Try to enter bnet lobby
 				s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
-				utils.Sleep(1000)
+				utils.Sleep(2000)
+			}
+
+			// TODO: Refactor this to a single prop: isJoiner
+			if s.bot.ctx.CharacterCfg.Companion.GameNameTemplate == "" {
+				for LastGameJoined == config.LastGameName {
+					s.bot.ctx.Logger.Info("Waiting for game join")
+					utils.Sleep(1000)
+				}
+				LastGameJoined = config.LastGameName
+				LastGamePassJoined = config.LastGamePassword
+				return s.bot.ctx.Manager.JoinOnlineGame(LastGameJoined, LastGamePassJoined)
+
 			}
 
 			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
@@ -252,7 +278,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 		} else {
 			// Press escape to exit the lobby
 			s.bot.ctx.HID.PressKey(0x1B) // ESC - to avoid importing win here as well
-			utils.Sleep(1000)
+			utils.Sleep(2000)
 
 			for range 5 {
 				if s.bot.ctx.Data.IsInCharSelectionScreen && s.bot.ctx.GameReader.IsOnline() {
@@ -262,7 +288,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 				if s.bot.ctx.GameReader.IsInLobby() {
 					// Mission failed
 					s.bot.ctx.HID.PressKey(0x1B) // ESC - to avoid importing win here as well
-					utils.Sleep(1000)
+					utils.Sleep(2000)
 				}
 			}
 
@@ -277,7 +303,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 		}
 	} else if s.bot.ctx.Data.OpenMenus.LoadingScreen {
 		// We're in a loading screen, wait a bit
-		utils.Sleep(250)
+		utils.Sleep(500)
 		return fmt.Errorf("loading screen")
 	} else {
 		return fmt.Errorf("")
