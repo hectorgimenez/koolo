@@ -102,7 +102,7 @@ var specialChars = map[string]byte{
 	"alt":       win.VK_MENU,
 	"lalt":      win.VK_LMENU,
 	"ralt":      win.VK_RMENU,
-	"shift":     win.VK_LSHIFT,
+	"shift":     win.VK_SHIFT,
 	"backspace": win.VK_BACK,
 	"lwin":      win.VK_LWIN,
 	"rwin":      win.VK_RWIN,
