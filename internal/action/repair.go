@@ -82,40 +82,67 @@ func Repair() error {
 }
 
 func RepairRequired() bool {
-    ctx := context.Get()
-    ctx.SetLastAction("RepairRequired")
+	ctx := context.Get()
+	ctx.SetLastAction("RepairRequired")
 
-    for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
-        // Skip indestructible items
-        _, indestructible := i.FindStat(stat.Indestructible, 0)
-        if i.Ethereal || indestructible {
-            continue
-        }
+	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+		// Skip indestructible items
+		_, indestructible := i.FindStat(stat.Indestructible, 0)
+		if i.Ethereal || indestructible {
+			continue
+		}
 
-        currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
-        maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
+		currentDurability, currentDurabilityFound := i.FindStat(stat.Durability, 0)
+		maxDurability, maxDurabilityFound := i.FindStat(stat.MaxDurability, 0)
 
-        // If we have both stats, check percentage
-        if currentDurabilityFound && maxDurabilityFound {
-            durabilityPercent := int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
-            if durabilityPercent <= 20 {
-                return true
-            }
-        }
+		// If we have both stats, check percentage
+		if currentDurabilityFound && maxDurabilityFound {
+			durabilityPercent := int((float64(currentDurability.Value) / float64(maxDurability.Value)) * 100)
+			if durabilityPercent <= 20 {
+				return true
+			}
+		}
 
-        // If we only have current durability, check absolute value
-        if currentDurabilityFound {
-            if currentDurability.Value <= 5 {
-                return true
-            }
-        }
+		// If we only have current durability, check absolute value
+		if currentDurabilityFound {
+			if currentDurability.Value <= 5 {
+				return true
+			}
+		}
 
-        // Handle case where durability stat is missing but max durability exists
-        // This likely indicates the item needs repair
-        if maxDurabilityFound && !currentDurabilityFound {
-            return true
-        }
-    }
+		// Handle case where durability stat is missing but max durability exists
+		// This likely indicates the item needs repair
+		if maxDurabilityFound && !currentDurabilityFound {
+			return true
+		}
+	}
 
-    return false
+	return false
+}
+
+func IsEquipmentBroken() bool {
+	ctx := context.Get()
+	ctx.SetLastAction("EquipmentBroken")
+
+	for _, i := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+
+		// Check if the item is ethereal
+		if i.Ethereal {
+			continue
+		}
+
+		// Check if the item is indestructible
+		_, indestructible := i.FindStat(stat.Indestructible, 0)
+		if indestructible {
+			continue
+		}
+		
+		// Check if the item is broken
+		if i.IsBroken {
+			ctx.Logger.Debug("Equipment is broken, returning to town", "item", i.Name)
+			return true
+		}
+	}
+
+	return false
 }
