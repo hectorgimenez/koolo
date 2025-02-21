@@ -56,7 +56,7 @@ func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate)
 		m.Attachments = chanMsgs[0].Attachments
 	}
 
-	if strings.Contains(m.Content, "ng:") {
+	if (m.Author.ID == s.State.User.ID || slices.Contains(config.Koolo.Discord.BotAdmins, m.Author.ID)) && strings.Contains(m.Content, "ng:") {
 		parts := strings.Split(m.Message.Content, ":")
 		if len(parts) == 3 {
 			config.LastGameName = parts[1]
