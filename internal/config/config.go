@@ -149,6 +149,10 @@ type CharacterCfg struct {
 		Andariel struct {
 			ClearRoom bool `yaml:"clearRoom"`
 		}
+		Palace struct {
+			OpenChests        bool `yaml:"openChests"`
+			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
+		} `yaml:"palace"`
 		StonyTomb struct {
 			OpenChests        bool `yaml:"openChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
