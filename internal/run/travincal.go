@@ -39,7 +39,7 @@ func (t *Travincal) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Only Enable Area Correction for Travincal
 	t.ctx.CurrentGame.AreaCorrection.ExpectedArea = area.Travincal
 	t.ctx.CurrentGame.AreaCorrection.Enabled = true

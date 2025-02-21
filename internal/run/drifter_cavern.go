@@ -41,7 +41,7 @@ func (s DrifterCavern) Run() error {
 	if err = action.MoveToArea(area.DrifterCavern); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clear the area
 	return action.ClearCurrentLevel(s.ctx.CharacterCfg.Game.DrifterCavern.OpenChests, monsterFilter)
 }

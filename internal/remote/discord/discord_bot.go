@@ -46,6 +46,25 @@ func (b *Bot) Start(ctx context.Context) error {
 }
 
 func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Check if the message follows the format "New game created:gameName:gamePassword"
+	if m.Content == "" {
+		chanMsgs, err := s.ChannelMessages(m.ChannelID, 1, "", "", m.ID)
+		if err != nil {
+			return
+		}
+		m.Content = chanMsgs[0].Content
+		m.Attachments = chanMsgs[0].Attachments
+	}
+
+	if (m.Author.ID == s.State.User.ID || slices.Contains(config.Koolo.Discord.BotAdmins, m.Author.ID)) && strings.Contains(m.Content, "ng:") {
+		parts := strings.Split(m.Message.Content, ":")
+		if len(parts) == 3 {
+			config.LastGameName = parts[1]
+			config.LastGamePassword = parts[2]
+		}
+		return
+	}
+
 	if m.Author.ID == s.State.User.ID {
 		return
 	}

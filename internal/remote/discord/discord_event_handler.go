@@ -14,7 +14,10 @@ func (b *Bot) Handle(_ context.Context, e event.Event) error {
 	if b.shouldPublish(e) {
 
 		switch e.(type) {
-		case event.GameCreatedEvent, event.GameFinishedEvent, event.RunStartedEvent, event.RunFinishedEvent:
+		case event.GameCreatedEvent:
+			_, err := b.discordSession.ChannelMessageSend(b.channelID, e.Message()+":"+e.(event.GameCreatedEvent).Name+":"+e.(event.GameCreatedEvent).Password)
+			return err
+		case event.GameFinishedEvent, event.RunStartedEvent, event.RunFinishedEvent:
 			_, err := b.discordSession.ChannelMessageSend(b.channelID, e.Message())
 			return err
 		default:
