@@ -4,11 +4,11 @@ import (
 	"errors"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/utils"
 	"log/slog"
 	"math"
@@ -39,7 +39,7 @@ func (f *Follower) Run() error {
 		return nil
 	}
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
-	f.goToCorrectTown(leader)
+	_ = f.goToCorrectTown(leader)
 
 	for leaderFound {
 		if leader.Area != f.ctx.Data.AreaData.Area {
@@ -53,6 +53,7 @@ func (f *Follower) Run() error {
 		f.ctx.RefreshGameData()
 		utils.Sleep(200)
 		leader, leaderFound = f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
+		f.ctx.Logger.Info("Leader is still here.", slog.String("leader", leader.Name))
 		if !leaderFound {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
 		}
@@ -69,7 +70,7 @@ func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
 			_ = action.ReturnTown()
 		}
 		_ = f.InTownRoutine()
-		f.goToCorrectTown(leader)
+		_ = f.goToCorrectTown(leader)
 		return
 	}
 
@@ -123,7 +124,7 @@ func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
 		_ = action.ReturnTown()
 	}
 	_ = f.InTownRoutine()
-	f.goToCorrectTown(leader)
+	_ = f.goToCorrectTown(leader)
 
 	err := f.UseCorrectPortalFromLeader(leader)
 	if err != nil {
@@ -167,28 +168,28 @@ func (f *Follower) handleLeaderInTown() {
 	utils.Sleep(5000)
 }
 
-func (f *Follower) goToCorrectTown(leader data.RosterMember) {
+func (f *Follower) goToCorrectTown(leader data.RosterMember) error {
 	f.ctx.Logger.Info("Going to the correct town.")
 	f.ctx.SetLastAction("Going to the correct town")
 	switch act := leader.Area.Act(); act {
 	case 1:
 		_ = action.WayPoint(area.RogueEncampment)
-		_ = action.MoveToCoords(town.A1{}.TPWaitingArea(*f.ctx.Data))
+		_ = action.MoveTo(f.getKashyaPosition)
 	case 2:
 		_ = action.WayPoint(area.LutGholein)
-		_ = action.MoveToCoords(town.A2{}.TPWaitingArea(*f.ctx.Data))
+		_ = action.MoveTo(f.getAtmaPosition)
 	case 3:
 		_ = action.WayPoint(area.KurastDocks)
-		_ = action.MoveToCoords(town.A3{}.TPWaitingArea(*f.ctx.Data))
 	case 4:
 		_ = action.WayPoint(area.ThePandemoniumFortress)
-		_ = action.MoveToCoords(town.A4{}.TPWaitingArea(*f.ctx.Data))
 	case 5:
 		_ = action.WayPoint(area.Harrogath)
-		_ = action.MoveToCoords(town.A5{}.TPWaitingArea(*f.ctx.Data))
 	default:
-		f.ctx.Logger.Info("Could not find the Leader's current Act location.")
+		f.ctx.Logger.Error("Could not find the Leader's current Act location.")
+		return errors.New("Could not find the Leader's current Act location.")
 	}
+	f.ctx.Logger.Info("Went to the correct town.")
+	return nil
 }
 
 func calculateDistance(pos1, pos2 data.Position) float64 {
@@ -229,4 +230,20 @@ func (f *Follower) InTownRoutine() error {
 	action.ReviveMerc()
 	_ = action.CubeRecipes()
 	return nil
+}
+
+func (f *Follower) getAtmaPosition() (data.Position, bool) {
+	atma, found := f.ctx.Data.NPCs.FindOne(npc.Atma)
+	if found {
+		return atma.Positions[0], true
+	}
+	return data.Position{}, false
+}
+
+func (f *Follower) getKashyaPosition() (data.Position, bool) {
+	cain, found := f.ctx.Data.NPCs.FindOne(npc.Kashya)
+	if found {
+		return cain.Positions[0], true
+	}
+	return data.Position{}, false
 }

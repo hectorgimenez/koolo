@@ -252,6 +252,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 func startGameCreationRoutine(s *SinglePlayerSupervisor) error {
 	err := goToLobby(s)
 
+	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
 	if err != nil {
 		_ = s.KillClient()
 		utils.Sleep(60000)
@@ -276,6 +277,7 @@ var (
 func startJoinerRoutine(s *SinglePlayerSupervisor) error {
 	err := goToLobby(s)
 
+	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
 	if err != nil {
 		_ = s.KillClient()
 		utils.Sleep(60000)
