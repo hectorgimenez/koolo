@@ -363,7 +363,12 @@
             <label>
                 <input type="checkbox" name="createLobbyGames" {{ if .Config.Game.CreateLobbyGames }}checked{{ end }}/>
                 Create Lobby Games
-            </label><br>
+            </label>
+            <label>
+                <input type="checkbox" name="joinLobbyGames" {{ if .Config.Game.JoinLobbyGames }}checked{{ end }}/>
+                Join Lobby Games
+            </label>
+            <br>
             <fieldset class="grid">
                 <label>
                     Game name pattern
