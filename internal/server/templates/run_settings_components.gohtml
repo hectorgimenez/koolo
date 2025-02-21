@@ -81,6 +81,12 @@
     </fieldset>
 {{ end }}
 
+{{ define "summoner" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameSummonerExitToA4" {{ if .Config.Game.Summoner.ExitToA4 }}checked{{ end }}> Exit to A4</label>
+    </fieldset>
+{{ end }}
+
 {{ define "tristram" }}
     <fieldset>
         <label><input type="checkbox" name="gameTristramFocusOnElitePacks" {{ if .Config.Game.Tristram.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
