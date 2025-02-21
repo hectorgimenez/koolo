@@ -79,6 +79,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewQuests())
 		case config.FollowerRun:
 			runs = append(runs, NewFollower())
+		case config.RushRun:
+			runs = append(runs, NewRush())
 		case config.CowsRun:
 			runs = append(runs, NewCows())
 		case config.ThreshsocketRun:
