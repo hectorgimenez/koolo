@@ -21,6 +21,15 @@ func (pf *PathFinder) RandomMovement() {
 	utils.Sleep(50)
 }
 
+func (pf *PathFinder) RandomTeleport() {
+	midGameX := pf.gr.GameAreaSizeX / 2
+	midGameY := pf.gr.GameAreaSizeY / 2
+	x := midGameX + rand.Intn(midGameX) - (midGameX / 2)
+	y := midGameY + rand.Intn(midGameY) - (midGameY / 2)
+	pf.MoveCharacter(x, y)
+	utils.Sleep(50)
+}
+
 func (pf *PathFinder) DistanceFromMe(p data.Position) int {
 	return DistanceFromPoint(pf.data.PlayerUnit.Position, p)
 }
