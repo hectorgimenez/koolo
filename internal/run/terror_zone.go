@@ -31,12 +31,13 @@ func (tz TerrorZone) Name() string {
 }
 
 func (tz TerrorZone) Run() error {
+
 	availableTzs := tz.AvailableTZs()
 	if len(availableTzs) == 0 {
 		return nil
 	}
 
-	switch tz.ctx.Data.TerrorZones[0] {
+	switch availableTzs[0] {
 	case area.PitLevel1:
 		return NewPit().Run()
 	case area.Tristram:
@@ -108,6 +109,7 @@ func (tz TerrorZone) Run() error {
 }
 
 func (tz TerrorZone) AvailableTZs() []area.ID {
+	tz.ctx.RefreshGameData()
 	var availableTZs []area.ID
 	for _, tzone := range tz.ctx.Data.TerrorZones {
 		for _, tzArea := range tz.ctx.CharacterCfg.Game.TerrorZone.Areas {
@@ -183,6 +185,7 @@ func (tz TerrorZone) tzAreaGroups(firstTZ area.ID) [][]area.ID {
 }
 
 func (tz TerrorZone) customTZEnemyFilter() data.MonsterFilter {
+
 	return func(m data.Monsters) []data.Monster {
 		var filteredMonsters []data.Monster
 		monsterFilter := data.MonsterAnyFilter()
