@@ -3,6 +3,7 @@ package config
 type Run string
 
 const (
+	BloodMoorRun        Run = "blood_moor"
 	CountessRun         Run = "countess"
 	AndarielRun         Run = "andariel"
 	AncientTunnelsRun   Run = "ancient_tunnels"
@@ -34,6 +35,7 @@ const (
 )
 
 var AvailableRuns = map[Run]interface{}{
+	BloodMoorRun:        nil,
 	CountessRun:         nil,
 	AndarielRun:         nil,
 	AncientTunnelsRun:   nil,
