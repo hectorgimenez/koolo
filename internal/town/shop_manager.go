@@ -113,7 +113,7 @@ func ShouldBuyIDs() bool {
 func ShouldBuyKeys() (int, bool) {
 	keys, found := context.Get().Data.Inventory.Find(item.Key, item.LocationInventory)
 	if !found {
-		return 12, false
+		return 0, true
 	}
 
 	qty, found := keys.FindStat(stat.Quantity, 0)
