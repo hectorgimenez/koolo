@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
-	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -33,12 +32,15 @@ func (f *Follower) Name() string {
 
 func (f *Follower) Run() error {
 	f.ctx.RefreshGameData()
+	f.ctx.SetLastAction("Finding Leader")
 	leader, leaderFound := f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
 	if !leaderFound {
+		f.ctx.Logger.Error("Leader not found.")
 		return nil
 	}
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
 	f.goToCorrectTown(leader)
+
 	for leaderFound {
 		if leader.Area != f.ctx.Data.AreaData.Area {
 			f.handleLeaderNotInSameArea(leader)
@@ -60,12 +62,14 @@ func (f *Follower) Run() error {
 }
 
 func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
+	f.ctx.SetLastAction("Handle leader not in same area")
 	if leader.Area.IsTown() {
 		f.ctx.Logger.Info("Leader is in town. Let's go wait there.")
-		_ = action.ReturnTown()
+		if !f.ctx.Data.AreaData.Area.IsTown() {
+			_ = action.ReturnTown()
+		}
 		_ = f.InTownRoutine()
 		f.goToCorrectTown(leader)
-		utils.Sleep(200)
 		return
 	}
 
@@ -87,6 +91,7 @@ func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
 }
 
 func (f *Follower) getEntrancesToLeader(leader data.RosterMember) []data.Level {
+	f.ctx.SetLastAction("Identifying best entrance to leader")
 	var entrances []data.Level
 	for _, al := range f.ctx.Data.AdjacentLevels {
 		if al.Area == leader.Area { // Only pick the first entrance
@@ -97,6 +102,7 @@ func (f *Follower) getEntrancesToLeader(leader data.RosterMember) []data.Level {
 }
 
 func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
+	f.ctx.SetLastAction("Finding closest entrance")
 	var lvl *data.Level
 	minDistance := math.MaxFloat64 // Start with the largest possible distance
 
@@ -112,7 +118,10 @@ func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
 
 func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
 	f.ctx.Logger.Info("Leader is not in a connecting area, returning to the correct town to use his portal.")
-	_ = action.ReturnTown()
+	f.ctx.SetLastAction("Handle No Valid Entrance")
+	if !f.ctx.Data.AreaData.Area.IsTown() {
+		_ = action.ReturnTown()
+	}
 	_ = f.InTownRoutine()
 	f.goToCorrectTown(leader)
 
@@ -123,6 +132,7 @@ func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
 }
 
 func (f *Follower) handleLeaderInSameArea(leader data.RosterMember) {
+	f.ctx.SetLastAction("Handle leader in same area")
 	_ = action.ClearAreaAroundPosition(leader.Position, MaxDistanceFromLeader, f.ctx.Data.MonsterFilterAnyReachable())
 	_ = action.MoveToCoords(leader.Position)
 	action.Buff()
@@ -130,6 +140,7 @@ func (f *Follower) handleLeaderInSameArea(leader data.RosterMember) {
 }
 
 func (f *Follower) interactWithChests() {
+	f.ctx.SetLastAction("Interact with chests")
 	for _, o := range f.ctx.Data.Objects {
 		if o.IsChest() && o.Selectable && f.isChestInRange(o) {
 			action.ClearAreaAroundPosition(o.Position, 10, data.MonsterAnyFilter())
@@ -152,10 +163,13 @@ func (f *Follower) moveToChestAndInteract(o data.Object) error {
 
 func (f *Follower) handleLeaderInTown() {
 	f.ctx.Logger.Info("We followed the Leader to town, let's wait.")
+	f.ctx.SetLastAction("Handle Leader In Town")
 	utils.Sleep(5000)
 }
 
 func (f *Follower) goToCorrectTown(leader data.RosterMember) {
+	f.ctx.Logger.Info("Going to the correct town.")
+	f.ctx.SetLastAction("Going to the correct town")
 	switch act := leader.Area.Act(); act {
 	case 1:
 		_ = action.WayPoint(area.RogueEncampment)
@@ -177,22 +191,6 @@ func (f *Follower) goToCorrectTown(leader data.RosterMember) {
 	}
 }
 
-func (f *Follower) getAtmaPosition() (data.Position, bool) {
-	atma, found := f.ctx.Data.NPCs.FindOne(npc.Atma)
-	if found {
-		return atma.Positions[0], true
-	}
-	return data.Position{}, false
-}
-
-func (f *Follower) getKashyaPosition() (data.Position, bool) {
-	cain, found := f.ctx.Data.NPCs.FindOne(npc.Kashya)
-	if found {
-		return cain.Positions[0], true
-	}
-	return data.Position{}, false
-}
-
 func calculateDistance(pos1, pos2 data.Position) float64 {
 	dx := pos1.X - pos2.X
 	dy := pos1.Y - pos2.Y
@@ -207,14 +205,13 @@ func (f *Follower) isChestInRange(chest data.Object) bool {
 }
 
 func (f *Follower) UseCorrectPortalFromLeader(leader data.RosterMember) error {
-	ctx := context.Get()
-	ctx.SetLastAction("UsePortalFrom")
+	f.ctx.SetLastAction("UsePortalFromLeader")
 
-	if !ctx.Data.PlayerUnit.Area.IsTown() {
+	if !f.ctx.Data.PlayerUnit.Area.IsTown() {
 		return nil
 	}
 
-	for _, obj := range ctx.Data.Objects {
+	for _, obj := range f.ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == leader.Name && obj.PortalData.DestArea == leader.Area {
 
 			return action.InteractObjectByID(obj.ID, nil)
@@ -225,10 +222,11 @@ func (f *Follower) UseCorrectPortalFromLeader(leader data.RosterMember) error {
 }
 
 func (f *Follower) InTownRoutine() error {
-	action.VendorRefill(false, true)
-	action.Stash(false)
+	f.ctx.SetLastAction("In Town Routine")
+
+	_ = action.VendorRefill(false, true)
+	_ = action.Stash(false)
 	action.ReviveMerc()
-	action.Repair()
-	action.CubeRecipes()
+	_ = action.CubeRecipes()
 	return nil
 }
