@@ -12,8 +12,8 @@ import (
 )
 
 var fixedPlaceNearRedPortal = data.Position{
-	X: 5130,
-	Y: 5120,
+	X: 5131, // Adjusted coords from X: 5130 to prevent bot stuck
+	Y: 5123, // Adjusted coords from Y: 5120 to prevent bot stuck
 }
 
 var pindleSafePosition = data.Position{
