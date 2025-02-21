@@ -30,7 +30,7 @@ func ReturnTown() error {
 		return errors.New("portal not found")
 	}
 
-	if err = ClearAreaAroundPosition(portal.Position, 8, data.MonsterAnyFilter()); err != nil {
+	if err = ClearAreaAroundPosition(portal.Position, 15, data.MonsterAnyFilter()); err != nil {
 		ctx.Logger.Warn("Error clearing area around portal", "error", err)
 	}
 
