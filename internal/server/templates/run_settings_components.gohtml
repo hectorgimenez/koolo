@@ -28,6 +28,7 @@
             <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="light" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "light" }}checked{{ end }}> Light</label>
             <label><input type="checkbox" name="gamePindleskinSkipOnImmunities[]" value="poison" {{ if isInSlice .Config.Game.Pindleskin.SkipOnImmunities "poison" }}checked{{ end }}> Poison</label>
         </fieldset>
+        <label><input type="checkbox" name="gamePindleskinKillNihlathak" {{ if .Config.Game.Pindleskin.KillNihlathak }}checked{{ end }}> Kill Nihlathak</label>
     </fieldset>
 {{ end }}
 
