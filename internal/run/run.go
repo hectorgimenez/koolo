@@ -31,6 +31,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 
 	for _, run := range cfg.Game.Runs {
 		switch run {
+		case config.BloodMoorRun:
+			runs = append(runs, NewBloodMoor())
 		case config.CountessRun:
 			runs = append(runs, NewCountess())
 		case config.AndarielRun:
