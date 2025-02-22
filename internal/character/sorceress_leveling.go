@@ -194,7 +194,7 @@ func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	statPoints := make(map[stat.ID]int)
 
 	if lvl.Value < 20 {
-		statPoints[stat.Strenght] = 34
+		statPoints[stat.Strength] = 43
 	} else {
 		//statPoints[stat.Energy] = 80
 		//statPoints[stat.Strength] = 60
