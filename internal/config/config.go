@@ -203,7 +203,8 @@ type CharacterCfg struct {
 			KillShenk bool `yaml:"killShenk"`
 		} `yaml:"eldritch"`
 		LowerKurastChest struct {
-			OpenRacks bool `yaml:"openRacks"`
+			OpenRacks       bool `yaml:"openRacks"`
+			GetSewersChests bool `yaml:"getSewersChests"`
 		} `yaml:"lowerkurastchests"`
 		TerrorZone struct {
 			FocusOnElitePacks bool          `yaml:"focusOnElitePacks"`
