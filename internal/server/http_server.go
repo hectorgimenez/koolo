@@ -805,7 +805,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		if cfg.Character.Class == "sorceress" {
 			cfg.Character.BlizzardSorceress.BossStaticThreshold, _ = strconv.Atoi(r.Form.Get("blizzardBossStaticThreshold"))
 			cfg.Character.BlizzardSorceress.MaxAttacksLoop, _ = strconv.Atoi(r.Form.Get("blizzardMaxAttacksLoop"))
-			cfg.Character.BlizzardSorceress.UseStaticField = r.Form.Has("blizzardUseStaticField")
 			cfg.Character.BlizzardSorceress.StaticFieldMinDist, _ = strconv.Atoi(r.Form.Get("blizzardStaticFieldMinDist"))
 			cfg.Character.BlizzardSorceress.StaticFieldMaxDist, _ = strconv.Atoi(r.Form.Get("blizzardStaticFieldMaxDist"))
 		}

@@ -117,10 +117,6 @@
                             <input type="number" id="blizzardMaxAttacksLoop" name="blizzardMaxAttacksLoop" min="1" max="1000" step="1" value="{{ .Config.Character.BlizzardSorceress.MaxAttacksLoop }}">
                         </label>
                         <label>
-                            Use Static Field
-                            <input type="checkbox" name="blizzardUseStaticField" {{ if .Config.Character.BlizzardSorceress.UseStaticField }}checked{{ end }} />
-                        </label>
-                        <label>
                             Boss Static HP (%)
                             <input type="number" id="blizzardBossStaticThreshold" name="blizzardBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.BlizzardSorceress.BossStaticThreshold }}">
                         </label>
