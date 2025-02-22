@@ -72,7 +72,7 @@ func (s HydraOrbSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= sorceressMaxAttacksLoop {
+		if completedAttackLoops >= ho_sorceressMaxAttacksLoop {
 			return nil
 		}
 
