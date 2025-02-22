@@ -58,7 +58,7 @@ character:
   blizzard_sorceress: # blizzard sorc defaults
     boss_static_threshold: 55
     max_attacks_loop: 40 
-    use_static_field: true
+    use_static_field: false
     static_field_minimum_distance: 12
     static_field_maximum_distance: 22
 game:
