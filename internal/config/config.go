@@ -452,11 +452,11 @@ func (c *CharacterCfg) Validate() {
 		minThreshold := 65 // Default
 		switch c.Game.Difficulty {
 		case difficulty.Normal:
-			minThreshold = 22
+			minThreshold = 1
 		case difficulty.Nightmare:
 			minThreshold = 33
 		case difficulty.Hell:
-			minThreshold = 66
+			minThreshold = 50
 		}
 		if c.Character.NovaSorceress.BossStaticThreshold < minThreshold || c.Character.NovaSorceress.BossStaticThreshold > 100 {
 			c.Character.NovaSorceress.BossStaticThreshold = minThreshold
