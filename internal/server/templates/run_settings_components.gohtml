@@ -113,6 +113,7 @@
 {{ define "lower_kurast_chest" }}
     <fieldset>
         <label><input type="checkbox" name="gameLowerKurastChestOpenRacks" {{ if .Config.Game.LowerKurastChest.OpenRacks }}checked{{ end }}> Weapon Racks + Armor Stands</label>
+        <label><input type="checkbox" name="gameLowerKurastChestGetSewersChests" {{ if .Config.Game.LowerKurastChest.GetSewersChests }}checked{{ end }}> Get Sewers Chests</label>
     </fieldset>
 {{ end }}
 

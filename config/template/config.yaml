@@ -65,6 +65,9 @@ game:
   spider_cavern:
     openChests: true
     focusOnElitePacks: false
+  lower_kurast_chests:
+    openRacks: true
+    getSewersChests: false
   pit:
     # default - Outer Cloister -> Monastery Gates -> Tamoe Highland
     moveThroughBlackMarsh: false # Use Black Marsh -> Tamoe Highland route
