@@ -53,6 +53,7 @@ game:
   # Specific runs settings
   pindleskin:
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
+    killNihlathak: false
   stony_tomb:
     openChests: true
     focusOnElitePacks: false

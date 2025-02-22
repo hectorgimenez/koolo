@@ -2,7 +2,6 @@ package run
 
 import (
 	"errors"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -54,8 +53,42 @@ func (p Pindleskin) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
+	action.Buff()
 	_ = action.MoveToCoords(pindleSafePosition)
 
-	return p.ctx.Char.KillPindle()
+	_ = p.ctx.Char.KillPindle()
+
+	if p.ctx.CharacterCfg.Game.Pindleskin.KillNihlathak {
+		_ = action.MoveToArea(area.HallsOfAnguish)
+		_ = action.MoveToArea(area.HallsOfPain)
+		_ = action.MoveToArea(area.HallsOfVaught)
+
+		o, found := p.ctx.Data.Objects.FindOne(object.NihlathakWildernessStartPositionName)
+		if !found {
+			return errors.New("failed to find Nihlathak's Start Position")
+		}
+
+		// Move to Nihlathak
+		action.Buff()
+
+		if err = action.MoveToCoords(o.Position); err != nil {
+			return err
+		}
+
+		// Disable item pickup before the fight
+		p.ctx.DisableItemPickup()
+
+		// Kill Nihlathak
+		if err = p.ctx.Char.KillNihlathak(); err != nil {
+			// Re-enable item pickup even if kill fails
+			p.ctx.EnableItemPickup()
+			return err
+		}
+
+		// Re-enable item pickup after kill
+		p.ctx.EnableItemPickup()
+	}
+
+	return nil
 }

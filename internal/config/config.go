@@ -136,6 +136,7 @@ type CharacterCfg struct {
 		PublicGameCounter      int                   `yaml:"-"`
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
+			KillNihlathak    bool          `yaml:"killNihlathak"`
 		} `yaml:"pindleskin"`
 		Cows struct {
 			OpenChests bool `yaml:"openChests"`
