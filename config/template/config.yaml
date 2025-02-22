@@ -42,6 +42,7 @@ game:
   minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
   clearTPArea: true # Will clear the TP area before clicking it
   difficulty: hell # Allowed values: normal, nightmare, hell
+  initialGameCount: 1 # Initial game number
   randomizeRuns: true # Will randomize the order of the runs each game
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
   # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak,
