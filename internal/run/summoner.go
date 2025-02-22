@@ -43,5 +43,14 @@ func (s Summoner) Run() error {
 	}
 
 	// Kill Summoner
-	return s.ctx.Char.KillSummoner()
+	_ = s.ctx.Char.KillSummoner()
+	_ = action.OpenTPIfLeader()
+
+	if s.ctx.CharacterCfg.Game.Summoner.ClearArea {
+		if err = action.ClearCurrentLevel(true, s.ctx.Data.MonsterFilterAnyReachable()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
