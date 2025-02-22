@@ -37,7 +37,12 @@ character:
   useMerc: true
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
-
+  blizzard_sorceress: # blizzard sorc
+    boss_static_threshold: 55
+    max_attacks_loop: 40 
+    use_static_field: true
+    static_field_minimum_distance: 12
+    static_field_maximum_distance: 22
 game:
   minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
   clearTPArea: true # Will clear the TP area before clicking it

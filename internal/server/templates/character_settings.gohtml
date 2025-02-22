@@ -111,7 +111,23 @@
                 </div>
 
                 <div class="blizzard-sorceress-options" style="display: none;">
-                    <fieldset class="grid">
+                    <fieldset class="list">
+                        <label>
+                            Boss Static HP (%)
+                            <input type="number" id="blizzardBossStaticThreshold" name="blizzardBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.BlizzardSorceress.BossStaticThreshold }}">
+                        </label>
+                        <label>
+                            Max Attacks Loop
+                            <input type="number" id="blizzardMaxAttacksLoop" name="blizzardMaxAttacksLoop" min="1" max="1000" step="1" value="{{ .Config.Character.BlizzardSorceress.MaxAttacksLoop }}">
+                        </label>
+                        <label>
+                            Use Static Field
+                            <input type="checkbox" name="blizzardUseStaticField" {{ if .Config.Character.BlizzardSorceress.UseStaticField }}checked{{ end }} />
+                        </label>
+                        <label>
+                            Static Field Min Distance
+                            <input type="number" id="blizzardStaticFieldMinDist" name="blizzardStaticFieldMinDist" min="1" max="50" step="1" value="{{ .Config.Character.BlizzardSorceress.StaticFieldMinDist }}">
+                        </label>
                         <label>
                             Static Field Max Distance
                             <input type="number" id="blizzardStaticFieldMaxDist" name="blizzardStaticFieldMaxDist" min="1" max="50" step="1" value="{{ .Config.Character.BlizzardSorceress.StaticFieldMaxDist }}">

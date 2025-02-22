@@ -691,6 +691,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if r.Method == http.MethodPost {
+		s.logger.Debug("HI IM HERE")
 		err = r.ParseForm()
 		if err != nil {
 			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
