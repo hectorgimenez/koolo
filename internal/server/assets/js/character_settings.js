@@ -252,14 +252,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-function setDefaultValue(elementId, uninitializedValue, defaultValue) {
-    const input = document.getElementById(elementId);
-    let value = parseInt(input.value);
-    if (value == uninitializedValue) {
-        input.value = defaultValue
-    }
-}
-
 function handleBossStaticThresholdChange(elementId) {
     const input = document.getElementById(elementId);
     const selectedDifficulty = document.getElementById('gameDifficulty').value;
