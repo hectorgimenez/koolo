@@ -73,7 +73,7 @@ func Buff() {
 			ctx.HID.PressKeyBinding(kb)
 			utils.Sleep(180)
 			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
+			utils.Sleep(500) // TODO: make this number based on your FCR?
 		}
 	}
 

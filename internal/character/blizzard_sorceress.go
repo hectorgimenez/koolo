@@ -11,15 +11,15 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
-	sorceressMaxAttacksLoop = 40
-	blizzMinDistance        = 8
-	blizzMaxDistance        = 20
-	LSMinDistance           = 6
-	LSMaxDistance           = 15 // Left skill
+	blizzMinDistance = 8
+	blizzMaxDistance = 20
+	LSMinDistance    = 6
+	LSMaxDistance    = 15 // Left skill
 )
 
 type BlizzardSorceress struct {
@@ -53,10 +53,43 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
+func (s BlizzardSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
+	ctx := context.Get()
+
+	for {
+		boss, found := s.Data.Monsters.FindOne(bossID, monsterType)
+		if !found || boss.Stats[stat.Life] <= 0 {
+			return nil
+		}
+
+		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
+		thresholdFloat := float64(ctx.CharacterCfg.Character.BlizzardSorceress.BossStaticThreshold)
+
+		// Cast Static Field until boss HP is below threshold
+		if bossHPPercent > thresholdFloat {
+			staticOpts := []step.AttackOption{
+				step.Distance(ctx.CharacterCfg.Character.BlizzardSorceress.StaticFieldMinDist, ctx.CharacterCfg.Character.BlizzardSorceress.StaticFieldMaxDist),
+			}
+			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, staticOpts...)
+			if err != nil {
+				s.Logger.Warn("Failed to cast Static Field", slog.String("error", err.Error()))
+			}
+			continue
+		}
+
+		// Switch to primary skill once boss HP is low enough
+		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+			return boss.UnitID, true
+		}, nil)
+	}
+}
+
 func (s BlizzardSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
+	ctx := context.Get()
+
 	completedAttackLoops := 0
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
@@ -77,7 +110,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= sorceressMaxAttacksLoop {
+		if completedAttackLoops >= ctx.CharacterCfg.Character.BlizzardSorceress.MaxAttacksLoop {
 			return nil
 		}
 
@@ -155,7 +188,13 @@ func (s BlizzardSorceress) KillCountess() error {
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
+	ctx := context.Get()
+
+	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+		return s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
+	}
 	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
+
 }
 
 func (s BlizzardSorceress) KillSummoner() error {
@@ -192,6 +231,11 @@ func (s BlizzardSorceress) KillCouncil() error {
 }
 
 func (s BlizzardSorceress) KillMephisto() error {
+	ctx := context.Get()
+
+	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+		return s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
+	}
 	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
 }
 

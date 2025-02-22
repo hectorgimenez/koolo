@@ -412,7 +412,7 @@ func CubeRecipes() error {
 				stashingRequired := false
 				stashingGrandCharm := false
 
-				// Check if the items that are not in the protected invetory slots should be stashed
+				// Check if the items that are not in the protected inventory slots should be stashed
 				for _, item := range itemsInInv {
 					// If item is not in the protected slots, check if it should be stashed
 					if ctx.CharacterCfg.Inventory.InventoryLock[item.Position.Y][item.Position.X] == 1 {
@@ -489,7 +489,7 @@ func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, boo
 
 	itemsForRecipe := []data.Item{}
 
-	// Iterate over the items in our stash to see if we have the items for the recipie.
+	// Iterate over the items in our stash to see if we have the items for the recipe.
 	for _, item := range items {
 		if count, ok := recipeItems[string(item.Name)]; ok {
 
@@ -515,7 +515,7 @@ func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, boo
 		}
 	}
 
-	// We don't have all the items for the recipie.
+	// We don't have all the items for the recipe.
 	return nil, false
 }
 

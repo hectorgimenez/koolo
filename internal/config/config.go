@@ -113,6 +113,13 @@ type CharacterCfg struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
 		} `yaml:"berserker_barb"`
+		BlizzardSorceress struct {
+			BossStaticThreshold int  `yaml:"boss_static_threshold"`
+			MaxAttacksLoop      int  `yaml:"max_attacks_loop"`
+			UseStaticField      bool `yaml:"use_static_field"`
+			StaticFieldMinDist  int  `yaml:"static_field_minimum_distance"`
+			StaticFieldMaxDist  int  `yaml:"static_field_maximum_distance"`
+		} `yaml:"blizzard_sorceress"`
 		NovaSorceress struct {
 			BossStaticThreshold int `yaml:"boss_static_threshold"`
 		} `yaml:"nova_sorceress"`
@@ -445,11 +452,11 @@ func (c *CharacterCfg) Validate() {
 		minThreshold := 65 // Default
 		switch c.Game.Difficulty {
 		case difficulty.Normal:
-			minThreshold = 1
+			minThreshold = 22
 		case difficulty.Nightmare:
 			minThreshold = 33
 		case difficulty.Hell:
-			minThreshold = 50
+			minThreshold = 66
 		}
 		if c.Character.NovaSorceress.BossStaticThreshold < minThreshold || c.Character.NovaSorceress.BossStaticThreshold > 100 {
 			c.Character.NovaSorceress.BossStaticThreshold = minThreshold

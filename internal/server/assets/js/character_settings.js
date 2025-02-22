@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const schedulerSettings = document.getElementById('scheduler-settings');
     const characterClassSelect = document.querySelector('select[name="characterClass"]');
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
+    const blizzardSorceressOptions = document.querySelector('.blizzard-sorceress-options');
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
@@ -132,10 +133,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedClass = characterClassSelect.value;
         const noSettingsMessage = document.getElementById('no-settings-message');
         const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
+        const blizzardSorceressOptions = document.querySelector('.blizzard-sorceress-options');
         const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
         const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
         // Hide all options first
         berserkerBarbOptions.style.display = 'none';
+        blizzardSorceressOptions.style.display = 'none';
         novaSorceressOptions.style.display = 'none';
         mosaicAssassinOptions.style.display = 'none';
         noSettingsMessage.style.display = 'none';
@@ -143,6 +146,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show relevant options based on class
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
+        } else if (selectedClass === 'sorceress') { // blizzard sorc
+            blizzardSorceressOptions.style.display = 'block';
+            updateBlizzardSorceressOptions();
         } else if (selectedClass === 'nova' || selectedClass === 'lightsorc') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
@@ -152,15 +158,26 @@ document.addEventListener('DOMContentLoaded', function () {
             noSettingsMessage.style.display = 'block';
         }
     }
+
+    function updateBlizzardSorceressOptions() {
+        const selectedDifficulty = document.getElementById('gameDifficulty').value;
+        // setDefaultValue('blizzardBossStaticThreshold', 0, 99)
+        // setDefaultValue('blizzardMaxAttacksLoop', 0, 40)
+        // setDefaultValue('blizzardStaticFieldMinDist', 0, 13)
+        // setDefaultValue('blizzardStaticFieldMaxDist', 0, 22)
+
+        updateBossStaticThresholdMin(selectedDifficulty, 'blizzardBossStaticThreshold');
+        handleBossStaticThresholdChange('blizzardBossStaticThreshold');
+    }
     
     function updateNovaSorceressOptions() {
         const selectedDifficulty = document.getElementById('gameDifficulty').value;
-        updateBossStaticThresholdMin(selectedDifficulty);
-        handleBossStaticThresholdChange();
+        updateBossStaticThresholdMin(selectedDifficulty, 'novaBossStaticThreshold');
+        handleBossStaticThresholdChange('novaBossStaticThreshold');
     }
     
-    function updateBossStaticThresholdMin(difficulty) {
-        const input = document.getElementById('novaBossStaticThreshold');
+    function updateBossStaticThresholdMin(difficulty, elementId) {
+        const input = document.getElementById(elementId);
         let minValue;
         switch(difficulty) {
             case 'normal':
@@ -230,8 +247,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-function handleBossStaticThresholdChange() {
-    const input = document.getElementById('novaBossStaticThreshold');
+function setDefaultValue(elementId, uninitializedValue, defaultValue) {
+    const input = document.getElementById(elementId);
+    let value = parseInt(input.value);
+    if (value == uninitializedValue) {
+        input.value = defaultValue
+    }
+}
+
+function handleBossStaticThresholdChange(elementId) {
+    const input = document.getElementById(elementId);
     const selectedDifficulty = document.getElementById('gameDifficulty').value;
     let minValue;
     switch(selectedDifficulty) {
