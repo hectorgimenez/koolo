@@ -71,6 +71,8 @@ game:
     openChests: true
     focusOnElitePacks: false
     onlyClearLevel2: false
+  summoner:
+    clearArea: false
   mephisto:
     killCouncilMembers: true # Will kill the council members after killing Mephisto
     openChests: true # Will open chests after killing Mephisto

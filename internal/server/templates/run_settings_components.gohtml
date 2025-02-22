@@ -116,6 +116,12 @@
     </fieldset>
 {{ end }}
 
+{{ define "summoner" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameSummonerClearArea" {{ if .Config.Game.Summoner.ClearArea }}checked{{ end }}> Clear Area</label>
+    </fieldset>
+{{ end }}
+
 {{ define "diablo" }}
     <fieldset class="options-group">
         <legend>Boss Options</legend>
