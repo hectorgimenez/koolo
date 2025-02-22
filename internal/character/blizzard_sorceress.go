@@ -27,7 +27,13 @@ type BlizzardSorceress struct {
 }
 
 func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.Blizzard, skill.Teleport, skill.TomeOfTownPortal, skill.ShiverArmor, skill.StaticField}
+	ctx := context.Get()
+
+	requireKeybindings := []skill.ID{skill.Blizzard, skill.Teleport, skill.TomeOfTownPortal, skill.ShiverArmor}
+	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+		requireKeybindings = append(requireKeybindings, skill.StaticField)
+	}
+
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -53,7 +59,7 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
-func (s BlizzardSorceress) killBossWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
+func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
 	ctx := context.Get()
 
 	for {
@@ -191,7 +197,7 @@ func (s BlizzardSorceress) KillAndariel() error {
 	ctx := context.Get()
 
 	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
-		return s.killBossWithStatic(npc.Andariel, data.MonsterTypeUnique)
+		return s.killMonsterWithStatic(npc.Andariel, data.MonsterTypeUnique)
 	}
 	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
 
@@ -202,6 +208,11 @@ func (s BlizzardSorceress) KillSummoner() error {
 }
 
 func (s BlizzardSorceress) KillDuriel() error {
+	ctx := context.Get()
+
+	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+		return s.killMonsterWithStatic(npc.Duriel, data.MonsterTypeUnique)
+	}
 	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
 }
 
@@ -234,19 +245,22 @@ func (s BlizzardSorceress) KillMephisto() error {
 	ctx := context.Get()
 
 	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
-		return s.killBossWithStatic(npc.Mephisto, data.MonsterTypeUnique)
+		return s.killMonsterWithStatic(npc.Mephisto, data.MonsterTypeUnique)
 	}
 	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillIzual() error {
-	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
+	ctx := context.Get()
 
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
+	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+		return s.killMonsterWithStatic(npc.Izual, data.MonsterTypeUnique)
+	}
+	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillDiablo() error {
+	ctx := context.Get()
 	timeout := time.Second * 20
 	startTime := time.Now()
 	diabloFound := false
@@ -272,9 +286,10 @@ func (s BlizzardSorceress) KillDiablo() error {
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
 
-		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(3, 8))
-
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+		if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+			return s.killMonsterWithStatic(npc.Diablo, data.MonsterTypeUnique)
+		}
+		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
 	}
 }
 
@@ -287,8 +302,10 @@ func (s BlizzardSorceress) KillNihlathak() error {
 }
 
 func (s BlizzardSorceress) KillBaal() error {
-	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
-	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
+	ctx := context.Get()
 
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
+	if ctx.CharacterCfg.Character.BlizzardSorceress.UseStaticField {
+		return s.killMonsterWithStatic(npc.BaalCrab, data.MonsterTypeUnique)
+	}
+	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
 }

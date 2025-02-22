@@ -56,9 +56,9 @@ character:
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
   blizzard_sorceress: # blizzard sorc defaults
-    boss_static_threshold: 55
     max_attacks_loop: 40 
     use_static_field: false
+    boss_static_threshold: 55
     static_field_minimum_distance: 12
     static_field_maximum_distance: 22
 game:
