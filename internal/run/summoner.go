@@ -36,6 +36,7 @@ func (s Summoner) Run() error {
 		return err
 	}
 
+	action.Buff()
 	// Move to the Summoner's position using the static coordinates from map data
 	if err = action.MoveToCoords(summonerNPC.Positions[0]); err != nil {
 		return err
