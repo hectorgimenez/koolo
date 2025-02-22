@@ -691,7 +691,6 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if r.Method == http.MethodPost {
-		s.logger.Debug("HI IM HERE")
 		err = r.ParseForm()
 		if err != nil {
 			s.templates.ExecuteTemplate(w, "character_settings.gohtml", CharacterSettings{
@@ -804,31 +803,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		// Blizzard Sorceress specific options
 		if cfg.Character.Class == "sorceress" {
-			// // Handle static config
-			// bossStaticThreshold, err := strconv.Atoi(r.Form.Get("blizzardBossStaticThreshold"))
-			// if err == nil {
-			// 	var minThreshold int
-			// 	switch cfg.Game.Difficulty {
-			// 	case difficulty.Normal:
-			// 		minThreshold = 22
-			// 	case difficulty.Nightmare:
-			// 		minThreshold = 33
-			// 	default:
-			// 		minThreshold = 66
-			// 	}
-			// 	if bossStaticThreshold >= minThreshold && bossStaticThreshold <= 100 {
-			// 		cfg.Character.BlizzardSorceress.BossStaticThreshold = bossStaticThreshold
-			// 	} else {
-			// 		cfg.Character.BlizzardSorceress.BossStaticThreshold = minThreshold
-			// 		s.logger.Warn("Invalid Boss Static Threshold, setting to minimum for difficulty",
-			// 			slog.Int("min", minThreshold),
-			// 			slog.String("difficulty", string(cfg.Game.Difficulty)))
-			// 	}
-			// } else {
-			// 	cfg.Character.BlizzardSorceress.BossStaticThreshold = 65 // Default value
-			// 	s.logger.Warn("Invalid Boss Static Threshold input, setting to default", slog.Int("default", 65))
-			// }
-
 			cfg.Character.BlizzardSorceress.BossStaticThreshold, _ = strconv.Atoi(r.Form.Get("blizzardBossStaticThreshold"))
 			cfg.Character.BlizzardSorceress.MaxAttacksLoop, _ = strconv.Atoi(r.Form.Get("blizzardMaxAttacksLoop"))
 			cfg.Character.BlizzardSorceress.UseStaticField = r.Form.Has("blizzardUseStaticField")

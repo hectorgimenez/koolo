@@ -116,13 +116,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const schedulerSettings = document.getElementById('scheduler-settings');
     const characterClassSelect = document.querySelector('select[name="characterClass"]');
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
-    const blizzardSorceressOptions = document.querySelector('.blizzard-sorceress-options');
+    const blizzardBossStaticThreshold = document.querySelector('blizzardBossStaticThreshold')
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
 
+    // TODO: it would be nice to somehow consolidate these
+    // Add a listener to see if the threshold changes to make sure it matches the difficulty setting
     if (bossStaticThresholdInput) {
-        bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
+        bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange('novaBossStaticThreshold'));
+    }
+    if (blizzardBossStaticThreshold) {
+        blizzardBossStaticThreshold.addEventListener('input', handleBossStaticThresholdChange('blizzardBossStaticThreshold'));
     }
 
     function toggleSchedulerVisibility() {
@@ -161,11 +166,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateBlizzardSorceressOptions() {
         const selectedDifficulty = document.getElementById('gameDifficulty').value;
-        // setDefaultValue('blizzardBossStaticThreshold', 0, 99)
-        // setDefaultValue('blizzardMaxAttacksLoop', 0, 40)
-        // setDefaultValue('blizzardStaticFieldMinDist', 0, 13)
-        // setDefaultValue('blizzardStaticFieldMaxDist', 0, 22)
-
         updateBossStaticThresholdMin(selectedDifficulty, 'blizzardBossStaticThreshold');
         handleBossStaticThresholdChange('blizzardBossStaticThreshold');
     }
@@ -202,8 +202,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     characterClassSelect.addEventListener('change', updateCharacterOptions);
     document.getElementById('gameDifficulty').addEventListener('change', function() {
+
+        // Check if we need to fix the static field threshold based on the new difficulty setting
         if (characterClassSelect.value === 'nova' || characterClassSelect.value === 'lightsorc') {
             updateNovaSorceressOptions();
+        }
+        if (characterClassSelect.value === 'sorceress') { // Blizzard Sorceress
+            updateBlizzardSorceressOptions()
         }
     });
 
