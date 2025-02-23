@@ -3,6 +3,7 @@ package discord
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"image/jpeg"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,8 +15,11 @@ func (b *Bot) Handle(_ context.Context, e event.Event) error {
 	if b.shouldPublish(e) {
 
 		switch e.(type) {
-		case event.GameCreatedEvent, event.GameFinishedEvent, event.RunStartedEvent, event.RunFinishedEvent:
-			_, err := b.discordSession.ChannelMessageSend(b.channelID, e.Message())
+		case event.GameCreatedEvent:
+        	_, err := b.discordSession.ChannelMessageSend(b.channelID, fmt.Sprintf("[%s] %s:%s:%s", e.Supervisor(), e.Message(), e.(event.GameCreatedEvent).Name, e.(event.GameCreatedEvent).Password))
+			return err
+		case event.GameFinishedEvent, event.RunStartedEvent, event.RunFinishedEvent:
+			_, err := b.discordSession.ChannelMessageSend(b.channelID, fmt.Sprintf("[%s] %s", e.Supervisor(), e.Message()))
 			return err
 		default:
 			break
@@ -29,7 +33,7 @@ func (b *Bot) Handle(_ context.Context, e event.Event) error {
 
 		_, err = b.discordSession.ChannelMessageSendComplex(b.channelID, &discordgo.MessageSend{
 			File:    &discordgo.File{Name: "Screenshot.jpeg", ContentType: "image/jpeg", Reader: buf},
-			Content: e.Message(),
+			Content: fmt.Sprintf("[%s] %s", e.Supervisor(), e.Message()),
 		})
 
 		return err

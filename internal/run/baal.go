@@ -12,12 +12,20 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"time"
 )
 
 var baalThronePosition = data.Position{
 	X: 15095,
 	Y: 5042,
 }
+
+var tpPosition = data.Position{
+	X: 15116,
+	Y: 5071,
+}
+
+var lastClear = time.Time{}
 
 type Baal struct {
 	ctx                *context.Status
@@ -44,10 +52,18 @@ func (s Baal) Run() error {
 	if s.clearMonsterFilter != nil {
 		filter = s.clearMonsterFilter
 	}
+	_ = action.VendorRefill(false, true)
+	_ = action.Stash(false)
 
 	err := action.WayPoint(area.TheWorldStoneKeepLevel2)
 	if err != nil {
 		return err
+	}
+
+	if s.ctx.CharacterCfg.Game.Baal.ClearFloors && s.ctx.CharacterCfg.Companion.Leader {
+		action.OpenTPIfLeader()
+		utils.Sleep(10000)
+		action.Buff()
 	}
 
 	if s.ctx.CharacterCfg.Game.Baal.ClearFloors || s.clearMonsterFilter != nil {
@@ -58,6 +74,11 @@ func (s Baal) Run() error {
 	if err != nil {
 		return err
 	}
+	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+		action.OpenTPIfLeader()
+		action.ClearAreaAroundPlayer(30, filter)
+		action.Buff()
+	}
 
 	if s.ctx.CharacterCfg.Game.Baal.ClearFloors || s.clearMonsterFilter != nil {
 		action.ClearCurrentLevel(false, filter)
@@ -67,7 +88,15 @@ func (s Baal) Run() error {
 	if err != nil {
 		return err
 	}
-	err = action.MoveToCoords(baalThronePosition)
+	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+		action.OpenTPIfLeader()
+		action.ClearAreaAroundPlayer(30, filter)
+		action.Buff()
+		action.ClearThroughPath(tpPosition, 20, filter)
+	} else {
+		err = action.MoveToCoords(tpPosition)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -77,14 +106,11 @@ func (s Baal) Run() error {
 
 	// Let's move to a safe area and open the portal in companion mode
 	if s.ctx.CharacterCfg.Companion.Leader {
-		action.MoveToCoords(data.Position{
-			X: 15116,
-			Y: 5071,
-		})
+		action.MoveToCoords(tpPosition)
 		action.OpenTPIfLeader()
 	}
 
-	err = action.ClearAreaAroundPlayer(50, data.MonsterAnyFilter())
+	err = action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 	if err != nil {
 		return err
 	}
@@ -99,10 +125,12 @@ func (s Baal) Run() error {
 	}
 
 	// Handle Baal waves
+	lastClear = time.Now()
 	lastWave := false
+
 	for !lastWave {
 		// Check for last wave
-		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
+		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found || time.Since(lastClear) > time.Minute*3 {
 			lastWave = true
 		}
 
@@ -117,7 +145,7 @@ func (s Baal) Run() error {
 		if err != nil {
 			return err
 		}
-
+		action.Buff()
 		// Small delay to allow next wave to spawn if not last wave
 		if !lastWave {
 			utils.Sleep(500)
@@ -126,21 +154,18 @@ func (s Baal) Run() error {
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
-		utils.Sleep(15000)
+		utils.Sleep(10000)
 		action.Buff()
 
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		err = action.InteractObject(baalPortal, func() bool {
+		_ = action.InteractObject(baalPortal, func() bool {
 			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
 		})
-		if err != nil {
-			return err
+
+		if err = s.ctx.Char.KillBaal(); err != nil {
+			return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 		}
-
-		_ = action.MoveToCoords(data.Position{X: 15136, Y: 5943})
-
-		return s.ctx.Char.KillBaal()
 	}
 
 	return nil
@@ -151,6 +176,7 @@ func (s Baal) clearWave() error {
 		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
 			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
 			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
+				lastClear = time.Now()
 				return m.UnitID, true
 			}
 		}

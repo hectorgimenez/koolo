@@ -77,6 +77,7 @@ func (d Duriel) Run() error {
 		return err
 	}
 
+	action.OpenTPIfLeader()
 	err = action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 	if err != nil {
 		return err

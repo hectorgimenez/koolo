@@ -59,6 +59,7 @@ func (e Endugu) Run() error {
 		return data.Position{}, false
 	})
 
+	action.OpenTPIfLeader()
 	// Clear monsters around player
 	action.ClearAreaAroundPlayer(15, data.MonsterEliteFilter())
 
