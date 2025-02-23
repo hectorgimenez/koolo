@@ -12,6 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
+	"time"
 )
 
 var baalThronePosition = data.Position{
@@ -23,6 +24,8 @@ var tpPosition = data.Position{
 	X: 15116,
 	Y: 5071,
 }
+
+var lastClear = time.Time{}
 
 type Baal struct {
 	ctx                *context.Status
@@ -122,11 +125,12 @@ func (s Baal) Run() error {
 	}
 
 	// Handle Baal waves
+	lastClear = time.Now()
 	lastWave := false
 
 	for !lastWave {
 		// Check for last wave
-		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
+		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found || time.Since(lastClear) > time.Minute*3 {
 			lastWave = true
 		}
 
@@ -155,16 +159,13 @@ func (s Baal) Run() error {
 
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		err = action.InteractObject(baalPortal, func() bool {
+		_ = action.InteractObject(baalPortal, func() bool {
 			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
 		})
-		if err != nil {
-			return err
-		}
-		action.OpenTPIfLeader()
-		//_ = action.MoveToCoords(data.Position{X: 15136, Y: 5943})
 
-		return s.ctx.Char.KillBaal()
+		if err = s.ctx.Char.KillBaal(); err != nil {
+			return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
+		}
 	}
 
 	return nil
@@ -175,6 +176,7 @@ func (s Baal) clearWave() error {
 		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
 			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
 			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
+				lastClear = time.Now()
 				return m.UnitID, true
 			}
 		}
