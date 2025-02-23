@@ -111,13 +111,15 @@ func (s BlizzardSorceress) KillMonsterSequence(
 
 		if completedAttackLoops >= s.Data.CharacterCfg.Character.Sorceress.MaxAttacksLoop {
 			s.Logger.Error("Exceeded MaxAttacksLoop", slog.String("completedAttackLoops", fmt.Sprintf("%v", completedAttackLoops)))
-
 			return nil
 		}
 
 		monster, found := s.Data.Monsters.FindByID(id)
 		if !found {
 			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+		if monster.Stats[stat.Life] <= 0 {
 			return nil
 		}
 
@@ -131,8 +133,9 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			}
 		}
 
-		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
+		for s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			step.PrimaryAttack(id, 2, true, lsOpts)
+			time.Sleep(50 * time.Millisecond) // Give time for the attack to complete
 		}
 
 		step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
