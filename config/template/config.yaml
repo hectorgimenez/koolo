@@ -51,12 +51,17 @@ inventory:
   beltColumns: [healing, healing, mana, rejuvenation] # 4 values, each represents the belt column type, allowed values: healing, mana, rejuvenation
 
 character:
-  class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
+  class: blizzardsorceress # Allowed values include: blizzardsorceresssorceress, lightning, hammerdin, foh, paladin (leveling only)
   useMerc: true
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
-  blizzard_sorceress: # blizzard sorc defaults
+  sorceress: # core sorceress configurations
     max_attacks_loop: 40 
+    left_skill_minimum_distance: 8
+    left_skill_maximum_distance: 20
+    right_skill_minimum_distance: 6
+    right_skill_maximum_distance: 15
+    use_static_field: true
     boss_static_threshold: 55
     static_field_minimum_distance: 12
     static_field_maximum_distance: 22

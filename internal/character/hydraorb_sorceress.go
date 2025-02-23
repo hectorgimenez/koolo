@@ -189,7 +189,7 @@ func (s HydraOrbSorceress) KillCouncil() error {
 }
 
 func (s HydraOrbSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, blizzMaxDistance, true, nil)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, ho_sorceressMaxDistance, true, nil)
 }
 
 func (s HydraOrbSorceress) KillIzual() error {

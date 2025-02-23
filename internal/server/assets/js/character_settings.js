@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const schedulerSettings = document.getElementById('scheduler-settings');
     const characterClassSelect = document.querySelector('select[name="characterClass"]');
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
-    const blizzardBossStaticThreshold = document.querySelector('blizzardBossStaticThreshold')
+    const sorcBossStaticThreshold = document.querySelector('sorcBossStaticThreshold')
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
@@ -126,8 +126,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bossStaticThresholdInput) {
         bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange('novaBossStaticThreshold'));
     }
-    if (blizzardBossStaticThreshold) {
-        blizzardBossStaticThreshold.addEventListener('input', handleBossStaticThresholdChange('blizzardBossStaticThreshold'));
+    if (sorcBossStaticThreshold) {
+        sorcBossStaticThreshold.addEventListener('input', handleBossStaticThresholdChange('sorcBossStaticThreshold'));
     }
 
     function toggleSchedulerVisibility() {
@@ -138,22 +138,26 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedClass = characterClassSelect.value;
         const noSettingsMessage = document.getElementById('no-settings-message');
         const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
-        const blizzardSorceressOptions = document.querySelector('.blizzard-sorceress-options');
+        const sorceressOptions = document.querySelector('.core-sorceress-options');
         const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
         const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
         // Hide all options first
         berserkerBarbOptions.style.display = 'none';
-        blizzardSorceressOptions.style.display = 'none';
+        sorceressOptions.style.display = 'none';
         novaSorceressOptions.style.display = 'none';
         mosaicAssassinOptions.style.display = 'none';
         noSettingsMessage.style.display = 'none';
+
+        const sorceressClasses = [
+            "blizzardsorceress"
+        ]
         
         // Show relevant options based on class
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
-        } else if (selectedClass === 'sorceress') { // blizzard sorc
-            blizzardSorceressOptions.style.display = 'block';
-            updateBlizzardSorceressOptions();
+        } else if (sorceressClasses.includes(selectedClass)) {
+            sorceressOptions.style.display = 'block';
+            updateSorceressOptions();
         } else if (selectedClass === 'nova' || selectedClass === 'lightsorc') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
@@ -164,10 +168,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function updateBlizzardSorceressOptions() {
+    function updateSorceressOptions() {
         const selectedDifficulty = document.getElementById('gameDifficulty').value;
-        updateBossStaticThresholdMin(selectedDifficulty, 'blizzardBossStaticThreshold');
-        handleBossStaticThresholdChange('blizzardBossStaticThreshold');
+        updateBossStaticThresholdMin(selectedDifficulty, 'sorcBossStaticThreshold');
+        handleBossStaticThresholdChange('sorcBossStaticThreshold');
     }
     
     function updateNovaSorceressOptions() {

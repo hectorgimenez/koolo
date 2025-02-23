@@ -36,8 +36,8 @@
                 <label>
                     Class
                     <select name="characterClass">
-                        <option value="sorceress" {{ if eq .Config.Character.Class
-                        "sorceress" }}selected{{ end }}>Blizzard Sorceress
+                        <option value="blizzardsorceress" {{ if eq .Config.Character.Class
+                        "blizzardsorceress" }}selected{{ end }}>Blizzard Sorceress
                         </option>
                         <option value="nova" {{ if eq .Config.Character.Class
                         "nova" }}selected{{ end }}>Nova Sorceress
@@ -109,25 +109,49 @@
                         </label>
                     </fieldset>
                 </div>
-
-                <div class="blizzard-sorceress-options" style="display: none;">
+                
+                <div class="core-sorceress-options" style="display: none;">
                     <fieldset class="list">
+                        <legend>Core sorceress configurations</legend>
+                        <details>
+                        {{/* TODO: all these style="max-width: 60px;" things should be specified on one line somewhere else but I'm not smart enough to do that */}}
                         <label>
                             Max Attacks Loop
-                            <input type="number" id="blizzardMaxAttacksLoop" name="blizzardMaxAttacksLoop" min="1" max="1000" step="1" value="{{ .Config.Character.BlizzardSorceress.MaxAttacksLoop }}">
+                            <input type="number" id="sorcMaxAttacksLoop" name="sorcMaxAttacksLoop" min="1" max="1000" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.MaxAttacksLoop }}">
                         </label>
                         <label>
-                            Boss Static HP (%)
-                            <input type="number" id="blizzardBossStaticThreshold" name="blizzardBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.BlizzardSorceress.BossStaticThreshold }}">
+                            Left Skill Minimum Distance
+                            <input type="number" id="sorcLeftSkillMinDist" name="sorcLeftSkillMinDist" min="1" max="25" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.LeftSkillMinDist }}">
+                        </label>
+                        <label>
+                            Left Skill Maximum Distance
+                            <input type="number" id="sorcLeftSkillMaxDist" name="sorcLeftSkillMaxDist" min="1" max="25" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.LeftSkillMaxDist }}">
+                        </label>
+                        <label>
+                            Right Skill Minimum Distance
+                            <input type="number" id="sorcRightSkillMinDist" name="sorcRightSkillMinDist" min="1" max="25" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.RightSkillMinDist }}">
+                        </label>
+                        <label>
+                            Right Skill Maximum Distance
+                            <input type="number" id="sorcRighttSkillMaxDist" name="sorcRightSkillMaxDist" min="1" max="25" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.RightSkillMaxDist }}">
+                        </label>
+                        <label>
+                            Use Static Field
+                            <input type="checkbox" name="sorcUseStaticField" {{ if .Config.Character.Sorceress.UseStaticField }}checked{{ end }} />
+                        </label>
+                        <label>
+                            Boss Static Field HP Target (%)
+                            <input type="number" id="sorcBossStaticThreshold" name="sorcBossStaticThreshold" min="1" max="100" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.BossStaticThreshold }}">
                         </label>
                         <label>
                             Static Field Min Distance
-                            <input type="number" id="blizzardStaticFieldMinDist" name="blizzardStaticFieldMinDist" min="1" max="50" step="1" value="{{ .Config.Character.BlizzardSorceress.StaticFieldMinDist }}">
+                            <input type="number" id="sorcStaticFieldMinDist" name="sorcStaticFieldMinDist" min="1" max="50" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.StaticFieldMinDist }}">
                         </label>
                         <label>
                             Static Field Max Distance
-                            <input type="number" id="blizzardStaticFieldMaxDist" name="blizzardStaticFieldMaxDist" min="1" max="50" step="1" value="{{ .Config.Character.BlizzardSorceress.StaticFieldMaxDist }}">
+                            <input type="number" id="sorcStaticFieldMaxDist" name="sorcStaticFieldMaxDist" min="1" max="50" step="1" style="max-width: 60px;" value="{{ .Config.Character.Sorceress.StaticFieldMaxDist }}">
                         </label>
+                        </details>
                     </fieldset>
                 </div>
 
