@@ -254,9 +254,9 @@ func startGameCreationRoutine(s *SinglePlayerSupervisor) error {
 
 	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
 	if err != nil {
-		_ = s.KillClient()
-		utils.Sleep(60000)
-		return err
+		for err != nil {
+			err = restartSupervisor(s)
+		}
 	}
 
 	if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
@@ -279,12 +279,13 @@ func startJoinerRoutine(s *SinglePlayerSupervisor) error {
 
 	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
 	if err != nil {
-		_ = s.KillClient()
-		utils.Sleep(60000)
-		return err
+		for err != nil {
+			err = restartSupervisor(s)
+		}
 	}
 
-	for LastGameJoined == config.LastGameName && !s.bot.ctx.Manager.InGame() {
+	timeInLobby := time.Now()
+	for LastGameJoined == config.LastGameName && !s.bot.ctx.Manager.InGame() && time.Since(timeInLobby) < 1*time.Minute {
 		s.bot.ctx.Logger.Info("Waiting for game join")
 		utils.Sleep(1000)
 	}
@@ -320,4 +321,10 @@ func goToLobby(s *SinglePlayerSupervisor) error {
 	}
 
 	return nil
+}
+
+func restartSupervisor(s *SinglePlayerSupervisor) error {
+	s.Stop()
+	utils.Sleep(60000)
+	return s.Start()
 }

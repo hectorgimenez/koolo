@@ -5,6 +5,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -98,6 +99,7 @@ func (f *Follower) getEntrancesToLeader(leader *data.RosterMember) []data.Level 
 			entrances = append(entrances, al)
 		}
 	}
+
 	return entrances
 }
 
@@ -117,6 +119,14 @@ func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
 }
 
 func (f *Follower) handleNoValidEntrance(leader *data.RosterMember) {
+	if leader.Area == area.TheWorldstoneChamber && f.ctx.Data.AreaData.Area == area.ThroneOfDestruction {
+		f.ctx.Logger.Info("Leader is in The Worldstone Chamber, going through the red portal.")
+		baalPortal, _ := f.ctx.Data.Objects.FindOne(object.BaalsPortal)
+		_ = action.InteractObject(baalPortal, func() bool {
+			return f.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
+		})
+	}
+
 	f.ctx.Logger.Info("Leader is not in a connecting area, returning to the correct town to use his portal.")
 	f.ctx.SetLastAction("Handle No Valid Entrance")
 	if !f.ctx.Data.AreaData.Area.IsTown() {
