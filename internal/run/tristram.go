@@ -63,9 +63,8 @@ func (t Tristram) Run() error {
 	tristPortal, _ := t.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 
 	// Interact with the portal
-	if err = action.InteractObject(tristPortal, func() bool {
-		return t.ctx.Data.PlayerUnit.Area == area.Tristram && t.ctx.Data.AreaData.IsInside(t.ctx.Data.PlayerUnit.Position)
-	}); err != nil {
+	err = action.InteractObject(tristPortal, nil)
+	if err != nil {
 		return err
 	}
 

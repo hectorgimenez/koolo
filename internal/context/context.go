@@ -164,10 +164,14 @@ func (s *Status) PauseIfNotPriority() {
 	}
 }
 func (ctx *Context) WaitForGameToLoad() {
-	for ctx.Data.OpenMenus.LoadingScreen {
+	// Get only the loading screen state from OpenMenus
+	for ctx.GameReader.GetData().OpenMenus.LoadingScreen {
 		time.Sleep(100 * time.Millisecond)
-		ctx.RefreshGameData()
 	}
+
+	// Once loading is done, do one full refresh to ensure all data is up to date
+	ctx.RefreshGameData()
+
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)
 }
