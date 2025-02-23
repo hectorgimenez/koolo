@@ -284,17 +284,22 @@ func startJoinerRoutine(s *SinglePlayerSupervisor) error {
 		return err
 	}
 
-	for LastGameJoined == config.LastGameName {
+	for LastGameJoined == config.LastGameName && !s.bot.ctx.Manager.InGame() {
 		s.bot.ctx.Logger.Info("Waiting for game join")
 		utils.Sleep(1000)
 	}
 
-	for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil; err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
+	if s.bot.ctx.Manager.InGame() {
+		LastGameJoined = s.bot.ctx.GameReader.LastGameName()
+		return nil
+	}
+
+	for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil && !s.bot.ctx.Manager.InGame(); err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
 		s.bot.ctx.HID.PressKey(0x1B)
 		utils.Sleep(15000)
 	}
 
-	LastGameJoined = config.LastGameName
+	LastGameJoined = s.bot.ctx.GameReader.LastGameName()
 
 	return nil
 }
