@@ -39,17 +39,8 @@ func (f *Follower) Run() error {
 		return nil
 	}
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
-	_ = f.goToCorrectTown(leader)
 
 	for leaderFound {
-		if leader.Area != f.ctx.Data.AreaData.Area {
-			f.handleLeaderNotInSameArea(leader)
-		} else if leader.Area == f.ctx.Data.AreaData.Area && !f.ctx.Data.PlayerUnit.Area.IsTown() {
-			f.handleLeaderInSameArea(leader)
-		} else if leader.Area == f.ctx.Data.AreaData.Area && f.ctx.Data.PlayerUnit.Area.IsTown() {
-			f.handleLeaderInTown()
-		}
-
 		f.ctx.RefreshGameData()
 		utils.Sleep(200)
 		leader, leaderFound = f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
@@ -57,12 +48,20 @@ func (f *Follower) Run() error {
 		if !leaderFound {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
 		}
+
+		if leader.Area != f.ctx.Data.AreaData.Area {
+			f.handleLeaderNotInSameArea(&leader)
+		} else if leader.Area == f.ctx.Data.AreaData.Area && !f.ctx.Data.PlayerUnit.Area.IsTown() {
+			f.handleLeaderInSameArea(&leader)
+		} else if leader.Area == f.ctx.Data.AreaData.Area && f.ctx.Data.PlayerUnit.Area.IsTown() {
+			f.handleLeaderInTown()
+		}
 	}
 
 	return nil
 }
 
-func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
+func (f *Follower) handleLeaderNotInSameArea(leader *data.RosterMember) {
 	f.ctx.SetLastAction("Handle leader not in same area")
 	if leader.Area.IsTown() {
 		f.ctx.Logger.Info("Leader is in town. Let's go wait there.")
@@ -91,7 +90,7 @@ func (f *Follower) handleLeaderNotInSameArea(leader data.RosterMember) {
 	}
 }
 
-func (f *Follower) getEntrancesToLeader(leader data.RosterMember) []data.Level {
+func (f *Follower) getEntrancesToLeader(leader *data.RosterMember) []data.Level {
 	f.ctx.SetLastAction("Identifying best entrance to leader")
 	var entrances []data.Level
 	for _, al := range f.ctx.Data.AdjacentLevels {
@@ -117,7 +116,7 @@ func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
 	return lvl
 }
 
-func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
+func (f *Follower) handleNoValidEntrance(leader *data.RosterMember) {
 	f.ctx.Logger.Info("Leader is not in a connecting area, returning to the correct town to use his portal.")
 	f.ctx.SetLastAction("Handle No Valid Entrance")
 	if !f.ctx.Data.AreaData.Area.IsTown() {
@@ -132,7 +131,7 @@ func (f *Follower) handleNoValidEntrance(leader data.RosterMember) {
 	}
 }
 
-func (f *Follower) handleLeaderInSameArea(leader data.RosterMember) {
+func (f *Follower) handleLeaderInSameArea(leader *data.RosterMember) {
 	f.ctx.SetLastAction("Handle leader in same area")
 	_ = action.ClearAreaAroundPosition(leader.Position, MaxDistanceFromLeader, f.ctx.Data.MonsterFilterAnyReachable())
 	_ = action.MoveToCoords(leader.Position)
@@ -168,8 +167,8 @@ func (f *Follower) handleLeaderInTown() {
 	utils.Sleep(5000)
 }
 
-func (f *Follower) goToCorrectTown(leader data.RosterMember) error {
-	f.ctx.Logger.Info("Going to the correct town.")
+func (f *Follower) goToCorrectTown(leader *data.RosterMember) error {
+	f.ctx.Logger.Info("Going to the correct town.", slog.Int("leader act", leader.Area.Act()), slog.String("leader area", leader.Area.Area().Name))
 	f.ctx.SetLastAction("Going to the correct town")
 	switch act := leader.Area.Act(); act {
 	case 1:
@@ -205,7 +204,7 @@ func (f *Follower) isChestInRange(chest data.Object) bool {
 	return distance <= MaxDistanceFromLeader
 }
 
-func (f *Follower) UseCorrectPortalFromLeader(leader data.RosterMember) error {
+func (f *Follower) UseCorrectPortalFromLeader(leader *data.RosterMember) error {
 	f.ctx.SetLastAction("UsePortalFromLeader")
 
 	if !f.ctx.Data.PlayerUnit.Area.IsTown() {
