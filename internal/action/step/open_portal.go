@@ -52,9 +52,7 @@ func OpenNewPortal() error {
 				return nil
 			}
 		}
-
-		ctx.Logger.Info("Could not find self owned nearby portal.")
-
+		
 		// Give some time to portal to popup before retrying...
 		if time.Since(lastRun) < time.Second*2 {
 			continue
