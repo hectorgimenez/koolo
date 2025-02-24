@@ -33,7 +33,7 @@ inventory:
   beltColumns: [healing, healing, mana, rejuvenation] # 4 values, each represents the belt column type, allowed values: healing, mana, rejuvenation
 
 character:
-  class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
+  class: blizzardsorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
   useMerc: true
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
