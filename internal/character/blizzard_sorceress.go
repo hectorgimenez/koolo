@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -58,7 +59,18 @@ func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data
 		}
 
 		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
-		thresholdFloat := float64(s.Data.CharacterCfg.Character.Sorceress.BossStaticThreshold)
+
+		// Pull target threshold from config based on difficulty
+		var targetThreshold int
+		switch s.Data.CharacterCfg.Game.Difficulty {
+		case difficulty.Normal:
+			targetThreshold = s.Data.CharacterCfg.Character.Sorceress.StaticFieldThreshold.Normal
+		case difficulty.Nightmare:
+			targetThreshold = s.Data.CharacterCfg.Character.Sorceress.StaticFieldThreshold.Nightmare
+		default:
+			targetThreshold = s.Data.CharacterCfg.Character.Sorceress.StaticFieldThreshold.Hell
+		}
+		thresholdFloat := float64(targetThreshold)
 
 		// Cast Static Field until boss HP is below threshold
 		if bossHPPercent > thresholdFloat {
@@ -88,12 +100,12 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	previousSelfBlizzard := time.Time{}
 
 	blizzOpts := step.StationaryDistance(
-		s.Data.CharacterCfg.Character.Sorceress.RightSkillMinDist,
-		s.Data.CharacterCfg.Character.Sorceress.RightSkillMaxDist,
+		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.BlizzardMinDist,
+		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.BlizzardMaxDist,
 	)
 	lsOpts := step.Distance(
-		s.Data.CharacterCfg.Character.Sorceress.LeftSkillMinDist,
-		s.Data.CharacterCfg.Character.Sorceress.LeftSkillMinDist,
+		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMaxDist,
+		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMaxDist,
 	)
 
 	for {
@@ -109,7 +121,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= s.Data.CharacterCfg.Character.Sorceress.MaxAttacksLoop {
+		if completedAttackLoops >= s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.MaxAttacksLoop {
 			s.Logger.Error("Exceeded MaxAttacksLoop", slog.String("completedAttackLoops", fmt.Sprintf("%v", completedAttackLoops)))
 			return nil
 		}

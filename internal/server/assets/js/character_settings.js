@@ -116,18 +116,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const schedulerSettings = document.getElementById('scheduler-settings');
     const characterClassSelect = document.querySelector('select[name="characterClass"]');
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
-    const sorcBossStaticThreshold = document.querySelector('sorcBossStaticThreshold')
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
 
-    // TODO: it would be nice to somehow consolidate these
-    // Add a listener to see if the threshold changes to make sure it matches the difficulty setting
     if (bossStaticThresholdInput) {
-        bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange('novaBossStaticThreshold'));
-    }
-    if (sorcBossStaticThreshold) {
-        sorcBossStaticThreshold.addEventListener('input', handleBossStaticThresholdChange('sorcBossStaticThreshold'));
+        bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
     }
 
     function toggleSchedulerVisibility() {
@@ -148,40 +142,42 @@ document.addEventListener('DOMContentLoaded', function () {
         mosaicAssassinOptions.style.display = 'none';
         noSettingsMessage.style.display = 'none';
 
+        var classSpecificOptionsAvailable = false
+
+        // Are there generic sorceress configurations applicable to this build?
         const sorceressClasses = [
             "blizzardsorceress"
         ]
-        
-        // Show relevant options based on class
+        if (sorceressClasses.includes(selectedClass)) {
+            sorceressOptions.style.display = 'block';
+            classSpecificOptionsAvailable = true
+        }
+        // Show relevant options based on build
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
-        } else if (sorceressClasses.includes(selectedClass)) {
-            sorceressOptions.style.display = 'block';
-            updateSorceressOptions();
+            classSpecificOptionsAvailable = true
         } else if (selectedClass === 'nova' || selectedClass === 'lightsorc') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
+            classSpecificOptionsAvailable = true
         } else if (selectedClass === 'mosaic') {
             mosaicAssassinOptions.style.display = 'block';
-        } else {
+            classSpecificOptionsAvailable = true
+        }
+
+        if (classSpecificOptionsAvailable === false) {
             noSettingsMessage.style.display = 'block';
         }
-    }
-
-    function updateSorceressOptions() {
-        const selectedDifficulty = document.getElementById('gameDifficulty').value;
-        updateBossStaticThresholdMin(selectedDifficulty, 'sorcBossStaticThreshold');
-        handleBossStaticThresholdChange('sorcBossStaticThreshold');
     }
     
     function updateNovaSorceressOptions() {
         const selectedDifficulty = document.getElementById('gameDifficulty').value;
-        updateBossStaticThresholdMin(selectedDifficulty, 'novaBossStaticThreshold');
-        handleBossStaticThresholdChange('novaBossStaticThreshold');
+        updateBossStaticThresholdMin(selectedDifficulty);
+        handleBossStaticThresholdChange();
     }
     
-    function updateBossStaticThresholdMin(difficulty, elementId) {
-        const input = document.getElementById(elementId);
+    function updateBossStaticThresholdMin(difficulty) {
+        const input = document.getElementById('novaBossStaticThreshold');
         let minValue;
         switch(difficulty) {
             case 'normal':
@@ -206,13 +202,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     characterClassSelect.addEventListener('change', updateCharacterOptions);
     document.getElementById('gameDifficulty').addEventListener('change', function() {
-
-        // Check if we need to fix the static field threshold based on the new difficulty setting
         if (characterClassSelect.value === 'nova' || characterClassSelect.value === 'lightsorc') {
             updateNovaSorceressOptions();
-        }
-        if (characterClassSelect.value === 'sorceress') { // Blizzard Sorceress
-            updateBlizzardSorceressOptions()
         }
     });
 
@@ -256,8 +247,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-function handleBossStaticThresholdChange(elementId) {
-    const input = document.getElementById(elementId);
+function handleBossStaticThresholdChange() {
+    const input = document.getElementById('novaBossStaticThreshold');
     const selectedDifficulty = document.getElementById('gameDifficulty').value;
     let minValue;
     switch(selectedDifficulty) {
