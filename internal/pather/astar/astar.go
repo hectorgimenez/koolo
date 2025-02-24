@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -32,11 +33,10 @@ func direction(from, to data.Position) (dx, dy int) {
 	return
 }
 
-func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, int, bool) {
+func CalculatePath(g *game.Grid, area area.ID, start, goal data.Position) ([]data.Position, int, bool) {
 	pq := make(PriorityQueue, 0)
 	heap.Init(&pq)
 
-	// Use a 2D slice to store the cost of each node
 	costSoFar := make([][]int, g.Width)
 	cameFrom := make([][]data.Position, g.Width)
 	for i := range costSoFar {
@@ -56,7 +56,6 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 	for pq.Len() > 0 {
 		current := heap.Pop(&pq).(*Node)
 
-		// Let's build the path if we reached the goal
 		if current.Position == goal {
 			var path []data.Position
 			for p := goal; p != start; p = cameFrom[p.X][p.Y] {
@@ -69,14 +68,21 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 		updateNeighbors(g, current, &neighbors)
 
 		for _, neighbor := range neighbors {
-			newCost := costSoFar[current.X][current.Y] + getCost(g.CollisionGrid[neighbor.Y][neighbor.X])
 
-			// Handicap for changing direction, this prevents zig-zagging around obstacles
-			//curDirX, curDirY := direction(cameFrom[current.X][current.Y], current.Position)
-			//newDirX, newDirY := direction(current.Position, neighbor)
-			//if curDirX != newDirX || curDirY != newDirY {
-			//	newCost++
-			//}
+			var tileCost int
+			tileType := g.CollisionGrid[neighbor.Y][neighbor.X]
+
+			if area.IsTown() {
+				// Extra cost near edges in town
+				if neighbor.X <= 2 || neighbor.X >= g.Width-2 ||
+					neighbor.Y <= 2 || neighbor.Y >= g.Height-2 {
+					tileCost += 20
+				}
+			} else {
+				tileCost = getCost(tileType, area)
+			}
+
+			newCost := costSoFar[current.X][current.Y] + tileCost
 
 			if newCost < costSoFar[neighbor.X][neighbor.Y] {
 				costSoFar[neighbor.X][neighbor.Y] = newCost
@@ -106,21 +112,35 @@ func updateNeighbors(grid *game.Grid, node *Node, neighbors *[]data.Position) {
 	}
 }
 
-func getCost(tileType game.CollisionType) int {
+func getCost(tileType game.CollisionType, currentArea area.ID) int {
+	if currentArea.IsTown() {
+		switch tileType {
+		case game.CollisionTypeWalkable:
+			return 1
+		case game.CollisionTypeMonster:
+			return 30 // Higher cost in town
+		case game.CollisionTypeObject:
+			return 15 // Higher cost in town
+		case game.CollisionTypeLowPriority:
+			return 40 // Much higher in town
+		default:
+			return math.MaxInt32
+		}
+	}
+
 	switch tileType {
 	case game.CollisionTypeWalkable:
-		return 1 // Walkable
+		return 1
 	case game.CollisionTypeMonster:
 		return 16
 	case game.CollisionTypeObject:
-		return 4 // Soft blocker
+		return 4
 	case game.CollisionTypeLowPriority:
 		return 20
 	default:
 		return math.MaxInt32
 	}
 }
-
 func heuristic(a, b data.Position) int {
 	dx := math.Abs(float64(a.X - b.X))
 	dy := math.Abs(float64(a.Y - b.Y))
