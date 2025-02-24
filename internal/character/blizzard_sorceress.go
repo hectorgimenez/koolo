@@ -104,7 +104,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.BlizzardMaxDist,
 	)
 	lsOpts := step.Distance(
-		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMaxDist,
+		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMinDist,
 		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMaxDist,
 	)
 
