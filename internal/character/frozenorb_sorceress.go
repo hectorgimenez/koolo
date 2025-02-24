@@ -9,7 +9,6 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
@@ -17,9 +16,9 @@ import (
 const (
 	orbMaxAttacksLoop = 40
 	orbMinDistance    = 8
-	orbMaxDistance    = 20
-	orbLSMinDistance  = 6
-	orbLSMaxDistance  = 15 // Left skill
+	orbMaxDistance    = 15
+	orbSFMinDistance  = 4
+	orbSFMaxDistance  = 6 // Left skill
 )
 
 type FrozenOrbSorceress struct {
@@ -53,16 +52,47 @@ func (s FrozenOrbSorceress) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
+func (s FrozenOrbSorceress) KillBossSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
+	orbOpts := step.StationaryDistance(orbMinDistance, orbMaxDistance)
+	sfOpts := step.Distance(orbSFMinDistance, orbSFMaxDistance)
+
+	id, found := monsterSelector(*s.Data)
+	if !found {
+		return nil
+	}
+
+	if !s.preBattleChecks(id, skipOnImmunities) {
+		return nil
+	}
+
+	monster, found := s.Data.Monsters.FindByID(id)
+	if !found {
+		s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+		return nil
+	}
+
+	for float64(monster.Stats[stat.Life]) >= 0.6*float64(monster.Stats[stat.MaxLife]) {
+		_ = step.SecondaryAttack(skill.StaticField, monster.UnitID, 4, sfOpts)
+	}
+
+	for monster.Stats[stat.Life] > 0 {
+		_ = step.PrimaryAttack(id, 1, false, orbOpts)
+	}
+
+	return nil
+}
+
 func (s FrozenOrbSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
-	previousSelfOrb := time.Time{}
 
 	orbOpts := step.StationaryDistance(orbMinDistance, orbMaxDistance)
-	lsOpts := step.Distance(orbLSMinDistance, orbLSMaxDistance)
 
 	for {
 		id, found := monsterSelector(*s.Data)
@@ -87,21 +117,7 @@ func (s FrozenOrbSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		if time.Since(previousSelfOrb) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			for _, m := range s.Data.Monsters.Enemies() {
-				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
-					previousSelfOrb = time.Now()
-					step.SecondaryAttack(skill.FrozenOrb, m.UnitID, 1, orbOpts)
-				}
-			}
-		}
-
-		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			step.PrimaryAttack(id, 2, true, lsOpts)
-		}
-
-		step.SecondaryAttack(skill.FrozenOrb, id, 1, orbOpts)
+		_ = step.PrimaryAttack(monster.UnitID, 1, false, orbOpts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
@@ -120,7 +136,7 @@ func (s FrozenOrbSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 }
 
 func (s FrozenOrbSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
 		}
@@ -196,10 +212,7 @@ func (s FrozenOrbSorceress) KillMephisto() error {
 }
 
 func (s FrozenOrbSorceress) KillIzual() error {
-	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
-
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
 }
 
 func (s FrozenOrbSorceress) KillDiablo() error {
@@ -228,9 +241,7 @@ func (s FrozenOrbSorceress) KillDiablo() error {
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
 
-		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(3, 8))
-
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
 	}
 }
 
@@ -243,8 +254,5 @@ func (s FrozenOrbSorceress) KillNihlathak() error {
 }
 
 func (s FrozenOrbSorceress) KillBaal() error {
-	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
-	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
-
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
 }
