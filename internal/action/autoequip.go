@@ -137,12 +137,21 @@ func isValidLocation(i data.Item, bodyLoc item.LocationType, target item.Locatio
 
 	// Player validation
 	if target == item.LocationEquipped {
-		if bodyLoc == item.LocRightArm {
-			isShield := slices.Contains(shieldTypes, i.Desc().Type)
-			return isShield
+		isShield := slices.Contains(shieldTypes, i.Desc().Type)
+
+		// Shields can only go in right arm
+		if isShield {
+			return bodyLoc == item.LocRightArm
 		}
-		return true // All other locations are valid
+
+		// For non-shield items, all locations are valid except right arm if it's reserved for shields
+		if bodyLoc == item.LocRightArm {
+			return !isShield
+		}
+
+		return true
 	}
+
 	return false
 }
 
