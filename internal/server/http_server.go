@@ -782,6 +782,11 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		// Chicken Scary Auras Config
 		cfg.ChickenScaryAuras.AmplifyDamage = r.Form.Has("chickenAmplifyDamage")
 		cfg.ChickenScaryAuras.BloodMana = r.Form.Has("chickenBloodMana")
+		cfg.ChickenScaryAuras.Decrepify = r.Form.Has("chickenDecrepify")
+		cfg.ChickenScaryAuras.LowerResist = r.Form.Has("chickenLowerResist")
+		cfg.ChickenScaryAuras.Fanaticism = r.Form.Has("chickenFanaticism")
+		cfg.ChickenScaryAuras.Might = r.Form.Has("chickenMight")
+		cfg.ChickenScaryAuras.Conviction = r.Form.Has("chickenConviction")
 
 		// Health config
 		cfg.Health.HealingPotionAt, _ = strconv.Atoi(r.Form.Get("healingPotionAt"))

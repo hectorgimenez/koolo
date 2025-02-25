@@ -93,6 +93,11 @@ type CharacterCfg struct {
 	ChickenScaryAuras struct {
 		AmplifyDamage bool `yaml:"amplifyDamage"`
 		BloodMana     bool `yaml:"bloodMana"`
+		Decrepify     bool `yaml:"decrepify"`
+		LowerResist   bool `yaml:"lowerResist"`
+		Fanaticism    bool `yaml:"fanaticism"`
+		Might         bool `yaml:"might"`
+		Conviction    bool `yaml:"conviction"`
 	}
 	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`

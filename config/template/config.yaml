@@ -16,6 +16,11 @@ enableCubeRecipes: true # Enable cubing of flawlesses and tokens
 chickenScaryAuras:
   amplifyDamage: false
   bloodMana: false
+  decrepify: false
+  lowerResist: false
+  fanaticism: false
+  might: false
+  conviction: false
 
 health: # Healing configuration, all values in %
   healingPotionAt: 75

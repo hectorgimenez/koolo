@@ -107,9 +107,9 @@ func (hm *Manager) HandleHealthAndMana() error {
 		}
 	}
 
+	// Player scary aura check - great for use on hardcore
 	chickenAurasConfig := hm.data.CharacterCfg.ChickenScaryAuras
 
-	// Player dangerous aura check - great for use on hardcore
 	if chickenAurasConfig.AmplifyDamage && hm.data.PlayerUnit.States.HasState(state.Amplifydamage) {
 		return fmt.Errorf("%w: Player has amplify damage aura", ErrChicken)
 	}
@@ -125,6 +125,37 @@ func (hm *Manager) HandleHealthAndMana() error {
 		// This curse only damages yourself when a character's mana exceeds their health (otherwise your def is reduced).
 		if mana.Value >= life.Value {
 			return fmt.Errorf("%w: Player has blood mana aura", ErrChicken)
+		}
+	}
+
+	if chickenAurasConfig.Decrepify && hm.data.PlayerUnit.States.HasState(state.Decrepify) {
+		return fmt.Errorf("%w: Player has decrepify aura", ErrChicken)
+	}
+
+	if chickenAurasConfig.LowerResist && hm.data.PlayerUnit.States.HasState(state.Lowerresist) {
+		return fmt.Errorf("%w: Player has lower resist aura", ErrChicken)
+	}
+
+	if chickenAurasConfig.Fanaticism || chickenAurasConfig.Might || chickenAurasConfig.Conviction {
+		for _, m := range hm.data.Monsters.Enemies() {
+			var scaryAura string
+
+			if chickenAurasConfig.Fanaticism && m.States.HasState(state.Fanaticism) {
+				scaryAura = "fanaticism"
+			}
+
+			if chickenAurasConfig.Might && m.States.HasState(state.Might) {
+				scaryAura = "might"
+			}
+
+			if chickenAurasConfig.Conviction && m.States.HasState(state.Conviction) {
+				scaryAura = "conviction"
+			}
+
+			// TODO: Distance check?
+			if scaryAura != "" {
+				return fmt.Errorf("%w: Mob has %s aura", ErrChicken, scaryAura)
+			}
 		}
 	}
 
