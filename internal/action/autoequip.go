@@ -21,6 +21,16 @@ const (
 )
 
 var (
+	classItems = map[data.Class][]string{
+		data.Amazon:      {"ajav", "abow", "aspe"},
+		data.Sorceress:   {"orb"},
+		data.Necromancer: {"head"},
+		data.Paladin:     {"ashd"},
+		data.Barbarian:   {"phlm"},
+		data.Druid:       {"pelt"},
+		data.Assassin:    {"h2h"},
+	}
+
 	// shieldTypes defines items that should be equipped in right arm (technically they can be left or right arm but we don't want to try and equip two shields)
 	shieldTypes = []string{"shie", "ashd", "head"}
 
@@ -94,6 +104,13 @@ func isEquippable(i data.Item, target item.LocationType) bool {
 
 	// Check for quest items
 	isQuestItem := slices.Contains(questItems, i.Name)
+
+	// Check for class specific
+	for class, items := range classItems {
+		if ctx.Data.PlayerUnit.Class != class && slices.Contains(items, i.Desc().Type) {
+			return false
+		}
+	}
 
 	// Check requirements
 	return i.Identified &&
