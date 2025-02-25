@@ -38,18 +38,17 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	teleportEnabled := pf.data.CanTeleport()
 
 	// Check cache with teleport status
-	if path, found := getCachedPath(currentPos, to, currentArea, teleportEnabled); found {
+	if path, found := GetCachedPath(currentPos, to, currentArea, teleportEnabled); found {
 		return path, len(path), true
 	}
 
 	// Calculate and cache new path
 	path, distance, found := pf.GetPathFrom(currentPos, to)
 	if found {
-		cachePath(currentPos, to, currentArea, teleportEnabled, path)
+		StorePath(currentPos, to, currentArea, teleportEnabled, path, currentPos)
 	}
 	return path, distance, found
 }
-
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	a := pf.data.AreaData
 

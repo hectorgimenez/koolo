@@ -59,14 +59,51 @@ type Debug struct {
 	LastAction string `json:"lastAction"`
 	LastStep   string `json:"lastStep"`
 }
+
 type PathCache struct {
 	Path             []data.Position
 	DestPosition     data.Position
 	StartPosition    data.Position
-	PreviousPosition data.Position
-	LastCheck        time.Time
-	LastRun          time.Time
 	DistanceToFinish int
+}
+
+func (pc *PathCache) IsPathValid(currentPos data.Position) bool {
+	if pc == nil {
+		return false
+	}
+	return pather.IsPathValid(currentPos, pc.StartPosition, pc.DestPosition, pc.Path)
+}
+
+func (pc *PathCache) GetLastRun(currentArea area.ID, canTeleport bool) time.Time {
+	entry, found := pather.GetCacheEntry(pc.StartPosition, pc.DestPosition, currentArea, canTeleport)
+	if found {
+		return entry.LastRun
+	}
+	return time.Time{}
+}
+
+func (pc *PathCache) UpdateLastRun(currentArea area.ID, canTeleport bool) {
+	pather.UpdatePathLastRun(pc.StartPosition, pc.DestPosition, currentArea, canTeleport)
+}
+
+func (pc *PathCache) GetLastCheck(currentArea area.ID, canTeleport bool) time.Time {
+	entry, found := pather.GetCacheEntry(pc.StartPosition, pc.DestPosition, currentArea, canTeleport)
+	if found {
+		return entry.LastCheck
+	}
+	return time.Time{}
+}
+
+func (pc *PathCache) UpdateLastCheck(currentArea area.ID, canTeleport bool, currentPos data.Position) {
+	pather.UpdatePathLastCheck(pc.StartPosition, pc.DestPosition, currentArea, canTeleport, currentPos)
+}
+
+func (pc *PathCache) GetPreviousPosition(currentArea area.ID, canTeleport bool) data.Position {
+	entry, found := pather.GetCacheEntry(pc.StartPosition, pc.DestPosition, currentArea, canTeleport)
+	if found {
+		return entry.PreviousPosition
+	}
+	return data.Position{}
 }
 
 type CurrentGameHelper struct {
@@ -174,6 +211,7 @@ func (s *Status) PauseIfNotPriority() {
 		time.Sleep(time.Millisecond * 10)
 	}
 }
+
 func (ctx *Context) WaitForGameToLoad() {
 	// Get only the loading screen state from OpenMenus
 	for ctx.GameReader.GetData().OpenMenus.LoadingScreen {

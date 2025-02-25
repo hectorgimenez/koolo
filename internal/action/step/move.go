@@ -51,27 +51,35 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 
 	startedAt := time.Now()
 
-	//TODO use the pathcache directly from path.go ?
-
 	// Initialize or reuse path cache
 	var pathCache *context.PathCache
+	currentPos := ctx.Data.PlayerUnit.Position
+	currentArea := ctx.Data.PlayerUnit.Area
+	canTeleport := ctx.Data.CanTeleport()
+
 	if ctx.CurrentGame.PathCache != nil &&
 		ctx.CurrentGame.PathCache.DestPosition == dest &&
-		IsPathValid(ctx.Data.PlayerUnit.Position, ctx.CurrentGame.PathCache) {
+		ctx.CurrentGame.PathCache.IsPathValid(currentPos) {
 		// Reuse existing path cache
 		pathCache = ctx.CurrentGame.PathCache
 	} else {
-		// Create new path cache
-		start := ctx.Data.PlayerUnit.Position
-		path, _, found := ctx.PathFinder.GetPath(dest)
+		// Get path from global cache or calculate new one
+		path, found := pather.GetCachedPath(currentPos, dest, currentArea, canTeleport)
 		if !found {
-			return fmt.Errorf("path not found to %v", dest)
+			// Calculate new path if not found in cache
+			path, _, found = ctx.PathFinder.GetPath(dest)
+			if !found {
+				return fmt.Errorf("path not found to %v", dest)
+			}
+			// Store in global cache
+			pather.StorePath(currentPos, dest, currentArea, canTeleport, path, currentPos)
 		}
 
+		// Create new PathCache reference
 		pathCache = &context.PathCache{
 			Path:             path,
 			DestPosition:     dest,
-			StartPosition:    start,
+			StartPosition:    currentPos,
 			DistanceToFinish: DistanceToFinishMoving,
 		}
 		ctx.CurrentGame.PathCache = pathCache
@@ -85,6 +93,11 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	// Add some delay between clicks to let the character move to destination
 	walkDuration := utils.RandomDurationMs(700, 900)
 
+	// Get last check time from global cache
+	lastCheck := pathCache.GetLastCheck(currentArea, canTeleport)
+	lastRun := pathCache.GetLastRun(currentArea, canTeleport)
+	previousPosition := pathCache.GetPreviousPosition(currentArea, canTeleport)
+
 	for {
 		time.Sleep(50 * time.Millisecond)
 		// Pause the execution if the priority is not the same as the execution priority
@@ -93,9 +106,9 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		now := time.Now()
 
 		// Refresh data and perform checks periodically
-		if now.Sub(pathCache.LastCheck) > refreshInterval {
+		if now.Sub(lastCheck) > refreshInterval {
 			ctx.RefreshGameData()
-			currentPos := ctx.Data.PlayerUnit.Position
+			currentPos = ctx.Data.PlayerUnit.Position
 			distanceToDest := pather.DistanceFromPoint(currentPos, dest)
 
 			// Check if we've reached destination
@@ -104,14 +117,14 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			}
 
 			// Check for stuck in same position (direct equality check is efficient)
-			isSamePosition := pathCache.PreviousPosition.X == currentPos.X && pathCache.PreviousPosition.Y == currentPos.Y
+			isSamePosition := previousPosition.X == currentPos.X && previousPosition.Y == currentPos.Y
 
 			// Only recalculate path in specific cases to reduce CPU usage
 			if isSamePosition && !ctx.Data.CanTeleport() {
 				// If stuck in same position without teleport, make random movement
 				ctx.PathFinder.RandomMovement()
 			} else if pathCache.Path == nil ||
-				!IsPathValid(currentPos, pathCache) ||
+				!pathCache.IsPathValid(currentPos) ||
 				(distanceToDest <= 15 && distanceToDest > pathCache.DistanceToFinish) {
 				//TODO this looks like the telestomp issue,  IsSamePosition is true but it never enter this condition, need something else to force refresh
 
@@ -123,12 +136,17 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 					}
 					return fmt.Errorf("failed to calculate path")
 				}
+
+				// Update global cache and local PathCache
+				pather.StorePath(currentPos, dest, currentArea, canTeleport, path, currentPos)
 				pathCache.Path = path
 				pathCache.StartPosition = currentPos
 			}
 
-			pathCache.PreviousPosition = currentPos
-			pathCache.LastCheck = now
+			// Update previous position and check time
+			previousPosition = currentPos
+			lastCheck = now
+			pathCache.UpdateLastCheck(currentArea, canTeleport, currentPos)
 
 			if now.Sub(startedAt) > timeout {
 				return fmt.Errorf("movement timeout")
@@ -136,10 +154,10 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		}
 
 		if !ctx.Data.CanTeleport() {
-			if time.Since(pathCache.LastRun) < walkDuration {
+			if time.Since(lastRun) < walkDuration {
 				continue
 			}
-		} else if time.Since(pathCache.LastRun) < ctx.Data.PlayerCastDuration() {
+		} else if time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
 			continue
 		}
 
@@ -159,34 +177,11 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			}
 		}
 
-		pathCache.LastRun = time.Now()
+		lastRun = time.Now()
+		pathCache.UpdateLastRun(currentArea, canTeleport)
+
 		if len(pathCache.Path) > 0 {
 			ctx.PathFinder.MoveThroughPath(pathCache.Path, walkDuration)
 		}
 	}
-}
-
-// Validate if the path is still valid based on current position
-func IsPathValid(currentPos data.Position, cache *context.PathCache) bool {
-	if cache == nil {
-		return false
-	}
-
-	// Valid if we're close to start, destination, or current path
-	if pather.DistanceFromPoint(currentPos, cache.StartPosition) < 20 ||
-		pather.DistanceFromPoint(currentPos, cache.DestPosition) < 20 {
-		return true
-	}
-
-	// Check if we're near any point on the path
-	minDistance := 20
-	for _, pathPoint := range cache.Path {
-		dist := pather.DistanceFromPoint(currentPos, pathPoint)
-		if dist < minDistance {
-			minDistance = dist
-			break
-		}
-	}
-
-	return minDistance < 20
 }

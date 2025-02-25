@@ -49,9 +49,6 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 	return fmt.Errorf("area sync timeout - expected: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
 }
 
-//TODO something is off with Diablo action.MoveToArea(area.ChaosSanctuary) , the transition between movetoarea and clearthrough path makes
-// bot telestomp until timeout before resuming with the run
-
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
@@ -215,30 +212,41 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		ctx.PauseIfNotPriority()
 
 		currentPos := ctx.Data.PlayerUnit.Position
+		currentArea := ctx.Data.PlayerUnit.Area
+		canTeleport := ctx.Data.CanTeleport()
 
 		// Get current path segment
-		var path []data.Position
+		var path pather.Path
 		var found bool
+
+		// Handle path caching using both context.PathCache (for UI) and global cache (for storage)
 		if ctx.CurrentGame.PathCache != nil &&
 			ctx.CurrentGame.PathCache.DestPosition == to &&
-			step.IsPathValid(currentPos, ctx.CurrentGame.PathCache) {
+			ctx.CurrentGame.PathCache.IsPathValid(currentPos) {
+			// Use existing path from context cache
 			path = ctx.CurrentGame.PathCache.Path
 			found = true
 		} else {
-
-			path, _, found = ctx.PathFinder.GetPath(to)
-			if found {
-				ctx.CurrentGame.PathCache = &context.PathCache{
-					Path:             path,
-					DestPosition:     to,
-					StartPosition:    currentPos,
-					DistanceToFinish: step.DistanceToFinishMoving,
+			// Try to get path from global cache
+			path, found = pather.GetCachedPath(currentPos, to, currentArea, canTeleport)
+			if !found {
+				// Calculate new path if not in cache
+				path, _, found = ctx.PathFinder.GetPath(to)
+				if !found {
+					return fmt.Errorf("path could not be calculated")
 				}
-			}
-		}
 
-		if !found {
-			return fmt.Errorf("path could not be calculated")
+				// Store in global cache
+				pather.StorePath(currentPos, to, currentArea, canTeleport, path, currentPos)
+			}
+
+			// Update context cache for UI reference
+			ctx.CurrentGame.PathCache = &context.PathCache{
+				Path:             path,
+				DestPosition:     to,
+				StartPosition:    currentPos,
+				DistanceToFinish: step.DistanceToFinishMoving,
+			}
 		}
 
 		//TODO if character detects monster on other side of the wall and we are past door detection
@@ -289,7 +297,6 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			}
 		}
 		// Continue moving
-
 		// WaitForAllMembersWhenLeveling  is breaking walkable logic, lets not use it for now.
 
 		if lastMovement {
