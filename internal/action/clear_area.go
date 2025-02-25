@@ -29,8 +29,6 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 		return 0, false
 	}, nil)
 }
-
-// TODO handle repath when stuck with hidden stash/ shrines. this is root of hidden stash stuck issue in chaos
 func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	lastMovement := false
