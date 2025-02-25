@@ -2,13 +2,19 @@ package run
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
+	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -55,12 +61,12 @@ func (d Duriel) Run() error {
 	d.ctx.RefreshGameData()
 
 	// Find orifice with retry logic
-	var orifice data.Object
+	var portal data.Object
 	var found bool
 
 	for attempts := 0; attempts < maxOrificeAttempts; attempts++ {
-		orifice, found = d.ctx.Data.Objects.FindOne(object.HoradricOrifice)
-		if found && orifice.Mode == mode.ObjectModeOpened {
+		portal, found = d.ctx.Data.Objects.FindOne(object.DurielsLairPortal)
+		if found && portal.Mode == mode.ObjectModeOpened {
 			break
 		}
 		utils.Sleep(orificeCheckDelay)
@@ -68,6 +74,9 @@ func (d Duriel) Run() error {
 	}
 
 	if !found {
+		return errors.New("failed to find Duriel's portal after multiple attempts")
+	}
+
 	if d.ctx.CharacterCfg.Game.Duriel.UseThawing {
 		reHidePortraits := false
 		action.ReturnTown()
