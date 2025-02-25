@@ -89,8 +89,17 @@ type CharacterCfg struct {
 	UseCentralizedPickit bool   `yaml:"useCentralizedPickit"`
 	HidePortraits        bool   `yaml:"hidePortraits"`
 
-	Scheduler Scheduler `yaml:"scheduler"`
-	Health    struct {
+	Scheduler         Scheduler `yaml:"scheduler"`
+	ChickenScaryAuras struct {
+		AmplifyDamage bool `yaml:"amplifyDamage"`
+		BloodMana     bool `yaml:"bloodMana"`
+		Decrepify     bool `yaml:"decrepify"`
+		LowerResist   bool `yaml:"lowerResist"`
+		Fanaticism    bool `yaml:"fanaticism"`
+		Might         bool `yaml:"might"`
+		Conviction    bool `yaml:"conviction"`
+	}
+	Health struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
 		RejuvPotionAtLife   int `yaml:"rejuvPotionAtLife"`

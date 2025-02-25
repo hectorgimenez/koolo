@@ -276,6 +276,44 @@
                 {{ end }}
             </div>
 
+            <br><h3>Chicken scary aura settings</h3><br>
+            <label>When enabled, if your character receives one of these debuffs or a mob has a scary aura, you will immediately leave the game.</label><br>
+            <h4>Player debuffs</h4><br>
+            <fieldset class="grid">
+                <label>
+                    <input id="chicken_amplify_damage" type="checkbox" name="chickenAmplifyDamage" {{ if .Config.ChickenScaryAuras.AmplifyDamage }}checked{{ end }}/>
+                    Amplify Damage
+                </label>
+                <label>
+                    <input id="chicken_blood_mana" type="checkbox" name="chickenBloodMana" {{ if .Config.ChickenScaryAuras.BloodMana }}checked{{ end }}/>
+                    Blood Mana
+                </label>
+                <label>
+                    <input id="chicken_decrepify" type="checkbox" name="chickenDecrepify" {{ if .Config.ChickenScaryAuras.Decrepify }}checked{{ end }}/>
+                    Decrepify
+                </label>
+                <label>
+                    <input id="chicken_lower_resist" type="checkbox" name="chickenLowerResist" {{ if .Config.ChickenScaryAuras.LowerResist }}checked{{ end }}/>
+                    Decrepify
+                </label>
+            </fieldset>
+            <h4>Mob buffs</h4><br>
+            <fieldset class="grid">
+                <label>
+                    <input id="chicken_fanaticism" type="checkbox" name="chickenFanaticism" {{ if .Config.ChickenScaryAuras.Fanaticism }}checked{{ end }}/>
+                    Fanaticism
+                </label>
+                <label>
+                    <input id="chicken_might" type="checkbox" name="chickenMight" {{ if .Config.ChickenScaryAuras.Might }}checked{{ end }}/>
+                    Might
+                </label>
+                <label>
+                    <input id="chicken_conviction" type="checkbox" name="chickenConviction" {{ if .Config.ChickenScaryAuras.Conviction }}checked{{ end }}/>
+                    Conviction
+                </label>
+                <label>&nbsp;</label>
+            </fieldset>
+
             <br><h3>Health settings</h3><br>
             <fieldset class="grid">
                 <label>
@@ -304,6 +342,7 @@
                            value="{{ .Config.Health.ChickenAt }}"/>
                 </label>
             </fieldset>
+
             <h4>Belt Layout</h4><br>
             <fieldset class="grid">
                 {{ range $index, $potionType := .Config.Inventory.BeltColumns }}
