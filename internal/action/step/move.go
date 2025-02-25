@@ -173,13 +173,13 @@ func IsPathValid(currentPos data.Position, cache *context.PathCache) bool {
 	}
 
 	// Valid if we're close to start, destination, or current path
-	if pather.DistanceFromPoint(currentPos, cache.StartPosition) < 15 ||
-		pather.DistanceFromPoint(currentPos, cache.DestPosition) < 15 {
+	if pather.DistanceFromPoint(currentPos, cache.StartPosition) < 20 ||
+		pather.DistanceFromPoint(currentPos, cache.DestPosition) < 20 {
 		return true
 	}
 
 	// Check if we're near any point on the path
-	minDistance := 15
+	minDistance := 20
 	for _, pathPoint := range cache.Path {
 		dist := pather.DistanceFromPoint(currentPos, pathPoint)
 		if dist < minDistance {
@@ -188,5 +188,5 @@ func IsPathValid(currentPos data.Position, cache *context.PathCache) bool {
 		}
 	}
 
-	return minDistance < 15
+	return minDistance < 20
 }
