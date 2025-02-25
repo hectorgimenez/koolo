@@ -158,8 +158,8 @@ func isValidLocation(i data.Item, bodyLoc item.LocationType, target item.Locatio
 // evaluateItems processes items for either player or merc
 func evaluateItems(items []data.Item, target item.LocationType, scoreFunc func(data.Item) float64) map[item.LocationType][]data.Item {
 	itemsByLoc := make(map[item.LocationType][]data.Item)
-
 	for _, itm := range items {
+
 		if !isEquippable(itm, target) {
 			continue
 		}
@@ -207,8 +207,6 @@ func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.Lo
 				continue
 			}
 			toEquip = true
-			ctx.Logger.Debug(fmt.Sprintf("Attempting to equip %s in %s for %s",
-				itm.Name, loc, target))
 
 			if err := equip(itm, loc, target); err != nil {
 				ctx.Logger.Error(fmt.Sprintf("Failed to equip %s: %v", itm.Name, err))
@@ -217,9 +215,6 @@ func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.Lo
 			break
 		}
 
-		if !toEquip {
-			ctx.Logger.Debug(fmt.Sprintf("No valid items found for %s location %s that aren't already equipped", target, loc))
-		}
 	}
 
 	return nil
@@ -234,7 +229,6 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 	// Get coordinates for item and equipment location
 	itemCoords := ui.GetScreenCoordsForItem(itm)
 
-	//if target == item.LocationEquipped {
 	if itm.Location.LocationType == item.LocationStash || itm.Location.LocationType == item.LocationSharedStash {
 		OpenStash()
 		utils.Sleep(EquipDelayMS)
@@ -264,34 +258,45 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 					}
 				}
 				if !inInventory || !itemFitsInventory(itm) {
-					return fmt.Errorf("Item not found in inventory")
+					return fmt.Errorf("item not found in inventory")
 				}
 			}
 		}
-
+	}
 		for !ctx.Data.OpenMenus.Inventory {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
 			utils.Sleep(EquipDelayMS)
-		}
-
 	}
 
 	if target == item.LocationMercenary {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MercenaryScreen)
 		utils.Sleep(EquipDelayMS)
 		ctx.HID.ClickWithModifier(game.LeftButton, itemCoords.X, itemCoords.Y, game.CtrlKey)
-		utils.Sleep(EquipDelayMS)
 	}
 
 	if target == item.LocationEquipped {
+		// We need to de-equip the item in the right ring slot first to prevent having to move cursor and click
+		if bodyloc == item.LocRightRing {
+			if itemFitsInventory(itm) {
+				equippedRing := data.Position{ui.EquipRRinX, ui.EquipRRinY}
+				if ctx.Data.LegacyGraphics {
+					equippedRing = data.Position{ui.EquipRRinClassicX, ui.EquipRRinClassicY}
+				}
+				ctx.HID.ClickWithModifier(game.LeftButton, equippedRing.X, equippedRing.Y, game.ShiftKey)
+				utils.Sleep(EquipDelayMS)
+			}
+		}
 		ctx.HID.ClickWithModifier(game.LeftButton, itemCoords.X, itemCoords.Y, game.ShiftKey)
 	}
 
+	utils.Sleep(100)
+	ctx.RefreshGameData()
 	for _, inPlace := range ctx.Data.Inventory.AllItems {
 		if itm.UnitID == inPlace.UnitID && inPlace.Location.LocationType != target {
 			step.CloseAllMenus()
-			ctx.Logger.Error("Equip failed, trying cursor")
-			return equipCursor(itm, bodyloc, target)
+			ctx.Logger.Error(fmt.Sprintf("Failed to equip %s to %s using hotkeys, trying cursor", itm.Name, target))
+			// Temporarily disabled using cursor to equip - it isn't needed for any case now and it will be removed after testing
+			//return equipCursor(itm, bodyloc, target)
 		}
 	}
 
@@ -337,9 +342,9 @@ func equipCursor(itm data.Item, bodyloc item.LocationType, target item.LocationT
 	for _, inPlace := range ctx.Data.Inventory.AllItems {
 		if itm.UnitID == inPlace.UnitID && inPlace.Location.LocationType != target {
 			step.CloseAllMenus()
-			if itm.Location.LocationType == item.LocationCursor {
+			utils.Sleep(EquipDelayMS)
 				DropMouseItem()
-			}
+
 			return fmt.Errorf("Failed %s to %s equip to using cursor", itm.Name, target)
 		}
 	}
