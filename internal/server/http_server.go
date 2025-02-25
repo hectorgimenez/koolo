@@ -801,14 +801,6 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			cfg.Character.BerserkerBarb.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
 		}
 
-		// Core Sorceress options
-		if slices.Contains([]string{
-			// If a new sorceress is updated to leverage the core config, add it here
-			"blizzardsorceress",
-		}, cfg.Character.Class) {
-			cfg.Character.Sorceress.UseStaticField = r.Form.Has("sorcUseStaticField")
-		}
-
 		// Nova Sorceress specific options
 		if cfg.Character.Class == "nova" || cfg.Character.Class == "lightsorc" {
 			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))

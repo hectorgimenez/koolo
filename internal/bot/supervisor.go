@@ -110,11 +110,6 @@ func (s *baseSupervisor) ensureProcessIsRunningAndPrepare() error {
 
 func (s *baseSupervisor) logGameStart(runs []run.Run) {
 	runNames := ""
-	if len(runs) == 0 {
-		message := "No runs were selected, please check your configuration"
-		s.bot.ctx.Logger.Error(message)
-		panic(message)
-	}
 	for _, r := range runs {
 		runNames += r.Name() + ", "
 	}
