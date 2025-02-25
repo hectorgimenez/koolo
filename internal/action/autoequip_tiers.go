@@ -171,7 +171,7 @@ func calculateBeltScore(itm data.Item) float64 {
 
 	// Slots matter more than stats, this should never downgrade a belt
 	if currentSize > beltSize {
-		return -1000
+		return float64(-1000)
 	}
 	return float64(beltSize * BeltBaseSlots * 2)
 }
@@ -205,10 +205,10 @@ func calculatePerLevelStats(itm data.Item) float64 {
 }
 
 // calculateBaseStats evaluates common item stats
-func calculateBaseStats(item data.Item) float64 {
+func calculateBaseStats(itm data.Item) float64 {
 	score := 0.0
 	for statID, weight := range generalWeights {
-		if statData, found := item.FindStat(statID, 0); found {
+		if statData, found := itm.FindStat(statID, 0); found {
 			score += float64(statData.Value) * weight
 		}
 	}
@@ -243,11 +243,11 @@ func calculateResistScore(itm data.Item) float64 {
 	return score
 }
 
-func getItemMainResists(item data.Item) ResistStats {
-	fr, _ := item.FindStat(stat.FireResist, 0)
-	cr, _ := item.FindStat(stat.ColdResist, 0)
-	lr, _ := item.FindStat(stat.LightningResist, 0)
-	pr, _ := item.FindStat(stat.PoisonResist, 0)
+func getItemMainResists(itm data.Item) ResistStats {
+	fr, _ := itm.FindStat(stat.FireResist, 0)
+	cr, _ := itm.FindStat(stat.ColdResist, 0)
+	lr, _ := itm.FindStat(stat.LightningResist, 0)
+	pr, _ := itm.FindStat(stat.PoisonResist, 0)
 
 	return ResistStats{
 		Fire:      fr.Value,
@@ -325,19 +325,19 @@ func calculateOtherResistScore(itm data.Item) float64 {
 
 // Skill calcs
 
-func calculateSkillScore(item data.Item) float64 {
+func calculateSkillScore(itm data.Item) float64 {
 	ctx := context.Get()
 	score := 0.0
 
-	if statData, found := item.FindStat(stat.AllSkills, 0); found {
+	if statData, found := itm.FindStat(stat.AllSkills, 0); found {
 		score += float64(statData.Value) * skillWeights[statData.ID]
 	}
-	if classSkillsStat, found := item.FindStat(stat.AddClassSkills, int(ctx.Data.PlayerUnit.Class)); found {
+	if classSkillsStat, found := itm.FindStat(stat.AddClassSkills, int(ctx.Data.PlayerUnit.Class)); found {
 		score += float64(classSkillsStat.Value) * skillWeights[classSkillsStat.ID]
 	}
 
 	tabskill := int(ctx.Data.PlayerUnit.Class)*8 + (getMaxSkillTabPage() - 1)
-	if tabSkillsStat, found := item.FindStat(stat.AddSkillTab, tabskill); found {
+	if tabSkillsStat, found := itm.FindStat(stat.AddSkillTab, tabskill); found {
 		score += float64(tabSkillsStat.Value) * skillWeights[tabSkillsStat.ID]
 	}
 
@@ -354,7 +354,7 @@ func calculateSkillScore(item data.Item) float64 {
 
 	// TODO Multiply the +x part of the skill bonus instead of returning a flat value
 	for _, usedSkill := range usedSkills {
-		if _, found := item.FindStat(stat.SingleSkill, int(usedSkill)); found {
+		if _, found := itm.FindStat(stat.SingleSkill, int(usedSkill)); found {
 			score += 40
 		}
 	}
@@ -363,19 +363,19 @@ func calculateSkillScore(item data.Item) float64 {
 }
 
 // MercScore calculates mercenary-specific item score
-func MercScore(item data.Item) float64 {
-	score := BaseScore + sumElementalDamage(item)*2.0
+func MercScore(itm data.Item) float64 {
+	score := BaseScore + sumElementalDamage(itm)*2.0
 
 	// Add base stat scores
 	for statID, weight := range mercWeights {
-		if statData, found := item.FindStat(statID, 0); found {
+		if statData, found := itm.FindStat(statID, 0); found {
 			score += float64(statData.Value) * weight
 		}
 	}
 
 	// Add cast-on-trigger scores
 	for _, ctc := range mercCTCWeight {
-		if _, found := item.FindStat(ctc.StatID, ctc.Layer); found {
+		if _, found := itm.FindStat(ctc.StatID, ctc.Layer); found {
 			score += ctc.Weight
 		}
 	}
@@ -384,22 +384,22 @@ func MercScore(item data.Item) float64 {
 }
 
 // Helper functions
-func sumElementalDamage(item data.Item) float64 {
-	return sumDamageType(item, stat.FireMinDamage, stat.FireMaxDamage) +
-		sumDamageType(item, stat.LightningMinDamage, stat.LightningMaxDamage) +
-		sumDamageType(item, stat.ColdMinDamage, stat.ColdMaxDamage) +
-		sumDamageType(item, stat.MagicMinDamage, stat.MagicMaxDamage) +
-		calculatePoisonDamage(item)
+func sumElementalDamage(itm data.Item) float64 {
+	return sumDamageType(itm, stat.FireMinDamage, stat.FireMaxDamage) +
+		sumDamageType(itm, stat.LightningMinDamage, stat.LightningMaxDamage) +
+		sumDamageType(itm, stat.ColdMinDamage, stat.ColdMaxDamage) +
+		sumDamageType(itm, stat.MagicMinDamage, stat.MagicMaxDamage) +
+		calculatePoisonDamage(itm)
 }
 
-func sumDamageType(item data.Item, minStat, maxStat stat.ID) float64 {
-	min, _ := item.FindStat(minStat, 0)
-	max, _ := item.FindStat(maxStat, 0)
+func sumDamageType(itm data.Item, minStat, maxStat stat.ID) float64 {
+	min, _ := itm.FindStat(minStat, 0)
+	max, _ := itm.FindStat(maxStat, 0)
 	return float64(min.Value + max.Value)
 }
 
-func calculatePoisonDamage(item data.Item) float64 {
-	poisonMin, _ := item.FindStat(stat.PoisonMinDamage, 0)
+func calculatePoisonDamage(itm data.Item) float64 {
+	poisonMin, _ := itm.FindStat(stat.PoisonMinDamage, 0)
 	return float64(poisonMin.Value) * 125.0 / 256.0
 }
 
