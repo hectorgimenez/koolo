@@ -6,17 +6,16 @@ import (
 	"sort"
 	"time"
 
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
-	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
@@ -183,18 +182,6 @@ func MoveToArea(dst area.ID) error {
 	return nil
 }
 
-func MoveToCoords(to data.Position) error {
-	ctx := context.Get()
-
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-		return err
-	}
-
-	return MoveTo(func() (data.Position, bool) {
-		return to, true
-	})
-}
-
 func MoveTo(toFunc func() (data.Position, bool)) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveTo")
@@ -205,137 +192,131 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		if err := step.CloseAllMenus(); err != nil {
 			return err
 		}
-
 		utils.Sleep(500)
 	}
 
-	openedDoors := make(map[object.Name]data.Position)
-	previousIterationPosition := data.Position{}
-	lastMovement := false
-
-	// Initial sync check
-	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
-		return err
+	to, found := toFunc()
+	if !found {
+		return nil
 	}
 
+	// If we can teleport, just move straight to destination
+	if ctx.Data.CanTeleport() {
+		return step.MoveTo(to)
+	}
+
+	openedDoors := make(map[object.Name]data.Position)
+	lastMovement := false
+
 	for {
-		ctx.RefreshGameData()
-		to, found := toFunc()
+		ctx.PauseIfNotPriority()
+
+		currentPos := ctx.Data.PlayerUnit.Position
+
+		// Get current path segment
+		var path []data.Position
+		var found bool
+		if ctx.CurrentGame.PathCache != nil &&
+			ctx.CurrentGame.PathCache.DestPosition == to &&
+			step.IsPathValid(currentPos, ctx.CurrentGame.PathCache) {
+			path = ctx.CurrentGame.PathCache.Path
+			found = true
+		} else {
+
+			path, _, found = ctx.PathFinder.GetPath(to)
+			if found {
+				ctx.CurrentGame.PathCache = &context.PathCache{
+					Path:             path,
+					DestPosition:     to,
+					StartPosition:    currentPos,
+					DistanceToFinish: step.DistanceToFinishMoving,
+				}
+			}
+		}
+
 		if !found {
-			return nil
+			return fmt.Errorf("path could not be calculated")
 		}
 
-		// If we can teleport, don't bother with the rest
-		if ctx.Data.CanTeleport() {
-			return step.MoveTo(to)
-		}
+		// Handle obstacles in current area
+		if !ctx.Data.CanTeleport() {
+			// Handle doors in path
+			for _, o := range ctx.Data.Objects {
+				if o.IsDoor() && o.Selectable && openedDoors[o.Name] != o.Position {
+					// Check if door is near our path
+					doorInPath := false
+					doorPos := data.Position{
+						X: o.Position.X - ctx.Data.AreaOrigin.X,
+						Y: o.Position.Y - ctx.Data.AreaOrigin.Y,
+					}
 
-		// Check for doors blocking path
-		for _, o := range ctx.Data.Objects {
-			if o.IsDoor() && ctx.PathFinder.DistanceFromMe(o.Position) < 10 && openedDoors[o.Name] != o.Position {
-				if o.Selectable {
-					ctx.Logger.Info("Door detected and teleport is not available, trying to open it...")
-					openedDoors[o.Name] = o.Position
-					err := step.InteractObject(o, func() bool {
-						obj, found := ctx.Data.Objects.FindByID(o.ID)
-						return found && !obj.Selectable
-					})
-					if err != nil {
-						return err
+					for _, pathPos := range path {
+						if pather.DistanceFromPoint(doorPos, pathPos) < 5 {
+							doorInPath = true
+							break
+						}
+					}
+
+					if doorInPath && ctx.PathFinder.DistanceFromMe(o.Position) < 10 {
+						ctx.Logger.Info("Door detected in path, attempting to open...")
+						openedDoors[o.Name] = o.Position
+						if err := step.InteractObject(o, func() bool {
+							obj, found := ctx.Data.Objects.FindByID(o.ID)
+							return found && !obj.Selectable
+						}); err != nil {
+							return err
+						}
+
+						// Clear area after opening door
+						if err := ClearAreaAroundPosition(o.Position, 5, data.MonsterAnyFilter()); err != nil {
+							ctx.Logger.Debug("Failed to clear area around door", err)
+						}
+						utils.Sleep(200)
+						continue
 					}
 				}
 			}
-		}
-		// Check if there is any object blocking our path
-		for _, o := range ctx.Data.Objects {
-			if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
-				err := step.InteractObject(o, func() bool {
-					obj, found := ctx.Data.Objects.FindByID(o.ID)
-					//additional click on barrel to avoid getting stuck
-					x, y := ctx.PathFinder.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
-					ctx.HID.Click(game.LeftButton, x, y)
-					return found && !obj.Selectable
-				})
-				if err != nil {
-					return err
-				}
+			// Clear monsters around current position
+			if err := ClearAreaAroundPlayer(7, data.MonsterAnyFilter()); err != nil {
+				return err
 			}
 		}
-
-		// Check for monsters close to player
-		closestMonster := data.Monster{}
-		closestMonsterDistance := 9999999
-		targetedNormalEnemies := make([]data.Monster, 0)
-		targetedElites := make([]data.Monster, 0)
-		minDistance := 6
-		minDistanceForElites := 20                                            // This will make the character to kill elites even if they are far away, ONLY during leveling
-		stuck := ctx.PathFinder.DistanceFromMe(previousIterationPosition) < 5 // Detect if character was not able to move from last iteration
-
-		for _, m := range ctx.Data.Monsters.Enemies() {
-			// Skip if monster is already dead
-			if m.Stats[stat.Life] <= 0 {
-				continue
-			}
-
-			dist := ctx.PathFinder.DistanceFromMe(m.Position)
-			appended := false
-			if m.IsElite() && dist <= minDistanceForElites {
-				targetedElites = append(targetedElites, m)
-				appended = true
-			}
-
-			if dist <= minDistance {
-				targetedNormalEnemies = append(targetedNormalEnemies, m)
-				appended = true
-			}
-
-			if appended && dist < closestMonsterDistance {
-				closestMonsterDistance = dist
-				closestMonster = m
-			}
-		}
-
-		if len(targetedNormalEnemies) > 5 || len(targetedElites) > 0 || (stuck && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) || (pather.IsNarrowMap(ctx.Data.PlayerUnit.Area) && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) {
-			if stuck {
-				ctx.Logger.Info("Character stuck and monsters detected, trying to kill monsters around")
-			} else {
-				ctx.Logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
-			}
-
-			path, _, mPathFound := ctx.PathFinder.GetPath(closestMonster.Position)
-			if mPathFound {
-				doorIsBlocking := false
-				for _, o := range ctx.Data.Objects {
-					if o.IsDoor() && o.Selectable && path.Intersects(*ctx.Data, o.Position, 4) {
-						ctx.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
-						doorIsBlocking = true
-					}
-				}
-
-				if !doorIsBlocking {
-					ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-						return closestMonster.UnitID, true
-					}, nil)
-				}
-			}
-		}
-
 		// Continue moving
 		WaitForAllMembersWhenLeveling()
-		previousIterationPosition = ctx.Data.PlayerUnit.Position
 
 		if lastMovement {
 			return nil
 		}
 
-		// TODO: refactor this to use the same approach as ClearThroughPath
-		if _, distance, _ := ctx.PathFinder.GetPathFrom(ctx.Data.PlayerUnit.Position, to); distance <= step.DistanceToFinishMoving {
+		// Calculate next movement segment
+		movementDistance := 7
+		if movementDistance > len(path) {
+			movementDistance = len(path)
+		}
+
+		dest := data.Position{
+			X: path[movementDistance-1].X + ctx.Data.AreaOrigin.X,
+			Y: path[movementDistance-1].Y + ctx.Data.AreaOrigin.Y,
+		}
+
+		if len(path)-movementDistance <= step.DistanceToFinishMoving {
 			lastMovement = true
 		}
 
-		err := step.MoveTo(to)
-		if err != nil {
+		if err := step.MoveTo(dest); err != nil {
 			return err
 		}
 	}
+}
+
+func MoveToCoords(to data.Position) error {
+	ctx := context.Get()
+
+	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
+		return err
+	}
+
+	return MoveTo(func() (data.Position, bool) {
+		return to, true
+	})
 }

@@ -59,6 +59,16 @@ type Debug struct {
 	LastAction string `json:"lastAction"`
 	LastStep   string `json:"lastStep"`
 }
+type PathCache struct {
+	Path             []data.Position
+	DestPosition     data.Position
+	StartPosition    data.Position
+	LastRun          time.Time
+	LastCheck        time.Time
+	PreviousPosition data.Position
+	DistanceToFinish int
+	LastMoveDistance int
+}
 
 type CurrentGameHelper struct {
 	BlacklistedItems []data.Item
@@ -68,6 +78,7 @@ type CurrentGameHelper struct {
 		ExpectedArea area.ID
 	}
 	PickupItems bool
+	PathCache   *PathCache
 }
 
 func NewContext(name string) *Status {
@@ -94,6 +105,7 @@ func NewGameHelper() *CurrentGameHelper {
 		PickupItems:      true,
 		PickedUpItems:    make(map[int]int),
 		BlacklistedItems: []data.Item{},
+		PathCache:        nil,
 	}
 }
 
@@ -164,10 +176,11 @@ func (s *Status) PauseIfNotPriority() {
 	}
 }
 func (ctx *Context) WaitForGameToLoad() {
-	for ctx.Data.OpenMenus.LoadingScreen {
+	// Get only the loading screen state from OpenMenus
+	for ctx.GameReader.GetData().OpenMenus.LoadingScreen {
 		time.Sleep(100 * time.Millisecond)
-		ctx.RefreshGameData()
 	}
+
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)
 }

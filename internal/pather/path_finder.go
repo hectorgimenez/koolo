@@ -106,7 +106,7 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 		grid.CollisionGrid[relativePos.Y][relativePos.X] = game.CollisionTypeMonster
 	}
 
-	path, distance, found := astar.CalculatePath(grid, from, to)
+	path, distance, found := astar.CalculatePath(grid, pf.data.PlayerUnit.Area, from, to)
 
 	if config.Koolo.Debug.RenderMap {
 		pf.renderMap(grid, from, to, path)

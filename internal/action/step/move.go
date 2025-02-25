@@ -1,151 +1,170 @@
 package step
 
 import (
-	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const DistanceToFinishMoving = 4
 
-type MoveOpts struct {
-	distanceOverride *int
-}
-
-type MoveOption func(*MoveOpts)
+type MoveOption func(*context.PathCache)
 
 // WithDistanceToFinish overrides the default DistanceToFinishMoving
 func WithDistanceToFinish(distance int) MoveOption {
-	return func(opts *MoveOpts) {
-		opts.distanceOverride = &distance
+	return func(cache *context.PathCache) {
+		cache.DistanceToFinish = distance
 	}
 }
 
 func MoveTo(dest data.Position, options ...MoveOption) error {
-	// Initialize options
-	opts := &MoveOpts{}
-
-	// Apply any provided options
-	for _, o := range options {
-		o(opts)
-	}
-
-	minDistanceToFinishMoving := DistanceToFinishMoving
-	if opts.distanceOverride != nil {
-		minDistanceToFinishMoving = *opts.distanceOverride
-	}
-
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
 
-	defer func() {
-		for {
-			switch ctx.Data.PlayerUnit.Mode {
-			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
-				utils.Sleep(100)
-				ctx.RefreshGameData()
-				continue
-			default:
-				return
-			}
-		}
-	}()
-
-	timeout := time.Second * 30
-	idleThreshold := time.Second * 3
-	idleStartTime := time.Time{}
+	const (
+		refreshInterval = 200 * time.Millisecond
+		timeout         = 30 * time.Second
+	)
 
 	startedAt := time.Now()
-	lastRun := time.Time{}
-	previousPosition := data.Position{}
-	previousDistance := 0
+
+	// Initialize or reuse path cache
+	var pathCache *context.PathCache
+	if ctx.CurrentGame.PathCache != nil &&
+		ctx.CurrentGame.PathCache.DestPosition == dest &&
+		IsPathValid(ctx.Data.PlayerUnit.Position, ctx.CurrentGame.PathCache) {
+		// Reuse existing path cache
+		pathCache = ctx.CurrentGame.PathCache
+	} else {
+		// Create new path cache
+		start := ctx.Data.PlayerUnit.Position
+		path, _, found := ctx.PathFinder.GetPath(dest)
+		if !found {
+			return fmt.Errorf("path not found to %v", dest)
+		}
+
+		pathCache = &context.PathCache{
+			Path:             path,
+			DestPosition:     dest,
+			StartPosition:    start,
+			DistanceToFinish: DistanceToFinishMoving,
+		}
+		ctx.CurrentGame.PathCache = pathCache
+	}
+
+	// Apply any options
+	for _, option := range options {
+		option(pathCache)
+	}
+
+	// Add some delay between clicks to let the character move to destination
+	walkDuration := utils.RandomDurationMs(600, 1200)
 
 	for {
+		time.Sleep(50 * time.Millisecond)
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
-		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
-		ctx.RefreshGameData()
 
-		// Check for idle state outside town
-		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
-			if idleStartTime.IsZero() {
-				idleStartTime = time.Now()
-			} else if time.Since(idleStartTime) > idleThreshold {
-				// Perform anti-idle action
-				ctx.Logger.Debug("Anti-idle triggered")
+		now := time.Now()
+
+		// Refresh data and perform checks periodically
+		if now.Sub(pathCache.LastCheck) > refreshInterval {
+			ctx.RefreshGameData()
+			currentPos := ctx.Data.PlayerUnit.Position
+			distanceToDest := pather.DistanceFromPoint(currentPos, dest)
+
+			// Check if we've reached destination
+			if distanceToDest <= pathCache.DistanceToFinish || len(pathCache.Path) <= pathCache.DistanceToFinish {
+				return nil
+			}
+
+			// Check for stuck in same position (direct equality check is efficient)
+			isSamePosition := pathCache.PreviousPosition.X == currentPos.X && pathCache.PreviousPosition.Y == currentPos.Y
+
+			// Only recalculate path in specific cases to reduce CPU usage
+			if isSamePosition && !ctx.Data.CanTeleport() {
+				// If stuck in same position without teleport, make random movement
 				ctx.PathFinder.RandomMovement()
-				idleStartTime = time.Time{} // Reset idle timer
+			} else if pathCache.Path == nil ||
+				!IsPathValid(currentPos, pathCache) ||
+				(distanceToDest <= 15 && distanceToDest > pathCache.DistanceToFinish) {
+				// Only recalculate when truly needed
+				path, _, found := ctx.PathFinder.GetPath(dest)
+				if !found {
+					if ctx.PathFinder.DistanceFromMe(dest) < pathCache.DistanceToFinish+5 {
+						return nil // Close enough
+					}
+					return fmt.Errorf("failed to calculate path")
+				}
+				pathCache.Path = path
+				pathCache.StartPosition = currentPos
+			}
+
+			pathCache.PreviousPosition = currentPos
+			pathCache.LastCheck = now
+
+			if now.Sub(startedAt) > timeout {
+				return fmt.Errorf("movement timeout")
+			}
+		}
+
+		if !ctx.Data.CanTeleport() {
+			if time.Since(pathCache.LastRun) < walkDuration {
 				continue
 			}
-		} else {
-			idleStartTime = time.Time{} // Reset idle timer if not in StandingOutsideTown mode
+		} else if time.Since(pathCache.LastRun) < ctx.Data.PlayerCastDuration() {
+			continue
 		}
 
 		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 		if ctx.Data.CanTeleport() {
+			walkDuration = ctx.Data.PlayerCastDuration()
 			if ctx.Data.PlayerUnit.RightSkill != skill.Teleport {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.Teleport))
+				time.Sleep(50 * time.Millisecond)
+				continue
 			}
 		} else if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Vigor); found {
 			if ctx.Data.PlayerUnit.RightSkill != skill.Vigor {
 				ctx.HID.PressKeyBinding(kb)
+				time.Sleep(50 * time.Millisecond)
+				continue
 			}
 		}
 
-		path, distance, found := ctx.PathFinder.GetPath(dest)
-		if !found {
-			if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
-				return nil
-			}
-
-			return errors.New("path could not be calculated. Current area: [" + ctx.Data.PlayerUnit.Area.Area().Name + "]. Trying to path to Destination: [" + fmt.Sprintf("%d,%d", dest.X, dest.Y) + "]")
+		pathCache.LastRun = time.Now()
+		if len(pathCache.Path) > 0 {
+			ctx.PathFinder.MoveThroughPath(pathCache.Path, walkDuration)
 		}
-		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
-			return nil
-		}
-
-		// Exit on timeout
-		if timeout > 0 && time.Since(startedAt) > timeout {
-			return nil
-		}
-
-		// Add some delay between clicks to let the character move to destination
-		walkDuration := utils.RandomDurationMs(600, 1200)
-		if !ctx.Data.CanTeleport() && time.Since(lastRun) < walkDuration {
-			continue
-		}
-
-		// We skip the movement if we can teleport and the last movement time was less than the player cast duration
-		if ctx.Data.CanTeleport() && time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
-			continue
-		}
-
-		lastRun = time.Now()
-
-		// If we are stuck in the same position, make a random movement and cross fingers
-		if previousPosition == ctx.Data.PlayerUnit.Position && !ctx.Data.CanTeleport() {
-			ctx.PathFinder.RandomMovement()
-			continue
-		}
-
-		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
-		if distance < 20 && math.Abs(float64(previousDistance-distance)) < DistanceToFinishMoving {
-			minDistanceToFinishMoving += DistanceToFinishMoving
-		} else if opts.distanceOverride != nil {
-			minDistanceToFinishMoving = *opts.distanceOverride
-		} else {
-			minDistanceToFinishMoving = DistanceToFinishMoving
-		}
-
-		previousPosition = ctx.Data.PlayerUnit.Position
-		previousDistance = distance
-		ctx.PathFinder.MoveThroughPath(path, walkDuration)
 	}
+}
+
+// Validate if the path is still valid based on current position
+func IsPathValid(currentPos data.Position, cache *context.PathCache) bool {
+	if cache == nil {
+		return false
+	}
+
+	// Valid if we're close to start, destination, or current path
+	if pather.DistanceFromPoint(currentPos, cache.StartPosition) < 20 ||
+		pather.DistanceFromPoint(currentPos, cache.DestPosition) < 20 {
+		return true
+	}
+
+	// Check if we're near any point on the path
+	minDistance := 20
+	for _, pathPoint := range cache.Path {
+		dist := pather.DistanceFromPoint(currentPos, pathPoint)
+		if dist < minDistance {
+			minDistance = dist
+			break
+		}
+	}
+
+	return minDistance < 20
 }

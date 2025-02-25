@@ -2,6 +2,7 @@ package run
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -9,8 +10,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -98,37 +97,27 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	// Handle Baal waves
 	lastWave := false
 	for !lastWave {
-		// Check for last wave
 		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found {
 			lastWave = true
 		}
-
-		// Clear current wave
-		err = s.clearWave()
-		if err != nil {
-			return err
-		}
-
 		// Return to throne position between waves
-		err = action.MoveToCoords(baalThronePosition)
+		err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
 		if err != nil {
 			return err
 		}
 
-		// Small delay to allow next wave to spawn if not last wave
-		if !lastWave {
-			utils.Sleep(500)
-		}
+		action.MoveToCoords(baalThronePosition)
 	}
+
+	// Let's be sure everything is dead
+	err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		utils.Sleep(15000)
 		action.Buff()
-
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		err = action.InteractObject(baalPortal, func() bool {
@@ -144,18 +133,6 @@ func (s Baal) Run() error {
 	}
 
 	return nil
-}
-
-func (s Baal) clearWave() error {
-	return s.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
-			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
-			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
-				return m.UnitID, true
-			}
-		}
-		return 0, false
-	}, nil)
 }
 
 func (s Baal) checkForSoulsOrDolls() bool {

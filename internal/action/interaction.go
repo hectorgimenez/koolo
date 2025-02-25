@@ -57,20 +57,25 @@ func InteractObject(o data.Object, isCompletedFn func() bool) error {
 		distFinish = 10
 	}
 
-	var err error
-	for range 5 {
-		err = step.MoveTo(pos, step.WithDistanceToFinish(distFinish))
+	for i := 0; i < 5; i++ {
+		// Move to position
+		err := step.MoveTo(pos, step.WithDistanceToFinish(distFinish))
 		if err != nil {
 			continue
 		}
+
+		// Try to interact with the object
 		err = step.InteractObject(o, isCompletedFn)
-		if err != nil {
+
+		// If we're too far away, move closer and try again
+		if err != nil && strings.Contains(err.Error(), "too far away") {
 			continue
 		}
-		break
+
+		return err // Return error or nil if successful
 	}
 
-	return err
+	return fmt.Errorf("failed to interact with object after multiple attempts")
 }
 
 func InteractObjectByID(id data.UnitID, isCompletedFn func() bool) error {
