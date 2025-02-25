@@ -32,6 +32,7 @@ func PreRun(firstRun bool) error {
 
 	// Identify - either via Cain or Tome
 	IdentifyAll(false)
+	AutoEquip()
 
 	// Stash before vendor
 	Stash(false)
@@ -87,6 +88,7 @@ func InRunReturnTownRoutine() error {
 	}
 
 	IdentifyAll(false)
+	AutoEquip()
 
 	VendorRefill(false, true)
 	Stash(false)
