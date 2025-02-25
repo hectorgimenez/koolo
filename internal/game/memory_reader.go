@@ -66,10 +66,11 @@ func (gd *MemoryReader) FetchMapData() error {
 		return fmt.Errorf("error fetching map data: %w", err)
 	}
 
-	areas := make(map[area.ID]AreaData)
+	areas := make(map[area.ID]AreaData, len(mapData)) // Pre-allocate map size
 	var mu sync.Mutex
 	g := errgroup.Group{}
 	for _, lvl := range mapData {
+		lvl := lvl // Capture local copy for go-routine
 		g.Go(func() error {
 			cg := lvl.CollisionGrid()
 			resultGrid := make([][]CollisionType, lvl.Size.Height)
@@ -77,9 +78,10 @@ func (gd *MemoryReader) FetchMapData() error {
 				resultGrid[i] = make([]CollisionType, lvl.Size.Width)
 			}
 
-			for y := 0; y < lvl.Size.Height; y++ {
-				for x := 0; x < lvl.Size.Width; x++ {
-					if cg[y][x] {
+			// Optimized grid population using range iteration
+			for y, row := range cg {
+				for x, val := range row {
+					if val {
 						resultGrid[y][x] = CollisionTypeWalkable
 					} else {
 						resultGrid[y][x] = CollisionTypeNonWalkable

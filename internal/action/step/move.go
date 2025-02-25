@@ -22,9 +22,27 @@ func WithDistanceToFinish(distance int) MoveOption {
 	}
 }
 
+// TODO town pathing stucks?
+
 func MoveTo(dest data.Position, options ...MoveOption) error {
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
+
+	//Todo if we add this it will make walkable character move like a broken disk. However is helping with waypoint interaction
+	// reducing walkduration seems to help with this issue.
+
+	/*	defer func() {
+		for {
+			switch ctx.Data.PlayerUnit.Mode {
+			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
+				utils.Sleep(50)
+				//	ctx.RefreshGameData()
+				continue
+			default:
+				return
+			}
+		}
+	}()*/
 
 	const (
 		refreshInterval = 200 * time.Millisecond
@@ -32,6 +50,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	)
 
 	startedAt := time.Now()
+
+	//TODO use the pathcache directly from path.go ?
 
 	// Initialize or reuse path cache
 	var pathCache *context.PathCache
@@ -63,7 +83,7 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	}
 
 	// Add some delay between clicks to let the character move to destination
-	walkDuration := utils.RandomDurationMs(600, 1200)
+	walkDuration := utils.RandomDurationMs(700, 900)
 
 	for {
 		time.Sleep(50 * time.Millisecond)
@@ -93,6 +113,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			} else if pathCache.Path == nil ||
 				!IsPathValid(currentPos, pathCache) ||
 				(distanceToDest <= 15 && distanceToDest > pathCache.DistanceToFinish) {
+				//TODO this looks like the telestomp issue,  IsSamePosition is true but it never enter this condition, need something else to force refresh
+
 				// Only recalculate when truly needed
 				path, _, found := ctx.PathFinder.GetPath(dest)
 				if !found {

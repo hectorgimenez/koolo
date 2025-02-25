@@ -49,6 +49,9 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 	return fmt.Errorf("area sync timeout - expected: %v, current: %v", expectedArea, ctx.Data.PlayerUnit.Area)
 }
 
+//TODO something is off with Diablo action.MoveToArea(area.ChaosSanctuary) , the transition between movetoarea and clearthrough path makes
+// bot telestomp until timeout before resuming with the run
+
 func MoveToArea(dst area.ID) error {
 	ctx := context.Get()
 	ctx.SetLastAction("MoveToArea")
@@ -238,6 +241,10 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			return fmt.Errorf("path could not be calculated")
 		}
 
+		//TODO if character detects monster on other side of the wall and we are past door detection
+		// it will ignore doors and try to move directly to it. Either line of sight fail or constantly check for doors intersects
+
+		// Walkable logic
 		// Handle obstacles in current area
 		if !ctx.Data.CanTeleport() {
 			// Handle doors in path
@@ -282,7 +289,8 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			}
 		}
 		// Continue moving
-		WaitForAllMembersWhenLeveling()
+
+		// WaitForAllMembersWhenLeveling  is breaking walkable logic, lets not use it for now.
 
 		if lastMovement {
 			return nil

@@ -63,11 +63,10 @@ type PathCache struct {
 	Path             []data.Position
 	DestPosition     data.Position
 	StartPosition    data.Position
-	LastRun          time.Time
-	LastCheck        time.Time
 	PreviousPosition data.Position
+	LastCheck        time.Time
+	LastRun          time.Time
 	DistanceToFinish int
-	LastMoveDistance int
 }
 
 type CurrentGameHelper struct {
