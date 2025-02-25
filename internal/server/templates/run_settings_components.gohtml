@@ -10,6 +10,19 @@
 {{ define "andariel" }}
     <fieldset>
         <label><input type="checkbox" name="gameAndarielClearRoom" {{ if .Config.Game.Andariel.ClearRoom }}checked{{ end }}> Clear room first</label>
+        <label><input type="checkbox" name="gameAndarielUseAntidoes" {{ if .Config.Game.Andariel.UseAntidoes }}checked{{ end }}> Use antidoes</label>
+    </fieldset>
+{{ end }}
+
+{{ define "duriel" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameDurielUseThawing" {{ if .Config.Game.Duriel.UseThawing }}checked{{ end }}> Use thawing potions</label>
+    </fieldset>
+{{ end }}
+
+{{ define "countess" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameCountessClearFloors" {{ if .Config.Game.Countess.ClearFloors }}checked{{ end }}> Clear all floors of Forgotten Tower </label>
     </fieldset>
 {{ end }}
 
