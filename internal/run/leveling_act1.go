@@ -42,21 +42,9 @@ func (a Leveling) act1() error {
 		a.stonyField()
 	}
 
-	if !a.isCainInTown() && !a.ctx.Data.Quests[quest.Act1TheSearchForCain].Completed() {
-		a.deckardCain()
-	}
-
-	// do Tristram Runs until level 14
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 14 {
-		a.tristram()
-	}
-
-	// do Countess Runs until level 17
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 17 {
-		a.countess()
-	}
-
-	return a.andariel()
+		if !a.ctx.Data.CanTeleport() {
+			a.ctx.CharacterCfg.Game.Countess.ClearFloors = true
+		}
 }
 
 func (a Leveling) bloodMoor() error {

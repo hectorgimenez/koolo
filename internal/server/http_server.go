@@ -874,6 +874,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Andariel.ClearRoom = r.Form.Has("gameAndarielClearRoom")
 		cfg.Game.Andariel.UseAntidoes = r.Form.Has("gameAndarielUseAntidoes")
 
+		cfg.Game.Countess.ClearFloors = r.Form.Has("gameCountessClearFloors")
+
 		cfg.Game.Pindleskin.SkipOnImmunities = []stat.Resist{}
 		for _, i := range r.Form["gamePindleskinSkipOnImmunities[]"] {
 			cfg.Game.Pindleskin.SkipOnImmunities = append(cfg.Game.Pindleskin.SkipOnImmunities, stat.Resist(i))
