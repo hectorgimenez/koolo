@@ -13,24 +13,21 @@ import (
 
 type Path []data.Position
 
-// PathCacheEntry stores path data and metadata in the global cache
-type PathCacheEntry struct {
-	Path             Path
-	LastUsed         int64 // Unix nano timestamp
-	PreviousPosition data.Position
-	LastCheck        time.Time
-	LastRun          time.Time
-}
-
 var (
 	// Spatial grid size for position normalization (5x5 tiles)
 	gridSize = 5
 
 	// Cache with timestamp-based eviction
-	pathCache    = make(map[string]PathCacheEntry)
+	pathCache    = make(map[string]cacheEntry)
+	cacheOrder   []string     // Maintains access order for LRU eviction
 	cacheLock    sync.RWMutex // Protects concurrent access to cache
-	maxCacheSize = 500        // Maximum number of paths to cache
+	maxCacheSize = 500        // Maximum number of paths to cache (increased from 100 for adaptive eviction)
 )
+
+type cacheEntry struct {
+	path     Path
+	lastUsed int64 // Unix nano timestamp
+}
 
 // Generates normalized cache key using spatial partitioning
 func cacheKey(from, to data.Position, area area.ID, teleport bool) string {
@@ -47,7 +44,7 @@ func cacheKey(from, to data.Position, area area.ID, teleport bool) string {
 }
 
 // Retrieves cached path with reverse path check
-func GetCachedPath(from, to data.Position, area area.ID, teleport bool) (Path, bool) {
+func getCachedPath(from, to data.Position, area area.ID, teleport bool) (Path, bool) {
 	key := cacheKey(from, to, area, teleport)
 
 	cacheLock.RLock()
@@ -55,16 +52,16 @@ func GetCachedPath(from, to data.Position, area area.ID, teleport bool) (Path, b
 
 	// Check direct path
 	if entry, exists := pathCache[key]; exists {
-		return entry.Path, true
+		return entry.path, true
 	}
 
 	// Check reverse path
 	reverseKey := cacheKey(to, from, area, teleport)
 	if entry, exists := pathCache[reverseKey]; exists {
 		// Return reversed path if available
-		reversed := make(Path, len(entry.Path))
-		for i, p := range entry.Path {
-			reversed[len(entry.Path)-1-i] = p
+		reversed := make(Path, len(entry.path))
+		for i, p := range entry.path {
+			reversed[len(entry.path)-1-i] = p
 		}
 		return reversed, true
 	}
@@ -72,37 +69,18 @@ func GetCachedPath(from, to data.Position, area area.ID, teleport bool) (Path, b
 	return nil, false
 }
 
-// GetCacheEntry retrieves the full cache entry for a path
-func GetCacheEntry(from, to data.Position, area area.ID, teleport bool) (*PathCacheEntry, bool) {
-	key := cacheKey(from, to, area, teleport)
-
-	cacheLock.RLock()
-	defer cacheLock.RUnlock()
-
-	if entry, exists := pathCache[key]; exists {
-		entryCopy := entry // Create a copy to safely return
-		return &entryCopy, true
-	}
-
-	return nil, false
-}
-
-// StorePath stores a path in the global cache
-func StorePath(from, to data.Position, area area.ID, teleport bool, path Path, currentPos data.Position) {
+// Stores path with usage timestamp
+func cachePath(from, to data.Position, area area.ID, teleport bool, path Path) {
 	key := cacheKey(from, to, area, teleport)
 
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
 
-	entry := PathCacheEntry{
-		Path:             path,
-		LastUsed:         time.Now().UnixNano(),
-		PreviousPosition: currentPos,
-		LastCheck:        time.Now(),
-		LastRun:          time.Time{},
+	// Update existing entry or create new
+	pathCache[key] = cacheEntry{
+		path:     path,
+		lastUsed: time.Now().UnixNano(),
 	}
-
-	pathCache[key] = entry
 
 	// Adaptive eviction when exceeding capacity
 	if len(pathCache) >= maxCacheSize { // LRU eviction logic
@@ -111,63 +89,13 @@ func StorePath(from, to data.Position, area area.ID, teleport bool, path Path, c
 
 		// Find least recently used entry
 		for k, v := range pathCache {
-			if v.LastUsed < oldestTime {
-				oldestTime = v.LastUsed
+			if v.lastUsed < oldestTime {
+				oldestTime = v.lastUsed
 				oldestKey = k
 			}
 		}
 		delete(pathCache, oldestKey)
 	}
-}
-
-// UpdatePathLastRun updates the lastRun time for a path
-func UpdatePathLastRun(from, to data.Position, area area.ID, teleport bool) {
-	key := cacheKey(from, to, area, teleport)
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-
-	if entry, exists := pathCache[key]; exists {
-		entry.LastRun = time.Now()
-		entry.LastUsed = time.Now().UnixNano()
-		pathCache[key] = entry
-	}
-}
-
-// UpdatePathLastCheck updates the lastCheck time and previous position for a path
-func UpdatePathLastCheck(from, to data.Position, area area.ID, teleport bool, currentPos data.Position) {
-	key := cacheKey(from, to, area, teleport)
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-
-	if entry, exists := pathCache[key]; exists {
-		entry.LastCheck = time.Now()
-		entry.PreviousPosition = currentPos
-		entry.LastUsed = time.Now().UnixNano()
-		pathCache[key] = entry
-	}
-}
-
-// IsPathValid checks if a path is still valid based on current position
-func IsPathValid(currentPos data.Position, startPos data.Position, destPos data.Position, path Path) bool {
-	// Valid if we're close to start, destination, or current path
-	if DistanceFromPoint(currentPos, startPos) < 20 ||
-		DistanceFromPoint(currentPos, destPos) < 20 {
-		return true
-	}
-
-	// Check if we're near any point on the path
-	minDistance := 20
-	for _, pathPoint := range path {
-		dist := DistanceFromPoint(currentPos, pathPoint)
-		if dist < minDistance {
-			minDistance = dist
-			break
-		}
-	}
-
-	return minDistance < 20
 }
 
 // Return the ending position of the path
@@ -194,6 +122,7 @@ func (p Path) From() data.Position {
 
 // Intersects checks if the given position intersects with the path
 func (p Path) Intersects(d game.Data, position data.Position, padding int) bool {
+
 	for _, point := range p {
 		xMatch := false
 		yMatch := false
