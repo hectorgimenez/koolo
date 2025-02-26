@@ -116,13 +116,6 @@ type CharacterCfg struct {
 		Sorceress struct {
 			StaticFieldMinDist int `yaml:"static_field_minimum_distance"`
 			StaticFieldMaxDist int `yaml:"static_field_maximum_distance"`
-			BlizzardSorceress  struct {
-				MaxAttacksLoop   int `yaml:"max_attacks_loop"`
-				LeftSkillMinDist int `yaml:"left_skill_minimum_distance"`
-				LeftSkillMaxDist int `yaml:"left_skill_maximum_distance"`
-				BlizzardMinDist  int `yaml:"blizzard_minimum_distance"`
-				BlizzardMaxDist  int `yaml:"blizzard_maximum_distance"`
-			} `yaml:"blizzard"`
 		} `yaml:"sorceress"`
 		NovaSorceress struct {
 			BossStaticThreshold int `yaml:"boss_static_threshold"`

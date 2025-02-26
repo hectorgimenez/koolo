@@ -19,6 +19,17 @@ type BlizzardSorceress struct {
 	BaseCharacter
 }
 
+func (s BlizzardSorceress) attackConfig() map[string]int {
+	// Avoiding constants that pollute the other characters in the package
+	return map[string]int{
+		"maxAttacksLoop":           100,
+		"leftSkillMinimumDistance": 8,
+		"leftSkillMaximumDistance": 20,
+		"blizzardMinimumDistance":  6,
+		"blizzardMaximumDistance":  15,
+	}
+}
+
 func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.Blizzard, skill.Teleport, skill.TomeOfTownPortal, skill.ShiverArmor, skill.StaticField}
 
@@ -93,15 +104,15 @@ func (s BlizzardSorceress) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
-	// previousSelfBlizzard := time.Time{}
+	previousSelfBlizzard := time.Time{}
 
 	blizzOpts := step.StationaryDistance(
-		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.BlizzardMinDist,
-		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.BlizzardMaxDist,
+		s.attackConfig()["blizzardMinimumDistance"],
+		s.attackConfig()["blizzardMaximumDistance"],
 	)
 	lsOpts := step.Distance(
-		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMinDist,
-		s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.LeftSkillMaxDist,
+		s.attackConfig()["leftSkillMinimumDistance"],
+		s.attackConfig()["leftSkillMaximumDistance"],
 	)
 
 	for {
@@ -117,7 +128,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= s.Data.CharacterCfg.Character.Sorceress.BlizzardSorceress.MaxAttacksLoop {
+		if completedAttackLoops >= s.attackConfig()["maxAttacksLoop"] {
 			s.Logger.Error("Exceeded MaxAttacksLoop", slog.String("completedAttackLoops", fmt.Sprintf("%v", completedAttackLoops)))
 			return nil
 		}
@@ -131,15 +142,15 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		// // Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		// if time.Since(previousSelfBlizzard) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
-		// 	for _, m := range s.Data.Monsters.Enemies() {
-		// 		if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
-		// 			previousSelfBlizzard = time.Now()
-		// 			step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, blizzOpts)
-		// 		}
-		// 	}
-		// }
+		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
+		if time.Since(previousSelfBlizzard) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
+			for _, m := range s.Data.Monsters.Enemies() {
+				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
+					previousSelfBlizzard = time.Now()
+					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, blizzOpts)
+				}
+			}
+		}
 
 		for s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			step.PrimaryAttack(id, 2, true, lsOpts)
