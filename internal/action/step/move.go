@@ -32,12 +32,17 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	)
 
 	startedAt := time.Now()
+	minDistanceToFinishMoving := DistanceToFinishMoving
+	//previousDistance := -1
 
+	if ctx.CurrentGame.PathCache != nil {
+		if pather.DistanceFromPoint(dest, ctx.CurrentGame.PathCache.DestPosition) > 2 {
+			ctx.InvalidatePathCache("destination changed")
+		}
+	}
 	// Initialize or reuse path cache
 	var pathCache *context.PathCache
-	if ctx.CurrentGame.PathCache != nil &&
-		ctx.CurrentGame.PathCache.DestPosition == dest &&
-		IsPathValid(ctx.Data.PlayerUnit.Position, ctx.CurrentGame.PathCache) {
+	if ctx.CurrentGame.PathCache != nil && IsPathValid(ctx.Data.PlayerUnit.Position, ctx.CurrentGame.PathCache) {
 		// Reuse existing path cache
 		pathCache = ctx.CurrentGame.PathCache
 	} else {
@@ -53,6 +58,9 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			DestPosition:     dest,
 			StartPosition:    start,
 			DistanceToFinish: DistanceToFinishMoving,
+			LastCheck:        time.Time{},
+			LastRun:          time.Time{},
+			PreviousPosition: data.Position{},
 		}
 		ctx.CurrentGame.PathCache = pathCache
 	}
@@ -63,7 +71,7 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	}
 
 	// Add some delay between clicks to let the character move to destination
-	walkDuration := utils.RandomDurationMs(600, 1200)
+	walkDuration := utils.RandomDurationMs(700, 1100)
 
 	for {
 		time.Sleep(50 * time.Millisecond)
@@ -76,27 +84,67 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		if now.Sub(pathCache.LastCheck) > refreshInterval {
 			ctx.RefreshGameData()
 			currentPos := ctx.Data.PlayerUnit.Position
-			distanceToDest := pather.DistanceFromPoint(currentPos, dest)
+			distance := pather.DistanceFromPoint(currentPos, dest)
+
+			// Simple stuck detection - if position hasn't changed, handle appropriately
+			if pathCache.PreviousPosition.X == currentPos.X && pathCache.PreviousPosition.Y == currentPos.Y &&
+				pathCache.PreviousPosition.X != 0 && pathCache.PreviousPosition.Y != 0 {
+
+				if !ctx.Data.CanTeleport() {
+					// For non-teleporters, immediately make a random movement
+					ctx.PathFinder.RandomMovement()
+					ctx.InvalidatePathCache("stuck walking")
+				} else {
+					// For teleporters, only invalidate if we've been stuck for multiple checks
+					// Check if this is the first time noticing we're stuck
+					if pathCache.StuckCount == 0 {
+						// First time we notice being stuck, just increment counter
+						pathCache.StuckCount++
+					} else if pathCache.StuckCount >= 2 {
+						// Only invalidate after being stuck for 3 consecutive checks
+						ctx.InvalidatePathCache("stuck teleporting")
+						pathCache.StuckCount = 0
+
+						// Recalculate path
+						path, _, found := ctx.PathFinder.GetPath(dest)
+						if !found {
+							if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
+								return nil // Close enough
+							}
+							return fmt.Errorf("failed to calculate path")
+						}
+						pathCache.Path = path
+						pathCache.StartPosition = currentPos
+					} else {
+						pathCache.StuckCount++
+					}
+				}
+			} else {
+				// Reset stuck counter when position changes
+				pathCache.StuckCount = 0
+			}
+
+			/*	// This is a workaround to avoid the character getting stuck when the hitbox of the destination is too big
+				if distance < 20 && previousDistance != -1 && math.Abs(float64(previousDistance-distance)) < DistanceToFinishMoving {
+					minDistanceToFinishMoving += DistanceToFinishMoving
+				} else {
+					minDistanceToFinishMoving = pathCache.DistanceToFinish
+				}*/
+
+			//		previousDistance = distance
+			pathCache.PreviousPosition = currentPos
 
 			// Check if we've reached destination
-			if distanceToDest <= pathCache.DistanceToFinish || len(pathCache.Path) <= pathCache.DistanceToFinish {
+			if distance <= minDistanceToFinishMoving || len(pathCache.Path) <= minDistanceToFinishMoving {
 				return nil
 			}
 
-			// Check for stuck in same position (direct equality check is efficient)
-			isSamePosition := pathCache.PreviousPosition.X == currentPos.X && pathCache.PreviousPosition.Y == currentPos.Y
-
-			// Only recalculate path in specific cases to reduce CPU usage
-			if isSamePosition && !ctx.Data.CanTeleport() {
-				// If stuck in same position without teleport, make random movement
-				ctx.PathFinder.RandomMovement()
-			} else if pathCache.Path == nil ||
-				!IsPathValid(currentPos, pathCache) ||
-				(distanceToDest <= 15 && distanceToDest > pathCache.DistanceToFinish) {
+			if pathCache.Path == nil ||
+				!IsPathValid(currentPos, pathCache) {
 				// Only recalculate when truly needed
 				path, _, found := ctx.PathFinder.GetPath(dest)
 				if !found {
-					if ctx.PathFinder.DistanceFromMe(dest) < pathCache.DistanceToFinish+5 {
+					if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
 						return nil // Close enough
 					}
 					return fmt.Errorf("failed to calculate path")
@@ -105,7 +153,6 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 				pathCache.StartPosition = currentPos
 			}
 
-			pathCache.PreviousPosition = currentPos
 			pathCache.LastCheck = now
 
 			if now.Sub(startedAt) > timeout {
@@ -146,25 +193,27 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 
 // Validate if the path is still valid based on current position
 func IsPathValid(currentPos data.Position, cache *context.PathCache) bool {
-	if cache == nil {
+	ctx := context.Get()
+
+	if cache == nil || len(cache.Path) == 0 {
 		return false
 	}
 
-	// Valid if we're close to start, destination, or current path
-	if pather.DistanceFromPoint(currentPos, cache.StartPosition) < 20 ||
-		pather.DistanceFromPoint(currentPos, cache.DestPosition) < 20 {
-		return true
+	// Convert current position to relative coordinates (grid-relative)
+	// Path points are stored in grid-relative coordinates (without area offset)
+	relativeCurrentPos := data.Position{
+		X: currentPos.X - ctx.Data.AreaOrigin.X,
+		Y: currentPos.Y - ctx.Data.AreaOrigin.Y,
 	}
 
-	// Check if we're near any point on the path
-	minDistance := 20
+	// Check if we're near any point on the path (path points are in relative coordinates)
+	minDistance := 3
 	for _, pathPoint := range cache.Path {
-		dist := pather.DistanceFromPoint(currentPos, pathPoint)
+		dist := pather.DistanceFromPoint(relativeCurrentPos, pathPoint)
 		if dist < minDistance {
 			minDistance = dist
-			break
 		}
 	}
 
-	return minDistance < 20
+	return minDistance < 3
 }

@@ -72,9 +72,11 @@ func (pf *PathFinder) OptimizeRoomsTraverseOrder() []data.Room {
 	return order
 }
 
-func (pf *PathFinder) MoveThroughPath(p Path, walkDuration time.Duration) {
+func (pf *PathFinder) MoveThroughPath(p Path, walkDuration time.Duration) data.Position {
 	// Calculate the max distance we can walk in the given duration
 	maxDistance := int(float64(25) * walkDuration.Seconds())
+
+	lastPosition := data.Position{}
 
 	// Let's try to calculate how close to the window border we can go
 	screenCords := data.Position{}
@@ -95,10 +97,13 @@ func (pf *PathFinder) MoveThroughPath(p Path, walkDuration time.Duration) {
 		if screenX < 0 || screenY < 0 || screenX > pf.gr.GameAreaSizeX || screenY > pf.gr.GameAreaSizeY {
 			break
 		}
+		lastPosition = data.Position{X: screenX, Y: screenY}
 		screenCords = data.Position{X: screenX, Y: screenY}
 	}
 
 	pf.MoveCharacter(screenCords.X, screenCords.Y)
+
+	return lastPosition
 }
 func (pf *PathFinder) MoveCharacter(x, y int) {
 	if pf.data.CanTeleport() {

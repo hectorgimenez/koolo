@@ -68,6 +68,7 @@ type PathCache struct {
 	PreviousPosition data.Position
 	DistanceToFinish int
 	LastMoveDistance int
+	StuckCount       int
 }
 
 type CurrentGameHelper struct {
@@ -195,5 +196,11 @@ func (ctx *Context) Cleanup() {
 	if len(ctx.CurrentGame.PickedUpItems) > 200 {
 		ctx.Logger.Debug("Resetting picked up items map due to exceeding 200 items")
 		ctx.CurrentGame.PickedUpItems = make(map[int]int)
+	}
+}
+func (c *Context) InvalidatePathCache(reason string) {
+	if c.CurrentGame.PathCache != nil {
+		c.Logger.Debug("Path cache invalidated", slog.String("reason", reason))
+		c.CurrentGame.PathCache = nil
 	}
 }

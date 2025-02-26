@@ -177,7 +177,6 @@ func MoveToArea(dst area.ID) error {
 			return err
 		}
 	}
-
 	event.Send(event.InteractedTo(event.Text(ctx.Name, ""), int(dst), event.InteractionTypeEntrance))
 	return nil
 }
@@ -282,7 +281,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			}
 		}
 		// Continue moving
-		WaitForAllMembersWhenLeveling()
+		//	WaitForAllMembersWhenLeveling()   bugged function do not use
 
 		if lastMovement {
 			return nil

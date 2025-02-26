@@ -45,7 +45,7 @@ func (d Data) PlayerCastDuration() time.Duration {
 	frames := float64(d.PlayerUnit.CastingFrames())
 	secs := frames / gameTickRate
 
-	secs = math.Max(0.4, secs)
+	secs = math.Max(0.40, secs)
 
 	return time.Duration(secs*1000) * time.Millisecond
 }
