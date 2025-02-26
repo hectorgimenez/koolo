@@ -3,6 +3,7 @@ package run
 import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -23,53 +24,51 @@ func (a Leveling) act1() error {
 
 	running = true
 
-	// clear Blood Moor until level 3
+	// Clear Den of Evil til level 3 - might need to run it in each difficulty if we need more than one respec
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
-		a.bloodMoor()
+		a.ctx.Logger.Debug("Current lvl %s under 3 - Leveling in Den of Evil")
+		return NewQuests().clearDenQuest()
 	}
-
-	// clear Cold Plains until level 6
+	// Do Cold Plains til level 6
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
-		a.coldPlains()
+		return a.coldPlains()
 	}
 
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !a.ctx.Data.Quests[quest.Act1DenOfEvil].Completed() {
-		a.denOfEvil()
-	}
-
-	// clear Stony Field until level 9
+	// Do Stony Field until 9
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 9 {
-		a.stonyField()
+		return a.stonyField()
 	}
 
-	if !a.isCainInTown() && !a.ctx.Data.Quests[quest.Act1TheSearchForCain].Completed() {
-		a.deckardCain()
+	// Do Countess Runs until level 14 - skipping in Hell because cold/fire immune - there's no point getting stuck if our merc isn't geared enough yet
+
+	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 14 || a.ctx.Data.CharacterCfg.Game.Difficulty == difficulty.Nightmare {
+		if !a.ctx.Data.CanTeleport() {
+			a.ctx.CharacterCfg.Game.Countess.ClearFloors = true
+		}
+		return NewCountess().Run()
 	}
 
-	// do Tristram Runs until level 14
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 14 {
-		a.tristram()
+	if a.ctx.Data.Quests[quest.Act1SistersToTheSlaughter].Completed() {
+		action.ReturnTown()
+		// Do Den of Evil if not complete before moving acts
+		if !a.ctx.Data.Quests[quest.Act1DenOfEvil].Completed() {
+			NewQuests().clearDenQuest()
+		}
+		if !a.isCainInTown() && !a.ctx.Data.Quests[quest.Act1TheSearchForCain].Completed() {
+			NewQuests().rescueCainQuest()
+		}
+
+		action.InteractNPC(npc.Warriv)
+		a.ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+
+		return nil
+	} else {
+		return NewAndariel().Run()
 	}
-
-	// do Countess Runs until level 17
-	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 17 {
-		a.countess()
-	}
-
-	return a.andariel()
-}
-
-func (a Leveling) bloodMoor() error {
-	err := action.MoveToArea(area.BloodMoor)
-	if err != nil {
-		return err
-	}
-
-	return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 }
 
 func (a Leveling) coldPlains() error {
-	err := action.MoveToArea(area.ColdPlains)
+	err := action.WayPoint(area.ColdPlains)
 	if err != nil {
 		return err
 	}
