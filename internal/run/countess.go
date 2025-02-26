@@ -42,6 +42,10 @@ func (c Countess) Run() error {
 
 	for _, a := range areas {
 		err = action.MoveToArea(a)
+		if c.ctx.CharacterCfg.Game.Countess.ClearGhosts {
+			action.ClearCurrentLevelTargets(false, 38)
+		}
+
 		if err != nil {
 			return err
 		}
