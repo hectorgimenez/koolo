@@ -53,6 +53,8 @@ type Context struct {
 	LastBuffAt        time.Time
 	ContextDebug      map[Priority]*Debug
 	CurrentGame       *CurrentGameHelper
+	RefreshRequest    chan struct{}
+	LastRefreshTime   time.Time
 }
 
 type Debug struct {
@@ -82,7 +84,9 @@ func NewContext(name string) *Status {
 			PriorityPause:      {},
 			PriorityStop:       {},
 		},
-		CurrentGame: NewGameHelper(),
+		CurrentGame:     NewGameHelper(),
+		RefreshRequest:  make(chan struct{}, 1),
+		LastRefreshTime: time.Now(),
 	}
 	botContexts[getGoroutineID()] = &Status{Priority: PriorityNormal, Context: ctx}
 
@@ -122,9 +126,15 @@ func getGoroutineID() uint64 {
 }
 
 func (ctx *Context) RefreshGameData() {
-	*ctx.Data = ctx.GameReader.GetData()
+	if time.Since(ctx.LastRefreshTime) >= 10*time.Millisecond {
+		*ctx.Data = ctx.GameReader.GetData()
+		ctx.LastRefreshTime = time.Now()
+		select {
+		case ctx.RefreshRequest <- struct{}{}: // Notify background goroutine to reset timer
+		default:
+		}
+	}
 }
-
 func (ctx *Context) Detach() {
 	mu.Lock()
 	defer mu.Unlock()

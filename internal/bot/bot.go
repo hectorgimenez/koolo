@@ -55,14 +55,15 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 		for {
 			select {
 			case <-ctx.Done():
-				cancel()
-				b.Stop()
+				ticker.Stop()
 				return nil
+			case <-b.ctx.RefreshRequest:
+				ticker.Reset(100 * time.Millisecond)
 			case <-ticker.C:
-				if b.ctx.ExecutionPriority == botCtx.PriorityPause {
-					continue
+				if b.ctx.ExecutionPriority != botCtx.PriorityPause {
+					*b.ctx.Data = b.ctx.GameReader.GetData()
+					b.ctx.LastRefreshTime = time.Now()
 				}
-				b.ctx.RefreshGameData()
 			}
 		}
 	})
