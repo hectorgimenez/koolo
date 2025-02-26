@@ -126,7 +126,7 @@ func getGoroutineID() uint64 {
 }
 
 func (ctx *Context) RefreshGameData() {
-	if time.Since(ctx.LastRefreshTime) >= 10*time.Millisecond {
+	if time.Since(ctx.LastRefreshTime) >= 4*time.Millisecond {
 		*ctx.Data = ctx.GameReader.GetData()
 		ctx.LastRefreshTime = time.Now()
 		select {
