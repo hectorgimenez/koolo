@@ -68,7 +68,7 @@ func (a Leveling) act1() error {
 }
 
 func (a Leveling) coldPlains() error {
-	err := action.MoveToArea(area.ColdPlains)
+	err := action.WayPoint(area.ColdPlains)
 	if err != nil {
 		return err
 	}
