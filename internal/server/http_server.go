@@ -790,10 +790,26 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Health.MercRejuvPotionAt, _ = strconv.Atoi(r.Form.Get("mercRejuvPotionAt"))
 		cfg.Health.MercChickenAt, _ = strconv.Atoi(r.Form.Get("mercChickenAt"))
 
-		// Character
+		// Character config section
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
+
+		// Process ClearPathDist - only relevant when teleport is disabled
+		if !cfg.Character.UseTeleport {
+			clearPathDist, err := strconv.Atoi(r.Form.Get("clearPathDist"))
+			if err == nil && clearPathDist >= 0 && clearPathDist <= 30 {
+				cfg.Character.ClearPathDist = clearPathDist
+			} else {
+				// Set default value if invalid
+				cfg.Character.ClearPathDist = 7
+				s.logger.Debug("Using default ClearPathDist value",
+					slog.Int("default", 7),
+					slog.String("input", r.Form.Get("clearPathDist")))
+			}
+		} else {
+			cfg.Character.ClearPathDist = 7
+		}
 
 		// Berserker Barb specific options
 		if cfg.Character.Class == "berserker" {
