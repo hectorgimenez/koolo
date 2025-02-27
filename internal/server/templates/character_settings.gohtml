@@ -36,8 +36,8 @@
                 <label>
                     Class
                     <select name="characterClass">
-                        <option value="sorceress" {{ if eq .Config.Character.Class
-                        "sorceress" }}selected{{ end }}>Blizzard Sorceress
+                        <option value="blizzardsorceress" {{ if eq .Config.Character.Class
+                        "blizzardsorceress" }}selected{{ end }}>Blizzard Sorceress
                         </option>
                         <option value="nova" {{ if eq .Config.Character.Class
                         "nova" }}selected{{ end }}>Nova Sorceress
@@ -446,12 +446,21 @@
                 Enable the bot to automatically cube item recipes.
             </label><br>
             <label>
+                <input type="checkbox" name="includePersonalStashForCubing" {{ if .Config.CubeRecipes.IncludePersonalStashForCubing }}checked{{ end }}/>
+                Allow cubing logic to check the personal stash when looking for recipe ingredients
+            </label><br>
+            <label>
                 <input type="checkbox" name="skipPerfectAmethysts" {{ if .Config.CubeRecipes.SkipPerfectAmethysts }}checked{{ end }}/>
                 Don't use Perfect Amethysts when rolling charms
             </label><br>
             <label>
                 <input type="checkbox" name="skipPerfectRubies" {{ if .Config.CubeRecipes.SkipPerfectRubies }}checked{{ end }}/>
                 Don't use Perfect Rubies when rolling charms
+            </label><br>
+            If desired, ensure we would have leftover runes before performing an upgrade recipe
+            <label>
+                <input type="number" name="bufferRunes" min="0" max="5" style="width: 3em" value=" {{ .Config.CubeRecipes.BufferRunes}}" placeholder=0>
+                Leftover Runes
             </label><br>
 
             <div class="recipe-grid">
