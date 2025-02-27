@@ -71,11 +71,11 @@ func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data
 		var targetThreshold int
 		switch s.Data.CharacterCfg.Game.Difficulty {
 		case difficulty.Normal:
-			targetThreshold = 10
+			targetThreshold = 99
 		case difficulty.Nightmare:
-			targetThreshold = 40
+			targetThreshold = 99
 		default:
-			targetThreshold = 60
+			targetThreshold = 99
 		}
 		thresholdFloat := float64(targetThreshold)
 
@@ -96,6 +96,20 @@ func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data
 			return boss.UnitID, true
 		}, nil)
 	}
+}
+
+func (s BlizzardSorceress) MonsterStillAlive(id data.UnitID) bool {
+	monster, found := s.Data.Monsters.FindByID(id)
+
+	if !found {
+		s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+		return false
+	}
+	if monster.Stats[stat.Life] <= 0 {
+		return false
+	}
+
+	return true
 }
 
 func (s BlizzardSorceress) KillMonsterSequence(
@@ -135,16 +149,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		monster, found := s.Data.Monsters.FindByID(id)
-		if !found {
-			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
-			return nil
-		}
-		if monster.Stats[stat.Life] <= 0 {
-			return nil
-		}
-
-		for s.Data.PlayerUnit.States.HasState(state.Cooldown) {
+		for s.Data.PlayerUnit.States.HasState(state.Cooldown) && s.MonsterStillAlive(id) {
 			step.PrimaryAttack(id, 2, true, lsOpts)
 			actionsTakenThisLoop = append(actionsTakenThisLoop, "PrimaryAttack")
 			// Wait for the cast to complete before doing anything else
@@ -152,7 +157,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		}
 
 		selfBlizzardThisLoop := false
-		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
+		// Cast a Blizzard on very close mobs, in order to clear possible trash close to the player, every two attack rotations
 		if time.Since(previousSelfBlizzard) > time.Second*4 {
 			for _, m := range s.Data.Monsters.Enemies() {
 				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
@@ -163,10 +168,13 @@ func (s BlizzardSorceress) KillMonsterSequence(
 				}
 			}
 		}
-		if !selfBlizzardThisLoop {
+		if !selfBlizzardThisLoop && s.MonsterStillAlive(id) {
 			step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
 			actionsTakenThisLoop = append(actionsTakenThisLoop, "offensiveBlizz")
+		}
 
+		if !s.MonsterStillAlive(id) {
+			return nil
 		}
 
 		completedAttackLoops++
