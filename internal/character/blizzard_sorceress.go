@@ -116,6 +116,8 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	)
 
 	for {
+		actionsTakenThisLoop := []string{}
+
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
@@ -144,23 +146,31 @@ func (s BlizzardSorceress) KillMonsterSequence(
 
 		for s.Data.PlayerUnit.States.HasState(state.Cooldown) {
 			step.PrimaryAttack(id, 2, true, lsOpts)
+			actionsTakenThisLoop = append(actionsTakenThisLoop, "PrimaryAttack")
 			// Wait for the cast to complete before doing anything else
 			time.Sleep(s.Data.PlayerCastDuration()) // stolen from internal/action/step/attack.go
 		}
 
+		selfBlizzardThisLoop := false
 		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
 		if time.Since(previousSelfBlizzard) > time.Second*4 {
 			for _, m := range s.Data.Monsters.Enemies() {
 				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
 					previousSelfBlizzard = time.Now()
+					selfBlizzardThisLoop = true
 					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, blizzOpts)
+					actionsTakenThisLoop = append(actionsTakenThisLoop, "selfBlizz")
 				}
 			}
-		} else {
+		}
+		if !selfBlizzardThisLoop {
 			step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
+			actionsTakenThisLoop = append(actionsTakenThisLoop, "offensiveBlizz")
+
 		}
 
 		completedAttackLoops++
+		s.Logger.Info("Actions taken:", slog.String("actionsTakenThisLoop", fmt.Sprintf("%v", actionsTakenThisLoop)))
 
 		previousUnitID = int(id)
 	}
