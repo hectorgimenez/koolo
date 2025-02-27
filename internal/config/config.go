@@ -114,21 +114,8 @@ type CharacterCfg struct {
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
 		} `yaml:"berserker_barb"`
 		Sorceress struct {
-			UseStaticField       bool `yaml:"use_static_field"`
-			StaticFieldMinDist   int  `yaml:"static_field_minimum_distance"`
-			StaticFieldMaxDist   int  `yaml:"static_field_maximum_distance"`
-			StaticFieldThreshold struct {
-				Normal    int `yaml:"normal"`
-				Nightmare int `yaml:"nightmare"`
-				Hell      int `yaml:"hell"`
-			} `yaml:"static_field_hp_threshold"`
-			BlizzardSorceress struct {
-				MaxAttacksLoop   int `yaml:"max_attacks_loop"`
-				LeftSkillMinDist int `yaml:"left_skill_minimum_distance"`
-				LeftSkillMaxDist int `yaml:"left_skill_maximum_distance"`
-				BlizzardMinDist  int `yaml:"blizzard_minimum_distance"`
-				BlizzardMaxDist  int `yaml:"blizzard_maximum_distance"`
-			} `yaml:"blizzard"`
+			StaticFieldMinDist int `yaml:"static_field_minimum_distance"`
+			StaticFieldMaxDist int `yaml:"static_field_maximum_distance"`
 		} `yaml:"sorceress"`
 		NovaSorceress struct {
 			BossStaticThreshold int `yaml:"boss_static_threshold"`

@@ -132,40 +132,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedClass = characterClassSelect.value;
         const noSettingsMessage = document.getElementById('no-settings-message');
         const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
-        const sorceressOptions = document.querySelector('.core-sorceress-options');
         const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
         const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
         // Hide all options first
         berserkerBarbOptions.style.display = 'none';
-        sorceressOptions.style.display = 'none';
         novaSorceressOptions.style.display = 'none';
         mosaicAssassinOptions.style.display = 'none';
         noSettingsMessage.style.display = 'none';
-
-        var classSpecificOptionsAvailable = false
-
-        // Are there generic sorceress configurations applicable to this build?
-        const sorceressClasses = [
-            "blizzardsorceress"
-        ]
-        if (sorceressClasses.includes(selectedClass)) {
-            sorceressOptions.style.display = 'block';
-            classSpecificOptionsAvailable = true
-        }
-        // Show relevant options based on build
+        
+        // Show relevant options based on class
         if (selectedClass === 'berserker') {
             berserkerBarbOptions.style.display = 'block';
-            classSpecificOptionsAvailable = true
         } else if (selectedClass === 'nova' || selectedClass === 'lightsorc') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
-            classSpecificOptionsAvailable = true
         } else if (selectedClass === 'mosaic') {
             mosaicAssassinOptions.style.display = 'block';
-            classSpecificOptionsAvailable = true
-        }
-
-        if (classSpecificOptionsAvailable === false) {
+        } else {
             noSettingsMessage.style.display = 'block';
         }
     }

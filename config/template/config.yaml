@@ -57,15 +57,10 @@ character:
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
   
   sorceress: # generic sorceress configurations
-    use_static_field: true # exposed in UI
-
     # static field configuration options
     static_field_minimum_distance: 8
     static_field_maximum_distance: 12
-    static_field_hp_threshold:
-      normal: 5 # min 1
-      nightmare: 35 # min 33
-      hell: 53 # min 50
+
 
     blizzard: # blizzardsorceress-specific configurations
       max_attacks_loop: 100
