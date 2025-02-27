@@ -53,7 +53,8 @@ func (a Leveling) act2() error {
 		return NewQuests().getHoradricCube()
 	}
 
-	if a.ctx.Data.Quests[quest.Act2TheSummoner].Completed() {
+	// Duriel quest only starts when we click the journal. If we haven't clicked the journal we probably don't even have the Canyon WP.
+	if a.ctx.Data.Quests[quest.Act2TheSummoner].Completed() && !a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
 		// Try to get level 21 before moving to Duriel and Act3
 
 		if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 21 {
@@ -85,33 +86,43 @@ func (a Leveling) act2() error {
 		a.findAmulet()
 	}
 
-	// Summoner
-	a.ctx.Logger.Info("Starting summoner quest")
-	if a.ctx.Data.Quests[quest.Act2TheSummoner].HasStatus(quest.StatusQuestNotStarted) && !a.ctx.Data.Quests[quest.Act2TaintedSun].HasStatus(quest.StatusQuestNotStarted) {
-		action.InteractNPC(npc.Drognan)
-	}
-	//return error
-	err := NewSummoner().Run()
-	if err != nil {
-		return err
-	}
-	// This block can be removed when https://github.com/hectorgimenez/koolo/pull/642 gets merged
-	if _, found := a.ctx.Data.NPCs.FindOne(npc.Summoner); found {
-		return fmt.Errorf("Summoner not dead")
-	}
+	if a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
+		// Summoner
+		a.ctx.Logger.Info("Starting summoner quest")
+		if a.ctx.Data.Quests[quest.Act2TheSummoner].HasStatus(quest.StatusQuestNotStarted) && !a.ctx.Data.Quests[quest.Act2TaintedSun].HasStatus(quest.StatusQuestNotStarted) {
+			action.InteractNPC(npc.Drognan)
+		}
+		
+		err := NewSummoner().Run()
+		if err != nil {
+			return err
+		}
+		// This block can be removed when https://github.com/hectorgimenez/koolo/pull/642 gets merged
+		tome, found := a.ctx.Data.Objects.FindOne(object.YetAnotherTome)
+		if !found {
+			return err
+		}
 
-	a.ctx.Logger.Debug("Moving to red portal")
-	portal, _ := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+		// Try to use the portal and discover the waypoint
+		err = action.InteractObject(tome, func() bool {
+			_, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+			return found
+		})
+		if err != nil {
+			return err
+		}
+		a.ctx.Logger.Debug("Moving to red portal")
+		portal, _ := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 
-	action.InteractObject(portal, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
-	})
-	// End of block for removal
-	err = action.DiscoverWaypoint()
-	if err != nil {
-		return err
+		action.InteractObject(portal, func() bool {
+			return a.ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
+		})
+		// End of block for removal
+		err = action.DiscoverWaypoint()
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
