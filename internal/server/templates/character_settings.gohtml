@@ -447,7 +447,7 @@
             </label><br>
             <label>
                 <input type="checkbox" name="includePersonalStashForCubing" {{ if .Config.CubeRecipes.IncludePersonalStashForCubing }}checked{{ end }}/>
-                Allow cubing logic to check the personal stash when looking for recipe ingredients
+                Use personal stash when looking for recipe ingredients
             </label><br>
             <label>
                 <input type="checkbox" name="skipPerfectAmethysts" {{ if .Config.CubeRecipes.SkipPerfectAmethysts }}checked{{ end }}/>
@@ -459,7 +459,7 @@
             </label><br>
             If desired, ensure we would have leftover runes before performing an upgrade recipe
             <label>
-                <input type="number" name="bufferRunes" min="0" max="5" style="width: 3em" value=" {{ .Config.CubeRecipes.BufferRunes}}" placeholder=0>
+                <input type="number" name="bufferRunes" min="0" max="5" style="width: 3em" value=" {{ .Config.CubeRecipes.BufferRunes }}" placeholder="{{ .Config.CubeRecipes.BufferRunes }}">
                 Leftover Runes
             </label><br>
 

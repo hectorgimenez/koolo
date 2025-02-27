@@ -187,6 +187,10 @@ gambling:
   enabled: true # If gambling is disabled, bot will stop picking up gold when can not carry more
   items: [ coronet, amulet, ring ] # Items to gamble, same value as [name] in pickit files.
 
+cubing:
+  includePersonalStashForCubing: true  # If true, checks personal stash in addition to shared when looking for recipe ingredients
+  bufferRunes: 0  # When performing rune recipe upgrades, make sure we'd have this many of the source rune leftover before we do an upgrade
+
 backtotown:
   noHpPotions: true
   noMpPotions: false
