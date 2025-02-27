@@ -51,6 +51,11 @@ func (s *SinglePlayerSupervisor) Start() error {
 		return fmt.Errorf("error preparing game: %w", err)
 	}
 
+	runs := run.BuildRuns(s.bot.ctx.CharacterCfg)
+	if len(runs) == 0 {
+		return fmt.Errorf("error loading config: %s", "no runs were selected, please check your configuration")
+	}
+
 	firstRun := true
 	for {
 		select {
@@ -79,7 +84,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 				}
 			}
 
-			runs := run.BuildRuns(s.bot.ctx.CharacterCfg)
 			gameStart := time.Now()
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
