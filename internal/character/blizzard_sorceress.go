@@ -150,10 +150,10 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		}
 
 		for s.Data.PlayerUnit.States.HasState(state.Cooldown) && s.MonsterStillAlive(id) {
-			step.PrimaryAttack(id, 2, true, lsOpts)
+			step.PrimaryAttack(id, 1, true, lsOpts)
 			actionsTakenThisLoop = append(actionsTakenThisLoop, "PrimaryAttack")
 			// Wait for the cast to complete before doing anything else
-			time.Sleep(s.Data.PlayerCastDuration()) // stolen from internal/action/step/attack.go
+			time.Sleep(s.Data.PlayerCastDuration() - (120 * time.Millisecond)) // stolen from internal/action/step/attack.go
 		}
 
 		selfBlizzardThisLoop := false
