@@ -158,7 +158,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				// Check if we need to go back to town (no pots or merc died)
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
-					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
+					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.IsEquipmentBroken() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
 					!b.ctx.Data.PlayerUnit.Area.IsTown() {

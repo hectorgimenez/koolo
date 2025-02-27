@@ -25,6 +25,10 @@ github.com/hectorgimenez/d2go v0.0.0-20250106015039-8bce23b03973 h1:dRqPFWAf0yb1
 github.com/hectorgimenez/d2go v0.0.0-20250106015039-8bce23b03973/go.mod h1:EOVayMaK8D13wsZiZ6n8AK3+Qflm1wHZsCqnzlVIci0=
 github.com/hectorgimenez/d2go v0.0.0-20250119163231-415ac29ab1ab h1:vrZ5hlN1qnUXPHjVRCvSuWyjfauNopuMLU+/YmBge2c=
 github.com/hectorgimenez/d2go v0.0.0-20250119163231-415ac29ab1ab/go.mod h1:EOVayMaK8D13wsZiZ6n8AK3+Qflm1wHZsCqnzlVIci0=
+github.com/hectorgimenez/d2go v0.0.0-20250219111533-438f80b9113e h1:upmLVX6I3rYRJZXwVJ0ZDv0O0zcSpVLUKeCucbuHjyg=
+github.com/hectorgimenez/d2go v0.0.0-20250219111533-438f80b9113e/go.mod h1:EOVayMaK8D13wsZiZ6n8AK3+Qflm1wHZsCqnzlVIci0=
+github.com/hectorgimenez/d2go v0.0.0-20250221161127-5455fd977276 h1:A4LnLo5dsLmUzoDtndegivn5hx2TfiXL/18bepMxW70=
+github.com/hectorgimenez/d2go v0.0.0-20250221161127-5455fd977276/go.mod h1:EOVayMaK8D13wsZiZ6n8AK3+Qflm1wHZsCqnzlVIci0=
 github.com/inkeliz/gowebview v1.0.1 h1:4gpLE2qt4kV3DB+xHkHKUeLLiGPN5Xw3or9A3hVqYyA=
 github.com/inkeliz/gowebview v1.0.1/go.mod h1:4SNjXp/fogE11MwvJD67kMBmSObY2BBqinEgH8+8eM8=
 github.com/inkeliz/w32 v1.0.2 h1:Es8Bmw9ApOY0PVRpGs7wsqIKdK5C3xBkP5TOATfVmtU=
