@@ -13,6 +13,15 @@ closeMiniPanel: false # Set to true to close the mini panel at start of game in 
 hidePortraits: true  # Set to true to hide mercenary and other players portraits (avatar)
 enableCubeRecipes: true # Enable cubing of flawlesses and tokens
 
+chickenScaryAuras:
+  amplifyDamage: false
+  bloodMana: false
+  decrepify: false
+  lowerResist: false
+  fanaticism: false
+  might: false
+  conviction: false
+
 health: # Healing configuration, all values in %
   healingPotionAt: 75
   manaPotionAt: 10
