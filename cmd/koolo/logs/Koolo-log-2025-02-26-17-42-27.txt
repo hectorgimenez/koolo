@@ -1,0 +1,20 @@
+time=17:42:27 level=INFO msg="Scheduler started"
+time=17:42:39 level=INFO msg="Attaching to existing game" pid=3796 hwnd=788712
+time=17:42:40 level=INFO msg="Starting Crash Detector ..." PID=3796 Supervisor=KulerDenLit
+time=17:42:45 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=17:42:45 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0
+time=17:46:26 level=INFO msg="Stopping Crash Detector" PID=3796 Supervisor=KulerDenLit
+time=17:46:26 level=INFO msg="Crash Detector stopped." PID=3796 Supervisor=KulerDenLit
+time=17:46:38 level=INFO msg="Attaching to existing game" pid=18180 hwnd=789036
+time=17:46:39 level=INFO msg="Starting Crash Detector ..." PID=18180 Supervisor=KulerDenLit
+time=17:46:44 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=17:46:44 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0
+time=17:49:59 level=ERROR msg="Client crash detected ..." PID=18180 Supervisor=KulerDenLit
+time=17:49:59 level=INFO msg="Attempting to restart client ..." Supervisor=KulerDenLit
+time=17:49:59 level=INFO msg="Restarting supervisor after crash" supervisor=KulerDenLit
+time=17:49:59 level=INFO msg="Stopping Crash Detector" PID=18180 Supervisor=KulerDenLit
+time=17:50:04 level=ERROR msg="Failed to restart supervisor" supervisor=KulerDenLit "Error: "="error starting game: CreateFile config/Settings.json: The system cannot find the file specified."
+time=17:50:56 level=INFO msg="Attaching to existing game" pid=19348 hwnd=920286
+time=17:50:57 level=INFO msg="Starting Crash Detector ..." PID=19348 Supervisor=KulerDenLit
+time=17:51:02 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=17:51:02 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0

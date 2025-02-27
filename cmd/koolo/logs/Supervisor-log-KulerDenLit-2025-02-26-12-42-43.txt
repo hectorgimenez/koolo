@@ -1,0 +1,9 @@
+time=12:42:44 level=INFO msg="Waiting for character selection screen..."
+time=12:42:50 level=INFO msg="Character selection screen found"
+time=12:42:50 level=INFO msg="Selecting character..."
+time=12:42:50 level=INFO msg="Character found"
+time=12:42:53 level=INFO msg="Starting Game #0. Run list: summoner"
+time=12:42:53 level=DEBUG msg="Fetching map data..." seed=730542948 difficulty=hell
+time=12:42:53 level=WARN msg="Game finished with errors, reason: error fetching map data: error fetching Map data from Diablo II: LoD 1.13c game: fork/exec ./tools/koolo-map.exe: The system cannot find the path specified.. Game total time: 0.09s" supervisor=KulerDenLit mapSeed=730542948
+time=12:43:01 level=INFO msg=Stopping... configuration=KulerDenLit
+time=12:43:01 level=INFO msg="Finished stopping" configuration=KulerDenLit

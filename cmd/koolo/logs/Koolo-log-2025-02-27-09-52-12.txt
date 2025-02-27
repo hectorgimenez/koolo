@@ -1,0 +1,9 @@
+time=09:52:12 level=INFO msg="Scheduler started"
+time=09:53:48 level=INFO msg="Attaching to existing game" pid=6676 hwnd=1247116
+time=09:54:32 level=INFO msg="Attaching to existing game" pid=42560 hwnd=2426234
+time=09:54:33 level=INFO msg="Starting Crash Detector ..." PID=42560 Supervisor=KulerDenLit
+time=09:54:38 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=09:54:38 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0
+time=10:28:57 level=ERROR msg="error running supervisor KulerDenLit: Error exiting game error exiting game! Timeout"
+time=10:30:51 level=INFO msg="Stopping Crash Detector" PID=42560 Supervisor=KulerDenLit
+time=10:30:51 level=INFO msg="Crash Detector stopped." PID=42560 Supervisor=KulerDenLit

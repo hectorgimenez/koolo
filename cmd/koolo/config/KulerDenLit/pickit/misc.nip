@@ -1,0 +1,100 @@
+// utility
+//[type] == gold # [gold] >= 750
+//[name] == scrolloftownportal
+//[name] == scrollofidentify
+
+// ubers
+[name] == keyofterror           # # [maxquantity] == 9
+[name] == keyofhate             # # [maxquantity] == 9
+[name] == keyofdestruction      # # [maxquantity] == 9
+//[name] == keyofterror 		# # [maxquantity] == 10
+//[name] == keyofhate 			# # [maxquantity] == 10
+//[name] == keyofdestruction 	# # [maxquantity] == 10
+//[name] == mephistosbrain
+//[name] == baalseye
+//[name] == diabloshorn
+
+// tokens
+//[name] == twistedessenceofsuffering 		# # [maxquantity] == 2
+//[name] == chargedessenceofhatred 			# # [maxquantity] == 2
+//[name] == burningessenceofterror 			# # [maxquantity] == 2
+//[name] == festeringessenceofdestruction 	# # [maxquantity] == 2
+//[name] == tokenofabsolution 				# # [maxquantity] == 5
+
+// runes
+[name] == elrune 	# # [maxquantity] == 3
+[name] == eldrune 	# # [maxquantity] == 3
+[name] == tirrune 	# # [maxquantity] == 3
+[name] == nefrune 	# # [maxquantity] == 3
+[name] == ethrune 	# # [maxquantity] == 3
+[name] == ithrune 	# # [maxquantity] == 3
+[name] == talrune 	# # [maxquantity] == 10
+[name] == ralrune 	# # [maxquantity] == 10
+[name] == ortrune 	# # [maxquantity] == 10
+[name] == thulrune 	# # [maxquantity] == 10
+[name] == amnrune 	# # [maxquantity] == 10
+[name] == solrune 	# # [maxquantity] == 3
+[name] == shaelrune 	# # [maxquantity] == 10
+[name] == dolrune 	# # [maxquantity] == 3
+[name] == helrune 	# # [maxquantity] == 100
+[name] == iorune 	# # [maxquantity] == 10
+[name] == lumrune 	# # [maxquantity] == 10
+[name] == korune 	# # [maxquantity] == 10
+[name] == falrune 	# # [maxquantity] == 10
+[name] == lemrune 	# # [maxquantity] == 10
+[name] == pulrune 	# # [maxquantity] == 10
+[name] == umrune 	# # [maxquantity] == 50
+[name] == malrune 	# # [maxquantity] == 10
+[name] == istrune 	# # [maxquantity] == 10
+[name] == gulrune 	# # [maxquantity] == 10
+[name] == vexrune 	# # [maxquantity] == 10
+[name] == ohmrune 	# # [maxquantity] == 10
+[name] == lorune 	# # [maxquantity] == 10
+[name] == surrune 	# # [maxquantity] == 10
+[name] == berrune 	# # [maxquantity] == 10
+[name] == jahrune 	# # [maxquantity] == 10
+[name] == chamrune 	# # [maxquantity] == 10
+[name] == zodrune 	# # [maxquantity] == 10
+
+// gems
+[name] == chippedamethyst 	# # [maxquantity] == 2
+[name] == chippeddiamond 		# # [maxquantity] == 2
+[name] == chippedemerald 		# # [maxquantity] == 2
+[name] == chippedruby 		# # [maxquantity] == 2
+[name] == chippedsapphire 	# # [maxquantity] == 2
+//[name] == chippedskull 		# # [maxquantity] == 1
+[name] == chippedtopaz 		# # [maxquantity] == 2
+//[name] == flawedamethyst 		# # [maxquantity] == 1
+//[name] == flaweddiamond 		# # [maxquantity] == 1
+//[name] == flawedemerald 		# # [maxquantity] == 1
+//[name] == flawedruby 			# # [maxquantity] == 1
+//[name] == flawedsapphire 		# # [maxquantity] == 1
+//[name] == flawedskull 		# # [maxquantity] == 1
+//[name] == flawedtopaz 		# # [maxquantity] == 1
+//[name] == amethyst 			# # [maxquantity] == 2
+//[name] == diamond 			# # [maxquantity] == 1
+//[name] == emerald 			# # [maxquantity] == 1
+//[name] == ruby 				# # [maxquantity] == 2
+//[name] == skull 				# # [maxquantity] == 1
+//[name] == sapphire 			# # [maxquantity] == 2
+//[name] == topaz 				# # [maxquantity] == 1
+[name] == flawlessamethyst 	# # [maxquantity] == 3
+[name] == flawlessdiamond 	# # [maxquantity] == 3
+[name] == flawlessemerald 	# # [maxquantity] == 3
+[name] == flawlessruby 		# # [maxquantity] == 3
+[name] == flawlesssapphire 	# # [maxquantity] == 3
+//[name] == flawlessskull 		# # [maxquantity] == 3
+[name] == flawlesstopaz 		# # [maxquantity] == 3
+[name] == perfectamethyst 		# # [maxquantity] == 10
+[name] == perfectdiamond 		# # [maxquantity] == 10
+[name] == perfectemerald 		# # [maxquantity] == 10
+[name] == perfectruby 			# # [maxquantity] == 10
+[name] == perfectsapphire 		# # [maxquantity] == 10
+[name] == perfectskull 			# # [maxquantity] == 10
+[name] == perfecttopaz 			# # [maxquantity] == 10
+
+// potions
+[name] == superhealingpotion
+[name] == supermanapotion
+[name] == rejuvenationpotion
+[name] == fullrejuvenationpotion

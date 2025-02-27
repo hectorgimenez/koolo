@@ -1,0 +1,4 @@
+time=12:16:33 level=INFO msg="Scheduler started"
+time=12:16:33 level=INFO msg="Koolo shutting down..."
+time=12:16:33 level=INFO msg="Scheduler stopped"
+time=12:16:55 level=ERROR msg="Error running Koolo" error="error opening connection: Get \"https://discord.com/api/v9/gateway\": dial tcp: lookup discord.com: no such host"

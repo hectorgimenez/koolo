@@ -1,0 +1,66 @@
+// IGNORED by default, this directory is ONLY evaluated DURING the character leveling process.
+// Rules here are included ADDITIONALLY to the main pickit rules
+
+[type] == gold # [gold] >= 200
+
+[name] == elrune
+[name] == eldrune
+[name] == tirrune
+[name] == nefrune
+[name] == ethrune
+[name] == ithrune
+[name] == talrune
+[name] == ralrune
+[name] == ortrune
+[name] == thulrune
+[name] == amnrune
+[name] == solrune
+[name] == shaelrune
+[name] == dolrune
+[name] == helrune
+[name] == iorune
+[name] == lumrune
+[name] == korune
+[name] == falrune
+[name] == lemrune
+[name] == pulrune
+
+// potions
+[name] == minorhealingpotion
+[name] == lighthealingpotion
+[name] == healingpotion
+[name] == greaterhealingpotion
+[name] == superhealingpotion
+[name] == minormanapotion
+[name] == lightmanapotion
+[name] == manapotion
+[name] == greatermanapotion
+[name] == supermanapotion
+[name] == rejuvenationpotion
+[name] == fullrejuvenationpotion
+
+// Bases
+[name] == crystalsword && [flag] != ethereal # [sockets] == 4 // Spirit
+[name] == crystalsword && [flag] != ethereal // Spirit
+[type] == shield # [sockets] == 4 // Spirit
+[type] == shield # [sockets] == 3 // Ancient's Pledge
+[type] == polearm # [sockets] == 4 // Insight
+[type] == armor # [sockets] == 3 // Treachery
+[type] == armor # [sockets] == 2 // Stealth
+[type] == helm # [sockets] == 2 // Lore
+
+// Paladin Shields
+[name] == rondache && [flag] != ethereal // Spirit
+[name] == akarantarge && [flag] != ethereal // Spirit
+[name] == aerinshield && [flag] != ethereal // Spirit
+[name] == akaranrondache && [flag] != ethereal // Spirit
+[name] == heraldicshield && [flag] != ethereal // Spirit
+
+
+[type] == gloves && [quality] >= rare
+[type] == boots && [quality] >= rare
+[type] == amulet && [quality] >= rare
+[type] == ring && [quality] >= rare
+[type] == orb && [quality] >= rare
+[type] == helm && [quality] >= rare
+[type] == polearm && [quality] >= rare

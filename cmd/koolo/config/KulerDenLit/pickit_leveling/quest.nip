@@ -1,0 +1,13 @@
+// IGNORED by default, this directory is ONLY evaluated DURING the character leveling process.
+// Rules here are included ADDITIONALLY to the main pickit rules
+
+[name] == ajadefigurine
+[name] == scrollofinifuss
+[name] == horadriccube
+[name] == amuletoftheviper
+[name] == staffofkings
+[name] == horadricstaff
+[name] == khalimseye
+[name] == khalimsbrain
+[name] == khalimsheart
+[name] == khalimsflail

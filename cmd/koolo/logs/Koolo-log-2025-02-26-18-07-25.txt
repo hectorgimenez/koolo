@@ -1,0 +1,9 @@
+time=18:07:25 level=INFO msg="Scheduler started"
+time=18:07:40 level=INFO msg="Attaching to existing game" pid=20740 hwnd=330724
+time=18:07:40 level=INFO msg="Starting Crash Detector ..." PID=20740 Supervisor=KulerDenLit
+time=18:07:45 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=18:07:45 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0
+time=18:11:13 level=INFO msg="Stopping Crash Detector" PID=20740 Supervisor=KulerDenLit
+time=18:11:13 level=INFO msg="Crash Detector stopped." PID=20740 Supervisor=KulerDenLit
+time=18:11:15 level=INFO msg="Koolo shutting down..."
+time=18:11:15 level=INFO msg="Scheduler stopped"

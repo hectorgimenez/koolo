@@ -1,0 +1,9 @@
+time=17:57:25 level=INFO msg="Scheduler started"
+time=17:57:32 level=INFO msg="Attaching to existing game" pid=7668 hwnd=789104
+time=17:57:33 level=INFO msg="Starting Crash Detector ..." PID=7668 Supervisor=KulerDenLit
+time=17:57:38 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=17:57:38 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0
+time=18:01:53 level=ERROR msg="Client crash detected ..." PID=7668 Supervisor=KulerDenLit
+time=18:01:53 level=INFO msg="Attempting to restart client ..." Supervisor=KulerDenLit
+time=18:01:53 level=INFO msg="Restarting supervisor after crash" supervisor=KulerDenLit
+time=18:01:53 level=INFO msg="Stopping Crash Detector" PID=7668 Supervisor=KulerDenLit
