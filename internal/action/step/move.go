@@ -86,8 +86,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			continue
 		}
 
-		// Check for idle state outside town
-		if ctx.Data.PlayerUnit.Mode == mode.StandingOutsideTown {
+		// Check for idle state
+		if ctx.Data.PlayerUnit.Position == previousPosition {
 			if idleStartTime.IsZero() {
 				idleStartTime = time.Now()
 			} else if time.Since(idleStartTime) > idleThreshold {
@@ -98,7 +98,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 				continue
 			}
 		} else {
-			idleStartTime = time.Time{} // Reset idle timer if not in StandingOutsideTown mode
+			idleStartTime = time.Time{} // Reset idle timer if position changed
+			previousPosition = ctx.Data.PlayerUnit.Position
 		}
 
 		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
@@ -130,12 +131,6 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		}
 
 		lastRun = time.Now()
-
-		// If we are stuck in the same position, make a random movement and cross fingers
-		if previousPosition == ctx.Data.PlayerUnit.Position && !ctx.Data.CanTeleport() {
-			ctx.PathFinder.RandomMovement()
-			continue
-		}
 
 		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
 		if distance < 20 && math.Abs(float64(previousDistance-distance)) < DistanceToFinishMoving {
