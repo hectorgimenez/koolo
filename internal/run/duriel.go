@@ -2,6 +2,7 @@ package run
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -9,6 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
+	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
@@ -61,12 +63,12 @@ func (d Duriel) Run() error {
 	d.ctx.RefreshGameData()
 
 	// Find orifice with retry logic
-	var portal data.Object
+	var orifice data.Object
 	var found bool
 
 	for attempts := 0; attempts < maxOrificeAttempts; attempts++ {
-		portal, found = d.ctx.Data.Objects.FindOne(object.DurielsLairPortal)
-		if found && portal.Mode == mode.ObjectModeOpened {
+		orifice, found = d.ctx.Data.Objects.FindOne(object.HoradricOrifice)
+		if found && orifice.Mode == mode.ObjectModeOpened {
 			break
 		}
 		utils.Sleep(orificeCheckDelay)
@@ -74,21 +76,49 @@ func (d Duriel) Run() error {
 	}
 
 	if !found {
-		return errors.New("failed to find Duriel's portal after multiple attempts")
+		return errors.New("failed to find Duriel's Lair entrance after multiple attempts")
+	}
+
+	// Move to orifice and clear the area
+	err = action.MoveToCoords(orifice.Position)
+	if err != nil {
+		return err
+	}
+
+	staff, ok := d.ctx.Data.Inventory.Find("HoradricStaff", item.LocationInventory)
+	if !d.ctx.Data.Quests[quest.Act2TheHoradricStaff].Completed() && ok {
+
+		err = action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+		if err != nil {
+			return err
+		}
+
+		action.InteractObject(orifice, func() bool {
+			return d.ctx.Data.OpenMenus.Anvil
+		})
+
+		screenPos := ui.GetScreenCoordsForItem(staff)
+
+		d.ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+		utils.Sleep(300)
+		if d.ctx.Data.LegacyGraphics {
+			d.ctx.HID.Click(game.LeftButton, ui.AnvilCenterXClassic, ui.AnvilCenterYClassic)
+			utils.Sleep(500)
+			d.ctx.HID.Click(game.LeftButton, ui.AnvilBtnXClassic, ui.AnvilBtnYClassic)
+		} else {
+			d.ctx.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
+			utils.Sleep(500)
+			d.ctx.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
+		}
+		utils.Sleep(20000)
 	}
 
 	if d.ctx.CharacterCfg.Game.Duriel.UseThawing {
-		reHidePortraits := false
 		action.ReturnTown()
 
 		potsToBuy := 4
-		if d.ctx.Data.MercHPPercent() > 0 {
+		if d.ctx.Data.MercHPPercent() > 0 && !d.ctx.CharacterCfg.HidePortraits {
 			potsToBuy = 8
-			if d.ctx.CharacterCfg.HidePortraits && !d.ctx.Data.OpenMenus.PortraitsShown {
-				d.ctx.CharacterCfg.HidePortraits = false
-				reHidePortraits = true
-				d.ctx.HID.PressKey(d.ctx.Data.KeyBindings.ShowPortraits.Key1[0])
-			}
 		}
 
 		action.VendorRefill(false, true)
@@ -124,19 +154,26 @@ func (d Duriel) Run() error {
 			x++
 		}
 		step.CloseAllMenus()
-		if reHidePortraits {
-			d.ctx.CharacterCfg.HidePortraits = true
+
+		action.UsePortalInTown()
+		action.Buff()
+	}
+
+	for _, obj := range d.ctx.Data.Areas[realTalRashaTomb].Objects {
+		if obj.Name == object.HoradricOrifice {
+			action.MoveToCoords(obj.Position)
 		}
-		action.HidePortraits()
 	}
 
-	err = action.InteractObject(portal, func() bool {
-		return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
-	})
-	if err != nil {
-		return err
+	duriellair, found := d.ctx.Data.Objects.FindOne(object.DurielsLairPortal)
+	if found {
+		action.InteractObject(duriellair, func() bool {
+			return d.ctx.Data.PlayerUnit.Area == area.DurielsLair && d.ctx.Data.AreaData.IsInside(d.ctx.Data.PlayerUnit.Position)
+		})
 	}
+	d.ctx.Logger.Debug(fmt.Sprintf("Quest Status %v", d.ctx.Data.Quests[quest.Act2TheSevenTombs]))
 
+	d.ctx.Logger.Info("Killing Duriel")
 	// Final refresh before fight
 	d.ctx.RefreshGameData()
 
