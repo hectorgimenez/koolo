@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
+	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
@@ -77,14 +79,19 @@ func (bc BaseCharacter) preBattleChecks(id data.UnitID, skipOnImmunities []stat.
 	return true
 }
 
-func (s BaseCharacter) MonsterStillAlive(id data.UnitID) bool {
+func (s BaseCharacter) MonsterAliveById(id data.UnitID) bool {
 	monster, found := s.Data.Monsters.FindByID(id)
 
-	if !found {
-		s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+	if !found || monster.Mode == mode.NpcDead || monster.Mode == mode.NpcDeath {
 		return false
 	}
-	if monster.Stats[stat.Life] <= 0 {
+
+	return true
+}
+func (s BaseCharacter) MonsterAliveByType(uniqueId npc.ID, monsterType data.MonsterType) bool {
+	unique, found := s.Data.Monsters.FindOne(uniqueId, monsterType)
+
+	if !found || unique.Mode == mode.NpcDead || unique.Mode == mode.NpcDeath {
 		return false
 	}
 

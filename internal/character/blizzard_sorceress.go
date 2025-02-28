@@ -60,10 +60,11 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 
 func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
 	for {
-		boss, found := s.Data.Monsters.FindOne(bossID, monsterType)
-		if !found || boss.Stats[stat.Life] <= 0 {
+		if !s.MonsterAliveByType(bossID, monsterType) {
 			return nil
 		}
+
+		boss, _ := s.Data.Monsters.FindOne(bossID, monsterType)
 
 		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
 
@@ -135,7 +136,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		for s.Data.PlayerUnit.States.HasState(state.Cooldown) && s.MonsterStillAlive(id) {
+		for s.Data.PlayerUnit.States.HasState(state.Cooldown) && s.MonsterAliveById(id) {
 			step.PrimaryAttack(id, 1, true, lsOpts)
 			actionsTakenThisLoop = append(actionsTakenThisLoop, "PrimaryAttack")
 			// Wait for the cast to complete before doing anything else
@@ -154,12 +155,12 @@ func (s BlizzardSorceress) KillMonsterSequence(
 				}
 			}
 		}
-		if !selfBlizzardThisLoop && s.MonsterStillAlive(id) {
+		if !selfBlizzardThisLoop && s.MonsterAliveById(id) {
 			step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
 			actionsTakenThisLoop = append(actionsTakenThisLoop, "offensiveBlizz")
 		}
 
-		if !s.MonsterStillAlive(id) {
+		if !s.MonsterAliveById(id) {
 			return nil
 		}
 
@@ -261,8 +262,7 @@ func (s BlizzardSorceress) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
+		if !s.MonsterAliveByType(npc.Diablo, data.MonsterTypeUnique) {
 			// Already dead
 			if diabloFound {
 				return nil
