@@ -296,7 +296,7 @@ func startJoinerRoutine(s *SinglePlayerSupervisor) error {
 	}
 
 	for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil && !s.bot.ctx.Manager.InGame(); err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
-		s.bot.ctx.HID.PressKey(0x1B)
+		// s.bot.ctx.HID.PressKey(0x1B)
 		utils.Sleep(15000)
 	}
 
