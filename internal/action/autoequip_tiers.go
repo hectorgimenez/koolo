@@ -155,9 +155,10 @@ func calculateGeneralScore(itm data.Item) float64 {
 	}
 
 	// Handle sockets - this might be a bad idea becauase we won't properly use the sockets
-	// May also double count if the sockets are filled
-	if !itm.IsRuneword {
-		score += float64(itm.Desc().MaxSockets * 10)
+	if !itm.IsRuneword && !itm.HasSocketedItems() {
+		if sockets, found := itm.FindStat(stat.NumSockets, 0); found {
+			score += float64(sockets.Value * 10)
+		}
 	}
 
 	score += calculatePerLevelStats(itm)
