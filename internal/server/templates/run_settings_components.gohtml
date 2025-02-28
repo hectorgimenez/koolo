@@ -138,6 +138,7 @@
     <fieldset>
         <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
         <label><input type="checkbox" name="gameLevelingEnsureKeyBinding" {{ if .Config.Game.Leveling.EnsureKeyBinding }}checked{{ end }}> Automatically bind skills</label>
+        <label><input type="checkbox" name="gameLevelingAutoEquip" {{ if .Config.Game.Leveling.AutoEquip }}checked{{ end }}> Automatically equip better items</label>
     </fieldset>
 {{ end }}
 
