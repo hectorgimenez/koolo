@@ -238,7 +238,12 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		if ctx.Data.AreaData.Area.IsTown() {
 			return step.MoveTo(to)
 		}
+		//TODO make segment walking work with adjacent level destination that are open areas
+		// this wont be necessary after
+		if !ctx.Data.AreaData.IsInside(to) {
+			return step.MoveTo(to)
 
+		}
 		// Clear monsters around player - similar to ClearThroughPath
 		if err := ClearAreaAroundPlayer(clearPathDist, data.MonsterAnyFilter()); err != nil {
 			ctx.Logger.Debug("Error clearing area around player", slog.String("error", err.Error()))
