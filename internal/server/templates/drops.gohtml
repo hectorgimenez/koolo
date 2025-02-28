@@ -15,6 +15,7 @@
         .set-quality { color: #10B981; }
         .rare-quality { color: #FBBF24; }
         .unique-quality { color: #bfa969; }
+        .crafted-quality { color: #FFA500; }
         .unknown-quality { color: #000000; }
 
         /* Drop location style */
@@ -258,7 +259,11 @@
                 <div class="d2-tooltip foldable">
                     <div class="item-header">
                         <div class="item-name {{ .Item.Quality.ToString | qualityClass }}">
-                            {{ .Item.Name }}
+                            {{ if .Item.IdentifiedName }}
+                                {{ .Item.IdentifiedName }}
+                            {{ else }}
+                                {{ .Item.Name }}
+                            {{ end }}
                         </div>
                         <div class="fold-indicator">▶</div>
                     </div>
@@ -268,38 +273,43 @@
                         <div class="italic">Unidentified</div>
                     </div>
                     {{ else }}
-                        <!-- Defense -->
-                        {{ range .Item.Stats }}
-                            {{ if eq .ID 31 }}
-                            <div class="item-stats text-gray-300">
-                                Defense: {{ .Value }}
-                            </div>
+                        <!-- Defense and Durability -->
+                        <div class="item-stats text-gray-300">
+                            {{ range .Item.Stats }}
+                                {{ if eq .ID 31 }}
+                                    <div>Defense: {{ .Value }}</div>
+                                {{ end }}
                             {{ end }}
-                        {{ end }}
-
-                        <!-- Durability -->
-                        {{ $currentDur := 0 }}
-                        {{ $maxDur := 0 }}
-                        {{ range .Item.Stats }}
-                            {{ if eq .ID 72 }}
-                                {{ $currentDur = .Value }}
+                            
+                            {{ $currentDur := 0 }}
+                            {{ $maxDur := 0 }}
+                            {{ range .Item.Stats }}
+                                {{ if eq .ID 72 }}
+                                    {{ $currentDur = .Value }}
+                                {{ end }}
+                                {{ if eq .ID 73 }}
+                                    {{ $maxDur = .Value }}
+                                {{ end }}
                             {{ end }}
-                            {{ if eq .ID 73 }}
-                                {{ $maxDur = .Value }}
+                            {{ if and (ne $currentDur 0) (ne $maxDur 0) }}
+                                <div>Durability: {{ $currentDur }} of {{ $maxDur }}</div>
                             {{ end }}
-                        {{ end }}
-                        {{ if and (ne $currentDur 0) (ne $maxDur 0) }}
-                            <div class="item-stats text-gray-300">
-                                Durability: {{ $currentDur }} of {{ $maxDur }}
-                            </div>
-                        {{ end }}
+                        </div>
 
                         <!-- Stats -->
                         <div class="item-stats text-gray-300">
-                            
+                            <!-- First show stat ID 92 if it's not 0 -->
+                            {{ range .Item.Stats }}
+                                {{ if eq .ID 92 }}
+                                    {{ if ne .Value 0 }}
+                                        <div>{{ .String }}</div>
+                                    {{ end }}
+                                {{ end }}
+                            {{ end }}
+
                             <!-- Ignore stats that have been handled (defense, durability, level requirement) -->
                             {{ range .Item.Stats }}
-                                {{ if and (ne .ID 31) (ne .ID 72) (ne .ID 73)}}
+                                {{ if and (ne .ID 31) (ne .ID 72) (ne .ID 73) (ne .ID 21) (ne .ID 22) (ne .ID 23) (ne .ID 24) (ne .ID 68) (ne .ID 92) }}
                                 <div>{{ .String }}</div>
                                 {{ end }}
                             {{ end }}
