@@ -223,7 +223,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 	}
 
 	lastMovement := false
-	movementRadius := 12 // Move in segments of this size ( not sure about value here)
+	movementRadius := 9 // Move in segments of this size ( not sure about value here)
 	clearPathDist := ctx.CharacterCfg.Character.ClearPathDist
 
 	for {

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -48,24 +47,18 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
 
-	defer func() {
-		for {
-			switch ctx.Data.PlayerUnit.Mode {
-			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
-				utils.Sleep(100)
-				ctx.RefreshGameData()
-				continue
-			default:
-				return
-			}
-		}
-	}()
-
 	timeout := time.Second * 30
 	idleThreshold := time.Second * 3
 	idleStartTime := time.Time{}
 	openedDoors := make(map[object.Name]data.Position)
-	walkDuration := utils.RandomDurationMs(600, 1200)
+
+	var walkDuration time.Duration
+	// Shorter walkDuration for fluid segment movement outside town.
+	if !ctx.Data.AreaData.Area.IsTown() {
+		walkDuration = utils.RandomDurationMs(475, 525)
+	} else {
+		walkDuration = utils.RandomDurationMs(600, 1000)
+	}
 
 	startedAt := time.Now()
 	lastRun := time.Time{}
@@ -164,7 +157,7 @@ func handleObstaclesInPath(dest data.Position, openedDoors map[object.Name]data.
 	// Check for doors in the path
 	for _, o := range ctx.Data.Objects {
 		if o.IsDoor() && o.Selectable &&
-			ctx.PathFinder.DistanceFromMe(o.Position) < 8 &&
+			ctx.PathFinder.DistanceFromMe(o.Position) < 7 &&
 			openedDoors[o.Name] != o.Position {
 
 			// Check if door is between us and destination
