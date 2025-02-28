@@ -1,7 +1,0 @@
-time=17:50:57 level=INFO msg="Waiting for character selection screen..."
-time=17:51:05 level=INFO msg="Character selection screen found"
-time=17:51:05 level=INFO msg="Selecting character..."
-time=17:51:05 level=INFO msg="Character found"
-time=17:51:09 level=INFO msg="Starting Game #0. Run list: summoner"
-time=17:51:09 level=DEBUG msg="Fetching map data..." seed=971917109 difficulty=hell
-time=17:51:16 level=DEBUG msg="Fetch completed" ms=7089

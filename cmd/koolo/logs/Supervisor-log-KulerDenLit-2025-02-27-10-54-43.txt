@@ -1,4 +1,0 @@
-time=10:54:44 level=INFO msg="Waiting for character selection screen..."
-time=10:54:53 level=INFO msg=Stopping... configuration=KulerDenLit
-time=10:54:53 level=INFO msg="Finished stopping" configuration=KulerDenLit
-time=10:54:54 level=INFO msg=Stopping... configuration=KulerDenLit

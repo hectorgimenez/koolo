@@ -1,8 +1,0 @@
-time=18:38:15 level=INFO msg="Waiting for character selection screen..."
-time=18:38:43 level=INFO msg="Character selection screen found"
-time=18:38:43 level=INFO msg="Selecting character..."
-time=18:38:43 level=INFO msg="Character found"
-time=18:38:50 level=ERROR msg="Error creating new game: failed to create game"
-time=18:38:50 level=INFO msg="Waiting for character selection screen..."
-time=18:39:21 level=INFO msg=Stopping... configuration=KulerDenLit
-time=18:39:21 level=INFO msg="Finished stopping" configuration=KulerDenLit
