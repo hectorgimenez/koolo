@@ -217,8 +217,8 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		return nil
 	}
 
-	// If we can teleport, use direct MoveTo
-	if ctx.Data.CanTeleport() {
+	// If we can teleport and we're in town, use direct MoveTo
+	if ctx.Data.CanTeleport() && ctx.Data.AreaData.Area.IsTown() {
 		return step.MoveTo(to)
 	}
 
@@ -234,16 +234,12 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		if !found {
 			return nil
 		}
-		// if we are in town , dont bother with monsters and segment walking.
+
+		// If we are in town, don't bother with monsters and segment walking
 		if ctx.Data.AreaData.Area.IsTown() {
 			return step.MoveTo(to)
 		}
-		//TODO make segment walking work with adjacent level destination that are open areas
-		// this wont be necessary after
-		if !ctx.Data.AreaData.IsInside(to) {
-			return step.MoveTo(to)
 
-		}
 		// Clear monsters around player - similar to ClearThroughPath
 		if err := ClearAreaAroundPlayer(clearPathDist, data.MonsterAnyFilter()); err != nil {
 			ctx.Logger.Debug("Error clearing area around player", slog.String("error", err.Error()))
@@ -253,17 +249,75 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			return nil
 		}
 
-		// Calculate path to destination
-		path, _, found := ctx.PathFinder.GetPath(to)
-		if !found {
-			// If path not found but we're close enough, consider it a success
+		path, _, pathFound := ctx.PathFinder.GetPath(to)
+
+		// If path not found, try to find an object in the destination area to use as a waypoint
+		if !pathFound {
+			// Check if destination is in an adjacent area
+			var targetArea area.ID
+
+			// Determine target area (either current or adjacent)
+			if !ctx.Data.AreaData.IsInside(to) {
+				for _, a := range ctx.Data.AreaData.AdjacentLevels {
+					if areaData, ok := ctx.Data.Areas[a.Area]; ok && areaData.IsInside(to) {
+						targetArea = a.Area
+						break
+					}
+				}
+			}
+
+			// If we found a target area and have objects data for it
+			if targetArea != 0 {
+				if areaData, ok := ctx.Data.Areas[targetArea]; ok {
+					objects := areaData.Objects
+
+					// Sort objects by distance from player
+					sort.Slice(objects, func(i, j int) bool {
+						distanceI := ctx.PathFinder.DistanceFromMe(objects[i].Position)
+						distanceJ := ctx.PathFinder.DistanceFromMe(objects[j].Position)
+						return distanceI < distanceJ
+					})
+
+					// Try to find any navigable object to use as intermediate destination
+					for _, obj := range objects {
+						intermediatePath, _, found := ctx.PathFinder.GetPath(obj.Position)
+						if found {
+							ctx.Logger.Debug("Using object as intermediate destination",
+								slog.String("object", string(obj.Name)),
+								slog.String("area", targetArea.Area().Name))
+							path = intermediatePath
+							pathFound = true
+							to = obj.Position // Update destination to the object position
+							break
+						}
+					}
+				}
+			}
+		}
+
+		// If still no path found but we're close enough, consider it a success
+		if !pathFound {
 			if ctx.PathFinder.DistanceFromMe(to) < step.DistanceToFinishMoving {
 				return nil
 			}
 			return fmt.Errorf("path could not be calculated to destination")
 		}
 
-		// Check if we've reached destination
+		// Find appropriate offset for current area or adjacent area
+		offsetX := ctx.Data.AreaData.OffsetX
+		offsetY := ctx.Data.AreaData.OffsetY
+		if !ctx.Data.AreaData.IsInside(to) {
+			for _, a := range ctx.Data.AreaData.AdjacentLevels {
+				destination := ctx.Data.Areas[a.Area]
+				if destination.IsInside(to) {
+					offsetX = destination.OffsetX
+					offsetY = destination.OffsetY
+					break
+				}
+			}
+		}
+
+		// Check if we've reached destination or are close enough
 		if ctx.PathFinder.DistanceFromMe(to) <= step.DistanceToFinishMoving || len(path) <= step.DistanceToFinishMoving {
 			return nil
 		}
@@ -275,8 +329,8 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		}
 
 		dest := data.Position{
-			X: path[movementDistance-1].X + ctx.Data.AreaData.OffsetX,
-			Y: path[movementDistance-1].Y + ctx.Data.AreaData.OffsetY,
+			X: path[movementDistance-1].X + offsetX,
+			Y: path[movementDistance-1].Y + offsetY,
 		}
 
 		// Set last movement flag if we're on our final segment
@@ -290,5 +344,10 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			ctx.Logger.Warn("Error moving to segment", slog.String("error", err.Error()))
 			return err
 		}
+		// clear monsters around player after moving
+		if err := ClearAreaAroundPlayer(clearPathDist, data.MonsterAnyFilter()); err != nil {
+			ctx.Logger.Debug("Error clearing area around player", slog.String("error", err.Error()))
+		}
+
 	}
 }

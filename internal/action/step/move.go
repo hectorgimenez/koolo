@@ -157,7 +157,7 @@ func handleObstaclesInPath(dest data.Position, openedDoors map[object.Name]data.
 	// Check for doors in the path
 	for _, o := range ctx.Data.Objects {
 		if o.IsDoor() && o.Selectable &&
-			ctx.PathFinder.DistanceFromMe(o.Position) < 7 &&
+			ctx.PathFinder.DistanceFromMe(o.Position) < 5 &&
 			openedDoors[o.Name] != o.Position {
 
 			// Check if door is between us and destination
@@ -191,7 +191,7 @@ func handleObstaclesInPath(dest data.Position, openedDoors map[object.Name]data.
 
 	// Check for destructible objects like barrels
 	for _, o := range ctx.Data.Objects {
-		if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 5 {
+		if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 4 {
 			objPos := o.Position
 			ourPos := ctx.Data.PlayerUnit.Position
 
