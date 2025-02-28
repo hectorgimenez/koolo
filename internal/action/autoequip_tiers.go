@@ -19,6 +19,7 @@ var (
 		stat.AllSkills:      200.0,
 		stat.AddClassSkills: 175.0,
 		stat.AddSkillTab:    125.0,
+		stat.SingleSkill:    40.0,
 	}
 
 	resistWeightsMain = map[stat.ID]float64{
@@ -118,7 +119,6 @@ type ResistStats struct {
 	Poison    int
 }
 
-// Example usage:
 var mercCTCWeight = []mercCTCWeights{
 	{StatID: stat.SkillOnAttack, Weight: 5.0, Layer: 4227},     // Amp Damage
 	{StatID: stat.SkillOnAttack, Weight: 10.0, Layer: 5572},    // Decrepify
@@ -172,7 +172,6 @@ func calculateBeltScore(itm data.Item) float64 {
 	beltSize := getBeltSize(itm)
 	currentSize := getCurrentBeltSize()
 
-	// Slots matter more than stats, this should never downgrade a belt
 	if currentSize > beltSize {
 		return float64(-1000)
 	}
@@ -207,7 +206,6 @@ func calculatePerLevelStats(itm data.Item) float64 {
 		(float64(manaPerlvl.Value/2048)*float64(charLevel.Value))*generalWeights[stat.ManaPerLevel]
 }
 
-// calculateBaseStats evaluates common item stats
 func calculateBaseStats(itm data.Item) float64 {
 	score := 0.0
 
@@ -359,10 +357,10 @@ func calculateSkillScore(itm data.Item) float64 {
 		}
 	}
 
-	// TODO Multiply the +x part of the skill bonus instead of returning a flat value
 	for _, usedSkill := range usedSkills {
-		if _, found := itm.FindStat(stat.SingleSkill, int(usedSkill)); found {
-			score += 40
+		if usedSkillsStat, found := itm.FindStat(stat.SingleSkill, int(usedSkill)); found {
+			usedSkillScore := float64(usedSkillsStat.Value) * skillWeights[usedSkillsStat.ID]
+			score += usedSkillScore
 		}
 	}
 
@@ -383,8 +381,9 @@ func MercScore(itm data.Item) float64 {
 
 	// Add cast-on-trigger scores
 	for _, ctc := range mercCTCWeight {
-		if _, found := itm.FindStat(ctc.StatID, ctc.Layer); found {
-			score += ctc.Weight
+		if ctcStat, found := itm.FindStat(ctc.StatID, ctc.Layer); found {
+			mercCTCScore := float64(ctcStat.Value) * ctc.Weight
+			score += mercCTCScore
 		}
 	}
 
