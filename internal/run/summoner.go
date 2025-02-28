@@ -2,15 +2,25 @@ package run
 
 import (
 	"math"
+
+	//"slices"
+
 	"strconv"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
+
+	//"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/koolo/internal/utils"
 )
+
+var minChestDistanceLaneEnd = 5
+var maxChestDistanceLaneEnd = 25
 
 type Summoner struct {
 	ctx *context.Status
@@ -82,6 +92,69 @@ func (s Summoner) Run() error {
 					summonerNPC.Positions[0].Y-s.ctx.Data.PlayerUnit.Position.Y < 20 {
 					s.ctx.Char.KillSummoner()
 				}
+				if ArcCheckPointsList[i] == ArcCheckPointsList[4] {
+					for _, o := range s.ctx.Data.Objects {
+						if /*(o.IsChest() || o.IsSuperChest()) &&*/ o.Selectable && isChestWithinLaneEndRange(o, ArcCheckPointsList[4]) {
+							err = action.MoveToCoords(o.Position)
+							if err != nil {
+								s.ctx.Logger.Warn("Failed moving to chest: %v", err)
+								continue
+							}
+							err = action.InteractObject(o, func() bool {
+								chest, _ := s.ctx.Data.Objects.FindByID(o.ID)
+								return !chest.Selectable
+							})
+							if err != nil {
+								s.ctx.Logger.Warn("Failed interacting with chest: %v", err)
+							}
+							utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
+						}
+					}
+					/*interactableObjects := []object.Name{object.ArcaneLargeChestLeft, object.ArcaneLargeChestRight,
+					object.ArcaneSmallChestLeft, object.ArcaneSmallChestRight, object.Act2LargeChestLeft,
+					object.Act2LargeChestRight, object.Act2MediumChestRight}*/
+
+					// Find the interactable objects
+					/*var objects []data.Object
+					for _, o := range s.ctx.Data.Objects {
+						if o.IsChest() || o.IsSuperChest() {
+							objects = append(objects, o)
+							s.ctx.Logger.Debug("We added a chest to the list.")
+						}
+
+						// Interact with objects in the order of shortest travel
+						for len(objects) > 0 {
+
+							//playerPos := s.ctx.Data.PlayerUnit.Position
+
+							sort.Slice(objects, func(x, j int) bool {
+								return pather.DistanceFromPoint(objects[x].Position, ArcCheckPointsList[4]) <
+									pather.DistanceFromPoint(objects[j].Position, ArcCheckPointsList[4])
+							})
+
+							// Interact with the closest object
+							closestObject := objects[0]
+							if !isChestWithinLaneEndRange(o, ArcCheckPointsList[4]) {
+								objects = objects[1:]
+								s.ctx.Logger.Debug("We removed a chest because it was too far.")
+							} else {
+								err = action.InteractObject(closestObject, func() bool {
+									object, _ := s.ctx.Data.Objects.FindByID(closestObject.ID)
+									s.ctx.Logger.Debug("We popped a chest")
+									return !object.Selectable
+								})
+							}
+							if err != nil {
+								s.ctx.Logger.Warn(fmt.Sprintf("[%s] failed interacting with object [%v] in Area: [%s]", s.ctx.Name, closestObject.Name, s.ctx.Data.PlayerUnit.Area.Area().Name), err)
+							}
+							utils.Sleep(500) // Add small delay to allow the game to open the object and drop the content
+
+							// Remove the interacted container from the list
+							objects = objects[1:]
+							s.ctx.Logger.Debug("We removed a chest after interacting with it.")
+						}
+					}*/
+				}
 			}
 			s.ctx.Logger.Debug("We've completed a lane loop.")
 			for d := 1; d < len(ArcCheckPointsList); d++ {
@@ -129,4 +202,9 @@ func (s *Summoner) getMonsterFilter() data.MonsterFilter {
 
 		return filteredMonsters
 	}
+}
+
+func isChestWithinLaneEndRange(chest data.Object, laneEnd data.Position) bool {
+	distance := pather.DistanceFromPoint(chest.Position, laneEnd)
+	return distance >= minChestDistanceLaneEnd && distance <= maxChestDistanceLaneEnd
 }

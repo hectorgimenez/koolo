@@ -104,7 +104,7 @@ game:
     minGoldPickupThreshold: 500000
     useCainIdentify: true
     clearTPArea: true
-    difficulty: hell
+    difficulty: nightmare
     randomizeRuns: false
     runs:
         - summoner
