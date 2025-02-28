@@ -132,12 +132,14 @@ var mercCTCWeight = []mercCTCWeights{
 // PlayerScore calculates overall item tier score
 func PlayerScore(itm data.Item) float64 {
 
-	return BaseScore +
-		calculateGeneralScore(itm) +
-		calculateResistScore(itm) +
-		calculateSkillScore(itm)
-}
+	generalScore := calculateGeneralScore(itm)
+	resistScore := calculateResistScore(itm)
+	skillScore := calculateSkillScore(itm)
 
+	totalScore := BaseScore + generalScore + resistScore + skillScore
+
+	return totalScore
+}
 func calculateGeneralScore(itm data.Item) float64 {
 
 	score := BaseScore
@@ -164,7 +166,7 @@ func calculateGeneralScore(itm data.Item) float64 {
 	return score
 }
 
-// calculateBeltScore handles belt-specific scoring
+// Belt-specific scoring so we don't lose belt slots
 func calculateBeltScore(itm data.Item) float64 {
 	beltSize := getBeltSize(itm)
 	currentSize := getCurrentBeltSize()
@@ -207,11 +209,14 @@ func calculatePerLevelStats(itm data.Item) float64 {
 // calculateBaseStats evaluates common item stats
 func calculateBaseStats(itm data.Item) float64 {
 	score := 0.0
+
 	for statID, weight := range generalWeights {
 		if statData, found := itm.FindStat(statID, 0); found {
-			score += float64(statData.Value) * weight
+			statScore := float64(statData.Value) * weight
+			score += statScore
 		}
 	}
+
 	return score
 }
 
@@ -221,26 +226,23 @@ func calculateBaseStats(itm data.Item) float64 {
 func calculateResistScore(itm data.Item) float64 {
 	// Get new item resists
 	newResists := getItemMainResists(itm)
+
+	// only enter next block if we have a new item with resists
 	if newResists.Fire == 0 && newResists.Cold == 0 && newResists.Lightning == 0 && newResists.Poison == 0 {
 		return 0.0
 	}
 
-	// Get currently equipped item resists
+	// get item resists stats from olditem equipped on body location
 	oldResists := getEquippedResists(itm)
 
-	// Calculate base resists
 	baseResists := getBaseResists(oldResists)
-
-	// Calculate effective resists
+	// subtract olditem resists from current total resists
 	effectiveResists := calculateEffectiveResists(newResists, baseResists)
 
-	// Calculate main resist score
-	score := calculateMainResistScore(effectiveResists)
+	mainScore := calculateMainResistScore(effectiveResists)
+	otherScore := calculateOtherResistScore(itm)
 
-	// Add other resist stats
-	score += calculateOtherResistScore(itm)
-
-	return score
+	return mainScore + otherScore
 }
 
 func getItemMainResists(itm data.Item) ResistStats {
@@ -330,15 +332,19 @@ func calculateSkillScore(itm data.Item) float64 {
 	score := 0.0
 
 	if statData, found := itm.FindStat(stat.AllSkills, 0); found {
-		score += float64(statData.Value) * skillWeights[statData.ID]
+		allSkillScore := float64(statData.Value) * skillWeights[statData.ID]
+		score += allSkillScore
 	}
+
 	if classSkillsStat, found := itm.FindStat(stat.AddClassSkills, int(ctx.Data.PlayerUnit.Class)); found {
-		score += float64(classSkillsStat.Value) * skillWeights[classSkillsStat.ID]
+		classSkillScore := float64(classSkillsStat.Value) * skillWeights[classSkillsStat.ID]
+		score += classSkillScore
 	}
 
 	tabskill := int(ctx.Data.PlayerUnit.Class)*8 + (getMaxSkillTabPage() - 1)
 	if tabSkillsStat, found := itm.FindStat(stat.AddSkillTab, tabskill); found {
-		score += float64(tabSkillsStat.Value) * skillWeights[tabSkillsStat.ID]
+		tabSkillScore := float64(tabSkillsStat.Value) * skillWeights[tabSkillsStat.ID]
+		score += tabSkillScore
 	}
 
 	usedSkills := make([]skill.ID, 0)
@@ -369,7 +375,8 @@ func MercScore(itm data.Item) float64 {
 	// Add base stat scores
 	for statID, weight := range mercWeights {
 		if statData, found := itm.FindStat(statID, 0); found {
-			score += float64(statData.Value) * weight
+			mercStatScore := float64(statData.Value) * weight
+			score += mercStatScore
 		}
 	}
 
