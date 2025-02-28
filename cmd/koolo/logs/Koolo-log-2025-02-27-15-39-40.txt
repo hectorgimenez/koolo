@@ -1,0 +1,3 @@
+time=15:39:40 level=INFO msg="Scheduler started"
+time=15:39:50 level=INFO msg="Koolo shutting down..."
+time=15:39:50 level=INFO msg="Scheduler stopped"

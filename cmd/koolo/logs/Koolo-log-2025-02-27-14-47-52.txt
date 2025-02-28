@@ -1,0 +1,5 @@
+time=14:47:52 level=INFO msg="Scheduler started"
+time=14:48:03 level=INFO msg="Attaching to existing game" pid=7860 hwnd=657488
+time=14:48:04 level=INFO msg="Starting Crash Detector ..." PID=7860 Supervisor=KulerDenLit
+time=14:48:09 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheight=1080 "max columns"=2 "max rows"=2
+time=14:48:09 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0

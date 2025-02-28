@@ -1,0 +1,12 @@
+time=13:30:15 level=INFO msg="Waiting for character selection screen..."
+time=13:30:21 level=INFO msg="Character selection screen found"
+time=13:30:21 level=INFO msg="Selecting character..."
+time=13:30:21 level=INFO msg="Character found"
+time=13:30:24 level=INFO msg="Starting Game #0. Run list: summoner"
+time=13:30:24 level=DEBUG msg="Fetching map data..." seed=606521482 difficulty=nightmare
+time=13:30:25 level=WARN msg="Game finished with errors, reason: error fetching map data: error fetching Map data from Diablo II: LoD 1.13c game: exit status 0xc0000005. Game total time: 0.86s" supervisor=KulerDenLit mapSeed=606521482
+time=13:30:34 level=INFO msg="Starting Game #1. Run list: summoner"
+time=13:30:34 level=DEBUG msg="Fetching map data..." seed=606521482 difficulty=nightmare
+time=13:30:34 level=WARN msg="Game finished with errors, reason: error fetching map data: error fetching Map data from Diablo II: LoD 1.13c game: exit status 0xc0000005. Game total time: 0.46s" supervisor=KulerDenLit mapSeed=606521482
+time=13:30:37 level=INFO msg=Stopping... configuration=KulerDenLit
+time=13:30:37 level=INFO msg="Finished stopping" configuration=KulerDenLit

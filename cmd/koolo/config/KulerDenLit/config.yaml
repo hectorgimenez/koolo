@@ -1,4 +1,4 @@
-maxGameLength: 5000
+maxGameLength: 360
 username: ""
 password: ""
 authMethod: None
@@ -104,7 +104,7 @@ game:
     minGoldPickupThreshold: 500000
     useCainIdentify: true
     clearTPArea: true
-    difficulty: nightmare
+    difficulty: hell
     randomizeRuns: false
     runs:
         - summoner
@@ -255,6 +255,9 @@ game:
         killShenk: false
         rescueAnya: false
         killAncients: false
+    summoner:
+        clearArea: false
+        clearGhosts: true
 companion:
     leader: false
     leaderName: ""

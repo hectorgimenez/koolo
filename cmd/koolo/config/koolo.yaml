@@ -6,7 +6,7 @@ firstRun: false
 useCustomSettings: true
 gameWindowArrangement: true
 logSaveDirectory: logs
-D2LoDPath: c:\users\nicho\onedrive\desktop\diabloii\diabloii
+D2LoDPath: c:\users\nicho\diabloii
 D2RPath: c:\program files (x86)\diablo ii resurrected
 centralizedPickitPath: ""
 discord:
