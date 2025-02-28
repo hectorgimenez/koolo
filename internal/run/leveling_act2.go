@@ -1,8 +1,6 @@
 package run
 
 import (
-	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -92,7 +90,7 @@ func (a Leveling) act2() error {
 		if a.ctx.Data.Quests[quest.Act2TheSummoner].HasStatus(quest.StatusQuestNotStarted) && !a.ctx.Data.Quests[quest.Act2TaintedSun].HasStatus(quest.StatusQuestNotStarted) {
 			action.InteractNPC(npc.Drognan)
 		}
-		
+
 		err := NewSummoner().Run()
 		if err != nil {
 			return err
@@ -282,21 +280,22 @@ func (a Leveling) prepareStaff() error {
 
 func (a Leveling) duriel() error {
 	a.ctx.Logger.Info("Starting Duriel....")
+	a.ctx.CharacterCfg.Game.Duriel.UseThawing = true
 	if err := NewDuriel().Run(); err != nil {
 		return err
 	}
 	duriel, found := a.ctx.Data.Monsters.FindOne(npc.Duriel, data.MonsterTypeUnique)
 	if !found || duriel.Stats[stat.Life] <= 0 || a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusInProgress3) {
 
-	action.MoveToCoords(data.Position{
-		X: 22577,
-		Y: 15613,
-	})
+		action.MoveToCoords(data.Position{
+			X: 22577,
+			Y: 15613,
+		})
 
-	action.InteractNPC(npc.Tyrael)
+		action.InteractNPC(npc.Tyrael)
 	}
 	if a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusInProgress5) {
-	action.ReturnTown()
+		action.ReturnTown()
 		return nil
 	}
 
