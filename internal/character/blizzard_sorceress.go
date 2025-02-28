@@ -71,11 +71,11 @@ func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data
 		var targetThreshold int
 		switch s.Data.CharacterCfg.Game.Difficulty {
 		case difficulty.Normal:
-			targetThreshold = 99
+			targetThreshold = 10
 		case difficulty.Nightmare:
-			targetThreshold = 99
+			targetThreshold = 40
 		default:
-			targetThreshold = 99
+			targetThreshold = 60
 		}
 		thresholdFloat := float64(targetThreshold)
 
