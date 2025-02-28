@@ -2,6 +2,9 @@ package run
 
 import (
 	"errors"
+	"log/slog"
+	"math"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -11,8 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"log/slog"
-	"math"
 )
 
 type Follower struct {
@@ -118,13 +119,9 @@ func (f *Follower) findClosestEntrance(entrances []data.Level) *data.Level {
 	return lvl
 }
 
-func (f *Follower) handleNoValidEntrance(leader *data.RosterMember) {
+func (f *Follower) handleNoValidEntrance(leader *data.RosterMember) error {
 	if leader.Area == area.TheWorldstoneChamber && f.ctx.Data.AreaData.Area == area.ThroneOfDestruction {
-		f.ctx.Logger.Info("Leader is in The Worldstone Chamber, going through the red portal.")
-		baalPortal, _ := f.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		_ = action.InteractObject(baalPortal, func() bool {
-			return f.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
-		})
+		return f.handleBaalScenario()
 	}
 
 	f.ctx.Logger.Info("Leader is not in a connecting area, returning to the correct town to use his portal.")
@@ -139,13 +136,15 @@ func (f *Follower) handleNoValidEntrance(leader *data.RosterMember) {
 	if err != nil {
 		utils.Sleep(5000)
 	}
+
+	return nil
 }
 
 func (f *Follower) handleLeaderInSameArea(leader *data.RosterMember) {
 	f.ctx.SetLastAction("Handle leader in same area")
 	_ = action.ClearAreaAroundPosition(leader.Position, MaxDistanceFromLeader, f.ctx.Data.MonsterFilterAnyReachable())
 	_ = action.MoveToCoords(leader.Position)
-	action.Buff()
+	action.BuffIfRequired()
 	f.interactWithChests()
 }
 
@@ -223,12 +222,12 @@ func (f *Follower) UseCorrectPortalFromLeader(leader *data.RosterMember) error {
 
 	for _, obj := range f.ctx.Data.Objects {
 		if obj.IsPortal() && obj.Owner == leader.Name && obj.PortalData.DestArea == leader.Area {
-
+			action.Buff()
 			return action.InteractObjectByID(obj.ID, nil)
 		}
 	}
 
-	return errors.New("Waiting for corrected portal")
+	return errors.New("Waiting for correct portal...")
 }
 
 func (f *Follower) InTownRoutine() error {
@@ -255,4 +254,22 @@ func (f *Follower) getKashyaPosition() (data.Position, bool) {
 		return cain.Positions[0], true
 	}
 	return data.Position{}, false
+}
+
+func (f *Follower) handleBaalScenario() error {
+	f.ctx.Logger.Info("Leader is in The Worldstone Chamber, going through the red portal.")
+	baalPortal, _ := f.ctx.Data.Objects.FindOne(object.BaalsPortal)
+	_ = action.InteractObject(baalPortal, func() bool {
+
+		for f.ctx.Data.PlayerUnit.Area != area.TheWorldstoneChamber {
+			utils.Sleep(200)
+		}
+		return true
+	})
+
+	if err := f.ctx.Char.KillBaal(); err != nil {
+		return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
+	}
+
+	return nil
 }
