@@ -29,6 +29,7 @@ type SupervisorManager struct {
 }
 
 func NewSupervisorManager(logger *slog.Logger, eventListener *event.Listener) *SupervisorManager {
+
 	return &SupervisorManager{
 		logger:         logger,
 		supervisors:    make(map[string]Supervisor),
@@ -262,15 +263,19 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 	bot := NewBot(ctx.Context)
 
 	statsHandler := NewStatsHandler(supervisorName, logger)
-	mng.eventListener.Register(statsHandler.Handle)
+	companionHandler := NewCompanionEventHandler(supervisorName, logger, cfg)
 
+	// Register event handler for stats
+	mng.eventListener.Register(statsHandler.Handle)
+	mng.eventListener.Register(companionHandler.Handle)
+
+	// Create the supervisor
 	var supervisor Supervisor
 
 	supervisor, err = NewSinglePlayerSupervisor(supervisorName, bot, statsHandler)
 
 	if err != nil {
 		return nil, nil, err
-
 	}
 
 	// This function will be used to restart the client - passed to the crashDetector

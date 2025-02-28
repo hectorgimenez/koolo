@@ -967,9 +967,9 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.CubeRecipes.EnabledRecipes = enabledRecipes
 		cfg.CubeRecipes.SkipPerfectAmethysts = r.Form.Has("skipPerfectAmethysts")
 		cfg.CubeRecipes.SkipPerfectRubies = r.Form.Has("skipPerfectRubies")
-		// Companion
 
 		// Companion config
+		cfg.Companion.Enabled = r.Form.Has("companionEnabled")
 		cfg.Companion.Leader = r.Form.Has("companionLeader")
 		cfg.Companion.LeaderName = r.Form.Get("companionLeaderName")
 		cfg.Companion.GameNameTemplate = r.Form.Get("companionGameNameTemplate")

@@ -12,6 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/lxn/win"
 )
@@ -127,22 +128,54 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 
 	s.bot.ctx.Logger.Info("Character selection screen found")
 
+	// Ensure we're online
+	if !s.bot.ctx.GameReader.IsOnline() {
+		if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
+
+			// Try and click the online tab to connect to bnet up to 3 times
+			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+
+			utils.Sleep(15000) // Wait for 15 seconds to ensure we're online
+
+			// Check if we're online again, if not, kill the client
+			if !s.bot.ctx.GameReader.IsOnline() {
+				if err := s.KillClient(); err != nil {
+					return err
+				}
+				return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
+			}
+		}
+		// Refresh game data as it bugs if we were disconnected
+		s.bot.ctx.RefreshGameData()
+	}
+
 	if s.bot.ctx.CharacterCfg.CharacterName != "" {
+
 		s.bot.ctx.Logger.Info("Selecting character...")
+
 		previousSelection := ""
-		for {
+
+		// Try to select a character up to 25 times then give up and kill the client
+		for i := 0; i < 25; i++ {
 			characterName := s.bot.ctx.GameReader.GameReader.GetSelectedCharacterName()
 			if strings.EqualFold(previousSelection, characterName) {
 				return fmt.Errorf("character %s not found", s.bot.ctx.CharacterCfg.CharacterName)
 			}
+
 			if strings.EqualFold(characterName, s.bot.ctx.CharacterCfg.CharacterName) {
 				s.bot.ctx.Logger.Info("Character found")
 				return nil
 			}
 
 			s.bot.ctx.HID.PressKey(win.VK_DOWN)
-			time.Sleep(time.Millisecond * 150)
+			time.Sleep(time.Millisecond * 250)
 			previousSelection = characterName
+		}
+
+		s.bot.ctx.Logger.Info("Character not found after 25 attempts, terminating client")
+
+		if err := s.KillClient(); err != nil {
+			return err
 		}
 	}
 
