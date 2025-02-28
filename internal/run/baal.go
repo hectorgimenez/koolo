@@ -2,6 +2,8 @@ package run
 
 import (
 	"errors"
+	"time"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
@@ -12,7 +14,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
-	"time"
 )
 
 var baalThronePosition = data.Position{
@@ -160,7 +161,11 @@ func (s Baal) Run() error {
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		_ = action.InteractObject(baalPortal, func() bool {
-			return s.ctx.Data.PlayerUnit.Area == area.TheWorldstoneChamber
+
+			for s.ctx.Data.PlayerUnit.Area != area.TheWorldstoneChamber {
+				utils.Sleep(200)
+			}
+			return true
 		})
 
 		if err = s.ctx.Char.KillBaal(); err != nil {
