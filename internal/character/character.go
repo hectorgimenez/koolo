@@ -76,3 +76,17 @@ func (bc BaseCharacter) preBattleChecks(id data.UnitID, skipOnImmunities []stat.
 
 	return true
 }
+
+func (s BaseCharacter) MonsterStillAlive(id data.UnitID) bool {
+	monster, found := s.Data.Monsters.FindByID(id)
+
+	if !found {
+		s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+		return false
+	}
+	if monster.Stats[stat.Life] <= 0 {
+		return false
+	}
+
+	return true
+}
