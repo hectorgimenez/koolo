@@ -181,6 +181,33 @@ func evaluateItems(items []data.Item, target item.LocationType, scoreFunc func(d
 		})
 	}
 
+	// Special handling for two-handed weapons
+	// If a two-handed weapon is equipped, check if a one-handed weapon + shield combo scores better
+	if target == item.LocationEquipped {
+		var bestComboScore float64
+		if items, ok := itemsByLoc[item.LocLeftArm]; ok {
+			// Check if the highest scoring left arm item is two-handed
+			if _, found := items[0].FindStat(stat.TwoHandedMinDamage, 0); found {
+				// Find best non-two-handed weapon score
+				for _, item := range items {
+					if _, isTwoHanded := item.FindStat(stat.TwoHandedMinDamage, 0); !isTwoHanded {
+						bestComboScore = scoreFunc(item)
+						break
+					}
+				}
+				// Add best shield score if available
+				if rightArmItems, ok := itemsByLoc[item.LocRightArm]; ok {
+					bestComboScore += scoreFunc(rightArmItems[0])
+				}
+
+				// If one-hand + shield combo scores better, remove the two-handed weapon
+				if bestComboScore >= scoreFunc(items[0]) {
+					itemsByLoc[item.LocLeftArm] = itemsByLoc[item.LocLeftArm][1:]
+				}
+			}
+		}
+	}
+
 	return itemsByLoc
 }
 
@@ -194,7 +221,6 @@ func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.Lo
 		}
 
 		// Try each item in sorted order until we find one that can be equipped
-		toEquip := false
 		for _, itm := range items {
 
 			// Skip if item is already equipped in the target location
@@ -206,7 +232,6 @@ func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.Lo
 			if (itm.Location.LocationType == item.LocationMercenary && target == item.LocationEquipped) || (itm.Location.LocationType == item.LocationEquipped && target == item.LocationMercenary) {
 				continue
 			}
-			toEquip = true
 
 			if err := equip(itm, loc, target); err != nil {
 				ctx.Logger.Error(fmt.Sprintf("Failed to equip %s: %v", itm.Name, err))
@@ -263,9 +288,9 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 			}
 		}
 	}
-		for !ctx.Data.OpenMenus.Inventory {
-			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
-			utils.Sleep(EquipDelayMS)
+	for !ctx.Data.OpenMenus.Inventory {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
+		utils.Sleep(EquipDelayMS)
 	}
 
 	if target == item.LocationMercenary {
@@ -343,7 +368,7 @@ func equipCursor(itm data.Item, bodyloc item.LocationType, target item.LocationT
 		if itm.UnitID == inPlace.UnitID && inPlace.Location.LocationType != target {
 			step.CloseAllMenus()
 			utils.Sleep(EquipDelayMS)
-				DropMouseItem()
+			DropMouseItem()
 
 			return fmt.Errorf("Failed %s to %s equip to using cursor", itm.Name, target)
 		}
