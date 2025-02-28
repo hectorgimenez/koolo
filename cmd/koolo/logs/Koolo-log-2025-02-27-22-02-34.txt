@@ -5,3 +5,7 @@ time=22:02:51 level=DEBUG msg="Arranging windows" displaywidth=1920 displayheigh
 time=22:02:51 level=DEBUG msg="Window Positions" supervisor=KulerDenLit column=0 row=0 position=-10x0
 time=22:05:58 level=INFO msg="Config reloaded"
 time=22:08:51 level=INFO msg="Config reloaded"
+time=22:20:05 level=INFO msg="Stopping Crash Detector" PID=16836 Supervisor=KulerDenLit
+time=22:20:05 level=INFO msg="Crash Detector stopped." PID=16836 Supervisor=KulerDenLit
+time=22:20:07 level=INFO msg="Koolo shutting down..."
+time=22:20:07 level=INFO msg="Scheduler stopped"

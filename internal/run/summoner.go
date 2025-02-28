@@ -16,7 +16,7 @@ type Summoner struct {
 	ctx *context.Status
 }
 
-var clearRange int = 50
+var clearRange int = 30
 
 func rotatePoint(x, y, centerX, centerY, angle float64) data.Position {
 	// Translate to origin
