@@ -88,10 +88,10 @@ func (s BaseCharacter) MonsterAliveById(id data.UnitID) bool {
 
 	return true
 }
-func (s BaseCharacter) MonsterAliveByType(uniqueId npc.ID, monsterType data.MonsterType) bool {
-	unique, found := s.Data.Monsters.FindOne(uniqueId, monsterType)
+func (s BaseCharacter) MonsterAliveByType(monsterId npc.ID, monsterType data.MonsterType) bool {
+	monster, found := s.Data.Monsters.FindOne(monsterId, monsterType)
 
-	if !found || unique.Mode == mode.NpcDead || unique.Mode == mode.NpcDeath {
+	if !found || monster.Mode == mode.NpcDead || monster.Mode == mode.NpcDeath {
 		return false
 	}
 
