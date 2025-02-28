@@ -357,6 +357,8 @@ func qualityClass(quality string) string {
 		return "rare-quality"
 	case "Unique":
 		return "unique-quality"
+	case "Crafted":
+		return "crafted-quality"
 	default:
 		return "unknown-quality"
 	}
