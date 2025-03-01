@@ -46,8 +46,9 @@ func (h *CompanionEventHandler) Handle(ctx context.Context, e event.Event) error
 		// If this character is a companion (not a leader), clear game info
 		if h.cfg.Companion.Enabled && !h.cfg.Companion.Leader {
 
-			// Check if the leader matches the one in our config or no leader set
-			if h.cfg.Companion.LeaderName == "" || evt.Leader == h.cfg.Companion.LeaderName {
+			// Check if the leader matches the one in our config or no leader set.
+			// Additional check for if LeaderName is the same as the character name for Manual join triggers
+			if h.cfg.Companion.LeaderName == "" || evt.Leader == h.cfg.Companion.LeaderName || h.cfg.CharacterName == evt.Leader {
 				h.log.Info("Companion reset game info event received", slog.String("supervisor", h.supervisor), slog.String("leader", evt.Leader))
 				h.cfg.Companion.CompanionGameName = ""
 				h.cfg.Companion.CompanionGamePassword = ""
