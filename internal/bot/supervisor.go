@@ -127,10 +127,13 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	}
 
 	s.bot.ctx.Logger.Info("Character selection screen found")
+	disconnected := false
 
 	// Ensure we're online
 	if !s.bot.ctx.GameReader.IsOnline() {
 		if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
+			disconnected = true
+			s.bot.ctx.Logger.Info("Offline screen detected, clicking online tab to connect to bnet ...")
 
 			// Try and click the online tab to connect to bnet up to 3 times
 			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
@@ -145,17 +148,24 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 				return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
 			}
 		}
-		// Refresh game data as it bugs if we were disconnected
-		s.bot.ctx.RefreshGameData()
 	}
 
 	if s.bot.ctx.CharacterCfg.CharacterName != "" {
 
 		s.bot.ctx.Logger.Info("Selecting character...")
 
+		// If we've lost connection it bugs out and we need to select another character and the first one again.
+		if disconnected {
+			s.bot.ctx.HID.PressKey(win.VK_DOWN)
+			time.Sleep(250 * time.Millisecond)
+			s.bot.ctx.HID.PressKey(win.VK_UP)
+		}
+
 		// Try to select a character up to 25 times then give up and kill the client
 		for i := 0; i < 25; i++ {
 			characterName := s.bot.ctx.GameReader.GameReader.GetSelectedCharacterName()
+
+			s.bot.ctx.Logger.Debug(fmt.Sprintf("Checking character: %s", characterName))
 
 			if strings.EqualFold(characterName, s.bot.ctx.CharacterCfg.CharacterName) {
 				s.bot.ctx.Logger.Info(fmt.Sprintf("Character %s found and selected.", s.bot.ctx.CharacterCfg.CharacterName))
