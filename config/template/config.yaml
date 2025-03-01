@@ -62,13 +62,18 @@ game:
   difficulty: hell # Allowed values: normal, nightmare, hell
   randomizeRuns: true # Will randomize the order of the runs each game
   # Just add the runs you want to do and they will be executed respecting the order, unless randomizeRuns is set to true
-  # Available runs: countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak,
+  # Available runs: blood_moor, countess, andariel, ancient_tunnels, summoner, mephisto, council, eldritch, pindleskin, nihlathak,
   #                 tristram, lower_kurast, lower_kurast_chest, stony_tomb, pit, arachnid_lair, tal_rasha_tombs, baal, diablo, cows, terror_zone
   # leveling: there is a "leveling" run, in combination with "sorceress or paladin" class will be able to start leveling character from level 1 (don't expect too much)
   # terror_zone: will detect current TZ and clear it
   runs: [ stony_tomb, pit, arachnid_lair ]
 
   # Specific runs settings
+  blood_moor:
+    clearDenOfEvil: true
+    openChests: true
+    focusOnElitePacks: false
+    onlyClearDenOfEvil: true
   pindleskin:
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
     killNihlathak: false
