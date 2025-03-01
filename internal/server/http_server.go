@@ -894,7 +894,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		for _, i := range r.Form["gamePindleskinSkipOnImmunities[]"] {
 			cfg.Game.Pindleskin.SkipOnImmunities = append(cfg.Game.Pindleskin.SkipOnImmunities, stat.Resist(i))
 		}
-
+		cfg.Game.Pindleskin.KillNihlathak = r.Form.Has("gamePindleskinKillNihlathak")
 		cfg.Game.StonyTomb.OpenChests = r.Form.Has("gameStonytombOpenChests")
 		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")
 		cfg.Game.AncientTunnels.OpenChests = r.Form.Has("gameAncientTunnelsOpenChests")
