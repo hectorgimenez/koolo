@@ -2,7 +2,10 @@ package pather
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"sync"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -11,22 +14,55 @@ import (
 	"github.com/hectorgimenez/koolo/internal/pather/astar"
 )
 
+const (
+	positionRounding = 10  // Round positions to nearest 10 units
+	maxCacheSize     = 500 // Maximum cached paths per game
+)
+
+// cacheKey includes game seed and area to avoid stale paths across games
+type cacheKey struct {
+	fromX, fromY int // Rounded start position
+	toX, toY     int // Rounded end position
+	area         area.ID
+	mapSeed      uint // Unique per game session
+}
+
+// cacheEntry stores the cached path result
+type cacheEntry struct {
+	path     Path
+	distance int
+	found    bool
+	lastUsed time.Time // Track usage for LRU
+}
+
 type PathFinder struct {
-	gr   *game.MemoryReader
-	data *game.Data
-	hid  *game.HID
-	cfg  *config.CharacterCfg
+	gr          *game.MemoryReader
+	data        *game.Data
+	hid         *game.HID
+	cfg         *config.CharacterCfg
+	cache       map[cacheKey]cacheEntry
+	gridCache   map[area.ID]*game.Grid // Cached grids per area
+	currentSeed uint                   // Track current game seed
+	mu          sync.Mutex
+	cacheHits   int // Track cache Hits
+	cacheMisses int // Track cache Misses
 }
 
 func NewPathFinder(gr *game.MemoryReader, data *game.Data, hid *game.HID, cfg *config.CharacterCfg) *PathFinder {
-	return &PathFinder{
-		gr:   gr,
-		data: data,
-		hid:  hid,
-		cfg:  cfg,
+	pf := &PathFinder{
+		gr:        gr,
+		data:      data,
+		hid:       hid,
+		cfg:       cfg,
+		cache:     make(map[cacheKey]cacheEntry),
+		gridCache: make(map[area.ID]*game.Grid),
 	}
+	go pf.logCacheStats()
+	return pf
 }
 
+// GetPath attempts to find a path from the player's current position to the target
+// First tries a direct path, then falls back to finding a nearby walkable position
 func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	// First try direct path
 	if path, distance, found := pf.GetPathFrom(pf.data.PlayerUnit.Position, to); found {
@@ -41,14 +77,74 @@ func (pf *PathFinder) GetPath(to data.Position) (Path, int, bool) {
 	return nil, 0, false
 }
 
+// GetPathFrom calculates a path between two positions, using cached results when available
 func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
+	currentArea := pf.data.PlayerUnit.Area
+	currentSeed := pf.gr.MapSeed()
+
+	// Clear cache when new game is detected
+	pf.mu.Lock()
+	if pf.currentSeed != currentSeed {
+		log.Printf(
+			"Clearing cache - Old Seed: %d | New Seed: %d | Cache Size Before: %d | Grid Cache Before: %d",
+			pf.currentSeed,
+			currentSeed,
+			len(pf.cache),
+			len(pf.gridCache),
+		)
+		pf.cache = make(map[cacheKey]cacheEntry)
+		pf.gridCache = make(map[area.ID]*game.Grid)
+		pf.currentSeed = currentSeed
+	}
+	pf.mu.Unlock()
+
+	// Round positions to reduce key fragmentation
+	roundedFromX := from.X / positionRounding
+	roundedFromY := from.Y / positionRounding
+	roundedToX := to.X / positionRounding
+	roundedToY := to.Y / positionRounding
+
+	key := cacheKey{
+		fromX:   roundedFromX,
+		fromY:   roundedFromY,
+		toX:     roundedToX,
+		toY:     roundedToY,
+		area:    currentArea,
+		mapSeed: currentSeed,
+	}
+
+	// Cache check
+	pf.mu.Lock()
+	entry, cached := pf.cache[key]
+	if cached {
+		// Update last used time
+		entry.lastUsed = time.Now()
+		pf.cache[key] = entry
+		pf.cacheHits++
+		pf.mu.Unlock()
+		return entry.path, entry.distance, entry.found
+	}
+	pf.mu.Unlock()
+
+	pf.mu.Lock()
+	pf.cacheMisses++
+	pf.mu.Unlock()
+
 	a := pf.data.AreaData
 
-	// We don't want to modify the original grid
-	grid := a.Grid.Copy()
+	// Optimized grid handling: reuse cached grid if available
+	pf.mu.Lock()
+	grid, ok := pf.gridCache[a.Area]
+	pf.mu.Unlock()
+	if !ok || currentArea == area.ArcaneSanctuary { // Always recopy dynamic areas
+		grid = a.Grid.Copy()
+		pf.mu.Lock()
+		pf.gridCache[a.Area] = grid
+		pf.mu.Unlock()
+	}
 
 	// Special handling for Arcane Sanctuary (to allow pathing with platforms)
-	if pf.data.PlayerUnit.Area == area.ArcaneSanctuary && pf.data.CanTeleport() {
+	if currentArea == area.ArcaneSanctuary && pf.data.CanTeleport() {
 		// Make all non-walkable tiles into low priority tiles for teleport pathing
 		for y := 0; y < len(grid.CollisionGrid); y++ {
 			for x := 0; x < len(grid.CollisionGrid[y]); x++ {
@@ -91,7 +187,6 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 				}
 				if grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] == game.CollisionTypeWalkable {
 					grid.CollisionGrid[relativePos.Y+i][relativePos.X+j] = game.CollisionTypeLowPriority
-
 				}
 			}
 		}
@@ -112,7 +207,50 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 		pf.renderMap(grid, from, to, path)
 	}
 
+	// Cache result ONLY IF FOUND
+	if found {
+		pf.mu.Lock()
+		// Remove oldest entry if cache is full
+		if len(pf.cache) >= maxCacheSize {
+			var oldestKey cacheKey
+			var oldestTime time.Time
+			for k, v := range pf.cache {
+				if oldestTime.IsZero() || v.lastUsed.Before(oldestTime) {
+					oldestKey = k
+					oldestTime = v.lastUsed
+				}
+			}
+			delete(pf.cache, oldestKey)
+		}
+
+		pf.cache[key] = cacheEntry{
+			path:     path,
+			distance: distance,
+			found:    found,
+			lastUsed: time.Now(),
+		}
+		pf.mu.Unlock()
+	}
+
 	return path, distance, found
+}
+
+// DEBUG ONLY
+// logCacheStats prints cache metrics every 10 seconds
+func (pf *PathFinder) logCacheStats() {
+	for {
+		pf.mu.Lock()
+		log.Printf(
+			"Path Cache - Hits: %d | Misses: %d | Size: %d | Grid Cache Size: %d | mapSeed: %d",
+			pf.cacheHits,
+			pf.cacheMisses,
+			len(pf.cache),
+			len(pf.gridCache),
+			pf.gr.MapSeed(),
+		)
+		pf.mu.Unlock()
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func (pf *PathFinder) mergeGrids(to data.Position) (*game.Grid, error) {
