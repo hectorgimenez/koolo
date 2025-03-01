@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -74,73 +73,77 @@ func (s SorceressLeveling) KillMonsterSequence(
 			return nil
 		}
 
+		attackSuccess := false
 		lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 		if s.Data.PlayerUnit.MPPercent() < 15 && lvl.Value < 15 {
 			s.Logger.Debug("Low mana, using primary attack")
 			step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
 		} else {
 			if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Blizzard); found {
-				s.Logger.Debug("Using Blizzard")
+				if s.Data.PlayerUnit.Mode == mode.CastingSkill {
+					attackSuccess = true
+					s.Logger.Debug("Using Blizzard")
+				}
 				step.SecondaryAttack(skill.Blizzard, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.Meteor); found {
-				s.Logger.Debug("Using Meteor")
+				if s.Data.PlayerUnit.Mode == mode.CastingSkill {
+					attackSuccess = true
+					s.Logger.Debug("Using Meteor")
+				}
 				step.SecondaryAttack(skill.Meteor, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBall); found {
-				s.Logger.Debug("Using FireBall")
-				step.SecondaryAttack(skill.FireBall, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+				if s.Data.PlayerUnit.Mode == mode.CastingSkill {
+					attackSuccess = true
+					s.Logger.Debug("Using FireBall")
+				}
+				step.SecondaryAttack(skill.FireBall, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.IceBolt); found {
-				s.Logger.Debug("Using IceBolt")
-				step.SecondaryAttack(skill.IceBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+				if s.Data.PlayerUnit.Mode == mode.CastingSkill {
+					attackSuccess = true
+					s.Logger.Debug("Using FireBolt")
+				}
+				step.SecondaryAttack(skill.FireBolt, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else {
 				s.Logger.Debug("No secondary skills available, using primary attack")
 				step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
 			}
 		}
-
+		if attackSuccess {
+			completedAttackLoops++
+		}
 		completedAttackLoops++
 		previousUnitID = int(id)
 	}
 }
 
-func (s SorceressLeveling) killMonster(npc npc.ID, t data.MonsterType) error {
+func (s SorceressLeveling) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return 0, false
+		if m, found := d.Monsters.FindOne(id, monsterType); found {
+			return m.UnitID, true
 		}
 
-		return m.UnitID, true
-	}, nil)
+		return 0, false
+	}, skipOnImmunities)
 }
-
 func (s SorceressLeveling) BuffSkills() []skill.ID {
 	skillsList := make([]skill.ID, 0)
-	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FrozenArmor); found {
-		skillsList = append(skillsList, skill.FrozenArmor)
-	}
-
 	if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.EnergyShield); found {
 		skillsList = append(skillsList, skill.EnergyShield)
 	}
 
-	s.Logger.Info("Buff skills", "skills", skillsList)
+	armors := []skill.ID{skill.ChillingArmor, skill.ShiverArmor, skill.FrozenArmor}
+	for _, armor := range armors {
+		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
+			skillsList = append(skillsList, armor)
+			return skillsList
+		}
+	}
+
 	return skillsList
 }
 
 func (s SorceressLeveling) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
-}
-
-func (s SorceressLeveling) staticFieldCasts() int {
-	casts := 6
-	ctx := context.Get()
-
-	switch ctx.CharacterCfg.Game.Difficulty {
-	case difficulty.Normal:
-		casts = 8
-	}
-	s.Logger.Debug("Static Field casts", "count", casts)
-	return casts
 }
 
 func (s SorceressLeveling) ShouldResetSkills() bool {
@@ -305,21 +308,26 @@ func (s SorceressLeveling) SkillPoints() []skill.ID {
 }
 
 func (s SorceressLeveling) KillCountess() error {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.DarkStalker, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
 }
 
 func (s SorceressLeveling) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.Andariel, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
 }
 func (s SorceressLeveling) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.Summoner, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
 }
 
 func (s SorceressLeveling) KillDuriel() error {
 	m, _ := s.Data.Monsters.FindOne(npc.Duriel, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
-
-	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
 }
 
 func (s SorceressLeveling) KillCouncil() error {
@@ -349,13 +357,14 @@ func (s SorceressLeveling) KillCouncil() error {
 }
 
 func (s SorceressLeveling) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+	m, _ := s.Data.Monsters.FindOne(npc.Mephisto, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
 }
 func (s SorceressLeveling) KillIzual() error {
 	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
-
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
+	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
 }
 
 func (s SorceressLeveling) KillDiablo() error {
@@ -384,36 +393,33 @@ func (s SorceressLeveling) KillDiablo() error {
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
 
-		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, s.staticFieldCasts(), step.Distance(1, 5))
+		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(1, 2))
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
 	}
 }
 
 func (s SorceressLeveling) KillPindle() error {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (s SorceressLeveling) KillNihlathak() error {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
 }
 
 func (s SorceressLeveling) KillAncients() error {
 	for _, m := range s.Data.Monsters.Enemies(data.MonsterEliteFilter()) {
 		m, _ := s.Data.Monsters.FindOne(m.Name, data.MonsterTypeSuperUnique)
-
-		step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(8, 10))
-
 		step.MoveTo(data.Position{X: 10062, Y: 12639})
-
-		s.killMonster(m.Name, data.MonsterTypeSuperUnique)
+		_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
+		s.killMonsterByName(m.Name, data.MonsterTypeSuperUnique, nil)
 	}
 	return nil
 }
 
 func (s SorceressLeveling) KillBaal() error {
 	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
-	step.SecondaryAttack(skill.StaticField, m.UnitID, s.staticFieldCasts(), step.Distance(1, 4))
+	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(1, 2))
 
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
 }
