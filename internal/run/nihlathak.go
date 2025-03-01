@@ -48,6 +48,7 @@ func (n Nihlathak) Run() error {
 	}
 
 	// Move to Nihlathak
+	action.Buff()
 	action.MoveToCoords(o.Position)
 
 	// Try to position in the safest corner
