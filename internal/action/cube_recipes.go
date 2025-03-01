@@ -2,6 +2,7 @@ package action
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
@@ -364,7 +365,13 @@ func CubeRecipes() error {
 		return nil
 	}
 
-	itemsInStash := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
+	ingredientSources := []item.LocationType{item.LocationSharedStash}
+	if ctx.CharacterCfg.CubeRecipes.IncludePersonalStashForCubing {
+		ingredientSources = append(ingredientSources, item.LocationStash)
+	}
+
+	itemsInStash := ctx.Data.Inventory.ByLocation(ingredientSources...)
+
 	for _, recipe := range Recipes {
 		// Check if the current recipe is Enabled
 		if !slices.Contains(ctx.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
@@ -412,7 +419,7 @@ func CubeRecipes() error {
 				stashingRequired := false
 				stashingGrandCharm := false
 
-				// Check if the items that are not in the protected invetory slots should be stashed
+				// Check if the items that are not in the protected inventory slots should be stashed
 				for _, item := range itemsInInv {
 					// If item is not in the protected slots, check if it should be stashed
 					if ctx.CharacterCfg.Inventory.InventoryLock[item.Position.Y][item.Position.X] == 1 {
@@ -476,7 +483,13 @@ func CubeRecipes() error {
 func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, bool) {
 
 	ctx.RefreshGameData()
-	items := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
+
+	ingredientSources := []item.LocationType{item.LocationSharedStash}
+	if ctx.CharacterCfg.CubeRecipes.IncludePersonalStashForCubing {
+		ingredientSources = append(ingredientSources, item.LocationStash)
+	}
+
+	items := ctx.Data.Inventory.ByLocation(ingredientSources...)
 	// Special handling for "Reroll GrandCharms" recipe
 	if recipe.Name == "Reroll GrandCharms" {
 		return hasItemsForGrandCharmReroll(ctx, items)
@@ -489,33 +502,40 @@ func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, boo
 
 	itemsForRecipe := []data.Item{}
 
-	// Iterate over the items in our stash to see if we have the items for the recipie.
+	// Figure out all of the items we have in our stashes as well as their count
+	itemsByType := map[string][]data.Item{}
 	for _, item := range items {
-		if count, ok := recipeItems[string(item.Name)]; ok {
-
-			// Let's make sure we don't use an item we don't want to. Add more if needed (depending on the recipes we have)
-			if item.Name == "Jewel" {
-				if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(item); result == nip.RuleResultFullMatch {
-					continue
-				}
-			}
-
-			itemsForRecipe = append(itemsForRecipe, item)
-
-			// Check if we now have exactly the needed count before decrementing
-			count -= 1
-			if count == 0 {
-				delete(recipeItems, string(item.Name))
-				if len(recipeItems) == 0 {
-					return itemsForRecipe, true
-				}
-			} else {
-				recipeItems[string(item.Name)] = count
+		// Let's make sure we don't use an item we don't want to. Add more if needed (depending on the recipes we have)
+		if item.Name == "Jewel" {
+			if _, result := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(item); result == nip.RuleResultFullMatch {
+				continue
 			}
 		}
+		itemsByType[string(item.Name)] = append(itemsByType[string(item.Name)], item)
 	}
 
-	// We don't have all the items for the recipie.
+	// Check to see if we have all of the items needed for the recipe
+	for itemName, countNeededForRecipe := range recipeItems {
+		if itemList, ok := itemsByType[itemName]; ok {
+			countInStash := len(itemList)
+
+			bufferCount := 0
+			if strings.HasPrefix(recipe.Name, "Upgrade") {
+				// Imprecise check to see if this is a rune upgrade recipe
+				bufferCount = ctx.CharacterCfg.CubeRecipes.BufferRunes
+			}
+
+			if countInStash >= (countNeededForRecipe + bufferCount) {
+				itemsForRecipe = append(itemsForRecipe, itemList[:countNeededForRecipe]...)
+				delete(recipeItems, itemName)
+				if len(recipeItems) == 0 { // Was this the last item-type for the recipe?
+					return itemsForRecipe, true
+				}
+			}
+			// We don't have enough for this item-type in the recipe
+		}
+		return nil, false
+	}
 	return nil, false
 }
 

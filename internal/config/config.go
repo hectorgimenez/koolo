@@ -113,6 +113,10 @@ type CharacterCfg struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
 		} `yaml:"berserker_barb"`
+		Sorceress struct {
+			StaticFieldMinDist int `yaml:"static_field_minimum_distance"`
+			StaticFieldMaxDist int `yaml:"static_field_maximum_distance"`
+		} `yaml:"sorceress"`
 		NovaSorceress struct {
 			BossStaticThreshold int `yaml:"boss_static_threshold"`
 		} `yaml:"nova_sorceress"`
@@ -240,10 +244,12 @@ type CharacterCfg struct {
 		Items   []item.Name `yaml:"items"`
 	} `yaml:"gambling"`
 	CubeRecipes struct {
-		Enabled              bool     `yaml:"enabled"`
-		EnabledRecipes       []string `yaml:"enabledRecipes"`
-		SkipPerfectAmethysts bool     `yaml:"skipPerfectAmethysts"`
-		SkipPerfectRubies    bool     `yaml:"skipPerfectRubies"`
+		Enabled                       bool     `yaml:"enabled"`
+		EnabledRecipes                []string `yaml:"enabledRecipes"`
+		SkipPerfectAmethysts          bool     `yaml:"skipPerfectAmethysts"`
+		SkipPerfectRubies             bool     `yaml:"skipPerfectRubies"`
+		IncludePersonalStashForCubing bool     `yaml:"includePersonalStashForCubing"`
+		BufferRunes                   int      `yaml:"bufferRunes"`
 	} `yaml:"cubing"`
 	BackToTown struct {
 		NoHpPotions     bool `yaml:"noHpPotions"`
