@@ -36,11 +36,9 @@ type GameCreatedEvent struct {
 	Password string
 }
 
-func GameCreated(be BaseEvent, name string, password string) GameCreatedEvent {
+func GameCreated(be BaseEvent) GameCreatedEvent {
 	return GameCreatedEvent{
 		BaseEvent: be,
-		Name:      name,
-		Password:  password,
 	}
 }
 
@@ -149,5 +147,35 @@ func GamePaused(be BaseEvent, paused bool) GamePausedEvent {
 	return GamePausedEvent{
 		BaseEvent: be,
 		Paused:    paused,
+	}
+}
+
+// RequestCompanionJoinGameEvent is sent when the leader creates a new game and wants the companions to join it
+type RequestCompanionJoinGameEvent struct {
+	BaseEvent
+	Leader   string
+	Name     string
+	Password string
+}
+
+func RequestCompanionJoinGame(be BaseEvent, leader string, name string, password string) RequestCompanionJoinGameEvent {
+	return RequestCompanionJoinGameEvent{
+		BaseEvent: be,
+		Leader:    leader,
+		Name:      name,
+		Password:  password,
+	}
+}
+
+type ResetCompanionGameInfoEvent struct {
+	BaseEvent
+	Leader string
+}
+
+// ResetCompanionGameInfoEvent is sent when the Leader finishes a game, preventing the companions from joining it
+func ResetCompanionGameInfo(be BaseEvent, leader string) ResetCompanionGameInfoEvent {
+	return ResetCompanionGameInfoEvent{
+		BaseEvent: be,
+		Leader:    leader,
 	}
 }

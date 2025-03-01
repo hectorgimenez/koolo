@@ -12,6 +12,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/run"
+	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/lxn/win"
 )
@@ -126,23 +127,59 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	}
 
 	s.bot.ctx.Logger.Info("Character selection screen found")
+	disconnected := false
+
+	// Ensure we're online
+	if !s.bot.ctx.GameReader.IsOnline() {
+		if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
+			disconnected = true
+			s.bot.ctx.Logger.Info("Offline screen detected, clicking online tab to connect to bnet ...")
+
+			// Try and click the online tab to connect to bnet up to 3 times
+			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+
+			utils.Sleep(15000) // Wait for 15 seconds to ensure we're online
+
+			// Check if we're online again, if not, kill the client
+			if !s.bot.ctx.GameReader.IsOnline() {
+				if err := s.KillClient(); err != nil {
+					return err
+				}
+				return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
+			}
+		}
+	}
 
 	if s.bot.ctx.CharacterCfg.CharacterName != "" {
+
 		s.bot.ctx.Logger.Info("Selecting character...")
-		previousSelection := ""
-		for {
+
+		// If we've lost connection it bugs out and we need to select another character and the first one again.
+		if disconnected {
+			s.bot.ctx.HID.PressKey(win.VK_DOWN)
+			time.Sleep(250 * time.Millisecond)
+			s.bot.ctx.HID.PressKey(win.VK_UP)
+		}
+
+		// Try to select a character up to 25 times then give up and kill the client
+		for i := 0; i < 25; i++ {
 			characterName := s.bot.ctx.GameReader.GameReader.GetSelectedCharacterName()
-			if strings.EqualFold(previousSelection, characterName) {
-				return fmt.Errorf("character %s not found", s.bot.ctx.CharacterCfg.CharacterName)
-			}
+
+			s.bot.ctx.Logger.Debug(fmt.Sprintf("Checking character: %s", characterName))
+
 			if strings.EqualFold(characterName, s.bot.ctx.CharacterCfg.CharacterName) {
-				s.bot.ctx.Logger.Info("Character found")
+				s.bot.ctx.Logger.Info(fmt.Sprintf("Character %s found and selected.", s.bot.ctx.CharacterCfg.CharacterName))
 				return nil
 			}
 
 			s.bot.ctx.HID.PressKey(win.VK_DOWN)
-			time.Sleep(time.Millisecond * 150)
-			previousSelection = characterName
+			time.Sleep(250 * time.Millisecond)
+		}
+
+		s.bot.ctx.Logger.Info(fmt.Sprintf("Character %s not found after 25 attempts, terminating client ...", s.bot.ctx.CharacterCfg.CharacterName))
+
+		if err := s.KillClient(); err != nil {
+			return err
 		}
 	}
 
