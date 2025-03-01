@@ -22,14 +22,6 @@ type Summoner struct {
 
 var clearRange int = 30
 
-var ArcCheckPointsList = []data.Position{
-	{X: 25448, Y: 5448}, /*Center Point 0*/
-	/*Base Lane Coordinates*/
-	{ /*Start 1*/ X: 25544, Y: 5446}, { /*Center on Right Lane-a 2*/ X: 25637, Y: 5383}, { /*center on Right Lane-b 3*/ X: 25754, Y: 5384},
-	{ /*End Point 4*/ X: 25853, Y: 5448}, { /*Center on Left Lane 5*/ X: 25637, Y: 5506},
-	{ /*Center of Lane 6*/ X: 25683, Y: 5453},
-}
-
 var ArcSequencer = []int{
 	1, 2, 6, 3, 4, 5, 1, 0,
 }
@@ -45,6 +37,14 @@ func (s Summoner) Name() string {
 }
 
 func (s Summoner) Run() error {
+	// Set/Reset the checkpoint position data for the Bot to move to.
+	var ArcCheckPointsList = []data.Position{
+		{X: 25448, Y: 5448}, /*Center Point 0*/
+		/*Base Lane Coordinates*/
+		{ /*Start 1*/ X: 25544, Y: 5446}, { /*Center on Right Lane-a 2*/ X: 25637, Y: 5383}, { /*center on Right Lane-b 3*/ X: 25754, Y: 5384},
+		{ /*End Point 4*/ X: 25853, Y: 5448}, { /*Center on Left Lane 5*/ X: 25637, Y: 5506},
+		{ /*Center of Lane 6*/ X: 25683, Y: 5453},
+	}
 	// Use the waypoint to get to Arcane Sanctuary
 	err := action.WayPoint(area.ArcaneSanctuary)
 	if err != nil {
