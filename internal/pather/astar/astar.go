@@ -80,7 +80,8 @@ func CalculatePath(g *game.Grid, start, goal data.Position) ([]data.Position, in
 
 			if newCost < costSoFar[neighbor.X][neighbor.Y] {
 				costSoFar[neighbor.X][neighbor.Y] = newCost
-				priority := newCost + int(0.5*float64(heuristic(neighbor, goal)))
+				// Optimized priority calculation by adjusting heuristic weight
+				priority := newCost + int(0.8*float64(heuristic(neighbor, goal))) // Changed from 0.5 to 0.8
 				heap.Push(&pq, &Node{Position: neighbor, Cost: newCost, Priority: priority})
 				cameFrom[neighbor.X][neighbor.Y] = current.Position
 			}
