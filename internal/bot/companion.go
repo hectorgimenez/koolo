@@ -27,8 +27,6 @@ func NewCompanionEventHandler(supervisor string, log *slog.Logger, cfg *config.C
 // Handle processes companion-related events
 func (h *CompanionEventHandler) Handle(ctx context.Context, e event.Event) error {
 
-	// TODO: Filter the events based on the supervisor name (leader name) or if empty
-
 	switch evt := e.(type) {
 
 	case event.RequestCompanionJoinGameEvent:
