@@ -86,6 +86,9 @@ let socket;
                      <div class="status-indicator"></div>
                 </div>
                 <div class="character-controls">
+                    <button class="btn btn-outline companion-join-btn" onclick="showCompanionJoinPopup('${key}')" style="display:none;">
+                        <i class="bi bi-door-open btn-icon"></i>Join Game
+                    </button>
                     <button class="btn btn-outline" onclick="location.href='/debug?characterName=${key}'">
                         <i class="bi bi-bug btn-icon"></i>Debug
                     </button>
@@ -100,9 +103,6 @@ let socket;
                     </button>
                     <button class="btn btn-outline attach-btn" onclick="showAttachPopup('${key}')" style="display:none;">
                         <i class="bi bi-link-45deg btn-icon"></i>Attach
-                    </button>
-                    <button class="btn btn-outline companion-join-btn" onclick="showCompanionJoinPopup('${key}')" style="display:none;">
-                        <i class="bi bi-door-open btn-icon"></i>Join Game
                     </button>
                     <button class="toggle-details">
                         <i class="bi bi-chevron-down"></i>
