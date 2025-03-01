@@ -125,15 +125,19 @@ func (a Cows) getWirtsLeg() error {
 	if err != nil {
 		return err
 	}
-	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+
+	// Kill Rakanishu before entering Tristam if enabled
+	if a.ctx.CharacterCfg.Game.Cows.KillRakanishu {
+		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+	} else {
+		utils.Sleep(1000) // Add delay when skipping to allow portal to load
+	}
 
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
 		return errors.New("tristram not found")
 	}
-	err = action.InteractObject(portal, func() bool {
-		return a.ctx.Data.AreaData.Area == area.Tristram && a.ctx.Data.AreaData.IsInside(a.ctx.Data.PlayerUnit.Position)
-	})
+	err = action.InteractObject(portal, nil)
 	if err != nil {
 		return err
 	}
@@ -145,6 +149,17 @@ func (a Cows) getWirtsLeg() error {
 	err = action.InteractObject(wirtCorpse, func() bool {
 		return a.hasWirtsLeg()
 	})
+	wirtPosition := wirtCorpse.Position
+
+	// lets move away from gold piles
+	notOnGoldStacksPos := data.Position{
+		X: wirtPosition.X - 4,
+		Y: wirtPosition.Y - 4,
+	}
+	err = action.MoveToCoords(notOnGoldStacksPos)
+	if err != nil {
+		return err
+	}
 
 	return action.ReturnTown()
 }
