@@ -102,7 +102,7 @@ func (a Cows) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Cows.OpenChests, data.MonsterAnyFilter())
 }
 

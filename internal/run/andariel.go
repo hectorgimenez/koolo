@@ -76,7 +76,7 @@ func (a Andariel) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clearing inside room
 	a.ctx.Logger.Info("Clearing inside room")
 

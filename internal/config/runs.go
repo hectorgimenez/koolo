@@ -28,6 +28,7 @@ const (
 	LevelingRun         Run = "leveling"
 	QuestsRun           Run = "quests"
 	RushRun             Run = "rush"
+	FollowerRun         Run = "follower"
 	TerrorZoneRun       Run = "terror_zone"
 	ThreshsocketRun     Run = "threshsocket"
 	DrifterCavernRun    Run = "drifter_cavern"
@@ -61,6 +62,7 @@ var AvailableRuns = map[Run]interface{}{
 	LevelingRun:         nil,
 	QuestsRun:           nil,
 	RushRun:             nil,
+	FollowerRun:         nil,
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
 	DrifterCavernRun:    nil,

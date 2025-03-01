@@ -50,6 +50,7 @@ func (n Nihlathak) Run() error {
 	// Move to Nihlathak
 	action.Buff()
 	action.MoveToCoords(o.Position)
+	action.OpenTPIfLeader()
 
 	// Try to position in the safest corner
 	action.MoveToCoords(n.findBestCorner(o.Position))

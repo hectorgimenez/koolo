@@ -155,7 +155,6 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 }
 
 func (gm *Manager) JoinOnlineGame(gameName, password string) error {
-
 	// Click "Join game" tab
 	gm.hid.Click(LeftButton, 977, 54)
 	utils.Sleep(200)
@@ -179,14 +178,17 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	}
 	gm.hid.PressKey(win.VK_RETURN)
 
-	for range 30 {
-		if gm.gr.InGame() {
-			return nil
-		}
+	waitingToJoinLoopCounter := 0
+	for !gm.gr.InGame() && waitingToJoinLoopCounter < 15 {
 		utils.Sleep(1000)
+		waitingToJoinLoopCounter++
+	}
+	
+	if waitingToJoinLoopCounter == 15 {
+		return errors.New("Couldn't join game! Timeout")
 	}
 
-	return errors.New("error joining game! Timeout")
+	return nil
 }
 
 func (gm *Manager) InGame() bool {

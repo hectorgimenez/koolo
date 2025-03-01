@@ -97,8 +97,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
-			event.Send(event.GameCreated(event.Text(s.name, "New game created")))
-
+			event.Send(event.GameCreated(event.Text(s.name, "ng"), s.bot.ctx.GameReader.LastGameName(), s.bot.ctx.GameReader.LastGamePass()))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
@@ -381,4 +380,84 @@ func (s *SinglePlayerSupervisor) exitLobbyToCharacterSelection() error {
 	}
 
 	return nil
+}
+
+func startGameCreationRoutine(s *SinglePlayerSupervisor) error {
+	err := goToLobby(s)
+
+	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
+	if err != nil {
+		for err != nil {
+			err = restartSupervisor(s)
+		}
+	}
+
+	if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
+		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
+		return fmt.Errorf("failed to create an online game")
+
+	} else {
+		// We created the game successfully!
+		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
+		return nil
+	}
+}
+
+var (
+	LastGameJoined = ""
+)
+
+func startJoinerRoutine(s *SinglePlayerSupervisor) error {
+	err := goToLobby(s)
+
+	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
+	if err != nil {
+		for err != nil {
+			err = restartSupervisor(s)
+		}
+	}
+
+	timeInLobby := time.Now()
+	for LastGameJoined == config.LastGameName && !s.bot.ctx.Manager.InGame() && time.Since(timeInLobby) < 1*time.Minute {
+		s.bot.ctx.Logger.Info("Waiting for game join")
+		utils.Sleep(1000)
+	}
+
+	if s.bot.ctx.Manager.InGame() {
+		LastGameJoined = s.bot.ctx.GameReader.LastGameName()
+		return nil
+	}
+
+	for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil && !s.bot.ctx.Manager.InGame(); err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
+		// s.bot.ctx.HID.PressKey(0x1B)
+		utils.Sleep(15000)
+	}
+
+	LastGameJoined = s.bot.ctx.GameReader.LastGameName()
+
+	return nil
+}
+
+func goToLobby(s *SinglePlayerSupervisor) error {
+	retryCount := 0
+	for !s.bot.ctx.GameReader.IsInLobby() {
+
+		// Prevent an infinite loop
+		if retryCount >= 5 && !s.bot.ctx.Data.IsInLobby {
+			return fmt.Errorf("failed to enter bnet lobby after 5 retries")
+		}
+
+		// Try to enter bnet lobby
+		s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
+		utils.Sleep(1000)
+		retryCount++
+	}
+
+	return nil
+}
+
+func restartSupervisor(s *SinglePlayerSupervisor) error {
+	s.Stop()
+	utils.Sleep(60000)
+	return s.Start()
 }

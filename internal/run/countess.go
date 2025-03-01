@@ -46,7 +46,7 @@ func (c Countess) Run() error {
 			return err
 		}
 	}
-
+	action.OpenTPIfLeader()
 	action.Buff()
 	// Try to move around Countess area
 	action.MoveTo(func() (data.Position, bool) {

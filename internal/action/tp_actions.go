@@ -3,12 +3,13 @@ package action
 import (
 	"errors"
 	"fmt"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/town"
+	"github.com/hectorgimenez/koolo/internal/utils"
+	"time"
 )
 
 func ReturnTown() error {
@@ -48,7 +49,38 @@ func ReturnTown() error {
 		return errors.New("portal not found")
 	}
 
-	return InteractObject(portal, nil)
+	if err = ClearAreaAroundPosition(portal.Position, 15, data.MonsterAnyFilter()); err != nil {
+		ctx.Logger.Warn("Error clearing area around portal", "error", err)
+	}
+
+	// Now that it is safe, interact with portal
+	err = InteractObject(portal, func() bool {
+		return ctx.Data.PlayerUnit.Area.IsTown()
+	})
+	if err != nil {
+		return err
+	}
+
+	// Wait for area transition and data sync
+	utils.Sleep(1000)
+	ctx.RefreshGameData()
+
+	// Wait for town area data to be fully loaded
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if ctx.Data.PlayerUnit.Area.IsTown() {
+			// Verify area data exists and is loaded
+			if townData, ok := ctx.Data.Areas[ctx.Data.PlayerUnit.Area]; ok {
+				if townData.IsInside(ctx.Data.PlayerUnit.Position) {
+					return nil
+				}
+			}
+		}
+		utils.Sleep(100)
+		ctx.RefreshGameData()
+	}
+
+	return fmt.Errorf("failed to verify town area data after portal transition")
 }
 
 func UsePortalInTown() error {
@@ -92,4 +124,44 @@ func UsePortalFrom(owner string) error {
 	}
 
 	return errors.New("portal not found")
+}
+
+func ReturnToTownWithOwnedPortal() error {
+	ctx := context.Get()
+	ctx.SetLastAction("ReturnTown")
+	ctx.PauseIfNotPriority()
+
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		return nil
+	}
+
+	// Move slightly if we're right next to a waypoint to prevent fail to hover portal
+	for _, obj := range ctx.Data.Objects {
+		if obj.IsWaypoint() && ctx.PathFinder.DistanceFromMe(obj.Position) < 3 {
+			// Try a few different positions until we find one that works
+			for i := 0; i < 4; i++ {
+				newPos := data.Position{
+					X: ctx.Data.PlayerUnit.Position.X + 3 - i,
+					Y: ctx.Data.PlayerUnit.Position.Y + 3 - i,
+				}
+				if ctx.Data.AreaData.IsWalkable(newPos) && ctx.PathFinder.DistanceFromMe(obj.Position) >= 3 {
+					MoveToCoords(newPos)
+					break
+				}
+			}
+			break
+		}
+	}
+
+	err := step.OpenNewPortal()
+	if err != nil {
+		return err
+	}
+
+	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
+	if !found {
+		return errors.New("portal not found")
+	}
+
+	return InteractObject(portal, nil)
 }
