@@ -231,6 +231,23 @@ type CharacterCfg struct {
 			RescueAnya     bool `yaml:"rescueAnya"`
 			KillAncients   bool `yaml:"killAncients"`
 		} `yaml:"quests"`
+		Rush struct {
+			ClearAct1      bool `yaml:"clearAct1"`
+			ClearDen       bool `yaml:"clearDen"`
+			RescueCain     bool `yaml:"rescueCain"`
+			RetrieveHammer bool `yaml:"retrieveHammer"`
+			ClearAct2      bool `yaml:"clearAct2"`
+			GetCube        bool `yaml:"getCube"`
+			KillRadament   bool `yaml:"killRadament"`
+			ClearAct3      bool `yaml:"clearAct3"`
+			RetrieveBook   bool `yaml:"retrieveBook"`
+			ClearAct4      bool `yaml:"clearAct4"`
+			KillIzual      bool `yaml:"killIzual"`
+			ClearAct5      bool `yaml:"clearAct5"`
+			KillShenk      bool `yaml:"killShenk"`
+			RescueAnya     bool `yaml:"rescueAnya"`
+			KillAncients   bool `yaml:"killAncients"`
+		} `yaml:"rush"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled               bool   `yaml:"enabled"`

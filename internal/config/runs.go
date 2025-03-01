@@ -26,6 +26,7 @@ const (
 	CowsRun             Run = "cows"
 	LevelingRun         Run = "leveling"
 	QuestsRun           Run = "quests"
+	RushRun             Run = "rush"
 	TerrorZoneRun       Run = "terror_zone"
 	ThreshsocketRun     Run = "threshsocket"
 	DrifterCavernRun    Run = "drifter_cavern"
@@ -57,6 +58,7 @@ var AvailableRuns = map[Run]interface{}{
 	CowsRun:             nil,
 	LevelingRun:         nil,
 	QuestsRun:           nil,
+	RushRun:             nil,
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
 	DrifterCavernRun:    nil,

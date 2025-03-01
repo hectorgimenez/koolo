@@ -167,6 +167,31 @@
     </fieldset>
 {{ end }}
 
+{{ define "rush" }}
+    <fieldset>
+        <label>Act 1</label>
+        <label><input type="checkbox" name="gameRushClearAct1" {{ if .Config.Game.Rush.ClearAct1 }}checked{{ end }}> Clear Act 1</label>
+        <label><input type="checkbox" name="gameRushClearDen" {{ if .Config.Game.Rush.ClearDen }}checked{{ end }}> Clear Den</label>
+        <label><input type="checkbox" name="gameRushRescueCain" {{ if .Config.Game.Rush.RescueCain }}checked{{ end }}> Rescue Cain</label>
+        <label><input type="checkbox" name="gameRushRetrieveHammer" {{ if .Config.Game.Rush.RetrieveHammer }}checked{{ end }}> Retrieve Hammer</label>
+        <label>Act 2</label>
+        <label><input type="checkbox" name="gameRushClearAct2" {{ if .Config.Game.Rush.ClearAct2 }}checked{{ end }}> Clear Act 2</label>
+        <label><input type="checkbox" name="gameRushGetCube" {{ if .Config.Game.Rush.GetCube }}checked{{ end }}> Get Cube</label>
+        <label><input type="checkbox" name="gameRushKillRadament" {{ if .Config.Game.Rush.KillRadament }}checked{{ end }}> Kill Radament</label>
+        <label>Act 3</label>
+        <label><input type="checkbox" name="gameRushClearAct3" {{ if .Config.Game.Rush.ClearAct3 }}checked{{ end }}> Clear Act 3</label>
+        <label><input type="checkbox" name="gameRushRetrieveBook" {{ if .Config.Game.Rush.RetrieveBook }}checked{{ end }}> Retrieve Book</label>
+        <label>Act 4</label>
+        <label><input type="checkbox" name="gameRushClearAct4" {{ if .Config.Game.Rush.ClearAct4 }}checked{{ end }}> Clear Act 4</label>
+        <label><input type="checkbox" name="gameRushKillIzual" {{ if .Config.Game.Rush.KillIzual }}checked{{ end }}> Kill Izual</label>
+        <label>Act 5</label>
+        <label><input type="checkbox" name="gameRushClearAct5" {{ if .Config.Game.Rush.ClearAct5 }}checked{{ end }}> Clear Act 5</label>
+        <label><input type="checkbox" name="gameRushKillShenk" {{ if .Config.Game.Rush.KillShenk }}checked{{ end }}> Kill Shenk</label>
+        <label><input type="checkbox" name="gameRushRescueAnya" {{ if .Config.Game.Rush.RescueAnya }}checked{{ end }}> Rescue Anya</label>
+        <label><input type="checkbox" name="gameRushKillAncients" {{ if .Config.Game.Rush.KillAncients }}checked{{ end }}> Kill Ancients</label>
+    </fieldset>
+{{ end }}
+
 {{ define "terror_zone" }}
     {{$topLevelContext := .}}
     <fieldset>
