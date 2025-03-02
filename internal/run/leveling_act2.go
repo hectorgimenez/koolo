@@ -9,6 +9,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
 	"github.com/hectorgimenez/koolo/internal/utils"
@@ -52,7 +53,7 @@ func (a Leveling) act2() error {
 	}
 
 	// Duriel quest only starts when we click the journal. If we haven't clicked the journal we probably don't even have the Canyon WP.
-	if a.ctx.Data.Quests[quest.Act2TheSummoner].Completed() && !a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
+	if !a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
 		// Try to get level 21 before moving to Duriel and Act3
 
 		if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 21 {
@@ -87,14 +88,11 @@ func (a Leveling) act2() error {
 	if a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
 		// Summoner
 		a.ctx.Logger.Info("Starting summoner quest")
-		if a.ctx.Data.Quests[quest.Act2TheSummoner].HasStatus(quest.StatusQuestNotStarted) && !a.ctx.Data.Quests[quest.Act2TaintedSun].HasStatus(quest.StatusQuestNotStarted) {
-			action.InteractNPC(npc.Drognan)
-		}
-
 		err := NewSummoner().Run()
 		if err != nil {
 			return err
 		}
+
 		// This block can be removed when https://github.com/hectorgimenez/koolo/pull/642 gets merged
 		tome, found := a.ctx.Data.Objects.FindOne(object.YetAnotherTome)
 		if !found {
@@ -222,6 +220,11 @@ func (a Leveling) findAmulet() error {
 		return err
 	}
 
+	action.ReturnTown()
+
+	// This stops us being blocked from getting into Palace
+	action.InteractNPC(npc.Drognan)
+
 	return nil
 }
 
@@ -247,7 +250,7 @@ func (a Leveling) prepareStaff() error {
 			screenPos := ui.GetScreenCoordsForItem(horadricStaff)
 			a.ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
 			utils.Sleep(300)
-			a.ctx.HID.PressKey(win.VK_ESCAPE)
+			step.CloseAllMenus()
 
 			return nil
 		}
