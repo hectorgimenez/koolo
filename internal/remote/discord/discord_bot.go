@@ -51,7 +51,7 @@ func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate)
 	if (m.Author.ID == s.State.User.ID || slices.Contains(config.Koolo.Discord.BotAdmins, m.Author.ID)) && strings.Contains(m.Content, "ng:") {
 		parts := strings.Split(m.Message.Content, ":")
 		if len(parts) == 4 {
-			s.ChannelMessageSend(m.ChannelID, "Game Join Request Received.")
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Leader:%s, Game Name: %s, Password: %s", parts[1], parts[2], parts[3]))
 			event.Send(event.RequestCompanionJoinGameEvent{
 				Leader:   parts[1],
 				Name:     parts[2],

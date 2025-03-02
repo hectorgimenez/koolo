@@ -30,7 +30,7 @@ func (h *CompanionEventHandler) Handle(ctx context.Context, e event.Event) error
 	switch evt := e.(type) {
 
 	case event.RequestCompanionJoinGameEvent:
-
+		h.log.Debug("RequestCompanionJoinGameEvent received.", slog.Any("event", e))
 		if h.cfg.Companion.Enabled && !h.cfg.Companion.Leader {
 
 			// Check if the leader matches the one in our config or no leader set

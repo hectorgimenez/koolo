@@ -97,7 +97,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
-			event.Send(event.GameCreated(event.Text(s.name, "ng:"+s.bot.ctx.Data.CharacterCfg.Companion.LeaderName+":")))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
@@ -106,6 +105,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 			// If we're in companion mode, send the companion join game event
 			if s.bot.ctx.CharacterCfg.Companion.Enabled && s.bot.ctx.CharacterCfg.Companion.Leader {
+				event.Send(event.GameCreated(event.Text(s.name, fmt.Sprintf("ng:%s:%s:%s", s.bot.ctx.CharacterCfg.CharacterName, s.bot.ctx.Data.Game.LastGameName, s.bot.ctx.Data.Game.LastGamePassword))))
 				event.Send(event.RequestCompanionJoinGame(event.Text(s.name, "New Game Started "+s.bot.ctx.Data.Game.LastGameName), s.bot.ctx.CharacterCfg.CharacterName, s.bot.ctx.Data.Game.LastGameName, s.bot.ctx.Data.Game.LastGamePassword))
 			}
 
