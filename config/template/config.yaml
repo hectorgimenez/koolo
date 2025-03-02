@@ -51,11 +51,16 @@ inventory:
   beltColumns: [healing, healing, mana, rejuvenation] # 4 values, each represents the belt column type, allowed values: healing, mana, rejuvenation
 
 character:
-  class: sorceress # Allowed values: sorceress, lightning, hammerdin, foh, paladin (leveling only)
+  class: blizzardsorceress # Allowed values include: blizzardsorceress, lightning, hammerdin, foh, paladin (leveling only)
   useMerc: true
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
 
+  sorceress: # generic sorceress configurations
+    # static field configuration options
+    static_field_minimum_distance: 8
+    static_field_maximum_distance: 12
+    
 game:
   minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items
   clearTPArea: true # Will clear the TP area before clicking it
