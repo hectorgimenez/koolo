@@ -10,12 +10,19 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const DistanceToFinishMoving = 4
+
+var (
+	ErrMonstersInPath        = errors.New("monsters detected in movement path")
+	stepLastMonsterCheck     = time.Time{}
+	stepMonsterCheckInterval = 500 * time.Millisecond
+)
 
 type MoveOpts struct {
 	distanceOverride *int
@@ -70,6 +77,32 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		ctx.PauseIfNotPriority()
 		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
 		ctx.RefreshGameData()
+
+		// Check for monsters in path - only perform this check periodically to reduce CPU usage
+		if !ctx.Data.AreaData.Area.IsTown() && !ctx.Data.CanTeleport() && time.Since(stepLastMonsterCheck) > stepMonsterCheckInterval {
+			stepLastMonsterCheck = time.Now()
+
+			monsterFound := false
+			clearPathDist := ctx.CharacterCfg.Character.ClearPathDist
+
+			for _, m := range ctx.Data.Monsters.Enemies() {
+				// Skip dead monsters
+				if m.Stats[stat.Life] <= 0 {
+					continue
+				}
+
+				// Fast distance calculation for early exit
+				distanceToMonster := ctx.PathFinder.DistanceFromMe(m.Position)
+				if distanceToMonster <= clearPathDist {
+					monsterFound = true
+					break
+				}
+			}
+
+			if monsterFound {
+				return ErrMonstersInPath
+			}
+		}
 
 		// If we can't teleport, check for doors and destructible objects
 		if !ctx.Data.CanTeleport() {
@@ -191,7 +224,7 @@ func handleObstaclesInPath(dest data.Position, openedDoors map[object.Name]data.
 
 	// Check for destructible objects like barrels
 	for _, o := range ctx.Data.Objects {
-		if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 4 {
+		if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
 			objPos := o.Position
 			ourPos := ctx.Data.PlayerUnit.Position
 
