@@ -292,15 +292,13 @@ func (a Leveling) duriel() error {
 
 		action.MoveToCoords(data.Position{
 			X: 22577,
-			Y: 15613,
+			Y: 15600,
 		})
-
 		action.InteractNPC(npc.Tyrael)
+
 	}
-	if a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusInProgress5) {
-		action.ReturnTown()
-		return nil
-	}
+
+	action.ReturnTown()
 
 	return nil
 }
