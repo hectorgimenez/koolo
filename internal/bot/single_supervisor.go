@@ -185,6 +185,9 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 				utils.Sleep(1000)
 			}
 
+			// Set PublicGameCounter to the default InitialGameCount
+			s.bot.ctx.CharacterCfg.Game.PublicGameCounter = s.bot.ctx.CharacterCfg.Game.InitialGameCount
+
 			if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
 				s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
 				return fmt.Errorf("failed to create an online game")
