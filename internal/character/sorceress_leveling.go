@@ -193,11 +193,16 @@ func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
-	if lvl.Value < 20 {
-		statPoints[stat.Strength] = 43
+	if lvl.Value < 9 {
+		statPoints[stat.Strength] = 15
+		statPoints[stat.Vitality] = 9999
+	} else if lvl.Value < 15 {
+		statPoints[stat.Energy] = 45
+		statPoints[stat.Strength] = 25
+		statPoints[stat.Vitality] = 9999
 	} else {
-		//statPoints[stat.Energy] = 80
-		//statPoints[stat.Strength] = 60
+		statPoints[stat.Energy] = 60
+		statPoints[stat.Strength] = 50
 		statPoints[stat.Vitality] = 9999
 	}
 
