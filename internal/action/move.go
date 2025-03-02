@@ -1,18 +1,18 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"sort"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/pather"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -20,9 +20,17 @@ import (
 )
 
 const (
-	maxAreaSyncAttempts = 10
-	areaSyncDelay       = 100 * time.Millisecond
+	maxAreaSyncAttempts       = 10
+	areaSyncDelay             = 100 * time.Millisecond
+	monsterCacheTime          = 30 * time.Second
+	monsterHandleCooldown     = 1500 * time.Millisecond
+	monsterMapCleanupInterval = 5 * time.Minute
 )
+
+// Cache structure to avoid frequent CPU intensive monster checks
+var actionAttemptedMonsterClears = make(map[data.UnitID]time.Time)
+var actionLastMonsterHandlingTime = time.Time{}
+var actionLastMonsterMapCleanup = time.Now()
 
 func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 	// Skip sync check if we're already in the expected area and have valid area data
@@ -58,7 +66,8 @@ func MoveToArea(dst area.ID) error {
 		return err
 	}
 
-	// Exception for Arcane Sanctuary
+	// Exceptions for:
+	// Arcane Sanctuary
 	if dst == area.ArcaneSanctuary && ctx.Data.PlayerUnit.Area == area.PalaceCellarLevel3 {
 		ctx.Logger.Debug("Arcane Sanctuary detected, finding the Portal")
 		portal, _ := ctx.Data.Objects.FindOne(object.ArcaneSanctuaryPortal)
@@ -66,6 +75,25 @@ func MoveToArea(dst area.ID) error {
 
 		return step.InteractObject(portal, func() bool {
 			return ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary
+		})
+	}
+	// Canyon of the Magi
+	if dst == area.CanyonOfTheMagi && ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary {
+		ctx.Logger.Debug("Canyon of the Magi detected, finding the Portal")
+		tome, _ := ctx.Data.Objects.FindOne(object.YetAnotherTome)
+		MoveToCoords(tome.Position)
+		InteractObject(tome, func() bool {
+			if _, found := ctx.Data.Objects.FindOne(object.PermanentTownPortal); found {
+				ctx.Logger.Debug("Opening YetAnotherTome!")
+				return true
+			}
+			return false
+		})
+		ctx.Logger.Debug("Using Canyon of the Magi Portal")
+		portal, _ := ctx.Data.Objects.FindOne(object.PermanentTownPortal)
+		MoveToCoords(portal.Position)
+		return step.InteractObject(portal, func() bool {
+			return ctx.Data.PlayerUnit.Area == area.CanyonOfTheMagi
 		})
 	}
 
@@ -209,13 +237,17 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 		utils.Sleep(500)
 	}
 
-	openedDoors := make(map[object.Name]data.Position)
-	previousIterationPosition := data.Position{}
 	lastMovement := false
 
 	// Initial sync check
 	if err := ensureAreaSync(ctx, ctx.Data.PlayerUnit.Area); err != nil {
 		return err
+	}
+
+	// Clean up monster map occasionally
+	if time.Since(actionLastMonsterMapCleanup) > monsterMapCleanupInterval {
+		cleanupMonsterMap()
+		actionLastMonsterMapCleanup = time.Now()
 	}
 
 	for {
@@ -230,100 +262,6 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			return step.MoveTo(to)
 		}
 
-		// Check for doors blocking path
-		for _, o := range ctx.Data.Objects {
-			if o.IsDoor() && ctx.PathFinder.DistanceFromMe(o.Position) < 10 && openedDoors[o.Name] != o.Position {
-				if o.Selectable {
-					ctx.Logger.Info("Door detected and teleport is not available, trying to open it...")
-					openedDoors[o.Name] = o.Position
-					err := step.InteractObject(o, func() bool {
-						obj, found := ctx.Data.Objects.FindByID(o.ID)
-						return found && !obj.Selectable
-					})
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
-		// Check if there is any object blocking our path
-		for _, o := range ctx.Data.Objects {
-			if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
-				err := step.InteractObject(o, func() bool {
-					obj, found := ctx.Data.Objects.FindByID(o.ID)
-					//additional click on barrel to avoid getting stuck
-					x, y := ctx.PathFinder.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
-					ctx.HID.Click(game.LeftButton, x, y)
-					return found && !obj.Selectable
-				})
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// Check for monsters close to player
-		closestMonster := data.Monster{}
-		closestMonsterDistance := 9999999
-		targetedNormalEnemies := make([]data.Monster, 0)
-		targetedElites := make([]data.Monster, 0)
-		minDistance := 6
-		minDistanceForElites := 20                                            // This will make the character to kill elites even if they are far away, ONLY during leveling
-		stuck := ctx.PathFinder.DistanceFromMe(previousIterationPosition) < 5 // Detect if character was not able to move from last iteration
-
-		for _, m := range ctx.Data.Monsters.Enemies() {
-			// Skip if monster is already dead
-			if m.Stats[stat.Life] <= 0 {
-				continue
-			}
-
-			dist := ctx.PathFinder.DistanceFromMe(m.Position)
-			appended := false
-			if m.IsElite() && dist <= minDistanceForElites {
-				targetedElites = append(targetedElites, m)
-				appended = true
-			}
-
-			if dist <= minDistance {
-				targetedNormalEnemies = append(targetedNormalEnemies, m)
-				appended = true
-			}
-
-			if appended && dist < closestMonsterDistance {
-				closestMonsterDistance = dist
-				closestMonster = m
-			}
-		}
-
-		if len(targetedNormalEnemies) > 5 || len(targetedElites) > 0 || (stuck && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) || (pather.IsNarrowMap(ctx.Data.PlayerUnit.Area) && (len(targetedNormalEnemies) > 0 || len(targetedElites) > 0)) {
-			if stuck {
-				ctx.Logger.Info("Character stuck and monsters detected, trying to kill monsters around")
-			} else {
-				ctx.Logger.Info(fmt.Sprintf("At least %d monsters detected close to the character, targeting closest one: %d", len(targetedNormalEnemies)+len(targetedElites), closestMonster.Name))
-			}
-
-			path, _, mPathFound := ctx.PathFinder.GetPath(closestMonster.Position)
-			if mPathFound {
-				doorIsBlocking := false
-				for _, o := range ctx.Data.Objects {
-					if o.IsDoor() && o.Selectable && path.Intersects(*ctx.Data, o.Position, 4) {
-						ctx.Logger.Debug("Door is blocking the path to the monster, skipping attack sequence")
-						doorIsBlocking = true
-					}
-				}
-
-				if !doorIsBlocking {
-					ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-						return closestMonster.UnitID, true
-					}, nil)
-				}
-			}
-		}
-
-		// Continue moving
-		WaitForAllMembersWhenLeveling()
-		previousIterationPosition = ctx.Data.PlayerUnit.Position
-
 		if lastMovement {
 			return nil
 		}
@@ -333,9 +271,78 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 			lastMovement = true
 		}
 
-		err := step.MoveTo(to)
-		if err != nil {
-			return err
+		moveErr := step.MoveTo(to)
+		if moveErr != nil {
+			// Handle the monsters in path error
+			if errors.Is(moveErr, step.ErrMonstersInPath) {
+				if time.Since(actionLastMonsterHandlingTime) < monsterHandleCooldown {
+					// Skip handling, just continue
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
+				actionLastMonsterHandlingTime = time.Now()
+				ctx.Logger.Debug("Monsters detected in path, clearing before continuing")
+
+				// Fast check if we've already attempted to clear any monsters in this area recently
+				skipClearing := false
+				clearPathDist := ctx.CharacterCfg.Character.ClearPathDist
+
+				// Get list of nearby monsters more efficiently
+				nearbyMonsters := make([]data.UnitID, 0, 5) // Pre-allocate small capacity
+				for _, m := range ctx.Data.Monsters.Enemies() {
+					if m.Stats[stat.Life] <= 0 {
+						continue
+					}
+
+					distanceToMonster := ctx.PathFinder.DistanceFromMe(m.Position)
+					if distanceToMonster <= clearPathDist {
+						nearbyMonsters = append(nearbyMonsters, m.UnitID)
+
+						// Check if we recently tried to clear this monster - early exit optimization
+						if clearTime, exists := actionAttemptedMonsterClears[m.UnitID]; exists {
+							if time.Since(clearTime) < monsterCacheTime {
+								skipClearing = true
+								break // Early exit if we find any monster we've already tried to clear
+							}
+						}
+					}
+				}
+
+				if skipClearing {
+					ctx.Logger.Debug("Skipping monster clearing - already attempted recently")
+				} else if len(nearbyMonsters) > 0 {
+					// Try clearing monsters
+					clearErr := ClearAreaAroundPosition(ctx.Data.PlayerUnit.Position, clearPathDist, data.MonsterAnyFilter())
+
+					// Mark all these monsters as attempted, regardless of success
+					now := time.Now()
+					for _, monsterID := range nearbyMonsters {
+						actionAttemptedMonsterClears[monsterID] = now
+					}
+
+					if clearErr != nil {
+						ctx.Logger.Warn("Failed to clear all monsters, will try to path around them",
+							slog.String("error", fmt.Sprintf("%v", clearErr)))
+					}
+				}
+
+				// Continue the path
+				continue
+			}
+
+			return moveErr
+		}
+	}
+}
+
+func cleanupMonsterMap() {
+	if len(actionAttemptedMonsterClears) > 100 { // Only clean if the map is getting large
+		now := time.Now()
+		for id, timestamp := range actionAttemptedMonsterClears {
+			if now.Sub(timestamp) > monsterMapCleanupInterval {
+				delete(actionAttemptedMonsterClears, id)
+			}
 		}
 	}
 }
