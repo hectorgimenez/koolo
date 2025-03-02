@@ -97,7 +97,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
-			event.Send(event.GameCreated(event.Text(s.name, "ng"), s.bot.ctx.GameReader.LastGameName(), s.bot.ctx.GameReader.LastGamePass()))
+			event.Send(event.GameCreated(event.Text(s.name, "ng:"+s.bot.ctx.Data.CharacterCfg.Companion.LeaderName+":")))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/hectorgimenez/koolo/internal/bot"
 	"github.com/hectorgimenez/koolo/internal/config"
+	"github.com/hectorgimenez/koolo/internal/event"
 )
 
 type Bot struct {
@@ -46,21 +47,16 @@ func (b *Bot) Start(ctx context.Context) error {
 }
 
 func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Check if the message follows the format "New game created:gameName:gamePassword"
-	if m.Content == "" {
-		chanMsgs, err := s.ChannelMessages(m.ChannelID, 1, "", "", m.ID)
-		if err != nil {
-			return
-		}
-		m.Content = chanMsgs[0].Content
-		m.Attachments = chanMsgs[0].Attachments
-	}
-
+	// Check if the message follows the format "ng:leaderName:gameName:gamePassword"
 	if (m.Author.ID == s.State.User.ID || slices.Contains(config.Koolo.Discord.BotAdmins, m.Author.ID)) && strings.Contains(m.Content, "ng:") {
 		parts := strings.Split(m.Message.Content, ":")
-		if len(parts) == 3 {
-			config.LastGameName = parts[1]
-			config.LastGamePassword = parts[2]
+		if len(parts) == 4 {
+			s.ChannelMessageSend(m.ChannelID, "Game Join Request Received.")
+			event.Send(event.RequestCompanionJoinGameEvent{
+				Leader:   parts[1],
+				Name:     parts[2],
+				Password: parts[3],
+			})
 		}
 		return
 	}
