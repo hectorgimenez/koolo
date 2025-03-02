@@ -88,9 +88,9 @@ func (s SorceressLeveling) KillMonsterSequence(
 			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBall); found {
 				s.Logger.Debug("Using FireBall")
 				step.SecondaryAttack(skill.FireBall, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
-			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.IceBolt); found {
-				s.Logger.Debug("Using IceBolt")
-				step.SecondaryAttack(skill.IceBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
+				s.Logger.Debug("Using FireBolt")
+				step.SecondaryAttack(skill.FireBolt, id, 4, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
 			} else {
 				s.Logger.Debug("No secondary skills available, using primary attack")
 				step.PrimaryAttack(id, 1, false, step.Distance(1, SorceressLevelingMeleeDistance))
@@ -174,8 +174,8 @@ func (s SorceressLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 		skillBindings = append(skillBindings, skill.Meteor)
 	} else if s.Data.PlayerUnit.Skills[skill.FireBall].Level > 0 {
 		skillBindings = append(skillBindings, skill.FireBall)
-	} else if s.Data.PlayerUnit.Skills[skill.IceBolt].Level > 0 {
-		skillBindings = append(skillBindings, skill.IceBolt)
+	} else if s.Data.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
+		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
 	mainSkill := skill.AttackSkill
@@ -193,11 +193,16 @@ func (s SorceressLeveling) StatPoints() map[stat.ID]int {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
-	if lvl.Value < 20 {
+	if lvl.Value < 9 {
+		statPoints[stat.Strength] = 15
+		statPoints[stat.Vitality] = 9999
+	} else if lvl.Value < 15 {
+		statPoints[stat.Energy] = 45
+		statPoints[stat.Strength] = 25
 		statPoints[stat.Vitality] = 9999
 	} else {
-		statPoints[stat.Energy] = 80
-		statPoints[stat.Strength] = 60
+		statPoints[stat.Energy] = 60
+		statPoints[stat.Strength] = 50
 		statPoints[stat.Vitality] = 9999
 	}
 
@@ -222,18 +227,18 @@ func (s SorceressLeveling) SkillPoints() []skill.ID {
 			skill.FireBolt,
 			skill.Telekinesis,
 			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.FireBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
 			skill.Teleport,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
-			skill.IceBolt,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
+			skill.FireBall,
 		}
 	} else {
 		skillPoints = []skill.ID{
