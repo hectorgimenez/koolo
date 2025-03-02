@@ -165,7 +165,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		}
 
 		completedAttackLoops++
-		s.Logger.Info("Actions taken:", slog.String("actionsTakenThisLoop", fmt.Sprintf("%v", actionsTakenThisLoop)))
+		// s.Logger.Debug("Actions taken:", slog.String("actionsTakenThisLoop", fmt.Sprintf("%v", actionsTakenThisLoop)))
 
 		previousUnitID = int(id)
 	}
