@@ -874,6 +874,9 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Pit.OnlyClearLevel2 = r.Form.Has("gamePitOnlyClearLevel2")
 
 		cfg.Game.Andariel.ClearRoom = r.Form.Has("gameAndarielClearRoom")
+		cfg.Game.Andariel.UseAntidoes = r.Form.Has("gameAndarielUseAntidoes")
+
+		cfg.Game.Countess.ClearFloors = r.Form.Has("gameCountessClearFloors")
 
 		cfg.Game.Pindleskin.SkipOnImmunities = []stat.Resist{}
 		for _, i := range r.Form["gamePindleskinSkipOnImmunities[]"] {
@@ -884,6 +887,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")
 		cfg.Game.AncientTunnels.OpenChests = r.Form.Has("gameAncientTunnelsOpenChests")
 		cfg.Game.AncientTunnels.FocusOnElitePacks = r.Form.Has("gameAncientTunnelsFocusOnElitePacks")
+		cfg.Game.Duriel.UseThawing = r.Form.Has("gameDurielUseThawing")
 		cfg.Game.Mausoleum.OpenChests = r.Form.Has("gameMausoleumOpenChests")
 		cfg.Game.Mausoleum.FocusOnElitePacks = r.Form.Has("gameMausoleumFocusOnElitePacks")
 		cfg.Game.DrifterCavern.OpenChests = r.Form.Has("gameDrifterCavernOpenChests")
