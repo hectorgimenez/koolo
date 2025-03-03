@@ -65,9 +65,9 @@ func (a Leveling) act3() error {
 
 	// Find KhalimsEye
 	_, found = a.ctx.Data.Inventory.Find("KhalimsEye", item.LocationInventory, item.LocationStash)
-	if found && !a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() && !willFound {
+	if found {
 		a.ctx.Logger.Info("KhalimsEye found, skipping quest")
-	} else {
+	} else if !willFound && !a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
 		a.ctx.Logger.Info("KhalimsEye not found, starting quest")
 		a.findKhalimsEye()
 	}
@@ -76,7 +76,7 @@ func (a Leveling) act3() error {
 	_, found = a.ctx.Data.Inventory.Find("KhalimsBrain", item.LocationInventory, item.LocationStash)
 	if found {
 		a.ctx.Logger.Info("KhalimsBrain found, skipping quest")
-	} else {
+	} else if !willFound && !a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
 		a.ctx.Logger.Info("KhalimsBrain not found, starting quest")
 		NewEndugu().Run()
 	}
@@ -85,7 +85,7 @@ func (a Leveling) act3() error {
 	_, found = a.ctx.Data.Inventory.Find("KhalimsHeart", item.LocationInventory, item.LocationStash)
 	if found {
 		a.ctx.Logger.Info("KhalimsHeart found, skipping quest")
-	} else {
+	} else if !willFound && !a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
 		a.ctx.Logger.Info("KhalimsHeart not found, starting quest")
 		a.findKhalimsHeart()
 	}
@@ -93,9 +93,9 @@ func (a Leveling) act3() error {
 	// Find KhalimsFlail
 	_, found = a.ctx.Data.Inventory.Find("KhalimsFlail", item.LocationInventory, item.LocationStash)
 	if found {
-	// Trav
-	a.openMephistoStairs()
-	} else {
+		// Trav
+		a.openMephistoStairs()
+	} else if !willFound && !a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
 		a.ctx.Logger.Info("KhalimsFlail not found, starting quest")
 		NewTravincal().Run()
 	}
@@ -343,8 +343,10 @@ func (a Leveling) openMephistoStairs() error {
 	}
 	utils.Sleep(300)
 	if a.ctx.Data.ActiveWeaponSlot == 1 {
-	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.SwapWeapons)
+		a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.SwapWeapons)
 	}
+
+	time.Sleep(12000)
 
 	if a.ctx.Data.Quests[quest.Act3TheBlackenedTemple].Completed() {
 		// Interact with the stairs to go to Durance of Hate Level 1
