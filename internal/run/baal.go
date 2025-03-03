@@ -146,7 +146,7 @@ func (s Baal) Run() error {
 		if err != nil {
 			return err
 		}
-		action.Buff()
+		action.BuffIfRequired()
 		// Small delay to allow next wave to spawn if not last wave
 		if !lastWave {
 			utils.Sleep(500)
