@@ -114,5 +114,6 @@ func InRunReturnTownRoutine() error {
 		return OpenTPIfLeader()
 	}
 
+	Buff()
 	return UsePortalInTown()
 }
