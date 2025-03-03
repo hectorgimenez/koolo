@@ -48,8 +48,7 @@ func Buff() {
 	}
 
 	// Check if we're in loading screen
-	ctx.RefreshGameData()
-	if ctx.Data.OpenMenus.LoadingScreen {
+	if ctx.GameReader.GetData().OpenMenus.LoadingScreen {
 		ctx.Logger.Debug("Loading screen detected. Waiting for game to load before buffing...")
 		ctx.WaitForGameToLoad()
 
