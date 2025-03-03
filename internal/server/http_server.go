@@ -732,7 +732,9 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		// Scheduler config
 		cfg.Scheduler.Enabled = r.Form.Has("schedulerEnabled")
-
+		if len(cfg.Scheduler.Days) == 0 {
+			cfg.Scheduler.Days = make([]config.Day, 7)
+		}
 		for day := 0; day < 7; day++ {
 
 			starts := r.Form[fmt.Sprintf("scheduler[%d][start][]", day)]
