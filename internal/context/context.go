@@ -164,10 +164,12 @@ func (s *Status) PauseIfNotPriority() {
 	}
 }
 func (ctx *Context) WaitForGameToLoad() {
-	for ctx.Data.OpenMenus.LoadingScreen {
+	for ctx.GameReader.GetData().OpenMenus.LoadingScreen {
 		time.Sleep(100 * time.Millisecond)
-		ctx.RefreshGameData()
 	}
+	// Add a final refresh of all game data to resolve an edge case where tinymod might be out of sync
+	// after loading the game.
+	ctx.RefreshGameData()
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)
 }
