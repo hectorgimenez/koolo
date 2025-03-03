@@ -31,7 +31,7 @@ func (t Threshsocket) Run() error {
 	if err != nil {
 		return err
 	}
-
+	_ = action.OpenTPIfLeader()
 	// Move to ArreatPlateau
 	if err = action.MoveToArea(area.ArreatPlateau); err != nil {
 		return err

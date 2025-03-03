@@ -42,6 +42,8 @@ func (d *Diablo) Run() error {
 		return err
 	}
 
+	action.OpenTPIfLeader()
+
 	action.MoveToArea(area.ChaosSanctuary)
 
 	// We move directly to Diablo spawn position if StartFromStar is enabled, not clearing the path
@@ -63,10 +65,20 @@ func (d *Diablo) Run() error {
 			action.Buff()
 			action.ClearAreaAroundPlayer(30, d.getMonsterFilter())
 		}
-		//path through towards vizier
-		err := action.ClearThroughPath(chaosNavToPosition, 50, d.getMonsterFilter())
-		if err != nil {
-			return err
+
+		// if we dont teleport, we have default clear area enabled
+		if !d.ctx.CharacterCfg.Character.UseTeleport {
+			//path through towards vizier
+			err := action.MoveToCoords(chaosNavToPosition)
+			if err != nil {
+				return err
+			}
+		} else {
+			//path through towards vizier
+			err := action.ClearThroughPath(chaosNavToPosition, 50, d.getMonsterFilter())
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -86,14 +98,23 @@ func (d *Diablo) Run() error {
 				return fmt.Errorf("seal not found: %d", sealID)
 			}
 
-			err := action.ClearThroughPath(seal.Position, 30, d.getMonsterFilter())
-			if err != nil {
-				return err
+			// if we dont teleport, we have default clear area enabled
+			if !d.ctx.CharacterCfg.Character.UseTeleport {
+				//path through towards vizier
+				err := action.MoveToCoords(seal.Position)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := action.ClearThroughPath(seal.Position, 30, d.getMonsterFilter())
+				if err != nil {
+					return err
+				}
 			}
 
 			// Handle the special case for DiabloSeal3
 			if sealID == object.DiabloSeal3 && seal.Position.X == 7773 && seal.Position.Y == 5155 {
-				if err = action.MoveToCoords(data.Position{X: 7768, Y: 5160}); err != nil {
+				if err := action.MoveToCoords(data.Position{X: 7768, Y: 5160}); err != nil {
 					return fmt.Errorf("failed to move to bugged seal position: %w", err)
 				}
 			}
@@ -113,7 +134,7 @@ func (d *Diablo) Run() error {
 
 			// Infector spawns when first seal is enabled
 			if object.DiabloSeal1 == sealID {
-				if err = d.killSealElite(bossName); err != nil {
+				if err := d.killSealElite(bossName); err != nil {
 					return err
 				}
 			}

@@ -30,22 +30,22 @@ func (e Endugu) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to FlayerDungeonLevel1
 	if err = action.MoveToArea(area.FlayerDungeonLevel1); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to FlayerDungeonLevel2
 	if err = action.MoveToArea(area.FlayerDungeonLevel2); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to FlayerDungeonLevel3
 	if err = action.MoveToArea(area.FlayerDungeonLevel3); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	var khalimChest2 data.Object
 
 	// Move to KhalimChest

@@ -13,6 +13,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -188,6 +189,7 @@ func (f *Follower) goToCorrectTown(leader *data.RosterMember) error {
 		_ = action.MoveTo(f.getAtmaPosition)
 	case 3:
 		_ = action.WayPoint(area.KurastDocks)
+		_ = action.MoveTo(f.getOrmusPosition)
 	case 4:
 		_ = action.WayPoint(area.ThePandemoniumFortress)
 	case 5:
@@ -238,11 +240,20 @@ func (f *Follower) InTownRoutine() error {
 	_ = action.Stash(false)
 	action.ReviveMerc()
 	_ = action.CubeRecipes()
+	_ = f.goToTpArea()
 	return nil
 }
 
 func (f *Follower) getAtmaPosition() (data.Position, bool) {
 	atma, found := f.ctx.Data.NPCs.FindOne(npc.Atma)
+	if found {
+		return atma.Positions[0], true
+	}
+	return data.Position{}, false
+}
+
+func (f *Follower) getOrmusPosition() (data.Position, bool) {
+	atma, found := f.ctx.Data.NPCs.FindOne(npc.Ormus)
 	if found {
 		return atma.Positions[0], true
 	}
@@ -273,4 +284,9 @@ func (f *Follower) handleBaalScenario() error {
 	}
 
 	return nil
+}
+
+func (f *Follower) goToTpArea() error {
+	tpArea := town.GetTownByArea(f.ctx.Data.PlayerUnit.Area).TPWaitingArea(*f.ctx.Data)
+	return action.MoveToCoords(tpArea)
 }

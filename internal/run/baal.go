@@ -11,8 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -61,7 +59,7 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Game.Baal.ClearFloors && s.ctx.CharacterCfg.Companion.Leader {
+	if s.ctx.CharacterCfg.Game.Baal.ClearFloors {
 		action.OpenTPIfLeader()
 		utils.Sleep(10000)
 		action.Buff()
@@ -75,7 +73,8 @@ func (s Baal) Run() error {
 	if err != nil {
 		return err
 	}
-	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -89,7 +88,8 @@ func (s Baal) Run() error {
 	if err != nil {
 		return err
 	}
-	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -147,7 +147,7 @@ func (s Baal) Run() error {
 	}
 
 	// Let's be sure everything is dead
-	err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+	_ = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
@@ -169,19 +169,6 @@ func (s Baal) Run() error {
 	}
 
 	return nil
-}
-
-func (s Baal) clearWave() error {
-	return s.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
-			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
-			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
-				lastClear = time.Now()
-				return m.UnitID, true
-			}
-		}
-		return 0, false
-	}, nil)
 }
 
 func (s Baal) checkForSoulsOrDolls() bool {

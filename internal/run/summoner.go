@@ -28,7 +28,7 @@ func (s Summoner) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Get the Summoner's position from the cached map data
 	areaData := s.ctx.Data.Areas[area.ArcaneSanctuary]
 	summonerNPC, found := areaData.NPCs.FindOne(npc.Summoner)
@@ -44,7 +44,6 @@ func (s Summoner) Run() error {
 
 	// Kill Summoner
 	_ = s.ctx.Char.KillSummoner()
-	_ = action.OpenTPIfLeader()
 
 	if s.ctx.CharacterCfg.Game.Summoner.ClearArea {
 		if err = action.ClearCurrentLevel(true, s.ctx.Data.MonsterFilterAnyReachable()); err != nil {

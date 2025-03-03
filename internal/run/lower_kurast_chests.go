@@ -41,7 +41,7 @@ func (run LowerKurastChests) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Get bonfires from cached map data
 	var bonFirePositions []data.Position
 	if areaData, ok := run.ctx.GameReader.GetData().Areas[area.LowerKurast]; ok {
@@ -111,11 +111,13 @@ func (run LowerKurastChests) Run() error {
 
 	if run.ctx.CharacterCfg.Game.LowerKurastChest.GetSewersChests {
 		// Go get all those chests in sewers lvl 2
-		err = action.MoveToArea(area.KurastBazaar)
+		_ = action.MoveToArea(area.KurastBazaar)
+		action.OpenTPIfLeader()
 		err = action.MoveToArea(area.SewersLevel1Act3)
 		if err != nil {
 			return err
 		}
+		action.OpenTPIfLeader()
 		action.Buff()
 
 		err = action.MoveTo(func() (data.Position, bool) {
@@ -151,6 +153,7 @@ func (run LowerKurastChests) Run() error {
 		if err != nil {
 			return err
 		}
+		action.OpenTPIfLeader()
 		action.Buff()
 
 		err = action.ClearCurrentLevel(true, run.ctx.Data.MonsterFilterAnyReachable())

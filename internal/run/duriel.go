@@ -39,7 +39,7 @@ func (d Duriel) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Find and move to the real Tal Rasha tomb
 	realTalRashaTomb, err := d.findRealTomb()
 	if err != nil {
@@ -50,7 +50,7 @@ func (d Duriel) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Wait for area to fully load and get synchronized
 	utils.Sleep(500)
 	d.ctx.RefreshGameData()
@@ -114,7 +114,7 @@ func (d Duriel) Run() error {
 	d.ctx.RefreshGameData()
 
 	utils.Sleep(700)
-
+	action.OpenTPIfLeader()
 	return d.ctx.Char.KillDuriel()
 }
 

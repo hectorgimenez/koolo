@@ -30,7 +30,7 @@ func (c Countess) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	areas := []area.ID{
 		area.ForgottenTower,
 		area.TowerCellarLevel1,
@@ -42,6 +42,7 @@ func (c Countess) Run() error {
 
 	for _, a := range areas {
 		err = action.MoveToArea(a)
+		action.OpenTPIfLeader()
 		if err != nil {
 			return err
 		}

@@ -36,7 +36,7 @@ func (s DrifterCavern) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the correct area
 	if err = action.MoveToArea(area.DrifterCavern); err != nil {
 		return err
