@@ -59,9 +59,9 @@ func (a Leveling) act2() error {
 		if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 21 {
 			return NewTalRashaTombs().Run()
 		}
-		if a.ctx.Data.Quests[quest.Act2TheHoradricStaff].HasStatus(quest.StatusInProgress3) {
-			a.prepareStaff()
-		}
+
+		a.prepareStaff()
+
 		return a.duriel()
 	}
 
@@ -85,7 +85,7 @@ func (a Leveling) act2() error {
 		a.findAmulet()
 	}
 
-	if a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
+	if !a.ctx.Data.Quests[quest.Act2TheSummoner].Completed() {
 		// Summoner
 		a.ctx.Logger.Info("Starting summoner quest")
 		err := NewSummoner().Run()
