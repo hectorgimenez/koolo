@@ -52,14 +52,14 @@ func (a Leveling) act3() error {
 			return err
 		}
 		if a.ctx.Data.Quests[quest.Act3TheGuardian].Completed() {
-	hellgate, found := a.ctx.Data.Objects.FindOne(object.HellGate)
-	if !found {
-		a.ctx.Logger.Info("Gate to Pandemonium Fortress not found")
-	}
+			hellgate, found := a.ctx.Data.Objects.FindOne(object.HellGate)
+			if !found {
+				a.ctx.Logger.Info("Gate to Pandemonium Fortress not found")
+			}
 			return action.InteractObject(hellgate, func() bool {
 				utils.Sleep(500)
-			return a.ctx.Data.PlayerUnit.Area == area.ThePandemoniumFortress
-		})
+				return a.ctx.Data.PlayerUnit.Area == area.ThePandemoniumFortress
+			})
 		}
 	}
 
@@ -264,14 +264,14 @@ func (a Leveling) prepareWill() error {
 		}
 
 		err := action.CubeAddItems(eye, brain, heart, flail)
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	err = action.CubeTransmute()
-	if err != nil {
-		return err
-	}
+		err = action.CubeTransmute()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -347,21 +347,21 @@ func (a Leveling) openMephistoStairs() error {
 	}
 
 	if a.ctx.Data.Quests[quest.Act3TheBlackenedTemple].Completed() {
-	// Interact with the stairs to go to Durance of Hate Level 1
-	stairsr, found := a.ctx.Data.Objects.FindOne(object.StairSR)
-	if !found {
+		// Interact with the stairs to go to Durance of Hate Level 1
+		stairsr, found := a.ctx.Data.Objects.FindOne(object.StairSR)
+		if !found {
 			a.ctx.Logger.Debug("Stairs to Durance not found")
-	}
+		}
 
 		err := action.InteractObject(stairsr, func() bool {
-		return a.ctx.Data.PlayerUnit.Area == area.DuranceOfHateLevel1
-	})
-	if err != nil {
-		return err
-	}
+			return a.ctx.Data.PlayerUnit.Area == area.DuranceOfHateLevel1
+		})
+		if err != nil {
+			return err
+		}
 
-	// Move to Durance of Hate Level 2 and discover the waypoint
-	action.MoveToArea(area.DuranceOfHateLevel2)
+		// Move to Durance of Hate Level 2 and discover the waypoint
+		action.MoveToArea(area.DuranceOfHateLevel2)
 		err = action.DiscoverWaypoint()
 		if err != nil {
 			return err
