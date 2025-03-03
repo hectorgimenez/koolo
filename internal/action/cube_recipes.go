@@ -373,7 +373,8 @@ func CubeRecipes() error {
 			continue
 		}
 
-		ctx.Logger.Debug("Cube recipe is enabled, processing", "recipe", recipe.Name)
+		// Commented out due to log pollution
+		//ctx.Logger.Debug("Cube recipe is enabled, processing", "recipe", recipe.Name)
 
 		continueProcessing := true
 		for continueProcessing {
