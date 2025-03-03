@@ -232,7 +232,8 @@ func (f *Follower) UseCorrectPortalFromLeader(leader *data.RosterMember) error {
 
 func (f *Follower) InTownRoutine() error {
 	f.ctx.SetLastAction("In Town Routine")
-
+	_ = action.Stash(false)
+	_ = action.IdentifyAll(false)
 	_ = action.VendorRefill(false, true)
 	_ = action.Stash(false)
 	action.ReviveMerc()
