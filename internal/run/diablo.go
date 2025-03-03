@@ -155,7 +155,13 @@ func (d *Diablo) killSealElite(boss string) error {
 			if action.IsMonsterSealElite(m) {
 				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
 
-				return action.ClearAreaAroundPosition(m.Position, 30, d.ctx.Data.MonsterFilterAnyReachable())
+				return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
+					if action.IsMonsterSealElite(m) {
+						filteredMonsters = append(filteredMonsters, m)
+					}
+
+					return filteredMonsters
+				})
 			}
 		}
 		time.Sleep(100 * time.Millisecond)

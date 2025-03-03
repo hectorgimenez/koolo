@@ -145,29 +145,6 @@ func DistanceFromPoint(from data.Position, to data.Position) int {
 }
 
 func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Position) bool {
-	// Pre-calculate door collision boxes
-	var doorBoxes []struct {
-		minX, maxX, minY, maxY int
-	}
-	for _, obj := range pf.data.Objects {
-		if obj.IsDoor() && obj.Selectable {
-			desc := obj.Desc()
-			halfSizeX := desc.SizeX / 2
-			halfSizeY := desc.SizeY / 2
-			doorX := obj.Position.X + desc.Xoffset
-			doorY := obj.Position.Y + desc.Yoffset
-
-			doorBoxes = append(doorBoxes, struct {
-				minX, maxX, minY, maxY int
-			}{
-				minX: doorX - halfSizeX,
-				maxX: doorX + halfSizeX,
-				minY: doorY - halfSizeY,
-				maxY: doorY + halfSizeY,
-			})
-		}
-	}
-
 	dx := int(math.Abs(float64(destination.X - origin.X)))
 	dy := int(math.Abs(float64(destination.Y - origin.Y)))
 	sx, sy := 1, 1
@@ -180,6 +157,7 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 	}
 
 	err := dx - dy
+
 	x, y := origin.X, origin.Y
 
 	for {
@@ -189,15 +167,6 @@ func (pf *PathFinder) LineOfSight(origin data.Position, destination data.Positio
 		if x == destination.X && y == destination.Y {
 			break
 		}
-
-		// Check pre-calculated door boxes
-		for _, box := range doorBoxes {
-			if x >= box.minX && x <= box.maxX &&
-				y >= box.minY && y <= box.maxY {
-				return false
-			}
-		}
-
 		e2 := 2 * err
 		if e2 > -dy {
 			err -= dy
