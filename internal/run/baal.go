@@ -155,14 +155,8 @@ func (s Baal) Run() error {
 		action.Buff()
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		_ = action.InteractObject(baalPortal, func() bool {
-
-			for s.ctx.Data.PlayerUnit.Area != area.TheWorldstoneChamber {
-				utils.Sleep(200)
-			}
-			return true
-		})
-
+		_ = action.InteractObject(baalPortal, nil)
+		utils.Sleep(700)
 		if err = s.ctx.Char.KillBaal(); err != nil {
 			return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 		}

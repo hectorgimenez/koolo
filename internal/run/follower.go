@@ -271,14 +271,8 @@ func (f *Follower) getKashyaPosition() (data.Position, bool) {
 func (f *Follower) handleBaalScenario() error {
 	f.ctx.Logger.Info("Leader is in The Worldstone Chamber, going through the red portal.")
 	baalPortal, _ := f.ctx.Data.Objects.FindOne(object.BaalsPortal)
-	_ = action.InteractObject(baalPortal, func() bool {
-
-		for f.ctx.Data.PlayerUnit.Area != area.TheWorldstoneChamber {
-			utils.Sleep(200)
-		}
-		return true
-	})
-
+	_ = action.InteractObject(baalPortal, nil)
+	utils.Sleep(700)
 	if err := f.ctx.Char.KillBaal(); err != nil {
 		return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 	}
