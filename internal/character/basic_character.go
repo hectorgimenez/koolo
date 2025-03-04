@@ -52,7 +52,7 @@ func (b BasicCharacter) KillMonsterSequence(
 
 		// If area is unreachable, or monster is dead, skip.
 		if previousUnitID == int(id) {
-			if monster.Stats[stat.Life] > 0 && s.Data.AreaData.IsWalkable(monster.Position) {
+			if monster.Stats[stat.Life] > 0 && b.Data.AreaData.IsWalkable(monster.Position) {
 				b.PathFinder.RandomTeleport() // will walk if can't teleport
 				utils.Sleep(400)
 			} else {
@@ -112,7 +112,7 @@ func (b BasicCharacter) KillBossSequence(
 }
 
 func (b BasicCharacter) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
-	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
+	return b.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(id, monsterType); found {
 			return m.UnitID, true
 		}
@@ -130,15 +130,15 @@ func (b BasicCharacter) PreCTABuffSkills() []skill.ID {
 }
 
 func (b BasicCharacter) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
+	return b.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
 }
 
 func (b BasicCharacter) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
+	return b.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
 }
 
 func (b BasicCharacter) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
+	return b.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
 }
 
 func (b BasicCharacter) KillDiablo() error {
@@ -148,11 +148,11 @@ func (b BasicCharacter) KillDiablo() error {
 
 	for {
 		if time.Since(startTime) > timeout && !diabloFound {
-			s.Logger.Error("Diablo was not found, timeout reached")
+			b.Logger.Error("Diablo was not found, timeout reached")
 			return nil
 		}
 
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
+		diablo, found := b.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
 		if !found || diablo.Stats[stat.Life] <= 0 {
 			if diabloFound {
 				return nil
@@ -162,30 +162,30 @@ func (b BasicCharacter) KillDiablo() error {
 		}
 
 		diabloFound = true
-		s.Logger.Info("Diablo detected, attacking")
+		b.Logger.Info("Diablo detected, attacking")
 
-		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
+		return b.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
 	}
 }
 
 func (b BasicCharacter) KillBaal() error {
-	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
+	return b.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
 }
 
 func (b BasicCharacter) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
+	return b.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
 }
 
 func (b BasicCharacter) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
+	return b.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, nil)
 }
 
 func (b BasicCharacter) KillIzual() error {
-	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
+	return b.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
 }
 
 func (b BasicCharacter) KillCouncil() error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+	return b.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		for _, m := range d.Monsters.Enemies() {
 			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
 				return m.UnitID, true
@@ -196,9 +196,9 @@ func (b BasicCharacter) KillCouncil() error {
 }
 
 func (b BasicCharacter) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, s.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
+	return b.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, b.CharacterCfg.Game.Pindleskin.SkipOnImmunities)
 }
 
 func (b BasicCharacter) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
+	return b.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
 }
