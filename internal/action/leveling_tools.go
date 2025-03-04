@@ -159,13 +159,48 @@ func EnsureSkillPoints() error {
 		for sk := range counts {
 			skills = append(skills, sk)
 		}
-		sort.Slice(skills, func(i, j int) bool { return skills[i] < skills[j] })
+
+		// this sorts the skills from highest to lowest skill ID. So better skills are skilled earlier (after the prerequisite skills)
+		sort.Slice(skills, func(i, j int) bool { return skills[i] > skills[j] })
 
 		var sortedOutput string // this is the output of the sorted list of skill and skill level pairs
 		for _, skillID := range skills {
 			sortedOutput += fmt.Sprintf("%d %d\n", skillID, counts[skillID]) // counts is the target skill level
 		}
 
+		// Level each unskilled skill in the order shown in settingsSkillPoints
+		for _, skillID := range settingsSkillPoints {
+			skillDesc, skFound := skill.Desc[skillID]
+			if !skFound {
+				ctx.Logger.Error("Skill not found for character", "skill", skillID)
+				continue
+			}
+
+			var calcSkillPoints int = int(ctx.Data.PlayerUnit.Skills[skillID].Level) // Current char skill level. Converts this from uint to int for the if logic below
+			if calcSkillPoints >= 1 {                                                // if the actual skill level is greater than 1, then skip this skill
+				continue
+			}
+
+			if !ctx.Data.OpenMenus.SkillTree {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+			}
+
+			utils.Sleep(100)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+			}
+			utils.Sleep(200)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+			}
+			utils.Sleep(500)
+		}
+
+		// Level each skill to target skill level, highlest skill IDs first
 		var iteration int = 0
 		for _, skillID := range skills {
 			sortedOutput += fmt.Sprintf("%d %d\n", skillID, counts[skillID])
