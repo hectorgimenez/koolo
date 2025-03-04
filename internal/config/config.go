@@ -24,11 +24,9 @@ import (
 )
 
 var (
-	Koolo            *KooloCfg
-	Characters       map[string]*CharacterCfg
-	Version          = "dev"
-	LastGameName     = ""
-	LastGamePassword = ""
+	Koolo      *KooloCfg
+	Characters map[string]*CharacterCfg
+	Version    = "dev"
 )
 
 type KooloCfg struct {
@@ -136,7 +134,6 @@ type CharacterCfg struct {
 		RandomizeRuns          bool                  `yaml:"randomizeRuns"`
 		Runs                   []Run                 `yaml:"runs"`
 		CreateLobbyGames       bool                  `yaml:"createLobbyGames"`
-		JoinLobbyGames         bool                  `yaml:"joinLobbyGames"`
 		PublicGameCounter      int                   `yaml:"-"`
 		BloodMoor              struct {
 			ClearDenOfEvil     bool `yaml:"clearDenOfEvil"`
