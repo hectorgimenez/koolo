@@ -59,9 +59,9 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
-		utils.Sleep(10000)
+		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
 	}
 
