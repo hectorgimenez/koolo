@@ -7,6 +7,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
+	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -15,25 +16,45 @@ import (
 )
 
 const (
-	maxInteractions = 45
-	spiralDelay     = 50 * time.Millisecond
-	clickDelay      = 25 * time.Millisecond
-	pickupTimeout   = 3 * time.Second
+	clickDelay    = 25 * time.Millisecond
+	spiralDelay   = 25 * time.Millisecond
+	pickupTimeout = 3 * time.Second
 )
 
 var (
+	maxInteractions      = 24 // 25 attempts since we start at 0
 	ErrItemTooFar        = errors.New("item is too far away")
 	ErrNoLOSToItem       = errors.New("no line of sight to item")
 	ErrMonsterAroundItem = errors.New("monsters detected around item")
+	ErrCastingMoving     = errors.New("char casting or moving")
 )
 
-func PickupItem(it data.Item) error {
+func PickupItem(it data.Item, itemPickupAttempt int) error {
 	ctx := context.Get()
 	ctx.SetLastStep("PickupItem")
+
+	// Casting skill/moving return back
+	for ctx.Data.PlayerUnit.Mode == mode.CastingSkill || ctx.Data.PlayerUnit.Mode == mode.Running || ctx.Data.PlayerUnit.Mode == mode.Walking || ctx.Data.PlayerUnit.Mode == mode.WalkingInTown {
+		time.Sleep(25 * time.Millisecond)
+		return ErrCastingMoving
+	}
 
 	// Calculate base screen position for item
 	baseX := it.Position.X - 1
 	baseY := it.Position.Y - 1
+	switch itemPickupAttempt {
+	case 3:
+		baseX = baseX + 1
+	case 4:
+		maxInteractions = 44
+		baseY = baseY + 1
+	case 5:
+		maxInteractions = 44
+		baseX = baseX - 1
+		baseY = baseY - 1
+	default:
+		maxInteractions = 24
+	}
 	baseScreenX, baseScreenY := ctx.PathFinder.GameCoordsToScreenCords(baseX, baseY)
 
 	// Check for monsters first
@@ -59,7 +80,7 @@ func PickupItem(it data.Item) error {
 	spiralAttempt := 0
 	targetItem := it
 	lastMonsterCheck := time.Now()
-	const monsterCheckInterval = 250 * time.Millisecond
+	const monsterCheckInterval = 150 * time.Millisecond
 
 	startTime := time.Now()
 
@@ -78,14 +99,18 @@ func PickupItem(it data.Item) error {
 		// Check if item still exists
 		currentItem, exists := findItemOnGround(targetItem.UnitID)
 		if !exists {
-			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s]", targetItem.Desc().Name, targetItem.Quality.ToString()))
+
+			ctx.Logger.Info(fmt.Sprintf("Picked up: %s [%s] | Item Pickup Attempt:%d | Spiral Attempt:%d", targetItem.Desc().Name, targetItem.Quality.ToString(), itemPickupAttempt, spiralAttempt))
+
+			ctx.CurrentGame.PickedUpItems[int(targetItem.UnitID)] = int(ctx.Data.PlayerUnit.Area.Area().ID)
+
 			return nil // Success!
 		}
 
 		// Check timeout conditions
 		if spiralAttempt > maxInteractions ||
 			(!waitingForInteraction.IsZero() && time.Since(waitingForInteraction) > pickupTimeout) ||
-			time.Since(startTime) > pickupTimeout*2 {
+			time.Since(startTime) > pickupTimeout {
 			return fmt.Errorf("failed to pick up %s after %d attempts", it.Desc().Name, spiralAttempt)
 		}
 
@@ -97,10 +122,8 @@ func PickupItem(it data.Item) error {
 		ctx.HID.MovePointer(cursorX, cursorY)
 		time.Sleep(spiralDelay)
 
-		// Refresh game state and check hover
-		ctx.RefreshGameData()
-
-		if currentItem.IsHovered {
+		// Click on item if mouse is hovering over
+		if currentItem.UnitID == ctx.GameReader.GameReader.GetData().HoverData.UnitID {
 			ctx.HID.Click(game.LeftButton, cursorX, cursorY)
 			time.Sleep(clickDelay)
 
@@ -112,7 +135,7 @@ func PickupItem(it data.Item) error {
 
 		// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 		// on Andariel, so we open it
-		if isChestHovered() {
+		if isChestorShrineHovered() {
 			ctx.HID.Click(game.LeftButton, cursorX, cursorY)
 			time.Sleep(50 * time.Millisecond)
 		}
@@ -142,11 +165,11 @@ func findItemOnGround(targetID data.UnitID) (data.Item, bool) {
 	return data.Item{}, false
 }
 
-func isChestHovered() bool {
+func isChestorShrineHovered() bool {
 	ctx := context.Get()
 
 	for _, o := range ctx.Data.Objects {
-		if o.IsChest() && o.IsHovered {
+		if (o.IsChest() || o.IsShrine()) && o.IsHovered {
 			return true
 		}
 	}
