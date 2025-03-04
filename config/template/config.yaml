@@ -71,6 +71,9 @@ game:
   # Specific runs settings
   pindleskin:
     skipOnImmunities: [ ] # Allowed values: cold, fire, light, poison
+  palace:
+    openChests: true
+    focusOnElitePacks: false
   stony_tomb:
     openChests: true
     focusOnElitePacks: false

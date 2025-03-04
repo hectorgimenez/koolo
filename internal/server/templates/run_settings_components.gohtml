@@ -31,6 +31,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "palace" }}
+    <fieldset>
+        <label><input type="checkbox" name="gamePalaceOpenChests" {{ if .Config.Game.Palace.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gamePalaceFocusOnElitePacks" {{ if .Config.Game.Palace.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
+    </fieldset>
+{{ end }}
+
 {{ define "stony_tomb" }}
     <fieldset>
         <label><input type="checkbox" name="gameStonytombOpenChests" {{ if .Config.Game.StonyTomb.OpenChests }}checked{{ end }}> Open chests</label>
