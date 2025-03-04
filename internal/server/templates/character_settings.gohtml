@@ -36,6 +36,9 @@
                 <label>
                     Class
                     <select name="characterClass">
+                        <option value="basiccharacter" {{ if eq .Config.Character.Class
+                        "basiccharacter" }}selected{{ end }}>Basic Character
+                        </option>
                         <option value="blizzardsorceress" {{ if eq .Config.Character.Class
                         "blizzardsorceress" }}selected{{ end }}>Blizzard Sorceress
                         </option>
@@ -391,10 +394,6 @@
             <label>
                 <input type="checkbox" name="createLobbyGames" {{ if .Config.Game.CreateLobbyGames }}checked{{ end }}/>
                 Create Lobby Games
-            </label>
-            <label>
-                <input type="checkbox" name="joinLobbyGames" {{ if .Config.Game.JoinLobbyGames }}checked{{ end }}/>
-                Join Lobby Games
             </label>
             <br>
             <fieldset class="grid">

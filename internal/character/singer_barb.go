@@ -3,12 +3,14 @@ package character
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -19,6 +21,7 @@ import (
 
 const (
 	SingerMaxAttackLoops = 15
+	singerMaxHorkRange   = 40
 )
 
 type SingerBarb struct {
@@ -128,6 +131,7 @@ func (s SingerBarb) KillBossSequence(
 	for {
 		id, found := monsterSelector(*s.Data)
 		if !found {
+			s.FindItemOnNearbyCorpses(singerMaxHorkRange)
 			return nil
 		}
 
@@ -258,4 +262,83 @@ func (s SingerBarb) KillPindle() error {
 
 func (s SingerBarb) KillNihlathak() error {
 	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, nil)
+}
+
+func (s *SingerBarb) FindItemOnNearbyCorpses(maxRange int) {
+	ctx := context.Get()
+	ctx.PauseIfNotPriority()
+
+	findItemKey, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FindItem)
+	if !found {
+		s.Logger.Debug("Find Item skill not found in key bindings")
+		return
+	}
+
+	corpses := s.getSortedHorkableCorpses(s.Data.Corpses, maxRange)
+	s.Logger.Debug("Horkable corpses found", slog.Int("count", len(corpses)))
+
+	for _, corpse := range corpses {
+		err := step.MoveTo(corpse.Position)
+		if err != nil {
+			s.Logger.Warn("Failed to move to corpse", slog.String("error", err.Error()))
+			continue
+		}
+
+		if s.Data.PlayerUnit.RightSkill != skill.FindItem {
+			ctx.HID.PressKeyBinding(findItemKey)
+			time.Sleep(time.Millisecond * 50)
+		}
+
+		clickPos := s.getOptimalClickPosition(corpse)
+		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(clickPos.X, clickPos.Y)
+		ctx.HID.Click(game.RightButton, screenX, screenY)
+		s.Logger.Debug("Find Item used on corpse", slog.Any("corpse_id", corpse.UnitID))
+
+		time.Sleep(time.Millisecond * 300)
+	}
+
+}
+
+func (s *SingerBarb) getOptimalClickPosition(corpse data.Monster) data.Position {
+	return data.Position{X: corpse.Position.X, Y: corpse.Position.Y + 1}
+}
+
+func (s *SingerBarb) getSortedHorkableCorpses(corpses data.Monsters, maxRange int) []data.Monster {
+	var horkableCorpses []data.Monster
+	for _, corpse := range corpses {
+		if s.isCorpseHorkable(corpse) && s.PathFinder.DistanceFromMe(corpse.Position) <= maxRange {
+			horkableCorpses = append(horkableCorpses, corpse)
+		}
+	}
+
+	sort.Slice(horkableCorpses, func(i, j int) bool {
+		distI := s.PathFinder.DistanceFromMe(horkableCorpses[i].Position)
+		distJ := s.PathFinder.DistanceFromMe(horkableCorpses[j].Position)
+		return distI < distJ
+	})
+
+	return horkableCorpses
+}
+
+func (s *SingerBarb) isCorpseHorkable(corpse data.Monster) bool {
+	unhorkableStates := []state.State{
+		state.CorpseNoselect,
+		state.CorpseNodraw,
+		state.Revive,
+		state.Redeemed,
+		state.Shatter,
+		state.Freeze,
+		state.Restinpeace,
+	}
+
+	for _, st := range unhorkableStates {
+		if corpse.States.HasState(st) {
+			return false
+		}
+	}
+
+	return corpse.Type == data.MonsterTypeChampion ||
+		corpse.Type == data.MonsterTypeMinion ||
+		corpse.Type == data.MonsterTypeUnique ||
+		corpse.Type == data.MonsterTypeSuperUnique
 }
