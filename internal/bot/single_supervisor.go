@@ -105,8 +105,11 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 			// If we're in companion mode, send the companion join game event
 			if s.bot.ctx.CharacterCfg.Companion.Enabled && s.bot.ctx.CharacterCfg.Companion.Leader {
-				event.Send(event.GameCreated(event.Text(s.name, fmt.Sprintf("ng:%s:%s:%s", s.bot.ctx.CharacterCfg.CharacterName, s.bot.ctx.Data.Game.LastGameName, s.bot.ctx.Data.Game.LastGamePassword))))
-				event.Send(event.RequestCompanionJoinGame(event.Text(s.name, "New Game Started "+s.bot.ctx.Data.Game.LastGameName), s.bot.ctx.CharacterCfg.CharacterName, s.bot.ctx.Data.Game.LastGameName, s.bot.ctx.Data.Game.LastGamePassword))
+				if config.Koolo.Discord.Enabled {
+					event.Send(event.GameCreated(event.Text(s.name, fmt.Sprintf("ng:%s:%s:%s", s.bot.ctx.CharacterCfg.CharacterName, s.bot.ctx.Data.Game.LastGameName, s.bot.ctx.Data.Game.LastGamePassword))))
+				} else {
+					event.Send(event.RequestCompanionJoinGame(event.Text(s.name, "New Game Started "+s.bot.ctx.Data.Game.LastGameName), s.bot.ctx.CharacterCfg.CharacterName, s.bot.ctx.Data.Game.LastGameName, s.bot.ctx.Data.Game.LastGamePassword))
+				}
 			}
 
 			// Perform keybindings check on the first run only
@@ -380,84 +383,4 @@ func (s *SinglePlayerSupervisor) exitLobbyToCharacterSelection() error {
 	}
 
 	return nil
-}
-
-func startGameCreationRoutine(s *SinglePlayerSupervisor) error {
-	err := goToLobby(s)
-
-	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
-	if err != nil {
-		for err != nil {
-			err = restartSupervisor(s)
-		}
-	}
-
-	if _, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter); err != nil {
-		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-		return fmt.Errorf("failed to create an online game")
-
-	} else {
-		// We created the game successfully!
-		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-		return nil
-	}
-}
-
-var (
-	LastGameJoined = ""
-)
-
-func startJoinerRoutine(s *SinglePlayerSupervisor) error {
-	err := goToLobby(s)
-
-	// TODO: this doesnt seem to actually kill the client. Gotta fix this.
-	if err != nil {
-		for err != nil {
-			err = restartSupervisor(s)
-		}
-	}
-
-	timeInLobby := time.Now()
-	for LastGameJoined == config.LastGameName && !s.bot.ctx.Manager.InGame() && time.Since(timeInLobby) < 1*time.Minute {
-		s.bot.ctx.Logger.Info("Waiting for game join")
-		utils.Sleep(1000)
-	}
-
-	if s.bot.ctx.Manager.InGame() {
-		LastGameJoined = s.bot.ctx.GameReader.LastGameName()
-		return nil
-	}
-
-	for err := s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword); err != nil && !s.bot.ctx.Manager.InGame(); err = s.bot.ctx.Manager.JoinOnlineGame(config.LastGameName, config.LastGamePassword) {
-		// s.bot.ctx.HID.PressKey(0x1B)
-		utils.Sleep(15000)
-	}
-
-	LastGameJoined = s.bot.ctx.GameReader.LastGameName()
-
-	return nil
-}
-
-func goToLobby(s *SinglePlayerSupervisor) error {
-	retryCount := 0
-	for !s.bot.ctx.GameReader.IsInLobby() {
-
-		// Prevent an infinite loop
-		if retryCount >= 5 && !s.bot.ctx.Data.IsInLobby {
-			return fmt.Errorf("failed to enter bnet lobby after 5 retries")
-		}
-
-		// Try to enter bnet lobby
-		s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
-		utils.Sleep(1000)
-		retryCount++
-	}
-
-	return nil
-}
-
-func restartSupervisor(s *SinglePlayerSupervisor) error {
-	s.Stop()
-	utils.Sleep(60000)
-	return s.Start()
 }
