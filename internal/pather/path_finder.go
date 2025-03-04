@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"sort"
 	"sync"
 	"time"
 
@@ -15,8 +16,9 @@ import (
 )
 
 const (
-	positionRounding = 10  // Round positions to nearest 10 units
-	maxCacheSize     = 500 // Maximum cached paths per game
+	positionRounding = 5                // Round positions to nearest 5 units
+	maxCacheSize     = 10000            // Increased from 2000 to handle longer sessions
+	cacheExpiration  = 30 * time.Minute // Automatically clear old entries
 )
 
 // cacheKey includes game seed and area to avoid stale paths across games
@@ -210,19 +212,39 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 	// Cache result ONLY IF FOUND
 	if found {
 		pf.mu.Lock()
-		// Remove oldest entry if cache is full
-		if len(pf.cache) >= maxCacheSize {
-			var oldestKey cacheKey
-			var oldestTime time.Time
-			for k, v := range pf.cache {
-				if oldestTime.IsZero() || v.lastUsed.Before(oldestTime) {
-					oldestKey = k
-					oldestTime = v.lastUsed
-				}
+		// Perform maintenance before adding new entry (already locked)
+		now := time.Now()
+		for k, v := range pf.cache {
+			if now.Sub(v.lastUsed) > cacheExpiration {
+				delete(pf.cache, k)
 			}
-			delete(pf.cache, oldestKey)
 		}
 
+		// Remove oldest entries if still over capacity
+		if len(pf.cache) >= maxCacheSize {
+			type entry struct {
+				key cacheKey
+				t   time.Time
+			}
+
+			entries := make([]entry, 0, len(pf.cache))
+			for k, v := range pf.cache {
+				entries = append(entries, entry{k, v.lastUsed})
+			}
+
+			sort.Slice(entries, func(i, j int) bool {
+				return entries[i].t.Before(entries[j].t)
+			})
+
+			toRemove := len(entries) - maxCacheSize
+			if toRemove > 0 {
+				for _, e := range entries[:toRemove] {
+					delete(pf.cache, e.key)
+				}
+			}
+		}
+
+		// Store the new path
 		pf.cache[key] = cacheEntry{
 			path:     path,
 			distance: distance,
@@ -240,13 +262,28 @@ func (pf *PathFinder) GetPathFrom(from, to data.Position) (Path, int, bool) {
 func (pf *PathFinder) logCacheStats() {
 	for {
 		pf.mu.Lock()
+		// Perform maintenance while locked
+		now := time.Now()
+		for k, v := range pf.cache {
+			if now.Sub(v.lastUsed) > cacheExpiration {
+				delete(pf.cache, k)
+			}
+		}
+
+		currentSeed := pf.gr.MapSeed()
+		if currentSeed == 0 {
+			pf.mu.Unlock()
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
 		log.Printf(
 			"Path Cache - Hits: %d | Misses: %d | Size: %d | Grid Cache Size: %d | mapSeed: %d",
 			pf.cacheHits,
 			pf.cacheMisses,
 			len(pf.cache),
 			len(pf.gridCache),
-			pf.gr.MapSeed(),
+			currentSeed,
 		)
 		pf.mu.Unlock()
 		time.Sleep(10 * time.Second)
