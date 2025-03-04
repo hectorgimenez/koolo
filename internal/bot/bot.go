@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/action"
 	botCtx "github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/event"
@@ -41,6 +40,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	// Let's make sure we have updated game data also fully loaded before performing anything
 	b.ctx.WaitForGameToLoad()
+
+	// Cleanup the current game helper structure
+	b.ctx.Cleanup()
+
 	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
@@ -152,13 +155,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				_, healingPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.HealingPotion)
 				_, manaPotsFound := b.ctx.Data.Inventory.Belt.GetFirstPotion(data.ManaPotion)
-				_, keysFound := b.ctx.Data.Inventory.Find(item.Key, item.LocationInventory)
 
 				// Check if we need to go back to town (no pots or merc died)
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
-					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
+					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.IsEquipmentBroken() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
-					b.ctx.CharacterCfg.BackToTown.NoKeys && !keysFound ||
 					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
 					!b.ctx.Data.PlayerUnit.Area.IsTown() {
 
@@ -170,8 +171,6 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 						reason = "Equipment broken"
 					} else if b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound {
 						reason = "No mana potions found"
-					} else if b.ctx.CharacterCfg.BackToTown.NoKeys && !keysFound {
-						reason = "No keys found"
 					} else if b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc {
 						reason = "Mercenary is dead"
 					}

@@ -48,6 +48,9 @@
                         <option value="lightsorc" {{ if eq .Config.Character.Class
                         "lightsorc" }}selected{{ end }}>Lightning Sorceress
                         </option>
+                        <option value="fireballsorc" {{ if eq .Config.Character.Class
+                        "fireballsorc" }}selected{{ end }}>Fireball Sorceress
+                        </option>
                         <option value="hammerdin" {{ if eq .Config.Character.Class
                         "hammerdin" }}selected{{ end }}>Hammer Paladin
                         </option>
@@ -486,10 +489,6 @@
                 <label>
                     <input id="equip_broken" type="checkbox" name="equipmentBroken" {{ if .Config.BackToTown.EquipmentBroken }}checked{{ end }}/>
                     Equipment Broken
-                </label>
-                <label>
-                    <input id="no_keys" type="checkbox" name="noKeys" {{ if .Config.BackToTown.NoKeys }}checked{{ end }}/>
-                    No Keys
                 </label>
             </fieldset>
             <fieldset class="grid">
