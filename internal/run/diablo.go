@@ -42,7 +42,9 @@ func (d *Diablo) Run() error {
 		return err
 	}
 
-	action.OpenTPIfLeader()
+	if !d.ctx.CharacterCfg.Character.UseTeleport {
+		action.OpenTPIfLeader()
+	}
 
 	action.MoveToArea(area.ChaosSanctuary)
 
@@ -101,7 +103,7 @@ func (d *Diablo) Run() error {
 			// if we dont teleport, we have default clear area enabled
 			if !d.ctx.CharacterCfg.Character.UseTeleport {
 				//path through towards vizier
-				err := action.MoveToCoords(seal.Position)
+				err := action.MoveToCoords(data.Position{X: seal.Position.X, Y: seal.Position.Y - 5})
 				if err != nil {
 					return err
 				}
@@ -114,7 +116,7 @@ func (d *Diablo) Run() error {
 
 			// Handle the special case for DiabloSeal3
 			if sealID == object.DiabloSeal3 && seal.Position.X == 7773 && seal.Position.Y == 5155 {
-				if err := action.MoveToCoords(data.Position{X: 7768, Y: 5160}); err != nil {
+				if err := action.MoveToCoords(data.Position{X: 7768, Y: 5165}); err != nil {
 					return fmt.Errorf("failed to move to bugged seal position: %w", err)
 				}
 			}
