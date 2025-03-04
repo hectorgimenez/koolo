@@ -56,6 +56,7 @@ func (s SingerBarb) KillMonsterSequence(
 	for {
 		id, found := monsterSelector(*s.Data)
 		if !found {
+			s.FindItemOnNearbyCorpses(singerMaxHorkRange)
 			return nil
 		}
 
@@ -99,8 +100,11 @@ func (s SingerBarb) KillMonsterSequence(
 				} else {
 					continue
 				}
+			} else {
+				s.FindItemOnNearbyCorpses(singerMaxHorkRange)
 			}
 		}
+
 		step.PrimaryAttack(
 			monster.UnitID,
 			6,
@@ -146,6 +150,7 @@ func (s SingerBarb) KillBossSequence(
 		}
 
 		if monster.Stats[stat.Life] <= 0 {
+			s.FindItemOnNearbyCorpses(singerMaxHorkRange)
 			return nil
 		}
 
