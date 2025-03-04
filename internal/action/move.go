@@ -237,7 +237,7 @@ func MoveTo(toFun func() (data.Position, bool)) error {
 				// Get list of nearby monsters more efficiently
 				nearbyMonsters := make([]data.UnitID, 0, 5) // Pre-allocate small capacity
 				for _, m := range ctx.Data.Monsters.Enemies() {
-					if m.Stats[stat.Life] <= 0 {
+					if m.Stats[stat.Life] <= 0 || !ctx.Data.AreaData.IsWalkable(m.Position) {
 						continue
 					}
 
