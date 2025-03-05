@@ -24,7 +24,7 @@ type PaladinLeveling struct {
 }
 
 func (s PaladinLeveling) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
