@@ -24,11 +24,13 @@ func NewBot(token, channelID string, manager *bot.SupervisorManager) (*Bot, erro
 		return nil, fmt.Errorf("error creating Discord session: %w", err)
 	}
 
-	return &Bot{
+	botInstance := &Bot{
 		discordSession: dg,
 		channelID:      channelID,
 		manager:        manager,
-	}, nil
+	}
+
+	return botInstance, nil
 }
 
 func (b *Bot) Start(ctx context.Context) error {
@@ -40,10 +42,12 @@ func (b *Bot) Start(ctx context.Context) error {
 		return fmt.Errorf("error opening connection: %w", err)
 	}
 
+	defer b.discordSession.Close() // Ensures closure on function exit
+
 	// Wait until context is finished
 	<-ctx.Done()
 
-	return b.discordSession.Close()
+	return nil
 }
 
 func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
