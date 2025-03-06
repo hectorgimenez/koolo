@@ -42,6 +42,8 @@ func (f *Follower) Run() error {
 		return nil
 	}
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
+	//Anti-stuck solution
+	lastPosition := data.Position{}
 
 	for leaderFound {
 		f.ctx.RefreshGameData()
@@ -52,10 +54,20 @@ func (f *Follower) Run() error {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
 		}
 
+		if leader.Area.Area().Name == "" {
+			continue
+		}
+
 		if leader.Area != f.ctx.Data.AreaData.Area {
 			f.handleLeaderNotInSameArea(&leader)
 		} else if leader.Area == f.ctx.Data.AreaData.Area && !f.ctx.Data.PlayerUnit.Area.IsTown() {
+			lastPosition = f.ctx.Data.PlayerUnit.Position
 			f.handleLeaderInSameArea(&leader)
+			f.ctx.RefreshGameData()
+			if f.ctx.Data.PlayerUnit.Position == lastPosition {
+				f.ctx.PathFinder.RandomTeleport()
+				utils.Sleep(500)
+			}
 		} else if leader.Area == f.ctx.Data.AreaData.Area && f.ctx.Data.PlayerUnit.Area.IsTown() {
 			f.handleLeaderInTown()
 		}
