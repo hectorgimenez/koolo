@@ -87,7 +87,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 
 			// Reset the companion game name and password to prevent re-joining the same game
-			if s.bot.ctx.CharacterCfg.Companion.Enabled && !s.bot.ctx.CharacterCfg.Companion.Leader {
+			if s.bot.ctx.CharacterCfg.Companion.Enabled && (!s.bot.ctx.CharacterCfg.Companion.Leader || (s.bot.ctx.CharacterCfg.Companion.Leader && s.bot.ctx.CharacterCfg.Companion.LeaderName != "")) {
 				s.bot.ctx.CharacterCfg.Companion.CompanionGameName = ""
 				s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword = ""
 			}
@@ -199,7 +199,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	}
 
 	// Now handle based on whether we're in companion mode
-	if s.bot.ctx.CharacterCfg.Companion.Enabled && !s.bot.ctx.CharacterCfg.Companion.Leader {
+	if s.bot.ctx.CharacterCfg.Companion.Enabled && (!s.bot.ctx.CharacterCfg.Companion.Leader || (s.bot.ctx.CharacterCfg.Companion.Leader && s.bot.ctx.CharacterCfg.Companion.LeaderName != "")) {
 		return s.handleCompanionMode()
 	} else {
 		return s.handleNormalMode()

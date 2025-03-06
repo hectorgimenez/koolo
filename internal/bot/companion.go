@@ -31,7 +31,7 @@ func (h *CompanionEventHandler) Handle(ctx context.Context, e event.Event) error
 
 	case event.RequestCompanionJoinGameEvent:
 		h.log.Debug("RequestCompanionJoinGameEvent received.", slog.Any("event", e))
-		if h.cfg.Companion.Enabled && !h.cfg.Companion.Leader {
+		if h.cfg.Companion.Enabled && (!h.cfg.Companion.Leader || (h.cfg.Companion.Leader && h.cfg.Companion.LeaderName != "")) {
 
 			// Check if the leader matches the one in our config or no leader set
 			if h.cfg.Companion.LeaderName == "" || evt.Leader == h.cfg.Companion.LeaderName {
@@ -44,7 +44,7 @@ func (h *CompanionEventHandler) Handle(ctx context.Context, e event.Event) error
 	case event.ResetCompanionGameInfoEvent:
 
 		// If this character is a companion (not a leader), clear game info
-		if h.cfg.Companion.Enabled && !h.cfg.Companion.Leader {
+		if h.cfg.Companion.Enabled && (!h.cfg.Companion.Leader || (h.cfg.Companion.Leader && h.cfg.Companion.LeaderName != "")) {
 
 			// Check if the leader matches the one in our config or no leader set.
 			// Additional check for if LeaderName is the same as the character name for Manual join triggers
