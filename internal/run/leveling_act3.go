@@ -82,6 +82,9 @@ func (a Leveling) act3() error {
 	} else if !willFound && !a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
 		a.ctx.Logger.Info("KhalimsBrain not found, starting quest")
 		NewEndugu().Run()
+		// Sometimes it doesn't pick up the brain
+		utils.Sleep(500)
+		action.ItemPickup(10)
 	}
 
 	// Find KhalimsHeart
