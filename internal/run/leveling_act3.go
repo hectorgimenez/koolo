@@ -47,6 +47,9 @@ func (a Leveling) act3() error {
 	}
 
 	if a.ctx.Data.Quests[quest.Act3KhalimsWill].Completed() {
+		a.ctx.CharacterCfg.Game.Mephisto.OpenChests = false
+		a.ctx.CharacterCfg.Game.Mephisto.KillCouncilMembers = false
+		a.ctx.CharacterCfg.Game.Mephisto.ExitToA4 = true
 		err := NewMephisto(nil).Run()
 		if err != nil {
 			return err
