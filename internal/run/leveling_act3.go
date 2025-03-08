@@ -389,6 +389,7 @@ func (a Leveling) jadefigurine() error {
 		action.InteractNPC(npc.Ormus)
 		action.InteractNPC(npc.Alkor)
 	}
+	utils.Sleep(500)
 	lifepotion, lifepotfound := a.ctx.Data.Inventory.Find("PotionOfLife", item.LocationInventory)
 	if lifepotfound {
 		a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
