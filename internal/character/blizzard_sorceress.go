@@ -211,7 +211,7 @@ func (s BlizzardSorceress) KillIzual() error {
 	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
 	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
 
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
 }
 
 func (s BlizzardSorceress) KillDiablo() error {
@@ -242,7 +242,7 @@ func (s BlizzardSorceress) KillDiablo() error {
 
 		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(3, 8))
 
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
 	}
 }
 
@@ -258,5 +258,5 @@ func (s BlizzardSorceress) KillBaal() error {
 	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
 	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
 
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
+	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
 }
