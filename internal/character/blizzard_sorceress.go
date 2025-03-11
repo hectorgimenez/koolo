@@ -60,6 +60,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	completedAttackLoops := 0
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
+	skipOnImmunities = append(skipOnImmunities, stat.ColdImmune)
 
 	blizzOpts := step.StationaryDistance(blizzMinDistance, blizzMaxDistance)
 	lsOpts := step.Distance(blizzLSMinDistance, blizzLSMaxDistance)
@@ -106,17 +107,6 @@ func (s BlizzardSorceress) KillMonsterSequence(
 		completedAttackLoops++
 		previousUnitID = int(id)
 	}
-}
-
-func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return 0, false
-		}
-
-		return m.UnitID, true
-	}, nil)
 }
 
 func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
