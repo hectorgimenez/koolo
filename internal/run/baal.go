@@ -139,6 +139,7 @@ func (s Baal) Run() error {
 		if err != nil {
 			return err
 		}
+		action.MoveToCoords(baalThronePosition)
 		action.BuffIfRequired()
 		// Small delay to allow next wave to spawn if not last wave
 		if !lastWave {
