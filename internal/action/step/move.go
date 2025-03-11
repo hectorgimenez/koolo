@@ -1,19 +1,21 @@
 package step
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
-const DistanceToFinishMoving = 4
+const (
+	DistanceToFinishMoving = 4
+	idleThreshold          = 1500 * time.Millisecond // Changed from 3s to 1.5s
+	maxMovementTimeout     = 30 * time.Second
+)
 
 type MoveOpts struct {
 	distanceOverride *int
@@ -29,10 +31,10 @@ func WithDistanceToFinish(distance int) MoveOption {
 }
 
 func MoveTo(dest data.Position, options ...MoveOption) error {
-	// Initialize options
-	opts := &MoveOpts{}
+	ctx := context.Get()
+	ctx.SetLastStep("MoveTo")
 
-	// Apply any provided options
+	opts := &MoveOpts{}
 	for _, o := range options {
 		o(opts)
 	}
@@ -42,67 +44,44 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		minDistanceToFinishMoving = *opts.distanceOverride
 	}
 
-	ctx := context.Get()
-	ctx.SetLastStep("MoveTo")
-
-	defer func() {
-		for {
-			switch ctx.Data.PlayerUnit.Mode {
-			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
-				utils.Sleep(100)
-				ctx.RefreshGameData()
-				continue
-			default:
-				return
-			}
-		}
-	}()
-
-	timeout := time.Second * 30
-	idleThreshold := time.Second * 3
-	idleStartTime := time.Time{}
-
 	startedAt := time.Now()
 	lastRun := time.Time{}
 	previousPosition := data.Position{}
 	previousDistance := 0
+	idleStartTime := time.Time{}
 
 	for {
-		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
-		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
 		ctx.RefreshGameData()
 
-		// Add some delay between clicks to let the character move to destination
-		walkDuration := utils.RandomDurationMs(600, 1200)
-		if !ctx.Data.CanTeleport() && time.Since(lastRun) < walkDuration {
-			time.Sleep(walkDuration - time.Since(lastRun))
-			continue
+		// Timeout check
+		if time.Since(startedAt) > maxMovementTimeout {
+			return nil
 		}
 
-		// We skip the movement if we can teleport and the last movement time was less than the player cast duration
-		if ctx.Data.CanTeleport() && time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
-			time.Sleep(ctx.Data.PlayerCastDuration() - time.Since(lastRun))
-			continue
+		// Distance check
+		currentDistance := ctx.PathFinder.DistanceFromMe(dest)
+		if currentDistance <= minDistanceToFinishMoving {
+			return nil
 		}
 
-		// Check for idle state
+		// Idle detection
 		if ctx.Data.PlayerUnit.Position == previousPosition {
 			if idleStartTime.IsZero() {
 				idleStartTime = time.Now()
 			} else if time.Since(idleStartTime) > idleThreshold {
-				// Perform anti-idle action
 				ctx.Logger.Debug("Anti-idle triggered")
 				ctx.PathFinder.RandomMovement()
-				idleStartTime = time.Time{} // Reset idle timer
+				idleStartTime = time.Time{}
+				time.Sleep(150 * time.Millisecond) // Reduced from 300ms
 				continue
 			}
 		} else {
-			idleStartTime = time.Time{} // Reset idle timer if position changed
+			idleStartTime = time.Time{}
 			previousPosition = ctx.Data.PlayerUnit.Position
 		}
 
-		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
+		// Skill management
 		if ctx.Data.CanTeleport() {
 			if ctx.Data.PlayerUnit.RightSkill != skill.Teleport {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.Teleport))
@@ -113,26 +92,20 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			}
 		}
 
+		// Path calculation
 		path, distance, found := ctx.PathFinder.GetPath(dest)
 		if !found {
-			if ctx.PathFinder.DistanceFromMe(dest) < minDistanceToFinishMoving+5 {
+			if currentDistance < minDistanceToFinishMoving+5 {
 				return nil
 			}
-
-			return errors.New("path could not be calculated. Current area: [" + ctx.Data.PlayerUnit.Area.Area().Name + "]. Trying to path to Destination: [" + fmt.Sprintf("%d,%d", dest.X, dest.Y) + "]")
-		}
-		if distance <= minDistanceToFinishMoving || len(path) <= minDistanceToFinishMoving || len(path) == 0 {
-			return nil
-		}
-
-		// Exit on timeout
-		if timeout > 0 && time.Since(startedAt) > timeout {
-			return nil
+			return fmt.Errorf("pathfinding failed in %s to %d,%d",
+				ctx.Data.PlayerUnit.Area.Area().Name,
+				dest.X,
+				dest.Y,
+			)
 		}
 
-		lastRun = time.Now()
-
-		// This is a workaround to avoid the character to get stuck in the same position when the hitbox of the destination is too big
+		// Dynamic distance adjustment
 		if distance < 20 && math.Abs(float64(previousDistance-distance)) < DistanceToFinishMoving {
 			minDistanceToFinishMoving += DistanceToFinishMoving
 		} else if opts.distanceOverride != nil {
@@ -141,8 +114,26 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			minDistanceToFinishMoving = DistanceToFinishMoving
 		}
 
-		previousPosition = ctx.Data.PlayerUnit.Position
-		previousDistance = distance
+		// Movement execution
+		walkDuration := utils.RandomDurationMs(600, 1200)
+		if !ctx.Data.CanTeleport() && time.Since(lastRun) < walkDuration {
+			time.Sleep(walkDuration - time.Since(lastRun))
+			continue
+		}
+
+		if ctx.Data.CanTeleport() && time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
+			// Calculate 70% of the original cast duration
+			fasterCastDuration := ctx.Data.PlayerCastDuration() * 7 / 10 // 70% of original duration | higher FCR -> 5 / 10 (50% speed = 2x faster)
+			remainingWait := fasterCastDuration - time.Since(lastRun)
+
+			if remainingWait > 0 {
+				time.Sleep(remainingWait)
+			}
+			continue
+		}
+
 		ctx.PathFinder.MoveThroughPath(path, walkDuration)
+		lastRun = time.Now()
+		previousDistance = distance
 	}
 }
