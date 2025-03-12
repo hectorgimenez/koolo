@@ -183,7 +183,7 @@ func ensureCubeIsOpen() error {
 	if ctx.Data.OpenMenus.Cube {
 		ctx.Logger.Info("Horadric Cube window already open, moving cursor to avoid Gloves/Weapon loss")
 		// Move cursor to the center-right of the screen to avoid Magefist/Weapon loss
-		ctx.HID.MovePointer(600, 300) // X=600, Y=300 (center | right side)
+		ctx.HID.MovePointer(1245, 355) // X=1245, Y=355 (center | right side)
 		return nil
 	}
 
