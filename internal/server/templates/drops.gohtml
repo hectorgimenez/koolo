@@ -4,184 +4,338 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark"/>
-    <link rel="stylesheet" href="../assets/css/pico.min.css">
-    <link rel="stylesheet" href="../assets/css/custom.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <title>Drops for {{.Character}}</title>
     <style>
-        .low-quality { color: gray; }
-        .normal-quality, .superior-quality { color: white; }
-        .magic-quality { color: blue; }
-        .set-quality { color: green; }
-        .rare-quality { color: yellow; }
-        .unique-quality { color: darkgoldenrod; }
-        .unknown-quality { color: black; }
+        /* Base color classes for item qualities */
+        .low-quality { color: #9CA3AF; }
+        .normal-quality { color: #FFFFFF; }
+        .superior-quality { color: #FFFFFF; }
+        .magic-quality { color: #60A5FA; }
+        .set-quality { color: #10B981; }
+        .rare-quality { color: #FBBF24; }
+        .unique-quality { color: #bfa969; }
+        .crafted-quality { color: #FFA500; }
+        .unknown-quality { color: #000000; }
 
-        .details {
+        /* Drop location style */
+        .drop-location {
+            color: #9CA3AF;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-style: italic;
             display: none;
-            padding: 10px;
-            background-color: #2E3A4A;
-            border-left: 3px solid #3E4A61;
-            border-radius: 0 5px 5px 0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: max-height 0.3s ease, padding 0.3s ease;
+            border-top: 1px solid rgba(156, 163, 175, 0.2);
+            padding-top: 0.5rem;
+        }
+
+        .d2-tooltip.expanded .drop-location {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        /* Custom font for D2-like appearance */
+        @font-face {
+            font-family: 'Exocet';
+            src: url('https://fonts.cdnfonts.com/css/exocet') format('woff2');
+        }
+
+        /* D2-style tooltip */
+        .d2-tooltip {
+            background-color: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            font-family: 'Arial', sans-serif;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(8px);
+            height: 4rem;
             overflow: hidden;
         }
-        
-        .item {
+
+        .d2-tooltip.expanded {
+            height: auto;
+            min-height: 4rem;
+            max-height: 16rem;
+            overflow-y: auto;
+        }
+
+        .d2-tooltip.expanded::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .d2-tooltip.expanded::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .d2-tooltip.expanded::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 3px;
+        }
+
+        .d2-tooltip.expanded::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.7);
+        }
+
+        .d2-tooltip.foldable {
             cursor: pointer;
-            padding: 10px 15px;
-            padding-right: 15px;
-            margin-right: 30px; 
-            margin-bottom: 10px;
-            list-style: none;
-            background-color: #2E3A4A;
-            border-radius: 8px;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            position: relative;
         }
 
-        .item:hover {
-            background-color: #3B4A5A;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        .d2-tooltip.foldable:hover {
+            border-color: rgba(75, 85, 99, 0.8);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
         }
 
-        .item-header {
+        .d2-tooltip .item-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            font-size: 18px;
-            background-color: #34495E;
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-
-        .item-header span {
-            font-weight: bold;
-        }
-
-        .toggle-icon {
-            font-size: 14px;
-            margin-left: 10px;
-            transition: transform 0.3s ease;
-        }
-
-        .item.expanded .toggle-icon {
-            transform: rotate(90deg);
-        }
-
-        .details p, .details ul {
-            margin: 5px 0;
-            font-size: 16px;
-            color: #CBD5E0;
-            padding-right: 15px;
-        }
-
-        .details ul {
-            padding-left: 20px;
-        }
-
-        .details li {
-            list-style: none;
-            padding-left: 20px;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
             position: relative;
         }
 
-        .details li:before {
-            content: '\f054';
-            font-family: "Font Awesome 5 Free";
-            font-weight: 900;
-            position: absolute;
-            left: 0;
-            top: 0;
-            color: #CBD5E0;
-            font-size: 12px;
-        }
-
-        .header {
+        .d2-tooltip .item-name {
             text-align: center;
-            margin-bottom: 20px;
+            font-size: 1.125rem;
+            font-weight: bold;
+            user-select: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        .header h1 {
-            font-size: 36px;
-            margin: 0;
+        .d2-tooltip .fold-indicator {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            user-select: none;
+            display: none;
+            position: absolute;
+            right: 0;
+            opacity: 0.7;
         }
 
-        .header p {
-            font-size: 18px;
-            color: #BDC3C7;
+        .d2-tooltip.foldable .fold-indicator {
+            display: inline;
         }
 
-        .button.secondary {
-            background-color: #34495E;
+        .d2-tooltip .item-stats {
+            font-size: 0.875rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            display: none;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .d2-tooltip.expanded .item-stats {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .d2-tooltip .level-req {
+            color: #EF4444;
+            text-align: center;
+            margin: 0.5rem 0;
+            display: none;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .d2-tooltip.expanded .level-req {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .rule-info {
+            color: #9CA3AF;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-style: italic;
+            display: none;
+            border-top: 1px solid rgba(156, 163, 175, 0.2);
+            padding-top: 0.5rem;
+        }
+
+        .d2-tooltip.expanded .rule-info {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            background-color: rgba(17, 24, 39, 0.75);
+            border: 1px solid rgba(75, 85, 99, 0.4);
+            border-radius: 0.5rem;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+            margin-bottom: 1.5rem;
+            outline: none;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(8px);
+            font-size: 1rem;
         }
 
-        .button.secondary:hover {
-            background-color: #2C3E50;
+        .search-box:hover {
+            border-color: rgba(75, 85, 99, 0.6);
+        }
+
+        .search-box:focus {
+            border-color: #60A5FA;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+
+        .search-box::placeholder {
+            color: rgba(156, 163, 175, 0.8);
+        }
+
+        .hidden-item {
+            display: none !important;
         }
     </style>
     <script>
-        function toggleDetails(event) {
-            const item = event.currentTarget;
-            const details = item.querySelector('.details');
-            if (details.style.display === "none" || details.style.display === "") {
-                details.style.display = "block";
-                details.style.maxHeight = details.scrollHeight + "px";
-                details.style.padding = "10px";
-                item.classList.add('expanded');
-            } else {
-                details.style.display = "none";
-                details.style.maxHeight = "0";
-                details.style.padding = "0 15px";
-                item.classList.remove('expanded');
-            }
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle tooltip expansion
+            document.querySelectorAll('.d2-tooltip.foldable').forEach(tooltip => {
+                tooltip.addEventListener('click', () => {
+                    tooltip.classList.toggle('expanded');
+                    const indicator = tooltip.querySelector('.fold-indicator');
+                    indicator.textContent = tooltip.classList.contains('expanded') ? '▼' : '▶';
+                });
+            });
+
+            // Search functionality
+            const searchBox = document.getElementById('searchBox');
+            const items = document.querySelectorAll('.d2-tooltip');
+
+            searchBox.addEventListener('input', () => {
+                const searchTerm = searchBox.value.toLowerCase();
+                
+                items.forEach(item => {
+                    const itemName = item.querySelector('.item-name').textContent.toLowerCase();
+                    const itemStats = item.querySelector('.item-stats')?.textContent.toLowerCase() || '';
+                    
+                    if (itemName.includes(searchTerm) || itemStats.includes(searchTerm)) {
+                        item.classList.remove('hidden-item');
+                    } else {
+                        item.classList.add('hidden-item');
+                    }
+                });
+            });
+        });
     </script>
 </head>
-<body>
-    <header class="header">
-        <a href="#" onclick="history.back(); return false;" class="button secondary">← Back</a>
-        <h1>Drops for {{.Character}}</h1>
-        <p>Total Drops: {{.NumberOfDrops}}</p>
-    </header>
-    <main>
-        <div class="card">
-            <div class="card-content">
-                <ul>
-                    {{ range .Drops }}
-                    <li class="item" onclick="toggleDetails(event)">
-                        <div class="item-header">
-                            <span class="{{ .Item.Quality.ToString | qualityClass }}">{{ .Item.Name }}</span>
-                            <span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>
-                        </div>
-                        <div class="details">
-                            
-                            <p><strong>Quality:</strong> {{ .Item.Quality.ToString }}</p>
-                            <p><strong>Ethereal:</strong> {{ if .Item.Ethereal }}True{{ else }}False{{ end }}</p>
-                            <p><strong>Identified:</strong> {{ if .Item.Identified }}True{{ else }}False{{ end }}</p>
-                            <p><strong>Stats:</strong></p>
-                            <ul>
-                                {{ range .Item.Stats }}
-                                <li>{{ .ID | statIDToText }}: {{ .Value }}</li>
-                                {{ end }}
-                            </ul>
-                            <p><strong>Matched Rule:</strong> {{ .Rule }}</p>
-                            <p><strong>Rule File:</strong> {{ .RuleFile }}</p>
-                        </div>
-                    </li>
-                    {{ end }}
-                </ul>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <button onclick="history.back()" class="bg-gray-800 hover:bg-gray-700 text-white px-6 py-2.5 rounded-lg transition duration-200 ease-in-out hover:shadow-lg font-medium">
+                ← Back
+            </button>
+            <div class="text-center flex-1">
+                <h1 class="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-400">Drops for {{.Character}}</h1>
+                <p class="text-gray-400 text-lg">Total Drops: {{.NumberOfDrops}}</p>
             </div>
+            <div class="w-[100px]"></div> <!-- Spacer for alignment -->
         </div>
-    </main>
+
+        <!-- Search Box -->
+        <div class="relative">
+            <input type="text" id="searchBox" class="search-box" placeholder="Search drops by name or stats...">
+        </div>
+
+        <!-- Drops Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {{ range .Drops }}
+                <div class="d2-tooltip foldable">
+                    <div class="item-header">
+                        <div class="item-name {{ .Item.Quality.ToString | qualityClass }}">
+                            {{ if .Item.IdentifiedName }}
+                                {{ .Item.IdentifiedName }}
+                            {{ else }}
+                                {{ .Item.Name }}
+                            {{ end }}
+                        </div>
+                        <div class="fold-indicator">▶</div>
+                    </div>
+                    
+                    {{ if not .Item.Identified }}
+                    <div class="item-stats text-gray-300">
+                        <div class="italic">Unidentified</div>
+                    </div>
+                    {{ else }}
+                        <!-- Defense and Durability -->
+                        <div class="item-stats text-gray-300">
+                            {{ range .Item.Stats }}
+                                {{ if eq .ID 31 }}
+                                    <div>Defense: {{ .Value }}</div>
+                                {{ end }}
+                            {{ end }}
+                            
+                            {{ $currentDur := 0 }}
+                            {{ $maxDur := 0 }}
+                            {{ range .Item.Stats }}
+                                {{ if eq .ID 72 }}
+                                    {{ $currentDur = .Value }}
+                                {{ end }}
+                                {{ if eq .ID 73 }}
+                                    {{ $maxDur = .Value }}
+                                {{ end }}
+                            {{ end }}
+                            {{ if and (ne $currentDur 0) (ne $maxDur 0) }}
+                                <div>Durability: {{ $currentDur }} of {{ $maxDur }}</div>
+                            {{ end }}
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="item-stats text-gray-300">
+                            <!-- First show stat ID 92 if it's not 0 -->
+                            {{ range .Item.Stats }}
+                                {{ if eq .ID 92 }}
+                                    {{ if ne .Value 0 }}
+                                        <div>{{ .String }}</div>
+                                    {{ end }}
+                                {{ end }}
+                            {{ end }}
+
+                            <!-- Ignore stats that have been handled (defense, durability, level requirement) -->
+                            {{ range .Item.Stats }}
+                                {{ if and (ne .ID 31) (ne .ID 72) (ne .ID 73) (ne .ID 21) (ne .ID 22) (ne .ID 23) (ne .ID 24) (ne .ID 68) (ne .ID 92) }}
+                                <div>{{ .String }}</div>
+                                {{ end }}
+                            {{ end }}
+
+                            {{ if .Item.Ethereal }}
+                                <div class="text-blue-300 font-medium mb-1">Ethereal (Cannot be Repaired)</div>
+                            {{ end }}
+                        </div>
+                    {{ end }}
+
+                    {{ if .DropLocation }}
+                    <div class="drop-location">
+                        Dropped in: {{ .DropLocation }}
+                    </div>
+                    {{ end }}
+
+                    {{ if .Rule }}
+                    <div class="rule-info">
+                        Stashed due to rule: {{ .Rule }}
+                        <br>Rule location: {{ .RuleFile }}
+                    </div>
+                    {{ end }}
+                    
+                </div>
+            {{ end }}
+        </div>
+    </div>
 </body>
 </html>

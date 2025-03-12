@@ -290,9 +290,23 @@ func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool
 		}
 	}
 
+	dropLocation := "unknown"
+
+	// log the contents of picked up items
+	ctx.Logger.Info(fmt.Sprintf("Picked up items: %v", ctx.CurrentGame.PickedUpItems))
+
+	if _, found := ctx.CurrentGame.PickedUpItems[int(i.UnitID)]; found {
+		areaId := ctx.CurrentGame.PickedUpItems[int(i.UnitID)]
+		dropLocation = area.ID(ctx.CurrentGame.PickedUpItems[int(i.UnitID)]).Area().Name
+
+		if slices.Contains(ctx.Data.TerrorZones, area.ID(areaId)) {
+			dropLocation += " (terrorized)"
+		}
+	}
+
 	// Don't log items that we already have in inventory during first run or that we don't want to notify about (gems, low runes .. etc)
 	if !skipLogging && shouldNotifyAboutStashing(i) && ruleFile != "" {
-		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile}))
+		event.Send(event.ItemStashed(event.WithScreenshot(ctx.Name, fmt.Sprintf("Item %s [%d] stashed", i.Name, i.Quality), screenshot), data.Drop{Item: i, Rule: rule, RuleFile: ruleFile, DropLocation: dropLocation}))
 	}
 
 	return true
@@ -368,13 +382,30 @@ func OpenStash() error {
 	if !found {
 		return errors.New("stash not found")
 	}
-	InteractObject(bank,
-		func() bool {
-			return ctx.Data.OpenMenus.Stash
-		},
-	)
 
-	return nil
+	// Clear any UI popups first
+	ClearMessages()
+
+	// Open the stash
+	err := InteractObject(bank, func() bool {
+		return ctx.Data.OpenMenus.Stash
+	})
+	if err != nil {
+		return err
+	}
+
+	// Force a refresh to ensure menu state is updated
+	ctx.RefreshGameData()
+	utils.Sleep(300) // Short delay for menu rendering
+
+	if ctx.Data.OpenMenus.Stash {
+		// Move cursor to the center-right of the screen to avoid Magefist/Weapon loss
+		ctx.HID.MovePointer(1245, 355) // X=1245, Y=355 (center | right side)
+		ctx.Logger.Info("Stash opened - cursor moved to safe position")
+		return nil
+	}
+
+	return errors.New("stash window not detected after interaction")
 }
 
 func CloseStash() error {

@@ -40,6 +40,10 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 	// Let's make sure we have updated game data also fully loaded before performing anything
 	b.ctx.WaitForGameToLoad()
+
+	// Cleanup the current game helper structure
+	b.ctx.Cleanup()
+
 	// Switch to legacy mode if configured
 	action.SwitchToLegacyMode()
 	b.ctx.RefreshGameData()
@@ -154,7 +158,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 				// Check if we need to go back to town (no pots or merc died)
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
-					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
+					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.IsEquipmentBroken() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
 					!b.ctx.Data.PlayerUnit.Area.IsTown() {
@@ -173,9 +177,11 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 
 					b.ctx.Logger.Info("Going back to town", "reason", reason)
 
-					action.InRunReturnTownRoutine()
+					if err = action.InRunReturnTownRoutine(); err != nil {
+						b.ctx.Logger.Warn("Failed returning town.. will try again shortly", "error", err)
+						time.Sleep(500 * time.Millisecond)
+					}
 				}
-
 				b.ctx.SwitchPriority(botCtx.PriorityNormal)
 			}
 		}

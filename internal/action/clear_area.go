@@ -77,14 +77,15 @@ func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) 
 			Y: path[movementDistance-1].Y + ctx.Data.AreaData.OffsetY,
 		}
 
-		// Let's handle the last movement logic to MoveToCoords function, we will trust the pathfinder because
+		// Let's handle the last movement logic to MoveTo function, we will trust the pathfinder because
 		// it can finish within a bigger distance than we expect (because blockers), so we will just check how far
 		// we should be after the latest movement in a theoretical way
 		if len(path)-movementDistance <= step.DistanceToFinishMoving {
 			lastMovement = true
 		}
-
-		err := MoveToCoords(dest)
+		// Increasing DistanceToFinishMoving prevent not being to able to finish movement if our destination is center of a large object like Seal in diablo run.
+		// is used only for pathing, attack.go will use default DistanceToFinishMoving
+		err := step.MoveTo(dest, step.WithDistanceToFinish(7))
 		if err != nil {
 			return err
 		}
