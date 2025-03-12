@@ -3,17 +3,26 @@ package step
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
-	"github.com/hectorgimenez/d2go/pkg/data/mode"
+	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
+	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
 const DistanceToFinishMoving = 4
+
+var (
+	ErrMonstersInPath        = errors.New("monsters detected in movement path")
+	stepLastMonsterCheck     = time.Time{}
+	stepMonsterCheckInterval = 500 * time.Millisecond
+)
 
 type MoveOpts struct {
 	distanceOverride *int
@@ -45,22 +54,18 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	ctx := context.Get()
 	ctx.SetLastStep("MoveTo")
 
-	defer func() {
-		for {
-			switch ctx.Data.PlayerUnit.Mode {
-			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
-				utils.Sleep(100)
-				ctx.RefreshGameData()
-				continue
-			default:
-				return
-			}
-		}
-	}()
-
 	timeout := time.Second * 30
 	idleThreshold := time.Second * 3
 	idleStartTime := time.Time{}
+	openedDoors := make(map[object.Name]data.Position)
+
+	var walkDuration time.Duration
+	// Shorter walkDuration for fluid segment movement outside town.
+	if !ctx.Data.AreaData.Area.IsTown() {
+		walkDuration = utils.RandomDurationMs(475, 525)
+	} else {
+		walkDuration = utils.RandomDurationMs(600, 1000)
+	}
 
 	startedAt := time.Now()
 	lastRun := time.Time{}
@@ -73,17 +78,50 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
 		ctx.RefreshGameData()
 
-		// Add some delay between clicks to let the character move to destination
-		walkDuration := utils.RandomDurationMs(600, 1200)
-		if !ctx.Data.CanTeleport() && time.Since(lastRun) < walkDuration {
-			time.Sleep(walkDuration - time.Since(lastRun))
-			continue
+		// Check for monsters in path - only perform this check periodically to reduce CPU usage
+		if !ctx.Data.AreaData.Area.IsTown() && !ctx.Data.CanTeleport() && time.Since(stepLastMonsterCheck) > stepMonsterCheckInterval {
+			stepLastMonsterCheck = time.Now()
+
+			monsterFound := false
+			clearPathDist := ctx.CharacterCfg.Character.ClearPathDist
+
+			for _, m := range ctx.Data.Monsters.Enemies() {
+				// Skip dead monsters
+				if m.Stats[stat.Life] <= 0 {
+					continue
+				}
+
+				// Fast distance calculation for early exit
+				distanceToMonster := ctx.PathFinder.DistanceFromMe(m.Position)
+				if distanceToMonster <= clearPathDist {
+					monsterFound = true
+					break
+				}
+			}
+
+			if monsterFound {
+				return ErrMonstersInPath
+			}
 		}
 
-		// We skip the movement if we can teleport and the last movement time was less than the player cast duration
-		if ctx.Data.CanTeleport() && time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
-			time.Sleep(ctx.Data.PlayerCastDuration() - time.Since(lastRun))
-			continue
+		// If we can't teleport, check for doors and destructible objects
+		if !ctx.Data.CanTeleport() {
+			obstacleHandled := handleObstaclesInPath(dest, openedDoors)
+			if obstacleHandled {
+				continue
+			}
+
+			// Add some delay between clicks to let the character move to destination
+			if time.Since(lastRun) < walkDuration {
+				time.Sleep(walkDuration - time.Since(lastRun))
+				continue
+			}
+		} else {
+			// We skip the movement if we can teleport and the last movement time was less than the player cast duration
+			if time.Since(lastRun) < ctx.Data.PlayerCastDuration() {
+				time.Sleep(ctx.Data.PlayerCastDuration() - time.Since(lastRun))
+				continue
+			}
 		}
 
 		// Check for idle state
@@ -145,4 +183,67 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		previousDistance = distance
 		ctx.PathFinder.MoveThroughPath(path, walkDuration)
 	}
+}
+func handleObstaclesInPath(dest data.Position, openedDoors map[object.Name]data.Position) bool {
+	ctx := context.Get()
+
+	// Check for doors in the path
+	for _, o := range ctx.Data.Objects {
+		if o.IsDoor() && o.Selectable &&
+			ctx.PathFinder.DistanceFromMe(o.Position) < 5 &&
+			openedDoors[o.Name] != o.Position {
+
+			// Check if door is between us and destination
+			doorPos := o.Position
+			ourPos := ctx.Data.PlayerUnit.Position
+
+			// Calculate if door is roughly in our path to destination
+			dotProduct := (doorPos.X-ourPos.X)*(dest.X-ourPos.X) + (doorPos.Y-ourPos.Y)*(dest.Y-ourPos.Y)
+
+			lengthSquared := (dest.X-ourPos.X)*(dest.X-ourPos.X) + (dest.Y-ourPos.Y)*(dest.Y-ourPos.Y)
+
+			// If door is roughly in our direction of travel and close enough
+			if lengthSquared > 0 && dotProduct > 0 && dotProduct < lengthSquared {
+				ctx.Logger.Debug("Door detected in path, opening it...")
+				openedDoors[o.Name] = o.Position
+
+				err := InteractObject(o, func() bool {
+					obj, found := ctx.Data.Objects.FindByID(o.ID)
+					return found && !obj.Selectable
+				})
+
+				if err != nil {
+					ctx.Logger.Debug("Failed to open door", slog.String("error", err.Error()))
+				} else {
+					utils.Sleep(200)
+					return true
+				}
+			}
+		}
+	}
+
+	// Check for destructible objects like barrels
+	for _, o := range ctx.Data.Objects {
+		if o.Name == object.Barrel && ctx.PathFinder.DistanceFromMe(o.Position) < 3 {
+			objPos := o.Position
+			ourPos := ctx.Data.PlayerUnit.Position
+
+			dotProduct := (objPos.X-ourPos.X)*(dest.X-ourPos.X) + (objPos.Y-ourPos.Y)*(dest.Y-ourPos.Y)
+			lengthSquared := (dest.X-ourPos.X)*(dest.X-ourPos.X) + (dest.Y-ourPos.Y)*(dest.Y-ourPos.Y)
+
+			if lengthSquared > 0 && dotProduct > 0 && dotProduct < lengthSquared {
+				ctx.Logger.Debug("Destructible object in path, destroying it...")
+				InteractObject(o, func() bool {
+					// Extra click to ensure destruction
+					x, y := ctx.PathFinder.GameCoordsToScreenCords(o.Position.X, o.Position.Y)
+					ctx.HID.Click(game.LeftButton, x, y)
+					return true
+				})
+
+				utils.Sleep(100)
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -52,17 +52,25 @@ func InteractObject(o data.Object, isCompletedFn func() bool) error {
 	distFinish := step.DistanceToFinishMoving
 	if ctx.Data.PlayerUnit.Area == area.RiverOfFlame && o.IsWaypoint() {
 		pos = data.Position{X: 7800, Y: 5919}
-		// Special case for seals:  we cant teleport directly to center. Interaction range is bigger then DistanceToFinishMoving so we modify it
+		// Special case for seals: we cant teleport directly to center. Interaction range is bigger then DistanceToFinishMoving so we modify it
 	} else if strings.Contains(o.Desc().Name, "Seal") {
 		distFinish = 10
 	}
 
 	var err error
 	for range 5 {
-		err = step.MoveTo(pos, step.WithDistanceToFinish(distFinish))
-		if err != nil {
-			continue
+		if o.IsWaypoint() && !ctx.Data.AreaData.Area.IsTown() {
+			err = MoveToCoords(pos)
+			if err != nil {
+				continue
+			}
+		} else {
+			err = step.MoveTo(pos, step.WithDistanceToFinish(distFinish))
+			if err != nil {
+				continue
+			}
 		}
+
 		err = step.InteractObject(o, isCompletedFn)
 		if err != nil {
 			continue
