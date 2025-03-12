@@ -8,6 +8,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hectorgimenez/koolo/internal/bot"
+	"github.com/hectorgimenez/koolo/internal/event"
 )
 
 func (b *Bot) supervisorExists(supervisor string) bool {
@@ -177,5 +178,17 @@ func (b *Bot) handleStatsRequest(s *discordgo.Session, m *discordgo.MessageCreat
 	} else {
 		// If no supervisors were specified, send a usage message
 		s.ChannelMessageSend(m.ChannelID, "Usage: !stats <supervisor1> [supervisor2] ...")
+	}
+}
+
+func (b *Bot) handleCompanionResetRequest(s *discordgo.Session, m *discordgo.MessageCreate) {
+	words := strings.Fields(m.Content)
+	if len(words) > 1 {
+		for _, leader := range words[1:] {
+			event.Send(event.ResetCompanionGameInfo(event.Text(m.Author.Username, "Discord Companion Reset Request"), leader))
+			s.ChannelMessageSend(m.ChannelID, "Group reset for leader: "+leader)
+		}
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "Usage: !comp-reset <leader1> [leader2] ...")
 	}
 }

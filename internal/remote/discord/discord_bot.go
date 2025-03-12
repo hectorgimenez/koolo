@@ -84,6 +84,8 @@ func (b *Bot) onMessageCreated(s *discordgo.Session, m *discordgo.MessageCreate)
 		b.handleStatsRequest(s, m)
 	case "!status":
 		b.handleStatusRequest(s, m)
+	case "!comp-reset":
+		b.handleCompanionResetRequest(s, m)
 	}
 
 }
