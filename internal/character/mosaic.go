@@ -112,9 +112,11 @@ func (s MosaicSin) KillMonsterSequence(
 		}
 
 		// Phoenix Strike - 2 charges
-		if !s.Data.PlayerUnit.States.HasState(state.Phoenixstrike) || (foundPhoenix && phoenixCharges.Value < 2) {
-			step.SecondaryAttack(skill.PhoenixStrike, id, 1)
-			continue
+		if ctx.CharacterCfg.Character.MosaicSin.UsePhoenixStrike {
+			if !s.Data.PlayerUnit.States.HasState(state.Phoenixstrike) || (foundPhoenix && phoenixCharges.Value < 2) {
+				step.SecondaryAttack(skill.PhoenixStrike, id, 1)
+				continue
+			}
 		}
 
 		if !s.MobAlive(id, *s.Data) {
