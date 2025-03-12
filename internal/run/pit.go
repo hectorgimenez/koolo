@@ -74,5 +74,11 @@ func (p Pit) Run() error {
 	}
 
 	// Clear it
+	if p.ctx.CharacterCfg.Game.Pit.OpenSuperChests {
+		if err := action.ClearCurrentLevelSuperChest(p.ctx.CharacterCfg.Game.Pit.OpenSuperChests, monsterFilter); err != nil {
+			return err
+		}
+	}
+
 	return action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter)
 }

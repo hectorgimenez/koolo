@@ -62,5 +62,10 @@ func (s StonyTomb) Run() error {
 	}
 
 	// Clear the area
+	if s.ctx.CharacterCfg.Game.StonyTomb.OpenSuperChests {
+		if err := action.ClearCurrentLevelSuperChest(s.ctx.CharacterCfg.Game.StonyTomb.OpenSuperChests, monsterFilter); err != nil {
+			return err
+		}
+	}
 	return action.ClearCurrentLevel(s.ctx.CharacterCfg.Game.StonyTomb.OpenChests, monsterFilter)
 }

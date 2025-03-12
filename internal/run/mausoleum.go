@@ -52,5 +52,11 @@ func (a Mausoleum) Run() error {
 	action.OpenTPIfLeader()
 
 	// Clear the area
+	if a.ctx.CharacterCfg.Game.Mausoleum.OpenSuperChests {
+		if err := action.ClearCurrentLevelSuperChest(a.ctx.CharacterCfg.Game.Mausoleum.OpenSuperChests, monsterFilter); err != nil {
+			return err
+		}
+	}
+
 	return action.ClearCurrentLevel(a.ctx.CharacterCfg.Game.Mausoleum.OpenChests, monsterFilter)
 }
