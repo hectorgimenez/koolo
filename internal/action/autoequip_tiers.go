@@ -178,6 +178,9 @@ func PlayerScore(itm data.Item) map[item.LocationType]float64 {
 
 		totalScore := BaseScore + generalScore + resistScore + skillScore
 
+		if itm.IsBroken && itm.Ethereal {
+			totalScore -= 10000
+		}
 
 		scores[loc] = totalScore
 	}
