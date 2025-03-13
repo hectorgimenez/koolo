@@ -134,6 +134,7 @@ type CharacterCfg struct {
 		Runs                   []Run                 `yaml:"runs"`
 		CreateLobbyGames       bool                  `yaml:"createLobbyGames"`
 		PublicGameCounter      int                   `yaml:"-"`
+		InitialGameCount       int                   `yaml:"initialGameCount"`
 		Pindleskin             struct {
 			SkipOnImmunities []stat.Resist `yaml:"skipOnImmunities"`
 		} `yaml:"pindleskin"`
