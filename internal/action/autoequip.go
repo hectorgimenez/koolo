@@ -121,14 +121,16 @@ func isEquippable(i data.Item, target item.LocationType) bool {
 }
 
 func isValidLocation(i data.Item, bodyLoc item.LocationType, target item.LocationType) bool {
+	ctx := context.Get()
+	class := ctx.Data.PlayerUnit.Class
+	itemType := i.Desc().Type
+	isShield := slices.Contains(shieldTypes, itemType)
 
 	if target == item.LocationMercenary {
 		if slices.Contains(mercBodyLocs, bodyLoc) {
 			if bodyLoc == item.LocLeftArm {
 				// Merc can only use spears, polearms and javelins in left arm
-				return i.Desc().Type == "spea" ||
-					i.Desc().Type == "pole" ||
-					i.Desc().Type == "jave"
+				return itemType == "spea" || itemType == "pole" || itemType == "jave"
 			}
 			return true
 		}
@@ -137,19 +139,40 @@ func isValidLocation(i data.Item, bodyLoc item.LocationType, target item.Locatio
 
 	// Player validation
 	if target == item.LocationEquipped {
-		isShield := slices.Contains(shieldTypes, i.Desc().Type)
-
 		// Shields can only go in right arm
 		if isShield {
 			return bodyLoc == item.LocRightArm
 		}
 
-		// For non-shield items, all locations are valid except right arm if it's reserved for shields
-		if bodyLoc == item.LocRightArm {
-			return !isShield
+		if bodyLoc != item.LocRightArm {
+			return true
 		}
 
-		return true
+		// Dual wield
+		switch class {
+		case data.Barbarian:
+			// Barbs can dual wield 1h weaps and 2h swords
+			_, isOneHanded := i.FindStat(stat.MaxDamage, 0)
+			_, isTwoHanded := i.FindStat(stat.TwoHandedMaxDamage, 0)
+			return isOneHanded || (isTwoHanded && itemType == "swor")
+
+		case data.Assassin:
+			isClaws := itemType == "h2h" || itemType == "h2h2"
+
+			// Only allow claws in right arm if there are claws in left arm
+			if isClaws && bodyLoc == item.LocRightArm {
+				for _, equippedItem := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+					if equippedItem.Location.BodyLocation == item.LocLeftArm {
+						return equippedItem.Desc().Type == "h2h" || equippedItem.Desc().Type == "h2h2"
+					}
+				}
+				return false
+			}
+			return isClaws
+		default:
+			// Everyone else can only have shields in right arm
+			return false
+		}
 	}
 
 	return false
