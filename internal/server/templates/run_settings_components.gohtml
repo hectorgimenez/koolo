@@ -138,6 +138,15 @@
     <fieldset>
         <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
         <label><input type="checkbox" name="gameLevelingEnsureKeyBinding" {{ if .Config.Game.Leveling.EnsureKeyBinding }}checked{{ end }}> Automatically bind skills</label>
+            <label><input type="checkbox" name="gameLevelingEnableRunewordMaker" {{ if .Config.Game.Leveling.EnableRunewordMaker  }}checked{{ end }}> Socket items </label>
+            <div class="recipe-grid" style="margin-left: 20px;">
+                {{ range $index, $recipe := .RunewordRecipeList }}
+                    <label>
+                        <input type="checkbox" name="gameLevelingEnabledRunewordRecipes" value="{{ $recipe }}" {{ if contains $.Config.Game.Leveling.EnabledRunewordRecipes $recipe }}checked{{ end }}>
+                        {{ $recipe }}
+                    </label>
+                {{ end }}
+            </div>   
     </fieldset>
 {{ end }}
 
