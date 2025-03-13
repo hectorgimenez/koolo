@@ -64,16 +64,29 @@ const (
 	RepairButtonY        = 515
 	RepairButtonYClassic = 557
 
-	AnvilCenterX = 272
-	AnvilCenterY = 333
-	AnvilBtnX    = 272
-	AnvilBtnY    = 450
+	AnvilCenterX        = 272
+	AnvilCenterXClassic = 355
 
-	MainSkillButtonX = 596
-	MainSkillButtonY = 693
+	AnvilCenterY        = 333
+	AnvilCenterYClassic = 200
 
-	SecondarySkillButtonX = 686
-	SecondarySkillButtonY = 693
+	AnvilBtnX        = 272
+	AnvilBtnXClassic = 325
+
+	AnvilBtnY        = 450
+	AnvilBtnYClassic = 300
+
+	MainSkillButtonX        = 596
+	MainSkillButtonXClassic = 300
+
+	MainSkillButtonY        = 693
+	MainSkillButtonYClassic = 690
+
+	SecondarySkillButtonX        = 686
+	SecondarySkillButtonXClassic = 955
+
+	SecondarySkillButtonY        = 693
+	SecondarySkillButtonYClassic = 690
 
 	GambleRefreshButtonX        = 390
 	GambleRefreshButtonXClassic = 540
@@ -81,13 +94,23 @@ const (
 	GambleRefreshButtonY        = 515
 	GambleRefreshButtonYClassic = 553
 
-	SecondarySkillListFirstSkillX = 687
-	MainSkillListFirstSkillX      = 592
-	SkillListFirstSkillY          = 590
-	SkillListSkillOffset          = 45
+	SecondarySkillListFirstSkillX        = 687
+	SecondarySkillListFirstSkillXClassic = 996
 
-	FirstMercFromContractorListX = 175
-	FirstMercFromContractorListY = 142
+	MainSkillListFirstSkillX        = 592
+	MainSkillListFirstSkillXClassic = 285
+
+	SkillListFirstSkillY        = 590
+	SkillListFirstSkillYClassic = 595
+
+	SkillListSkillOffset        = 45
+	SkillListSkillOffsetClassic = 60
+
+	FirstMercFromContractorListX        = 175
+	FirstMercFromContractorListXClassic = 410
+
+	FirstMercFromContractorListY        = 142
+	FirstMercFromContractorListYClassic = 227
 
 	StashGoldBtnX        = 966
 	StashGoldBtnXClassic = 754
