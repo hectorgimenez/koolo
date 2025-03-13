@@ -17,6 +17,8 @@ const (
 	hydra_sorceressMaxAttacksLoop = 40
 	hydra_sorceressMinDistance    = 15
 	hydra_sorceressMaxDistance    = 30
+	hydra_SFMinDistance           = 4
+	hydra_SFMaxDistance           = 6
 )
 
 type HydraSorceress struct {
@@ -56,7 +58,6 @@ func (s HydraSorceress) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
-	// previousSelfHydra := time.Time{}
 	skipOnImmunities = append(skipOnImmunities, stat.FireImmune)
 	opts := step.Distance(hydra_sorceressMinDistance, hydra_sorceressMaxDistance)
 
@@ -83,7 +84,7 @@ func (s HydraSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		step.SecondaryAttack(skill.Hydra, id, 1, opts)
+		step.SecondaryAttack(skill.Hydra, id, 6, opts)
 		step.PrimaryAttack(id, 3, false, opts)
 
 		completedAttackLoops++
@@ -95,32 +96,39 @@ func (s HydraSorceress) KillBossSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
-	completedAttackLoops := 0
-	previousUnitID := 0
-	// previousSelfHydra := time.Time{}
-	opts := step.Distance(hydra_sorceressMinDistance, hydra_sorceressMaxDistance)
 
-	for {
+	opts := step.Distance(hydra_sorceressMinDistance, hydra_sorceressMaxDistance)
+	sfOpts := step.Distance(hydra_SFMinDistance, hydra_SFMaxDistance)
+
+	id, found := monsterSelector(*s.Data)
+	if !found {
+		return nil
+	}
+
+	monster, found := s.Data.Monsters.FindByID(id)
+	if !found {
+		s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+		return nil
+	}
+
+	_ = step.SecondaryAttack(skill.StaticField, monster.UnitID, 6, sfOpts)
+
+	for monster.Stats[stat.Life] > 0 && found {
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
-		if previousUnitID != int(id) {
-			completedAttackLoops = 0
-		}
 
 		monster, found := s.Data.Monsters.FindByID(id)
-		if !found || monster.Stats[stat.Life] <= 0 {
+		if !found {
 			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
-
-		step.SecondaryAttack(skill.Hydra, id, 1, opts)
-		step.PrimaryAttack(id, 3, false, opts)
-
-		completedAttackLoops++
-		previousUnitID = int(id)
+		step.SecondaryAttack(skill.Hydra, id, 6, opts)
+		step.PrimaryAttack(id, 6, false, opts)
 	}
+
+	return nil
 }
 
 func (s HydraSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ int, _ bool, skipOnImmunities []stat.Resist) error {
