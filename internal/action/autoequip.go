@@ -326,8 +326,9 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 
 	utils.Sleep(100)
 	ctx.RefreshGameData()
+	utils.Sleep(500)
 	for _, inPlace := range ctx.Data.Inventory.AllItems {
-		if itm.UnitID == inPlace.UnitID && inPlace.Location.LocationType != target {
+		if itm.UnitID == inPlace.UnitID && inPlace.Location.BodyLocation == bodyloc {
 			step.CloseAllMenus()
 			ctx.Logger.Error(fmt.Sprintf("Failed to equip %s to %s using hotkeys, trying cursor", itm.Name, target))
 			// Temporarily disabled using cursor to equip - it isn't needed for any case now and it will be removed after testing
