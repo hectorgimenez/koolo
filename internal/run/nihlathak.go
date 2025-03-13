@@ -51,8 +51,9 @@ func (n Nihlathak) Run() error {
 	action.MoveToCoords(o.Position)
 
 	// Try to position in the safest corner
-	action.MoveToCoords(n.findBestCorner(o.Position))
-
+	if !n.ctx.CharacterCfg.Character.UseTeleStomp {
+		action.MoveToCoords(n.findBestCorner(o.Position))
+	}
 	// Disable item pickup before the fight
 	n.ctx.DisableItemPickup()
 
