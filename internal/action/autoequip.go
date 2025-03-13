@@ -179,18 +179,32 @@ func isValidLocation(i data.Item, bodyLoc item.LocationType, target item.Locatio
 }
 
 // evaluateItems processes items for either player or merc
-func evaluateItems(items []data.Item, target item.LocationType, scoreFunc func(data.Item) float64) map[item.LocationType][]data.Item {
+func evaluateItems(items []data.Item, target item.LocationType, scoreFunc func(data.Item) map[item.LocationType]float64) map[item.LocationType][]data.Item {
+	ctx := context.Get()
 	itemsByLoc := make(map[item.LocationType][]data.Item)
+	itemScores := make(map[data.UnitID]map[item.LocationType]float64)
+
 	for _, itm := range items {
 
 		if !isEquippable(itm, target) {
 			continue
 		}
 
-		locations := itm.Desc().GetType().BodyLocs
-		for _, loc := range locations {
-			if isValidLocation(itm, loc, target) {
-				itemsByLoc[loc] = append(itemsByLoc[loc], itm)
+		// Get scores for all possible body locations
+		bodyLocScores := scoreFunc(itm)
+
+		if len(bodyLocScores) > 0 {
+			if _, exists := itemScores[itm.UnitID]; !exists {
+				itemScores[itm.UnitID] = make(map[item.LocationType]float64)
+			}
+
+			for bodyLoc, score := range bodyLocScores {
+				isValid := isValidLocation(itm, bodyLoc, target)
+
+				if isValid {
+					itemScores[itm.UnitID][bodyLoc] = score
+					itemsByLoc[bodyLoc] = append(itemsByLoc[bodyLoc], itm)
+				}
 			}
 		}
 	}
@@ -198,34 +212,55 @@ func evaluateItems(items []data.Item, target item.LocationType, scoreFunc func(d
 	// Sort items by score in each location
 	for loc := range itemsByLoc {
 		sort.Slice(itemsByLoc[loc], func(i, j int) bool {
-			scoreI := scoreFunc(itemsByLoc[loc][i])
-			scoreJ := scoreFunc(itemsByLoc[loc][j])
+			scoreI := itemScores[itemsByLoc[loc][i].UnitID][loc]
+			scoreJ := itemScores[itemsByLoc[loc][j].UnitID][loc]
 			return scoreI > scoreJ
 		})
+
+		ctx.Logger.Debug(fmt.Sprintf("*** Sorted items for %s ***", loc))
+		for i, itm := range itemsByLoc[loc] {
+			score := itemScores[itm.UnitID][loc]
+			ctx.Logger.Debug(fmt.Sprintf("%d. %s (Score: %.1f)", i+1, itm.IdentifiedName, score))
+		}
+		ctx.Logger.Debug("**********************************")
 	}
 
-	// Special handling for two-handed weapons
-	// If a two-handed weapon is equipped, check if a one-handed weapon + shield combo scores better
+	// Check 1h weapon + shield score vs 2h weapons
 	if target == item.LocationEquipped {
-		var bestComboScore float64
-		if items, ok := itemsByLoc[item.LocLeftArm]; ok {
+		class := ctx.Data.PlayerUnit.Class
+
+		if items, ok := itemsByLoc[item.LocLeftArm]; ok && len(items) > 0 {
 			// Check if the highest scoring left arm item is two-handed
 			if _, found := items[0].FindStat(stat.TwoHandedMinDamage, 0); found {
-				// Find best non-two-handed weapon score
-				for _, item := range items {
-					if _, isTwoHanded := item.FindStat(stat.TwoHandedMinDamage, 0); !isTwoHanded {
-						bestComboScore = scoreFunc(item)
-						break
+				if class == data.Barbarian && items[0].Desc().Type == "swor" {
+					// Skip the removal check for Barbarians with 2h swords
+				} else {
+					// Find best non-two-handed weapon score
+					var bestComboScore float64
+					for _, itm := range items {
+						if _, isTwoHanded := itm.FindStat(stat.TwoHandedMinDamage, 0); !isTwoHanded {
+							if score, exists := itemScores[itm.UnitID]["left_arm"]; exists {
+								ctx.Logger.Debug(fmt.Sprintf("Best one-handed weapon score: %.1f", score))
+								bestComboScore = score
+								break
+							}
+						}
 					}
-				}
-				// Add best shield score if available
-				if rightArmItems, ok := itemsByLoc[item.LocRightArm]; ok {
-					bestComboScore += scoreFunc(rightArmItems[0])
-				}
 
-				// If one-hand + shield combo scores better, remove the two-handed weapon
-				if bestComboScore >= scoreFunc(items[0]) {
-					itemsByLoc[item.LocLeftArm] = itemsByLoc[item.LocLeftArm][1:]
+					// Add best shield score if available
+					if rightArmItems, ok := itemsByLoc[item.LocRightArm]; ok && len(rightArmItems) > 0 {
+						if score, exists := itemScores[rightArmItems[0].UnitID][item.LocRightArm]; exists {
+							ctx.Logger.Debug(fmt.Sprintf("Best shield score: %.1f", score))
+							bestComboScore += score
+							ctx.Logger.Debug(fmt.Sprintf("Best one-hand + shield combo score: %.1f", bestComboScore))
+						}
+					}
+
+					// If one-hand + shield combo scores better, remove the two-handed weapon
+					if twoHandedScore, exists := itemScores[items[0].UnitID][item.LocLeftArm]; exists && bestComboScore >= twoHandedScore {
+						ctx.Logger.Debug(fmt.Sprintf("Removing two-handed weapon: %s", items[0].Name))
+						itemsByLoc[item.LocLeftArm] = itemsByLoc[item.LocLeftArm][1:]
+					}
 				}
 			}
 		}
