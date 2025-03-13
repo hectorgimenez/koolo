@@ -52,19 +52,6 @@ func (a Leveling) act2() error {
 		return NewQuests().getHoradricCube()
 	}
 
-	// Duriel quest only starts when we click the journal. If we haven't clicked the journal we probably don't even have the Canyon WP.
-	if !a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
-		// Try to get level 21 before moving to Duriel and Act3
-
-		if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 21 {
-			return NewTalRashaTombs().Run()
-		}
-
-		a.prepareStaff()
-
-		return a.duriel()
-	}
-
 	_, horadricStaffFound := a.ctx.Data.Inventory.Find("HoradricStaff", item.LocationInventory, item.LocationStash, item.LocationEquipped)
 
 	// Find Staff of Kings
@@ -119,6 +106,20 @@ func (a Leveling) act2() error {
 			return err
 		}
 	}
+
+	// Duriel quest only starts when we click the journal. If we haven't clicked the journal we probably don't even have the Canyon WP.
+	if !a.ctx.Data.Quests[quest.Act2TheSevenTombs].HasStatus(quest.StatusQuestNotStarted) {
+		// Try to get level 21 before moving to Duriel and Act3
+
+		if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 21 {
+			return NewTalRashaTombs().Run()
+		}
+
+		a.prepareStaff()
+
+		return a.duriel()
+	}
+
 	return nil
 }
 
