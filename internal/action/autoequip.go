@@ -412,8 +412,8 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 		if itm.UnitID == inPlace.UnitID && inPlace.Location.BodyLocation == bodyloc {
 			step.CloseAllMenus()
 			ctx.Logger.Error(fmt.Sprintf("Failed to equip %s to %s using hotkeys, trying cursor", itm.Name, target))
-			// Temporarily disabled using cursor to equip - it isn't needed for any case now and it will be removed after testing
-			//return equipCursor(itm, bodyloc, target)
+
+			return equipCursor(itm, bodyloc, target)
 		}
 	}
 
@@ -462,7 +462,7 @@ func equipCursor(itm data.Item, bodyloc item.LocationType, target item.LocationT
 			utils.Sleep(EquipDelayMS)
 			DropMouseItem()
 
-			return fmt.Errorf("Failed %s to %s equip to using cursor", itm.Name, target)
+			return fmt.Errorf("failed %s to %s equip to using cursor", itm.Name, target)
 		}
 	}
 
