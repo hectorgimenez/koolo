@@ -1,6 +1,7 @@
 package action
 
 import (
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -152,6 +153,12 @@ var fireSkills = []skill.ID{
 	skill.CorpseExplosion,
 	// Paladin
 	skill.HolyFire,
+}
+
+var resPenalty = map[difficulty.Difficulty]int{
+	difficulty.Normal:    0,
+	difficulty.Nightmare: 40,
+	difficulty.Hell:      100,
 }
 
 // PlayerScore calculates overall item tier score
@@ -306,28 +313,40 @@ func getEquippedResists(newItem data.Item) ResistStats {
 func getBaseResists(equipped ResistStats) ResistStats {
 	ctx := context.Get()
 
-	fr, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(stat.FireResist, 0)
-	cr, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(stat.ColdResist, 0)
-	lr, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(stat.LightningResist, 0)
-	pr, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(stat.PoisonResist, 0)
+	fr, _ := ctx.Data.PlayerUnit.FindStat(stat.FireResist, 0)
+	cr, _ := ctx.Data.PlayerUnit.FindStat(stat.ColdResist, 0)
+	lr, _ := ctx.Data.PlayerUnit.FindStat(stat.LightningResist, 0)
+	pr, _ := ctx.Data.PlayerUnit.FindStat(stat.PoisonResist, 0)
 
-	return ResistStats{
-		Fire:      fr.Value - equipped.Fire,
-		Cold:      cr.Value - equipped.Cold,
-		Lightning: lr.Value - equipped.Lightning,
-		Poison:    pr.Value - equipped.Poison,
+	baseRes := ResistStats{
+		Fire:      fr.Value - resPenalty[ctx.CharacterCfg.Game.Difficulty] - equipped.Fire,
+		Cold:      cr.Value - resPenalty[ctx.CharacterCfg.Game.Difficulty] - equipped.Cold,
+		Lightning: lr.Value - resPenalty[ctx.CharacterCfg.Game.Difficulty] - equipped.Lightning,
+		Poison:    pr.Value - resPenalty[ctx.CharacterCfg.Game.Difficulty] - equipped.Poison,
 	}
+
+	return baseRes
 }
 
 func calculateEffectiveResists(new, base ResistStats) ResistStats {
 	const maxResist = 75
 
-	return ResistStats{
-		Fire:      min(new.Fire, max(maxResist-base.Fire, 0)),
-		Cold:      min(new.Cold, max(maxResist-base.Cold, 0)),
-		Lightning: min(new.Lightning, max(maxResist-base.Lightning, 0)),
-		Poison:    min(new.Poison, max(maxResist-base.Poison, 0)),
+	// This prevents scoring if we're already at max res (doesn't account for items that increase max res)
+	limit := ResistStats{
+		Fire:      max(maxResist-base.Fire, 0),
+		Cold:      max(maxResist-base.Cold, 0),
+		Lightning: max(maxResist-base.Lightning, 0),
+		Poison:    max(maxResist-base.Poison, 0),
 	}
+
+	effectiveRes := ResistStats{
+		Fire:      min(new.Fire, limit.Fire),
+		Cold:      min(new.Cold, limit.Cold),
+		Lightning: min(new.Lightning, limit.Lightning),
+		Poison:    min(new.Poison, limit.Poison),
+	}
+
+	return effectiveRes
 }
 
 func calculateMainResistScore(resists ResistStats) float64 {
