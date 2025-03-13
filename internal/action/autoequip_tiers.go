@@ -129,6 +129,31 @@ var mercCTCWeight = []mercCTCWeights{
 	{StatID: stat.Aura, Weight: 100.0, Layer: 120},             // Insight
 }
 
+// Can't find a way to get this from txt files - needed for + to fire skills from Magefists, Leaf, Flickering Flame etc
+var fireSkills = []skill.ID{
+	// Amazon
+	skill.FireArrow,
+	skill.ExplodingArrow,
+	skill.ImmolationArrow,
+	// Assassin
+	skill.FistsOfFire,
+	skill.FireBlast,
+	skill.WakeOfFire,
+	skill.WakeOfInferno,
+	// Druid
+	skill.FireClaws,
+	skill.Firestorm,
+	skill.MoltenBoulder,
+	skill.Fissure,
+	skill.Volcano,
+	skill.Armageddon,
+	// Necromancer
+	skill.FireGolem,
+	skill.CorpseExplosion,
+	// Paladin
+	skill.HolyFire,
+}
+
 // PlayerScore calculates overall item tier score
 func PlayerScore(itm data.Item) float64 {
 
@@ -364,6 +389,26 @@ func calculateSkillScore(itm data.Item) float64 {
 		}
 	}
 
+	if fireSkillsStat, found := itm.FindStat(stat.FireSkills, 1); found {
+		// Non-Sorcs
+		for sk := range ctx.Data.PlayerUnit.Skills {
+			for _, fireSkill := range fireSkills {
+				if sk == fireSkill {
+					const fireSkillWeight = 40.0
+					fireSkillScore := float64(fireSkillsStat.Value) * fireSkillWeight
+					//ctx.Logger.Debug(fmt.Sprintf("  +%d to Fire Skills, weight: %.2f, score: %.2f",
+					//	fireSkillsStat.Value, fireSkillWeight, fireSkillScore))
+					score += fireSkillScore
+				}
+			}
+		}
+		if ctx.Data.PlayerUnit.Class == data.Sorceress && getMaxSkillTabPage() == 1 { // Sorc using Fire tree
+			fireSkillScore := float64(fireSkillsStat.Value) * skillWeights[stat.AddSkillTab] // Consider it the same as '+x to Fire Skills (Sorceress only)'
+			//ctx.Logger.Debug(fmt.Sprintf("  +%d to Fire Skills, weight: %.2f, score: %.2f",
+			//	fireSkillsStat.Value, skillWeights[stat.AddSkillTab], fireSkillScore))
+			score += fireSkillScore
+		}
+	}
 	return score
 }
 
