@@ -215,6 +215,8 @@ func evaluateItems(items []data.Item, target item.LocationType, scoreFunc func(d
 func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.LocationType) error {
 	ctx := context.Get()
 
+	equippedItems := make(map[data.UnitID]bool)
+
 	for loc, items := range itemsByLoc {
 		if len(items) == 0 {
 			continue
@@ -228,6 +230,11 @@ func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.Lo
 				break
 			}
 
+			if equippedItems[itm.UnitID] {
+				ctx.Logger.Debug(fmt.Sprintf("Skipping %s for %s as it was already equipped elsewhere", itm.Name, loc))
+				continue
+			}
+
 			// Skip if item is equipped by the other target (player/merc)
 			if (itm.Location.LocationType == item.LocationMercenary && target == item.LocationEquipped) || (itm.Location.LocationType == item.LocationEquipped && target == item.LocationMercenary) {
 				continue
@@ -237,6 +244,9 @@ func equipBestItems(itemsByLoc map[item.LocationType][]data.Item, target item.Lo
 				ctx.Logger.Error(fmt.Sprintf("Failed to equip %s: %v", itm.Name, err))
 				continue
 			}
+
+			// Mark this item as equipped
+			equippedItems[itm.UnitID] = true
 			break
 		}
 
