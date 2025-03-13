@@ -162,15 +162,26 @@ var resPenalty = map[difficulty.Difficulty]int{
 }
 
 // PlayerScore calculates overall item tier score
-func PlayerScore(itm data.Item) float64 {
+func PlayerScore(itm data.Item) map[item.LocationType]float64 {
+	bodyLocs := itm.Desc().GetType().BodyLocs
+	if len(bodyLocs) == 0 {
+		return make(map[item.LocationType]float64)
+	}
 
-	generalScore := calculateGeneralScore(itm)
-	resistScore := calculateResistScore(itm)
-	skillScore := calculateSkillScore(itm)
+	// Should move valid location checks here maybe to avoid unneccessary calcs
+	scores := make(map[item.LocationType]float64)
 
-	totalScore := BaseScore + generalScore + resistScore + skillScore
+	for _, loc := range bodyLocs {
+		generalScore := calculateGeneralScore(itm)
+		resistScore := calculateResistScore(itm, loc)
+		skillScore := calculateSkillScore(itm)
 
-	return totalScore
+		totalScore := BaseScore + generalScore + resistScore + skillScore
+
+
+		scores[loc] = totalScore
+	}
+	return scores
 }
 func calculateGeneralScore(itm data.Item) float64 {
 
@@ -254,26 +265,24 @@ func calculateBaseStats(itm data.Item) float64 {
 // Resists
 
 // calculateResistScore evaluates item resistance values and returns a weighted score
-func calculateResistScore(itm data.Item) float64 {
-	// Get new item resists
+func calculateResistScore(itm data.Item, bodyloc item.LocationType) float64 {
 	newResists := getItemMainResists(itm)
-
-	// only enter next block if we have a new item with resists
+	mainScore := 0.0
 	if newResists.Fire == 0 && newResists.Cold == 0 && newResists.Lightning == 0 && newResists.Poison == 0 {
 		return 0.0
 	}
-
-	// get item resists stats from olditem equipped on body location
-	oldResists := getEquippedResists(itm)
-
+	oldResists := getEquippedResists(bodyloc)
 	baseResists := getBaseResists(oldResists)
 	// subtract olditem resists from current total resists
 	effectiveResists := calculateEffectiveResists(newResists, baseResists)
 
-	mainScore := calculateMainResistScore(effectiveResists)
+	mainScore = calculateMainResistScore(effectiveResists)
+
 	otherScore := calculateOtherResistScore(itm)
 
-	return mainScore + otherScore
+	totalScore := mainScore + otherScore
+
+	return totalScore
 }
 
 func getItemMainResists(itm data.Item) ResistStats {
@@ -290,12 +299,11 @@ func getItemMainResists(itm data.Item) ResistStats {
 	}
 }
 
-func getEquippedResists(newItem data.Item) ResistStats {
+func getEquippedResists(bodyloc item.LocationType) ResistStats {
 	ctx := context.Get()
 	var resists ResistStats
-
 	for _, equippedItem := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
-		if equippedItem.Desc().Type[0] == newItem.Desc().Type[0] {
+		if equippedItem.Location.BodyLocation == bodyloc {
 			fr, _ := equippedItem.FindStat(stat.FireResist, 0)
 			resists.Fire = fr.Value
 			cr, _ := equippedItem.FindStat(stat.ColdResist, 0)
@@ -304,8 +312,10 @@ func getEquippedResists(newItem data.Item) ResistStats {
 			resists.Lightning = lr.Value
 			pr, _ := equippedItem.FindStat(stat.PoisonResist, 0)
 			resists.Poison = pr.Value
-			break
+
+			return resists
 		}
+
 	}
 	return resists
 }
@@ -350,10 +360,14 @@ func calculateEffectiveResists(new, base ResistStats) ResistStats {
 }
 
 func calculateMainResistScore(resists ResistStats) float64 {
-	return float64(resists.Fire)*resistWeightsMain[stat.FireResist] +
-		float64(resists.Cold)*resistWeightsMain[stat.ColdResist] +
-		float64(resists.Lightning)*resistWeightsMain[stat.LightningResist] +
-		float64(resists.Poison)*resistWeightsMain[stat.PoisonResist]
+	fireScore := float64(resists.Fire) * resistWeightsMain[stat.FireResist]
+	coldScore := float64(resists.Cold) * resistWeightsMain[stat.ColdResist]
+	lightScore := float64(resists.Lightning) * resistWeightsMain[stat.LightningResist]
+	poisonScore := float64(resists.Poison) * resistWeightsMain[stat.PoisonResist]
+
+	totalScore := fireScore + coldScore + lightScore + poisonScore
+
+	return totalScore
 }
 
 func calculateOtherResistScore(itm data.Item) float64 {
@@ -432,26 +446,38 @@ func calculateSkillScore(itm data.Item) float64 {
 }
 
 // MercScore calculates mercenary-specific item score
-func MercScore(itm data.Item) float64 {
-	score := BaseScore + sumElementalDamage(itm)*2.0
-
-	// Add base stat scores
-	for statID, weight := range mercWeights {
-		if statData, found := itm.FindStat(statID, 0); found {
-			mercStatScore := float64(statData.Value) * weight
-			score += mercStatScore
-		}
+func MercScore(itm data.Item) map[item.LocationType]float64 {
+	// Get all possible body locations for this item
+	bodyLocs := itm.Desc().GetType().BodyLocs
+	if len(bodyLocs) == 0 {
+		return make(map[item.LocationType]float64)
 	}
 
-	// Add cast-on-trigger scores
-	for _, ctc := range mercCTCWeight {
-		if ctcStat, found := itm.FindStat(ctc.StatID, ctc.Layer); found {
-			mercCTCScore := float64(ctcStat.Value) * ctc.Weight
-			score += mercCTCScore
-		}
-	}
+	// Should move valid location checks here maybe to avoid unneccessary calcs
+	scores := make(map[item.LocationType]float64)
 
-	return score
+	for _, loc := range bodyLocs {
+		totalScore := BaseScore + sumElementalDamage(itm)*2.0
+
+		// Base stats
+		for statID, weight := range mercWeights {
+			if statData, found := itm.FindStat(statID, 0); found {
+				mercStatScore := float64(statData.Value) * weight
+				totalScore += mercStatScore
+			}
+		}
+
+		// Chance-to-cast
+		for _, ctc := range mercCTCWeight {
+			if ctcStat, found := itm.FindStat(ctc.StatID, ctc.Layer); found {
+				mercCTCScore := float64(ctcStat.Value) * ctc.Weight
+				totalScore += mercCTCScore
+			}
+		}
+
+		scores[loc] = totalScore
+	}
+	return scores
 }
 
 // Helper functions
