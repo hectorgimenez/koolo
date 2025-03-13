@@ -310,17 +310,40 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 	}
 
 	if target == item.LocationEquipped {
-		// We need to de-equip the item in the right ring slot first to prevent having to move cursor and click
-		if bodyloc == item.LocRightRing {
-			if itemFitsInventory(itm) {
-				equippedRing := data.Position{ui.EquipRRinX, ui.EquipRRinY}
-				if ctx.Data.LegacyGraphics {
-					equippedRing = data.Position{ui.EquipRRinClassicX, ui.EquipRRinClassicY}
+		// We need to de-equip the item in the right ring or right arm slot first to prevent having to move cursor and click
+		switch bodyloc {
+		case item.LocRightRing:
+			if !itemFitsInventory(itm) {
+				return fmt.Errorf("not enough inventory space to unequip %s", itm.Name)
+			}
+			equippedRing := data.Position{X: ui.EquipRRinX, Y: ui.EquipRRinY}
+			if ctx.Data.LegacyGraphics {
+				equippedRing = data.Position{X: ui.EquipRRinClassicX, Y: ui.EquipRRinClassicY}
+			}
+			ctx.HID.ClickWithModifier(game.LeftButton, equippedRing.X, equippedRing.Y, game.ShiftKey)
+			utils.Sleep(EquipDelayMS)
+
+		case item.LocRightArm:
+			// Check if there's something already equipped in the right arm
+			for _, equippedItem := range ctx.Data.Inventory.ByLocation(item.LocationEquipped) {
+				if equippedItem.Location.BodyLocation == item.LocRightArm {
+					if !itemFitsInventory(itm) {
+						return fmt.Errorf("not enough inventory space to unequip %s", itm.Name)
+					}
+
+					// It will straight swap if the item type is the same
+					// But item type needs to be different from left arm - TODO add the logic for this
+					equippedRightArm := data.Position{X: ui.EquipRArmX, Y: ui.EquipRArmY}
+					if ctx.Data.LegacyGraphics {
+						equippedRightArm = data.Position{X: ui.EquipRArmClassicX, Y: ui.EquipRArmClassicY}
+					}
+					ctx.HID.ClickWithModifier(game.LeftButton, equippedRightArm.X, equippedRightArm.Y, game.ShiftKey)
+					utils.Sleep(EquipDelayMS)
+					break // Only need to un-equip one item
 				}
-				ctx.HID.ClickWithModifier(game.LeftButton, equippedRing.X, equippedRing.Y, game.ShiftKey)
-				utils.Sleep(EquipDelayMS)
 			}
 		}
+		ctx.Logger.Debug(fmt.Sprintf("Equipping %s at %v to %s using hotkeys", itm.Name, itemCoords, bodyloc))
 		ctx.HID.ClickWithModifier(game.LeftButton, itemCoords.X, itemCoords.Y, game.ShiftKey)
 	}
 
