@@ -58,6 +58,7 @@ func (s FrozenOrbSorceress) KillBossSequence(
 ) error {
 	orbOpts := step.StationaryDistance(orbMinDistance, orbMaxDistance)
 	sfOpts := step.Distance(orbSFMinDistance, orbSFMaxDistance)
+	skipOnImmunities = append(skipOnImmunities, stat.ColdImmune)
 
 	id, found := monsterSelector(*s.Data)
 	if !found {
