@@ -81,7 +81,12 @@ func (a Quests) Run() error {
 func (a Quests) clearDenQuest() error {
 	a.ctx.Logger.Info("Starting Den of Evil Quest...")
 
-	err := action.MoveToArea(area.BloodMoor)
+	err := action.WayPoint(area.RogueEncampment)
+	if err != nil {
+		return err
+	}
+
+	err = action.MoveToArea(area.BloodMoor)
 	if err != nil {
 		return err
 	}
