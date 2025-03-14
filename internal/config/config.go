@@ -194,9 +194,6 @@ type CharacterCfg struct {
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
 		} `yaml:"nihlathak"`
-		Summoner struct {
-			ClearArea bool `yaml:"clearArea"`
-		} `yaml:"summoner"`
 		Diablo struct {
 			KillDiablo                    bool `yaml:"killDiablo"`
 			StartFromStar                 bool `yaml:"startFromStar"`
