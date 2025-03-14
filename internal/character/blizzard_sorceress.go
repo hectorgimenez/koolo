@@ -19,12 +19,18 @@ type BlizzardSorceress struct {
 	BaseCharacter
 }
 
-func (s BlizzardSorceress) attackConfig() map[string]int {
+type BlizzardAttackConfig struct {
+	maxAttacksLoop    int
+	attackMinDistance int
+	attackMaxDistance int
+}
+
+func (s BlizzardSorceress) attackConfig() BlizzardAttackConfig {
 	// Avoiding constants that pollute the other characters in the package
-	return map[string]int{
-		"maxAttacksLoop":    100,
-		"attackMinDistance": 8,
-		"attackMaxDistance": 16,
+	return BlizzardAttackConfig{
+		maxAttacksLoop:    40,
+		attackMinDistance: 8,
+		attackMaxDistance: 16,
 	}
 }
 
@@ -90,10 +96,7 @@ func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data
 			continue
 		}
 
-		// Switch to primary skill once boss HP is low enough
-		return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-			return boss.UnitID, true
-		}, nil)
+		return s.killMonsterByName(bossID, monsterType, nil)
 	}
 }
 
@@ -106,8 +109,8 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	previousSelfBlizzard := time.Time{}
 
 	attackOpts := step.StationaryDistance(
-		s.attackConfig()["attackMinDistance"],
-		s.attackConfig()["attackMaxDistance"],
+		s.attackConfig().attackMinDistance,
+		s.attackConfig().attackMaxDistance,
 	)
 
 	for {
@@ -125,7 +128,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= s.attackConfig()["maxAttacksLoop"] {
+		if completedAttackLoops >= s.attackConfig().maxAttacksLoop {
 			s.Logger.Error("Exceeded MaxAttacksLoop", slog.String("completedAttackLoops", fmt.Sprintf("%v", completedAttackLoops)))
 			return nil
 		}
@@ -166,13 +169,25 @@ func (s BlizzardSorceress) KillMonsterSequence(
 }
 
 func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		if m, found := d.Monsters.FindOne(id, monsterType); found {
-			return m.UnitID, true
-		}
+	// while the monster is alive, keep attacking it
+	for {
+		if m, found := s.Data.Monsters.FindOne(id, monsterType); found {
+			if m.Stats[stat.Life] <= 0 {
+				break
+			}
 
-		return 0, false
-	}, skipOnImmunities)
+			s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				if m, found := d.Monsters.FindOne(id, monsterType); found {
+					return m.UnitID, true
+				}
+
+				return 0, false
+			}, skipOnImmunities)
+		} else {
+			break
+		}
+	}
+	return nil
 }
 
 func (s BlizzardSorceress) BuffSkills() []skill.ID {
