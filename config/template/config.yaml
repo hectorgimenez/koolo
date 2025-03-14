@@ -216,6 +216,9 @@ game:
       - 119 # Icy Cellar
       - 121 # Nihlathak's Temple (Will do Nihlathak run)
       - 128 # The Worldstone Keep Level 1 (Will do Baal run)
+    summoner:
+  clearArea: false
+  clearGhosts: false
 
 companion:
   enabled: false

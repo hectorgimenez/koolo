@@ -258,6 +258,10 @@ type CharacterCfg struct {
 			RescueAnya     bool `yaml:"rescueAnya"`
 			KillAncients   bool `yaml:"killAncients"`
 		} `yaml:"rush"`
+		Summoner struct {
+			ClearArea   bool `yaml:"clearArea"`
+			ClearGhosts bool `yaml:"clearGhosts"`
+		} `yaml:"summoner"`
 	} `yaml:"game"`
 	Companion struct {
 		Enabled               bool   `yaml:"enabled"`
