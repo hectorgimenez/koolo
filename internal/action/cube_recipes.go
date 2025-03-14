@@ -208,6 +208,20 @@ var (
 			PurchaseItems:    []string{"Ring"},
 		},
 
+		// Blood Amulet
+		{
+			Name:             "Blood Amulet",
+			Items:            []string{"AmnRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Amulet"},
+		},
+		// Blood Ring
+		{
+			Name:             "Blood Ring",
+			Items:            []string{"SolRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Ring"},
+		},
 		// Blood Gloves
 		{
 			Name:             "Blood Gloves",
