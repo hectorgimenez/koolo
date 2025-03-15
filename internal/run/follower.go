@@ -40,9 +40,12 @@ func (f *Follower) Run() error {
 	leader, leaderFound := f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
 	if !leaderFound {
 		f.ctx.Logger.Error("Leader not found.")
+		f.resetCompanionGameInfo()
 		return nil
 	}
+
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
+
 	//Anti-stuck solution
 	lastPosition := data.Position{}
 
@@ -53,6 +56,7 @@ func (f *Follower) Run() error {
 		f.ctx.Logger.Info("Leader is still here.", slog.String("leader", leader.Name))
 		if !leaderFound {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
+			f.resetCompanionGameInfo()
 			return nil
 		}
 
@@ -306,4 +310,9 @@ func (f *Follower) handleBaalScenario() error {
 func (f *Follower) goToTpArea() error {
 	tpArea := town.GetTownByArea(f.ctx.Data.PlayerUnit.Area).TPWaitingArea(*f.ctx.Data)
 	return action.MoveToCoords(tpArea)
+}
+
+func (f *Follower) resetCompanionGameInfo() {
+	f.ctx.Context.CharacterCfg.Companion.CompanionGameName = ""
+	f.ctx.Context.CharacterCfg.Companion.CompanionGamePassword = ""
 }
