@@ -25,34 +25,49 @@ func (a Leveling) act1() error {
 
 	// clear Blood Moor until level 3
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
+		a.ctx.Logger.Debug("Clearing Blood Moor")
 		a.bloodMoor()
 	}
 
 	// clear Cold Plains until level 6
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 6 {
+		a.ctx.Logger.Debug("Clearing Cold Plains")
 		a.coldPlains()
 	}
 
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value == 6 || !a.ctx.Data.Quests[quest.Act1DenOfEvil].Completed() {
+		a.ctx.Logger.Debug("Clearing Den of Evil")
 		a.denOfEvil()
 	}
 
 	// clear Stony Field until level 9
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 9 {
+		a.ctx.Logger.Debug("Clearing Stony Field")
 		a.stonyField()
 	}
 
 	if !a.isCainInTown() && !a.ctx.Data.Quests[quest.Act1TheSearchForCain].Completed() {
-		a.deckardCain()
+		a.ctx.Logger.Debug("Cain is not in town, trying to run Tristram")
+
+		// Check if we need to do Dark Wood Inifuss Tree
+		if a.ctx.Data.Quests[quest.Act1TheSearchForCain].HasStatus(quest.StatusInProgress3) {
+			a.ctx.Logger.Debug("Running Tristram")
+			a.tristram()
+		} else {
+			a.ctx.Logger.Debug("Doing Dark Wood Inifuss Tree")
+			a.deckardCain()
+		}
 	}
 
 	// do Tristram Runs until level 14
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 14 {
+		a.ctx.Logger.Debug("Clearing Tristram")
 		a.tristram()
 	}
 
 	// do Countess Runs until level 17
 	if lvl, _ := a.ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 17 {
+		a.ctx.Logger.Debug("Clearing Countess")
 		a.countess()
 	}
 
@@ -115,6 +130,7 @@ func (a Leveling) deckardCain() error {
 	action.WayPoint(area.RogueEncampment)
 	err := action.WayPoint(area.DarkWood)
 	if err != nil {
+		a.ctx.Logger.Error("Failed to waypoint to Dark Wood", "error", err)
 		return err
 	}
 
@@ -134,7 +150,7 @@ func (a Leveling) deckardCain() error {
 
 	obj, found := a.ctx.Data.Objects.FindOne(object.InifussTree)
 	if !found {
-		a.ctx.Logger.Debug("InifussTree not found")
+		a.ctx.Logger.Error("InifussTree not found")
 	}
 
 	err = action.InteractObject(obj, func() bool {
@@ -157,8 +173,10 @@ func (a Leveling) deckardCain() error {
 	a.ctx.HID.PressKey(win.VK_ESCAPE)
 
 	//Reuse Tristram Run actions
-	err = Tristram{}.Run()
+	a.ctx.Logger.Debug("Running Tristram")
+	err = NewTristram().Run()
 	if err != nil {
+		a.ctx.Logger.Error("Failed to run Tristram", "error", err)
 		return err
 	}
 
@@ -166,11 +184,11 @@ func (a Leveling) deckardCain() error {
 }
 
 func (a Leveling) tristram() error {
-	return Tristram{}.Run()
+	return NewTristram().Run()
 }
 
 func (a Leveling) countess() error {
-	return Countess{}.Run()
+	return NewCountess().Run()
 }
 
 func (a Leveling) andariel() error {

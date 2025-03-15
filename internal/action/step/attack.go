@@ -35,6 +35,7 @@ type attackSettings struct {
 	numOfAttacks     int           // Number of attacks to perform
 	timeout          time.Duration // Timeout for the attack sequence
 	isBurstCastSkill bool          // Whether this is a channeled/burst skill like Nova
+	quickCast        bool          // Whether to quick cast the skill
 }
 
 // AttackOption defines a function type for configuring attack settings
@@ -99,6 +100,7 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts .
 		numOfAttacks:     numOfAttacks,
 		shouldStandStill: standStill,
 		primaryAttack:    true,
+		quickCast:        ctx.Data.CharacterCfg.Character.UseQuickCast,
 	}
 	for _, o := range opts {
 		o(&settings)
@@ -109,12 +111,15 @@ func PrimaryAttack(target data.UnitID, numOfAttacks int, standStill bool, opts .
 
 // SecondaryAttack initiates a secondary (right-click) attack sequence with a specific skill
 func SecondaryAttack(skill skill.ID, target data.UnitID, numOfAttacks int, opts ...AttackOption) error {
+	ctx := context.Get()
+
 	settings := attackSettings{
 		target:           target,
 		numOfAttacks:     numOfAttacks,
 		skill:            skill,
 		primaryAttack:    false,
 		isBurstCastSkill: skill == 48, // nova can define any other burst skill here
+		quickCast:        ctx.Data.CharacterCfg.Character.UseQuickCast,
 	}
 	for _, o := range opts {
 		o(&settings)
@@ -268,10 +273,12 @@ func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
 		return // Skip attack if no line of sight
 	}
 
-	// Ensure we have the skill selected
-	if settings.skill != 0 && ctx.Data.PlayerUnit.RightSkill != settings.skill {
-		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
-		time.Sleep(time.Millisecond * 10)
+	if !settings.quickCast {
+		// Ensure we have the skill selected
+		if settings.skill != 0 && ctx.Data.PlayerUnit.RightSkill != settings.skill {
+			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(settings.skill))
+			time.Sleep(time.Millisecond * 10)
+		}
 	}
 
 	if settings.shouldStandStill {
@@ -279,10 +286,27 @@ func performAttack(ctx *context.Status, settings attackSettings, x, y int) {
 	}
 
 	x, y = ctx.PathFinder.GameCoordsToScreenCords(x, y)
-	if settings.primaryAttack {
-		ctx.HID.Click(game.LeftButton, x, y)
-	} else {
-		ctx.HID.Click(game.RightButton, x, y)
+
+	if settings.quickCast {
+		ctx.HID.MovePointer(x, y)
+		kb := ctx.Data.KeyBindings.MustKBForSkill(settings.skill)
+		if len(kb.Key1) > 0 {
+			ctx.HID.PressKeyBinding(kb)
+		} else {
+			if settings.primaryAttack {
+				ctx.HID.Click(game.LeftButton, x, y)
+			} else {
+				ctx.HID.Click(game.RightButton, x, y)
+			}
+		}
+	}
+
+	if !settings.quickCast {
+		if settings.primaryAttack {
+			ctx.HID.Click(game.LeftButton, x, y)
+		} else {
+			ctx.HID.Click(game.RightButton, x, y)
+		}
 	}
 
 	if settings.shouldStandStill {

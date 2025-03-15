@@ -7,6 +7,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
@@ -103,7 +104,14 @@ func (pf *PathFinder) MoveThroughPath(p Path, walkDuration time.Duration) {
 
 func (pf *PathFinder) MoveCharacter(x, y int) {
 	if pf.data.CanTeleport() {
-		pf.hid.Click(game.RightButton, x, y)
+		teleport := pf.data.KeyBindings.MustKBForSkill(skill.Teleport)
+		if pf.data.CharacterCfg.Character.UseQuickCast {
+			pf.hid.MovePointer(x, y)
+			pf.hid.PressKeyBinding(teleport)
+		} else {
+			pf.hid.PressKeyBinding(teleport)
+			pf.hid.Click(game.RightButton, x, y)
+		}
 	} else {
 		pf.hid.MovePointer(x, y)
 		pf.hid.PressKeyBinding(pf.data.KeyBindings.ForceMove)
