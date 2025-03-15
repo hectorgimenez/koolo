@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -14,20 +15,28 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
-const (
-	sorceressMaxAttacksLoop = 40
-	blizzMinDistance        = 8
-	blizzMaxDistance        = 20
-	LSMinDistance           = 6
-	LSMaxDistance           = 15 // Left skill
-)
-
 type BlizzardSorceress struct {
 	BaseCharacter
 }
 
+type BlizzardAttackConfig struct {
+	maxAttacksLoop    int
+	attackMinDistance int
+	attackMaxDistance int
+}
+
+func (s BlizzardSorceress) attackConfig() BlizzardAttackConfig {
+	// Avoiding constants that pollute the other characters in the package
+	return BlizzardAttackConfig{
+		maxAttacksLoop:    40,
+		attackMinDistance: 8,
+		attackMaxDistance: 16,
+	}
+}
+
 func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	requireKeybindings := []skill.ID{skill.Blizzard, skill.Teleport, skill.TomeOfTownPortal, skill.ShiverArmor, skill.StaticField}
+
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -53,6 +62,44 @@ func (s BlizzardSorceress) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
+func (s BlizzardSorceress) killMonsterWithStatic(bossID npc.ID, monsterType data.MonsterType) error {
+	for {
+		if !s.MonsterAliveByType(bossID, monsterType) {
+			return nil
+		}
+
+		boss, _ := s.Data.Monsters.FindOne(bossID, monsterType)
+
+		bossHPPercent := (float64(boss.Stats[stat.Life]) / float64(boss.Stats[stat.MaxLife])) * 100
+
+		// Pull target threshold from config based on difficulty
+		var targetThreshold int
+		switch s.Data.CharacterCfg.Game.Difficulty {
+		case difficulty.Normal:
+			targetThreshold = 10
+		case difficulty.Nightmare:
+			targetThreshold = 40
+		default:
+			targetThreshold = 60
+		}
+		thresholdFloat := float64(targetThreshold)
+
+		// Cast Static Field until boss HP is below threshold
+		if bossHPPercent > thresholdFloat {
+			staticOpts := []step.AttackOption{
+				step.Distance(s.Data.CharacterCfg.Character.Sorceress.StaticFieldMinDist, s.Data.CharacterCfg.Character.Sorceress.StaticFieldMaxDist),
+			}
+			err := step.SecondaryAttack(skill.StaticField, boss.UnitID, 1, staticOpts...)
+			if err != nil {
+				s.Logger.Warn("Failed to cast Static Field", slog.String("error", err.Error()))
+			}
+			continue
+		}
+
+		return s.killMonsterByName(bossID, monsterType, nil)
+	}
+}
+
 func (s BlizzardSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
@@ -61,10 +108,14 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
 
-	blizzOpts := step.StationaryDistance(blizzMinDistance, blizzMaxDistance)
-	lsOpts := step.Distance(LSMinDistance, LSMaxDistance)
+	attackOpts := step.StationaryDistance(
+		s.attackConfig().attackMinDistance,
+		s.attackConfig().attackMaxDistance,
+	)
 
 	for {
+		actionsTakenThisLoop := []string{}
+
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
@@ -77,46 +128,44 @@ func (s BlizzardSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		if completedAttackLoops >= sorceressMaxAttacksLoop {
+		if completedAttackLoops >= s.attackConfig().maxAttacksLoop {
+			s.Logger.Error("Exceeded MaxAttacksLoop", slog.String("completedAttackLoops", fmt.Sprintf("%v", completedAttackLoops)))
 			return nil
 		}
 
-		monster, found := s.Data.Monsters.FindByID(id)
-		if !found {
-			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
-			return nil
+		for s.Data.PlayerUnit.States.HasState(state.Cooldown) && s.MonsterAliveById(id) {
+			step.PrimaryAttack(id, 1, true, attackOpts)
+			actionsTakenThisLoop = append(actionsTakenThisLoop, "PrimaryAttack")
+			// Wait for the cast to complete before doing anything else
+			time.Sleep(s.Data.PlayerCastDuration() - (120 * time.Millisecond)) // stolen from internal/action/step/attack.go
 		}
 
-		// Cast a Blizzard on very close mobs, in order to clear possible trash close the player, every two attack rotations
-		if time.Since(previousSelfBlizzard) > time.Second*4 && !s.Data.PlayerUnit.States.HasState(state.Cooldown) {
+		selfBlizzardThisLoop := false
+		// Cast a Blizzard on very close mobs, in order to clear possible trash close to the player, every two attack rotations
+		if time.Since(previousSelfBlizzard) > time.Second*4 {
 			for _, m := range s.Data.Monsters.Enemies() {
 				if dist := s.PathFinder.DistanceFromMe(m.Position); dist < 4 {
 					previousSelfBlizzard = time.Now()
-					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, blizzOpts)
+					selfBlizzardThisLoop = true
+					step.SecondaryAttack(skill.Blizzard, m.UnitID, 1, attackOpts)
+					actionsTakenThisLoop = append(actionsTakenThisLoop, "selfBlizz")
 				}
 			}
 		}
-
-		if s.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			step.PrimaryAttack(id, 2, true, lsOpts)
+		if !selfBlizzardThisLoop && s.MonsterAliveById(id) {
+			step.SecondaryAttack(skill.Blizzard, id, 1, attackOpts)
+			actionsTakenThisLoop = append(actionsTakenThisLoop, "offensiveBlizz")
 		}
 
-		step.SecondaryAttack(skill.Blizzard, id, 1, blizzOpts)
+		if !s.MonsterAliveById(id) {
+			return nil
+		}
 
 		completedAttackLoops++
+		// s.Logger.Debug("Actions taken:", slog.String("actionsTakenThisLoop", fmt.Sprintf("%v", actionsTakenThisLoop)))
+
 		previousUnitID = int(id)
 	}
-}
-
-func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return 0, false
-		}
-
-		return m.UnitID, true
-	}, nil)
 }
 
 func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
@@ -163,11 +212,11 @@ func (s BlizzardSorceress) PreCTABuffSkills() []skill.ID {
 }
 
 func (s BlizzardSorceress) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, nil)
+	return s.killMonsterWithStatic(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
 func (s BlizzardSorceress) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, nil)
+	return s.killMonsterWithStatic(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillSummoner() error {
@@ -175,7 +224,7 @@ func (s BlizzardSorceress) KillSummoner() error {
 }
 
 func (s BlizzardSorceress) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, nil)
+	return s.killMonsterWithStatic(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillCouncil() error {
@@ -204,14 +253,11 @@ func (s BlizzardSorceress) KillCouncil() error {
 }
 
 func (s BlizzardSorceress) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, nil)
+	return s.killMonsterWithStatic(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillIzual() error {
-	m, _ := s.Data.Monsters.FindOne(npc.Izual, data.MonsterTypeUnique)
-	_ = step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
-
-	return s.killMonsterByName(npc.Izual, data.MonsterTypeUnique, nil)
+	return s.killMonsterWithStatic(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s BlizzardSorceress) KillDiablo() error {
@@ -225,8 +271,7 @@ func (s BlizzardSorceress) KillDiablo() error {
 			return nil
 		}
 
-		diablo, found := s.Data.Monsters.FindOne(npc.Diablo, data.MonsterTypeUnique)
-		if !found || diablo.Stats[stat.Life] <= 0 {
+		if !s.MonsterAliveByType(npc.Diablo, data.MonsterTypeUnique) {
 			// Already dead
 			if diabloFound {
 				return nil
@@ -240,9 +285,7 @@ func (s BlizzardSorceress) KillDiablo() error {
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
 
-		_ = step.SecondaryAttack(skill.StaticField, diablo.UnitID, 5, step.Distance(3, 8))
-
-		return s.killMonsterByName(npc.Diablo, data.MonsterTypeUnique, nil)
+		return s.killMonsterWithStatic(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
@@ -255,8 +298,5 @@ func (s BlizzardSorceress) KillNihlathak() error {
 }
 
 func (s BlizzardSorceress) KillBaal() error {
-	m, _ := s.Data.Monsters.FindOne(npc.BaalCrab, data.MonsterTypeUnique)
-	step.SecondaryAttack(skill.StaticField, m.UnitID, 4, step.Distance(5, 8))
-
-	return s.killMonsterByName(npc.BaalCrab, data.MonsterTypeUnique, nil)
+	return s.killMonsterWithStatic(npc.BaalCrab, data.MonsterTypeUnique)
 }
