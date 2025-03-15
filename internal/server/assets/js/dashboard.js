@@ -86,6 +86,9 @@ let socket;
                      <div class="status-indicator"></div>
                 </div>
                 <div class="character-controls">
+                    <button class="btn btn-outline companion-join-btn" onclick="showCompanionJoinPopup('${key}')" style="display:none;">
+                        <i class="bi bi-door-open btn-icon"></i>Join Game
+                    </button>
                     <button class="btn btn-outline" onclick="location.href='/debug?characterName=${key}'">
                         <i class="bi bi-bug btn-icon"></i>Debug
                     </button>
@@ -207,6 +210,7 @@ let socket;
         const startPauseBtn = card.querySelector('.start-pause');
         const stopBtn = card.querySelector('.stop');
         const attachBtn = card.querySelector('.attach-btn');
+        const companionJoinBtn = card.querySelector('.companion-join-btn');
         const statusDetails = card.querySelector('.status-details');
         const statusBadge = statusDetails.querySelector('.status-badge');
         const statusIndicator = card.querySelector('.status-indicator');
@@ -223,7 +227,13 @@ let socket;
             updateButtons(startPauseBtn, stopBtn, attachBtn, value.SupervisorStatus);
         }
 
-
+        // Update companion join button visibility
+        if (companionJoinBtn) {
+            const isCompanionFollower = value.IsCompanionFollower || false;
+            // Only show the button if it's a companion follower AND the supervisor is running
+            const isRunning = value.SupervisorStatus === "In game" || value.SupervisorStatus === "Paused" || value.SupervisorStatus === "Starting";
+            companionJoinBtn.style.display = (isCompanionFollower && isRunning) ? 'inline-flex' : 'none';
+        }
 
         updateStats(card, key, value.Games, dropCount);
         updateRunStats(card, value.Games);
@@ -660,6 +670,104 @@ function updateButtons(startPauseBtn, stopBtn, attachBtn, status) {
             } else {
                 row.style.display = 'none';
             }
+        });
+    }
+
+    function showCompanionJoinPopup(characterName) {
+        const popup = document.createElement('div');
+        popup.className = 'attach-popup'; // Reuse the attach popup styling
+        popup.innerHTML = `
+            <h3>Join Game as Companion</h3>
+            <div class="popup-content">
+                <div class="form-group">
+                    <label for="game-name">Game Name:</label>
+                    <input type="text" id="game-name" placeholder="Enter game name">
+                </div>
+                <div class="form-group">
+                    <label for="game-password">Game Password:</label>
+                    <input type="text" id="game-password" placeholder="Enter game password">
+                </div>
+                <div class="popup-buttons">
+                    <button id="join-game-btn" class="btn btn-primary">Request Join</button>
+                    <button id="cancel-join" class="btn">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        // Add event listeners
+        document.getElementById('join-game-btn').addEventListener('click', () => {
+            const gameName = document.getElementById('game-name').value.trim();
+            const password = document.getElementById('game-password').value.trim();
+            
+            if (!gameName) {
+                alert('Please enter a game name');
+                return;
+            }
+            
+            requestCompanionJoin(characterName, gameName, password);
+        });
+        
+        document.getElementById('cancel-join').addEventListener('click', closeCompanionJoinPopup);
+    }
+
+    function closeCompanionJoinPopup() {
+        const popup = document.querySelector('.attach-popup');
+        if (popup) {
+            popup.remove();
+        }
+    }
+
+    function requestCompanionJoin(supervisor, gameName, password) {
+        // Show loading animation
+        const popup = document.querySelector('.attach-popup');
+        popup.innerHTML = `
+            <h3>Requesting Game Join</h3>
+            <div class="loading-spinner"></div>
+            <p>Please wait...</p>
+        `;
+
+        fetch('/api/companion-join', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                supervisor: supervisor,
+                gameName: gameName,
+                password: password
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                popup.innerHTML = `
+                    <h3>Success</h3>
+                    <p>Join request sent for game "${gameName}"</p>
+                `;
+                // Close popup after 2 seconds
+                setTimeout(() => {
+                    closeCompanionJoinPopup();
+                }, 2000);
+            } else {
+                // Show error message
+                popup.innerHTML = `
+                    <h3>Error</h3>
+                    <p>Failed to send join request: ${data.error || 'Unknown error'}</p>
+                    <button onclick="closeCompanionJoinPopup()" class="btn btn-primary">Close</button>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error sending join request:', error);
+            // Show error message
+            popup.innerHTML = `
+                <h3>Error</h3>
+                <p>An error occurred while sending the join request.</p>
+                <button onclick="closeCompanionJoinPopup()" class="btn btn-primary">Close</button>
+            `;
         });
     }
 
