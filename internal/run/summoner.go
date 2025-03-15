@@ -72,7 +72,7 @@ func (s Summoner) Run() error {
 				// Locate Chests
 				if ArcCheckPointsList[i] == ArcCheckPointsList[4] {
 					for _, o := range s.ctx.Data.Objects {
-						if o.Selectable && isChestWithinLaneEndRange(o, ArcCheckPointsList[4]) {
+						if (o.IsChest() || o.IsSuperChest()) && o.Selectable && isChestWithinLaneEndRange(o, ArcCheckPointsList[4]) {
 							err = action.MoveToCoords(o.Position)
 							if err != nil {
 								s.ctx.Logger.Warn("Failed moving to chest: %v", err)
