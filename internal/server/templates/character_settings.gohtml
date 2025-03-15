@@ -440,6 +440,17 @@
                 <input type="checkbox" name="gamblingEnabled" {{ if .Config.Gambling.Enabled }}checked{{ end }}/>
                 Enabled
             </label>
+            <h6>Only Check One (or none at all)</h6>
+            <fieldset class="grid">
+            <label>
+                <input type="checkbox" name="lessrefreshEnabled" {{ if .Config.Gambling.LessRefresh }}checked{{ end }}/>
+                Less Refresh (Circlet/Coronet only Version)
+            </label>
+            <label>
+                <input type="checkbox" name="gamblemapEnabled" {{ if .Config.Gambling.GambleMap }}checked{{ end }}/>
+                Less Refresh (only refreshes, when no stated item is found)
+            </label>
+            </fieldset>
             <h3>Cube Recipes</h3>
             <label>
                 <input type="checkbox" style="padding-right: 30px" name="enableCubeRecipes" {{ if .Config.CubeRecipes.Enabled }}checked{{ end }}/>
