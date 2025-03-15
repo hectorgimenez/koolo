@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"math"
+	"math/rand/v2"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -52,7 +53,6 @@ func (f *Follower) Run() error {
 		f.ctx.Logger.Info("Leader is still here.", slog.String("leader", leader.Name))
 		if !leaderFound {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
-			f.resetCompanionGameInfo()
 			return nil
 		}
 
@@ -68,7 +68,7 @@ func (f *Follower) Run() error {
 			f.ctx.RefreshGameData()
 			if f.ctx.Data.PlayerUnit.Position == lastPosition {
 				f.ctx.PathFinder.RandomTeleport()
-				utils.Sleep(500)
+				utils.Sleep(2000)
 			}
 		} else if leader.Area == f.ctx.Data.AreaData.Area && f.ctx.Data.PlayerUnit.Area.IsTown() {
 			f.handleLeaderInTown()
@@ -196,24 +196,33 @@ func (f *Follower) goToCorrectTown(leader *data.RosterMember) error {
 	f.ctx.SetLastAction("Going to the correct town")
 	switch act := leader.Area.Act(); act {
 	case 1:
+		targetPos, _ := f.getKashyaPosition()
 		_ = action.WayPoint(area.RogueEncampment)
-		_ = action.MoveTo(f.getKashyaPosition)
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(-5, 5)})
 	case 2:
+		targetPos, _ := f.getAtmaPosition()
 		_ = action.WayPoint(area.LutGholein)
-		_ = action.MoveTo(f.getAtmaPosition)
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(-15, -5)})
 	case 3:
+		targetPos, _ := f.getOrmusPosition()
 		_ = action.WayPoint(area.KurastDocks)
-		_ = action.MoveTo(f.getOrmusPosition)
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(-15, -5)})
 	case 4:
 		_ = action.WayPoint(area.ThePandemoniumFortress)
+		f.ctx.PathFinder.RandomMovement()
 	case 5:
 		_ = action.WayPoint(area.Harrogath)
+		f.ctx.PathFinder.RandomMovement()
 	default:
-		f.ctx.Logger.Error("Could not find the Leader's current Act location.")
-		return errors.New("Could not find the Leader's current Act location.")
+		f.ctx.Logger.Error("Could not find the Leader's current Act location")
+		return errors.New("Could not find the Leader's current Act location")
 	}
 	f.ctx.Logger.Info("Went to the correct town.")
 	return nil
+}
+
+func randRange(min, max int) int {
+	return rand.IntN(max-min) + min
 }
 
 func calculateDistance(pos1, pos2 data.Position) float64 {
@@ -297,9 +306,4 @@ func (f *Follower) handleBaalScenario() error {
 func (f *Follower) goToTpArea() error {
 	tpArea := town.GetTownByArea(f.ctx.Data.PlayerUnit.Area).TPWaitingArea(*f.ctx.Data)
 	return action.MoveToCoords(tpArea)
-}
-
-func (f *Follower) resetCompanionGameInfo() {
-	f.ctx.Context.CharacterCfg.Companion.CompanionGameName = ""
-	f.ctx.Context.CharacterCfg.Companion.CompanionGamePassword = ""
 }
