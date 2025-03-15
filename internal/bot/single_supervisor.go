@@ -184,9 +184,6 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 // This function is responsible for handling all interactions with joining/creating games
 func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
-
-	ct.Get().SetLastAction("HandleOutOfGameFlow")
-
 	// Refresh the data
 	s.bot.ctx.RefreshGameData()
 
@@ -196,8 +193,9 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 		return fmt.Errorf("loading screen")
 	}
 
-	// Check if we're in character creation screen, and exit
+	// Check if we're in character creation screen, and handle it
 	if s.bot.ctx.GameReader.IsInCharacterCreationScreen() {
+		// We need to exit the character creation screen (press ESC)
 		s.bot.ctx.HID.PressKey(0x1B) // ESC key
 		utils.Sleep(1000)
 		return fmt.Errorf("exiting character creation screen")
@@ -206,7 +204,6 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// Check if we need to be online but aren't
 	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() && s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
 		s.bot.ctx.Logger.Info("We're not online, trying to connect", slog.String("supervisor", s.name))
-
 		err := s.EnsureOnlineTab()
 		if err != nil {
 			return err
@@ -224,15 +221,14 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 // handleCompanionMode handles the flow for companion mode
 func (s *SinglePlayerSupervisor) handleCompanionMode() error {
 
-	ct.Get().SetLastAction("HandleCompanionMode")
-	s.bot.ctx.RefreshGameData()
-
 	// We are a follower/companion
 	gameName := s.bot.ctx.CharacterCfg.Companion.CompanionGameName
 	gamePassword := s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword
 
 	// If game name is blank, idle in character selection screen
 	if gameName == "" {
+
+		// Sleep for a bit
 		utils.Sleep(2000)
 
 		// We're in character selection screen and idling
@@ -269,9 +265,12 @@ func (s *SinglePlayerSupervisor) handleCompanionMode() error {
 // handleNormalMode handles the standard (non-companion) flow
 func (s *SinglePlayerSupervisor) handleNormalMode() error {
 
-	ct.Get().SetLastAction("HandleNormalMode")
-
 	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
+		// Ensure we're on the online tab if using authentication
+		err := s.EnsureOnlineTab()
+		if err != nil {
+			return err
+		}
 
 		// If we need to create lobby games, go to lobby
 		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
@@ -298,58 +297,25 @@ func (s *SinglePlayerSupervisor) handleNormalMode() error {
 
 		// Otherwise, we need to go back to character selection
 		return s.exitLobbyToCharacterSelection()
-	} else {
-		return fmt.Errorf("unknown game state")
 	}
+
+	return fmt.Errorf("unknown game state")
 }
 
 // ensureOnlineTab makes sure we're on the online tab in character selection screen
 func (s *SinglePlayerSupervisor) EnsureOnlineTab() error {
-
-	ct.Get().SetLastAction("EnsureOnlineTab")
-
 	if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
+		// Try and click the online tab to connect to bnet
+		s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+		utils.Sleep(10000) // Wait for 10 seconds allowing time for the client to connect
 
-		// Try and reconnect up to 3 times
-		maxReconnectAttempts := 3
-
-		for i := 0; i < maxReconnectAttempts; i++ {
-			// Try and click the online tab to connect to bnet
-			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
-			utils.Sleep(1000)
-
-			// Wait for the loading screen to disappear and dismiss any popups
-			for {
-				blockingPanel := s.bot.ctx.GameReader.GetPanel("BlockingPanel")
-				popuPanel := s.bot.ctx.GameReader.GetPanel("DismissableModal")
-
-				if blockingPanel.PanelName != "" && blockingPanel.PanelEnabled && blockingPanel.PanelVisible {
-					time.Sleep(1000)
-					continue
-				}
-
-				if popuPanel.PanelName != "" && popuPanel.PanelEnabled && popuPanel.PanelVisible {
-					// Press Escape to dismiss the popup
-					s.bot.ctx.HID.PressKey(0x1B)
-					time.Sleep(1000)
-					continue
-				}
-
-				break
+		// Check if we're online again, if not, kill the client
+		if !s.bot.ctx.GameReader.IsOnline() {
+			if err := s.KillClient(); err != nil {
+				return err
 			}
-
-			if s.bot.ctx.GameReader.IsOnline() {
-				break
-			}
+			return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
 		}
-	}
-
-	// Check if we're online again, if not, kill the client
-	if !s.bot.ctx.GameReader.IsOnline() {
-		if err := s.KillClient(); err != nil {
-			return err
-		}
-		return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
 	}
 
 	return nil
@@ -357,8 +323,6 @@ func (s *SinglePlayerSupervisor) EnsureOnlineTab() error {
 
 // enterLobby navigates to the lobby from character selection
 func (s *SinglePlayerSupervisor) enterLobby() error {
-
-	ct.Get().SetLastAction("EnterLobby")
 
 	retryCount := 0
 	for !s.bot.ctx.GameReader.IsInLobby() {
@@ -379,8 +343,6 @@ func (s *SinglePlayerSupervisor) enterLobby() error {
 
 // createLobbyGame creates a game from the lobby
 func (s *SinglePlayerSupervisor) createLobbyGame() error {
-	ct.Get().SetLastAction("CreateLobbyGame")
-
 	// Create the online game
 	_, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter)
 	if err != nil {
@@ -395,8 +357,6 @@ func (s *SinglePlayerSupervisor) createLobbyGame() error {
 
 // exitLobbyToCharacterSelection leaves the lobby and returns to character selection
 func (s *SinglePlayerSupervisor) exitLobbyToCharacterSelection() error {
-	ct.Get().SetLastAction("ExitLobbyToCharacterSelection")
-
 	// Press escape to exit the lobby
 	s.bot.ctx.HID.PressKey(0x1B) // ESC key
 	utils.Sleep(1000)
