@@ -25,7 +25,7 @@ type SorceressLevelingLightning struct {
 }
 
 func (s SorceressLevelingLightning) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -211,6 +211,7 @@ func (s SorceressLevelingLightning) StatPoints() map[stat.ID]int {
 	statPoints := make(map[stat.ID]int)
 
 	if lvl.Value < 9 {
+		statPoints[stat.Strength] = 15
 		statPoints[stat.Vitality] = 9999
 	} else if lvl.Value < 15 {
 		statPoints[stat.Energy] = 45
