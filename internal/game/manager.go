@@ -199,10 +199,6 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 			return errors.New("error joining game! Got error message")
 		}
 	}
-	
-	if waitingToJoinLoopCounter == 15 {
-		return errors.New("Couldn't join game! Timeout")
-	}
 
 	return nil
 }
