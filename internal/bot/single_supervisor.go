@@ -48,6 +48,10 @@ func (s *SinglePlayerSupervisor) Start() error {
 
 	needToWait := true
 
+	// Start with fresh companion settings
+	s.bot.ctx.CharacterCfg.Companion.CompanionGameName = ""
+	s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword = ""
+
 	err := s.ensureProcessIsRunningAndPrepare()
 	if err != nil {
 		return fmt.Errorf("error preparing game: %w", err)
@@ -87,10 +91,10 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 
 			// Reset the companion game name and password to prevent re-joining the same game
-			if s.bot.ctx.CharacterCfg.Companion.Enabled && (!s.bot.ctx.CharacterCfg.Companion.Leader || (s.bot.ctx.CharacterCfg.Companion.Leader && s.bot.ctx.CharacterCfg.Companion.LeaderName != "")) {
-				s.bot.ctx.CharacterCfg.Companion.CompanionGameName = ""
-				s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword = ""
-			}
+			// if s.bot.ctx.CharacterCfg.Companion.Enabled && (!s.bot.ctx.CharacterCfg.Companion.Leader || (s.bot.ctx.CharacterCfg.Companion.Leader && s.bot.ctx.CharacterCfg.Companion.LeaderName != "")) {
+			// 	s.bot.ctx.CharacterCfg.Companion.CompanionGameName = ""
+			// 	s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword = ""
+			// }
 
 			runs := run.BuildRuns(s.bot.ctx.CharacterCfg)
 			gameStart := time.Now()
@@ -128,6 +132,10 @@ func (s *SinglePlayerSupervisor) Start() error {
 			}
 
 			err = s.bot.Run(ctx, firstRun, runs)
+			// If we're in companion mode, send the companion stop join game event
+			if s.bot.ctx.CharacterCfg.Companion.Enabled && s.bot.ctx.CharacterCfg.Companion.Leader {
+				event.Send(event.ResetCompanionGameInfo(event.Text(s.name, "Game "+s.bot.ctx.Data.Game.LastGameName+" finished"), s.bot.ctx.CharacterCfg.CharacterName))
+			}
 			firstRun = false
 
 			var gameFinishReason event.FinishReason
@@ -156,15 +164,19 @@ func (s *SinglePlayerSupervisor) Start() error {
 				event.Send(event.GameFinished(event.Text(s.name, "Game finished successfully"), gameFinishReason))
 			}
 
-			// If we're in companion mode, send the companion stop join game event
-			if s.bot.ctx.CharacterCfg.Companion.Enabled && s.bot.ctx.CharacterCfg.Companion.Leader {
-				event.Send(event.ResetCompanionGameInfo(event.Text(s.name, "Game "+s.bot.ctx.Data.Game.LastGameName+" finished"), s.bot.ctx.CharacterCfg.CharacterName))
-			}
-
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
 				errMsg := fmt.Sprintf("Error exiting game %s", exitErr.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
-				return errors.New(errMsg)
+				exitAttemptCount := 0
+				for s.bot.ctx.Manager.InGame() {
+					if exitAttemptCount >= 10 {
+						s.bot.Stop()
+						return exitErr
+					}
+					utils.Sleep(2000)
+					_ = s.bot.ctx.Manager.ExitGame()
+					exitAttemptCount++
+				}
 			}
 		}
 	}
