@@ -202,11 +202,11 @@ func (f *Follower) goToCorrectTown(leader *data.RosterMember) error {
 	case 2:
 		targetPos, _ := f.getAtmaPosition()
 		_ = action.WayPoint(area.LutGholein)
-		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(-15, -5)})
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(5, 15)})
 	case 3:
 		targetPos, _ := f.getOrmusPosition()
 		_ = action.WayPoint(area.KurastDocks)
-		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(-15, -5)})
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(5, 15)})
 	case 4:
 		_ = action.WayPoint(area.ThePandemoniumFortress)
 		f.ctx.PathFinder.RandomMovement()
