@@ -141,16 +141,18 @@ func (i *MemoryInjector) OverrideGetKeyState(key byte) error {
 	if !i.isLoaded {
 		return nil
 	}
-
 	/*
-		cmp rcx, 0x12
-		mov rax, 0x8000
-		ret
+		Assembly: Compare key byte, set al if match, shift left to create 0x8000 if matched (4 cycles)
+		cmp cl, key    -> Compare key byte
+		sete al        -> Set al to 1 if equal
+		shl ax, 15     -> Shift left by 15 to create 0x8000 if was 1, else 0
+		ret            -> Return with result in ax
 	*/
-	bytes := []byte{0x48, 0x81, 0xF9, key, 0x00, 0x00, 0x00, 0x48, 0xB8, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC3}
+
+	bytes := []byte{0x80, 0xF9, key, 0x0F, 0x94, 0xC0, 0x66, 0xC1, 0xE0, 0x0F, 0xC3}
+
 	return windows.WriteProcessMemory(i.handle, i.getKeyStateAddr, &bytes[0], uintptr(len(bytes)), nil)
 }
-
 func (i *MemoryInjector) OverrideSetCursorPos() error {
 	/*
 		Just do nothing, this prevents the game from moving our cursor, for example when opening inventory or wp list
