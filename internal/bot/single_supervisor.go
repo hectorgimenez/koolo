@@ -58,6 +58,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 	}
 
 	firstRun := true
+	errorCount := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -83,12 +84,22 @@ func (s *SinglePlayerSupervisor) Start() error {
 						s.bot.ctx.Logger.Info("[Companion] Idling in character selection screen while waiting for Leader to create new game", slog.String("supervisor", s.name))
 						utils.Sleep(100)
 						continue
+					} else if err.Error() == "unknown game state" {
+						if errorCount >= 30 {
+							s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
+							s.StopClient()
+							return err
+						}
+						errorCount++
+						utils.Sleep(2000)
 					}
 
 					s.bot.ctx.Logger.Error(fmt.Sprintf("Error creating new game: %s", err.Error()))
 					continue
 				}
 			}
+			// We managed to get in a game, resetting the major error count
+			errorCount = 0
 
 			// Reset the companion game name and password to prevent re-joining the same game
 			// if s.bot.ctx.CharacterCfg.Companion.Enabled && (!s.bot.ctx.CharacterCfg.Companion.Leader || (s.bot.ctx.CharacterCfg.Companion.Leader && s.bot.ctx.CharacterCfg.Companion.LeaderName != "")) {
@@ -167,15 +178,9 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if exitErr := s.bot.ctx.Manager.ExitGame(); exitErr != nil {
 				errMsg := fmt.Sprintf("Error exiting game %s", exitErr.Error())
 				event.Send(event.GameFinished(event.WithScreenshot(s.name, errMsg, s.bot.ctx.GameReader.Screenshot()), event.FinishedError))
-				exitAttemptCount := 0
 				for s.bot.ctx.Manager.InGame() {
-					if exitAttemptCount >= 10 {
-						s.bot.Stop()
-						return exitErr
-					}
 					utils.Sleep(2000)
 					_ = s.bot.ctx.Manager.ExitGame()
-					exitAttemptCount++
 				}
 			}
 		}
@@ -395,4 +400,13 @@ func (s *SinglePlayerSupervisor) exitLobbyToCharacterSelection() error {
 	}
 
 	return nil
+}
+
+func (s *SinglePlayerSupervisor) StopClient() {
+	if s.bot.ctx.GameReader.IsInLobby() {
+		s.exitLobbyToCharacterSelection()
+	}
+	s.bot.ctx.HID.PressKey(0x1B) // ESC key
+	utils.Sleep(500)
+	s.bot.ctx.HID.PressKey(0x0D) // Enter key
 }
