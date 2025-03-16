@@ -315,6 +315,11 @@ func (s *SinglePlayerSupervisor) HandleCompanionMenuFlow() error {
 		return s.bot.ctx.Manager.JoinOnlineGame(gameName, gamePassword)
 	}
 
+	if s.bot.ctx.GameReader.IsInLobby() {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're in lobby, joining game ...")
+		return s.bot.ctx.Manager.JoinOnlineGame(gameName, gamePassword)
+	}
+
 	return fmt.Errorf("[Menu Flow]: Unhandled Companion menu scenario")
 }
 
