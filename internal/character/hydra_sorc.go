@@ -89,10 +89,10 @@ func (f HydraSorceress) KillMonsterSequence(
 		}
 
 		if f.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			step.SecondaryAttack(skill.Hydra, id, 1, lsOpts)
+			step.PrimaryAttack(id, 2, true, lsOpts)
 		}
 
-		step.PrimaryAttack(id, 2, true, lsOpts)
+		step.SecondaryAttack(skill.Hydra, id, 1, opts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
