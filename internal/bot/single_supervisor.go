@@ -280,6 +280,17 @@ func (s *SinglePlayerSupervisor) HandleStandardMenuFlow() error {
 		if err != nil {
 			return err
 		}
+	} else if atLobbyScreen && !s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're at the lobby screen, but we shouldn't be, going back to character selection screen ...")
+
+		// Exit lobby by pressing esc
+		s.bot.ctx.HID.PressKey(0x1B)
+		time.Sleep(2000)
+
+		// Check if we're still in lobby
+		if s.bot.ctx.GameReader.IsInLobby() {
+			return fmt.Errorf("[Menu Flow]: Failed to exit lobby")
+		}
 	}
 
 	return fmt.Errorf("[Menu Flow]: Unhandled menu scenario")
@@ -291,11 +302,10 @@ func (s *SinglePlayerSupervisor) HandleCompanionMenuFlow() error {
 	gameName := s.bot.ctx.CharacterCfg.Companion.CompanionGameName
 	gamePassword := s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword
 
-	// If game name is blank, idle in character selection screen
+	// If game name is blank, idle in menus
 	if gameName == "" {
+		// We don't have a game name, so we'll idle until we get one
 		utils.Sleep(2000)
-
-		// We're in character selection screen and idling
 		return fmt.Errorf("idle")
 	}
 
