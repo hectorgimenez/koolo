@@ -106,7 +106,7 @@ func (gm *Manager) clearGameNameOrPasswordField() {
 	}
 }
 
-func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
+func (gm *Manager) CreateLobbyGame(gameCounter int) (string, error) {
 
 	// Click "Create game" tab
 	gm.hid.Click(LeftButton, 845, 54)

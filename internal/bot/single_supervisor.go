@@ -70,7 +70,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			// By this point, we should be in the character selection screen.
 			if !s.bot.ctx.Manager.InGame() {
 				// Create the game
-				if err = s.HandleOutOfGameFlow(); err != nil {
+				if err = s.HandleMenuFlow(); err != nil {
 					// Ignore loading screen errors or unhandled errors (for now) and try again
 					if err.Error() == "loading screen" || err.Error() == "" {
 						utils.Sleep(100)
@@ -169,51 +169,125 @@ func (s *SinglePlayerSupervisor) Start() error {
 }
 
 // This function is responsible for handling all interactions with joining/creating games
-func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
+func (s *SinglePlayerSupervisor) HandleMenuFlow() error {
 
-	ct.Get().SetLastAction("HandleOutOfGameFlow")
-
-	// Refresh the data
 	s.bot.ctx.RefreshGameData()
 
-	// First check if we're in a loading screen, which we can't do anything about
 	if s.bot.ctx.Data.OpenMenus.LoadingScreen {
-		utils.Sleep(250)
+		utils.Sleep(500)
 		return fmt.Errorf("loading screen")
 	}
 
+	s.bot.ctx.Logger.Debug("[Menu Flow]: Starting menu flow ...")
+
 	// Check if we're in character creation screen, and exit
 	if s.bot.ctx.GameReader.IsInCharacterCreationScreen() {
-		s.bot.ctx.HID.PressKey(0x1B) // ESC key
-		utils.Sleep(1000)
-		return fmt.Errorf("exiting character creation screen")
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're in character creation screen, exiting ...")
+
+		// Click escape to exit character creation screen
+		s.bot.ctx.HID.PressKey(0x1B)
+		time.Sleep(2000)
+
+		// Check if we're still in character creation screen
+		if s.bot.ctx.GameReader.IsInCharacterCreationScreen() {
+			return errors.New("[Menu Flow]: Failed to exit character creation screen")
+		}
 	}
 
-	// Check if we need to be online but aren't
-	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() && s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
-		s.bot.ctx.Logger.Info("We're not online, trying to connect", slog.String("supervisor", s.name))
+	// Check if we're ingame for some reason but shouldn't?
+	if s.bot.ctx.Manager.InGame() {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're still ingame, exiting ...")
+		return s.bot.ctx.Manager.ExitGame()
+	}
 
-		err := s.EnsureOnlineTab()
+	// Check if there's any error popup
+	isDismissableModalPresent, text := s.bot.ctx.GameReader.IsDismissableModalPresent()
+	if isDismissableModalPresent {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: Detected dismissable modal with text: " + text)
+		s.bot.ctx.Logger.Debug("[Menu Flow]: Dismissing it ...")
+
+		// Click escape to dismiss the modal
+		s.bot.ctx.HID.PressKey(0x1B)
+		time.Sleep(1000)
+
+		// Check again if the modal is still there
+		isDismissableModalStillPresent, _ := s.bot.ctx.GameReader.IsDismissableModalPresent()
+		if isDismissableModalStillPresent {
+			return errors.New("[Menu Flow]: Failed to dismiss popup")
+		}
+	}
+
+	// Check if we'll handle standard or companion mode
+	if s.bot.ctx.CharacterCfg.Companion.Enabled && !s.bot.ctx.CharacterCfg.Companion.Leader {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: Companion mode detected, handling companion menu flow ...")
+		return s.HandleCompanionMenuFlow()
+	} else if s.bot.ctx.CharacterCfg.Companion.Enabled && s.bot.ctx.CharacterCfg.Companion.Leader {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: Companion Leader mode detected, using standard menu flow ...")
+		return s.HandleStandardMenuFlow()
+	} else {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: Standard mode detected, handling standard menu flow ...")
+		return s.HandleStandardMenuFlow()
+	}
+}
+
+func (s *SinglePlayerSupervisor) HandleStandardMenuFlow() error {
+
+	atCharacterSelectionScreen := s.bot.ctx.GameReader.IsInCharacterSelectionScreen()
+
+	if atCharacterSelectionScreen && s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're at the character selection screen, ensuring we're online ...")
+
+		err := s.ensureOnline()
+		if err != nil {
+			return err
+		}
+
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're online, creating new game ...")
+
+		// Create the game
+		return s.bot.ctx.Manager.NewGame()
+
+	} else if atCharacterSelectionScreen && s.bot.ctx.CharacterCfg.AuthMethod == "None" {
+
+		s.bot.ctx.Logger.Debug("[Menu Flow]: Creating new game ...")
+		return s.bot.ctx.Manager.NewGame()
+	}
+
+	atLobbyScreen := s.bot.ctx.GameReader.IsInLobby()
+
+	if atLobbyScreen && s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're at the lobby screen and we should create a lobby game ...")
+
+		// Increment the game counter if its 0
+		if s.bot.ctx.CharacterCfg.Game.PublicGameCounter == 0 {
+			s.bot.ctx.CharacterCfg.Game.PublicGameCounter = 1
+		}
+
+		err := s.createLobbyGame()
+		if err != nil {
+			return err
+		}
+
+	} else if !atLobbyScreen && s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're not at the lobby screen, trying to enter lobby ...")
+		err := s.tryEnterLobby()
+		if err != nil {
+			return err
+		}
+
+		// Create the lobby game
+		err = s.createLobbyGame()
 		if err != nil {
 			return err
 		}
 	}
 
-	// Now handle based on whether we're in companion mode
-	if s.bot.ctx.CharacterCfg.Companion.Enabled && !s.bot.ctx.CharacterCfg.Companion.Leader {
-		return s.handleCompanionMode()
-	} else {
-		return s.handleNormalMode()
-	}
+	return fmt.Errorf("[Menu Flow]: Unhandled menu scenario")
 }
 
-// handleCompanionMode handles the flow for companion mode
-func (s *SinglePlayerSupervisor) handleCompanionMode() error {
+func (s *SinglePlayerSupervisor) HandleCompanionMenuFlow() error {
+	s.bot.ctx.Logger.Debug("[Menu Flow]: Trying to enter lobby ...")
 
-	ct.Get().SetLastAction("HandleCompanionMode")
-	s.bot.ctx.RefreshGameData()
-
-	// We are a follower/companion
 	gameName := s.bot.ctx.CharacterCfg.Companion.CompanionGameName
 	gamePassword := s.bot.ctx.CharacterCfg.Companion.CompanionGamePassword
 
@@ -225,133 +299,39 @@ func (s *SinglePlayerSupervisor) handleCompanionMode() error {
 		return fmt.Errorf("idle")
 	}
 
-	// We have a game name, so we need to join the leader's game
 	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
-		// Ensure we're on the online tab if using authentication
-		err := s.EnsureOnlineTab()
+		// Esnure we're online
+		err := s.ensureOnline()
 		if err != nil {
 			return err
 		}
 
-		// Need to go to lobby first to join a game
-		err = s.enterLobby()
+		// Now we need to enter the lobby
+		err = s.tryEnterLobby()
 		if err != nil {
 			return err
 		}
 
-		// Join the game
 		return s.bot.ctx.Manager.JoinOnlineGame(gameName, gamePassword)
-	} else if s.bot.ctx.GameReader.IsInLobby() {
-		// We're in the lobby, join the game
-		if err := s.bot.ctx.Manager.JoinOnlineGame(gameName, gamePassword); err != nil {
-			return fmt.Errorf("failed to join leader's game: %w", err)
-		}
+	}
+
+	return fmt.Errorf("[Menu Flow]: Unhandled Companion menu scenario")
+}
+
+func (s *SinglePlayerSupervisor) tryEnterLobby() error {
+	s.bot.ctx.Logger.Debug("[Menu Flow]: Trying to enter lobby ...")
+
+	if s.bot.ctx.GameReader.IsInLobby() {
+		s.bot.ctx.Logger.Debug("[Menu Flow]: We're already in lobby, exiting ...")
 		return nil
 	}
-
-	return fmt.Errorf("waiting for appropriate screen to join game")
-}
-
-// handleNormalMode handles the standard (non-companion) flow
-func (s *SinglePlayerSupervisor) handleNormalMode() error {
-
-	ct.Get().SetLastAction("HandleNormalMode")
-
-	if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
-
-		// If we need to create lobby games, go to lobby
-		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
-			err := s.enterLobby()
-			if err != nil {
-				return err
-			}
-
-			// Create Online Game
-			return s.createLobbyGame()
-		}
-
-		// Otherwise, create a regular game from character selection
-		if err := s.bot.ctx.Manager.NewGame(); err != nil {
-			return fmt.Errorf("failed to create game: %w", err)
-		}
-		return nil
-
-	} else if s.bot.ctx.GameReader.IsInLobby() {
-		// If we should create lobby games, do so
-		if s.bot.ctx.CharacterCfg.Game.CreateLobbyGames {
-			return s.createLobbyGame()
-		}
-
-		// Otherwise, we need to go back to character selection
-		return s.exitLobbyToCharacterSelection()
-	} else {
-		return fmt.Errorf("unknown game state")
-	}
-}
-
-// ensureOnlineTab makes sure we're on the online tab in character selection screen
-func (s *SinglePlayerSupervisor) EnsureOnlineTab() error {
-
-	ct.Get().SetLastAction("EnsureOnlineTab")
-
-	if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
-
-		// Try and reconnect up to 3 times
-		maxReconnectAttempts := 3
-
-		for i := 0; i < maxReconnectAttempts; i++ {
-			// Try and click the online tab to connect to bnet
-			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
-			utils.Sleep(1000)
-
-			// Wait for the loading screen to disappear and dismiss any popups
-			for {
-				blockingPanel := s.bot.ctx.GameReader.GetPanel("BlockingPanel")
-				popuPanel := s.bot.ctx.GameReader.GetPanel("DismissableModal")
-
-				if blockingPanel.PanelName != "" && blockingPanel.PanelEnabled && blockingPanel.PanelVisible {
-					time.Sleep(1000)
-					continue
-				}
-
-				if popuPanel.PanelName != "" && popuPanel.PanelEnabled && popuPanel.PanelVisible {
-					// Press Escape to dismiss the popup
-					s.bot.ctx.HID.PressKey(0x1B)
-					time.Sleep(1000)
-					continue
-				}
-
-				break
-			}
-
-			if s.bot.ctx.GameReader.IsOnline() {
-				break
-			}
-		}
-	}
-
-	// Check if we're online again, if not, kill the client
-	if !s.bot.ctx.GameReader.IsOnline() {
-		if err := s.KillClient(); err != nil {
-			return err
-		}
-		return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
-	}
-
-	return nil
-}
-
-// enterLobby navigates to the lobby from character selection
-func (s *SinglePlayerSupervisor) enterLobby() error {
-
-	ct.Get().SetLastAction("EnterLobby")
 
 	retryCount := 0
 	for !s.bot.ctx.GameReader.IsInLobby() {
 		s.bot.ctx.Logger.Info("Entering lobby", slog.String("supervisor", s.name))
 		// Prevent an infinite loop
 		if retryCount >= 5 {
-			return fmt.Errorf("failed to enter bnet lobby after 5 retries")
+			return fmt.Errorf("[Menu Flow]: Failed to enter bnet lobby after 5 retries")
 		}
 
 		// Try to enter bnet lobby by clicking the "Play" button
@@ -363,62 +343,26 @@ func (s *SinglePlayerSupervisor) enterLobby() error {
 	return nil
 }
 
-// createLobbyGame creates a game from the lobby
 func (s *SinglePlayerSupervisor) createLobbyGame() error {
-	ct.Get().SetLastAction("CreateLobbyGame")
+	s.bot.ctx.Logger.Debug("[Menu Flow]: Trying to create lobby game ...")
 
 	// Create the online game
-	_, err := s.bot.ctx.Manager.CreateOnlineGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter)
+	_, err := s.bot.ctx.Manager.CreateLobbyGame(s.bot.ctx.CharacterCfg.Game.PublicGameCounter)
 	if err != nil {
 		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-		return fmt.Errorf("failed to create an online game: %w", err)
+		return fmt.Errorf("[Menu Flow]: Failed to create lobby game: %w", err)
 	}
+
+	// check if dismissable modal is present
+	isDismissableModalPresent, text := s.bot.ctx.GameReader.IsDismissableModalPresent()
+	if isDismissableModalPresent {
+		s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
+		return fmt.Errorf("[Menu Flow]: Failed to create lobby game: %s", text)
+	}
+
+	s.bot.ctx.Logger.Debug("[Menu Flow]: Lobby game created successfully")
 
 	// Game created successfully
 	s.bot.ctx.CharacterCfg.Game.PublicGameCounter++
-	return nil
-}
-
-// exitLobbyToCharacterSelection leaves the lobby and returns to character selection
-func (s *SinglePlayerSupervisor) exitLobbyToCharacterSelection() error {
-	ct.Get().SetLastAction("ExitLobbyToCharacterSelection")
-
-	// Press escape to exit the lobby
-	s.bot.ctx.HID.PressKey(0x1B) // ESC key
-	utils.Sleep(1000)
-
-	// Retry a few times
-	retryCount := 0
-	for retryCount < 5 {
-		if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() &&
-			(s.bot.ctx.GameReader.IsOnline() || s.bot.ctx.CharacterCfg.AuthMethod == "None") {
-			break
-		}
-
-		if s.bot.ctx.GameReader.IsInLobby() {
-			s.bot.ctx.HID.PressKey(0x1B) // ESC key
-			utils.Sleep(1000)
-		}
-
-		retryCount++
-	}
-
-	if !s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
-		return fmt.Errorf("failed to go back to character selection screen after multiple attempts")
-	}
-
-	// Now check if we need to be online but aren't
-	if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
-		err := s.EnsureOnlineTab()
-		if err != nil {
-			return err
-		}
-	}
-
-	// Create the game from character selection
-	if err := s.bot.ctx.Manager.NewGame(); err != nil {
-		return fmt.Errorf("failed to create game: %w", err)
-	}
-
 	return nil
 }
