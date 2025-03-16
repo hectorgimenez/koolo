@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -57,6 +58,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
+	ctx := context.Get()
 	completedAttackLoops := 0
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
@@ -65,6 +67,9 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	lsOpts := step.Distance(LSMinDistance, LSMaxDistance)
 
 	for {
+		// Pause if not priority
+		ctx.PauseIfNotPriority()
+
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
@@ -108,7 +113,6 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	}
 }
 
-/* killMonster method is no longer used, thus being commented out
 func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
@@ -119,34 +123,31 @@ func (s BlizzardSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
 		return m.UnitID, true
 	}, nil)
 }
-*/
 
 func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {
-	// Check if the monster exists and is immune before starting the attack loop
-	if m, found := s.Data.Monsters.FindOne(id, monsterType); found {
-		for _, immunity := range skipOnImmunities {
-			if m.IsImmune(immunity) {
-				s.Logger.Info("Monster is immune! skipping", slog.String("immuneTo", string(immunity)))
-				return nil
-			}
-		}
-	}
-
-	// Proceed to attack the monster if not immune
+	// while the monster is alive, keep attacking it
 	for {
-		m, found := s.Data.Monsters.FindOne(id, monsterType)
-		if !found || m.Stats[stat.Life] <= 0 {
-			break
-		}
-
-		err := s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-			if m, found := d.Monsters.FindOne(id, monsterType); found {
-				return m.UnitID, true
+		if m, found := s.Data.Monsters.FindOne(id, monsterType); found {
+			if m.Stats[stat.Life] <= 0 {
+				break
 			}
-			return 0, false
-		}, skipOnImmunities)
-		if err != nil {
-			return err
+
+			// Check if monster is immune to any of the skipOnImmunities
+			for _, immunity := range skipOnImmunities {
+				if m.IsImmune(immunity) {
+					return nil
+				}
+			}
+
+			s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				if m, found := d.Monsters.FindOne(id, monsterType); found {
+					return m.UnitID, true
+				}
+
+				return 0, false
+			}, skipOnImmunities)
+		} else {
+			break
 		}
 	}
 	return nil
