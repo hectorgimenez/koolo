@@ -102,10 +102,13 @@ func (f HydraSorceress) KillMonsterSequence(
 		needToKite := false
 		var monsterPositions []data.Position
 		
-		// First collect all nearby monster positions
+		// First collect all nearby monster positions and adds to the array if the distance is less than 25
 		for _, m := range f.Data.Monsters.Enemies() {
-			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < 20 {
-				needToKite = true
+			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < (hydraSorceressMaxDistance + 5) {
+				// If the distance is less than 5, we need to kite else we are probably ok and don't need to jump around to much
+				if dist < 5 {
+					needToKite = true
+				}
 				monsterPositions = append(monsterPositions, m.Position)
 			}
 		}
