@@ -121,10 +121,16 @@ var buffStateMap = map[skill.ID][]state.State{
 func needsRebuff(buff skill.ID, ctx context.Status) bool {
 	hasState := false
 	if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
-		for _, neededState := range buffStateMap[buff] {
-			if ctx.Data.PlayerUnit.States.HasState(neededState) {
-				hasState = true
+		stateMappings, ok := buffStateMap[buff]
+		if ok {
+			for _, neededState := range stateMappings {
+				if ctx.Data.PlayerUnit.States.HasState(neededState) {
+					hasState = true
+				}
 			}
+		} else {
+			ctx.Logger.Error("Tried to buff with unimplemented buff state", slog.Any("skillID", buff))
+			return false
 		}
 	}
 	return !hasState
