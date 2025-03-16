@@ -3,6 +3,7 @@ package character
 import (
 	"fmt"
 	"log/slog"
+	"math"
 	"math/rand"
 	"time"
 
@@ -98,12 +99,22 @@ func (f HydraSorceress) KillMonsterSequence(
 		}
 
 		// Kite Monsters
+		needToKite := false
+		var monsterPositions []data.Position
+		
+		// First collect all nearby monster positions
 		for _, m := range f.Data.Monsters.Enemies() {
-			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < hydraSorceressMinDistance {
-				step.MoveTo(kitePosition(m.Position))
-				step.SecondaryAttack(skill.Hydra, id, 1, distanceOrgs)
-				continue
+			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < 20 {
+				needToKite = true
+				monsterPositions = append(monsterPositions, m.Position)
 			}
+		}
+
+		// If we need to kite, find the safest position away from all monsters
+		if needToKite && len(monsterPositions) > 0 {
+			bestPos := kiteMonsters(monsterPositions)
+			step.MoveTo(bestPos)
+			step.SecondaryAttack(skill.Hydra, id, 1, distanceOrgs)
 		}
 
 		// Hydra or Fireball
@@ -119,21 +130,69 @@ func (f HydraSorceress) KillMonsterSequence(
 	}
 }
 
-func kitePosition(monsterPos data.Position) data.Position {
-	xOffset := rand.Intn(hydraSorceressMaxDistance-hydraSorceressMinDistance+1) + hydraSorceressMinDistance
-	yOffset := rand.Intn(hydraSorceressMaxDistance-hydraSorceressMinDistance+1) + hydraSorceressMinDistance
+// kiteMonsters finds the safest position furthest away from all given monster positions
+func kiteMonsters(monsterPositions []data.Position) data.Position {
+	// Find the bounding box of all monsters
+	minX, maxX := monsterPositions[0].X, monsterPositions[0].X
+	minY, maxY := monsterPositions[0].Y, monsterPositions[0].Y
+	
+	for _, pos := range monsterPositions {
+		if pos.X < minX {
+			minX = pos.X
+		}
+		if pos.X > maxX {
+			maxX = pos.X
+		}
+		if pos.Y < minY {
+			minY = pos.Y
+		}
+		if pos.Y > maxY {
+			maxY = pos.Y
+		}
+	}
 
-	if rand.Float32() < 0.5 {
-		xOffset = -xOffset
-	}
-	if rand.Float32() < 0.5 {
-		yOffset = -yOffset
+	// Add padding to create a larger search area
+	padding := 10
+	minX -= padding
+	maxX += padding
+	minY -= padding
+	maxY += padding
+
+	// We'll search in a grid pattern within this bounding box
+	gridStep := 2 // Step size for grid search
+	bestDistance := 0
+	var bestPos data.Position
+
+	// Try positions in the grid and find the one with maximum distance from all monsters
+	for x := minX; x <= maxX; x += gridStep {
+		for y := minY; y <= maxY; y += gridStep {
+			candidatePos := data.Position{X: x, Y: y}
+			
+			// Calculate minimum distance to any monster
+			minDistToMonsters := math.MaxInt32
+			for _, monsterPos := range monsterPositions {
+				dist := calculateDistance(candidatePos, monsterPos)
+				if dist < minDistToMonsters {
+					minDistToMonsters = dist
+				}
+			}
+
+			// If this position keeps us further from all monsters than our previous best, use it
+			if minDistToMonsters > bestDistance {
+				bestDistance = minDistToMonsters
+				bestPos = candidatePos
+			}
+		}
 	}
 
-	return data.Position{
-		X: monsterPos.X + xOffset,
-		Y: monsterPos.Y + yOffset,
-	}
+	return bestPos
+}
+
+// calculateDistance returns the Euclidean distance between two positions
+func calculateDistance(pos1, pos2 data.Position) int {
+	dx := float64(pos2.X - pos1.X)
+	dy := float64(pos2.Y - pos1.Y)
+	return int(math.Sqrt(dx*dx + dy*dy))
 }
 
 func (f HydraSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
