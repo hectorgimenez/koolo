@@ -291,6 +291,11 @@ func (s *SinglePlayerSupervisor) HandleStandardMenuFlow() error {
 		if s.bot.ctx.GameReader.IsInLobby() {
 			return fmt.Errorf("[Menu Flow]: Failed to exit lobby")
 		}
+
+		// If we're at character selection screen, create a new game
+		if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
+			return s.bot.ctx.Manager.NewGame()
+		}
 	}
 
 	return fmt.Errorf("[Menu Flow]: Unhandled menu scenario")
