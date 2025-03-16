@@ -16,10 +16,8 @@ import (
 
 const (
 	hydraSorceressMaxAttacksLoop = 40
-	hydraSorceressMinDistance    = 8
-	hydraSorceressMaxDistance    = 16
-	hydraSorceressLSMinDistance  = 6
-	hydraSorceressLSMaxDistance  = 15 // Left skill
+	hydraSorceressMinDistance    = 10
+	hydraSorceressMaxDistance    = 20
 )
 
 type HydraSorceress struct {
@@ -62,37 +60,55 @@ func (f HydraSorceress) KillMonsterSequence(
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	lsOpts := step.Distance(hydraSorceressLSMinDistance, hydraSorceressLSMaxDistance)
+	// Setup timer and control flag for Hydra casting
+	canCastHydra := false
+	timer := time.NewTicker(10 * time.Second)
+	defer timer.Stop()
+	
+	go func() {
+		for range timer.C {
+			canCastHydra = true
+		}
+	}()
+
+	lsOpts := step.Distance(hydraSorceressMinDistance, hydraSorceressMaxDistance)
 
 	for {
 		id, found := monsterSelector(*f.Data)
 		if !found {
+			timer.Stop()
 			return nil
-
 		}
+		
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
 
 		if !f.preBattleChecks(id, skipOnImmunities) {
+			timer.Stop()
 			return nil
 		}
 
 		if completedAttackLoops >= hydraSorceressMaxAttacksLoop {
+			timer.Stop()
 			return nil
 		}
 
 		monster, found := f.Data.Monsters.FindByID(id)
 		if !found {
+			timer.Stop()
 			f.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
 
-		if f.Data.PlayerUnit.States.HasState(state.Cooldown) {
-			step.PrimaryAttack(id, 2, true, lsOpts)
+		step.PrimaryAttack(id, 2, true, lsOpts)
+		
+		if canCastHydra {
+			for i := 0; i < 10; i++ {
+				step.SecondaryAttack(skill.Hydra, id, 1, lsOpts)
+			}
+			canCastHydra = false
 		}
-
-		step.SecondaryAttack(skill.Hydra, id, 1, opts)
 
 		completedAttackLoops++
 		previousUnitID = int(id)
