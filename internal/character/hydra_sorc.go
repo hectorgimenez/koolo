@@ -22,7 +22,6 @@ const (
 
 type HydraSorceress struct {
 	BaseCharacter
-	canCastHydra bool
 }
 
 func (f HydraSorceress) CheckKeyBindings() []skill.ID {
@@ -54,21 +53,21 @@ func (f HydraSorceress) CheckKeyBindings() []skill.ID {
 	return missingKeybindings
 }
 
-func (f *HydraSorceress) KillMonsterSequence(
+func (f HydraSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	canCastHydra := true
 
 	// Setup timer for Hydra casting
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
-	defer func() { f.canCastHydra = true }()
 	
 	go func() {
 		for range ticker.C {
-			f.canCastHydra = true
+			canCastHydra = true
 		}
 	}()
 
@@ -97,14 +96,14 @@ func (f *HydraSorceress) KillMonsterSequence(
 			f.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
-
-		step.PrimaryAttack(id, 2, true, lsOpts)
-		
-		if f.canCastHydra {
+	
+		if canCastHydra {
 			for i := 0; i < 8; i++ {
 				step.SecondaryAttack(skill.Hydra, id, 1, lsOpts)
 			}
-			f.canCastHydra = false
+			canCastHydra = false
+		} else {
+			step.PrimaryAttack(id, 2, true, lsOpts)
 		}
 
 		completedAttackLoops++
