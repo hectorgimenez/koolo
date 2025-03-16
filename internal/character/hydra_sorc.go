@@ -17,8 +17,8 @@ import (
 
 const (
 	hydraSorceressMaxAttacksLoop = 40
-	hydraSorceressMinDistance    = 7
-	hydraSorceressMaxDistance    = 15
+	hydraSorceressMinDistance    = 9
+	hydraSorceressMaxDistance    = 10
 )
 
 type HydraSorceress struct {
@@ -72,7 +72,7 @@ func (f HydraSorceress) KillMonsterSequence(
 		}
 	}()
 
-	distanceOrgs := step.RangedDistance(0, (hydraSorceressMaxDistance + 5))
+	distanceOrgs := step.RangedDistance(0, (hydraSorceressMaxDistance + 2))
 
 	for {
 		id, found := monsterSelector(*f.Data)
@@ -105,8 +105,9 @@ func (f HydraSorceress) KillMonsterSequence(
 		// First collect all nearby monster positions and adds to the array if the distance is less than 25
 		for _, m := range f.Data.Monsters.Enemies() {
 			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < (hydraSorceressMaxDistance + 5) {
-				// If the distance is less than 5, we need to kite else we are probably ok and don't need to jump around to much
-				if dist < 5 {
+				// If the distance is less than 6 (Hurricane Distance)
+				// We need to kite else we are probably ok and don't need to jump around to much
+				if dist < 6 {
 					needToKite = true
 				}
 				monsterPositions = append(monsterPositions, m.Position)
