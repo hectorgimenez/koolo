@@ -3,21 +3,21 @@ package character
 import (
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
-	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
 	hydraSorceressMaxAttacksLoop = 40
-	hydraSorceressMinDistance    = 15
-	hydraSorceressMaxDistance    = 20
+	hydraSorceressMinDistance    = 7
+	hydraSorceressMaxDistance    = 15
 )
 
 type HydraSorceress struct {
@@ -62,23 +62,23 @@ func (f HydraSorceress) KillMonsterSequence(
 	canCastHydra := true
 
 	// Setup timer for Hydra casting
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
-	
+
 	go func() {
 		for range ticker.C {
 			canCastHydra = true
 		}
 	}()
 
-	lsOpts := step.Distance(hydraSorceressMinDistance, hydraSorceressMaxDistance)
+	distanceOrgs := step.RangedDistance(0, (hydraSorceressMaxDistance + 5))
 
 	for {
 		id, found := monsterSelector(*f.Data)
 		if !found {
 			return nil
 		}
-		
+
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
 		}
@@ -96,18 +96,43 @@ func (f HydraSorceress) KillMonsterSequence(
 			f.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
 			return nil
 		}
-	
-		if canCastHydra {
-			for i := 0; i < 8; i++ {
-				step.SecondaryAttack(skill.Hydra, id, 1, lsOpts)
+
+		// Kite Monsters
+		for _, m := range f.Data.Monsters.Enemies() {
+			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < hydraSorceressMinDistance {
+				step.MoveTo(kitePosition(m.Position))
+				step.SecondaryAttack(skill.Hydra, id, 1, distanceOrgs)
+				continue
 			}
+		}
+
+		// Hydra or Fireball
+		if canCastHydra {
+			step.SecondaryAttack(skill.Hydra, id, 3, distanceOrgs)
 			canCastHydra = false
 		} else {
-			step.PrimaryAttack(id, 2, true, lsOpts)
+			step.PrimaryAttack(id, 2, true, distanceOrgs)
 		}
 
 		completedAttackLoops++
 		previousUnitID = int(id)
+	}
+}
+
+func kitePosition(monsterPos data.Position) data.Position {
+	xOffset := rand.Intn(hydraSorceressMaxDistance-hydraSorceressMinDistance+1) + hydraSorceressMinDistance
+	yOffset := rand.Intn(hydraSorceressMaxDistance-hydraSorceressMinDistance+1) + hydraSorceressMinDistance
+
+	if rand.Float32() < 0.5 {
+		xOffset = -xOffset
+	}
+	if rand.Float32() < 0.5 {
+		yOffset = -yOffset
+	}
+
+	return data.Position{
+		X: monsterPos.X + xOffset,
+		Y: monsterPos.Y + yOffset,
 	}
 }
 
