@@ -103,6 +103,33 @@ func Buff() {
 	}
 }
 
+var buffStateMap = map[skill.ID][]state.State{
+	// map of buff skills and the related states to watch for to indicate that we need a rebuff
+	skill.HolyShield: {state.State(state.Holyshield)},
+	skill.FrozenArmor: {
+		state.State(state.Frozenarmor),
+		state.State(state.Shiverarmor),
+		state.State(state.Chillingarmor),
+	},
+	skill.EnergyShield: {state.State(state.Energyshield)},
+	skill.CycloneArmor: {state.State(state.Cyclonearmor)},
+	skill.Fade:         {state.State(state.Fade)},
+	// skill.BurstOfSpeed: {state.State(state.BurstOfSpeed)}, Not mapped?
+
+}
+
+func needsRebuff(buff skill.ID, ctx context.Status) bool {
+	hasState := false
+	if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
+		for _, neededState := range buffStateMap[buff] {
+			if ctx.Data.PlayerUnit.States.HasState(neededState) {
+				hasState = true
+			}
+		}
+	}
+	return !hasState
+}
+
 func IsRebuffRequired() bool {
 	ctx := context.Get()
 	ctx.SetLastAction("IsRebuffRequired")
@@ -116,22 +143,13 @@ func IsRebuffRequired() bool {
 		return true
 	}
 
-	// TODO: Find a better way to convert skill to state
 	buffs := ctx.Char.BuffSkills()
+
+	rebuffRequired := false
 	for _, buff := range buffs {
-		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
-			if buff == skill.HolyShield && !ctx.Data.PlayerUnit.States.HasState(state.Holyshield) {
-				return true
-			}
-			if buff == skill.FrozenArmor && (!ctx.Data.PlayerUnit.States.HasState(state.Frozenarmor) && !ctx.Data.PlayerUnit.States.HasState(state.Shiverarmor) && !ctx.Data.PlayerUnit.States.HasState(state.Chillingarmor)) {
-				return true
-			}
-			if buff == skill.EnergyShield && !ctx.Data.PlayerUnit.States.HasState(state.Energyshield) {
-				return true
-			}
-			if buff == skill.CycloneArmor && !ctx.Data.PlayerUnit.States.HasState(state.Cyclonearmor) {
-				return true
-			}
+		rebuffRequired = needsRebuff(buff, *ctx)
+		if rebuffRequired {
+			return true
 		}
 	}
 
