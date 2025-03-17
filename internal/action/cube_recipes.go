@@ -208,6 +208,14 @@ var (
 			PurchaseItems:    []string{"Ring"},
 		},
 
+		//Blood Ring
+		{
+			Name: "Blood Ring",
+			Items: []string{"SolRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems: []string{"Ring"},
+		},
+
 		// Blood Gloves
 		{
 			Name:             "Blood Gloves",
@@ -254,6 +262,14 @@ var (
 			Items:            []string{"OrtRune", "PerfectRuby", "Jewel"},
 			PurchaseRequired: true,
 			PurchaseItems:    []string{"Axe"},
+		},
+		
+		// Safety Amulet
+		{
+			Name: "Safety Amulet",
+			Items: []string{"ThulRune", "PerfectEmerald", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems: []string{"Amulet"},
 		},
 
 		// Safety Shield
