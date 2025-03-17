@@ -194,6 +194,8 @@ func (s MosaicSin) KillMonsterSequence(
 			totalChargeAttacks += skillChargeCount
 		}
 
+		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
+		// more of your physical damage to fire. You need physical damage for life leech!
 		if ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire && totalChargeAttacks < attacksBeforeKick {
 			skillChargeCount := s.buildChargesForSkill(id, skill.FistsOfFire, 3, *ctx)
 			if skillChargeCount == -1 {
