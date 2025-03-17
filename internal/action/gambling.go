@@ -162,7 +162,6 @@ func gambleItems() error {
 
 	for {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
 
 		// Check if we should stop gambling due to low gold
 		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
@@ -257,7 +256,6 @@ func lessRefreshGamble() error {
 
 	for {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
 
 		// Check if we should stop gambling due to low gold
 		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
@@ -355,7 +353,6 @@ func gambleMap() error {
 
 	for {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
 
 		// Check if we should stop gambling due to low gold
 		if ctx.Data.PlayerUnit.TotalPlayerGold() < 500000 {
