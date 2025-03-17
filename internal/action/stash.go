@@ -382,13 +382,30 @@ func OpenStash() error {
 	if !found {
 		return errors.New("stash not found")
 	}
-	InteractObject(bank,
-		func() bool {
-			return ctx.Data.OpenMenus.Stash
-		},
-	)
 
-	return nil
+	// Clear any UI popups first
+	ClearMessages()
+
+	// Open the stash
+	err := InteractObject(bank, func() bool {
+		return ctx.Data.OpenMenus.Stash
+	})
+	if err != nil {
+		return err
+	}
+
+	// Force a refresh to ensure menu state is updated
+	ctx.RefreshGameData()
+	utils.Sleep(300) // Short delay for menu rendering
+
+	if ctx.Data.OpenMenus.Stash {
+		// Move cursor to the center-right of the screen to avoid Magefist/Weapon loss
+		ctx.HID.MovePointer(1245, 355) // X=1245, Y=355 (center | right side)
+		ctx.Logger.Info("Stash opened - cursor moved to safe position")
+		return nil
+	}
+
+	return errors.New("stash window not detected after interaction")
 }
 
 func CloseStash() error {
