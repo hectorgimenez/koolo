@@ -60,19 +60,8 @@ func (f HydraSorceress) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
-	canCastHydra := true
 
-	// Setup timer for Hydra casting
-	ticker := time.NewTicker(2 * time.Second)
-	defer ticker.Stop()
-
-	go func() {
-		for range ticker.C {
-			canCastHydra = true
-		}
-	}()
-
-	distanceOrgs := step.RangedDistance(0, (hydraSorceressMaxDistance + 2))
+	distanceOrgs := step.RangedDistance(0, hydraSorceressMaxDistance)
 
 	for {
 		id, found := monsterSelector(*f.Data)
@@ -122,7 +111,7 @@ func (f HydraSorceress) KillMonsterSequence(
 		}
 
 		// Hydra or Fireball
-		if canCastHydra {
+		if completedAttackLoops % 8 == 0 {
 			step.SecondaryAttack(skill.Hydra, id, 3, distanceOrgs)
 			canCastHydra = false
 		} else {
