@@ -177,7 +177,7 @@ func buffCTA() {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
 		utils.Sleep(180)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(180)
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
 		utils.Sleep(180)
 		ctx.HID.Click(game.RightButton, 300, 300)
