@@ -1,8 +1,11 @@
 package config
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"time"
 
@@ -409,6 +412,28 @@ func ValidateAndSaveConfig(config KooloCfg) error {
 
 	if _, err := os.Stat(config.D2RPath + "/d2r.exe"); os.IsNotExist(err) {
 		return errors.New("D2RPath is not valid")
+	}
+
+	//Validate LoD MD5
+	hash := md5.New()
+	file, err := os.Open(config.D2LoDPath + "/game.exe")
+	if err != nil {
+		return errors.New("failed to open game.exe")
+	}
+	defer file.Close()
+	if _, err := io.Copy(hash, file); err != nil {
+		return errors.New("failed to calculate MD5")
+	}
+
+	md5Value := hex.EncodeToString(hash.Sum(nil))
+
+	validMD5s := map[string]string{
+		"58d3b91452307c7dce4e0a7abc84af8e": "1.13c",
+	}
+
+	_, valid := validMD5s[md5Value]
+	if !valid {
+		return errors.New("invalid game.exe version. Please use version 1.13c")
 	}
 
 	text, err := yaml.Marshal(config)
