@@ -6,6 +6,7 @@
 /stats
 /screenshots
 /logs
+/cmd/koolo/__debug*
 
 /config/*
 !/config/template
