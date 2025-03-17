@@ -57,7 +57,7 @@ func (s MosaicSin) hasKeyBindingForSkill(skill skill.ID) bool {
 }
 
 func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge skill.ID, desiredCount int, ctx context.Status) int {
-	// Call this if we're enabled for the skill
+	// Any configuration checks for whether this skill is enabled handle before we call this function
 	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(s.chargedSkillStateMap()[skillToCharge]), 0)
 	attacks := 0
 
