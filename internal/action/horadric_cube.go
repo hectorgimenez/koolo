@@ -22,10 +22,20 @@ func CubeAddItems(items ...data.Item) error {
 
 	// Ensure stash is open
 	if !ctx.Data.OpenMenus.Stash {
-		bank, _ := ctx.Data.Objects.FindOne(object.Bank)
+
+		utils.Sleep(300)
+		bank, found := ctx.Data.Objects.FindOne(object.Bank)
+		if !found {
+			return fmt.Errorf("stash not found")
+		}
+
+		// Clear any popups first
+		ClearMessages()
+
 		err := InteractObject(bank, func() bool {
 			return ctx.Data.OpenMenus.Stash
 		})
+
 		if err != nil {
 			return err
 		}
@@ -36,6 +46,21 @@ func CubeAddItems(items ...data.Item) error {
 
 	// If items are on the Stash, pickup them to the inventory
 	for _, itm := range items {
+
+		ctx.Logger.Info("Processing item",
+			slog.String("Name", string(itm.Name)),
+			slog.String("Location", fmt.Sprintf("%v", itm.Location.LocationType)),
+		)
+
+		// Add check to skip equipped items
+		if itm.Location.LocationType == item.LocationEquipped {
+			ctx.Logger.Warn("Skipping equipped item",
+				slog.String("Item", string(itm.Name)),
+				slog.Any("Location", itm.Location),
+			)
+			continue
+		}
+
 		nwIt := itm
 		if nwIt.Location.LocationType != item.LocationStash && nwIt.Location.LocationType != item.LocationSharedStash {
 			continue
@@ -152,8 +177,13 @@ func ensureCubeIsOpen() error {
 	ctx := context.Get()
 	ctx.Logger.Debug("Opening Horadric Cube...")
 
+	// Force a refresh to sync menu states
+	ctx.RefreshGameData()
+
 	if ctx.Data.OpenMenus.Cube {
-		ctx.Logger.Debug("Horadric Cube window already open")
+		ctx.Logger.Info("Horadric Cube window already open, moving cursor to avoid Gloves/Weapon loss")
+		// Move cursor to the center-right of the screen to avoid Magefist/Weapon loss
+		ctx.HID.MovePointer(1245, 355) // X=1245, Y=355 (center | right side)
 		return nil
 	}
 
