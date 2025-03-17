@@ -18,37 +18,18 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 	ctx := context.Get()
 	ctx.SetLastAction("ClearAreaAroundPosition")
 
-	for {
-		ctx.PauseIfNotPriority()
-
-		// Check for closest monster within radius - monsters are already sorted by distance
-		err := ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-			for _, m := range d.Monsters.Enemies(filter) {
-				dist := pather.DistanceFromPoint(pos, m.Position)
-				if ctx.Data.AreaData.IsWalkable(m.Position) && dist <= radius {
-					return m.UnitID, true
-				}
-			}
-			return 0, false
-		}, nil)
-
-		if err != nil {
-			return err
-		}
-
-		// If no monsters found within radius, we're done
-		found := false
-		for _, m := range ctx.Data.Monsters.Enemies(filter) {
-			if pather.DistanceFromPoint(pos, m.Position) <= radius {
-				found = true
-				break
+	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+		for _, m := range d.Monsters.Enemies(filter) {
+			distanceToTarget := pather.DistanceFromPoint(pos, m.Position)
+			if ctx.Data.AreaData.IsWalkable(m.Position) && distanceToTarget <= radius {
+				return m.UnitID, true
 			}
 		}
-		if !found {
-			return nil
-		}
-	}
+
+		return 0, false
+	}, nil)
 }
+
 func ClearThroughPath(pos data.Position, radius int, filter data.MonsterFilter) error {
 	ctx := context.Get()
 
