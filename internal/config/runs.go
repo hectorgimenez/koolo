@@ -58,6 +58,7 @@ var AvailableRuns = map[Run]interface{}{
 	CowsRun:             nil,
 	LevelingRun:         nil,
 	QuestsRun:           nil,
+	FollowerRun:         nil,
 	TerrorZoneRun:       nil,
 	ThreshsocketRun:     nil,
 	DrifterCavernRun:    nil,
