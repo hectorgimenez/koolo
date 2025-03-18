@@ -47,9 +47,6 @@ func (f *Follower) Run() error {
 
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
 
-	//Anti-stuck solution
-	lastPosition := data.Position{}
-
 	for leaderFound {
 		f.ctx.RefreshGameData()
 		utils.Sleep(200)
@@ -69,7 +66,8 @@ func (f *Follower) Run() error {
 		if leader.Area != f.ctx.Data.AreaData.Area {
 			f.handleLeaderNotInSameArea(&leader)
 		} else if leader.Area == f.ctx.Data.AreaData.Area && !f.ctx.Data.PlayerUnit.Area.IsTown() {
-			lastPosition = f.ctx.Data.PlayerUnit.Position
+			//Anti-stuck solution
+			lastPosition := f.ctx.Data.PlayerUnit.Position
 			f.handleLeaderInSameArea(&leader)
 			f.ctx.RefreshGameData()
 			if f.ctx.Data.PlayerUnit.Position == lastPosition {
