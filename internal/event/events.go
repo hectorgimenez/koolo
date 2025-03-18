@@ -36,9 +36,11 @@ type GameCreatedEvent struct {
 	Password string
 }
 
-func GameCreated(be BaseEvent) GameCreatedEvent {
+func GameCreated(be BaseEvent, name string, password string) GameCreatedEvent {
 	return GameCreatedEvent{
 		BaseEvent: be,
+		Name:      name,
+		Password:  password,
 	}
 }
 
