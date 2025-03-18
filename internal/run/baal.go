@@ -59,7 +59,7 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Companion.Leader {
+	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -74,7 +74,7 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Companion.Leader {
+	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -89,7 +89,7 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Companion.Leader {
+	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -109,6 +109,7 @@ func (s Baal) Run() error {
 	if s.ctx.CharacterCfg.Companion.Leader {
 		action.MoveToCoords(tpPosition)
 		action.OpenTPIfLeader()
+		action.Buff()
 	}
 
 	err = action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
