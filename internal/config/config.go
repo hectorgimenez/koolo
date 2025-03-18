@@ -226,6 +226,7 @@ type CharacterCfg struct {
 			KillIzual      bool `yaml:"killIzual"`
 			Hellforge      bool `yaml:"hellforge"`
 			KillShenk      bool `yaml:"killShenk"`
+			RescueBarbs    bool `yaml:"rescueBarbs"`
 			RescueAnya     bool `yaml:"rescueAnya"`
 			KillAncients   bool `yaml:"killAncients"`
 		} `yaml:"quests"`

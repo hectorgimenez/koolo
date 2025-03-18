@@ -689,6 +689,53 @@ func (a Quests) killShenkQuest() error {
 	return nil
 }
 
+func (a Quests) rescueBarbsQuest() error {
+	a.ctx.Logger.Info("Starting Rescue Barb Quest...")
+	err := action.WayPoint(area.FrigidHighlands)
+	if err != nil {
+		return err
+	}
+	freedBarbs := make(map[object.Name]data.Position)
+	barbsFreed := 0
+
+	for _, o := range a.ctx.Data.Objects {
+		if o.Name == object.CagedWussie && freedBarbs[o.Name] != o.Position {
+			barbsFreed++
+			a.ctx.Logger.Info(fmt.Sprintf("Rescuing barbarian %d/3...", barbsFreed))
+			err := action.MoveTo(func() (data.Position, bool) {
+				return o.Position, true
+			})
+			if err != nil {
+				a.ctx.Logger.Debug(fmt.Sprintf("Could not find barbarian %d/3, continuing...", barbsFreed))
+				continue
+			}
+
+			a.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				if m, found := d.Monsters.FindOne(npc.PrisonDoor, data.MonsterTypeNone); found {
+					return m.UnitID, true
+				}
+				return 0, false
+			}, nil)
+			freedBarbs[o.Name] = o.Position
+		}
+	}
+
+	err = action.ReturnTown()
+	if err != nil {
+		return err
+	}
+
+	// Talk to Qual-Kehk to complete the quest
+	err = action.InteractNPC(npc.QualKehk)
+	if err != nil {
+		return err
+	}
+
+	step.CloseAllMenus()
+
+	return nil
+}
+
 func (a Quests) rescueAnyaQuest() error {
 	a.ctx.Logger.Info("Starting Rescuing Anya Quest...")
 
