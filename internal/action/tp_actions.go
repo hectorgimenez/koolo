@@ -126,3 +126,43 @@ func UsePortalFrom(owner string) error {
 
 	return errors.New("portal not found")
 }
+
+func ReturnToTownWithOwnedPortal() error {
+	ctx := context.Get()
+	ctx.SetLastAction("ReturnTown")
+	ctx.PauseIfNotPriority()
+
+	if ctx.Data.PlayerUnit.Area.IsTown() {
+		return nil
+	}
+
+	// Move slightly if we're right next to a waypoint to prevent fail to hover portal
+	for _, obj := range ctx.Data.Objects {
+		if obj.IsWaypoint() && ctx.PathFinder.DistanceFromMe(obj.Position) < 3 {
+			// Try a few different positions until we find one that works
+			for i := 0; i < 4; i++ {
+				newPos := data.Position{
+					X: ctx.Data.PlayerUnit.Position.X + 3 - i,
+					Y: ctx.Data.PlayerUnit.Position.Y + 3 - i,
+				}
+				if ctx.Data.AreaData.IsWalkable(newPos) && ctx.PathFinder.DistanceFromMe(obj.Position) >= 3 {
+					MoveToCoords(newPos)
+					break
+				}
+			}
+			break
+		}
+	}
+
+	err := step.OpenNewPortal()
+	if err != nil {
+		return err
+	}
+
+	portal, found := ctx.Data.Objects.FindOne(object.TownPortal)
+	if !found {
+		return errors.New("portal not found")
+	}
+
+	return InteractObject(portal, nil)
+}
