@@ -34,7 +34,8 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 
 	// Wait for area data to sync
 	for attempts := 0; attempts < maxAreaSyncAttempts; attempts++ {
-		ctx.RefreshGameData()
+		// Only refresh area data instead of full refresh
+		ctx.Data.PlayerUnit.Area = ctx.GameReader.GetData().Data.PlayerUnit.Area
 
 		if ctx.Data.PlayerUnit.Area == expectedArea {
 			if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
