@@ -11,8 +11,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
-	"github.com/hectorgimenez/koolo/internal/game"
-	"github.com/hectorgimenez/koolo/internal/pather"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -134,15 +132,8 @@ func (s Baal) Run() error {
 		if _, found := s.ctx.Data.Monsters.FindOne(npc.BaalsMinion, data.MonsterTypeMinion); found || time.Since(lastClear) > time.Minute*3 {
 			lastWave = true
 		}
-
-		// Clear current wave
-		err = s.clearWave()
-		if err != nil {
-			return err
-		}
-
 		// Return to throne position between waves
-		err = action.MoveToCoords(baalThronePosition)
+		err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
 		if err != nil {
 			return err
 		}
@@ -153,11 +144,13 @@ func (s Baal) Run() error {
 		}
 	}
 
+	// Let's be sure everything is dead
+	err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
 		utils.Sleep(10000)
 		action.Buff()
-
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
 		_ = action.InteractObject(baalPortal, func() bool {
