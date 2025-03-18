@@ -50,8 +50,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			switch ctx.Data.PlayerUnit.Mode {
 			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
 				utils.Sleep(100)
-				// We need updated mode so only PlayerUnit refresh is required
-				ctx.Data.PlayerUnit = ctx.GameReader.GetData().Data.PlayerUnit
+				// We need updated mode so only refresh this
+				ctx.Data.PlayerUnit.Mode = ctx.GameReader.GetData().Data.PlayerUnit.Mode
 				continue
 			default:
 				return
@@ -71,8 +71,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
-		// is needed to update player information(prevent teleport in circle) Cost is minimal compared to RefreshGameData
-		ctx.Data.PlayerUnit = ctx.GameReader.GetData().Data.PlayerUnit
+		// is needed to update player position (prevent teleport in circle) Cost is minimal compared to RefreshGameData
+		ctx.Data.PlayerUnit.Position = ctx.GameReader.GetData().PlayerUnit.Position
 
 		// Add some delay between clicks to let the character move to destination
 		walkDuration := utils.RandomDurationMs(600, 1200)
