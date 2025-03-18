@@ -126,12 +126,7 @@ func (a Cows) getWirtsLeg() error {
 		return err
 	}
 
-	// Kill Rakanishu before entering Tristam if enabled
-	if a.ctx.CharacterCfg.Game.Cows.KillRakanishu {
-		action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
-	} else {
-		utils.Sleep(1000) // Add delay when skipping to allow portal to load
-	}
+	action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 
 	portal, found := a.ctx.Data.Objects.FindOne(object.PermanentTownPortal)
 	if !found {
