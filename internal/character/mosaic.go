@@ -56,13 +56,13 @@ func (s MosaicSin) hasKeyBindingForSkill(skill skill.ID) bool {
 	return found
 }
 
-func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge skill.ID, desiredCount int, ctx context.Status) int {
+func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge skill.ID, desiredCount int, playerUnit data.PlayerUnit) (int, bool) {
 	// Any configuration checks for whether this skill is enabled handle before we call this function
-	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(s.chargedSkillStateMap()[skillToCharge]), 0)
+	charges, found := playerUnit.Stats.FindStat(stat.ID(s.chargedSkillStateMap()[skillToCharge]), 0)
 	attacks := 0
 
 	if !s.MobAlive(monsterId, *s.Data) {
-		return -1
+		return -1, true
 	}
 
 	if s.hasKeyBindingForSkill(skillToCharge) {
@@ -73,10 +73,11 @@ func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge ski
 		}
 	}
 
-	return attacks
+	return attacks, false
 }
 
 func (s MosaicSin) MobHasAnyState(mob data.UnitID, statesToFind []state.State) bool {
+	// TODO this maybe has a home in d2go?
 	monster, found := s.Data.Monsters.FindByID(mob)
 	if found {
 		for _, stateToFind := range statesToFind {
@@ -93,7 +94,7 @@ func (s MosaicSin) KillMonsterSequence(
 	skipOnImmunities []stat.Resist,
 ) error {
 	ctx := context.Get()
-	ctx.RefreshGameData()
+	playerUnit := ctx.GameReader.GetData().Data.PlayerUnit
 	lastRefresh := time.Now()
 
 	// TODO: move to config
@@ -112,7 +113,7 @@ func (s MosaicSin) KillMonsterSequence(
 	for {
 		// Limit refresh rate to 10 times per second to avoid excessive CPU usage
 		if time.Since(lastRefresh) > time.Millisecond*100 {
-			ctx.RefreshGameData()
+			playerUnit = ctx.GameReader.GetData().Data.PlayerUnit
 			lastRefresh = time.Now()
 		}
 
@@ -145,17 +146,19 @@ func (s MosaicSin) KillMonsterSequence(
 			return nil
 		}
 
+		// Targets the following number of charges for each skill, if enabled:
+
 		// Cobra 3
 		// Phoenix 2
 		// Lightning 3
 		// Tiger 3
 		// Ice 3
-		// Fire 3  // This one breaks life leech, dangerous?
+		// Fire 3
 
 		totalChargeAttacks := 0
 		if ctx.CharacterCfg.Character.MosaicSin.UseCobraStrike && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount := s.buildChargesForSkill(id, skill.CobraStrike, 3, *ctx)
-			if skillChargeCount == -1 {
+			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.CobraStrike, 3, playerUnit)
+			if alreadyDead {
 				return nil
 			}
 			totalChargeAttacks += skillChargeCount
@@ -163,32 +166,32 @@ func (s MosaicSin) KillMonsterSequence(
 
 		// Always use phoenix
 		if totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount := s.buildChargesForSkill(id, skill.PhoenixStrike, 2, *ctx)
-			if skillChargeCount == -1 {
+			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.PhoenixStrike, 2, playerUnit)
+			if alreadyDead {
 				return nil
 			}
 			totalChargeAttacks += skillChargeCount
 		}
 
 		if ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount := s.buildChargesForSkill(id, skill.ClawsOfThunder, 3, *ctx)
-			if skillChargeCount == -1 {
+			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.ClawsOfThunder, 3, playerUnit)
+			if alreadyDead {
 				return nil
 			}
 			totalChargeAttacks += skillChargeCount
 		}
 
 		if ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount := s.buildChargesForSkill(id, skill.TigerStrike, 3, *ctx)
-			if skillChargeCount == -1 {
+			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.TigerStrike, 3, playerUnit)
+			if alreadyDead {
 				return nil
 			}
 			totalChargeAttacks += skillChargeCount
 		}
 
 		if ctx.CharacterCfg.Character.MosaicSin.UseBladesOfIce && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount := s.buildChargesForSkill(id, skill.BladesOfIce, 3, *ctx)
-			if skillChargeCount == -1 {
+			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.BladesOfIce, 3, playerUnit)
+			if alreadyDead {
 				return nil
 			}
 			totalChargeAttacks += skillChargeCount
@@ -197,8 +200,8 @@ func (s MosaicSin) KillMonsterSequence(
 		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
 		// more of your physical damage to fire. You need physical damage for life leech!
 		if ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount := s.buildChargesForSkill(id, skill.FistsOfFire, 3, *ctx)
-			if skillChargeCount == -1 {
+			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.FistsOfFire, 3, playerUnit)
+			if alreadyDead {
 				return nil
 			}
 			totalChargeAttacks += skillChargeCount
