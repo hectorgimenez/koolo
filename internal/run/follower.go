@@ -40,7 +40,8 @@ func (f *Follower) Run() error {
 	leader, leaderFound := f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
 	if !leaderFound {
 		f.ctx.Logger.Error("Leader not found.")
-		f.resetCompanionGameInfo()
+		// Re-enable this when companion PR gets merged if they don't implement a reset
+		//f.resetCompanionGameInfo()
 		return nil
 	}
 
@@ -56,7 +57,8 @@ func (f *Follower) Run() error {
 		f.ctx.Logger.Info("Leader is still here.", slog.String("leader", leader.Name))
 		if !leaderFound {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
-			f.resetCompanionGameInfo()
+			// Re-enable this when companion PR gets merged if they don't implement a reset
+			//f.resetCompanionGameInfo()
 			return nil
 		}
 
@@ -312,7 +314,8 @@ func (f *Follower) goToTpArea() error {
 	return action.MoveToCoords(tpArea)
 }
 
-func (f *Follower) resetCompanionGameInfo() {
-	f.ctx.Context.CharacterCfg.Companion.CompanionGameName = ""
-	f.ctx.Context.CharacterCfg.Companion.CompanionGamePassword = ""
-}
+// Re-enable this when companion PR gets merged if they don't implement a reset
+// func (f *Follower) resetCompanionGameInfo() {
+// 	f.ctx.Context.CharacterCfg.Companion.CompanionGameName = ""
+// 	f.ctx.Context.CharacterCfg.Companion.CompanionGamePassword = ""
+// }
