@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/run"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"github.com/hectorgimenez/koolo/internal/utils/winproc"
 	"github.com/lxn/win"
 )
@@ -129,25 +129,13 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	s.bot.ctx.Logger.Info("Character selection screen found")
 	disconnected := false
 
-	// Ensure we're online
-	if !s.bot.ctx.GameReader.IsOnline() {
-		if s.bot.ctx.CharacterCfg.AuthMethod != "None" && !s.bot.ctx.GameReader.IsOnline() {
-			disconnected = true
-			s.bot.ctx.Logger.Info("Offline screen detected, clicking online tab to connect to bnet ...")
-
-			// Try and click the online tab to connect to bnet up to 3 times
-			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
-
-			utils.Sleep(15000) // Wait for 15 seconds to ensure we're online
-
-			// Check if we're online again, if not, kill the client
-			if !s.bot.ctx.GameReader.IsOnline() {
-				if err := s.KillClient(); err != nil {
-					return err
-				}
-				return fmt.Errorf("we've lost connection to bnet or client glitched. The d2r process will be killed")
-			}
+	if err := s.ensureOnline(); err != nil {
+		s.bot.ctx.Logger.Error("[Ensure Online]: Failed to prepare for character selection, will kill client ...")
+		if err := s.KillClient(); err != nil {
+			s.bot.ctx.Logger.Error("[Ensure Online]: Failed to kill client", slog.String("error", err.Error()))
+			return err
 		}
+		return err
 	}
 
 	if s.bot.ctx.CharacterCfg.CharacterName != "" {
@@ -189,4 +177,55 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 func (s *baseSupervisor) SetWindowPosition(x, y int) {
 	uFlags := win.SWP_NOZORDER | win.SWP_NOSIZE | win.SWP_NOACTIVATE
 	win.SetWindowPos(s.bot.ctx.GameReader.HWND, 0, int32(x), int32(y), 0, 0, uint32(uFlags))
+}
+
+func (s *baseSupervisor) ensureOnline() error {
+	if !s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
+		return fmt.Errorf("[Ensure Online]: We're not in the character selection screen")
+	}
+
+	if !s.bot.ctx.GameReader.IsOnline() && s.bot.ctx.CharacterCfg.AuthMethod != "None" {
+		s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+		s.bot.ctx.Logger.Debug("[Ensure Online]: We're at the character selection screen but not online")
+
+		time.Sleep(2000)
+
+		maxRetries := 5
+		for i := 0; i < maxRetries; i++ {
+			s.bot.ctx.Logger.Debug(fmt.Sprintf("[Ensure Online]: Trying to connect to bnet attempt %d of %d", i+1, maxRetries))
+			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+			time.Sleep(2000)
+
+			for {
+				blockingPanel := s.bot.ctx.GameReader.GetPanel("BlockingPanel")
+				popuPanel := s.bot.ctx.GameReader.GetPanel("DismissableModal")
+
+				if blockingPanel.PanelName != "" && blockingPanel.PanelEnabled && blockingPanel.PanelVisible {
+					s.bot.ctx.Logger.Debug("[Ensure Online]: Loading panel detected, waiting for it to disappear")
+					time.Sleep(2000)
+					continue
+				}
+
+				if popuPanel.PanelName != "" && popuPanel.PanelEnabled && popuPanel.PanelVisible {
+					s.bot.ctx.Logger.Debug("[Ensure Online]: Dismissable modal detected, dismissing it and trying to connect again ...")
+					s.bot.ctx.HID.PressKey(0x1B)
+					time.Sleep(1000)
+					break
+				}
+
+				s.bot.ctx.Logger.Debug("[Ensure Online]: No loading panel or errors detected, checking if we're online ...")
+				break
+			}
+
+			if s.bot.ctx.GameReader.IsOnline() {
+				s.bot.ctx.Logger.Debug("[Ensure Online]: We're online!")
+				return nil
+			}
+		}
+	} else {
+		s.bot.ctx.Logger.Debug("[Ensure Online]: We're already online or don't have to be, skipping ...")
+		return nil
+	}
+
+	return errors.New("[Ensure Online]: Failed to connect to bnet")
 }
