@@ -937,6 +937,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Game.Quests.RetrieveBook = r.Form.Has("gameQuestsRetrieveBook")
 		// Quests options for Act 4
 		cfg.Game.Quests.KillIzual = r.Form.Has("gameQuestsKillIzual")
+		cfg.Game.Quests.Hellforge = r.Form.Has("gameQuestsHellforge")
 		// Quests options for Act 5
 		cfg.Game.Quests.KillShenk = r.Form.Has("gameQuestsKillShenk")
 		cfg.Game.Quests.RescueAnya = r.Form.Has("gameQuestsRescueAnya")
