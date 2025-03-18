@@ -36,12 +36,12 @@ func (run SpiderCavern) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the correct area
 	if err = action.MoveToArea(area.SpiderCavern); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clear the area
 	action.ClearCurrentLevel(run.ctx.CharacterCfg.Game.SpiderCavern.OpenChests, monsterFilter)
 

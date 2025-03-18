@@ -35,8 +35,15 @@ func (d *Diablo) Run() error {
 		d.ctx.EnableItemPickup()
 	}()
 
+	action.VendorRefill(true, true)
+	action.Repair()
+	action.Stash(false)
 	if err := action.WayPoint(area.RiverOfFlame); err != nil {
 		return err
+	}
+
+	if !d.ctx.CharacterCfg.Character.UseTeleport {
+		action.OpenTPIfLeader()
 	}
 
 	action.MoveToArea(area.ChaosSanctuary)
@@ -51,19 +58,29 @@ func (d *Diablo) Run() error {
 		if d.ctx.CharacterCfg.Companion.Leader {
 			action.OpenTPIfLeader()
 			action.Buff()
-			action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+			action.ClearAreaAroundPlayer(60, d.getMonsterFilter())
 		}
 	} else {
 		//open portal in entrance
 		if d.ctx.CharacterCfg.Companion.Leader {
 			action.OpenTPIfLeader()
 			action.Buff()
-			action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+			action.ClearAreaAroundPlayer(30, d.getMonsterFilter())
 		}
-		//path through towards vizier
-		err := action.ClearThroughPath(chaosNavToPosition, 30, d.getMonsterFilter())
-		if err != nil {
-			return err
+
+		// if we dont teleport, we have default clear area enabled
+		if !d.ctx.CharacterCfg.Character.UseTeleport {
+			//path through towards vizier
+			err := action.MoveToCoords(chaosNavToPosition)
+			if err != nil {
+				return err
+			}
+		} else {
+			//path through towards vizier
+			err := action.ClearThroughPath(chaosNavToPosition, 50, d.getMonsterFilter())
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -83,36 +100,43 @@ func (d *Diablo) Run() error {
 				return fmt.Errorf("seal not found: %d", sealID)
 			}
 
-			err := action.ClearThroughPath(seal.Position, 20, d.getMonsterFilter())
-			if err != nil {
-				return err
+			// if we dont teleport, we have default clear area enabled
+			if !d.ctx.CharacterCfg.Character.UseTeleport {
+				//path through towards vizier
+				err := action.MoveToCoords(data.Position{X: seal.Position.X, Y: seal.Position.Y - 5})
+				if err != nil {
+					return err
+				}
+			} else {
+				err := action.ClearThroughPath(seal.Position, 30, d.getMonsterFilter())
+				if err != nil {
+					return err
+				}
 			}
 
 			// Handle the special case for DiabloSeal3
 			if sealID == object.DiabloSeal3 && seal.Position.X == 7773 && seal.Position.Y == 5155 {
-				if err = action.MoveToCoords(data.Position{X: 7768, Y: 5160}); err != nil {
+				if err := action.MoveToCoords(data.Position{X: 7768, Y: 5165}); err != nil {
 					return fmt.Errorf("failed to move to bugged seal position: %w", err)
 				}
 			}
 
 			// Clear everything around the seal
-			action.ClearAreaAroundPlayer(10, d.ctx.Data.MonsterFilterAnyReachable())
-
+			action.ClearAreaAroundPlayer(20, d.ctx.Data.MonsterFilterAnyReachable())
+			action.OpenTPIfLeader()
 			//Buff refresh before Infector
 			if object.DiabloSeal1 == sealID {
 				action.Buff()
 			}
 
-			if err = action.InteractObject(seal, func() bool {
+			_ = action.InteractObject(seal, func() bool {
 				seal, _ = d.ctx.Data.Objects.FindOne(sealID)
 				return !seal.Selectable
-			}); err != nil {
-				return fmt.Errorf("failed to interact with seal: %w", err)
-			}
+			})
 
 			// Infector spawns when first seal is enabled
 			if object.DiabloSeal1 == sealID {
-				if err = d.killSealElite(bossName); err != nil {
+				if err := d.killSealElite(bossName); err != nil {
 					return err
 				}
 			}
@@ -155,19 +179,20 @@ func (d *Diablo) killSealElite(boss string) error {
 			if action.IsMonsterSealElite(m) {
 				d.ctx.Logger.Debug(fmt.Sprintf("Seal elite found: %s at position X: %d, Y: %d", m.Name, m.Position.X, m.Position.Y))
 
-				return action.ClearAreaAroundPosition(m.Position, 30, func(monsters data.Monsters) (filteredMonsters []data.Monster) {
-					if action.IsMonsterSealElite(m) {
-						filteredMonsters = append(filteredMonsters, m)
-					}
+				// Check if we should disable item pickup during boss fights
+				if d.ctx.CharacterCfg.Game.Diablo.DisableItemPickupDuringBosses {
+					d.ctx.DisableItemPickup()
+					// Re-enable item pickup after this elite fight
+					defer d.ctx.EnableItemPickup()
+				}
 
-					return filteredMonsters
-				})
+				return action.ClearAreaAroundPosition(m.Position, 30, d.ctx.Data.MonsterFilterAnyReachable())
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	return fmt.Errorf("no seal elite found for %s within %v seconds", boss, timeout.Seconds())
+	return nil
 }
 
 func (d *Diablo) getMonsterFilter() data.MonsterFilter {

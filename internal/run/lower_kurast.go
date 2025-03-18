@@ -29,7 +29,7 @@ func (a LowerKurast) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clear Lower Kurast
 	return action.ClearCurrentLevel(true, data.MonsterAnyFilter())
 
