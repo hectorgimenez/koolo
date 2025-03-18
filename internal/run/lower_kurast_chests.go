@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -40,7 +41,7 @@ func (run LowerKurastChests) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Get bonfires from cached map data
 	var bonFirePositions []data.Position
 	if areaData, ok := run.ctx.GameReader.GetData().Areas[area.LowerKurast]; ok {
@@ -108,15 +109,68 @@ func (run LowerKurastChests) Run() error {
 		}
 	}
 
-	// Return to town
-	if err = action.ReturnTown(); err != nil {
-		return err
-	}
+	if run.ctx.CharacterCfg.Game.LowerKurastChest.GetSewersChests {
+		// Go get all those chests in sewers lvl 2
+		_ = action.MoveToArea(area.KurastBazaar)
+		action.OpenTPIfLeader()
+		err = action.MoveToArea(area.SewersLevel1Act3)
+		if err != nil {
+			return err
+		}
+		action.OpenTPIfLeader()
+		action.Buff()
 
-	// Move to A4 if possible to shorten the run time
-	err = action.WayPoint(area.ThePandemoniumFortress)
-	if err != nil {
-		return err
+		err = action.MoveTo(func() (data.Position, bool) {
+			for _, l := range run.ctx.Data.AdjacentLevels {
+				if l.Area == area.SewersLevel2Act3 {
+					return l.Position, true
+				}
+			}
+			return data.Position{}, false
+		})
+		if err != nil {
+			return err
+		}
+
+		_ = action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
+
+		stairs, found := run.ctx.Data.Objects.FindOne(object.Act3SewerStairsToLevel3)
+		if !found {
+			run.ctx.Logger.Debug("Stairs in Act 3 Sewers not found")
+		}
+
+		_ = action.MoveToCoords(stairs.Position)
+
+		_ = action.InteractObject(stairs, func() bool {
+			o, _ := run.ctx.Data.Objects.FindOne(object.Act3SewerStairsToLevel3)
+
+			return !o.Selectable
+		})
+
+		time.Sleep(3000)
+
+		err = action.MoveToArea(area.SewersLevel2Act3)
+		if err != nil {
+			return err
+		}
+		action.OpenTPIfLeader()
+		action.Buff()
+
+		err = action.ClearCurrentLevel(true, run.ctx.Data.MonsterFilterAnyReachable())
+		if err != nil {
+			return err
+		}
+
+		// Return to town
+		if err = action.ReturnTown(); err != nil {
+			return err
+		}
+
+		// Move to A4 if possible to shorten the run time
+		err = action.WayPoint(area.ThePandemoniumFortress)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Done

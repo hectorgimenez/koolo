@@ -34,7 +34,7 @@ func (m Mephisto) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	if m.clearMonsterFilter != nil {
 		if err = action.ClearCurrentLevel(m.ctx.CharacterCfg.Game.Mephisto.OpenChests, m.clearMonsterFilter); err != nil {
 			return err
@@ -45,7 +45,7 @@ func (m Mephisto) Run() error {
 	if err = action.MoveToArea(area.DuranceOfHateLevel3); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the Safe position
 	action.MoveToCoords(data.Position{
 		X: 17568,
