@@ -11,6 +11,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -57,6 +58,7 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
 ) error {
+	ctx := context.Get()
 	completedAttackLoops := 0
 	previousUnitID := 0
 	previousSelfBlizzard := time.Time{}
@@ -66,6 +68,9 @@ func (s BlizzardSorceress) KillMonsterSequence(
 	lsOpts := step.Distance(blizzLSMinDistance, blizzLSMaxDistance)
 
 	for {
+		// Pause if not priority
+		ctx.PauseIfNotPriority()
+
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
@@ -115,6 +120,13 @@ func (s BlizzardSorceress) killMonsterByName(id npc.ID, monsterType data.Monster
 		if m, found := s.Data.Monsters.FindOne(id, monsterType); found {
 			if m.Stats[stat.Life] <= 0 {
 				break
+			}
+
+			// Check if monster is immune to any of the skipOnImmunities
+			for _, immunity := range skipOnImmunities {
+				if m.IsImmune(immunity) {
+					return nil
+				}
 			}
 
 			s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
