@@ -208,6 +208,20 @@ var (
 			PurchaseItems:    []string{"Ring"},
 		},
 
+		// Blood Amulet
+		{
+			Name:             "Blood Amulet",
+			Items:            []string{"AmnRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Amulet"},
+		},
+		// Blood Ring
+		{
+			Name:             "Blood Ring",
+			Items:            []string{"SolRune", "PerfectRuby", "Jewel"},
+			PurchaseRequired: true,
+			PurchaseItems:    []string{"Ring"},
+		},
 		// Blood Gloves
 		{
 			Name:             "Blood Gloves",
@@ -373,7 +387,8 @@ func CubeRecipes() error {
 			continue
 		}
 
-		ctx.Logger.Debug("Cube recipe is enabled, processing", "recipe", recipe.Name)
+		// Commented out due to log pollution
+		//ctx.Logger.Debug("Cube recipe is enabled, processing", "recipe", recipe.Name)
 
 		continueProcessing := true
 		for continueProcessing {

@@ -32,7 +32,7 @@ func (a ArachnidLair) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	err = action.MoveToArea(area.SpiderCave)
 	if err != nil {
 		return err

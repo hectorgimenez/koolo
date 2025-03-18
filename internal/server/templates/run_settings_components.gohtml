@@ -20,6 +20,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "summoner" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameSummonerClearArea" {{ if .Config.Game.Summoner.ClearArea }}checked{{ end }}> Clear Area</label>
+        <label><input type="checkbox" name="gameSummonerClearGhosts" {{ if .Config.Game.Summoner.ClearGhosts }}checked{{ end }}> Clear Ghosts</label>
+    </fieldset>
+{{ end }}
+
 {{ define "pindleskin" }}
     <fieldset>
         <label>Skip on immunities</label>
@@ -116,12 +123,6 @@
     <fieldset>
         <label><input type="checkbox" name="gameLowerKurastChestOpenRacks" {{ if .Config.Game.LowerKurastChest.OpenRacks }}checked{{ end }}> Weapon Racks + Armor Stands</label>
         <label><input type="checkbox" name="gameLowerKurastChestGetSewersChests" {{ if .Config.Game.LowerKurastChest.GetSewersChests }}checked{{ end }}> Get Sewers Chests</label>
-    </fieldset>
-{{ end }}
-
-{{ define "summoner" }}
-    <fieldset>
-        <label><input type="checkbox" name="gameSummonerClearArea" {{ if .Config.Game.Summoner.ClearArea }}checked{{ end }}> Clear Area</label>
     </fieldset>
 {{ end }}
 

@@ -111,6 +111,7 @@ type CharacterCfg struct {
 		UseMerc       bool   `yaml:"useMerc"`
 		StashToShared bool   `yaml:"stashToShared"`
 		UseTeleport   bool   `yaml:"useTeleport"`
+		ClearPathDist int    `yaml:"clearPathDist"`
 		BerserkerBarb struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
@@ -196,9 +197,6 @@ type CharacterCfg struct {
 		Nihlathak struct {
 			ClearArea bool `yaml:"clearArea"`
 		} `yaml:"nihlathak"`
-		Summoner struct {
-			ClearArea bool `yaml:"clearArea"`
-		} `yaml:"summoner"`
 		Diablo struct {
 			KillDiablo                    bool `yaml:"killDiablo"`
 			StartFromStar                 bool `yaml:"startFromStar"`
@@ -260,6 +258,10 @@ type CharacterCfg struct {
 			RescueAnya     bool `yaml:"rescueAnya"`
 			KillAncients   bool `yaml:"killAncients"`
 		} `yaml:"rush"`
+		Summoner struct {
+			ClearArea   bool `yaml:"clearArea"`
+			ClearGhosts bool `yaml:"clearGhosts"`
+		} `yaml:"summoner"`
 	} `yaml:"game"`
 	Companion struct {
 		Leader           bool   `yaml:"leader"`

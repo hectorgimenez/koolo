@@ -29,6 +29,8 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 	}
 
 	switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
+	case "basic":
+		return BasicCharacter{BaseCharacter: bc}, nil
 	case "blizzardsorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
 	case "fireballsorc":
@@ -37,8 +39,12 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 		return FrozenOrbSorceress{BaseCharacter: bc}, nil
 	case "nova":
 		return NovaSorceress{BaseCharacter: bc}, nil
+	case "singer":
+		return SingerBarb{BaseCharacter: bc}, nil
 	case "hydraorb":
 		return HydraOrbSorceress{BaseCharacter: bc}, nil
+	case "hydra":
+		return HydraSorceress{BaseCharacter: bc}, nil
 	case "lightsorc":
 		return LightningSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":

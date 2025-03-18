@@ -33,7 +33,7 @@ func (b BloodMoor) Run() error {
 	if err := action.WayPoint(area.ColdPlains); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Buff before we start
 	action.Buff()
 
@@ -58,7 +58,7 @@ func (b BloodMoor) Run() error {
 	if err := action.MoveToArea(area.DenOfEvil); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Buff before we start
 	action.Buff()
 

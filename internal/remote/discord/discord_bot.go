@@ -23,11 +23,13 @@ func NewBot(token, channelID string, manager *bot.SupervisorManager) (*Bot, erro
 		return nil, fmt.Errorf("error creating Discord session: %w", err)
 	}
 
-	return &Bot{
+	botInstance := &Bot{
 		discordSession: dg,
 		channelID:      channelID,
 		manager:        manager,
-	}, nil
+	}
+
+	return botInstance, nil
 }
 
 func (b *Bot) Start(ctx context.Context) error {
@@ -38,6 +40,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error opening connection: %w", err)
 	}
+
 
 	// Wait until context is finished
 	<-ctx.Done()

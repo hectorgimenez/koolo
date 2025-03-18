@@ -2,6 +2,7 @@ package run
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/object"
@@ -59,9 +60,11 @@ func (p Pindleskin) Run() error {
 
 	if p.ctx.CharacterCfg.Game.Pindleskin.KillNihlathak {
 		_ = action.MoveToArea(area.HallsOfAnguish)
+		action.OpenTPIfLeader()
 		_ = action.MoveToArea(area.HallsOfPain)
+		action.OpenTPIfLeader()
 		_ = action.MoveToArea(area.HallsOfVaught)
-
+		action.OpenTPIfLeader()
 		o, found := p.ctx.Data.Objects.FindOne(object.NihlathakWildernessStartPositionName)
 		if !found {
 			return errors.New("failed to find Nihlathak's Start Position")

@@ -36,23 +36,25 @@ func (p Pit) Run() error {
 		if err != nil {
 			return err
 		}
-
+		action.OpenTPIfLeader()
 		if err = action.MoveToArea(area.MonasteryGate); err != nil {
 			return err
 		}
-
+		action.OpenTPIfLeader()
 		if err = action.MoveToArea(area.TamoeHighland); err != nil {
 			return err
 		}
+		action.OpenTPIfLeader()
 	} else {
 		err := action.WayPoint(area.BlackMarsh)
 		if err != nil {
 			return err
 		}
-
+		action.OpenTPIfLeader()
 		if err = action.MoveToArea(area.TamoeHighland); err != nil {
 			return err
 		}
+		action.OpenTPIfLeader()
 	}
 	if err := action.MoveToArea(area.PitLevel1); err != nil {
 		return err
@@ -72,7 +74,7 @@ func (p Pit) Run() error {
 	if err := action.MoveToArea(area.PitLevel2); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clear it
 	return action.ClearCurrentLevel(p.ctx.CharacterCfg.Game.Pit.OpenChests, monsterFilter)
 }

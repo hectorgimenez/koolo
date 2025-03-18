@@ -59,9 +59,9 @@ func (s Baal) Run() error {
 		return err
 	}
 
-	if s.ctx.CharacterCfg.Game.Baal.ClearFloors && s.ctx.CharacterCfg.Companion.Leader {
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
-		utils.Sleep(10000)
+		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
 	}
 
@@ -73,7 +73,8 @@ func (s Baal) Run() error {
 	if err != nil {
 		return err
 	}
-	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -87,7 +88,8 @@ func (s Baal) Run() error {
 	if err != nil {
 		return err
 	}
-	if s.ctx.CharacterCfg.Companion.Leader && s.ctx.CharacterCfg.Game.Baal.ClearFloors {
+
+	if s.ctx.CharacterCfg.Companion.Leader {
 		action.OpenTPIfLeader()
 		action.ClearAreaAroundPlayer(30, filter)
 		action.Buff()
@@ -137,6 +139,7 @@ func (s Baal) Run() error {
 		if err != nil {
 			return err
 		}
+		action.MoveToCoords(baalThronePosition)
 		action.BuffIfRequired()
 		// Small delay to allow next wave to spawn if not last wave
 		if !lastWave {
@@ -145,7 +148,7 @@ func (s Baal) Run() error {
 	}
 
 	// Let's be sure everything is dead
-	err = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
+	_ = action.ClearAreaAroundPosition(baalThronePosition, 50, data.MonsterAnyFilter())
 
 	_, isLevelingChar := s.ctx.Char.(context.LevelingCharacter)
 	if s.ctx.CharacterCfg.Game.Baal.KillBaal || isLevelingChar {
@@ -153,33 +156,14 @@ func (s Baal) Run() error {
 		action.Buff()
 		// Exception: Baal portal has no destination in memory
 		baalPortal, _ := s.ctx.Data.Objects.FindOne(object.BaalsPortal)
-		_ = action.InteractObject(baalPortal, func() bool {
-
-			for s.ctx.Data.PlayerUnit.Area != area.TheWorldstoneChamber {
-				utils.Sleep(200)
-			}
-			return true
-		})
-
+		_ = action.InteractObject(baalPortal, nil)
+		utils.Sleep(700)
 		if err = s.ctx.Char.KillBaal(); err != nil {
 			return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 		}
 	}
 
 	return nil
-}
-
-func (s Baal) clearWave() error {
-	return s.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		for _, m := range d.Monsters.Enemies(data.MonsterAnyFilter()) {
-			dist := pather.DistanceFromPoint(baalThronePosition, m.Position)
-			if d.AreaData.IsWalkable(m.Position) && dist <= 45 {
-				lastClear = time.Now()
-				return m.UnitID, true
-			}
-		}
-		return 0, false
-	}, nil)
 }
 
 func (s Baal) checkForSoulsOrDolls() bool {

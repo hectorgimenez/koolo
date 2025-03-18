@@ -15,10 +15,10 @@ import (
 
 const (
 	orbMaxAttacksLoop = 40
-	orbMinDistance    = 8
-	orbMaxDistance    = 15
+	orbMinDistance    = 15
+	orbMaxDistance    = 20
 	orbSFMinDistance  = 4
-	orbSFMaxDistance  = 6 // Left skill
+	orbSFMaxDistance  = 6
 )
 
 type FrozenOrbSorceress struct {
@@ -58,13 +58,10 @@ func (s FrozenOrbSorceress) KillBossSequence(
 ) error {
 	orbOpts := step.StationaryDistance(orbMinDistance, orbMaxDistance)
 	sfOpts := step.Distance(orbSFMinDistance, orbSFMaxDistance)
+	skipOnImmunities = append(skipOnImmunities, stat.ColdImmune)
 
 	id, found := monsterSelector(*s.Data)
 	if !found {
-		return nil
-	}
-
-	if !s.preBattleChecks(id, skipOnImmunities) {
 		return nil
 	}
 
@@ -74,11 +71,20 @@ func (s FrozenOrbSorceress) KillBossSequence(
 		return nil
 	}
 
-	for float64(monster.Stats[stat.Life]) >= 0.6*float64(monster.Stats[stat.MaxLife]) {
-		_ = step.SecondaryAttack(skill.StaticField, monster.UnitID, 4, sfOpts)
-	}
+	_ = step.SecondaryAttack(skill.StaticField, monster.UnitID, 6, sfOpts)
 
-	for monster.Stats[stat.Life] > 0 {
+	for found && monster.Stats[stat.Life] > 0 {
+		id, found := monsterSelector(*s.Data)
+		if !found {
+			return nil
+		}
+
+		monster, found := s.Data.Monsters.FindByID(id)
+		if !found {
+			s.Logger.Info("Monster not found", slog.String("monster", fmt.Sprintf("%v", monster)))
+			return nil
+		}
+
 		_ = step.PrimaryAttack(id, 1, false, orbOpts)
 	}
 
@@ -122,17 +128,6 @@ func (s FrozenOrbSorceress) KillMonsterSequence(
 		completedAttackLoops++
 		previousUnitID = int(id)
 	}
-}
-
-func (s FrozenOrbSorceress) killMonster(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		m, found := d.Monsters.FindOne(npc, t)
-		if !found {
-			return 0, false
-		}
-
-		return m.UnitID, true
-	}, nil)
 }
 
 func (s FrozenOrbSorceress) killMonsterByName(id npc.ID, monsterType data.MonsterType, skipOnImmunities []stat.Resist) error {

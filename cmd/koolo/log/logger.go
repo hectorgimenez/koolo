@@ -36,7 +36,7 @@ func NewLogger(debug bool, logDir, supervisor string) (*slog.Logger, error) {
 
 	level := slog.LevelDebug
 	if !debug {
-		level = slog.LevelInfo
+		level = slog.LevelError
 	}
 
 	opts := &slog.HandlerOptions{

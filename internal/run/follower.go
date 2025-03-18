@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"math"
+	"math/rand/v2"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -13,6 +14,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/hectorgimenez/koolo/internal/utils"
 )
 
@@ -38,9 +40,14 @@ func (f *Follower) Run() error {
 	leader, leaderFound := f.ctx.Data.Roster.FindByName(f.ctx.CharacterCfg.Companion.LeaderName)
 	if !leaderFound {
 		f.ctx.Logger.Error("Leader not found.")
+		f.resetCompanionGameInfo()
 		return nil
 	}
+
 	f.ctx.Logger.Info("Leader is ", slog.Any("leader", leader))
+
+	//Anti-stuck solution
+	lastPosition := data.Position{}
 
 	for leaderFound {
 		f.ctx.RefreshGameData()
@@ -49,12 +56,24 @@ func (f *Follower) Run() error {
 		f.ctx.Logger.Info("Leader is still here.", slog.String("leader", leader.Name))
 		if !leaderFound {
 			f.ctx.Logger.Info("Leader is gone, leaving game.")
+			f.resetCompanionGameInfo()
+			return nil
+		}
+
+		if leader.Area.Area().Name == "" {
+			continue
 		}
 
 		if leader.Area != f.ctx.Data.AreaData.Area {
 			f.handleLeaderNotInSameArea(&leader)
 		} else if leader.Area == f.ctx.Data.AreaData.Area && !f.ctx.Data.PlayerUnit.Area.IsTown() {
+			lastPosition = f.ctx.Data.PlayerUnit.Position
 			f.handleLeaderInSameArea(&leader)
+			f.ctx.RefreshGameData()
+			if f.ctx.Data.PlayerUnit.Position == lastPosition {
+				f.ctx.PathFinder.RandomTeleport()
+				utils.Sleep(2000)
+			}
 		} else if leader.Area == f.ctx.Data.AreaData.Area && f.ctx.Data.PlayerUnit.Area.IsTown() {
 			f.handleLeaderInTown()
 		}
@@ -181,23 +200,33 @@ func (f *Follower) goToCorrectTown(leader *data.RosterMember) error {
 	f.ctx.SetLastAction("Going to the correct town")
 	switch act := leader.Area.Act(); act {
 	case 1:
+		targetPos, _ := f.getKashyaPosition()
 		_ = action.WayPoint(area.RogueEncampment)
-		_ = action.MoveTo(f.getKashyaPosition)
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(-5, 5)})
 	case 2:
+		targetPos, _ := f.getAtmaPosition()
 		_ = action.WayPoint(area.LutGholein)
-		_ = action.MoveTo(f.getAtmaPosition)
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(5, 15)})
 	case 3:
+		targetPos, _ := f.getOrmusPosition()
 		_ = action.WayPoint(area.KurastDocks)
+		_ = action.MoveToCoords(data.Position{X: targetPos.X + randRange(-5, 5), Y: targetPos.Y + randRange(5, 15)})
 	case 4:
 		_ = action.WayPoint(area.ThePandemoniumFortress)
+		f.ctx.PathFinder.RandomMovement()
 	case 5:
 		_ = action.WayPoint(area.Harrogath)
+		f.ctx.PathFinder.RandomMovement()
 	default:
-		f.ctx.Logger.Error("Could not find the Leader's current Act location.")
-		return errors.New("Could not find the Leader's current Act location.")
+		f.ctx.Logger.Error("Could not find the Leader's current Act location")
+		return errors.New("Could not find the Leader's current Act location")
 	}
 	f.ctx.Logger.Info("Went to the correct town.")
 	return nil
+}
+
+func randRange(min, max int) int {
+	return rand.IntN(max-min) + min
 }
 
 func calculateDistance(pos1, pos2 data.Position) float64 {
@@ -238,11 +267,20 @@ func (f *Follower) InTownRoutine() error {
 	_ = action.Stash(false)
 	action.ReviveMerc()
 	_ = action.CubeRecipes()
+	_ = f.goToTpArea()
 	return nil
 }
 
 func (f *Follower) getAtmaPosition() (data.Position, bool) {
 	atma, found := f.ctx.Data.NPCs.FindOne(npc.Atma)
+	if found {
+		return atma.Positions[0], true
+	}
+	return data.Position{}, false
+}
+
+func (f *Follower) getOrmusPosition() (data.Position, bool) {
+	atma, found := f.ctx.Data.NPCs.FindOne(npc.Ormus)
 	if found {
 		return atma.Positions[0], true
 	}
@@ -260,17 +298,21 @@ func (f *Follower) getKashyaPosition() (data.Position, bool) {
 func (f *Follower) handleBaalScenario() error {
 	f.ctx.Logger.Info("Leader is in The Worldstone Chamber, going through the red portal.")
 	baalPortal, _ := f.ctx.Data.Objects.FindOne(object.BaalsPortal)
-	_ = action.InteractObject(baalPortal, func() bool {
-
-		for f.ctx.Data.PlayerUnit.Area != area.TheWorldstoneChamber {
-			utils.Sleep(200)
-		}
-		return true
-	})
-
+	_ = action.InteractObject(baalPortal, nil)
+	utils.Sleep(700)
 	if err := f.ctx.Char.KillBaal(); err != nil {
 		return action.ClearCurrentLevel(false, data.MonsterAnyFilter())
 	}
 
 	return nil
+}
+
+func (f *Follower) goToTpArea() error {
+	tpArea := town.GetTownByArea(f.ctx.Data.PlayerUnit.Area).TPWaitingArea(*f.ctx.Data)
+	return action.MoveToCoords(tpArea)
+}
+
+func (f *Follower) resetCompanionGameInfo() {
+	f.ctx.Context.CharacterCfg.Companion.CompanionGameName = ""
+	f.ctx.Context.CharacterCfg.Companion.CompanionGamePassword = ""
 }

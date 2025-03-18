@@ -35,7 +35,7 @@ func (t Tristram) Run() error {
 	if err != nil {
 		return err
 	}
-
+	_ = action.OpenTPIfLeader()
 	// Find the Cairn Stone Alpha
 	cairnStone := data.Object{}
 	for _, o := range t.ctx.Data.Objects {

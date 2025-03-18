@@ -36,6 +36,9 @@
                 <label>
                     Class
                     <select name="characterClass">
+                        <option value="basic" {{ if eq .Config.Character.Class
+                        "basic" }}selected{{ end }}>Basic Character
+                        </option>
                         <option value="blizzardsorceress" {{ if eq .Config.Character.Class
                         "blizzardsorceress" }}selected{{ end }}>Blizzard Sorceress
                         </option>
@@ -47,6 +50,10 @@
                         </option>
                         <option value="hydraorb" {{ if eq .Config.Character.Class
                         "hydraorb" }}selected{{ end }}>Hydra Orb Sorceress
+                        </option>
+                        </option>
+                        <option value="hydra" {{ if eq .Config.Character.Class
+                        "hydra" }}selected{{ end }}>Hydra Sorceress
                         </option>
                         <option value="lightsorc" {{ if eq .Config.Character.Class
                         "lightsorc" }}selected{{ end }}>Lightning Sorceress
@@ -83,6 +90,9 @@
                         </option>
                         <option value="berserker" {{ if eq .Config.Character.Class
                         "berserker" }}selected{{ end }}>Berserk Barbarian
+                        </option>
+                        <option value="singer" {{ if eq .Config.Character.Class
+                        "singer" }}selected{{ end }}>Singer Barbarian
                         </option>
                     </select>
                 </label>
@@ -150,7 +160,7 @@
 
             <fieldset class="grid">
                 <label>
-                    <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
+                    <input type="checkbox" id="characterUseTeleport" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
                     Use teleport when available
                 </label>
                 <label>
@@ -166,6 +176,28 @@
                 <label>
                     <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
                     Identify with Cain
+                </label>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
+            <div id="clearPathDistContainer" class="conditional-field" {{ if .Config.Character.UseTeleport }}style="display: none;"{{ end }}>
+                <div class="walking-radius-container">
+                    <label for="clearPathDist">Clear Path Radius</label>
+                    <div class="walking-radius-slider">
+                        <input
+                                type="range"
+                                id="clearPathDist"
+                                name="clearPathDist"
+                                min="0"
+                                max="30"
+                                step="1"
+                                value="{{ if .Config.Character.ClearPathDist }}{{ .Config.Character.ClearPathDist }}{{ else }}12{{ end }}"
+                        >
+                        <span class="walking-radius-value" id="clearPathDistValue">{{ if .Config.Character.ClearPathDist }}{{ .Config.Character.ClearPathDist }}{{ else }}12{{ end }}</span>
+                    </div>
+                    <div class="input-info">Distance (in game units) to clear enemies while walking through areas</div>
+                </div>
+            </div>
                 </label>
             </fieldset>
             <label>

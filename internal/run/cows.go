@@ -116,7 +116,7 @@ func (a Cows) getWirtsLeg() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	cainStone, found := a.ctx.Data.Objects.FindOne(object.CairnStoneAlpha)
 	if !found {
 		return errors.New("cain stones not found")
@@ -141,12 +141,12 @@ func (a Cows) getWirtsLeg() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	wirtCorpse, found := a.ctx.Data.Objects.FindOne(object.WirtCorpse)
 	if !found {
 		return errors.New("wirt corpse not found")
 	}
-	err = action.InteractObject(wirtCorpse, func() bool {
+	_ = action.InteractObject(wirtCorpse, func() bool {
 		return a.hasWirtsLeg()
 	})
 	wirtPosition := wirtCorpse.Position

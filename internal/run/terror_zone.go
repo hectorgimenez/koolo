@@ -2,8 +2,9 @@ package run
 
 import (
 	"fmt"
-	"github.com/hectorgimenez/koolo/internal/utils"
 	"slices"
+
+	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
@@ -86,11 +87,13 @@ func (tz TerrorZone) Run() error {
 				if err != nil {
 					return err
 				}
+				_ = action.OpenTPIfLeader()
 			} else {
 				err := action.MoveToArea(tzArea)
 				if err != nil {
 					return err
 				}
+				_ = action.OpenTPIfLeader()
 			}
 			if slices.Contains(availableTzs, tzArea) {
 				if tz.ctx.CharacterCfg.Companion.Leader {
