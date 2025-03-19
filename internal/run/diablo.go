@@ -14,6 +14,7 @@ import (
 
 var diabloSpawnPosition = data.Position{X: 7792, Y: 5294}
 var chaosNavToPosition = data.Position{X: 7732, Y: 5292} //into path towards vizier
+var sealPopChaosEntrace = data.Position{X: 7794, Y: 5558}
 
 type Diablo struct {
 	ctx *context.Status
@@ -95,6 +96,30 @@ func (d *Diablo) Run() error {
 				}
 			}
 
+			// Check for seal pop config and if this is the last seal
+			if d.ctx.CharacterCfg.Game.Diablo.SealPop && sealID == object.DiabloSeal2 {
+
+				// Buff so bot doesnt buff before opening last seal
+				action.Buff()
+
+				// Extra clear so bot doesnt target when coming back
+				action.ClearAreaAroundPlayer(30, data.MonsterAnyFilter())
+				
+				// Disable item pickup before traversing since we will be going back after seal pop
+				d.ctx.DisableItemPickup()
+
+				// Traverse the sanctuary to reactivate monsters
+				if err = d.traverseSanctuary(d.ctx.Data.PlayerUnit.Position); err != nil {
+					// Enable item pickup if traverse fails
+					d.ctx.EnableItemPickup()
+					return err
+				}
+
+				// Re enable item pickup on success
+				d.ctx.EnableItemPickup()
+
+			}
+
 			// Clear everything around the seal
 			action.ClearAreaAroundPlayer(10, d.ctx.Data.MonsterFilterAnyReachable())
 
@@ -107,7 +132,26 @@ func (d *Diablo) Run() error {
 				seal, _ = d.ctx.Data.Objects.FindOne(sealID)
 				return !seal.Selectable
 			}); err != nil {
-				return fmt.Errorf("failed to interact with seal: %w", err)
+				// Rerunning seal attempt with a random movement first before erroring out, seems to resolve most failed to interact
+				d.ctx.PathFinder.RandomMovement()
+				if err = action.InteractObject(seal, func() bool {
+					seal, _ = d.ctx.Data.Objects.FindOne(sealID)
+					return !seal.Selectable
+				}); err != nil {
+					return fmt.Errorf("failed to interact with seal: %w", err)
+				}
+			}
+
+			// Traverse sanctuary to check for items that may have dropped from activated monsters
+			if d.ctx.CharacterCfg.Game.Diablo.SealPop && sealID == object.DiabloSeal2 {
+
+				// Make sure item pickup is enabled
+				d.ctx.EnableItemPickup()
+
+				// Traverse the sanctuary to loot reactivate monsters, end at Diablo
+				if err = d.traverseSanctuary(diabloSpawnPosition); err != nil {
+					return err
+				}
 			}
 
 			// Infector spawns when first seal is enabled
@@ -130,7 +174,10 @@ func (d *Diablo) Run() error {
 	}
 
 	if d.ctx.CharacterCfg.Game.Diablo.KillDiablo {
-		action.Buff()
+		// Bot will buff while seal popping, no need to force it if popping
+		if !d.ctx.CharacterCfg.Game.Diablo.SealPop {
+			action.Buff()
+		}
 
 		action.MoveToCoords(diabloSpawnPosition)
 
@@ -189,4 +236,19 @@ func (d *Diablo) getMonsterFilter() data.MonsterFilter {
 
 		return filteredMonsters
 	}
+}
+
+func (d *Diablo) traverseSanctuary(lastCoords data.Position) error {
+	d.ctx.Logger.Debug("Traversing Chaos Sanctuary for Seal POP")
+
+	// Move to sanctuary entrance
+	if err := action.MoveToCoords(sealPopChaosEntrace); err != nil {
+		return err
+	}
+	//Move back to last coords
+	if err := action.MoveToCoords(lastCoords); err != nil {
+		return err
+	}
+
+	return nil
 }

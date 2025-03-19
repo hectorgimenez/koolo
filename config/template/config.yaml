@@ -101,6 +101,7 @@ game:
     killDiablo: true # Should bot kill Diablo after seals
     clearArea: true # Should bot clear Chaos Sanctuary
     onlyElites: true # Should bot target only elites
+    sealPop: false # seal pop traverse CS
   baal:
     killBaal: false
     dollQuit: false
