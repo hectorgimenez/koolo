@@ -135,7 +135,7 @@ func (s MosaicSin) KillMonsterSequence(
 		// Initial move to monster if we're too far
 		if ctx.PathFinder.DistanceFromMe(monster.Position) > 3 {
 			if s.hasKeyBindingForSkill(skill.DragonFlight) {
-				step.SecondaryAttack(skill.DragonFlight, id, 1)
+				step.SecondaryAttack(skill.DragonFlight, id, 1, step.RangedDistance(0, 18))
 			} else if err := step.MoveTo(monster.Position); err != nil {
 				s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
 				continue
