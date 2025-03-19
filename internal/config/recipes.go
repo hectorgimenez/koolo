@@ -2,6 +2,10 @@ package config
 
 var AvailableRecipes = []string{
 	// List out all the recipe names from cube_recipes.go
+	"Upgraded Magefists",
+	"Double Upgraded Magefists",
+	"Upgraded Trang-ouls",
+	"Upgraded Gorerider",
 	"Perfect Amethyst",
 	"Perfect Diamond",
 	"Perfect Emerald",

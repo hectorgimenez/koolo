@@ -367,6 +367,38 @@ var (
 			PurchaseRequired: true,
 			PurchaseItems:    []string{"GothicShield", "AncientShield", "Ward"},
 		},
+
+		// Upgraded Magefist
+		{
+			Name: "Upgraded Magefists",
+			Items: []string{"Magefists", "TalRune", "ShaelRune", "PerfectDiamond"},
+			PurchaseRequired: false,
+			PurchaseItems: []string{},
+		},
+
+		// Double Upgraded Magefist
+		{
+			Name: "Double Upgraded Magefists",
+			Items: []string{"Magefists", "KoRune", "LemRune", "PerfectDiamond"},
+			PurchaseRequired: false,
+			PurchaseItems: []string{},
+		},
+
+		// Upgraded Trang-ouls
+		{
+			Name: "Upgraded Trang-ouls",
+			Items: []string{"Trang-Oul's Claws", "KoRune", "LemRune", "PerfectDiamond"},
+			PurchaseRequired: false,
+			PurchaseItems: []string{},
+		},
+
+		// Upgraded Gorerider
+		{
+			Name: "Upgraded Gorerider",
+			Items: []string{"Gorerider", "KoRune", "LemRune", "PerfectDiamond"},
+			PurchaseRequired: false,
+			PurchaseItems: []string{},
+		},
 	}
 )
 
