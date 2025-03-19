@@ -119,6 +119,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
+    const teleportEnabled = document.querySelector('input[name="characterUseTeleport"]');
+    const teleStompEnabled = document.querySelector('input[name="characterUseTeleStomp"]');
 
     if (bossStaticThresholdInput) {
         bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
@@ -126,6 +128,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleSchedulerVisibility() {
         schedulerSettings.style.display = schedulerEnabled.checked ? 'grid' : 'none';
+    }
+
+    function toggleTeleStompVisibility(){
+        if (!teleportEnabled.checked){
+            teleStompEnabled.checked = false;
+        }
+        teleStompEnabled.disabled = teleportEnabled.checked ? false : true;
     }
 
     function updateCharacterOptions() {
@@ -196,8 +205,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set initial state
     toggleSchedulerVisibility();
     updateNovaSorceressOptions();
+    toggleTeleStompVisibility();
 
     schedulerEnabled.addEventListener('change', toggleSchedulerVisibility);
+    teleportEnabled.addEventListener('change', toggleTeleStompVisibility);
 
     document.querySelectorAll('.add-time-range').forEach(button => {
         button.addEventListener('click', function () {
