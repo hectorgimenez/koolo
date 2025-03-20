@@ -21,15 +21,53 @@ type MosaicSin struct {
 	BaseCharacter
 }
 
-func (s MosaicSin) chargedSkillStateMap() map[skill.ID]state.State {
-	// Mappings of skills to the charge state
-	return map[skill.ID]state.State{
-		skill.TigerStrike:    state.State(stat.ProgressiveDamage),
-		skill.CobraStrike:    state.State(stat.ProgressiveSteal),
-		skill.PhoenixStrike:  state.State(stat.ProgressiveOther),
-		skill.ClawsOfThunder: state.State(stat.ProgressiveLightning),
-		skill.BladesOfIce:    state.State(stat.ProgressiveCold),
-		skill.FistsOfFire:    state.State(stat.ProgressiveFire),
+type ChargeSkillConfigEntry struct {
+	useSkill         bool
+	chargeState      state.State
+	chargesPerAttack int
+	desiredCharges   int
+}
+
+func (s MosaicSin) getChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
+	return map[skill.ID]ChargeSkillConfigEntry{
+		skill.TigerStrike: {
+			ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike,
+			state.State(stat.ProgressiveDamage),
+			1,
+			3,
+		},
+		skill.CobraStrike: {
+			ctx.CharacterCfg.Character.MosaicSin.UseCobraStrike,
+			state.State(stat.ProgressiveSteal),
+			1,
+			3,
+		},
+		skill.PhoenixStrike: {
+			true, // Always enabled
+			state.State(stat.ProgressiveOther),
+			1,
+			2,
+		},
+		skill.ClawsOfThunder: {
+			ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder,
+			state.State(stat.ProgressiveLightning),
+			2,
+			3,
+		},
+		skill.BladesOfIce: {
+			ctx.CharacterCfg.Character.MosaicSin.UseBladesOfIce,
+			state.State(stat.ProgressiveCold),
+			2,
+			3,
+		},
+		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
+		// more of your physical damage to fire. You need physical damage for life leech!
+		skill.FistsOfFire: {
+			ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire,
+			state.State(stat.ProgressiveFire),
+			2,
+			3,
+		},
 	}
 }
 
@@ -57,8 +95,10 @@ func (s MosaicSin) hasKeyBindingForSkill(skill skill.ID) bool {
 }
 
 func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge skill.ID, desiredCount int, ctx context.Status) (int, bool) {
-	// Any configuration checks for whether this skill is enabled handle before we call this function
-	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(s.chargedSkillStateMap()[skillToCharge]), 0)
+	// The configuration checks for whether this skill is enabled are handled before we call this function
+	chargeConfig := s.getChargeSkillConfig(ctx)[skillToCharge]
+
+	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(chargeConfig.chargeState), 0)
 	attacks := 0
 
 	if !s.MobAlive(monsterId, *s.Data) {
@@ -67,9 +107,11 @@ func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge ski
 
 	if s.hasKeyBindingForSkill(skillToCharge) {
 		if !found || (found && charges.Value < desiredCount) {
-			attackCount := desiredCount - charges.Value
-			attacks += attackCount
-			step.SecondaryAttack(skillToCharge, monsterId, attackCount)
+			neededCharges := desiredCount - charges.Value
+			// Some skills give up to 2 charges per attack
+			plannedAttacks := (neededCharges + chargeConfig.chargesPerAttack - 1) / chargeConfig.chargesPerAttack
+			attacks += plannedAttacks
+			step.SecondaryAttack(skillToCharge, monsterId, plannedAttacks)
 		}
 	}
 
@@ -97,16 +139,18 @@ func (s MosaicSin) KillMonsterSequence(
 	ctx.Data.PlayerUnit = ctx.GameReader.GetData().Data.PlayerUnit
 	lastRefresh := time.Now()
 
+	chargeSkillConfig := s.getChargeSkillConfig(*ctx)
+
 	// TODO: move to config
 	attacksBeforeKick := 4
 	useCloakOfShadows := true
 
 	// Initial cloak of shadows cast for survivability
 	if id, found := monsterSelector(*s.Data); found {
+		// How do I determine if cloak of shadows is on cooldown?
 		if useCloakOfShadows && s.hasKeyBindingForSkill(skill.CloakOfShadows) &&
 			!s.MobHasAnyState(id, []state.State{state.Lifetap, state.CloakOfShadows}) {
-			// How do I determine if cloak of shadows is on cooldown?
-			step.SecondaryAttack(skill.CloakOfShadows, id, 1)
+			step.SecondaryAttack(skill.CloakOfShadows, id, 1, step.Distance(1, 20))
 		}
 	}
 
@@ -135,10 +179,12 @@ func (s MosaicSin) KillMonsterSequence(
 		// Initial move to monster if we're too far
 		if ctx.PathFinder.DistanceFromMe(monster.Position) > 3 {
 			if s.hasKeyBindingForSkill(skill.DragonFlight) {
-				step.SecondaryAttack(skill.DragonFlight, id, 1, step.RangedDistance(0, 18))
-			} else if err := step.MoveTo(monster.Position); err != nil {
-				s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
-				continue
+				step.SecondaryAttack(skill.DragonFlight, id, 1, step.Distance(1, 20))
+			} else {
+				if err := step.MoveTo(monster.Position); err != nil {
+					s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
+					continue
+				}
 			}
 		}
 
@@ -146,65 +192,32 @@ func (s MosaicSin) KillMonsterSequence(
 			return nil
 		}
 
-		// Targets the following number of charges for each skill, if enabled:
-
-		// Cobra 3
-		// Phoenix 2
-		// Lightning 3
-		// Tiger 3
-		// Ice 3
-		// Fire 3
-
-		totalChargeAttacks := 0
-		if ctx.CharacterCfg.Character.MosaicSin.UseCobraStrike && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.CobraStrike, 3, *ctx)
-			if alreadyDead {
-				return nil
-			}
-			totalChargeAttacks += skillChargeCount
+		// The order to charge our skills, if the skill is enabled. TODO: Order could be configurable
+		chargeSkills := []skill.ID{
+			skill.CobraStrike,
+			skill.PhoenixStrike,
+			skill.ClawsOfThunder,
+			skill.TigerStrike,
+			skill.BladesOfIce,
+			skill.FistsOfFire,
 		}
+		totalAttacks := 0
 
-		// Always use phoenix
-		if totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.PhoenixStrike, 2, *ctx)
-			if alreadyDead {
-				return nil
-			}
-			totalChargeAttacks += skillChargeCount
-		}
+		for _, chargeSkill := range chargeSkills {
+			if chargeSkillConfig[chargeSkill].useSkill && totalAttacks < attacksBeforeKick {
+				attackCount, alreadyDead := s.buildChargesForSkill(
+					id,
+					chargeSkill,
+					chargeSkillConfig[chargeSkill].desiredCharges,
+					*ctx,
+				)
 
-		if ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.ClawsOfThunder, 3, *ctx)
-			if alreadyDead {
-				return nil
-			}
-			totalChargeAttacks += skillChargeCount
-		}
+				if alreadyDead {
+					return nil
+				}
 
-		if ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.TigerStrike, 3, *ctx)
-			if alreadyDead {
-				return nil
+				totalAttacks += attackCount
 			}
-			totalChargeAttacks += skillChargeCount
-		}
-
-		if ctx.CharacterCfg.Character.MosaicSin.UseBladesOfIce && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.BladesOfIce, 3, *ctx)
-			if alreadyDead {
-				return nil
-			}
-			totalChargeAttacks += skillChargeCount
-		}
-
-		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
-		// more of your physical damage to fire. You need physical damage for life leech!
-		if ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire && totalChargeAttacks < attacksBeforeKick {
-			skillChargeCount, alreadyDead := s.buildChargesForSkill(id, skill.FistsOfFire, 3, *ctx)
-			if alreadyDead {
-				return nil
-			}
-			totalChargeAttacks += skillChargeCount
 		}
 
 		opts := step.Distance(1, 2)
