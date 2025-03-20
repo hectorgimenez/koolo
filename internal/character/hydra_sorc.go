@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"math/rand"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -17,8 +16,7 @@ import (
 
 const (
 	hydraSorceressMaxAttacksLoop = 40
-	hydraSorceressMinDistance    = 9
-	hydraSorceressMaxDistance    = 10
+	hydraSorceressKiteDistance   = 6 // Hurricane Radius
 )
 
 type HydraSorceress struct {
@@ -61,7 +59,7 @@ func (f HydraSorceress) KillMonsterSequence(
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	distanceOrgs := step.RangedDistance(0, hydraSorceressMaxDistance)
+	distanceOrgs := step.RangedDistance(hydraSorceressKiteDistance+2, 50)
 
 	for {
 		id, found := monsterSelector(*f.Data)
@@ -90,13 +88,13 @@ func (f HydraSorceress) KillMonsterSequence(
 		// Kite Monsters
 		needToKite := false
 		var monsterPositions []data.Position
-		
+
 		// First collect all nearby monster positions and adds to the array if the distance is less than 25
 		for _, m := range f.Data.Monsters.Enemies() {
-			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < (hydraSorceressMaxDistance + 5) {
-				// If the distance is less than 6 (Hurricane Distance)
+			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < 15 {
+				// If the distance is less than hydraSorceressKiteDistance (Hurricane Radius)
 				// We need to kite else we are probably ok and don't need to jump around to much
-				if dist < 6 {
+				if dist < hydraSorceressKiteDistance {
 					needToKite = true
 				}
 				monsterPositions = append(monsterPositions, m.Position)
@@ -111,9 +109,8 @@ func (f HydraSorceress) KillMonsterSequence(
 		}
 
 		// Hydra or Fireball
-		if completedAttackLoops % 8 == 0 {
+		if (completedAttackLoops % 8) == 0 {
 			step.SecondaryAttack(skill.Hydra, id, 3, distanceOrgs)
-			canCastHydra = false
 		} else {
 			step.PrimaryAttack(id, 2, true, distanceOrgs)
 		}
@@ -128,7 +125,7 @@ func kiteMonsters(monsterPositions []data.Position) data.Position {
 	// Find the bounding box of all monsters
 	minX, maxX := monsterPositions[0].X, monsterPositions[0].X
 	minY, maxY := monsterPositions[0].Y, monsterPositions[0].Y
-	
+
 	for _, pos := range monsterPositions {
 		if pos.X < minX {
 			minX = pos.X
@@ -160,7 +157,7 @@ func kiteMonsters(monsterPositions []data.Position) data.Position {
 	for x := minX; x <= maxX; x += gridStep {
 		for y := minY; y <= maxY; y += gridStep {
 			candidatePos := data.Position{X: x, Y: y}
-			
+
 			// Calculate minimum distance to any monster
 			minDistToMonsters := math.MaxInt32
 			for _, monsterPos := range monsterPositions {
