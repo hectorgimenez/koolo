@@ -15,8 +15,16 @@ import (
 )
 
 const (
+	// Standard attack loop amount.
 	hydraSorceressMaxAttacksLoop = 40
-	hydraSorceressKiteDistance   = 6 // Hurricane Radius
+
+	// This is the minimum distance we can be from a monster before we want to kite.
+	// This is the same as the Druid's Hurricane Radius.
+	hydraSorceressKiteDistance = 6
+
+	// This is the maximum distance probably any character can have before it starts 
+	// to bug by accidentally clicking on the potion belt and skills. 
+	hydraSorceressMaxDistance = 20
 )
 
 type HydraSorceress struct {
@@ -59,7 +67,8 @@ func (f HydraSorceress) KillMonsterSequence(
 	completedAttackLoops := 0
 	previousUnitID := 0
 
-	distanceOrgs := step.RangedDistance(hydraSorceressKiteDistance+2, 50)
+	// Part of the Kiting Logic. Non-Follow movement. 
+	distanceOrgs := step.RangedDistance(hydraSorceressKiteDistance+2, hydraSorceressMaxDistance)
 
 	for {
 		id, found := monsterSelector(*f.Data)
@@ -85,15 +94,17 @@ func (f HydraSorceress) KillMonsterSequence(
 			return nil
 		}
 
-		// Kite Monsters
+		// Kite Monsters parameters
 		needToKite := false
 		var monsterPositions []data.Position
 
-		// First collect all nearby monster positions and adds to the array if the distance is less than 25
+		// First collect all nearby monster positions and adds to the array
+		// if the distance is less than 15.
 		for _, m := range f.Data.Monsters.Enemies() {
 			if dist := f.PathFinder.DistanceFromMe(m.Position); dist < 15 {
-				// If the distance is less than hydraSorceressKiteDistance (Hurricane Radius)
-				// We need to kite else we are probably ok and don't need to jump around to much
+				// If the distance is less than hydraSorceressKiteDistance
+				// We need to kite else we are probably ok and don't need 
+				// to jump around to much
 				if dist < hydraSorceressKiteDistance {
 					needToKite = true
 				}
