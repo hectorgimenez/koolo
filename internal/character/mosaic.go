@@ -28,7 +28,7 @@ type ChargeSkillConfigEntry struct {
 	desiredCharges   int
 }
 
-func (s MosaicSin) getChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
+func (s MosaicSin) getBossChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
 	return map[skill.ID]ChargeSkillConfigEntry{
 		skill.TigerStrike: {
 			ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike,
@@ -46,7 +46,50 @@ func (s MosaicSin) getChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeS
 			true, // Always enabled
 			state.State(stat.ProgressiveOther),
 			1,
+			1, // Only one charge, we want meteors
+		},
+		skill.ClawsOfThunder: {
+			ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder,
+			state.State(stat.ProgressiveLightning),
 			2,
+			3,
+		},
+		skill.BladesOfIce: {
+			ctx.CharacterCfg.Character.MosaicSin.UseBladesOfIce,
+			state.State(stat.ProgressiveCold),
+			2,
+			3,
+		},
+		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
+		// more of your physical damage to fire. You need physical damage for life leech!
+		skill.FistsOfFire: {
+			ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire,
+			state.State(stat.ProgressiveFire),
+			2,
+			3,
+		},
+	}
+}
+
+func (s MosaicSin) getMonsterChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
+	return map[skill.ID]ChargeSkillConfigEntry{
+		skill.TigerStrike: {
+			ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike,
+			state.State(stat.ProgressiveDamage),
+			1,
+			3,
+		},
+		skill.CobraStrike: {
+			ctx.CharacterCfg.Character.MosaicSin.UseCobraStrike,
+			state.State(stat.ProgressiveSteal),
+			1,
+			3,
+		},
+		skill.PhoenixStrike: {
+			true, // Always enabled
+			state.State(stat.ProgressiveOther),
+			1,
+			2, // Two charges, we want lightning
 		},
 		skill.ClawsOfThunder: {
 			ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder,
@@ -96,7 +139,7 @@ func (s MosaicSin) hasKeyBindingForSkill(skill skill.ID) bool {
 
 func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge skill.ID, desiredCount int, ctx context.Status) (int, bool) {
 	// The configuration checks for whether this skill is enabled are handled before we call this function
-	chargeConfig := s.getChargeSkillConfig(ctx)[skillToCharge]
+	chargeConfig := s.getMonsterChargeSkillConfig(ctx)[skillToCharge]
 
 	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(chargeConfig.chargeState), 0)
 	attacks := 0
@@ -119,7 +162,7 @@ func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge ski
 }
 
 func (s MosaicSin) MobHasAnyState(mob data.UnitID, statesToFind []state.State) bool {
-	// TODO this maybe has a home in d2go?
+	// TODO: this maybe has a home in d2go?
 	monster, found := s.Data.Monsters.FindByID(mob)
 	if found {
 		for _, stateToFind := range statesToFind {
@@ -131,17 +174,17 @@ func (s MosaicSin) MobHasAnyState(mob data.UnitID, statesToFind []state.State) b
 	return false
 }
 
-func (s MosaicSin) KillMonsterSequence(
+func (s MosaicSin) AttackLoop(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
 	skipOnImmunities []stat.Resist,
+	attackOrder []skill.ID,
+	skillConfig map[skill.ID]ChargeSkillConfigEntry,
+	ctx context.Status,
 ) error {
-	ctx := context.Get()
 	ctx.Data.PlayerUnit = ctx.GameReader.GetData().Data.PlayerUnit
 	lastRefresh := time.Now()
 
-	chargeSkillConfig := s.getChargeSkillConfig(*ctx)
-
-	// TODO: move to config
+	// TODO: move to config?
 	attacksBeforeKick := 4
 	useCloakOfShadows := true
 
@@ -192,24 +235,15 @@ func (s MosaicSin) KillMonsterSequence(
 			return nil
 		}
 
-		// The order to charge our skills, if the skill is enabled. TODO: Order could be configurable
-		chargeSkills := []skill.ID{
-			skill.CobraStrike,
-			skill.PhoenixStrike,
-			skill.ClawsOfThunder,
-			skill.TigerStrike,
-			skill.BladesOfIce,
-			skill.FistsOfFire,
-		}
 		totalAttacks := 0
 
-		for _, chargeSkill := range chargeSkills {
-			if chargeSkillConfig[chargeSkill].useSkill && totalAttacks < attacksBeforeKick {
+		for _, chargeSkill := range attackOrder {
+			if skillConfig[chargeSkill].useSkill && totalAttacks < attacksBeforeKick {
 				attackCount, alreadyDead := s.buildChargesForSkill(
 					id,
 					chargeSkill,
-					chargeSkillConfig[chargeSkill].desiredCharges,
-					*ctx,
+					skillConfig[chargeSkill].desiredCharges,
+					ctx,
 				)
 
 				if alreadyDead {
@@ -224,6 +258,57 @@ func (s MosaicSin) KillMonsterSequence(
 		// Finish it off with primary attack
 		step.PrimaryAttack(id, 1, false, opts)
 	}
+}
+
+func (s MosaicSin) KillBossSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
+	chargeSkills := []skill.ID{
+		// skill.CobraStrike,
+		skill.PhoenixStrike, // We only want to use phoenix strike for bosses, but you can uncomment and reorder these if you desire.
+		// skill.ClawsOfThunder,
+		// skill.TigerStrike,
+		// skill.BladesOfIce,
+		// skill.FistsOfFire,
+	}
+
+	ctx := context.Get()
+	chargeSkillConfig := s.getBossChargeSkillConfig(*ctx)
+
+	return s.AttackLoop(
+		monsterSelector,
+		skipOnImmunities,
+		chargeSkills,
+		chargeSkillConfig,
+		*ctx,
+	)
+}
+
+func (s MosaicSin) KillMonsterSequence(
+	monsterSelector func(d game.Data) (data.UnitID, bool),
+	skipOnImmunities []stat.Resist,
+) error {
+	// The order to charge our skills, if the skill is enabled. TODO: Order could be configurable
+	chargeSkills := []skill.ID{
+		skill.CobraStrike,
+		skill.PhoenixStrike,
+		skill.ClawsOfThunder,
+		skill.TigerStrike,
+		skill.BladesOfIce,
+		skill.FistsOfFire,
+	}
+
+	ctx := context.Get()
+	chargeSkillConfig := s.getMonsterChargeSkillConfig(*ctx)
+
+	return s.AttackLoop(
+		monsterSelector,
+		skipOnImmunities,
+		chargeSkills,
+		chargeSkillConfig,
+		*ctx,
+	)
 }
 
 func (s MosaicSin) MobAlive(mob data.UnitID, d game.Data) bool {
@@ -256,7 +341,7 @@ func (s MosaicSin) PreCTABuffSkills() []skill.ID {
 }
 
 func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
 			return 0, false
