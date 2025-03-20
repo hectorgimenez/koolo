@@ -1,7 +1,8 @@
 {{ define "pit" }}
     <fieldset>
         <label><input type="checkbox" name="gamePitMoveThroughBlackMarsh" {{ if .Config.Game.Pit.MoveThroughBlackMarsh }}checked{{ end }}> Move through Black Marsh</label>
-        <label><input type="checkbox" name="gamePitOpenChests" {{ if .Config.Game.Pit.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gamePitOpenChests" {{ if .Config.Game.Pit.OpenChests }}checked{{ end }}> Open chests (includes SuperChests)</label>
+                <label><input type="checkbox" name="gamePitOpenSuperChests" {{ if .Config.Game.Pit.OpenSuperChests }}checked{{ end }}> Open only SuperChests</label>
         <label><input type="checkbox" name="gamePitFocusOnElitePacks" {{ if .Config.Game.Pit.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
         <label><input type="checkbox" name="gamePitOnlyClearLevel2" {{ if .Config.Game.Pit.OnlyClearLevel2 }}checked{{ end }}> Only clear level 2</label>
     </fieldset>
@@ -33,21 +34,24 @@
 
 {{ define "stony_tomb" }}
     <fieldset>
-        <label><input type="checkbox" name="gameStonytombOpenChests" {{ if .Config.Game.StonyTomb.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameStonytombOpenChests" {{ if .Config.Game.StonyTomb.OpenChests }}checked{{ end }}> Open chests (includes SuperChests)</label>
+        <label><input type="checkbox" name="gameStonytombOpenSuperChests" {{ if .Config.Game.StonyTomb.OpenSuperChests }}checked{{ end }}> Open only SuperChests</label>
         <label><input type="checkbox" name="gameStonytombFocusOnElitePacks" {{ if .Config.Game.StonyTomb.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
     </fieldset>
 {{ end }}
 
 {{ define "mausoleum" }}
     <fieldset>
-        <label><input type="checkbox" name="gameMausoleumOpenChests" {{ if .Config.Game.Mausoleum.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameMausoleumOpenChests" {{ if .Config.Game.Mausoleum.OpenChests }}checked{{ end }}> Open chests (includes SuperChests)</label>
+        <label><input type="checkbox" name="gameMausoleumOpenSuperChests" {{ if .Config.Game.Mausoleum.OpenSuperChests }}checked{{ end }}> Open only SuperChests</label>
         <label><input type="checkbox" name="gameMausoleumFocusOnElitePacks" {{ if .Config.Game.Mausoleum.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
     </fieldset>
 {{ end }}
 
 {{ define "ancient_tunnels" }}
     <fieldset>
-        <label><input type="checkbox" name="gameAncientTunnelsOpenChests" {{ if .Config.Game.AncientTunnels.OpenChests }}checked{{ end }}> Open chests</label>
+        <label><input type="checkbox" name="gameAncientTunnelsOpenChests" {{ if .Config.Game.AncientTunnels.OpenChests }}checked{{ end }}> Open chests  (includes SuperChests)</label>
+        <label><input type="checkbox" name="gameAncientTunnelsOpenSuperChests" {{ if .Config.Game.AncientTunnels.OpenSuperChests }}checked{{ end }}> Open only SuperChests</label>
         <label><input type="checkbox" name="gameAncientTunnelsFocusOnElitePacks" {{ if .Config.Game.AncientTunnels.FocusOnElitePacks }}checked{{ end }}> Focus on elite packs</label>
     </fieldset>
 {{ end }}

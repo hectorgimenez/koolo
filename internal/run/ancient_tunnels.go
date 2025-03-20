@@ -24,6 +24,7 @@ func (a AncientTunnels) Name() string {
 
 func (a AncientTunnels) Run() error {
 	openChests := a.ctx.CharacterCfg.Game.AncientTunnels.OpenChests
+	openSuperChests := a.ctx.CharacterCfg.Game.AncientTunnels.OpenSuperChests
 	onlyElites := a.ctx.CharacterCfg.Game.AncientTunnels.FocusOnElitePacks
 	filter := data.MonsterAnyFilter()
 
@@ -43,6 +44,11 @@ func (a AncientTunnels) Run() error {
 	action.OpenTPIfLeader()
 
 	// Clear Ancient Tunnels
+	if a.ctx.CharacterCfg.Game.AncientTunnels.OpenSuperChests {
+		if err := action.ClearCurrentLevelSuperChest(openSuperChests, filter); err != nil {
+			return err
+		}
+	}
 
 	return action.ClearCurrentLevel(openChests, filter)
 }

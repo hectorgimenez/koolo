@@ -48,6 +48,39 @@ func ClearCurrentLevel(openChests bool, filter data.MonsterFilter) error {
 	return nil
 }
 
+func ClearCurrentLevelSuperChest(openSuperChests bool, filter data.MonsterFilter) error {
+	ctx := context.Get()
+	ctx.SetLastAction("ClearCurrentLevel")
+
+	rooms := ctx.PathFinder.OptimizeRoomsTraverseOrder()
+	for _, r := range rooms {
+		err := clearRoom(r, filter)
+		if err != nil {
+			ctx.Logger.Warn("Failed to clear room: %v", err)
+		}
+
+		for _, o := range ctx.Data.Objects {
+			if o.IsSuperChest() && o.Selectable && r.IsInside(o.Position) {
+				err = MoveToCoords(o.Position)
+				if err != nil {
+					ctx.Logger.Warn("Failed moving to chest: %v", err)
+					continue
+				}
+				err = InteractObject(o, func() bool {
+					chest, _ := ctx.Data.Objects.FindByID(o.ID)
+					return !chest.Selectable
+				})
+				if err != nil {
+					ctx.Logger.Warn("Failed interacting with chest: %v", err)
+				}
+				utils.Sleep(500) // Add small delay to allow the game to open the chest and drop the content
+			}
+		}
+	}
+
+	return nil
+}
+
 func clearRoom(room data.Room, filter data.MonsterFilter) error {
 	ctx := context.Get()
 	ctx.SetLastAction("clearRoom")

@@ -870,6 +870,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		cfg.Game.Pit.MoveThroughBlackMarsh = r.Form.Has("gamePitMoveThroughBlackMarsh")
 		cfg.Game.Pit.OpenChests = r.Form.Has("gamePitOpenChests")
+		cfg.Game.Pit.OpenSuperChests = r.Form.Has("gamePitOpenSuperChests")
 		cfg.Game.Pit.FocusOnElitePacks = r.Form.Has("gamePitFocusOnElitePacks")
 		cfg.Game.Pit.OnlyClearLevel2 = r.Form.Has("gamePitOnlyClearLevel2")
 
@@ -881,10 +882,13 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		cfg.Game.StonyTomb.OpenChests = r.Form.Has("gameStonytombOpenChests")
+		cfg.Game.StonyTomb.OpenSuperChests = r.Form.Has("gameStonytombOpenSuperChests")
 		cfg.Game.StonyTomb.FocusOnElitePacks = r.Form.Has("gameStonytombFocusOnElitePacks")
 		cfg.Game.AncientTunnels.OpenChests = r.Form.Has("gameAncientTunnelsOpenChests")
+		cfg.Game.AncientTunnels.OpenSuperChests = r.Form.Has("gameAncientTunnelsOpenSuperChests")
 		cfg.Game.AncientTunnels.FocusOnElitePacks = r.Form.Has("gameAncientTunnelsFocusOnElitePacks")
 		cfg.Game.Mausoleum.OpenChests = r.Form.Has("gameMausoleumOpenChests")
+		cfg.Game.Mausoleum.OpenSuperChests = r.Form.Has("gameMausoleumOpenSuperChests")
 		cfg.Game.Mausoleum.FocusOnElitePacks = r.Form.Has("gameMausoleumFocusOnElitePacks")
 		cfg.Game.DrifterCavern.OpenChests = r.Form.Has("gameDrifterCavernOpenChests")
 		cfg.Game.DrifterCavern.FocusOnElitePacks = r.Form.Has("gameDrifterCavernFocusOnElitePacks")
