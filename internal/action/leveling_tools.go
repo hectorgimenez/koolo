@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -52,58 +53,49 @@ var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
 func EnsureStatPoints() error {
-	// TODO finish this
-	return nil
-	//return NewStepChain(func(d game.Data) []step.Step {
-	//	char, isLevelingChar := b.ch.(LevelingCharacter)
-	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-	//	if !isLevelingChar || !unusedStatPoints {
-	//		if d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKey(win.VK_ESCAPE)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		return nil
-	//	}
-	//
-	//	for st, targetPoints := range char.StatPoints(d) {
-	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-	//		if !found || currentPoints.Value >= targetPoints {
-	//			continue
-	//		}
-	//
-	//		if !d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		var statBtnPosition data.Position
-	//		if d.LegacyGraphics {
-	//			statBtnPosition = uiStatButtonPositionLegacy[st]
-	//		} else {
-	//			statBtnPosition = uiStatButtonPosition[st]
-	//		}
-	//
-	//		return []step.Step{
-	//			step.SyncStep(func(_ game.Data) error {
-	//				utils.Sleep(100)
-	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				utils.Sleep(500)
-	//				return nil
-	//			}),
-	//		}
-	//	}
-	//
-	//	return nil
-	//}, RepeatUntilNoSteps())
+	ctx := context.Get()
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if !isLevelingChar {
+		return nil
+	}
+
+	statPoints, hasUnusedPoints := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+	if !hasUnusedPoints || statPoints.Value == 0 {
+		return nil
+	}
+
+	remainingPoints := statPoints.Value
+	allocations := char.StatPoints()
+	for _, allocation := range allocations {
+		if statPoints.Value == 0 {
+			break
+		}
+
+		currentValue, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(allocation.Stat, 0)
+		if currentValue.Value >= allocation.Points {
+			continue
+		}
+
+		// Calculate how many points we can actually spend
+		pointsToSpend := min(allocation.Points-currentValue.Value, remainingPoints)
+		for i := 0; i < pointsToSpend; i++ {
+
+			if !spendStatPoint(allocation.Stat) {
+				ctx.Logger.Error(fmt.Sprintf("Failed to spend point in %v", allocation.Stat))
+				continue
+			}
+
+			remainingPoints--
+
+			updatedValue, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(allocation.Stat, 0)
+			if updatedValue.Value >= allocation.Points {
+				ctx.Logger.Debug(fmt.Sprintf("Increased %v to target %d (%d total points remaining)",
+					allocation.Stat, allocation.Points, remainingPoints))
+			}
+		}
+	}
+	return step.CloseAllMenus()
+
 }
 
 func EnsureSkillPoints() error {
@@ -168,6 +160,61 @@ func UpdateQuestLog() error {
 
 	return step.CloseAllMenus()
 }
+
+func spendStatPoint(statID stat.ID) bool {
+	ctx := context.Get()
+	beforePoints, _ := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+
+	if !ctx.Data.OpenMenus.Character {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
+		utils.Sleep(100)
+	}
+
+	statBtnPosition := uiStatButtonPosition[statID]
+	if ctx.Data.LegacyGraphics {
+		statBtnPosition = uiStatButtonPositionLegacy[statID]
+	}
+
+	ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+	utils.Sleep(300)
+
+	afterPoints, _ := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+	return beforePoints.Value-afterPoints.Value == 1
+}
+
+func spendSkillPoint(skillID skill.ID) bool {
+	ctx := context.Get()
+	beforePoints, _ := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+
+	if !ctx.Data.OpenMenus.SkillTree {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+		utils.Sleep(100)
+	}
+
+	skillDesc, found := skill.Desc[skillID]
+	if !found {
+		ctx.Logger.Error(fmt.Sprintf("skill not found for character: %v", skillID))
+		return false
+	}
+
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+	} else {
+		ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+	}
+	utils.Sleep(200)
+
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+	} else {
+		ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+	}
+	utils.Sleep(300)
+
+	afterPoints, _ := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+	return beforePoints.Value-afterPoints.Value == 1
+}
+
 func getAvailableSkillKB() []data.KeyBinding {
 	availableSkillKB := make([]data.KeyBinding, 0)
 	ctx := context.Get()

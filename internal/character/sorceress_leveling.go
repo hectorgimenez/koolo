@@ -12,6 +12,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 )
 
@@ -192,20 +193,18 @@ func (s SorceressLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 	return mainSkill, skillBindings
 }
 
-func (s SorceressLeveling) StatPoints() map[stat.ID]int {
-	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
-	statPoints := make(map[stat.ID]int)
+func (s SorceressLeveling) StatPoints() []context.StatAllocation {
 
-	if lvl.Value < 20 {
-		statPoints[stat.Vitality] = 9999
-	} else {
-		statPoints[stat.Energy] = 80
-		statPoints[stat.Strength] = 60
-		statPoints[stat.Vitality] = 9999
+	// Define target totals (including base stats)
+	targets := []context.StatAllocation{
+		{Stat: stat.Vitality, Points: 50},  // Base 10 + 40
+		{Stat: stat.Strength, Points: 25},  // Base 10 + 15
+		{Stat: stat.Vitality, Points: 65},  // Previous 50 + 15
+		{Stat: stat.Strength, Points: 47},  // Previous 25 + 22
+		{Stat: stat.Vitality, Points: 999}, // Rest into vit
 	}
 
-	s.Logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
-	return statPoints
+	return targets
 }
 
 func (s SorceressLeveling) SkillPoints() []skill.ID {
