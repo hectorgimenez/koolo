@@ -119,6 +119,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
+    const useTeleportCheckbox = document.getElementById('characterUseTeleport');
+    const clearPathDistContainer = document.getElementById('clearPathDistContainer');
+    const clearPathDistInput = document.getElementById('clearPathDist');
+    const clearPathDistValue = document.getElementById('clearPathDistValue');
 
     if (bossStaticThresholdInput) {
         bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
@@ -151,6 +155,35 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             noSettingsMessage.style.display = 'block';
         }
+    }
+    function toggleClearPathVisibility() {
+        if (useTeleportCheckbox && clearPathDistContainer) {
+            if (useTeleportCheckbox.checked) {
+                clearPathDistContainer.style.display = 'none';
+            } else {
+                clearPathDistContainer.style.display = 'block';
+            }
+        }
+    }
+
+    // Update the displayed value when the slider changes
+    function updateClearPathValue() {
+        if (clearPathDistInput && clearPathDistValue) {
+            clearPathDistValue.textContent = clearPathDistInput.value;
+        }
+    }
+
+    // Set up event listeners
+    if (useTeleportCheckbox) {
+        useTeleportCheckbox.addEventListener('change', toggleClearPathVisibility);
+        // Initialize visibility
+        toggleClearPathVisibility();
+    }
+
+    if (clearPathDistInput) {
+        clearPathDistInput.addEventListener('input', updateClearPathValue);
+        // Initialize value display
+        updateClearPathValue();
     }
     
     function updateNovaSorceressOptions() {

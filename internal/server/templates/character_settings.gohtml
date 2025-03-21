@@ -147,7 +147,7 @@
 
             <fieldset class="grid">
                 <label>
-                    <input type="checkbox" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
+                    <input type="checkbox" id="characterUseTeleport" name="characterUseTeleport" {{ if .Config.Character.UseTeleport }}checked{{ end }}/>
                     Use teleport when available
                 </label>
                 <label>
@@ -163,6 +163,28 @@
                 <label>
                     <input type="checkbox" name="useCainIdentify" {{ if .Config.Game.UseCainIdentify }}checked{{ end }}/>
                     Identify with Cain
+                </label>
+            </fieldset>
+            <fieldset class="grid">
+                <label>
+            <div id="clearPathDistContainer" class="conditional-field" {{ if .Config.Character.UseTeleport }}style="display: none;"{{ end }}>
+                <div class="walking-radius-container">
+                    <label for="clearPathDist">Clear Path Radius</label>
+                    <div class="walking-radius-slider">
+                        <input
+                                type="range"
+                                id="clearPathDist"
+                                name="clearPathDist"
+                                min="0"
+                                max="30"
+                                step="1"
+                                value="{{ if .Config.Character.ClearPathDist }}{{ .Config.Character.ClearPathDist }}{{ else }}12{{ end }}"
+                        >
+                        <span class="walking-radius-value" id="clearPathDistValue">{{ if .Config.Character.ClearPathDist }}{{ .Config.Character.ClearPathDist }}{{ else }}12{{ end }}</span>
+                    </div>
+                    <div class="input-info">Distance (in game units) to clear enemies while walking through areas</div>
+                </div>
+            </div>
                 </label>
             </fieldset>
             <label>
