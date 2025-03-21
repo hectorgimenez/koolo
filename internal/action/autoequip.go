@@ -405,21 +405,21 @@ func equip(itm data.Item, bodyloc item.LocationType, target item.LocationType) e
 		ctx.HID.ClickWithModifier(game.LeftButton, itemCoords.X, itemCoords.Y, game.ShiftKey)
 	}
 
-	utils.Sleep(100)
-	ctx.RefreshGameData()
 	utils.Sleep(500)
-	for _, inPlace := range ctx.Data.Inventory.AllItems {
+	itemEquipped := false
+	for _, inPlace := range ctx.GameReader.GetData().Data.Inventory.ByLocation(item.LocationEquipped) {
 		if itm.UnitID == inPlace.UnitID && inPlace.Location.BodyLocation == bodyloc {
-			step.CloseAllMenus()
-			ctx.Logger.Error(fmt.Sprintf("Failed to equip %s to %s using hotkeys, trying cursor", itm.Name, target))
-
-			return equipCursor(itm, bodyloc, target)
+			itemEquipped = true
+			break
 		}
 	}
 
-	step.CloseAllMenus()
-	return nil
-
+	if itemEquipped {
+		return step.CloseAllMenus()
+	} else {
+		ctx.Logger.Error(fmt.Sprintf("Failed to equip %s to %s using hotkeys, trying cursor", itm.Name, target))
+		return equipCursor(itm, bodyloc, target)
+	}
 }
 
 // Fallback for when hotkey equip doesn't work
