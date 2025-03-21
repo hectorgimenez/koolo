@@ -39,7 +39,7 @@ func BuyConsumables(forceRefill bool) {
 	}
 
 	if ShouldBuyTPs() || forceRefill {
-		if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); !found {
+		if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); !found && ctx.Data.PlayerUnit.TotalPlayerGold() > 450 {
 			ctx.Logger.Info("TP Tome not found, buying one...")
 			if itm, itmFound := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationVendor); itmFound {
 				BuyItem(itm, 1)
@@ -47,12 +47,16 @@ func BuyConsumables(forceRefill bool) {
 		}
 		ctx.Logger.Debug("Filling TP Tome...")
 		if itm, found := ctx.Data.Inventory.Find(item.ScrollOfTownPortal, item.LocationVendor); found {
-			buyFullStack(itm)
+			if ctx.Data.PlayerUnit.TotalPlayerGold() > 6000 {
+				buyFullStack(itm)
+			} else {
+				BuyItem(itm, 1)
+			}
 		}
 	}
 
 	if ShouldBuyIDs() || forceRefill {
-		if _, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); !found {
+		if _, found := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationInventory); !found && ctx.Data.PlayerUnit.TotalPlayerGold() > 360 {
 			ctx.Logger.Info("ID Tome not found, buying one...")
 			if itm, itmFound := ctx.Data.Inventory.Find(item.TomeOfIdentify, item.LocationVendor); itmFound {
 				BuyItem(itm, 1)
@@ -60,7 +64,11 @@ func BuyConsumables(forceRefill bool) {
 		}
 		ctx.Logger.Debug("Filling IDs Tome...")
 		if itm, found := ctx.Data.Inventory.Find(item.ScrollOfIdentify, item.LocationVendor); found {
-			buyFullStack(itm)
+			if ctx.Data.PlayerUnit.TotalPlayerGold() > 16000 {
+				buyFullStack(itm)
+			} else {
+				BuyItem(itm, 1)
+			}
 		}
 	}
 
