@@ -24,7 +24,7 @@ type PaladinLeveling struct {
 }
 
 func (s PaladinLeveling) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -88,8 +88,15 @@ func (s PaladinLeveling) KillMonsterSequence(
 				s.Logger.Debug("Using Zeal")
 				numOfAttacks = 1
 			}
-			s.Logger.Debug("Using primary attack with Holy Fire aura")
-			step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.HolyFire))
+			
+			// Check if Holy Fire is greater than 0.
+			if s.Data.PlayerUnit.Skills[skill.HolyFire].Level > 0 {
+				s.Logger.Debug("Using primary attack with Holy Fire aura")
+				step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.HolyFire))
+			} else {
+				s.Logger.Debug("Using primary attack with Might aura (Holy Fire not acquired)")
+				step.PrimaryAttack(id, numOfAttacks, false, step.Distance(1, 3), step.EnsureAura(skill.Might))
+			}
 		}
 
 		completedAttackLoops++
