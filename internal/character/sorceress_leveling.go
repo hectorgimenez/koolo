@@ -28,7 +28,7 @@ const (
 )
 
 func (s SorceressLeveling) CheckKeyBindings() []skill.ID {
-	requireKeybindings := []skill.ID{skill.TomeOfTownPortal}
+	requireKeybindings := []skill.ID{}
 	missingKeybindings := []skill.ID{}
 
 	for _, cskill := range requireKeybindings {
@@ -158,9 +158,7 @@ func (s SorceressLeveling) ShouldResetSkills() bool {
 
 func (s SorceressLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 	level, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
-	skillBindings := []skill.ID{
-		skill.TomeOfTownPortal,
-	}
+	skillBindings := []skill.ID{}
 
 	if level.Value >= 4 {
 		skillBindings = append(skillBindings, skill.FrozenArmor)
