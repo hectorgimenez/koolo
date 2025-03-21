@@ -138,15 +138,18 @@
     <fieldset>
         <label><input type="checkbox" name="gameLevelingEnsurePointsAllocation" {{ if .Config.Game.Leveling.EnsurePointsAllocation }}checked{{ end }}> Automatically allocate stats/skills</label>
         <label><input type="checkbox" name="gameLevelingEnsureKeyBinding" {{ if .Config.Game.Leveling.EnsureKeyBinding }}checked{{ end }}> Automatically bind skills</label>
-            <label><input type="checkbox" name="gameLevelingEnableRunewordMaker" {{ if .Config.Game.Leveling.EnableRunewordMaker  }}checked{{ end }}> Socket items </label>
-            <div class="recipe-grid" style="margin-left: 20px;">
-                {{ range $index, $recipe := .RunewordRecipeList }}
-                    <label>
-                        <input type="checkbox" name="gameLevelingEnabledRunewordRecipes" value="{{ $recipe }}" {{ if contains $.Config.Game.Leveling.EnabledRunewordRecipes $recipe }}checked{{ end }}>
-                        {{ $recipe }}
-                    </label>
-                {{ end }}
-            </div>   
+        <h6>Create Runewords</h6>
+            <div style="margin-left: 20px;">
+                <input type="text" id="search-runewords" placeholder="Search runewords..." style="margin-bottom: 10px; width: 100%; max-width: 300px;">
+                <div class="recipe-grid" id="runeword-recipe-grid">
+                    {{ range $index, $recipe := .RunewordRecipeList }}
+                        <label class="runeword-item" style="display: none;"> <!-- Initially hidden -->
+                            <input type="checkbox" name="gameLevelingEnabledRunewordRecipes" value="{{ $recipe }}" {{ if contains $.Config.Game.Leveling.EnabledRunewordRecipes $recipe }}checked{{ end }}>
+                            <span class="runeword-name">{{ $recipe }}</span>
+                        </label>
+                    {{ end }}
+                </div>
+            </div>
     </fieldset>
 {{ end }}
 
