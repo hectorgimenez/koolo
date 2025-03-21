@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -164,33 +165,18 @@ func (s PaladinLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 	return mainSkill, skillBindings
 }
 
-func (s PaladinLeveling) StatPoints() map[stat.ID]int {
-	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
-	statPoints := make(map[stat.ID]int)
+func (s PaladinLeveling) StatPoints() []context.StatAllocation {
 
-	if lvl.Value < 21 {
-		statPoints[stat.Strength] = 0
-		statPoints[stat.Dexterity] = 25
-		statPoints[stat.Vitality] = 150
-		statPoints[stat.Energy] = 0
-	} else if lvl.Value < 30 {
-		statPoints[stat.Strength] = 35
-		statPoints[stat.Vitality] = 200
-		statPoints[stat.Energy] = 0
-	} else if lvl.Value < 45 {
-		statPoints[stat.Strength] = 50
-		statPoints[stat.Dexterity] = 40
-		statPoints[stat.Vitality] = 220
-		statPoints[stat.Energy] = 0
-	} else {
-		statPoints[stat.Strength] = 86
-		statPoints[stat.Dexterity] = 50
-		statPoints[stat.Vitality] = 300
-		statPoints[stat.Energy] = 0
+	// Define target totals (including base stats)
+	targets := []context.StatAllocation{
+		{Stat: stat.Vitality, Points: 45},  // Base 25 + 20
+		{Stat: stat.Dexterity, Points: 21}, // Base 20 + 1
+		{Stat: stat.Vitality, Points: 65},  // Previous 50 + 15
+		{Stat: stat.Strength, Points: 47},  // Previous 25 + 22
+		{Stat: stat.Vitality, Points: 999}, // Rest into vit
 	}
 
-	s.Logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
-	return statPoints
+	return targets
 }
 
 func (s PaladinLeveling) SkillPoints() []skill.ID {

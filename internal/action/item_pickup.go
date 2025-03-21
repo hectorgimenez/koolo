@@ -212,7 +212,7 @@ func GetItemsToPickup(maxDistance int) []data.Item {
 
 	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationGround) {
 		// Skip itempickup on party leveling Maggot Lair, is too narrow and causes characters to get stuck
-		if isLevelingChar && !itm.IsFromQuest() && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 ||
+		if isLevelingChar && itm.Name != "StaffOfKings" && (ctx.Data.PlayerUnit.Area == area.MaggotLairLevel1 ||
 			ctx.Data.PlayerUnit.Area == area.MaggotLairLevel2 ||
 			ctx.Data.PlayerUnit.Area == area.MaggotLairLevel3 ||
 			ctx.Data.PlayerUnit.Area == area.ArcaneSanctuary) {
@@ -286,7 +286,7 @@ func shouldBePickedUp(i data.Item) bool {
 	specialRuns := slices.Contains(ctx.CharacterCfg.Game.Runs, "quests") || slices.Contains(ctx.CharacterCfg.Game.Runs, "leveling")
 	if specialRuns {
 		switch i.Name {
-		case "Scrollofinifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
+		case "ScrollOfInifuss", "LamEsensTome", "HoradricCube", "AmuletoftheViper", "StaffofKings", "HoradricStaff", "AJadeFigurine", "KhalimsEye", "KhalimsBrain", "KhalimsHeart", "KhalimsFlail":
 			return true
 		}
 	}

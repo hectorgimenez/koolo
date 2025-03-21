@@ -206,24 +206,18 @@ func (s SorceressLevelingLightning) SkillsToBind() (skill.ID, []skill.ID) {
 	return mainSkill, skillBindings
 }
 
-func (s SorceressLevelingLightning) StatPoints() map[stat.ID]int {
-	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
-	statPoints := make(map[stat.ID]int)
+func (s SorceressLevelingLightning) StatPoints() []context.StatAllocation {
 
-	if lvl.Value < 9 {
-		statPoints[stat.Vitality] = 9999
-	} else if lvl.Value < 15 {
-		statPoints[stat.Energy] = 45
-		statPoints[stat.Strength] = 25
-		statPoints[stat.Vitality] = 9999
-	} else {
-		statPoints[stat.Energy] = 60
-		statPoints[stat.Strength] = 50
-		statPoints[stat.Vitality] = 9999
+	// Define target totals (including base stats)
+	targets := []context.StatAllocation{
+		{Stat: stat.Vitality, Points: 50},  // Base 10 + 40
+		{Stat: stat.Strength, Points: 25},  // Base 10 + 15
+		{Stat: stat.Vitality, Points: 65},  // Previous 50 + 15
+		{Stat: stat.Strength, Points: 47},  // Previous 25 + 22
+		{Stat: stat.Vitality, Points: 999}, // Rest into vit
 	}
 
-	s.Logger.Info("Assigning stat points", "level", lvl.Value, "statPoints", statPoints)
-	return statPoints
+	return targets
 }
 
 func (s SorceressLevelingLightning) SkillPoints() []skill.ID {

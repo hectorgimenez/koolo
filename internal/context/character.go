@@ -27,11 +27,15 @@ type Character interface {
 		skipOnImmunities []stat.Resist,
 	) error
 }
+type StatAllocation struct {
+	Stat   stat.ID
+	Points int
+}
 
 type LevelingCharacter interface {
 	Character
 	// StatPoints Stats will be assigned in the order they are returned by this function.
-	StatPoints() map[stat.ID]int
+	StatPoints() []StatAllocation
 	SkillPoints() []skill.ID
 	SkillsToBind() (skill.ID, []skill.ID)
 	ShouldResetSkills() bool
