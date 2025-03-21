@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
+    const runewordSearchInput = document.getElementById('search-runewords');
 
     if (bossStaticThresholdInput) {
         bossStaticThresholdInput.addEventListener('input', handleBossStaticThresholdChange);
@@ -228,6 +229,37 @@ document.addEventListener('DOMContentLoaded', function () {
             checkbox.checked = e.target.checked;
         });
     });
+
+    function filterRunewords(searchTerm = '') { // Default parameter to ensure previously checked runewords show before searching
+        let listItems = document.querySelectorAll('.runeword-item');
+        searchTerm = searchTerm.toLowerCase();
+        
+        listItems.forEach(function (item) {
+            const isChecked = item.querySelector('input[type="checkbox"]').checked;
+            const rwName = item.querySelector('.runeword-name').textContent.toLowerCase();
+            
+            if (isChecked || (searchTerm && rwName.includes(searchTerm))) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    if (runewordSearchInput) {
+        runewordSearchInput.addEventListener('input', function () {
+            filterRunewords(runewordSearchInput.value);
+        });
+        
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('.runeword-item input[type="checkbox"]')) {
+                filterRunewords(runewordSearchInput.value);
+            }
+        });
+        
+        filterRunewords();
+    }
+    
 });
 
 function handleBossStaticThresholdChange() {

@@ -213,8 +213,10 @@ type CharacterCfg struct {
 			OpenChests        bool          `yaml:"openChests"`
 		} `yaml:"terror_zone"`
 		Leveling struct {
-			EnsurePointsAllocation bool `yaml:"ensurePointsAllocation"`
-			EnsureKeyBinding       bool `yaml:"ensureKeyBinding"`
+			EnsurePointsAllocation bool     `yaml:"ensurePointsAllocation"`
+			EnsureKeyBinding       bool     `yaml:"ensureKeyBinding"`
+			EnableRunewordMaker    bool     `yaml:"enableRunewordMaker"`
+			EnabledRunewordRecipes []string `yaml:"enabledRunewordRecipes"`
 		} `yaml:"leveling"`
 		Quests struct {
 			ClearDen       bool `yaml:"clearDen"`
