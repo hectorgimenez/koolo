@@ -391,6 +391,22 @@
                            value="{{ .Config.MaxGameLength }}"/>
                 </label>
             </fieldset>
+            <h3>Companion System</h3><br>
+            <p>The companion system allows you to have your characters play together in a group. If you enable this and don't set it as Leader, it will be a follower. In that case, make sure to specify a Leader Name.</p>
+            <br>
+            <label>
+                <input type="checkbox" name="companionEnabled" id="companionEnabled" {{ if .Config.Companion.Enabled }}checked{{ end }}/>
+                Enabled
+            </label>
+            <label>
+                <input type="checkbox" name="companionLeader" id="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
+                Set as Leader
+            </label>
+            <label>
+            Leader Name
+            <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
+                   value="{{ .Config.Companion.LeaderName }}"/>
+            </label>
             <h4>Run Settings</h4><br>
             <label>
                 Choose the runs that you want the bot to run. You can either drag & drop runs below to enable or disable them, or use the + - buttons. Click on any of the runs to expand them and see more details and options.
@@ -462,16 +478,6 @@
                     </label>
                 {{ end }}
             </div>
-            <h3>Leader mode</h3>
-            <label>
-                <input type="checkbox" name="companionLeader" {{ if .Config.Companion.Leader }}checked{{ end }}/>
-                Leader
-            </label>
-            <label>
-                Leader Name
-                <input name="companionLeaderName" placeholder="{{ .Config.Companion.LeaderName }}"
-                       value="{{ .Config.Companion.LeaderName }}"/>
-            </label>
             <h3>Back to Town Settings:</h3>
             <fieldset class="grid">
                 <label>

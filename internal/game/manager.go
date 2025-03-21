@@ -106,7 +106,7 @@ func (gm *Manager) clearGameNameOrPasswordField() {
 	}
 }
 
-func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
+func (gm *Manager) CreateLobbyGame(gameCounter int) (string, error) {
 
 	// Click "Create game" tab
 	gm.hid.Click(LeftButton, 845, 54)
@@ -144,11 +144,18 @@ func (gm *Manager) CreateOnlineGame(gameCounter int) (string, error) {
 	}
 	gm.hid.PressKey(win.VK_RETURN)
 
-	for range 30 {
+	for range 15 {
 		if gm.gr.InGame() {
 			return gameName, nil
 		}
 		utils.Sleep(1000)
+
+		panel := gm.gr.GetPanel("DismissableModal")
+		if panel.PanelName != "" && panel.PanelEnabled && panel.PanelVisible {
+			gm.hid.PressKey(win.VK_ESCAPE)
+			utils.Sleep(1000)
+			return gameName, errors.New("error creating game! Got error message")
+		}
 	}
 
 	return gameName, errors.New("error creating game! Timeout")
@@ -179,11 +186,19 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	}
 	gm.hid.PressKey(win.VK_RETURN)
 
-	for range 30 {
+	for range 15 {
 		if gm.gr.InGame() {
 			return nil
 		}
 		utils.Sleep(1000)
+
+		// Check if we got an error message while trying to join the game
+		panel := gm.gr.GetPanel("DismissableModal")
+		if panel.PanelName != "" && panel.PanelEnabled && panel.PanelVisible {
+			gm.hid.PressKey(win.VK_ESCAPE)
+			utils.Sleep(1000)
+			return errors.New("error joining game! Got error message")
+		}
 	}
 
 	return errors.New("error joining game! Timeout")
