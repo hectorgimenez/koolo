@@ -13,6 +13,24 @@ closeMiniPanel: false # Set to true to close the mini panel at start of game in 
 hidePortraits: true  # Set to true to hide mercenary and other players portraits (avatar)
 enableCubeRecipes: true # Enable cubing of flawlesses and tokens
 
+scheduler:
+  enabled: false
+  days:
+    - dayOfWeek: 0
+      timeRange: []
+    - dayOfWeek: 1
+      timeRange: []
+    - dayOfWeek: 2
+      timeRange: []
+    - dayOfWeek: 3
+      timeRange: []
+    - dayOfWeek: 4
+      timeRange: []
+    - dayOfWeek: 5
+      timeRange: []
+    - dayOfWeek: 6
+      timeRange: []
+
 health: # Healing configuration, all values in %
   healingPotionAt: 75
   manaPotionAt: 10
