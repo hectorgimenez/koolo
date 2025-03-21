@@ -2,6 +2,7 @@ package town
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -12,6 +13,15 @@ import (
 	"github.com/hectorgimenez/koolo/internal/game"
 	"github.com/hectorgimenez/koolo/internal/ui"
 )
+
+var questItems = []item.Name{
+	"StaffOfKings",
+	"HoradricStaff",
+	"AmuletOfTheViper",
+	"KhalimsFlail",
+	"KhalimsWill",
+	"HellforgeHammer",
+}
 
 func BuyConsumables(forceRefill bool) {
 	ctx := context.Get()
@@ -171,8 +181,10 @@ func buyFullStack(i data.Item) {
 
 func ItemsToBeSold() (items []data.Item) {
 	ctx := context.Get()
+
 	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
-		if itm.IsFromQuest() {
+		isQuestItem := slices.Contains(questItems, itm.Name)
+		if itm.IsFromQuest() || isQuestItem {
 			continue
 		}
 
