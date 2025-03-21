@@ -22,6 +22,9 @@ func InteractEntrance(area area.ID) error {
 	currentMouseCoords := data.Position{}
 	lastRun := time.Time{}
 
+	// If we move the mouse to interact with an entrance, we will set this variable.
+	var lastEntranceLevel data.Level
+
 	ctx := context.Get()
 	ctx.SetLastStep("InteractEntrance")
 
@@ -42,7 +45,10 @@ func InteractEntrance(area area.ID) error {
 
 		lastRun = time.Now()
 		for _, l := range ctx.Data.AdjacentLevels {
-			if l.Area == area {
+			// It is possible to have multiple entrances to the same area (A2 sewers, A2 palace, etc)
+			// Once we "select" an area and start to move the mouse to hover with it, we don't want
+			// to change the area to the 2nd entrance in the same area on the next iteration.
+			if l.Area == area && (lastEntranceLevel == (data.Level{}) || lastEntranceLevel == l) {
 				distance := ctx.PathFinder.DistanceFromMe(l.Position)
 				if distance > maxEntranceDistance {
 					// Try to move closer with retries
@@ -85,6 +91,9 @@ func InteractEntrance(area area.ID) error {
 					ctx.HID.MovePointer(lx+x, ly+y)
 					interactionAttempts++
 					utils.Sleep(100)
+
+					lastEntranceLevel = l
+
 					continue
 				}
 
