@@ -98,7 +98,7 @@ func (s SorceressLeveling) KillMonsterSequence(
 					s.Logger.Debug("Using FireBall")
 				}
 				step.SecondaryAttack(skill.FireBall, id, 1, step.Distance(SorceressLevelingMinDistance, SorceressLevelingMaxDistance))
-			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.IceBolt); found {
+			} else if _, found := s.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); found {
 				if s.Data.PlayerUnit.Mode == mode.CastingSkill {
 					attackSuccess = true
 					s.Logger.Debug("Using FireBolt")
@@ -174,10 +174,12 @@ func (s SorceressLeveling) SkillsToBind() (skill.ID, []skill.ID) {
 		skillBindings = append(skillBindings, skill.Blizzard)
 	} else if s.Data.PlayerUnit.Skills[skill.Meteor].Level > 0 {
 		skillBindings = append(skillBindings, skill.Meteor)
+	} else if s.Data.PlayerUnit.Skills[skill.Hydra].Level > 0 {
+		skillBindings = append(skillBindings, skill.Hydra)
 	} else if s.Data.PlayerUnit.Skills[skill.FireBall].Level > 0 {
 		skillBindings = append(skillBindings, skill.FireBall)
-	} else if s.Data.PlayerUnit.Skills[skill.IceBolt].Level > 0 {
-		skillBindings = append(skillBindings, skill.IceBolt)
+	} else if s.Data.PlayerUnit.Skills[skill.FireBolt].Level > 0 {
+		skillBindings = append(skillBindings, skill.FireBolt)
 	}
 
 	mainSkill := skill.AttackSkill
