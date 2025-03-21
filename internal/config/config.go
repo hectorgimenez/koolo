@@ -122,6 +122,7 @@ type CharacterCfg struct {
 			UseClawsOfThunder bool `yaml:"useClawsOfThunder"`
 			UseBladesOfIce    bool `yaml:"useBladesOfIce"`
 			UseFistsOfFire    bool `yaml:"useFistsOfFire"`
+			UsePhoenixStrike  bool `yaml:"usePhoenixStrike"`
 		} `yaml:"mosaic_sin"`
 	} `yaml:"character"`
 
