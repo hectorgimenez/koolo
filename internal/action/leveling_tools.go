@@ -396,9 +396,15 @@ func HireMerc() error {
 			}
 			ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 			utils.Sleep(2000)
-			ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
-			utils.Sleep(500)
-			ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListXClassic, ui.FirstMercFromContractorListYClassic)
+				utils.Sleep(500)
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListXClassic, ui.FirstMercFromContractorListYClassic)
+			} else {
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+				utils.Sleep(500)
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+			}
 		}
 	}
 
