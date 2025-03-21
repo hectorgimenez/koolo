@@ -65,18 +65,23 @@ function filterDisabledRuns(searchTerm) {
 
 function checkLevelingProfile() {
     const levelingProfiles = [
-        "sorceress_leveling_hydraorb",
         "sorceress_leveling_lightning",
         "sorceress_leveling",
-        "paladin_leveling"
+        "paladin"
     ];
-    const characterClass = document.getElementById('characterClass').value;
+    const characterClass = document.querySelector('select[name="characterClass"]').value;
 
     if (levelingProfiles.includes(characterClass)) {
-        const confirmation = confirm("This profile requires the leveling run profile, would you like to clear enabled run profiles and select the leveling profile?");
-        if (confirmation) {
-            clearEnabledRuns();
-            selectLevelingProfile();
+
+        const levelingRunEnabled = document.querySelector('#enabled_runs li[value="leveling"]');
+        
+        // Only show confirmation if leveling run is not already enabled
+        if (!levelingRunEnabled) {
+            const confirmation = confirm("This profile requires the leveling run profile, would you like to clear enabled run profiles and select the leveling profile?");
+            if (confirmation) {
+                clearEnabledRuns();
+                selectLevelingProfile();
+            }
         }
     }
 }
@@ -109,6 +114,20 @@ function updateButtonForDisabledRun(runElement) {
     button.classList.add('add-run');
     button.title = "Add run";
     button.innerHTML = '<i class="bi bi-plus"></i>';
+}
+
+function clearEnabledRuns() {
+    const enabledRuns = document.querySelectorAll('#enabled_runs li');
+    enabledRuns.forEach(function(runItem) {
+        moveRunToDisabled(runItem);
+    });
+}
+
+function selectLevelingProfile() {
+    const levelingRunItem = document.querySelector('#disabled_runs li[value="leveling"]');
+    if (levelingRunItem) {
+        moveRunToEnabled(levelingRunItem);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -192,6 +211,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     characterClassSelect.addEventListener('change', updateCharacterOptions);
     updateCharacterOptions(); // Call this initially to set the correct state
+
+    characterClassSelect.addEventListener('change', checkLevelingProfile);
+    checkLevelingProfile();
 
     // Set initial state
     toggleSchedulerVisibility();
