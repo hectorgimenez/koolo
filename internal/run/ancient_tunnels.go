@@ -35,7 +35,7 @@ func (a AncientTunnels) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	err = action.MoveToArea(area.AncientTunnels) // Travel to ancient tunnels
 	if err != nil {
 		return err

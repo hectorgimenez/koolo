@@ -34,7 +34,7 @@ func (a TalRashaTombs) Run() error {
 		if err != nil {
 			return err
 		}
-
+		_ = action.OpenTPIfLeader()
 		// Move to the next Tomb
 		if err = action.MoveToArea(tomb); err != nil {
 			return err

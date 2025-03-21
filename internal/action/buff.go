@@ -43,10 +43,6 @@ func Buff() {
 	ctx := context.Get()
 	ctx.SetLastAction("Buff")
 
-	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
-		return
-	}
-
 	// Check if we're in loading screen
 	if ctx.Data.OpenMenus.LoadingScreen {
 		ctx.Logger.Debug("Loading screen detected. Waiting for game to load before buffing...")
@@ -77,7 +73,9 @@ func Buff() {
 		}
 	}
 
-	buffCTA()
+	if !ctx.Data.PlayerUnit.Area.IsTown() {
+		buffCTA()
+	}
 
 	postKeys := make([]data.KeyBinding, 0)
 	for _, buff := range ctx.Char.BuffSkills() {

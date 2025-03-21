@@ -40,7 +40,7 @@ func (run LowerKurastChests) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Get bonfires from cached map data
 	var bonFirePositions []data.Position
 	if areaData, ok := run.ctx.GameReader.GetData().Areas[area.LowerKurast]; ok {
@@ -106,17 +106,6 @@ func (run LowerKurastChests) Run() error {
 			// Remove the interacted container from the list
 			objects = objects[1:]
 		}
-	}
-
-	// Return to town
-	if err = action.ReturnTown(); err != nil {
-		return err
-	}
-
-	// Move to A4 if possible to shorten the run time
-	err = action.WayPoint(area.ThePandemoniumFortress)
-	if err != nil {
-		return err
 	}
 
 	// Done

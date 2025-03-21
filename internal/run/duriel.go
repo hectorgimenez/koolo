@@ -2,6 +2,7 @@ package run
 
 import (
 	"errors"
+
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/mode"
@@ -38,7 +39,7 @@ func (d Duriel) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Find and move to the real Tal Rasha tomb
 	realTalRashaTomb, err := d.findRealTomb()
 	if err != nil {
@@ -49,7 +50,7 @@ func (d Duriel) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Wait for area to fully load and get synchronized
 	utils.Sleep(500)
 	d.ctx.RefreshGameData()
@@ -77,6 +78,7 @@ func (d Duriel) Run() error {
 		return err
 	}
 
+	action.OpenTPIfLeader()
 	err = action.ClearAreaAroundPlayer(10, data.MonsterAnyFilter())
 	if err != nil {
 		return err
@@ -100,6 +102,7 @@ func (d Duriel) Run() error {
 		return errors.New("failed to find Duriel's portal after multiple attempts")
 	}
 
+	//Exception: Duriel Lair portal has no destination in memory
 	err = action.InteractObject(portal, func() bool {
 		return d.ctx.Data.PlayerUnit.Area == area.DurielsLair
 	})
@@ -111,7 +114,7 @@ func (d Duriel) Run() error {
 	d.ctx.RefreshGameData()
 
 	utils.Sleep(700)
-
+	action.OpenTPIfLeader()
 	return d.ctx.Char.KillDuriel()
 }
 

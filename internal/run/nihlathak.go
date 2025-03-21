@@ -34,12 +34,12 @@ func (n Nihlathak) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to Halls Of Vaught
 	if err = action.MoveToArea(area.HallsOfVaught); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	var nihlaObject data.Object
 
 	o, found := n.ctx.Data.Objects.FindOne(object.NihlathakWildernessStartPositionName)
@@ -48,7 +48,9 @@ func (n Nihlathak) Run() error {
 	}
 
 	// Move to Nihlathak
+	action.Buff()
 	action.MoveToCoords(o.Position)
+	action.OpenTPIfLeader()
 
 	// Try to position in the safest corner
 	action.MoveToCoords(n.findBestCorner(o.Position))

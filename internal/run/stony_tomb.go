@@ -37,12 +37,12 @@ func (s StonyTomb) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the correct area
 	if err = action.MoveToArea(area.RockyWaste); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the correct area
 	if err = action.MoveToArea(area.StonyTombLevel1); err != nil {
 		return err
@@ -60,7 +60,7 @@ func (s StonyTomb) Run() error {
 	if err = action.MoveToArea(area.StonyTombLevel2); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clear the area
 	return action.ClearCurrentLevel(s.ctx.CharacterCfg.Game.StonyTomb.OpenChests, monsterFilter)
 }

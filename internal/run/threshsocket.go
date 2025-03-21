@@ -31,12 +31,12 @@ func (t Threshsocket) Run() error {
 	if err != nil {
 		return err
 	}
-
+	_ = action.OpenTPIfLeader()
 	// Move to ArreatPlateau
 	if err = action.MoveToArea(area.ArreatPlateau); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Kill Threshsocket
 	return t.ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
 		if m, found := d.Monsters.FindOne(npc.BloodBringer, data.MonsterTypeSuperUnique); found {

@@ -48,13 +48,12 @@ func (p Pindleskin) Run() error {
 		return errors.New("red portal not found")
 	}
 
-	err = action.InteractObject(redPortal, func() bool {
-		return p.ctx.Data.AreaData.Area == area.NihlathaksTemple && p.ctx.Data.AreaData.IsInside(p.ctx.Data.PlayerUnit.Position)
-	})
+	err = action.InteractObject(redPortal, nil)
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
+	action.Buff()
 	_ = action.MoveToCoords(pindleSafePosition)
 
 	return p.ctx.Char.KillPindle()

@@ -70,13 +70,14 @@ func (a Andariel) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	err = action.MoveToArea(area.CatacombsLevel3)
+	action.OpenTPIfLeader()
 	action.MoveToArea(area.CatacombsLevel4)
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Clearing inside room
 	a.ctx.Logger.Info("Clearing inside room")
 

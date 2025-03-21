@@ -37,12 +37,12 @@ func (a Mausoleum) Run() error {
 	if err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the BurialGrounds
 	if err = action.MoveToArea(area.BurialGrounds); err != nil {
 		return err
 	}
-
+	action.OpenTPIfLeader()
 	// Move to the Mausoleum
 	if err = action.MoveToArea(area.Mausoleum); err != nil {
 		return err
