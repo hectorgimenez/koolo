@@ -117,7 +117,7 @@ func isEquippable(i data.Item, target item.LocationType) bool {
 		str >= i.Desc().RequiredStrength &&
 		dex >= i.Desc().RequiredDexterity &&
 		lvl >= i.LevelReq &&
-		!isQuestItem
+		!isQuestItem && (i.Desc().Type != "bow" && i.Desc().Type != "xbow" && i.Desc().Type != "bowq" && i.Desc().Type != "xbowq")
 }
 
 func isValidLocation(i data.Item, bodyLoc item.LocationType, target item.LocationType) bool {
