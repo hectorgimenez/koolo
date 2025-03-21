@@ -349,7 +349,7 @@ func gambleMap() error {
 	var refreshAttempts int
 	var itemBought data.Item
 	const maxRefreshAttempts = 11
-	const maxPurchasesPerItem = 5
+	const maxPurchasesPerItem = 25
 
 	for {
 		ctx.PauseIfNotPriority()

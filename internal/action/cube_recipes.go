@@ -371,15 +371,15 @@ var (
 		// Upgraded Magefist
 		{
 			Name: "Upgraded Magefists",
-			Items: []string{"Magefists", "TalRune", "ShaelRune", "PerfectDiamond"},
+			Items: []string{"Magefist", "TalRune", "ShaelRune", "PerfectDiamond"},
 			PurchaseRequired: false,
 			PurchaseItems: []string{},
 		},
 
 		// Double Upgraded Magefist
 		{
-			Name: "Double Upgraded Magefists",
-			Items: []string{"Magefists", "KoRune", "LemRune", "PerfectDiamond"},
+			Name: "Double Upgraded Magefist",
+			Items: []string{"Magefist", "KoRune", "LemRune", "PerfectDiamond"},
 			PurchaseRequired: false,
 			PurchaseItems: []string{},
 		},
