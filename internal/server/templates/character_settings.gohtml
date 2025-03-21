@@ -36,14 +36,24 @@
                 <label>
                     Class
                     <select name="characterClass">
-                        <option value="sorceress" {{ if eq .Config.Character.Class
-                        "sorceress" }}selected{{ end }}>Blizzard Sorceress
+                        <option value="basic" {{ if eq .Config.Character.Class
+                        "basic" }}selected{{ end }}>Basic Character
+                        </option>
+                        <option value="blizzardsorceress" {{ if eq .Config.Character.Class
+                        "blizzardsorceress" }}selected{{ end }}>Blizzard Sorceress
+                        </option>
+                        <option value="orbsorceress" {{ if eq .Config.Character.Class
+                        "orbsorceress" }}selected{{ end }}>Frozen Orb Sorceress
                         </option>
                         <option value="nova" {{ if eq .Config.Character.Class
                         "nova" }}selected{{ end }}>Nova Sorceress
                         </option>
                         <option value="hydraorb" {{ if eq .Config.Character.Class
                         "hydraorb" }}selected{{ end }}>Hydra Orb Sorceress
+                        </option>
+                        </option>
+                        <option value="hydra" {{ if eq .Config.Character.Class
+                        "hydra" }}selected{{ end }}>Hydra Sorceress
                         </option>
                         <option value="lightsorc" {{ if eq .Config.Character.Class
                         "lightsorc" }}selected{{ end }}>Lightning Sorceress
@@ -56,6 +66,9 @@
                         </option>
                         <option value="foh" {{ if eq .Config.Character.Class
                         "foh" }}selected{{ end }}>FOH Paladin
+                        </option>
+                        <option value="poisonnecro" {{ if eq .Config.Character.Class
+                        "poisonnecro" }}selected{{ end }}>Poison Necro
                         </option>
                         <option value="paladin" {{ if eq .Config.Character.Class
                         "paladin" }}selected{{ end }}>Paladin (Leveling)
@@ -80,6 +93,9 @@
                         </option>
                         <option value="berserker" {{ if eq .Config.Character.Class
                         "berserker" }}selected{{ end }}>Berserk Barbarian
+                        </option>
+                        <option value="singer" {{ if eq .Config.Character.Class
+                        "singer" }}selected{{ end }}>Singer Barbarian
                         </option>
                     </select>
                 </label>

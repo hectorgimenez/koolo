@@ -24,9 +24,9 @@ type Berserker struct {
 }
 
 const (
-	maxHorkRange      = 40
-	meleeRange        = 5
-	maxAttackAttempts = 20
+	zerkerMaxHorkRange      = 40
+	zerkerMeleeRange        = 5
+	zerkerMaxAttackAttempts = 20
 )
 
 func (s *Berserker) CheckKeyBindings() []skill.ID {
@@ -55,11 +55,11 @@ func (s *Berserker) KillMonsterSequence(
 	skipOnImmunities []stat.Resist,
 ) error {
 
-	for attackAttempts := 0; attackAttempts < maxAttackAttempts; attackAttempts++ {
+	for attackAttempts := 0; attackAttempts < zerkerMaxAttackAttempts; attackAttempts++ {
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			if !s.isKillingCouncil.Load() {
-				s.FindItemOnNearbyCorpses(maxHorkRange)
+				s.FindItemOnNearbyCorpses(zerkerMaxHorkRange)
 			}
 			return nil
 		}
@@ -74,7 +74,7 @@ func (s *Berserker) KillMonsterSequence(
 		}
 
 		distance := s.PathFinder.DistanceFromMe(monster.Position)
-		if distance > meleeRange {
+		if distance > zerkerMeleeRange {
 			err := step.MoveTo(monster.Position)
 			if err != nil {
 				s.Logger.Warn("Failed to move to monster", slog.String("error", err.Error()))
@@ -300,7 +300,7 @@ func (s *Berserker) KillCouncil() error {
 
 	// Perform horking in two passes
 	for i := 0; i < 2; i++ {
-		s.FindItemOnNearbyCorpses(maxHorkRange)
+		s.FindItemOnNearbyCorpses(zerkerMaxHorkRange)
 
 		// Wait between passes
 		time.Sleep(300 * time.Millisecond)
@@ -313,7 +313,7 @@ func (s *Berserker) KillCouncil() error {
 	time.Sleep(500 * time.Millisecond)
 
 	// Final item pickup
-	err = action.ItemPickup(maxHorkRange)
+	err = action.ItemPickup(zerkerMaxHorkRange)
 	if err != nil {
 		s.Logger.Warn("Error during final item pickup after horking", "error", err)
 		return err

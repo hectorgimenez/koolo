@@ -63,6 +63,7 @@ func (s NovaSorceress) KillMonsterSequence(
 	ctx := context.Get()
 	completedAttackLoops := 0
 	staticFieldCast := false
+	skipOnImmunities = append(skipOnImmunities, stat.LightImmune)
 
 	for {
 		ctx.PauseIfNotPriority()

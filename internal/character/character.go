@@ -29,20 +29,30 @@ func BuildCharacter(ctx *context.Context) (context.Character, error) {
 	}
 
 	switch strings.ToLower(ctx.CharacterCfg.Character.Class) {
-	case "sorceress":
+	case "basic":
+		return BasicCharacter{BaseCharacter: bc}, nil
+	case "blizzardsorceress":
 		return BlizzardSorceress{BaseCharacter: bc}, nil
 	case "fireballsorc":
 		return FireballSorceress{BaseCharacter: bc}, nil
+	case "orbsorceress":
+		return FrozenOrbSorceress{BaseCharacter: bc}, nil
 	case "nova":
 		return NovaSorceress{BaseCharacter: bc}, nil
+	case "singer":
+		return SingerBarb{BaseCharacter: bc}, nil
 	case "hydraorb":
 		return HydraOrbSorceress{BaseCharacter: bc}, nil
+	case "hydra":
+		return HydraSorceress{BaseCharacter: bc}, nil
 	case "lightsorc":
 		return LightningSorceress{BaseCharacter: bc}, nil
 	case "hammerdin":
 		return Hammerdin{BaseCharacter: bc}, nil
 	case "foh":
 		return Foh{BaseCharacter: bc}, nil
+	case "poisonnecro":
+		return PoisonNecro{BaseCharacter: bc}, nil
 	case "trapsin":
 		return Trapsin{BaseCharacter: bc}, nil
 	case "mosaic":

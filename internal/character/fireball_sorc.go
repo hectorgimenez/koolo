@@ -57,10 +57,9 @@ func (f FireballSorceress) CheckKeyBindings() []skill.ID {
 
 func (f FireballSorceress) KillMonsterSequence(
 	monsterSelector func(d game.Data) (data.UnitID, bool),
-
 	skipOnImmunities []stat.Resist,
 ) error {
-
+	skipOnImmunities = append(skipOnImmunities, stat.FireImmune)
 	completedAttackLoops := 0
 	previousUnitID := 0
 

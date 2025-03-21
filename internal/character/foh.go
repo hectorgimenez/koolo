@@ -23,7 +23,7 @@ const (
 	fohMaxDistance    = 15
 	hbMinDistance     = 6
 	hbMaxDistance     = 12
-	fohMaxAttacksLoop = 35              // Maximum attack attempts before resetting
+	fohMaxAttacksLoop = 42              // Maximum attack attempts before resetting
 	castingTimeout    = 3 * time.Second // Maximum time to wait for a cast to complete
 )
 
@@ -55,11 +55,9 @@ func (f Foh) waitForCastComplete() bool {
 	startTime := time.Now()
 
 	for time.Since(startTime) < castingTimeout {
-		ctx.RefreshGameData()
-
 		// Check if we're no longer casting and enough time has passed since last cast
 		if ctx.Data.PlayerUnit.Mode != mode.CastingSkill &&
-			time.Since(f.lastCastTime) > 150*time.Millisecond { //150 for Foh but if we make that generic it would need tuning maybe from skill desc
+			time.Since(f.lastCastTime) > 100*time.Millisecond { //150 for Foh but if we make that generic it would need tuning maybe from skill desc
 			return true
 		}
 
@@ -124,14 +122,13 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 	}
 
 	for {
-		// Refresh game data periodically
-		if time.Since(lastRefresh) > time.Millisecond*100 {
-			ctx.RefreshGameData()
-			lastRefresh = time.Now()
-		}
-
 		ctx.PauseIfNotPriority()
 
+		// Refresh PlayerUnit States periodically
+		if time.Since(lastRefresh) > time.Millisecond*100 {
+			ctx.Data.PlayerUnit.States = ctx.GameReader.GetData().PlayerUnit.States
+			lastRefresh = time.Now()
+		}
 		if completedAttackLoops >= fohMaxAttacksLoop {
 			return nil
 		}
@@ -164,7 +161,7 @@ func (f Foh) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID,
 		}
 
 		// Cast appropriate skill
-		if useHolyBolt {
+		if useHolyBolt || completedAttackLoops%6 == 0 {
 			if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.HolyBolt); found {
 				ctx.HID.PressKeyBinding(kb)
 				if err := step.PrimaryAttack(currentTargetID, 1, true, hbOpts...); err == nil {
@@ -245,11 +242,11 @@ func (f Foh) KillBossSequence(monsterSelector func(d game.Data) (data.UnitID, bo
 	}
 
 	for {
-		if time.Since(lastRefresh) > time.Millisecond*100 {
-			ctx.RefreshGameData()
+		ctx.PauseIfNotPriority()
+		if time.Since(lastRefresh) > time.Millisecond*50 {
+			ctx.Data.PlayerUnit.States = ctx.GameReader.GetData().PlayerUnit.States
 			lastRefresh = time.Now()
 		}
-		ctx.PauseIfNotPriority()
 		if completedAttackLoops >= fohMaxAttacksLoop {
 			return nil
 		}
