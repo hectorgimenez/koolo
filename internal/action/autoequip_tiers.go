@@ -454,11 +454,11 @@ func calculateSkillScore(itm data.Item) float64 {
 
 	usedSkills := make([]skill.ID, 0)
 
-	//Let's ignore 1 point wonders unless we're above level 2
+	//Let's ignore 1 point wonders unless we're below level 4
 	for sk, pts := range ctx.Data.PlayerUnit.Skills {
 		if pts.Level > 1 {
 			usedSkills = append(usedSkills, sk)
-		} else if lvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 3 {
+		} else if lvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0); lvl.Value < 4 {
 			usedSkills = append(usedSkills, sk)
 		}
 	}
