@@ -33,6 +33,11 @@ func PreRun(firstRun bool) error {
 	// Identify - either via Cain or Tome
 	IdentifyAll(false)
 
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if ctx.CharacterCfg.Game.Leveling.AutoEquip && isLevelingChar {
+		AutoEquip()
+	}
+
 	// Stash before vendor
 	Stash(false)
 
@@ -87,6 +92,11 @@ func InRunReturnTownRoutine() error {
 	}
 
 	IdentifyAll(false)
+
+	_, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if ctx.CharacterCfg.Game.Leveling.AutoEquip && isLevelingChar {
+		AutoEquip()
+	}
 
 	VendorRefill(false, true)
 	Stash(false)
