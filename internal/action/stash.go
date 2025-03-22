@@ -258,7 +258,11 @@ func shouldKeepRecipeItem(i data.Item) bool {
 	recipeMatch := false
 
 	// Check if the item is part of a recipe and if that recipe is enabled
+	pgems := []string{"PerfectAmethyst", "PerfectEmerald", "PerfectRuby", "PerfectDiamond", "PerfectSapphire", "PerfectTopaz", "PerfectSkull"}
 	for _, recipe := range Recipes {
+		if slices.Contains(pgems, string(i.Name)) {
+			break
+		}
 		if slices.Contains(recipe.Items, string(i.Name)) && slices.Contains(ctx.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
 			recipeMatch = true
 			break

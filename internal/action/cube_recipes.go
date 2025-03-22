@@ -210,10 +210,10 @@ var (
 
 		//Blood Ring
 		{
-			Name: "Blood Ring",
-			Items: []string{"SolRune", "PerfectRuby", "Jewel"},
+			Name:             "Blood Ring",
+			Items:            []string{"SolRune", "PerfectRuby", "Jewel"},
 			PurchaseRequired: true,
-			PurchaseItems: []string{"Ring"},
+			PurchaseItems:    []string{"Ring"},
 		},
 
 		// Blood Gloves
@@ -263,13 +263,13 @@ var (
 			PurchaseRequired: true,
 			PurchaseItems:    []string{"Axe"},
 		},
-		
+
 		// Safety Amulet
 		{
-			Name: "Safety Amulet",
-			Items: []string{"ThulRune", "PerfectEmerald", "Jewel"},
+			Name:             "Safety Amulet",
+			Items:            []string{"ThulRune", "PerfectEmerald", "Jewel"},
 			PurchaseRequired: true,
-			PurchaseItems: []string{"Amulet"},
+			PurchaseItems:    []string{"Amulet"},
 		},
 
 		// Safety Shield
@@ -370,34 +370,26 @@ var (
 
 		// Upgraded Magefist
 		{
-			Name: "Upgraded Magefists",
-			Items: []string{"Magefist", "TalRune", "ShaelRune", "PerfectDiamond"},
-			PurchaseRequired: false,
-			PurchaseItems: []string{},
+			Name:  "Upgraded Magefist",
+			Items: []string{"LightGauntlets", "TalRune", "ShaelRune", "PerfectDiamond"},
 		},
 
 		// Double Upgraded Magefist
 		{
-			Name: "Double Upgraded Magefist",
-			Items: []string{"Magefist", "KoRune", "LemRune", "PerfectDiamond"},
-			PurchaseRequired: false,
-			PurchaseItems: []string{},
+			Name:  "Double Upgraded Magefist",
+			Items: []string{"BattleGauntlets", "KoRune", "LemRune", "PerfectDiamond"},
 		},
 
 		// Upgraded Trang-ouls
 		{
-			Name: "Upgraded Trang-ouls",
-			Items: []string{"Trang-Oul's Claws", "KoRune", "LemRune", "PerfectDiamond"},
-			PurchaseRequired: false,
-			PurchaseItems: []string{},
+			Name:  "Upgraded Trang-ouls",
+			Items: []string{"HeavyBracers", "KoRune", "LemRune", "PerfectDiamond"},
 		},
 
 		// Upgraded Gorerider
 		{
-			Name: "Upgraded Gorerider",
-			Items: []string{"Gorerider", "KoRune", "LemRune", "PerfectDiamond"},
-			PurchaseRequired: false,
-			PurchaseItems: []string{},
+			Name:  "Upgraded Gorerider",
+			Items: []string{"WarBoots", "KoRune", "LemRune", "PerfectDiamond"},
 		},
 	}
 )
@@ -522,12 +514,25 @@ func CubeRecipes() error {
 }
 
 func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, bool) {
-
 	ctx.RefreshGameData()
 	items := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
 	// Special handling for "Reroll GrandCharms" recipe
 	if recipe.Name == "Reroll GrandCharms" {
 		return hasItemsForGrandCharmReroll(ctx, items)
+	}
+	//TODO: include slice of all upgrade recipes and pass Item.identifiedName to function
+	if recipe.Name == "Upgraded Magefist" || recipe.Name == "Double Upgraded Magefist" {
+		// return upgradeArmor(ctx, recipe, "Magefist")
+		return upgradeArmor(ctx, recipe, "Magefist")
+	}
+	if recipe.Name == "Upgraded Trang-ouls" {
+		// return upgradeArmor(ctx, recipe, "Trang-Oul's Claws")
+		return upgradeArmor(ctx, recipe, "Trang-Oul's Claws")
+	}
+
+	if recipe.Name == "Upgraded Gorerider" {
+		// return upgradeArmor(ctx, recipe, "Gorerider")
+		return upgradeArmor(ctx, recipe, "Gorerider")
 	}
 
 	recipeItems := make(map[string]int)
@@ -547,7 +552,6 @@ func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, boo
 					continue
 				}
 			}
-
 			itemsForRecipe = append(itemsForRecipe, item)
 
 			// Check if we now have exactly the needed count before decrementing
@@ -562,7 +566,41 @@ func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, boo
 			}
 		}
 	}
+	// We don't have all the items for the recipie.
+	return nil, false
+}
 
+func upgradeArmor(ctx *context.Status, recipe CubeRecipe, name string) ([]data.Item, bool) {
+
+	ctx.RefreshGameData()
+	items := ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash)
+	recipeItems := make(map[string]int)
+	for _, item := range recipe.Items {
+		recipeItems[item]++
+	}
+
+	itemsForRecipe := []data.Item{}
+
+	// Iterate over the items in our stash to see if we have the items for the recipie.
+	for _, item := range items {
+		if count, ok := recipeItems[string(item.Name)]; ok {
+			//skip item if it is set+ but does not match identified name
+			//TODO: check for white bases - should not pass if white base
+			if item.IdentifiedName != name {
+				continue
+			}
+			// Check if we now have exactly the needed count before decrementing
+			count -= 1
+			if count == 0 {
+				delete(recipeItems, string(item.Name))
+				if len(recipeItems) == 0 {
+					return itemsForRecipe, true
+				}
+			} else {
+				recipeItems[string(item.Name)] = count
+			}
+		}
+	}
 	// We don't have all the items for the recipie.
 	return nil, false
 }
