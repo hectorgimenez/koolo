@@ -46,6 +46,7 @@ func (s Hammerdin) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	consecutiveAttacks := 0
 
 	for {
 		id, found := monsterSelector(*s.Data)
@@ -54,6 +55,7 @@ func (s Hammerdin) KillMonsterSequence(
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
+			consecutiveAttacks = 0
 		}
 
 		if !s.preBattleChecks(id, skipOnImmunities) {
@@ -70,12 +72,14 @@ func (s Hammerdin) KillMonsterSequence(
 			return nil
 		}
 
-		// Add a random movement, maybe hammer is not hitting the target
-		if previousUnitID == int(id) {
-			if monster.Stats[stat.Life] > 0 {
+		if previousUnitID == int(id) && monster.Stats[stat.Life] > 0 {
+			consecutiveAttacks++
+			if consecutiveAttacks >= 5 { //adjust if needed -> higher value = more attacks without randommovement
 				s.PathFinder.RandomMovement()
+				time.Sleep(200 * time.Millisecond)
+				consecutiveAttacks = 0
+				continue
 			}
-			return nil
 		}
 
 		step.PrimaryAttack(
