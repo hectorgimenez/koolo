@@ -74,7 +74,7 @@ func (s Hammerdin) KillMonsterSequence(
 
 		if previousUnitID == int(id) && monster.Stats[stat.Life] > 0 {
 			consecutiveAttacks++
-			if consecutiveAttacks >= 3 {
+			if consecutiveAttacks >= 5 { //adjust if needed -> higher value = more attacks without randommovement
 				s.PathFinder.RandomMovement()
 				time.Sleep(200 * time.Millisecond)
 				consecutiveAttacks = 0
@@ -86,7 +86,7 @@ func (s Hammerdin) KillMonsterSequence(
 			id,
 			3,
 			true,
-			step.Distance(2, 2),
+			step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
 			step.EnsureAura(skill.Concentration),
 		)
 
