@@ -48,7 +48,7 @@ func Buff() {
 	}
 
 	// Check if we're in loading screen
-	if ctx.Data.OpenMenus.LoadingScreen {
+	if ctx.GameReader.GetData().OpenMenus.LoadingScreen {
 		ctx.Logger.Debug("Loading screen detected. Waiting for game to load before buffing...")
 		ctx.WaitForGameToLoad()
 
@@ -103,6 +103,39 @@ func Buff() {
 	}
 }
 
+var buffStateMap = map[skill.ID][]state.State{
+	// map of buff skills and the related states to watch for to indicate that we need a rebuff
+	skill.HolyShield: {state.State(state.Holyshield)},
+	skill.FrozenArmor: {
+		state.State(state.Frozenarmor),
+		state.State(state.Shiverarmor),
+		state.State(state.Chillingarmor),
+	},
+	skill.EnergyShield: {state.State(state.Energyshield)},
+	skill.CycloneArmor: {state.State(state.Cyclonearmor)},
+	skill.Fade:         {state.State(state.Fade)},
+	// skill.BurstOfSpeed: {state.State(state.BurstOfSpeed)}, Not mapped?
+
+}
+
+func needsRebuff(buff skill.ID, ctx context.Status) bool {
+	hasState := false
+	if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
+		stateMappings, ok := buffStateMap[buff]
+		if ok {
+			for _, neededState := range stateMappings {
+				if ctx.Data.PlayerUnit.States.HasState(neededState) {
+					hasState = true
+				}
+			}
+		} else {
+			ctx.Logger.Error("Tried to buff with unimplemented buff state", slog.Any("skillID", buff))
+			return false
+		}
+	}
+	return !hasState
+}
+
 func IsRebuffRequired() bool {
 	ctx := context.Get()
 	ctx.SetLastAction("IsRebuffRequired")
@@ -116,22 +149,13 @@ func IsRebuffRequired() bool {
 		return true
 	}
 
-	// TODO: Find a better way to convert skill to state
 	buffs := ctx.Char.BuffSkills()
+
+	rebuffRequired := false
 	for _, buff := range buffs {
-		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
-			if buff == skill.HolyShield && !ctx.Data.PlayerUnit.States.HasState(state.Holyshield) {
-				return true
-			}
-			if buff == skill.FrozenArmor && (!ctx.Data.PlayerUnit.States.HasState(state.Frozenarmor) && !ctx.Data.PlayerUnit.States.HasState(state.Shiverarmor) && !ctx.Data.PlayerUnit.States.HasState(state.Chillingarmor)) {
-				return true
-			}
-			if buff == skill.EnergyShield && !ctx.Data.PlayerUnit.States.HasState(state.Energyshield) {
-				return true
-			}
-			if buff == skill.CycloneArmor && !ctx.Data.PlayerUnit.States.HasState(state.Cyclonearmor) {
-				return true
-			}
+		rebuffRequired = needsRebuff(buff, *ctx)
+		if rebuffRequired {
+			return true
 		}
 	}
 
@@ -153,7 +177,7 @@ func buffCTA() {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
 		utils.Sleep(180)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(180)
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
 		utils.Sleep(180)
 		ctx.HID.Click(game.RightButton, 300, 300)
