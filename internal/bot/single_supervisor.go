@@ -176,7 +176,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 			for !s.bot.ctx.GameReader.IsInLobby() {
 
 				// Prevent an infinite loop
-				if retryCount >= 5 && !s.bot.ctx.Data.IsInLobby {
+				if retryCount >= 5 && !s.bot.ctx.GameReader.IsInLobby() {
 					return fmt.Errorf("failed to enter bnet lobby after 5 retries")
 				}
 
@@ -255,7 +255,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 			utils.Sleep(1000)
 
 			for range 5 {
-				if s.bot.ctx.Data.IsInCharSelectionScreen && s.bot.ctx.GameReader.IsOnline() {
+				if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() && s.bot.ctx.GameReader.IsOnline() {
 					break
 				}
 
@@ -266,7 +266,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 				}
 			}
 
-			if !s.bot.ctx.Data.IsInCharSelectionScreen {
+			if !s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
 				return fmt.Errorf("failed to leave lobby or an unknown case occurred")
 			}
 
