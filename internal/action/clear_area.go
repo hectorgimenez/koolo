@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -19,7 +20,13 @@ func ClearAreaAroundPosition(pos data.Position, radius int, filter data.MonsterF
 	ctx.SetLastAction("ClearAreaAroundPosition")
 
 	return ctx.Char.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		for _, m := range d.Monsters.Enemies(filter) {
+		orderedMonsters := d.Monsters.Enemies(filter)
+		slices.SortFunc(orderedMonsters, func(i, j data.Monster) int {
+			distanceI := ctx.PathFinder.DistanceFromMe(i.Position)
+			distanceJ := ctx.PathFinder.DistanceFromMe(j.Position)
+			return distanceI - distanceJ
+		})
+		for _, m := range orderedMonsters {
 			distanceToTarget := pather.DistanceFromPoint(pos, m.Position)
 			if ctx.Data.AreaData.IsWalkable(m.Position) && distanceToTarget <= radius {
 				return m.UnitID, true
