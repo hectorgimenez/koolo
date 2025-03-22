@@ -178,6 +178,9 @@ type CharacterCfg struct {
 			OpenChests         bool `yaml:"openChests"`
 			ExitToA4           bool `yaml:"exitToA4"`
 		} `yaml:"mephisto"`
+		Summoner struct {
+			ExitToA4 bool `yaml:"exitToA4"`
+		} `yaml:"summoner"`
 		Tristram struct {
 			ClearPortal       bool `yaml:"clearPortal"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
