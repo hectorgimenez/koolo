@@ -3,6 +3,7 @@ package discord
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"image/jpeg"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,8 +14,12 @@ import (
 func (b *Bot) Handle(_ context.Context, e event.Event) error {
 	if b.shouldPublish(e) {
 
-		switch e.(type) {
-		case event.GameCreatedEvent, event.GameFinishedEvent, event.RunStartedEvent, event.RunFinishedEvent:
+		switch evt := e.(type) {
+		case event.GameCreatedEvent:
+			message := fmt.Sprintf("%s\nGame: %s\nPassword: %s", evt.Message(), evt.Name, evt.Password)
+			_, err := b.discordSession.ChannelMessageSend(b.channelID, message)
+			return err
+		case event.GameFinishedEvent, event.RunStartedEvent, event.RunFinishedEvent:
 			_, err := b.discordSession.ChannelMessageSend(b.channelID, e.Message())
 			return err
 		default:
