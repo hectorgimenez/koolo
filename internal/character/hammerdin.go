@@ -46,6 +46,7 @@ func (s Hammerdin) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	consecutiveAttacks := 0
 
 	for {
 		id, found := monsterSelector(*s.Data)
@@ -54,6 +55,7 @@ func (s Hammerdin) KillMonsterSequence(
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
+			consecutiveAttacks = 0
 		}
 
 		if !s.preBattleChecks(id, skipOnImmunities) {
@@ -70,19 +72,21 @@ func (s Hammerdin) KillMonsterSequence(
 			return nil
 		}
 
-		// Add a random movement, maybe hammer is not hitting the target
-		if previousUnitID == int(id) {
-			if monster.Stats[stat.Life] > 0 {
+		if previousUnitID == int(id) && monster.Stats[stat.Life] > 0 {
+			consecutiveAttacks++
+			if consecutiveAttacks >= 3 {
 				s.PathFinder.RandomMovement()
+				time.Sleep(200 * time.Millisecond)
+				consecutiveAttacks = 0
+				continue
 			}
-			return nil
 		}
 
 		step.PrimaryAttack(
 			id,
 			3,
 			true,
-			step.Distance(2, 2), // X,Y coords of 2,2 is the perfect hammer angle attack for NPC targeting/attacking, you can adjust accordingly anything between 1,1 - 3,3 is acceptable, where the higher the number, the bigger the distance from the player (usually used for De Seis)
+			step.Distance(2, 2),
 			step.EnsureAura(skill.Concentration),
 		)
 
