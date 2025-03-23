@@ -57,6 +57,8 @@ func BuildRuns(cfg *config.CharacterCfg) (runs []Run) {
 			runs = append(runs, NewMausoleum())
 		case config.PitRun:
 			runs = append(runs, NewPit())
+		case config.PalaceRun:
+			runs = append(runs, NewPalace())
 		case config.StonyTombRun:
 			runs = append(runs, NewStonyTomb())
 		case config.ArachnidLairRun:
