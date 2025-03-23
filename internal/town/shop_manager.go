@@ -168,7 +168,7 @@ func ItemsToBeSold() (items []data.Item) {
 			continue
 		}
 
-		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == item.Key || itm.Name == "WirtsLeg" {
+		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == "WirtsLeg" {
 			continue
 		}
 
@@ -176,13 +176,20 @@ func ItemsToBeSold() (items []data.Item) {
 			continue
 		}
 
+		if itm.Name == item.Key && ctx.Data.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] != 1 {
+			items = append(items, itm)
+			continue
+		}
+
+		// Wenn es im locked Inventory ist
 		if ctx.Data.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
 			// If item is a full match will be stashed, we don't want to sell it
 			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
 				continue
 			}
-			items = append(items, itm)
 		}
+
+		items = append(items, itm)
 	}
 
 	return
