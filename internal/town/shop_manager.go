@@ -181,7 +181,6 @@ func ItemsToBeSold() (items []data.Item) {
 			continue
 		}
 
-		// Wenn es im locked Inventory ist
 		if ctx.Data.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 1 {
 			// If item is a full match will be stashed, we don't want to sell it
 			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
