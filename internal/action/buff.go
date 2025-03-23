@@ -77,8 +77,18 @@ func Buff() {
 		}
 	}
 
-	buffCTA()
+	if !ctx.Data.PlayerUnit.Area.IsTown() {
+		buffCTA()
+	}
+	if ctx.CharacterCfg.Character.NovaSorceress.PostBuffWithCta || ctx.CharacterCfg.Character.BlizzardSorceress.PostBuffWithCta {
+		return
+	} else {
+		PostBuffing()
+	}
+}
 
+func PostBuffing() {
+	ctx := context.Get()
 	postKeys := make([]data.KeyBinding, 0)
 	for _, buff := range ctx.Char.BuffSkills() {
 		kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
@@ -93,11 +103,11 @@ func Buff() {
 		ctx.Logger.Debug("Post CTA Buffing...")
 
 		for _, kb := range postKeys {
-			utils.Sleep(100)
+			utils.Sleep(200)
 			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
+			utils.Sleep(280)
 			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
+			utils.Sleep(200)
 		}
 		ctx.LastBuffAt = time.Now()
 	}
@@ -151,16 +161,21 @@ func buffCTA() {
 		}
 
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
-		utils.Sleep(180)
+		utils.Sleep(280)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(200)
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
-		utils.Sleep(180)
+		utils.Sleep(280)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(200)
+
+		if ctx.CharacterCfg.Character.NovaSorceress.PostBuffWithCta || ctx.CharacterCfg.Character.BlizzardSorceress.PostBuffWithCta {
+			PostBuffing()
+		}
 
 		utils.Sleep(500)
 		step.SwapToMainWeapon()
+		ctx.Logger.Debug("Swapping to main weapon after buffing")
 	}
 }
 

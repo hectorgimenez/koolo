@@ -801,7 +801,15 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			cfg.Character.BerserkerBarb.FindItemSwitch = r.Form.Has("characterFindItemSwitch")
 		}
 
+		// Blizzard Sorceress specific options
+		if cfg.Character.Class == "sorceress" {
+			cfg.Character.BlizzardSorceress.PostBuffWithCta = r.Form.Has("characterPostBuffWithCta")
+		}
 		// Nova Sorceress specific options
+		if cfg.Character.Class == "nova" {
+			cfg.Character.NovaSorceress.PostBuffWithCta = r.Form.Has("characterPostBuffWithCta")
+		}
+
 		if cfg.Character.Class == "nova" || cfg.Character.Class == "lightsorc" {
 			bossStaticThreshold, err := strconv.Atoi(r.Form.Get("novaBossStaticThreshold"))
 			if err == nil {
