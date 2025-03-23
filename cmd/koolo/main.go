@@ -21,6 +21,22 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// wrapWithRecover wraps a function with panic recovery logic
+func wrapWithRecover(logger *slog.Logger, f func() error) func() error {
+	return func() error {
+		defer func() {
+			if r := recover(); r != nil {
+				stackTrace := debug.Stack()
+				errMsg := fmt.Sprintf("panic recovered: %v\nStacktrace: %s", r, stackTrace)
+				logger.Error(errMsg)
+				// We don't need to return an error here as the recover has handled the panic
+				// and logged it, the program can continue execution
+			}
+		}()
+		return f()
+	}
+}
+
 func main() {
 	err := config.Load()
 	if err != nil {
@@ -60,7 +76,8 @@ func main() {
 		log.Fatalf("Error starting local server: %s", err.Error())
 	}
 
-	g.Go(func() error {
+	// Use wrapWithRecover for all goroutines to handle panics
+	g.Go(wrapWithRecover(logger, func() error {
 		defer cancel()
 		displayScale := config.GetCurrentDisplayScale()
 		w, err := gowebview.New(&gowebview.Config{URL: "http://localhost:8087", WindowConfig: &gowebview.WindowConfig{
@@ -84,7 +101,7 @@ func main() {
 		w.Run()
 
 		return nil
-	})
+	}))
 
 	// Discord Bot initialization
 	if config.Koolo.Discord.Enabled {
@@ -95,9 +112,9 @@ func main() {
 		}
 
 		eventListener.Register(discordBot.Handle)
-		g.Go(func() error {
+		g.Go(wrapWithRecover(logger, func() error {
 			return discordBot.Start(ctx)
-		})
+		}))
 	}
 
 	// Telegram Bot initialization
@@ -109,22 +126,22 @@ func main() {
 		}
 
 		eventListener.Register(telegramBot.Handle)
-		g.Go(func() error {
+		g.Go(wrapWithRecover(logger, func() error {
 			return telegramBot.Start(ctx)
-		})
+		}))
 	}
 
-	g.Go(func() error {
+	g.Go(wrapWithRecover(logger, func() error {
 		defer cancel()
 		return srv.Listen(8087)
-	})
+	}))
 
-	g.Go(func() error {
+	g.Go(wrapWithRecover(logger, func() error {
 		defer cancel()
 		return eventListener.Listen(ctx)
-	})
+	}))
 
-	g.Go(func() error {
+	g.Go(wrapWithRecover(logger, func() error {
 		<-ctx.Done()
 		logger.Info("Koolo shutting down...")
 		cancel()
@@ -136,7 +153,7 @@ func main() {
 		}
 
 		return err
-	})
+	}))
 
 	err = g.Wait()
 	if err != nil {
