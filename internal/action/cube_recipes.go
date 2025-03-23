@@ -586,9 +586,10 @@ func upgradeArmor(ctx *context.Status, recipe CubeRecipe, name string) ([]data.I
 		if count, ok := recipeItems[string(item.Name)]; ok {
 			//skip item if it is set+ but does not match identified name
 			//TODO: check for white bases - should not pass if white base
-			if item.IdentifiedName != name {
+			if (item.Quality.ToString() == "Set" || item.Quality.ToString() == "Unique") && item.IdentifiedName != name {
 				continue
 			}
+			itemsForRecipe = append(itemsForRecipe, item)
 			// Check if we now have exactly the needed count before decrementing
 			count -= 1
 			if count == 0 {

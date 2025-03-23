@@ -168,7 +168,7 @@ func ItemsToBeSold() (items []data.Item) {
 			continue
 		}
 
-		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == item.Key || itm.Name == "WirtsLeg" {
+		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == "WirtsLeg" {
 			continue
 		}
 
