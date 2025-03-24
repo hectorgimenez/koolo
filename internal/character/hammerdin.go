@@ -3,7 +3,6 @@ package character
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 	"time"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -155,26 +154,11 @@ func (s Hammerdin) KillDuriel() error {
 
 func (s Hammerdin) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
-		var councilMembers []data.Monster
-		for _, m := range d.Monsters {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				councilMembers = append(councilMembers, m)
+		for _, m := range d.Monsters.Enemies() {
+			if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
+				return m.UnitID, true
 			}
 		}
-
-		// Order council members by distance
-		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
-
-			return distanceI < distanceJ
-		})
-
-		for _, m := range councilMembers {
-			return m.UnitID, true
-		}
-
 		return 0, false
 	}, nil)
 }
