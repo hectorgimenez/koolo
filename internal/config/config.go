@@ -48,6 +48,7 @@ type KooloCfg struct {
 		EnableNewRunMessages         bool     `yaml:"enableNewRunMessages"`
 		EnableRunFinishMessages      bool     `yaml:"enableRunFinishMessages"`
 		EnableDiscordChickenMessages bool     `yaml:"enableDiscordChickenMessages"`
+		EnableDiscordErrorMessages   bool     `yaml:"enableDiscordErrorMessages"`
 		BotAdmins                    []string `yaml:"botAdmins"`
 		ChannelID                    string   `yaml:"channelId"`
 		Token                        string   `yaml:"token"`
