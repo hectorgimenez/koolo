@@ -87,6 +87,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 
 	for {
 		ctx.PauseIfNotPriority()
+		ctx.RefreshHoverData()
 
 		// Periodic monster check
 		if time.Since(lastMonsterCheck) > monsterCheckInterval {
