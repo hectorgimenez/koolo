@@ -50,7 +50,8 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 			switch ctx.Data.PlayerUnit.Mode {
 			case mode.Walking, mode.WalkingInTown, mode.Running, mode.CastingSkill:
 				utils.Sleep(100)
-				ctx.RefreshGameData()
+				// We need updated mode so only PlayerUnit refresh is required
+				ctx.RefreshPlayerData()
 				continue
 			default:
 				return
@@ -71,7 +72,7 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 		// is needed to prevent bot teleporting in circle when it reached destination (lower end cpu) cost is minimal.
-		ctx.RefreshGameData()
+		ctx.RefreshPlayerData()
 
 		// Add some delay between clicks to let the character move to destination
 		walkDuration := utils.RandomDurationMs(600, 1200)
