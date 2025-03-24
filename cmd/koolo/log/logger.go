@@ -1,7 +1,6 @@
 package log
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,7 +11,12 @@ import (
 
 var logFileHandler *os.File
 
-// FlushLog ensures that all logs are written to file
+func FlushLogOnly() {
+	if logFileHandler != nil {
+		logFileHandler.Sync()
+	}
+}
+
 func FlushLog() error {
 	if logFileHandler != nil {
 		logFileHandler.Sync()
@@ -20,27 +24,6 @@ func FlushLog() error {
 	}
 
 	return nil
-}
-
-// FlushLogOnly syncs logs to disk without closing the file
-func FlushLogOnly() {
-	if logFileHandler != nil {
-		logFileHandler.Sync()
-	}
-}
-
-type errorHandler struct {
-	slog.Handler
-}
-
-// Handle extends the standard handler to flush logs when errors are logged
-func (h *errorHandler) Handle(ctx context.Context, record slog.Record) error {
-	// Immediately flush logs for error and above to ensure they're written
-	// even if the program crashes right after
-	if record.Level >= slog.LevelError {
-		defer FlushLogOnly()
-	}
-	return h.Handler.Handle(ctx, record)
 }
 
 func NewLogger(debug bool, logDir, supervisor string) (*slog.Logger, error) {
@@ -84,12 +67,7 @@ func NewLogger(debug bool, logDir, supervisor string) (*slog.Logger, error) {
 			return a
 		},
 	}
-
-	// Create the base handler
-	baseHandler := slog.NewTextHandler(io.MultiWriter(logFileHandler, os.Stdout), opts)
-
-	// Wrap it with our error handler that flushes logs on errors
-	handler := &errorHandler{Handler: baseHandler}
+	handler := slog.NewTextHandler(io.MultiWriter(logFileHandler, os.Stdout), opts)
 
 	return slog.New(handler), nil
 }

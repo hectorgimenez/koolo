@@ -29,8 +29,7 @@ func wrapWithRecover(logger *slog.Logger, f func() error) func() error {
 				stackTrace := debug.Stack()
 				errMsg := fmt.Sprintf("panic recovered: %v\nStacktrace: %s", r, stackTrace)
 				logger.Error(errMsg)
-				// We don't need to return an error here as the recover has handled the panic
-				// and logged it, the program can continue execution
+				sloggger.FlushLogOnly()
 			}
 		}()
 		return f()
