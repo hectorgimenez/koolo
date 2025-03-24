@@ -11,6 +11,21 @@ import (
 
 var logFileHandler *os.File
 
+func FlushLog() {
+	if logFileHandler != nil {
+		logFileHandler.Sync()
+	}
+}
+
+func FlushAndClose() error {
+	if logFileHandler != nil {
+		logFileHandler.Sync()
+		return logFileHandler.Close()
+	}
+
+	return nil
+}
+
 func NewLogger(debug bool, logDir, supervisor string) (*slog.Logger, error) {
 	if logDir == "" {
 		logDir = "logs"
@@ -52,17 +67,7 @@ func NewLogger(debug bool, logDir, supervisor string) (*slog.Logger, error) {
 			return a
 		},
 	}
-
 	handler := slog.NewTextHandler(io.MultiWriter(logFileHandler, os.Stdout), opts)
 
 	return slog.New(handler), nil
-}
-
-func FlushLog() error {
-	if logFileHandler != nil {
-		logFileHandler.Sync()
-		return logFileHandler.Close()
-	}
-
-	return nil
 }
