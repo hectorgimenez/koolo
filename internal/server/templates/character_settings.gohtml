@@ -113,8 +113,21 @@
                 <div class="nova-sorceress-options" style="display: none;">
                     <fieldset class="grid">
                         <label>
+                            <input type="checkbox" name="characterPostBuffWithCta" {{ if .Config.Character.NovaSorceress.PostBuffWithCta }}checked{{ end }}/>
+                            Use CTA for all Buffs
+                        </label>
+                        <label>
                             Boss Static HP (%)
                             <input type="number" id="novaBossStaticThreshold" name="novaBossStaticThreshold" min="1" max="100" step="1" value="{{ .Config.Character.NovaSorceress.BossStaticThreshold }}">
+                        </label>
+                    </fieldset>
+                </div>
+
+                <div class="blizzard-sorceress-options" style="display: none;">
+                    <fieldset class="grid">
+                        <label>
+                            <input type="checkbox" name="characterPostBuffWithCta" {{ if .Config.Character.BlizzardSorceress.PostBuffWithCta }}checked{{ end }}/>
+                            Use CTA for all Buffs
                         </label>
                     </fieldset>
                 </div>

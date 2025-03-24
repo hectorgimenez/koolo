@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const characterClassSelect = document.querySelector('select[name="characterClass"]');
     const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
     const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
+    const blizzardSorceressOptions = document.querySelector('.blizzard-sorceress-options');
     const bossStaticThresholdInput = document.getElementById('novaBossStaticThreshold');
     const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
 
@@ -133,10 +134,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const noSettingsMessage = document.getElementById('no-settings-message');
         const berserkerBarbOptions = document.querySelector('.berserker-barb-options');
         const novaSorceressOptions = document.querySelector('.nova-sorceress-options');
+        const blizzardSorceressOptions = document.querySelector('.blizzard-sorceress-options');
         const mosaicAssassinOptions = document.querySelector('.mosaic-assassin-options');
         // Hide all options first
         berserkerBarbOptions.style.display = 'none';
         novaSorceressOptions.style.display = 'none';
+        blizzardSorceressOptions.style.display = 'none';
         mosaicAssassinOptions.style.display = 'none';
         noSettingsMessage.style.display = 'none';
         
@@ -146,6 +149,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (selectedClass === 'nova' || selectedClass === 'lightsorc') {
             novaSorceressOptions.style.display = 'block';
             updateNovaSorceressOptions();
+        } else if (selectedClass === 'sorceress') {
+            blizzardSorceressOptions.style.display = 'block';
         } else if (selectedClass === 'mosaic') {
             mosaicAssassinOptions.style.display = 'block';
         } else {
