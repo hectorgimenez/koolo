@@ -4,10 +4,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
-	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/d2go/pkg/data/state"
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -39,6 +37,21 @@ func BuffIfRequired() {
 	Buff()
 }
 
+func castSkill(buff skill.ID) {
+	ctx := context.Get()
+	kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
+
+	if !found {
+		ctx.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
+		return
+	}
+	utils.Sleep(100)
+	ctx.HID.PressKeyBinding(kb)
+	utils.Sleep(180)
+	ctx.HID.Click(game.RightButton, 640, 340)
+	utils.Sleep(100)
+}
+
 func Buff() {
 	ctx := context.Get()
 	ctx.SetLastAction("Buff")
@@ -56,51 +69,19 @@ func Buff() {
 		utils.Sleep(500)
 	}
 
-	preKeys := make([]data.KeyBinding, 0)
+	ctx.Logger.Debug("Pre CTA Buffing...")
 	for _, buff := range ctx.Char.PreCTABuffSkills() {
-		kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
-		if !found {
-			ctx.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
-		} else {
-			preKeys = append(preKeys, kb)
-		}
+		castSkill(buff)
 	}
 
-	if len(preKeys) > 0 {
-		ctx.Logger.Debug("PRE CTA Buffing...")
-		for _, kb := range preKeys {
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
-			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
-		}
-	}
+	buffCTA([]skill.ID{}) // Future place for buffs to be cast with CTA weapon set
 
-	buffCTA()
-
-	postKeys := make([]data.KeyBinding, 0)
+	ctx.Logger.Debug("Post CTA Buffing...")
 	for _, buff := range ctx.Char.BuffSkills() {
-		kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
-		if !found {
-			ctx.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
-		} else {
-			postKeys = append(postKeys, kb)
-		}
+		castSkill(buff)
+
 	}
 
-	if len(postKeys) > 0 {
-		ctx.Logger.Debug("Post CTA Buffing...")
-
-		for _, kb := range postKeys {
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
-			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
-		}
-		ctx.LastBuffAt = time.Now()
-	}
 }
 
 var buffStateMap = map[skill.ID][]state.State{
@@ -111,14 +92,16 @@ var buffStateMap = map[skill.ID][]state.State{
 		state.State(state.Shiverarmor),
 		state.State(state.Chillingarmor),
 	},
-	skill.EnergyShield: {state.State(state.Energyshield)},
-	skill.CycloneArmor: {state.State(state.Cyclonearmor)},
-	skill.Fade:         {state.State(state.Fade)},
-	// skill.BurstOfSpeed: {state.State(state.BurstOfSpeed)}, Not mapped?
-
+	skill.EnergyShield:  {state.State(state.Energyshield)},
+	skill.CycloneArmor:  {state.State(state.Cyclonearmor)},
+	skill.Fade:          {state.State(state.Fade)},
+	skill.BurstOfSpeed:  {state.State(state.Quickness)},
+	skill.BattleOrders:  {state.State(state.Battleorders)},
+	skill.BattleCommand: {state.State(state.Battlecommand)},
 }
 
-func needsRebuff(buff skill.ID, ctx context.Status) bool {
+func skillNeedsRebuff(buff skill.ID) bool {
+	ctx := context.Get()
 	hasState := false
 	if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
 		stateMappings, ok := buffStateMap[buff]
@@ -145,7 +128,7 @@ func IsRebuffRequired() bool {
 		return false
 	}
 
-	if ctaFound(*ctx.Data) && (!ctx.Data.PlayerUnit.States.HasState(state.Battleorders) || !ctx.Data.PlayerUnit.States.HasState(state.Battlecommand)) {
+	if ctaFound(*ctx.Data) && (skillNeedsRebuff(skill.BattleOrders) || skillNeedsRebuff(skill.BattleCommand)) {
 		return true
 	}
 
@@ -153,7 +136,7 @@ func IsRebuffRequired() bool {
 
 	rebuffRequired := false
 	for _, buff := range buffs {
-		rebuffRequired = needsRebuff(buff, *ctx)
+		rebuffRequired = skillNeedsRebuff(buff)
 		if rebuffRequired {
 			return true
 		}
@@ -162,26 +145,28 @@ func IsRebuffRequired() bool {
 	return false
 }
 
-func buffCTA() {
+func buffCTA(otherBuffs []skill.ID) {
 	ctx := context.Get()
 	ctx.SetLastAction("buffCTA")
 
 	if ctaFound(*ctx.Data) {
 		ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
-		// Swap weapon only in case we don't have the CTA, sometimes CTA is already equipped (for example chicken previous game during buff stage)
-		if _, found := ctx.Data.PlayerUnit.Skills[skill.BattleCommand]; !found {
-			step.SwapToCTA()
+		step.SwapToSecondary()
+
+		yells := []skill.ID{
+			skill.BattleCommand,
+			skill.BattleOrders,
 		}
 
-		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
-		utils.Sleep(180)
-		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(180)
-		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
-		utils.Sleep(180)
-		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		for _, yell := range yells {
+			castSkill(yell)
+		}
+
+		// If applicable, cast other buffs while we're holding CTA
+		for _, buff := range otherBuffs {
+			castSkill(buff)
+		}
 
 		utils.Sleep(500)
 		step.SwapToMainWeapon()
@@ -190,10 +175,8 @@ func buffCTA() {
 
 func ctaFound(d game.Data) bool {
 	for _, itm := range d.Inventory.ByLocation(item.LocationEquipped) {
-		_, boFound := itm.FindStat(stat.NonClassSkill, int(skill.BattleOrders))
-		_, bcFound := itm.FindStat(stat.NonClassSkill, int(skill.BattleCommand))
-
-		if boFound && bcFound {
+		ctaFound := itm.RunewordName == item.RunewordCallToArms
+		if ctaFound {
 			return true
 		}
 	}

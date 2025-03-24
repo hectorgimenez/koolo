@@ -3,7 +3,6 @@ package step
 import (
 	"time"
 
-	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/context"
 )
 
@@ -11,15 +10,15 @@ func SwapToMainWeapon() error {
 	return swapWeapon(false)
 }
 
-func SwapToCTA() error {
+func SwapToSecondary() error {
 	return swapWeapon(true)
 }
 
-func swapWeapon(toCTA bool) error {
+func swapWeapon(toSecondary bool) error {
 	lastRun := time.Time{}
 
 	ctx := context.Get()
-	ctx.SetLastStep("SwapToCTA")
+	ctx.SetLastStep("swapWeapon")
 
 	for {
 		// Pause the execution if the priority is not the same as the execution priority
@@ -29,8 +28,10 @@ func swapWeapon(toCTA bool) error {
 			continue
 		}
 
-		_, found := ctx.Data.PlayerUnit.Skills[skill.BattleOrders]
-		if (toCTA && found) || (!toCTA && !found) {
+		onPrimary := ctx.Data.ActiveWeaponSlot == 0
+		needsSwap := (onPrimary && toSecondary) || (!onPrimary && !toSecondary)
+
+		if !needsSwap {
 			return nil
 		}
 
