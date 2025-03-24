@@ -120,9 +120,21 @@ func getGoroutineID() uint64 {
 
 	return id
 }
-
+// Full Data Update
 func (ctx *Context) RefreshGameData() {
 	*ctx.Data = ctx.GameReader.GetData()
+}
+// Partial updates
+func (ctx *Context) RefreshPlayerData() {
+	rawPlayerUnits := ctx.GameReader.GetRawPlayerUnits()
+	mainPlayerUnit := rawPlayerUnits.GetMainPlayer()
+	ctx.Data.PlayerUnit = ctx.GameReader.GetPlayerUnit(mainPlayerUnit)
+}
+func (ctx *Context) RefreshOpenMenus() {
+	ctx.Data.OpenMenus = ctx.GameReader.OpenMenus()
+}
+func (ctx *Context) RefreshHoverData() {
+	ctx.Data.HoverData = ctx.GameReader.HoveredData()
 }
 
 func (ctx *Context) Detach() {
@@ -166,7 +178,7 @@ func (s *Status) PauseIfNotPriority() {
 func (ctx *Context) WaitForGameToLoad() {
 	for ctx.Data.OpenMenus.LoadingScreen {
 		time.Sleep(100 * time.Millisecond)
-		ctx.RefreshGameData()
+		ctx.RefreshOpenMenus()
 	}
 	// Add a small buffer to ensure everything is fully loaded
 	time.Sleep(300 * time.Millisecond)

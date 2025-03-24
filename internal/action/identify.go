@@ -60,6 +60,7 @@ func IdentifyAll(skipIdentify bool) error {
 	step.CloseAllMenus()
 	for !ctx.Data.OpenMenus.Inventory {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
+		ctx.RefreshOpenMenus()
 		utils.Sleep(1000) // Add small delay to allow the game to open the inventory
 	}
 
@@ -90,7 +91,7 @@ func CainIdentify() error {
 	menuWait := time.Now().Add(2 * time.Second)
 	for time.Now().Before(menuWait) {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
+		ctx.RefreshOpenMenus()
 		if ctx.Data.OpenMenus.NPCInteract {
 			break
 		}

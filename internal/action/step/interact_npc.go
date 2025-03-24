@@ -29,6 +29,7 @@ func InteractNPC(npcID npc.ID) error {
 		// Pause the execution if the priority is not the same as the execution priority
 		ctx.PauseIfNotPriority()
 
+		ctx.RefreshOpenMenus()
 		// Check if interaction succeeded and menu is open
 		if ctx.Data.OpenMenus.NPCInteract || ctx.Data.OpenMenus.NPCShop {
 			// Find current NPC position
@@ -74,6 +75,7 @@ func InteractNPC(npcID npc.ID) error {
 		hoverStart := time.Now()
 
 		for time.Since(hoverStart) < hoverWait {
+			ctx.RefreshHoverData()
 			if currentNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone); found && currentNPC.IsHovered {
 				targetNPCID = currentNPC.UnitID
 				ctx.HID.Click(game.LeftButton, x, y)

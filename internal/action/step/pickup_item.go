@@ -36,6 +36,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 	// Casting skill/moving return back
 	for ctx.Data.PlayerUnit.Mode == mode.CastingSkill || ctx.Data.PlayerUnit.Mode == mode.Running || ctx.Data.PlayerUnit.Mode == mode.Walking || ctx.Data.PlayerUnit.Mode == mode.WalkingInTown {
 		time.Sleep(25 * time.Millisecond)
+		ctx.RefreshPlayerData()
 		return ErrCastingMoving
 	}
 
@@ -86,7 +87,7 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 
 	for {
 		ctx.PauseIfNotPriority()
-		ctx.RefreshGameData()
+		ctx.RefreshHoverData()
 
 		// Periodic monster check
 		if time.Since(lastMonsterCheck) > monsterCheckInterval {
@@ -121,9 +122,11 @@ func PickupItem(it data.Item, itemPickupAttempt int) error {
 		// Move cursor directly to target position
 		ctx.HID.MovePointer(cursorX, cursorY)
 		time.Sleep(spiralDelay)
-
+		
+		ctx.RefreshHoverData()
 		// Click on item if mouse is hovering over
-		if currentItem.UnitID == ctx.GameReader.GameReader.GetData().HoverData.UnitID {
+	
+		if currentItem.UnitID == ctx.Data.HoverData.UnitID {
 			ctx.HID.Click(game.LeftButton, cursorX, cursorY)
 			time.Sleep(clickDelay)
 

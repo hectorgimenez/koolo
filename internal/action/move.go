@@ -32,7 +32,7 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 
 	// Wait for area data to sync
 	for attempts := 0; attempts < maxAreaSyncAttempts; attempts++ {
-		ctx.RefreshGameData()
+		ctx.RefreshPlayerData()
 
 		if ctx.Data.PlayerUnit.Area == expectedArea {
 			return nil
@@ -213,7 +213,7 @@ func MoveTo(toFunc func() (data.Position, bool)) error {
 	}
 
 	for {
-		ctx.RefreshGameData()
+		ctx.RefreshPlayerData()
 		to, found := toFunc()
 		if !found {
 			return nil

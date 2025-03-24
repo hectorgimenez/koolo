@@ -152,6 +152,7 @@ func ensureCubeIsOpen() error {
 	ctx := context.Get()
 	ctx.Logger.Debug("Opening Horadric Cube...")
 
+	ctx.RefreshOpenMenus()
 	if ctx.Data.OpenMenus.Cube {
 		ctx.Logger.Debug("Horadric Cube window already open")
 		return nil
@@ -173,6 +174,7 @@ func ensureCubeIsOpen() error {
 	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
 	utils.Sleep(500)
 
+	ctx.RefreshOpenMenus()
 	if ctx.Data.OpenMenus.Cube {
 		ctx.Logger.Debug("Horadric Cube window detected")
 		return nil
