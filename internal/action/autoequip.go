@@ -82,7 +82,7 @@ func isEquippable(i data.Item, target item.LocationType) bool {
 
 	bodyLoc := i.Desc().GetType().BodyLocs
 	// Check item has valid equipment locations
-	if bodyLoc == nil {
+	if len(bodyLoc) == 0 {
 		return false
 	}
 
