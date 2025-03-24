@@ -29,7 +29,7 @@ func wrapWithRecover(logger *slog.Logger, f func() error) func() error {
 				stackTrace := debug.Stack()
 				errMsg := fmt.Sprintf("panic recovered: %v\nStacktrace: %s", r, stackTrace)
 				logger.Error(errMsg)
-				sloggger.FlushLogOnly()
+				sloggger.FlushLog()
 			}
 		}()
 		return f()
@@ -48,13 +48,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error starting logger: %s", err.Error())
 	}
-	defer sloggger.FlushLog()
+	defer sloggger.FlushAndClose()
 
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("fatal error detected, Koolo will close with the following error: %v\n Stacktrace: %s", r, debug.Stack())
 			logger.Error(err.Error())
-			sloggger.FlushLog()
+			sloggger.FlushAndClose()
 			utils.ShowDialog("Koolo error :(", fmt.Sprintf("Koolo will close due to an expected error, please check the latest log file for more info!\n %s", err.Error()))
 		}
 	}()
@@ -161,5 +161,5 @@ func main() {
 		return
 	}
 
-	sloggger.FlushLog()
+	sloggger.FlushAndClose()
 }

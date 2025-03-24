@@ -11,13 +11,13 @@ import (
 
 var logFileHandler *os.File
 
-func FlushLogOnly() {
+func FlushLog() {
 	if logFileHandler != nil {
 		logFileHandler.Sync()
 	}
 }
 
-func FlushLog() error {
+func FlushAndClose() error {
 	if logFileHandler != nil {
 		logFileHandler.Sync()
 		return logFileHandler.Close()
