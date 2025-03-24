@@ -79,40 +79,36 @@ func Buff() {
 	ctx.Logger.Debug("Post CTA Buffing...")
 	for _, buff := range ctx.Char.BuffSkills() {
 		castSkill(buff)
-
 	}
 
+	ctx.LastBuffAt = time.Now()
 }
 
-var buffStateMap = map[skill.ID][]state.State{
-	// map of buff skills and the related states to watch for to indicate that we need a rebuff
-	skill.HolyShield: {state.State(state.Holyshield)},
-	skill.FrozenArmor: {
-		state.State(state.Frozenarmor),
-		state.State(state.Shiverarmor),
-		state.State(state.Chillingarmor),
-	},
-	skill.EnergyShield:  {state.State(state.Energyshield)},
-	skill.CycloneArmor:  {state.State(state.Cyclonearmor)},
-	skill.Fade:          {state.State(state.Fade)},
-	skill.BurstOfSpeed:  {state.State(state.Quickness)},
-	skill.BattleOrders:  {state.State(state.Battleorders)},
-	skill.BattleCommand: {state.State(state.Battlecommand)},
+var buffStateMap = map[skill.ID]state.State{
+	// map of buff skills and the related state to watch for to indicate that we need a rebuff
+	skill.HolyShield:    state.State(state.Holyshield),
+	skill.FrozenArmor:   state.State(state.Frozenarmor),
+	skill.ShiverArmor:   state.State(state.Shiverarmor),
+	skill.ChillingArmor: state.State(state.Chillingarmor),
+	skill.EnergyShield:  state.State(state.Energyshield),
+	skill.CycloneArmor:  state.State(state.Cyclonearmor),
+	skill.Fade:          state.State(state.Fade),
+	skill.BurstOfSpeed:  state.State(state.Quickness),
+	skill.BattleOrders:  state.State(state.Battleorders),
+	skill.BattleCommand: state.State(state.Battlecommand),
 }
 
 func skillNeedsRebuff(buff skill.ID) bool {
 	ctx := context.Get()
 	hasState := false
 	if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff); found {
-		stateMappings, ok := buffStateMap[buff]
+		neededState, ok := buffStateMap[buff]
 		if ok {
-			for _, neededState := range stateMappings {
-				if ctx.Data.PlayerUnit.States.HasState(neededState) {
-					hasState = true
-				}
+			if ctx.Data.PlayerUnit.States.HasState(neededState) {
+				hasState = true
 			}
 		} else {
-			ctx.Logger.Error("Tried to buff with unimplemented buff state", slog.Any("skillID", buff))
+			ctx.Logger.Error("Tried to buff with unimplemented buff state", slog.Any("Buff", buff.Desc().Name))
 			return false
 		}
 	}
