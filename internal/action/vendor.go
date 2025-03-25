@@ -8,6 +8,7 @@ import (
 	"github.com/hectorgimenez/koolo/internal/town"
 	"github.com/lxn/win"
 
+	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 )
@@ -23,12 +24,36 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 	ctx.Logger.Info("Visiting vendor...", slog.Bool("forceRefill", forceRefill))
 
 	vendorNPC := town.GetTownByArea(ctx.Data.PlayerUnit.Area).RefillNPC()
+	if vendorNPC == npc.Ormus && town.ShouldBuyKeys() {
+		vendorNPC = npc.Hratli
+		if err := InteractNPC(vendorNPC); err != nil {
+			ctx.Logger.Debug("Failed to interact with Hratli, moving to his position")
+			if err := MoveToCoords(data.Position{X: 5224, Y: 5045}); err != nil {
+				return err
+			}
+			if err := InteractNPC(vendorNPC); err != nil {
+				return err
+			}
+		}
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+		SwitchStashTab(4)
+		ctx.RefreshGameData()
+		if sellJunk {
+			town.SellJunk()
+		}
+		town.BuyConsumables(forceRefill)
+		if err := step.CloseAllMenus(); err != nil {
+			return err
+		}
+		vendorNPC = npc.Ormus
+	}
+
 	if vendorNPC == npc.Drognan {
-		_, needsBuy := town.ShouldBuyKeys()
-		if needsBuy {
+		if town.ShouldBuyKeys() {
 			vendorNPC = npc.Lysander
 		}
 	}
+
 	err := InteractNPC(vendorNPC)
 	if err != nil {
 		return err
@@ -102,5 +127,5 @@ func shouldVisitVendor() bool {
 		return false
 	}
 
-	return ctx.BeltManager.ShouldBuyPotions() || town.ShouldBuyTPs() || town.ShouldBuyIDs()
+	return ctx.BeltManager.ShouldBuyPotions() || town.ShouldBuyTPs() || town.ShouldBuyIDs() || town.ShouldBuyKeys()
 }
