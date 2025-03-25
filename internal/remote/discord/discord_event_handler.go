@@ -43,6 +43,9 @@ func (b *Bot) shouldPublish(e event.Event) bool {
 
 	switch evt := e.(type) {
 	case event.GameFinishedEvent:
+		if evt.Reason == event.FinishedError {
+			return config.Koolo.Discord.EnableDiscordErrorMessages
+		}
 		if evt.Reason == event.FinishedChicken || evt.Reason == event.FinishedMercChicken || evt.Reason == event.FinishedDied {
 			return config.Koolo.Discord.EnableDiscordChickenMessages
 		}

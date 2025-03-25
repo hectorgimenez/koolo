@@ -84,7 +84,7 @@ func (s *SinglePlayerSupervisor) Start() error {
 			if config.Characters[s.name].Game.RandomizeRuns {
 				rand.Shuffle(len(runs), func(i, j int) { runs[i], runs[j] = runs[j], runs[i] })
 			}
-			event.Send(event.GameCreated(event.Text(s.name, "New game created"), "", ""))
+			event.Send(event.GameCreated(event.Text(s.name, "New game created"), s.bot.ctx.GameReader.LastGameName(), s.bot.ctx.GameReader.LastGamePass()))
 			s.bot.ctx.LastBuffAt = time.Time{}
 			s.logGameStart(runs)
 
@@ -255,7 +255,7 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 			utils.Sleep(1000)
 
 			for range 5 {
-				if s.bot.ctx.GameReader.IsInCharacterCreationScreen() && s.bot.ctx.GameReader.IsOnline() {
+				if s.bot.ctx.GameReader.IsInCharacterSelectionScreen() && s.bot.ctx.GameReader.IsOnline() {
 					break
 				}
 
@@ -286,4 +286,3 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)
 
 	return nil
-}
