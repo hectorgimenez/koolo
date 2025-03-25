@@ -42,17 +42,17 @@ func BuffIfRequired() {
 func Buff() {
 	ctx := context.Get()
 	ctx.SetLastAction("Buff")
+	ctx.Logger.Debug("WEAPON CACHE CHECKPOINT",
+		slog.Bool("cache_valid", ctx.WeaponBonusCache.IsValid),
+		slog.Any("cache_data", ctx.WeaponBonusCache))
 
 	if ctx.Data.PlayerUnit.Area.IsTown() || time.Since(ctx.LastBuffAt) < time.Second*30 {
 		return
 	}
 
-	// Check if we're in loading screen
 	if ctx.Data.OpenMenus.LoadingScreen {
 		ctx.Logger.Debug("Loading screen detected. Waiting for game to load before buffing...")
 		ctx.WaitForGameToLoad()
-
-		// Give it half a second more
 		utils.Sleep(500)
 	}
 
@@ -68,12 +68,20 @@ func Buff() {
 
 	if len(preKeys) > 0 {
 		ctx.Logger.Debug("PRE CTA Buffing...")
+		if ctx.WeaponBonusCache.IsValid {
+			ctx.Logger.Debug("PRE CTA Buffing with Best Weapon Slot...")
+			bestSlot := getBestWeaponSlot(ctx)
+			if bestSlot != getCurrentWeaponSlot(ctx) {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+				utils.Sleep(200)
+			}
+		}
 		for _, kb := range preKeys {
-			utils.Sleep(100)
+			utils.Sleep(200)
 			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
+			utils.Sleep(280)
 			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
+			utils.Sleep(200)
 		}
 	}
 
@@ -92,13 +100,28 @@ func Buff() {
 	if len(postKeys) > 0 {
 		ctx.Logger.Debug("Post CTA Buffing...")
 
-		for _, kb := range postKeys {
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(180)
-			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(100)
+		if ctx.WeaponBonusCache.IsValid {
+			ctx.Logger.Debug("POST CTA Buffing with Best Weapon Slot...")
+			bestSlot := getBestWeaponSlot(ctx)
+			if bestSlot != getCurrentWeaponSlot(ctx) {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+				utils.Sleep(200)
+			}
 		}
+
+		for _, kb := range postKeys {
+			utils.Sleep(200)
+			ctx.HID.PressKeyBinding(kb)
+			utils.Sleep(280)
+			ctx.HID.Click(game.RightButton, 640, 340)
+			utils.Sleep(200)
+		}
+		// I have to exclude Berserker from this because "ctx.Data.PlayerUnit.Skills[skill.BattleOrders]" will always be true
+		// and he will not swap weapons to buff righ now
+		if ctx.CharacterCfg.Character.Class != "berserker" {
+			step.SwapToMainWeapon()
+		}
+
 		ctx.LastBuffAt = time.Now()
 	}
 }
@@ -151,11 +174,15 @@ func buffCTA() {
 		}
 
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
-		utils.Sleep(180)
+		utils.Sleep(280)
 		ctx.HID.Click(game.RightButton, 300, 300)
-		utils.Sleep(100)
+		utils.Sleep(200)
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
+		utils.Sleep(280)
+		ctx.HID.Click(game.RightButton, 300, 300)
+		utils.Sleep(200)
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
-		utils.Sleep(180)
+		utils.Sleep(280)
 		ctx.HID.Click(game.RightButton, 300, 300)
 		utils.Sleep(100)
 
@@ -175,4 +202,105 @@ func ctaFound(d game.Data) bool {
 	}
 
 	return false
+}
+
+func buildGearCache() {
+	ctx := context.Get()
+	// Since this currently has a dependency on havening CTA, we skip this now for Berserker
+	if ctx.CharacterCfg.Character.Class == "berserker" {
+		ctx.WeaponBonusCache.IsValid = false
+		ctx.Logger.Debug("Skipping gear cache build for Berserker")
+		return
+	}
+	currentSlot := getCurrentWeaponSlot(ctx)
+	hasCTA := ctaFound(*ctx.Data)
+
+	if currentSlot != 1 {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+		ctx.RefreshGameData()
+		utils.Sleep(200)
+	}
+	ctx.WeaponBonusCache.Slot1AllClassBonus = calculateAllPlusClassBonus(ctx)
+	utils.Sleep(200)
+
+	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+	ctx.RefreshGameData()
+	utils.Sleep(200)
+	ctx.WeaponBonusCache.Slot2AllClassBonus = calculateAllPlusClassBonus(ctx)
+	utils.Sleep(200)
+
+	step.SwapToMainWeapon()
+
+	ctx.WeaponBonusCache.IsValid = hasCTA
+
+	ctx.Logger.Debug("Weapon bonus cache built",
+		slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
+		slog.Int("slot2_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
+		slog.Bool("has_cta", hasCTA),
+		slog.Bool("is_cache_valid", ctx.WeaponBonusCache.IsValid),
+	)
+
+	if !hasCTA {
+		ctx.Logger.Debug("CTA not found - cache marked invalid")
+	}
+}
+
+// Here we calculate all the bonuses from the player's gear and skills
+// and return the total bonus for the All +Skills (ID 127) and +AddClassSkills (ID 83) stats.
+// Right now we ignore +SpecificSkills from Stat ID 97, until we build a UseCase for it.
+func calculateAllPlusClassBonus(ctx *context.Status) int {
+	total := 0
+
+	allSkills := 0
+	for layer := 0; layer < 10; layer++ {
+		if s, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.AllSkills, layer); found {
+			allSkills += s.Value
+		}
+	}
+	total += allSkills
+
+	classSkills := 0
+	for layer := 0; layer < 10; layer++ {
+		if s, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.AddClassSkills, layer); found {
+			classSkills += s.Value
+		}
+	}
+	total += classSkills
+
+	ctx.Logger.Debug("Skill Bonus Calculation",
+		slog.Int("all_skills", allSkills),
+		slog.Int("class_skills", classSkills),
+		slog.Int("total_bonus", total),
+		slog.Int("class_id", int(ctx.Data.PlayerUnit.Class)),
+	)
+
+	return total
+}
+
+func getBestWeaponSlot(ctx *context.Status) int {
+	if !ctx.WeaponBonusCache.IsValid {
+		ctx.Logger.Debug("Cache invalid - using default slot 1")
+		return 1
+	}
+
+	if ctx.WeaponBonusCache.Slot1AllClassBonus >= ctx.WeaponBonusCache.Slot2AllClassBonus {
+		ctx.Logger.Debug("Selected slot 1 as best weapon slot",
+			slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
+			slog.Int("slot2_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
+		)
+		return 1
+	} else {
+		ctx.Logger.Debug("Selected slot 2 as best weapon slot",
+			slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
+			slog.Int("slot2_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
+		)
+		return 2
+	}
+}
+
+func getCurrentWeaponSlot(ctx *context.Status) int {
+	if _, found := ctx.Data.PlayerUnit.Skills[skill.BattleOrders]; found {
+		return 2
+	}
+	return 1
 }

@@ -35,6 +35,12 @@ type Status struct {
 	Priority Priority
 }
 
+type WeaponBonusCache struct {
+	IsValid            bool
+	Slot1AllClassBonus int
+	Slot2AllClassBonus int
+}
+
 type Context struct {
 	Name              string
 	ExecutionPriority Priority
@@ -53,6 +59,7 @@ type Context struct {
 	LastBuffAt        time.Time
 	ContextDebug      map[Priority]*Debug
 	CurrentGame       *CurrentGameHelper
+	WeaponBonusCache  WeaponBonusCache
 }
 
 type Debug struct {
