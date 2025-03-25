@@ -75,9 +75,8 @@ func Buff() {
 	}
 
 	hasCTA := ctaFound(*ctx.Data)
-	buffWithCTA := true
 	if hasCTA {
-		if buffWithCTA {
+		if ctx.CharacterCfg.Character.BuffWithCTA {
 			buffCTA(ctx.Char.BuffSkills())
 		} else {
 			buffCTA([]skill.ID{})
@@ -85,7 +84,7 @@ func Buff() {
 	}
 
 	ctx.Logger.Debug("Post CTA Buffing...")
-	if !hasCTA || !buffWithCTA {
+	if !hasCTA || !ctx.CharacterCfg.Character.BuffWithCTA {
 		for _, buff := range ctx.Char.BuffSkills() {
 			castSkill(buff)
 		}
@@ -155,7 +154,6 @@ func buffCTA(otherBuffs []skill.ID) {
 	ctx := context.Get()
 	ctx.SetLastAction("buffCTA")
 
-	// if ctaFound(*ctx.Data) {
 	ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
 	step.SwapToSecondary()
@@ -176,7 +174,6 @@ func buffCTA(otherBuffs []skill.ID) {
 
 	utils.Sleep(500)
 	step.SwapToMainWeapon()
-	// }
 }
 
 func ctaFound(d game.Data) bool {

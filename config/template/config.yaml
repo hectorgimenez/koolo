@@ -55,6 +55,7 @@ character:
   useMerc: true
   stashToShared: false
   useTeleport: true # If set to false, bot will not use teleport skill and will walk to the destination
+  buffWithCTA: false # If set to true, bot will cast buffs during CTA switch, if applicable
 
 game:
   minGoldPickupThreshold: 500000 # If total gold amount is less than this, bot will pick up and sell magic+ items

@@ -794,6 +794,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Character.Class = r.Form.Get("characterClass")
 		cfg.Character.StashToShared = r.Form.Has("characterStashToShared")
 		cfg.Character.UseTeleport = r.Form.Has("characterUseTeleport")
+		cfg.Character.BuffWithCTA = r.Form.Has("buffWithCTA")
 
 		// Berserker Barb specific options
 		if cfg.Character.Class == "berserker" {

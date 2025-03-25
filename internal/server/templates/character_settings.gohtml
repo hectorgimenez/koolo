@@ -165,6 +165,12 @@
                     Identify with Cain
                 </label>
             </fieldset>
+            <fieldset class="grid">
+                <label>
+                    <input type="checkbox" name="buffWithCTA" {{ if .Config.Character.BuffWithCTA }}checked{{ end }}/>
+                    Cast buffs with CTA when available
+                </label>
+            </fieldset>
             <label>
                 Minimum Gold (will pick up Magic+ to sell for gold if below)
                 <input min="0" type="number" name="gameMinGoldPickupThreshold"
