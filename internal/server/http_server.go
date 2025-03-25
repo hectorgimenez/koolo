@@ -836,6 +836,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			cfg.Character.MosaicSin.UseClawsOfThunder = r.Form.Has("mosaicUseClawsOfThunder")
 			cfg.Character.MosaicSin.UseBladesOfIce = r.Form.Has("mosaicUseBladesOfIce")
 			cfg.Character.MosaicSin.UseFistsOfFire = r.Form.Has("mosaicUseFistsOfFire")
+			cfg.Character.MosaicSin.UsePhoenixStrike = r.Form.Has("mosaicUsePhoenixStrike")
 		}
 
 		for y, row := range cfg.Inventory.InventoryLock {
