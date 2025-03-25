@@ -961,7 +961,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 
 		// Gambling
 		cfg.Gambling.Enabled = r.Form.Has("gamblingEnabled")
-
+		cfg.Gambling.LessRefresh = r.Form.Has("lessrefreshEnabled")
+		cfg.Gambling.GambleMap = r.Form.Has("gamblemapEnabled")
 		// Cube Recipes
 		cfg.CubeRecipes.Enabled = r.Form.Has("enableCubeRecipes")
 		enabledRecipes := r.Form["enabledRecipes"]
