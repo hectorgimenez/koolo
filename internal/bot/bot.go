@@ -163,7 +163,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 				}
 
 				if (b.ctx.CharacterCfg.BackToTown.NoHpPotions && !healingPotsFound ||
-					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.RepairRequired() ||
+					b.ctx.CharacterCfg.BackToTown.EquipmentBroken && action.IsEquipmentBroken() ||
 					b.ctx.CharacterCfg.BackToTown.NoMpPotions && !manaPotsFound ||
 					b.ctx.CharacterCfg.BackToTown.NoKeys && keyQuantity < 2 ||
 					b.ctx.CharacterCfg.BackToTown.MercDied && b.ctx.Data.MercHPPercent() <= 0 && b.ctx.CharacterCfg.Character.UseMerc) &&
@@ -209,7 +209,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 			case <-ctx.Done():
 				return nil
 			default:
-				event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("")), r.Name()))
+				event.Send(event.RunStarted(event.Text(b.ctx.Name, fmt.Sprintf("Starting run: %s", r.Name())), r.Name()))
 				err = action.PreRun(firstRun)
 				if err != nil {
 					return err
@@ -234,7 +234,7 @@ func (b *Bot) Run(ctx context.Context, firstRun bool, runs []run.Run) error {
 					runFinishReason = event.FinishedOK
 				}
 
-				event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("")), r.Name(), runFinishReason))
+				event.Send(event.RunFinished(event.Text(b.ctx.Name, fmt.Sprintf("Finished run: %s", r.Name())), r.Name(), runFinishReason))
 
 				if err != nil {
 					return err

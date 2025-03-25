@@ -2,7 +2,6 @@ package town
 
 import (
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -125,8 +124,6 @@ func ShouldBuyKeys() bool {
 			}
 		}
 	}
-
-	ctx.Logger.Debug("Keys in locked inventory", slog.Int("quantity", totalKeys))
 	return totalKeys < 5
 }
 
@@ -187,9 +184,8 @@ func ItemsToBeSold() (items []data.Item) {
 			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
 				continue
 			}
+			items = append(items, itm)
 		}
-
-		items = append(items, itm)
 	}
 
 	return
