@@ -653,6 +653,7 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.Discord.EnableNewRunMessages = r.Form.Has("enable_new_run_messages")
 		newConfig.Discord.EnableRunFinishMessages = r.Form.Has("enable_run_finish_messages")
 		newConfig.Discord.EnableDiscordChickenMessages = r.Form.Has("enable_discord_chicken_messages")
+		newConfig.Discord.EnableDiscordErrorMessages = r.Form.Has("enable_discord_error_messages")
 
 		// Discord admins who can use bot commands
 		discordAdmins := r.Form.Get("discord_admins")
