@@ -46,6 +46,7 @@ func PreRun(firstRun bool) error {
 	Stash(false)
 
 	CubeRecipes()
+	MakeRunewords()
 
 	// Leveling related checks
 	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
@@ -93,6 +94,7 @@ func InRunReturnTownRoutine() error {
 	Gamble()
 	Stash(false)
 	CubeRecipes()
+	MakeRunewords()
 
 	if ctx.CharacterCfg.Game.Leveling.EnsurePointsAllocation {
 		EnsureStatPoints()
