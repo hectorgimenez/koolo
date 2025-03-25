@@ -27,9 +27,7 @@ const (
 func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 	// Skip sync check if we're already in the expected area and have valid area data
 	if ctx.Data.PlayerUnit.Area == expectedArea {
-		if areaData, ok := ctx.Data.Areas[expectedArea]; ok && areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-			return nil
-		}
+		return nil
 	}
 
 	// Wait for area data to sync
@@ -37,11 +35,7 @@ func ensureAreaSync(ctx *context.Status, expectedArea area.ID) error {
 		ctx.RefreshGameData()
 
 		if ctx.Data.PlayerUnit.Area == expectedArea {
-			if areaData, ok := ctx.Data.Areas[expectedArea]; ok {
-				if areaData.IsInside(ctx.Data.PlayerUnit.Position) {
-					return nil
-				}
-			}
+			return nil
 		}
 
 		time.Sleep(areaSyncDelay)
