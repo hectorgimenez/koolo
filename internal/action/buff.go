@@ -74,11 +74,21 @@ func Buff() {
 		castSkill(buff)
 	}
 
-	buffCTA([]skill.ID{}) // Future place for buffs to be cast with CTA weapon set
+	hasCTA := ctaFound(*ctx.Data)
+	buffWithCTA := true
+	if hasCTA {
+		if buffWithCTA {
+			buffCTA(ctx.Char.BuffSkills())
+		} else {
+			buffCTA([]skill.ID{})
+		}
+	}
 
 	ctx.Logger.Debug("Post CTA Buffing...")
-	for _, buff := range ctx.Char.BuffSkills() {
-		castSkill(buff)
+	if !hasCTA || !buffWithCTA {
+		for _, buff := range ctx.Char.BuffSkills() {
+			castSkill(buff)
+		}
 	}
 
 	ctx.LastBuffAt = time.Now()
@@ -145,28 +155,28 @@ func buffCTA(otherBuffs []skill.ID) {
 	ctx := context.Get()
 	ctx.SetLastAction("buffCTA")
 
-	if ctaFound(*ctx.Data) {
-		ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
+	// if ctaFound(*ctx.Data) {
+	ctx.Logger.Debug("CTA found: swapping weapon and casting Battle Command / Battle Orders")
 
-		step.SwapToSecondary()
+	step.SwapToSecondary()
 
-		yells := []skill.ID{
-			skill.BattleCommand,
-			skill.BattleOrders,
-		}
-
-		for _, yell := range yells {
-			castSkill(yell)
-		}
-
-		// If applicable, cast other buffs while we're holding CTA
-		for _, buff := range otherBuffs {
-			castSkill(buff)
-		}
-
-		utils.Sleep(500)
-		step.SwapToMainWeapon()
+	yells := []skill.ID{
+		skill.BattleCommand,
+		skill.BattleOrders,
 	}
+
+	for _, yell := range yells {
+		castSkill(yell)
+	}
+
+	// If applicable, cast other buffs while we're holding CTA
+	for _, buff := range otherBuffs {
+		castSkill(buff)
+	}
+
+	utils.Sleep(500)
+	step.SwapToMainWeapon()
+	// }
 }
 
 func ctaFound(d game.Data) bool {
