@@ -2,6 +2,7 @@ package town
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -64,15 +65,10 @@ func BuyConsumables(forceRefill bool) {
 		}
 	}
 
-	keyQuantity, shouldBuyKeys := ShouldBuyKeys()
-	if ctx.Data.PlayerUnit.Class != data.Assassin && (shouldBuyKeys || forceRefill) {
+	if ctx.Data.PlayerUnit.Class != data.Assassin && (ShouldBuyKeys() || forceRefill) {
 		if itm, found := ctx.Data.Inventory.Find(item.Key, item.LocationVendor); found {
 			ctx.Logger.Debug("Vendor with keys detected, provisioning...")
-
-			qty, _ := itm.FindStat(stat.Quantity, 0)
-			if (qty.Value + keyQuantity) <= 12 {
-				buyFullStack(itm)
-			}
+			buyFullStack(itm)
 		}
 	}
 }
@@ -110,18 +106,28 @@ func ShouldBuyIDs() bool {
 	return qty.Value < 10 || !found
 }
 
-func ShouldBuyKeys() (int, bool) {
-	keys, found := context.Get().Data.Inventory.Find(item.Key, item.LocationInventory)
-	if !found {
-		return 12, false
+func ShouldBuyKeys() bool {
+	ctx := context.Get()
+
+	// only consider keys when option is checked
+	if !ctx.CharacterCfg.BackToTown.NoKeys {
+		return false
 	}
 
-	qty, found := keys.FindStat(stat.Quantity, 0)
-	if found && qty.Value >= 12 {
-		return 12, false
+	totalKeys := 0
+
+	// only keys in locked inventory
+	for _, itm := range ctx.Data.Inventory.ByLocation(item.LocationInventory) {
+		if itm.Name == item.Key && ctx.Data.CharacterCfg.Inventory.InventoryLock[itm.Position.Y][itm.Position.X] == 0 {
+			qty, found := itm.FindStat(stat.Quantity, 0)
+			if found {
+				totalKeys += qty.Value
+			}
+		}
 	}
 
-	return qty.Value, true
+	ctx.Logger.Debug("Keys in locked inventory", slog.Int("quantity", totalKeys))
+	return totalKeys < 5
 }
 
 func SellJunk() {
@@ -168,7 +174,7 @@ func ItemsToBeSold() (items []data.Item) {
 			continue
 		}
 
-		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == item.Key || itm.Name == "WirtsLeg" {
+		if itm.Name == item.TomeOfTownPortal || itm.Name == item.TomeOfIdentify || itm.Name == "WirtsLeg" {
 			continue
 		}
 
@@ -181,8 +187,9 @@ func ItemsToBeSold() (items []data.Item) {
 			if _, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAll(itm); result == nip.RuleResultFullMatch && !itm.IsPotion() {
 				continue
 			}
-			items = append(items, itm)
 		}
+
+		items = append(items, itm)
 	}
 
 	return

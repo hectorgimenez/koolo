@@ -107,12 +107,12 @@ func InRunReturnTownRoutine() error {
 	ReviveMerc()
 	HireMerc()
 	Repair()
-	
-	if (ctx.CharacterCfg.Companion.Leader) {
+
+	if ctx.CharacterCfg.Companion.Leader {
 		UsePortalInTown()
 		utils.Sleep(500)
 		return OpenTPIfLeader()
 	}
-	
+
 	return UsePortalInTown()
 }
