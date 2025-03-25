@@ -40,6 +40,8 @@ type KooloCfg struct {
 	GameWindowArrangement bool   `yaml:"gameWindowArrangement"`
 	LogSaveDirectory      string `yaml:"logSaveDirectory"`
 	D2LoDPath             string `yaml:"D2LoDPath"`
+	UseMapServer          bool   `yaml:"useMapServer"`
+	MapServerHost         string `yaml:"mapServerHost"`
 	D2RPath               string `yaml:"D2RPath"`
 	CentralizedPickitPath string `yaml:"centralizedPickitPath"`
 	Discord               struct {

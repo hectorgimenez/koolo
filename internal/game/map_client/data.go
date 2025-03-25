@@ -1,5 +1,12 @@
 package map_client
 
+type serverDifficulty struct {
+	ID         string        `json:"id"`
+	Seed       int           `json:"seed"`
+	Difficulty int           `json:"difficulty"`
+	Levels     []serverLevel `json:"levels"`
+}
+
 type serverLevel struct {
 	Type   string         `json:"type"`
 	ID     int            `json:"id"`
