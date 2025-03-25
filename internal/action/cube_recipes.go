@@ -391,6 +391,18 @@ var (
 			Name:  "Upgraded Gorerider",
 			Items: []string{"WarBoots", "KoRune", "LemRune", "PerfectDiamond"},
 		},
+
+		// Upgrade Swordback x1
+		{
+			Name: "Upgraded Swordback x1",
+			Items: []string{"SpikedShield", "TalRune", "ShaelRune", "PerfectDiamond"}
+		},
+
+		// Upgrade Swordback x2
+		{
+			Name: "Upgraded Swordback x2",
+			Items: []string{"BarbedShield", "KoRune", "LemRune", "PerfectDiamond"}
+		},
 	}
 )
 
@@ -522,17 +534,18 @@ func hasItemsForRecipe(ctx *context.Status, recipe CubeRecipe) ([]data.Item, boo
 	}
 	//TODO: include slice of all upgrade recipes and pass Item.identifiedName to function
 	if recipe.Name == "Upgraded Magefist" || recipe.Name == "Double Upgraded Magefist" {
-		// return upgradeArmor(ctx, recipe, "Magefist")
 		return upgradeArmor(ctx, recipe, "Magefist")
 	}
 	if recipe.Name == "Upgraded Trang-ouls" {
-		// return upgradeArmor(ctx, recipe, "Trang-Oul's Claws")
 		return upgradeArmor(ctx, recipe, "Trang-Oul's Claws")
 	}
 
 	if recipe.Name == "Upgraded Gorerider" {
-		// return upgradeArmor(ctx, recipe, "Gorerider")
 		return upgradeArmor(ctx, recipe, "Gorerider")
+	}
+
+	if recipe.Name == "Upgraded Swordback x1" || recipe.Name == "Upgraded Swordback x2" {
+		return upgradeArmor(ctx, recipe, "Swordback Hold")
 	}
 
 	recipeItems := make(map[string]int)

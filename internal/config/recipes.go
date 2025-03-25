@@ -6,6 +6,8 @@ var AvailableRecipes = []string{
 	"Double Upgraded Magefist",
 	"Upgraded Trang-ouls",
 	"Upgraded Gorerider",
+	"Upgraded Swordback x1",
+	"Upgraded Swordback x2",
 	"Perfect Amethyst",
 	"Perfect Diamond",
 	"Perfect Emerald",
