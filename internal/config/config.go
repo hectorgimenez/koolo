@@ -192,6 +192,7 @@ type CharacterCfg struct {
 			FocusOnElitePacks             bool `yaml:"focusOnElitePacks"`
 			DisableItemPickupDuringBosses bool `yaml:"disableItemPickupDuringBosses"`
 			AttackFromDistance            int  `yaml:"attackFromDistance"`
+			SealPop                       bool `yaml:"sealPop"`
 		} `yaml:"diablo"`
 		Baal struct {
 			KillBaal    bool `yaml:"killBaal"`
