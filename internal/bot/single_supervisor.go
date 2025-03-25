@@ -286,3 +286,4 @@ func (s *SinglePlayerSupervisor) HandleOutOfGameFlow() error {
 	// TODO: Maybe expand this with functionality to create new characters if the currently configured char isn't found? :)
 
 	return nil
+}

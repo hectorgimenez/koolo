@@ -394,14 +394,14 @@ var (
 
 		// Upgrade Swordback x1
 		{
-			Name: "Upgraded Swordback x1",
-			Items: []string{"SpikedShield", "TalRune", "ShaelRune", "PerfectDiamond"}
+			Name:  "Upgraded Swordback x1",
+			Items: []string{"SpikedShield", "TalRune", "ShaelRune", "PerfectDiamond"},
 		},
 
 		// Upgrade Swordback x2
 		{
-			Name: "Upgraded Swordback x2",
-			Items: []string{"BarbedShield", "KoRune", "LemRune", "PerfectDiamond"}
+			Name:  "Upgraded Swordback x2",
+			Items: []string{"BarbedShield", "KoRune", "LemRune", "PerfectDiamond"},
 		},
 	}
 )
