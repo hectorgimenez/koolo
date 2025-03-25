@@ -140,6 +140,10 @@
                         <input type="checkbox" name="enable_discord_chicken_messages" value="{{ .Discord.EnableDiscordChickenMessages }}" {{ if .Discord.EnableDiscordChickenMessages }} checked="checked" {{ end }} />
                         Enable Chicken/Death Messages
                     </label>
+                    <label>
+                        <input type="checkbox" name="enable_discord_error_messages" value="{{ .Discord.EnableDiscordErrorMessages }}" {{ if .Discord.EnableDiscordErrorMessages }} checked="checked" {{ end }} />
+                        Enable Error Messages
+                    </label>
                 </fieldset>
                 <h4>Telegram integration</h4>
                 <label>
