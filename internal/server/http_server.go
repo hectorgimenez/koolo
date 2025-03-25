@@ -924,6 +924,8 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 			}
 			cfg.Game.Diablo.AttackFromDistance = attackFromDistance
 		}
+		cfg.Game.Summoner.ClearArea = r.Form.Has("gameSummonerClearArea")
+		cfg.Game.Summoner.ClearGhosts = r.Form.Has("gameSummonerClearGhosts")
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
 

@@ -19,6 +19,13 @@
     </fieldset>
 {{ end }}
 
+{{ define "summoner" }}
+    <fieldset>
+        <label><input type="checkbox" name="gameSummonerClearArea" {{ if .Config.Game.Summoner.ClearArea }}checked{{ end }}> Clear Area</label>
+        <label><input type="checkbox" name="gameSummonerClearGhosts" {{ if .Config.Game.Summoner.ClearGhosts }}checked{{ end }}> Clear Ghosts</label>
+    </fieldset>
+{{ end }}
+
 {{ define "pindleskin" }}
     <fieldset>
         <label>Skip on immunities</label>
