@@ -168,7 +168,9 @@ func (s PaladinLeveling) StatPoints() map[stat.ID]int {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
-	if lvl.Value < 21 {
+	if lvl.Value <= 6 {
+		statPoints[stat.Vitality] = 9999
+	} else if lvl.Value < 21 {
 		statPoints[stat.Strength] = 0
 		statPoints[stat.Dexterity] = 25
 		statPoints[stat.Vitality] = 150
