@@ -3,7 +3,7 @@ maxGameLength: 500 # Max game length (in seconds), bot will try to quit game arr
 # Required to avoid the 30 days not logged issue, since the game requires internet connection even to play offline
 username: '' # Battle.net username
 password: '' # Battle.net pwd
-realm: 'eu.actual.battle.net' # Battle.net realm (kr.actual.battle.net, us.actual.battle.net, eu.actual.battle.net)
+realm: 'us.actual.battle.net' # Battle.net realm (kr.actual.battle.net, us.actual.battle.net, eu.actual.battle.net)
 authMethod: 'None' # Authentication method the bot will use (None, BattleNetClient, UsernamePassword)
 characterName: '' # If left empty, koolo will use first listed character, if name is wrong, it will fail to create the game
 commandLineArgs: '' # Command line arguments for D2

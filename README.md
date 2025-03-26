@@ -69,6 +69,21 @@ There are some considerations to take into account:
 - If there is an error on the NIP file or Koolo can not understand it, the application will not start.
 - Pickit rules can not be changed in runtime (yet), you will need to restart Koolo to apply changes.
 
+## Map Server
+In some instances there are access violation (Diablo 2 error 0xc0000005) issues running the map tool (koolo-map.exe).  In this case a persistent map server can be used based on the [same tool](https://github.com/blacha/diablo2/tree/master/packages/map) the included map tool uses.
+
+This is also useful if you wish to host the collision map generation on a separate system and/or have multiple systems share a single instance to generate collision data.
+
+The included Dockerfile will allow creating and running the tool.
+
+To build the container run `docker build -t koolo-map:latest -f tools/map/Dockerfile .` from the project directory.
+
+Once built it can be run with `docker run -v "/C/Program Files (x86)/Diablo II":/app/game --rm -d -p 8899:8899 koolo-map:latest`
+
+The volume should be the location of your Diablo II 1.13c install.
+
+Remove the `-d` flag if you'd prefer to run it in a window rather than as a daemon.
+
 ## Development environment
 **Note:** This is only required if you want to build the project from source. If you want to run the bot, you can just download the [latest release](https://github.com/hectorgimenez/koolo/releases).
 

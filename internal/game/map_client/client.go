@@ -3,7 +3,9 @@ package map_client
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -16,6 +18,52 @@ import (
 )
 
 func GetMapData(seed string, difficulty difficulty.Difficulty) (MapData, error) {
+	if config.Koolo.UseMapServer {
+		seedInt, err := strconv.Atoi(seed)
+		if err != nil {
+			return nil, fmt.Errorf("invalid seed value: %w", err)
+		}
+
+		return getMapFromServer(config.Koolo.MapServerHost, fmt.Sprintf("0x%x", seedInt), difficulty)
+	}
+
+	return getMapFromGame(seed, difficulty)
+}
+
+func getMapFromServer(host, seed string, difficulty difficulty.Difficulty) (MapData, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/v1/map/%s/%s.json", host, seed, getDifficultyAsNum(difficulty)), nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request to map server: %w", err)
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching map data from map server: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error fetching map data from map server: %s", res.Status)
+	}
+
+	var difficultyData serverDifficulty
+
+	err = json.NewDecoder(res.Body).Decode(&difficultyData)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding map data from map server: %w", err)
+	}
+
+	cleanLevels := make([]serverLevel, 0)
+	for _, lvl := range difficultyData.Levels {
+		if lvl.Type != "" && len(lvl.Map) > 0 {
+			cleanLevels = append(cleanLevels, lvl)
+		}
+	}
+
+	return cleanLevels, nil
+}
+
+func getMapFromGame(seed string, difficulty difficulty.Difficulty) (MapData, error) {
 	cmd := exec.Command("./tools/koolo-map.exe", config.Koolo.D2LoDPath, "-s", seed, "-d", getDifficultyAsNum(difficulty))
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	stdout, err := cmd.Output()

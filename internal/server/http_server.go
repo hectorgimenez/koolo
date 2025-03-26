@@ -641,6 +641,8 @@ func (s *HttpServer) config(w http.ResponseWriter, r *http.Request) {
 		newConfig.FirstRun = false // Disable the welcome assistant
 		newConfig.D2RPath = r.Form.Get("d2rpath")
 		newConfig.D2LoDPath = r.Form.Get("d2lodpath")
+		newConfig.UseMapServer = r.Form.Get("use_map_server") == "true"
+		newConfig.MapServerHost = r.Form.Get("map_server_host")
 		newConfig.CentralizedPickitPath = r.Form.Get("centralized_pickit_path")
 		newConfig.UseCustomSettings = r.Form.Get("use_custom_settings") == "true"
 		newConfig.GameWindowArrangement = r.Form.Get("game_window_arrangement") == "true"

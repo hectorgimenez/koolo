@@ -42,6 +42,25 @@
                     />
                 </label>
                 <label>
+                    <input
+                        {{ if .UseMapServer }}
+                            checked="checked"
+                        {{ end }}
+                        type="checkbox"
+                        name="use_map_server"
+                        value="true"
+                    />
+                    Use Map Server (advanced)
+                </label>
+                <label>
+                    Map Server Host
+                    <input
+                            name="map_server_host"
+                            placeholder="localhost:8899"
+                            value="{{.MapServerHost}}"
+                    />
+                </label>
+                <label>
                     Centralized Pickit Path (leave blank if you don't want to use a single location for all pickit files)
                     <input
                             name="centralized_pickit_path"
