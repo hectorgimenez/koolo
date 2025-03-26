@@ -243,9 +243,17 @@ func shouldKeepRecipeItem(i data.Item) bool {
 		return false
 	}
 
+	//Auto-keep all jewels
+	if i.Name == "Jewel" {
+		return true
+	}
+
 	itemInStashNotMatchingRule := false
 
 	// Check if we already have the item in our stash and if it doesn't match any of our pickit rules
+	//BUG: This logic will cause other recipes like Upgrading Magefists/Swordback etc to keep magic and normal versions of bases
+	// Not sure if it will break parts of the bot/crafting system if disabled so leaving here
+	//UPDATE: Potential fix on 273 (needs testing)
 	for _, it := range ctx.Data.Inventory.ByLocation(item.LocationStash, item.LocationSharedStash) {
 		if it.Name == i.Name {
 			_, res := ctx.CharacterCfg.Runtime.Rules.EvaluateAll(it)
@@ -258,7 +266,10 @@ func shouldKeepRecipeItem(i data.Item) bool {
 	recipeMatch := false
 
 	// Check if the item is part of a recipe and if that recipe is enabled
+	//Ignore Pgems - handled by NIP
 	pgems := []string{"PerfectAmethyst", "PerfectEmerald", "PerfectRuby", "PerfectDiamond", "PerfectSapphire", "PerfectTopaz", "PerfectSkull"}
+	//Ignore bases handled by NIP - otherwise will end up with magic/normal bases when picked up to reach min gold threshold
+	bases := []string{"LightGauntlets", "SpikedShield", "HeavyBracers", "BarbedShield"}
 	for _, recipe := range Recipes {
 		if slices.Contains(pgems, string(i.Name)) {
 			break
