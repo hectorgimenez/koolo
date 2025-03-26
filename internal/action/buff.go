@@ -56,69 +56,98 @@ func Buff() {
 		utils.Sleep(500)
 	}
 
-	preKeys := make([]data.KeyBinding, 0)
-	for _, buff := range ctx.Char.PreCTABuffSkills() {
-		kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
-		if !found {
-			ctx.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
-		} else {
-			preKeys = append(preKeys, kb)
-		}
-	}
-
-	if len(preKeys) > 0 {
+	preCTASkills := ctx.Char.PreCTABuffSkills()
+	if len(preCTASkills) > 0 {
 		ctx.Logger.Debug("PRE CTA Buffing...")
+
 		if ctx.WeaponBonusCache.IsValid {
-			ctx.Logger.Debug("PRE CTA Buffing with Best Weapon Slot...")
-			bestSlot := getBestWeaponSlot(ctx)
-			if bestSlot != ctx.Data.ActiveWeaponSlot {
+
+			slot0Pre, slot1Pre := groupSkillsBySlot(ctx, preCTASkills)
+
+			if len(slot0Pre) > 0 && ctx.Data.ActiveWeaponSlot != 0 {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
 				utils.Sleep(200)
+				ctx.Logger.Debug("PRE CTA Buffing Slot 0...")
 			}
-		}
-		for _, kb := range preKeys {
-			utils.Sleep(200)
-			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(280)
-			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(200)
+			castSkills(ctx, slot0Pre)
+
+			if len(slot1Pre) > 0 && ctx.Data.ActiveWeaponSlot != 1 {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+				utils.Sleep(200)
+				ctx.Logger.Debug("PRE CTA Buffing Slot 1...")
+			}
+			castSkills(ctx, slot1Pre)
+		} else {
+
+			castSkills(ctx, preCTASkills)
 		}
 	}
 
 	buffCTA()
 
-	postKeys := make([]data.KeyBinding, 0)
-	for _, buff := range ctx.Char.BuffSkills() {
-		kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(buff)
-		if !found {
-			ctx.Logger.Info("Key binding not found, skipping buff", slog.String("skill", buff.Desc().Name))
-		} else {
-			postKeys = append(postKeys, kb)
-		}
-	}
-
-	if len(postKeys) > 0 {
+	postCTASkills := ctx.Char.BuffSkills()
+	if len(postCTASkills) > 0 {
 		ctx.Logger.Debug("Post CTA Buffing...")
 
 		if ctx.WeaponBonusCache.IsValid {
-			ctx.Logger.Debug("POST CTA Buffing with Best Weapon Slot...")
-			bestSlot := getBestWeaponSlot(ctx)
-			if bestSlot != ctx.Data.ActiveWeaponSlot {
+
+			slot0Post, slot1Post := groupSkillsBySlot(ctx, postCTASkills)
+
+			if len(slot0Post) > 0 && ctx.Data.ActiveWeaponSlot != 0 {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
 				utils.Sleep(200)
+				ctx.Logger.Debug("Post CTA Buffing Slot 0...")
 			}
+			castSkills(ctx, slot0Post)
+
+			if len(slot1Post) > 0 && ctx.Data.ActiveWeaponSlot != 1 {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
+				utils.Sleep(200)
+				ctx.Logger.Debug("Post CTA Buffing Slot 1...")
+			}
+			castSkills(ctx, slot1Post)
+		} else {
+			castSkills(ctx, postCTASkills)
 		}
 
-		for _, kb := range postKeys {
-			utils.Sleep(200)
-			ctx.HID.PressKeyBinding(kb)
-			utils.Sleep(280)
-			ctx.HID.Click(game.RightButton, 640, 340)
-			utils.Sleep(200)
-		}
 		step.SwapToMainWeapon()
 
-		ctx.LastBuffAt = time.Now()
+	}
+
+	ctx.LastBuffAt = time.Now()
+}
+
+func groupSkillsBySlot(ctx *context.Status, skills []skill.ID) (slot0, slot1 []skill.ID) {
+	for _, skillID := range skills {
+		if ctx.WeaponBonusCache.OptimalSkillSlots[skillID] == 0 {
+			slot0 = append(slot0, skillID)
+		} else {
+			slot1 = append(slot1, skillID)
+		}
+	}
+	return
+}
+
+func castSkills(ctx *context.Status, skills []skill.ID) {
+	cachedKeys := make(map[skill.ID]data.KeyBinding)
+
+	for _, skillID := range skills {
+		kb, ok := cachedKeys[skillID]
+		if !ok {
+			var found bool
+			kb, found = ctx.Data.KeyBindings.KeyBindingForSkill(skillID)
+			if !found {
+				ctx.Logger.Info("Key binding not found", slog.String("skill", skillID.Desc().Name))
+				continue
+			}
+			cachedKeys[skillID] = kb
+		}
+
+		utils.Sleep(200)
+		ctx.HID.PressKeyBinding(kb)
+		utils.Sleep(280)
+		ctx.HID.Click(game.RightButton, 640, 340)
+		utils.Sleep(200)
 	}
 }
 
@@ -200,25 +229,32 @@ func ctaFound(d game.Data) bool {
 	return false
 }
 
+// buildGearCache, getspecificSkillBonuses, calculateSlotBonus, should now account for +allSkills ID 127 +classSkills ID 83 and +specificSkills ID 97
+// I have not found a solution for adding +addskilltab ID 188 because skill.go does not have the according trees mapped
+// I think currently ID 188 is giving me a value and a layer, and this layer corresponds to the skill tree, but I am not sure
+// But even if i hardcode these layers to the skilltrees, it will not work because the skill.go does not have the trees mapped to the skills
 func buildGearCache() {
 	ctx := context.Get()
 	ctx.WeaponBonusCache.IsValid = false
 
 	currentSlot := ctx.Data.ActiveWeaponSlot
-
 	if currentSlot != 0 {
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
 		ctx.RefreshGameData()
 		utils.Sleep(500)
 	}
 
-	ctx.WeaponBonusCache.Slot1AllClassBonus = calculateAllPlusClassBonus(ctx)
+	skills := append(ctx.Char.PreCTABuffSkills(), ctx.Char.BuffSkills()...)
+	specificBonuses := getSpecificSkillBonuses(ctx, skills)
+
+	ctx.WeaponBonusCache.Slot1AllClassBonus = calculateSlotBonus(ctx, 0, specificBonuses)
 	utils.Sleep(200)
 
 	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SwapWeapons)
 	ctx.RefreshGameData()
 	utils.Sleep(500)
-	ctx.WeaponBonusCache.Slot2AllClassBonus = calculateAllPlusClassBonus(ctx)
+
+	ctx.WeaponBonusCache.Slot2AllClassBonus = calculateSlotBonus(ctx, 1, specificBonuses)
 	utils.Sleep(200)
 
 	if ctx.Data.ActiveWeaponSlot != 0 {
@@ -226,19 +262,42 @@ func buildGearCache() {
 		utils.Sleep(200)
 	}
 
+	optimalSlots := make(map[skill.ID]int)
+	for skillID := range specificBonuses {
+		slot0Total := ctx.WeaponBonusCache.Slot1AllClassBonus + specificBonuses[skillID]
+		slot1Total := ctx.WeaponBonusCache.Slot2AllClassBonus + specificBonuses[skillID]
+
+		if slot0Total >= slot1Total {
+			optimalSlots[skillID] = 0
+		} else {
+			optimalSlots[skillID] = 1
+		}
+	}
+
+	ctx.WeaponBonusCache.SkillSpecificBonuses = specificBonuses
+	ctx.WeaponBonusCache.OptimalSkillSlots = optimalSlots
 	ctx.WeaponBonusCache.IsValid = true
 
 	ctx.Logger.Debug("Weapon bonus cache built",
-		slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
-		slog.Int("slot2_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
-		slog.Bool("is_cache_valid", ctx.WeaponBonusCache.IsValid),
+		slog.Int("slot0_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
+		slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
+		slog.Any("specific_bonuses", specificBonuses),
+		slog.Any("optimal_slots", optimalSlots),
+		slog.Bool("is_valid", true),
 	)
 }
 
-// Here we calculate all the bonuses from the player's gear and skills
-// and return the total bonus for the All +Skills (ID 127) and +AddClassSkills (ID 83) stats.
-// Right now we ignore +SpecificSkills from Stat ID 97, until we build a UseCase for it.
-func calculateAllPlusClassBonus(ctx *context.Status) int {
+func getSpecificSkillBonuses(ctx *context.Status, skillIDs []skill.ID) map[skill.ID]int {
+	bonuses := make(map[skill.ID]int)
+	for _, skillID := range skillIDs {
+		if s, found := ctx.Data.PlayerUnit.Stats.FindStat(97, int(skillID)); found {
+			bonuses[skillID] = s.Value
+		}
+	}
+	return bonuses
+}
+
+func calculateSlotBonus(ctx *context.Status, slot int, specificBonuses map[skill.ID]int) int {
 	total := 0
 
 	allSkills := 0
@@ -249,40 +308,21 @@ func calculateAllPlusClassBonus(ctx *context.Status) int {
 	}
 	total += allSkills
 
-	classSkills := 0
 	classLayer := int(ctx.Data.PlayerUnit.Class)
 	if s, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.AddClassSkills, classLayer); found {
-		classSkills = s.Value
+		total += s.Value
 	}
-	total += classSkills
 
-	ctx.Logger.Debug("Skill Bonus Calculation",
+	for _, bonus := range specificBonuses {
+		total += bonus
+	}
+
+	ctx.Logger.Debug("Slot Bonus Calculation",
+		slog.Int("slot", slot),
 		slog.Int("all_skills", allSkills),
-		slog.Int("class_skills", classSkills),
-		slog.Int("total_bonus", total),
-		slog.Int("class_id", int(ctx.Data.PlayerUnit.Class)),
+		slog.Int("class_skills", total-allSkills),
+		slog.Int("specific_skills", len(specificBonuses)),
 	)
 
 	return total
-}
-
-func getBestWeaponSlot(ctx *context.Status) int {
-	if !ctx.WeaponBonusCache.IsValid {
-		ctx.Logger.Debug("Cache invalid - using default slot 1")
-		return 0
-	}
-
-	if ctx.WeaponBonusCache.Slot1AllClassBonus >= ctx.WeaponBonusCache.Slot2AllClassBonus {
-		ctx.Logger.Debug("Selected slot 1 as best weapon slot",
-			slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
-			slog.Int("slot2_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
-		)
-		return 0
-	} else {
-		ctx.Logger.Debug("Selected slot 2 as best weapon slot",
-			slog.Int("slot1_bonus", ctx.WeaponBonusCache.Slot1AllClassBonus),
-			slog.Int("slot2_bonus", ctx.WeaponBonusCache.Slot2AllClassBonus),
-		)
-		return 1
-	}
 }
