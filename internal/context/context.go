@@ -10,6 +10,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -36,9 +37,11 @@ type Status struct {
 }
 
 type WeaponBonusCache struct {
-	IsValid            bool
-	Slot1AllClassBonus int
-	Slot2AllClassBonus int
+	IsValid              bool
+	Slot1AllClassBonus   int
+	Slot2AllClassBonus   int
+	SkillSpecificBonuses map[skill.ID]int
+	OptimalSkillSlots    map[skill.ID]int
 }
 
 type Context struct {
