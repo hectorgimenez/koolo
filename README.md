@@ -70,11 +70,13 @@ There are some considerations to take into account:
 - Pickit rules can not be changed in runtime (yet), you will need to restart Koolo to apply changes.
 
 ## Map Server
-In some instances there are access violation issues running the map tool directly to get the collision data. In this case a persistent map server can be used based on the [same tool](https://github.com/blacha/diablo2/tree/master/packages/map) the included map tool uses.
+In some instances there are access violation (Diablo 2 error 0xc0000005) issues running the map tool (koolo-map.exe).  In this case a persistent map server can be used based on the [same tool](https://github.com/blacha/diablo2/tree/master/packages/map) the included map tool uses.
+
+This is also useful if you wish to host the collision map generation on a separate system and/or have multiple systems share a single instance to generate collision data.
 
 The included Dockerfile will allow creating and running the tool.
 
-To build it run `docker build -t kooolo-map:latest .` from the project directory.
+To build the container run `docker build -t koolo-map:latest -f tools/map/Dockerfile .` from the project directory.
 
 Once built it can be run with `docker run -v "/C/Program Files (x86)/Diablo II":/app/game --rm -d -p 8899:8899 koolo-map:latest`
 
