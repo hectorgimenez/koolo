@@ -274,6 +274,9 @@ func shouldKeepRecipeItem(i data.Item) bool {
 		if slices.Contains(pgems, string(i.Name)) {
 			break
 		}
+		if slices.Contains(bases, string(i.Name)) {
+			break
+		}
 		if slices.Contains(recipe.Items, string(i.Name)) && slices.Contains(ctx.CharacterCfg.CubeRecipes.EnabledRecipes, recipe.Name) {
 			recipeMatch = true
 			break
