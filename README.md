@@ -79,6 +79,9 @@ Setting the development environment is pretty straightforward, but the following
 - [Install git](https://gitforwindows.org/)
 
 ### Building from source
+
+For those that wish to build in linux use [build.sh](build.sh) in place of [build.bat](build.bat)
+
 Open the terminal and run the following commands in project root directory:
 ```shell
 git clone https://github.com/hectorgimenez/koolo.git
