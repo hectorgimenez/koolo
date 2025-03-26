@@ -73,6 +73,29 @@ var (
 		stat.ManaPerLevel:         2.0,
 	}
 
+	classWeightModifiers = map[data.Class]map[stat.ID]float64{
+		data.Amazon: {
+			stat.CannotBeFrozen:       75.0,
+			stat.IncreasedAttackSpeed: 4.0,
+			stat.FasterCastRate:       -4.5,
+			stat.ManaRecovery:         -1.5,
+			stat.Dexterity:            2.0,
+			stat.ReplenishQuantity:    50.0,
+		},
+		data.Barbarian: {
+			stat.CannotBeFrozen:       75.0,
+			stat.IncreasedAttackSpeed: 4.0,
+			stat.FasterCastRate:       -4.5,
+			stat.ManaRecovery:         -1.5,
+		},
+		data.Assassin: {
+			stat.CannotBeFrozen:       75.0,
+			stat.IncreasedAttackSpeed: 4.0,
+			stat.FasterCastRate:       -4.5,
+			stat.ManaRecovery:         -1.5,
+		},
+	}
+
 	mercWeights = map[stat.ID]float64{
 		stat.IncreasedAttackSpeed:   3.5,
 		stat.MinDamage:              3.0,
@@ -274,13 +297,24 @@ func calculatePerLevelStats(itm data.Item) float64 {
 }
 
 func calculateBaseStats(itm data.Item) float64 {
-	//ctx := context.Get()
+	ctx := context.Get()
 	score := 0.0
+	class := ctx.Data.PlayerUnit.Class
 
-	for statID, weight := range generalWeights {
+	for statID, baseWeight := range generalWeights {
 		if statData, found := itm.FindStat(statID, 0); found {
+			weight := baseWeight
+
+			// Apply class-specific modifier if it exists
+			if modifiers, hasClassModifiers := classWeightModifiers[class]; hasClassModifiers {
+				if modifier, hasStatModifier := modifiers[statID]; hasStatModifier {
+					weight += modifier
+				}
+			}
+
 			statScore := float64(statData.Value) * weight
-			//ctx.Logger.Debug(fmt.Sprintf("Stat %s: value %d, weight %.1f, score %.1f", statID, statData.Value, weight, statScore))
+			//ctx.Logger.Debug(fmt.Sprintf("Stat %s: value %d, base weight %.1f, class-adjusted weight %.1f, score %.1f",
+			//	statID, statData.Value, baseWeight, weight, statScore))
 			score += statScore
 		}
 	}
