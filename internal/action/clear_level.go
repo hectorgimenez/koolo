@@ -77,6 +77,7 @@ func clearRoom(room data.Room, filter data.MonsterFilter) error {
 		for _, m := range monsters {
 			if m.IsMonsterRaiser() {
 				targetMonster = m
+				break
 			}
 		}
 
