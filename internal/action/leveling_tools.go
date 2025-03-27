@@ -1,7 +1,12 @@
 package action
 
 import (
+	"fmt"
+	"math"
 	"slices"
+	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/context"
@@ -52,107 +57,196 @@ var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
 func EnsureStatPoints() error {
-	// TODO finish this
-	return nil
-	//return NewStepChain(func(d game.Data) []step.Step {
-	//	char, isLevelingChar := b.ch.(LevelingCharacter)
-	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-	//	if !isLevelingChar || !unusedStatPoints {
-	//		if d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKey(win.VK_ESCAPE)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		return nil
-	//	}
-	//
-	//	for st, targetPoints := range char.StatPoints(d) {
-	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-	//		if !found || currentPoints.Value >= targetPoints {
-	//			continue
-	//		}
-	//
-	//		if !d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		var statBtnPosition data.Position
-	//		if d.LegacyGraphics {
-	//			statBtnPosition = uiStatButtonPositionLegacy[st]
-	//		} else {
-	//			statBtnPosition = uiStatButtonPosition[st]
-	//		}
-	//
-	//		return []step.Step{
-	//			step.SyncStep(func(_ game.Data) error {
-	//				utils.Sleep(100)
-	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				utils.Sleep(500)
-	//				return nil
-	//			}),
-	//		}
-	//	}
-	//
-	//	return nil
-	//}, RepeatUntilNoSteps())
+	// This function will allocate stat points to the character based on the settings in the character configuration file.
+
+	ctx := context.Get()
+	ctx.SetLastAction("EnsureStatPoints")
+
+	ch, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	findUnusedStats, _ := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+
+	if isLevelingChar && findUnusedStats.Value > 0 {
+		ctx.Logger.Info("Allocating stat points...")
+
+		settingsStatPoints := ch.StatPoints() // complete list of statpoints to be leveled per character settings
+
+		// This section sorts the settingsStatPoints map in the order set by the character config files. Go iterates over maps in a random order, so this is necessary to avoid random ordering.
+		// Collect stats from the map
+		sortedStats := make([]stat.ID, 0, len(settingsStatPoints))
+		for st := range settingsStatPoints {
+			sortedStats = append(sortedStats, st)
+		}
+
+		// Sort the stats
+		sort.Slice(sortedStats, func(i, j int) bool {
+			return sortedStats[i] < sortedStats[j]
+		})
+
+		unusedStats := findUnusedStats.Value // This has to be outside the for loops, so that is can be reduced for each stat that is allocated within the 2 for loops below, without resetting for each stat.
+
+		// this runs through only the included stats from the character config files, in the order STR, ENG, DEX, VIT per d2go definitions
+		for i := range sortedStats {
+			targetPoints := settingsStatPoints[sortedStats[i]]
+			currentPoints, _ := ctx.Data.PlayerUnit.FindStat(sortedStats[i], 0)
+
+			if currentPoints.Value >= targetPoints {
+				continue
+			}
+
+			var statsToAllocate = targetPoints - currentPoints.Value
+
+			for unusedStats >= 1 && statsToAllocate >= 1 {
+
+				// check if character menu is already open
+				if !ctx.Data.OpenMenus.Character {
+					ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
+				}
+
+				// check if legacy or standard button co-ordinates should be used
+				var statBtnPosition data.Position
+				if ctx.Data.LegacyGraphics {
+					statBtnPosition = uiStatButtonPositionLegacy[currentPoints.ID]
+				} else {
+					statBtnPosition = uiStatButtonPosition[currentPoints.ID]
+				}
+
+				utils.Sleep(100)
+				ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+				utils.Sleep(300)
+
+				// reduce the remaining stats to allocate after clicking
+				unusedStats = unusedStats - 1
+				statsToAllocate = statsToAllocate - 1
+
+			}
+		}
+	}
+
+	return step.CloseAllMenus()
 }
 
 func EnsureSkillPoints() error {
-	// TODO finish this
-	return nil
-	//ctx := context.Get()
-	//
-	//char, isLevelingChar := ctx.Char.(LevelingCharacter)
-	//availablePoints, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
-	//
-	//assignedPoints := make(map[skill.ID]int)
-	//for _, sk := range char.SkillPoints() {
-	//	currentPoints, found := assignedPoints[sk]
-	//	if !found {
-	//		currentPoints = 0
-	//	}
-	//
-	//	assignedPoints[sk] = currentPoints + 1
-	//
-	//	characterPoints, found := ctx.Data.PlayerUnit.Skills[sk]
-	//	if !found || int(characterPoints.Level) < assignedPoints[sk] {
-	//		skillDesc, skFound := skill.Desc[sk]
-	//		if !skFound {
-	//			ctx.Logger.Error("skill not found for character", slog.Any("skill", sk))
-	//			return nil
-	//		}
-	//
-	//		if !ctx.Data.OpenMenus.SkillTree {
-	//			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
-	//		}
-	//
-	//		utils.Sleep(100)
-	//		if ctx.Data.LegacyGraphics {
-	//			ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
-	//		} else {
-	//			ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
-	//		}
-	//		utils.Sleep(200)
-	//		if ctx.Data.LegacyGraphics {
-	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
-	//		} else {
-	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
-	//		}
-	//		utils.Sleep(500)
-	//		return nil
-	//	}
-	//}
-	//
-	//return nil
+	ctx := context.Get()
+	ctx.SetLastAction("EnsureSkillPoints")
+	unusedSkillPoints, _ := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+
+	ch, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if isLevelingChar && !ch.ShouldResetSkills() && unusedSkillPoints.Value > 0 { // only run if it's running a leveling script, is not going to reset skills, and has unused skillpoints
+		ctx.Logger.Info("Allocating skill points...")
+
+		ctx := context.Get()
+		lvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0)
+		settingsSkillPoints := ch.SkillPoints() // this is a complete list of skills to be leveled per character settings
+
+		// Extract the first X skillpoints from the list of skills to be leveled, where X is the character level
+		var charLevel = lvl.Value
+		var input []skill.ID = settingsSkillPoints
+
+		firstX := input[:charLevel]
+		result := make([]string, len(firstX))
+		for i, v := range firstX {
+			result[i] = fmt.Sprint(v)
+		}
+
+		// Count unique number of skills to be leveled, for this characters level
+		counts := make(map[skill.ID]int)
+		for _, skillID := range firstX {
+			counts[skillID]++
+		}
+
+		// Create a sorted list of skill and skill level pairs i.e. "36 5, 37 1" (firebolt level 5, warmth level 1)
+		var skills []skill.ID
+		for sk := range counts {
+			skills = append(skills, sk)
+		}
+
+		// this sorts the skills from highest to lowest skill ID. So better skills are skilled earlier (after the prerequisite skills)
+		sort.Slice(skills, func(i, j int) bool { return skills[i] > skills[j] })
+
+		var sortedOutput string // this is the output of the sorted list of skill and skill level pairs
+		for _, skillID := range skills {
+			sortedOutput += fmt.Sprintf("%d %d\n", skillID, counts[skillID]) // counts is the target skill level
+		}
+
+		// Level each unskilled skill in the order shown in settingsSkillPoints
+		for _, skillID := range settingsSkillPoints {
+			skillDesc, skFound := skill.Desc[skillID]
+			if !skFound {
+				ctx.Logger.Error("Skill not found for character", "skill", skillID)
+				continue
+			}
+
+			var calcSkillPoints int = int(ctx.Data.PlayerUnit.Skills[skillID].Level) // Current char skill level. Converts this from uint to int for the if logic below
+			if calcSkillPoints >= 1 {                                                // if the actual skill level is greater than 1, then skip this skill
+				continue
+			}
+
+			if !ctx.Data.OpenMenus.SkillTree {
+				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+			}
+
+			utils.Sleep(100)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+			}
+			utils.Sleep(200)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+			} else {
+				ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+			}
+			utils.Sleep(500)
+		}
+
+		// Level each skill to target skill level, highlest skill IDs first
+		var iteration int = 0
+		for _, skillID := range skills {
+			sortedOutput += fmt.Sprintf("%d %d\n", skillID, counts[skillID])
+			pair := strings.Split(sortedOutput, "\n")[iteration]  // this will return a string of the skill and skill level pair
+			count, _ := strconv.Atoi(strings.Split(pair, " ")[1]) // this will return a string of skill level
+			iteration = iteration + 1                             // this iterates the for loop to run through each unique skill.
+
+			var calcSkillPoints int = int(ctx.Data.PlayerUnit.Skills[skillID].Level)  // Current char skill level. Converts this from uint to int for the if logic below
+			unusedSkillPoints, _ := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0) // Unused skillpoints. This is the total number of skillpoints that can be allocated to the character.
+
+			if calcSkillPoints < count && unusedSkillPoints.Value > 0 { // if the actual skill level is less than the target skill level, and there are unused skillpoints still to be spent
+				min := int(math.Min(float64(count-calcSkillPoints), float64(unusedSkillPoints.Value))) // to level up the minimum of either unused skillpoints or the difference between the target skill level and the actual skill level
+
+				skillDesc, skFound := skill.Desc[skillID]
+				if !skFound {
+					ctx.Logger.Error("Skill not found for character", "skill", skillID)
+					return nil
+				}
+
+				if !ctx.Data.OpenMenus.SkillTree {
+					ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+				}
+
+				i := 1
+				for i <= min { // levels up the skill until unused skillpoints are spent or the target skill level is reached
+					utils.Sleep(100)
+					if ctx.Data.LegacyGraphics {
+						ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+					} else {
+						ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+					}
+					utils.Sleep(200)
+					if ctx.Data.LegacyGraphics {
+						ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+					} else {
+						ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+					}
+					utils.Sleep(500)
+					i = i + 1
+				}
+
+			}
+		}
+	}
+
+	return step.CloseAllMenus()
 }
 
 func UpdateQuestLog() error {
