@@ -101,7 +101,7 @@ func EnsureStatPoints() error {
 
 		currentStatAssignment.required += totalToAssign
 
-		for currentStatAssignment.assigned <= currentStatAssignment.required && availableStatPoints > 0 {
+		for currentStatAssignment.assigned < currentStatAssignment.required && availableStatPoints > 0 {
 			if err := clickStatPoint(ctx, st); err != nil {
 				ctx.Logger.Error(err.Error(), slog.Any("stat", st))
 				continue
