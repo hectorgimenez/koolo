@@ -22,90 +22,54 @@ type MosaicSin struct {
 }
 
 type ChargeSkillConfigEntry struct {
+	skill            skill.ID
 	useSkill         bool
 	chargeState      state.State
 	chargesPerAttack int
 	desiredCharges   int
 }
 
-func (s MosaicSin) getBossChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
+func (s MosaicSin) getChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
 	return map[skill.ID]ChargeSkillConfigEntry{
 		skill.TigerStrike: {
+			skill.TigerStrike,
 			ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike,
 			state.State(stat.ProgressiveDamage),
 			1,
 			3,
 		},
 		skill.CobraStrike: {
+			skill.CobraStrike,
 			ctx.CharacterCfg.Character.MosaicSin.UseCobraStrike,
 			state.State(stat.ProgressiveSteal),
 			1,
 			3,
 		},
 		skill.PhoenixStrike: {
-			true, // Always enabled
-			state.State(stat.ProgressiveOther),
-			1,
-			1, // Only one charge, we want meteors
-		},
-		skill.ClawsOfThunder: {
-			ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder,
-			state.State(stat.ProgressiveLightning),
-			2,
-			3,
-		},
-		skill.BladesOfIce: {
-			ctx.CharacterCfg.Character.MosaicSin.UseBladesOfIce,
-			state.State(stat.ProgressiveCold),
-			2,
-			3,
-		},
-		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
-		// more of your physical damage to fire. You need physical damage for life leech!
-		skill.FistsOfFire: {
-			ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire,
-			state.State(stat.ProgressiveFire),
-			2,
-			3,
-		},
-	}
-}
-
-func (s MosaicSin) getMonsterChargeSkillConfig(ctx context.Status) map[skill.ID]ChargeSkillConfigEntry {
-	return map[skill.ID]ChargeSkillConfigEntry{
-		skill.TigerStrike: {
-			ctx.CharacterCfg.Character.MosaicSin.UseTigerStrike,
-			state.State(stat.ProgressiveDamage),
-			1,
-			3,
-		},
-		skill.CobraStrike: {
-			ctx.CharacterCfg.Character.MosaicSin.UseCobraStrike,
-			state.State(stat.ProgressiveSteal),
-			1,
-			3,
-		},
-		skill.PhoenixStrike: {
+			skill.PhoenixStrike,
 			true, // Always enabled
 			state.State(stat.ProgressiveOther),
 			1,
 			2, // Two charges, we want lightning
 		},
 		skill.ClawsOfThunder: {
+			skill.ClawsOfThunder,
 			ctx.CharacterCfg.Character.MosaicSin.UseClawsOfThunder,
 			state.State(stat.ProgressiveLightning),
 			2,
 			3,
 		},
 		skill.BladesOfIce: {
+			skill.BladesOfIce,
 			ctx.CharacterCfg.Character.MosaicSin.UseBladesOfIce,
 			state.State(stat.ProgressiveCold),
 			2,
 			3,
 		},
-		// Note: you probably never want to use this. As fists of fire levels up, it converts more and
+		// Note: Be careful with this. As fists of fire levels up, it converts more and
 		// more of your physical damage to fire. You need physical damage for life leech!
 		skill.FistsOfFire: {
+			skill.FistsOfFire,
 			ctx.CharacterCfg.Character.MosaicSin.UseFistsOfFire,
 			state.State(stat.ProgressiveFire),
 			2,
@@ -137,24 +101,23 @@ func (s MosaicSin) hasKeyBindingForSkill(skill skill.ID) bool {
 	return found
 }
 
-func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge skill.ID, desiredCount int, ctx context.Status) (int, bool) {
+func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillConfig ChargeSkillConfigEntry, ctx context.Status) (int, bool) {
 	// The configuration checks for whether this skill is enabled are handled before we call this function
-	chargeConfig := s.getMonsterChargeSkillConfig(ctx)[skillToCharge]
 
-	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(chargeConfig.chargeState), 0)
+	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(skillConfig.chargeState), 0)
 	attacks := 0
 
 	if !s.MobAlive(monsterId, *s.Data) {
 		return -1, true
 	}
 
-	if s.hasKeyBindingForSkill(skillToCharge) {
-		if !found || (found && charges.Value < desiredCount) {
-			neededCharges := desiredCount - charges.Value
+	if s.hasKeyBindingForSkill(skillConfig.skill) {
+		if !found || (found && charges.Value < skillConfig.desiredCharges) {
+			neededCharges := skillConfig.desiredCharges - charges.Value
 			// Some skills give up to 2 charges per attack
-			plannedAttacks := (neededCharges + chargeConfig.chargesPerAttack - 1) / chargeConfig.chargesPerAttack
+			plannedAttacks := (neededCharges + skillConfig.chargesPerAttack - 1) / skillConfig.chargesPerAttack
 			attacks += plannedAttacks
-			step.SecondaryAttack(skillToCharge, monsterId, plannedAttacks, step.StationaryDistance(1, 4))
+			step.SecondaryAttack(skillConfig.skill, monsterId, plannedAttacks, step.StationaryDistance(1, 4))
 		}
 	}
 
@@ -219,18 +182,6 @@ func (s MosaicSin) AttackLoop(
 			return nil
 		}
 
-		// Initial move to monster if we're too far
-		if ctx.PathFinder.DistanceFromMe(monster.Position) > 3 {
-			if s.hasKeyBindingForSkill(skill.DragonFlight) {
-				step.SecondaryAttack(skill.DragonFlight, id, 1, step.StationaryDistance(1, 24))
-			} else {
-				if err := step.MoveTo(monster.Position); err != nil {
-					s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
-					continue
-				}
-			}
-		}
-
 		if !s.MobAlive(id, *s.Data) {
 			return nil
 		}
@@ -241,8 +192,7 @@ func (s MosaicSin) AttackLoop(
 			if skillConfig[chargeSkill].useSkill && totalAttacks < attacksBeforeKick {
 				attackCount, alreadyDead := s.buildChargesForSkill(
 					id,
-					chargeSkill,
-					skillConfig[chargeSkill].desiredCharges,
+					skillConfig[chargeSkill],
 					ctx,
 				)
 
@@ -254,7 +204,7 @@ func (s MosaicSin) AttackLoop(
 			}
 		}
 
-		opts := step.StationaryDistance(1, 4)
+		opts := step.Distance(1, 2)
 		// Finish it off with primary attack
 		step.PrimaryAttack(id, 1, false, opts)
 	}
@@ -274,7 +224,15 @@ func (s MosaicSin) KillBossSequence(
 	}
 
 	ctx := context.Get()
-	chargeSkillConfig := s.getBossChargeSkillConfig(*ctx)
+	chargeSkillConfig := s.getChargeSkillConfig(*ctx)
+	// Override phoenix strike behavior for bosses
+	chargeSkillConfig[skill.PhoenixStrike] = ChargeSkillConfigEntry{
+		skill.PhoenixStrike,
+		true, // Always enabled
+		state.State(stat.ProgressiveOther),
+		1,
+		1, // We only want one charge of Phoenix strike for bosses
+	}
 
 	return s.AttackLoop(
 		monsterSelector,
@@ -300,7 +258,7 @@ func (s MosaicSin) KillMonsterSequence(
 	}
 
 	ctx := context.Get()
-	chargeSkillConfig := s.getMonsterChargeSkillConfig(*ctx)
+	chargeSkillConfig := s.getChargeSkillConfig(*ctx)
 
 	return s.AttackLoop(
 		monsterSelector,
@@ -340,7 +298,7 @@ func (s MosaicSin) PreCTABuffSkills() []skill.ID {
 	return []skill.ID{}
 }
 
-func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
+func (s MosaicSin) killBoss(npc npc.ID, t data.MonsterType) error {
 	return s.KillBossSequence(func(d game.Data) (data.UnitID, bool) {
 		m, found := d.Monsters.FindOne(npc, t)
 		if !found {
@@ -351,19 +309,19 @@ func (s MosaicSin) killMonster(npc npc.ID, t data.MonsterType) error {
 }
 
 func (s MosaicSin) KillCountess() error {
-	return s.killMonster(npc.DarkStalker, data.MonsterTypeSuperUnique)
+	return s.killBoss(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
 func (s MosaicSin) KillAndariel() error {
-	return s.killMonster(npc.Andariel, data.MonsterTypeUnique)
+	return s.killBoss(npc.Andariel, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillSummoner() error {
-	return s.killMonster(npc.Summoner, data.MonsterTypeUnique)
+	return s.killBoss(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillDuriel() error {
-	return s.killMonster(npc.Duriel, data.MonsterTypeUnique)
+	return s.killBoss(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillCouncil() error {
@@ -390,11 +348,11 @@ func (s MosaicSin) KillCouncil() error {
 }
 
 func (s MosaicSin) KillMephisto() error {
-	return s.killMonster(npc.Mephisto, data.MonsterTypeUnique)
+	return s.killBoss(npc.Mephisto, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillIzual() error {
-	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
+	return s.killBoss(npc.Izual, data.MonsterTypeUnique)
 }
 
 func (s MosaicSin) KillDiablo() error {
@@ -419,18 +377,18 @@ func (s MosaicSin) KillDiablo() error {
 
 		diabloFound = true
 		s.Logger.Info("Diablo detected, attacking")
-		return s.killMonster(npc.Diablo, data.MonsterTypeUnique)
+		return s.killBoss(npc.Diablo, data.MonsterTypeUnique)
 	}
 }
 
 func (s MosaicSin) KillPindle() error {
-	return s.killMonster(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
+	return s.killBoss(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s MosaicSin) KillNihlathak() error {
-	return s.killMonster(npc.Nihlathak, data.MonsterTypeSuperUnique)
+	return s.killBoss(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
 func (s MosaicSin) KillBaal() error {
-	return s.killMonster(npc.BaalCrab, data.MonsterTypeUnique)
+	return s.killBoss(npc.BaalCrab, data.MonsterTypeUnique)
 }
