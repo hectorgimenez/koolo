@@ -37,11 +37,10 @@ type Status struct {
 }
 
 type WeaponBonusCache struct {
-	IsValid              bool
-	Slot1AllClassBonus   int
-	Slot2AllClassBonus   int
-	SkillSpecificBonuses map[skill.ID]int
-	OptimalSkillSlots    map[skill.ID]int
+	IsValid            bool
+	Slot0AllClassBonus int
+	Slot1AllClassBonus int
+	OptimalSkillSlots  map[skill.ID]int
 }
 
 type Context struct {
