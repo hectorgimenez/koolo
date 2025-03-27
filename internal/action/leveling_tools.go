@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+	"log/slog"
 	"slices"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -51,109 +53,180 @@ var uiSkillPagePositionLegacy = [3]data.Position{
 var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
+var baseStats = map[data.Class]map[stat.ID]int{
+	data.Amazon:      {stat.Strength: 20, stat.Dexterity: 25, stat.Vitality: 20, stat.Energy: 15},
+	data.Assassin:    {stat.Strength: 20, stat.Dexterity: 20, stat.Vitality: 20, stat.Energy: 25},
+	data.Barbarian:   {stat.Strength: 30, stat.Dexterity: 20, stat.Vitality: 25, stat.Energy: 10},
+	data.Druid:       {stat.Strength: 15, stat.Dexterity: 20, stat.Vitality: 25, stat.Energy: 20},
+	data.Necromancer: {stat.Strength: 15, stat.Dexterity: 25, stat.Vitality: 15, stat.Energy: 25},
+	data.Paladin:     {stat.Strength: 25, stat.Dexterity: 20, stat.Vitality: 25, stat.Energy: 15},
+	data.Sorceress:   {stat.Strength: 10, stat.Dexterity: 25, stat.Vitality: 10, stat.Energy: 35},
+}
+
+// #region stat management
+type assignedStatPoint struct {
+	required int
+	assigned int
+}
+
 func EnsureStatPoints() error {
-	// TODO finish this
+	ctx := context.Get()
+
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if !isLevelingChar {
+		return nil
+	}
+
+	unusedStatPoints, hasUnusedStatPoints := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+
+	if !hasUnusedStatPoints {
+		return nil
+	}
+
+	ctx.Logger.Debug("Assigning stat points")
+
+	availableStatPoints := unusedStatPoints.Value
+	assignedStatPoints := make(map[stat.ID]*assignedStatPoint)
+	for st, totalToAssign := range char.StatPoints() {
+
+		currentStatAssignment, found := assignedStatPoints[st]
+		if !found {
+			currentStat, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(st, 0)
+			currentStatAssignment = &assignedStatPoint{
+				required: 0,
+				assigned: currentStat.Value - baseStats[ctx.Data.PlayerUnit.Class][st],
+			}
+			assignedStatPoints[st] = currentStatAssignment
+		}
+
+		currentStatAssignment.required += totalToAssign
+
+		for currentStatAssignment.assigned < currentStatAssignment.required && availableStatPoints > 0 {
+			if err := clickStatPoint(ctx, st); err != nil {
+				ctx.Logger.Error(err.Error(), slog.Any("stat", st))
+				continue
+			}
+
+			ctx.Logger.Debug("Assigning stat point", slog.Any("stat", stat.StringStats[st]))
+
+			currentStatAssignment.assigned++
+			availableStatPoints--
+		}
+	}
+
 	return nil
-	//return NewStepChain(func(d game.Data) []step.Step {
-	//	char, isLevelingChar := b.ch.(LevelingCharacter)
-	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-	//	if !isLevelingChar || !unusedStatPoints {
-	//		if d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKey(win.VK_ESCAPE)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		return nil
-	//	}
-	//
-	//	for st, targetPoints := range char.StatPoints(d) {
-	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-	//		if !found || currentPoints.Value >= targetPoints {
-	//			continue
-	//		}
-	//
-	//		if !d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		var statBtnPosition data.Position
-	//		if d.LegacyGraphics {
-	//			statBtnPosition = uiStatButtonPositionLegacy[st]
-	//		} else {
-	//			statBtnPosition = uiStatButtonPosition[st]
-	//		}
-	//
-	//		return []step.Step{
-	//			step.SyncStep(func(_ game.Data) error {
-	//				utils.Sleep(100)
-	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				utils.Sleep(500)
-	//				return nil
-	//			}),
-	//		}
-	//	}
-	//
-	//	return nil
-	//}, RepeatUntilNoSteps())
+}
+
+func clickStatPoint(ctx *context.Status, st stat.ID) error {
+	if !ctx.Data.OpenMenus.Character {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
+		utils.Sleep(500)
+	}
+
+	var statBtnPosition data.Position
+	if ctx.Data.LegacyGraphics {
+		statBtnPosition = uiStatButtonPositionLegacy[st]
+	} else {
+		statBtnPosition = uiStatButtonPosition[st]
+	}
+
+	ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+	utils.Sleep(300)
+
+	return nil
+}
+
+// #endregion
+
+// #region skill management
+type assignedSkill struct {
+	skillID        skill.ID
+	assignedPoints int
+	requiredPoints int
 }
 
 func EnsureSkillPoints() error {
-	// TODO finish this
+	ctx := context.Get()
+
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if !isLevelingChar {
+		return nil
+	}
+
+	availablePointsData, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+	availablePoints := availablePointsData.Value
+
+	if !unusedSkillPoints {
+		return nil
+	}
+
+	assignedPoints := make(map[skill.ID]*assignedSkill)
+	for _, sk := range char.SkillPoints() {
+		if availablePoints <= 0 {
+			ctx.Logger.Debug("No more skill points available")
+			break
+		}
+
+		currentPoints, found := assignedPoints[sk]
+		if !found {
+			currentPoints = &assignedSkill{
+				skillID:        sk,
+				assignedPoints: int(ctx.Data.PlayerUnit.Skills[sk].Level),
+				requiredPoints: 0,
+			}
+
+			assignedPoints[sk] = currentPoints
+		}
+
+		currentPoints.requiredPoints++
+
+		// If we have already assigned all points for this skill, skip it
+		if currentPoints.assignedPoints >= currentPoints.requiredPoints {
+			continue
+		}
+
+		if err := clickSkill(ctx, sk); err != nil {
+			ctx.Logger.Error(err.Error(), slog.Any("skill", sk))
+			continue
+		}
+
+		ctx.Logger.Debug("Assigning skill point", slog.Any("skill", skill.SkillNames[sk]))
+
+		currentPoints.assignedPoints++
+		availablePoints--
+	}
+
 	return nil
-	//ctx := context.Get()
-	//
-	//char, isLevelingChar := ctx.Char.(LevelingCharacter)
-	//availablePoints, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
-	//
-	//assignedPoints := make(map[skill.ID]int)
-	//for _, sk := range char.SkillPoints() {
-	//	currentPoints, found := assignedPoints[sk]
-	//	if !found {
-	//		currentPoints = 0
-	//	}
-	//
-	//	assignedPoints[sk] = currentPoints + 1
-	//
-	//	characterPoints, found := ctx.Data.PlayerUnit.Skills[sk]
-	//	if !found || int(characterPoints.Level) < assignedPoints[sk] {
-	//		skillDesc, skFound := skill.Desc[sk]
-	//		if !skFound {
-	//			ctx.Logger.Error("skill not found for character", slog.Any("skill", sk))
-	//			return nil
-	//		}
-	//
-	//		if !ctx.Data.OpenMenus.SkillTree {
-	//			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
-	//		}
-	//
-	//		utils.Sleep(100)
-	//		if ctx.Data.LegacyGraphics {
-	//			ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
-	//		} else {
-	//			ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
-	//		}
-	//		utils.Sleep(200)
-	//		if ctx.Data.LegacyGraphics {
-	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
-	//		} else {
-	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
-	//		}
-	//		utils.Sleep(500)
-	//		return nil
-	//	}
-	//}
-	//
-	//return nil
 }
+
+func clickSkill(ctx *context.Status, skillID skill.ID) error {
+	skillDesc, found := skill.Desc[skillID]
+	if !found {
+		return fmt.Errorf("skill not found")
+	}
+
+	if !ctx.Data.OpenMenus.SkillTree {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+	}
+
+	utils.Sleep(100)
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+	} else {
+		ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+	}
+	utils.Sleep(200)
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+	} else {
+		ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+	}
+	utils.Sleep(500)
+
+	return nil
+}
+
+// #endregion
 
 func UpdateQuestLog() error {
 	ctx := context.Get()

@@ -17,6 +17,7 @@ import (
 
 const (
 	paladinLevelingMaxAttacksLoop = 10
+	respecLevel                   = 21
 )
 
 type PaladinLeveling struct {
@@ -123,8 +124,8 @@ func (s PaladinLeveling) PreCTABuffSkills() []skill.ID {
 
 func (s PaladinLeveling) ShouldResetSkills() bool {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
-	if lvl.Value >= 21 && s.Data.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
-		s.Logger.Info("Resetting skills: Level 21+ and Holy Fire level > 10")
+	if lvl.Value >= respecLevel && s.Data.PlayerUnit.Skills[skill.HolyFire].Level > 10 {
+		s.Logger.Info(fmt.Sprintf("Resetting skills: Level %d+ and Holy Fire level > 10", respecLevel))
 		return true
 	}
 
@@ -168,14 +169,16 @@ func (s PaladinLeveling) StatPoints() map[stat.ID]int {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	statPoints := make(map[stat.ID]int)
 
-	if lvl.Value < 21 {
+	if lvl.Value <= 6 {
+		statPoints[stat.Vitality] = 9999
+	} else if lvl.Value < respecLevel {
 		statPoints[stat.Strength] = 0
 		statPoints[stat.Dexterity] = 25
 		statPoints[stat.Vitality] = 150
 		statPoints[stat.Energy] = 0
 	} else if lvl.Value < 30 {
-		statPoints[stat.Strength] = 35
-		statPoints[stat.Vitality] = 200
+		statPoints[stat.Strength] = 25
+		statPoints[stat.Vitality] = 210
 		statPoints[stat.Energy] = 0
 	} else if lvl.Value < 45 {
 		statPoints[stat.Strength] = 50
@@ -197,7 +200,7 @@ func (s PaladinLeveling) SkillPoints() []skill.ID {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
 	var skillPoints []skill.ID
 
-	if lvl.Value < 21 {
+	if lvl.Value < respecLevel {
 		skillPoints = []skill.ID{
 			skill.Might,
 			skill.Sacrifice,
