@@ -154,7 +154,7 @@ func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillToCharge ski
 			// Some skills give up to 2 charges per attack
 			plannedAttacks := (neededCharges + chargeConfig.chargesPerAttack - 1) / chargeConfig.chargesPerAttack
 			attacks += plannedAttacks
-			step.SecondaryAttack(skillToCharge, monsterId, plannedAttacks)
+			step.SecondaryAttack(skillToCharge, monsterId, plannedAttacks, step.StationaryDistance(1, 4))
 		}
 	}
 
@@ -193,7 +193,7 @@ func (s MosaicSin) AttackLoop(
 		// How do I determine if cloak of shadows is on cooldown?
 		if useCloakOfShadows && s.hasKeyBindingForSkill(skill.CloakOfShadows) &&
 			!s.MobHasAnyState(id, []state.State{state.Lifetap, state.CloakOfShadows}) {
-			step.SecondaryAttack(skill.CloakOfShadows, id, 1, step.Distance(1, 20))
+			step.SecondaryAttack(skill.CloakOfShadows, id, 1, step.StationaryDistance(1, 24))
 		}
 	}
 
@@ -222,7 +222,7 @@ func (s MosaicSin) AttackLoop(
 		// Initial move to monster if we're too far
 		if ctx.PathFinder.DistanceFromMe(monster.Position) > 3 {
 			if s.hasKeyBindingForSkill(skill.DragonFlight) {
-				step.SecondaryAttack(skill.DragonFlight, id, 1, step.Distance(1, 20))
+				step.SecondaryAttack(skill.DragonFlight, id, 1, step.StationaryDistance(1, 24))
 			} else {
 				if err := step.MoveTo(monster.Position); err != nil {
 					s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
@@ -254,7 +254,7 @@ func (s MosaicSin) AttackLoop(
 			}
 		}
 
-		opts := step.Distance(1, 2)
+		opts := step.StationaryDistance(1, 4)
 		// Finish it off with primary attack
 		step.PrimaryAttack(id, 1, false, opts)
 	}
