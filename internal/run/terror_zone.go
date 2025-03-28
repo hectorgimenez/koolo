@@ -136,7 +136,7 @@ func (tz TerrorZone) tzAreaGroups(firstTZ area.ID) [][]area.ID {
 	case area.Barracks:
 		return [][]area.ID{{area.JailLevel1, area.Barracks}, {area.JailLevel1, area.JailLevel2, area.JailLevel3}}
 	case area.Cathedral:
-		return [][]area.ID{{area.InnerCloister, area.Cathedral, area.CatacombsLevel1, area.CatacombsLevel2, area.CatacombsLevel3}}
+		return [][]area.ID{{area.InnerCloister, area.Cathedral, area.CatacombsLevel1, area.CatacombsLevel2, area.CatacombsLevel3, area.CatacombsLevel4}}
 	// Act 2
 	case area.SewersLevel1Act2:
 		return [][]area.ID{{area.LutGholein, area.SewersLevel1Act2, area.SewersLevel2Act2, area.SewersLevel3Act2}}
