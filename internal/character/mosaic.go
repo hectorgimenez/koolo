@@ -161,6 +161,8 @@ func (s MosaicSin) AttackLoop(
 	}
 
 	for {
+		ctx.PauseIfNotPriority()
+
 		// Limit refresh rate to 10 times per second to avoid excessive CPU usage
 		if time.Since(lastRefresh) > time.Millisecond*100 {
 			ctx.Data.PlayerUnit = ctx.GameReader.GetData().Data.PlayerUnit
@@ -184,6 +186,14 @@ func (s MosaicSin) AttackLoop(
 
 		if !s.MonsterAliveById(id) {
 			return nil
+		}
+
+		// Initial move to monster if we're too far
+		if ctx.PathFinder.DistanceFromMe(monster.Position) > 3 {
+			if err := step.MoveTo(monster.Position); err != nil {
+				s.Logger.Debug("Failed to move to monster position", slog.String("error", err.Error()))
+				continue
+			}
 		}
 
 		totalAttacks := 0
