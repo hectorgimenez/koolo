@@ -107,7 +107,7 @@ func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillConfig Charg
 	charges, found := ctx.Data.PlayerUnit.Stats.FindStat(stat.ID(skillConfig.chargeState), 0)
 	attacks := 0
 
-	if !s.MobAlive(monsterId, *s.Data) {
+	if !s.MonsterAliveById(monsterId) {
 		return -1, true
 	}
 
@@ -117,7 +117,7 @@ func (s MosaicSin) buildChargesForSkill(monsterId data.UnitID, skillConfig Charg
 			// Some skills give up to 2 charges per attack
 			plannedAttacks := (neededCharges + skillConfig.chargesPerAttack - 1) / skillConfig.chargesPerAttack
 			attacks += plannedAttacks
-			step.SecondaryAttack(skillConfig.skill, monsterId, plannedAttacks, step.StationaryDistance(1, 4))
+			step.SecondaryAttack(skillConfig.skill, monsterId, plannedAttacks, step.MeleeDistance(2))
 		}
 	}
 
@@ -182,7 +182,7 @@ func (s MosaicSin) AttackLoop(
 			return nil
 		}
 
-		if !s.MobAlive(id, *s.Data) {
+		if !s.MonsterAliveById(id) {
 			return nil
 		}
 
@@ -204,9 +204,8 @@ func (s MosaicSin) AttackLoop(
 			}
 		}
 
-		opts := step.Distance(1, 2)
 		// Finish it off with primary attack
-		step.PrimaryAttack(id, 1, false, opts)
+		step.PrimaryAttack(id, 1, false, step.MeleeDistance(4))
 	}
 }
 
@@ -267,11 +266,6 @@ func (s MosaicSin) KillMonsterSequence(
 		chargeSkillConfig,
 		*ctx,
 	)
-}
-
-func (s MosaicSin) MobAlive(mob data.UnitID, d game.Data) bool {
-	monster, found := s.Data.Monsters.FindByID(mob)
-	return found && monster.Stats[stat.Life] > 0
 }
 
 func (s MosaicSin) BuffSkills() []skill.ID {

@@ -75,6 +75,14 @@ func StationaryDistance(minimum, maximum int) AttackOption {
 	}
 }
 
+func MeleeDistance(maximum int) AttackOption {
+	return func(step *attackSettings) {
+		step.followEnemy = false
+		step.minDistance = 0
+		step.maxDistance = maximum
+	}
+}
+
 // EnsureAura ensures specified aura is active during attack
 func EnsureAura(aura skill.ID) AttackOption {
 	return func(step *attackSettings) {
@@ -315,8 +323,9 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int, ne
 	}
 
 	// Any close-range combat (mosaic,barb...) should move directly to target
-	if maxDistance <= 3 {
-		return MoveTo(monster.Position)
+	// TODO: check if this breaks anything D:
+	if maxDistance <= 4 && distanceToMonster > maxDistance {
+		return MoveTo(monster.Position, WithDistanceToFinish(5))
 	}
 
 	// Get path to monster
