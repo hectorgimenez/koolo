@@ -5,13 +5,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
-
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
@@ -46,8 +46,11 @@ func (s Hammerdin) KillMonsterSequence(
 	completedAttackLoops := 0
 	previousUnitID := 0
 	consecutiveAttacks := 0
+	ctx := context.Get()
 
 	for {
+		ctx.PauseIfNotPriority()
+
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
