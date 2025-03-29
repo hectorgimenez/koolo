@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -126,23 +127,47 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 	}
 
 	s.bot.ctx.Logger.Info("Character selection screen found")
+	disconnected := false
+
+	if err := s.ensureOnline(); err != nil {
+		s.bot.ctx.Logger.Error("[Ensure Online]: Failed to prepare for character selection, will kill client ...")
+		if err := s.KillClient(); err != nil {
+			s.bot.ctx.Logger.Error("[Ensure Online]: Failed to kill client", slog.String("error", err.Error()))
+			return err
+		}
+		return err
+	}
 
 	if s.bot.ctx.CharacterCfg.CharacterName != "" {
+
 		s.bot.ctx.Logger.Info("Selecting character...")
-		previousSelection := ""
-		for {
+
+		// If we've lost connection it bugs out and we need to select another character and the first one again.
+		if disconnected {
+			s.bot.ctx.HID.PressKey(win.VK_DOWN)
+			time.Sleep(250 * time.Millisecond)
+			s.bot.ctx.HID.PressKey(win.VK_UP)
+		}
+
+		// Try to select a character up to 25 times then give up and kill the client
+		for i := 0; i < 25; i++ {
 			characterName := s.bot.ctx.GameReader.GameReader.GetSelectedCharacterName()
-			if strings.EqualFold(previousSelection, characterName) {
-				return fmt.Errorf("character %s not found", s.bot.ctx.CharacterCfg.CharacterName)
-			}
+
+			s.bot.ctx.Logger.Debug(fmt.Sprintf("Checking character: %s", characterName))
+
 			if strings.EqualFold(characterName, s.bot.ctx.CharacterCfg.CharacterName) {
-				s.bot.ctx.Logger.Info("Character found")
+				s.bot.ctx.Logger.Info(fmt.Sprintf("Character %s found and selected.", s.bot.ctx.CharacterCfg.CharacterName))
 				return nil
 			}
 
 			s.bot.ctx.HID.PressKey(win.VK_DOWN)
-			time.Sleep(time.Millisecond * 150)
-			previousSelection = characterName
+			time.Sleep(250 * time.Millisecond)
+		}
+
+		s.bot.ctx.Logger.Info(fmt.Sprintf("Character %s not found after 25 attempts, terminating client ...", s.bot.ctx.CharacterCfg.CharacterName))
+
+		if err := s.KillClient(); err != nil {
+			return err
 		}
 	}
 
@@ -152,4 +177,55 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 func (s *baseSupervisor) SetWindowPosition(x, y int) {
 	uFlags := win.SWP_NOZORDER | win.SWP_NOSIZE | win.SWP_NOACTIVATE
 	win.SetWindowPos(s.bot.ctx.GameReader.HWND, 0, int32(x), int32(y), 0, 0, uint32(uFlags))
+}
+
+func (s *baseSupervisor) ensureOnline() error {
+	if !s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
+		return fmt.Errorf("[Ensure Online]: We're not in the character selection screen")
+	}
+
+	if !s.bot.ctx.GameReader.IsOnline() && s.bot.ctx.CharacterCfg.AuthMethod != "None" {
+		s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+		s.bot.ctx.Logger.Debug("[Ensure Online]: We're at the character selection screen but not online")
+
+		time.Sleep(2000)
+
+		maxRetries := 5
+		for i := 0; i < maxRetries; i++ {
+			s.bot.ctx.Logger.Debug(fmt.Sprintf("[Ensure Online]: Trying to connect to bnet attempt %d of %d", i+1, maxRetries))
+			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+			time.Sleep(2000)
+
+			for {
+				blockingPanel := s.bot.ctx.GameReader.GetPanel("BlockingPanel")
+				popuPanel := s.bot.ctx.GameReader.GetPanel("DismissableModal")
+
+				if blockingPanel.PanelName != "" && blockingPanel.PanelEnabled && blockingPanel.PanelVisible {
+					s.bot.ctx.Logger.Debug("[Ensure Online]: Loading panel detected, waiting for it to disappear")
+					time.Sleep(2000)
+					continue
+				}
+
+				if popuPanel.PanelName != "" && popuPanel.PanelEnabled && popuPanel.PanelVisible {
+					s.bot.ctx.Logger.Debug("[Ensure Online]: Dismissable modal detected, dismissing it and trying to connect again ...")
+					s.bot.ctx.HID.PressKey(0x1B)
+					time.Sleep(1000)
+					break
+				}
+
+				s.bot.ctx.Logger.Debug("[Ensure Online]: No loading panel or errors detected, checking if we're online ...")
+				break
+			}
+
+			if s.bot.ctx.GameReader.IsOnline() {
+				s.bot.ctx.Logger.Debug("[Ensure Online]: We're online!")
+				return nil
+			}
+		}
+	} else {
+		s.bot.ctx.Logger.Debug("[Ensure Online]: We're already online or don't have to be, skipping ...")
+		return nil
+	}
+
+	return errors.New("[Ensure Online]: Failed to connect to bnet")
 }

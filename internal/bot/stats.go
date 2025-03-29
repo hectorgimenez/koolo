@@ -96,11 +96,12 @@ func (h *StatsHandler) Stats() Stats {
 }
 
 type Stats struct {
-	StartedAt        time.Time
-	SupervisorStatus SupervisorStatus
-	Details          string
-	Drops            []data.Drop
-	Games            []GameStats
+	StartedAt           time.Time
+	SupervisorStatus    SupervisorStatus
+	Details             string
+	Drops               []data.Drop
+	Games               []GameStats
+	IsCompanionFollower bool
 }
 
 type GameStats struct {

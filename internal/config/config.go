@@ -231,10 +231,13 @@ type CharacterCfg struct {
 		} `yaml:"quests"`
 	} `yaml:"game"`
 	Companion struct {
-		Leader           bool   `yaml:"leader"`
-		LeaderName       string `yaml:"leaderName"`
-		GameNameTemplate string `yaml:"gameNameTemplate"`
-		GamePassword     string `yaml:"gamePassword"`
+		Enabled               bool   `yaml:"enabled"`
+		Leader                bool   `yaml:"leader"`
+		LeaderName            string `yaml:"leaderName"`
+		GameNameTemplate      string `yaml:"gameNameTemplate"`
+		GamePassword          string `yaml:"gamePassword"`
+		CompanionGameName     string `yaml:"companionGameName"`
+		CompanionGamePassword string `yaml:"companionGamePassword"`
 	} `yaml:"companion"`
 	Gambling struct {
 		Enabled bool        `yaml:"enabled"`
