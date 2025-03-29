@@ -3,16 +3,15 @@ package character
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 	"time"
-
-	"github.com/hectorgimenez/koolo/internal/action/step"
-	"github.com/hectorgimenez/koolo/internal/game"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
+	"github.com/hectorgimenez/koolo/internal/action/step"
+	"github.com/hectorgimenez/koolo/internal/context"
+	"github.com/hectorgimenez/koolo/internal/game"
 )
 
 const (
@@ -46,14 +45,19 @@ func (s Hammerdin) KillMonsterSequence(
 ) error {
 	completedAttackLoops := 0
 	previousUnitID := 0
+	consecutiveAttacks := 0
+	ctx := context.Get()
 
 	for {
+		ctx.PauseIfNotPriority()
+
 		id, found := monsterSelector(*s.Data)
 		if !found {
 			return nil
 		}
 		if previousUnitID != int(id) {
 			completedAttackLoops = 0
+			consecutiveAttacks = 0
 		}
 
 		if !s.preBattleChecks(id, skipOnImmunities) {
@@ -70,12 +74,14 @@ func (s Hammerdin) KillMonsterSequence(
 			return nil
 		}
 
-		// Add a random movement, maybe hammer is not hitting the target
-		if previousUnitID == int(id) {
-			if monster.Stats[stat.Life] > 0 {
+		if previousUnitID == int(id) && monster.Stats[stat.Life] > 0 {
+			consecutiveAttacks++
+			if consecutiveAttacks >= 5 { //adjust if needed -> higher value = more attacks without randommovement
 				s.PathFinder.RandomMovement()
+				time.Sleep(200 * time.Millisecond)
+				consecutiveAttacks = 0
+				continue
 			}
-			return nil
 		}
 
 		step.PrimaryAttack(
@@ -102,14 +108,24 @@ func (s Hammerdin) killMonster(npc npc.ID, t data.MonsterType) error {
 	}, nil)
 }
 
-func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType, _ bool) error {
-	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		if m, found := d.Monsters.FindOne(id, monsterType); found {
-			return m.UnitID, true
-		}
+func (s Hammerdin) killMonsterByName(id npc.ID, monsterType data.MonsterType) error {
+	for {
+		if m, found := s.Data.Monsters.FindOne(id, monsterType); found {
+			if m.Stats[stat.Life] <= 0 {
+				break
+			}
 
-		return 0, false
-	}, nil)
+			s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
+				if m, found := d.Monsters.FindOne(id, monsterType); found {
+					return m.UnitID, true
+				}
+				return 0, false
+			}, nil)
+		} else {
+			break
+		}
+	}
+	return nil
 }
 
 func (s Hammerdin) BuffSkills() []skill.ID {
@@ -124,49 +140,36 @@ func (s Hammerdin) PreCTABuffSkills() []skill.ID {
 }
 
 func (s Hammerdin) KillCountess() error {
-	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.DarkStalker, data.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillAndariel() error {
-	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique, false)
+	return s.killMonsterByName(npc.Andariel, data.MonsterTypeUnique)
 }
+
 func (s Hammerdin) KillSummoner() error {
-	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique, false)
+	return s.killMonsterByName(npc.Summoner, data.MonsterTypeUnique)
 }
 
 func (s Hammerdin) KillDuriel() error {
-	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique, false)
+	return s.killMonsterByName(npc.Duriel, data.MonsterTypeUnique)
 }
 
 func (s Hammerdin) KillCouncil() error {
 	return s.KillMonsterSequence(func(d game.Data) (data.UnitID, bool) {
-		// Exclude monsters that are not council members
-		var councilMembers []data.Monster
-		for _, m := range d.Monsters {
-			if m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3 {
-				councilMembers = append(councilMembers, m)
+		for _, m := range d.Monsters.Enemies() {
+			if (m.Name == npc.CouncilMember || m.Name == npc.CouncilMember2 || m.Name == npc.CouncilMember3) && m.Stats[stat.Life] > 0 {
+				return m.UnitID, true
 			}
 		}
-
-		// Order council members by distance
-		sort.Slice(councilMembers, func(i, j int) bool {
-			distanceI := s.PathFinder.DistanceFromMe(councilMembers[i].Position)
-			distanceJ := s.PathFinder.DistanceFromMe(councilMembers[j].Position)
-
-			return distanceI < distanceJ
-		})
-
-		for _, m := range councilMembers {
-			return m.UnitID, true
-		}
-
 		return 0, false
 	}, nil)
 }
 
 func (s Hammerdin) KillMephisto() error {
-	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique, false)
+	return s.killMonsterByName(npc.Mephisto, data.MonsterTypeUnique)
 }
+
 func (s Hammerdin) KillIzual() error {
 	return s.killMonster(npc.Izual, data.MonsterTypeUnique)
 }
@@ -202,11 +205,11 @@ func (s Hammerdin) KillDiablo() error {
 }
 
 func (s Hammerdin) KillPindle() error {
-	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.DefiledWarrior, data.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillNihlathak() error {
-	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique, false)
+	return s.killMonsterByName(npc.Nihlathak, data.MonsterTypeSuperUnique)
 }
 
 func (s Hammerdin) KillBaal() error {
