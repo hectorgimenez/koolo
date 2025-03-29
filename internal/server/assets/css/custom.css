@@ -4,6 +4,58 @@
     --pico-form-element-spacing-horizontal: 0.5rem;
     --pico-font-size: 100%;
 }
+.conditional-field {
+    transition: all 0.3s ease;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    margin: 0.5rem 0;
+    border: 1px solid #2a3140;
+}
+
+.input-with-info {
+    position: relative;
+}
+
+.input-info {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+#clearPathDist {
+    width: 100%;
+}
+
+/* Style the walking radius input */
+.walking-radius-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.walking-radius-container label {
+    font-weight: bold;
+    color: #7aa6ff;
+    margin-bottom: 5px;
+}
+
+.walking-radius-slider {
+    position: relative;
+    height: 30px;
+}
+
+.walking-radius-value {
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    background-color: #2a3140;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    color: #fff;
+}
 
 .error-message {
     background-color: #f8d7da;
@@ -193,13 +245,14 @@
 }
 
 .run-list li summary button {
-    border: none;
+
     cursor: pointer;
     padding: 2.5px 5px; /* 50% smaller padding */
     margin-left: 10px;
     font-size: 0.8rem; /* 50% smaller font size */
     color: #ffffff;
-    border-radius: 1px solid #2a3140;
+    border: 1px solid #2a3140; /* Fixed: changed from border-radius to border */
+    border-radius: 4px; /* Added correct border-radius property */
     transition: background-color 0.2s, transform 0.1s;
     align-items: center;
     justify-content: center;
