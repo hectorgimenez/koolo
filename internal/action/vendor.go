@@ -41,13 +41,12 @@ func VendorRefill(forceRefill, sellJunk bool) error {
 		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 	}
 
-	SwitchStashTab(4)
-	ctx.RefreshGameData()
-	town.BuyConsumables(forceRefill)
-
 	if sellJunk {
 		town.SellJunk()
 	}
+	SwitchStashTab(4)
+	ctx.RefreshGameData()
+	town.BuyConsumables(forceRefill)
 
 	return step.CloseAllMenus()
 }

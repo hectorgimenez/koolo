@@ -65,8 +65,8 @@ func InteractNPC(npcID npc.ID) error {
 
 		// Calculate click position
 		x, y := ui.GameCoordsToScreenCords(townNPC.Position.X, townNPC.Position.Y)
-		if npcID == npc.Tyrael2 {
-			y = y - 40 // Act 4 Tyrael has a super weird hitbox
+		if npcID == npc.Tyrael2 || npcID == npc.Tyrael {
+			y = y - 40 // Tyrael has a super weird hitbox
 		}
 
 		// Move mouse and wait for hover

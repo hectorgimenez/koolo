@@ -147,8 +147,15 @@ type CharacterCfg struct {
 			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
 			OnlyClearLevel2       bool `yaml:"onlyClearLevel2"`
 		} `yaml:"pit"`
+		Countess struct {
+			ClearFloors bool `yaml:"clearFloors"`
+		}
 		Andariel struct {
-			ClearRoom bool `yaml:"clearRoom"`
+			ClearRoom   bool `yaml:"clearRoom"`
+			UseAntidoes bool `yaml:"useAntidoes"`
+		}
+		Duriel struct {
+			UseThawing bool `yaml:"useThawing"`
 		}
 		StonyTomb struct {
 			OpenChests        bool `yaml:"openChests"`

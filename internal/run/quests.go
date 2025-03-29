@@ -10,6 +10,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data/object"
 	"github.com/hectorgimenez/d2go/pkg/data/quest"
 	"github.com/hectorgimenez/koolo/internal/action"
+	"github.com/hectorgimenez/koolo/internal/action/step"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/context"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -103,7 +104,7 @@ func (a Quests) clearDenQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	return nil
 }
@@ -153,8 +154,8 @@ func (a Quests) rescueCainQuest() error {
 	if err != nil {
 		return err
 	}
+	utils.Sleep(1000)
 
-	action.ItemPickup(0)
 	err = action.ReturnTown()
 	if err != nil {
 		return err
@@ -165,10 +166,10 @@ func (a Quests) rescueCainQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	//Reuse Tristram Run actions
-	err = Tristram{}.Run()
+	err = NewTristram().Run()
 	if err != nil {
 		return err
 	}
@@ -233,7 +234,7 @@ func (a Quests) retrieveHammerQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	return nil
 }
@@ -311,13 +312,13 @@ func (a Quests) killRadamentQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 	itm, _ := a.ctx.Data.Inventory.Find("BookofSkill")
 	screenPos := ui.GetScreenCoordsForItem(itm)
 	utils.Sleep(200)
 	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	return nil
 }
@@ -444,7 +445,7 @@ func (a Quests) retrieveBookQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	return nil
 }
@@ -536,7 +537,7 @@ func (a Quests) killShenkQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	return nil
 }
@@ -622,13 +623,13 @@ func (a Quests) rescueAnyaQuest() error {
 		return err
 	}
 
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 	a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 	itm, _ := a.ctx.Data.Inventory.Find("ScrollOfResistance")
 	screenPos := ui.GetScreenCoordsForItem(itm)
 	utils.Sleep(200)
 	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
-	a.ctx.HID.PressKey(win.VK_ESCAPE)
+	step.CloseAllMenus()
 
 	return nil
 }

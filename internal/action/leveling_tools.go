@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/hectorgimenez/koolo/internal/action/step"
@@ -14,6 +15,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/npc"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
@@ -52,122 +54,145 @@ var uiSkillRowPositionLegacy = [6]int{110, 195, 275, 355, 440, 520}
 var uiSkillColumnPositionLegacy = [3]int{690, 770, 855}
 
 func EnsureStatPoints() error {
-	// TODO finish this
-	return nil
-	//return NewStepChain(func(d game.Data) []step.Step {
-	//	char, isLevelingChar := b.ch.(LevelingCharacter)
-	//	_, unusedStatPoints := d.PlayerUnit.FindStat(stat.StatPoints, 0)
-	//	if !isLevelingChar || !unusedStatPoints {
-	//		if d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKey(win.VK_ESCAPE)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		return nil
-	//	}
-	//
-	//	for st, targetPoints := range char.StatPoints(d) {
-	//		currentPoints, found := d.PlayerUnit.FindStat(st, 0)
-	//		if !found || currentPoints.Value >= targetPoints {
-	//			continue
-	//		}
-	//
-	//		if !d.OpenMenus.Character {
-	//			return []step.Step{
-	//				step.SyncStep(func(_ game.Data) error {
-	//					b.HID.PressKeyBinding(d.KeyBindings.CharacterScreen)
-	//					return nil
-	//				}),
-	//			}
-	//		}
-	//
-	//		var statBtnPosition data.Position
-	//		if d.LegacyGraphics {
-	//			statBtnPosition = uiStatButtonPositionLegacy[st]
-	//		} else {
-	//			statBtnPosition = uiStatButtonPosition[st]
-	//		}
-	//
-	//		return []step.Step{
-	//			step.SyncStep(func(_ game.Data) error {
-	//				utils.Sleep(100)
-	//				b.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
-	//				utils.Sleep(500)
-	//				return nil
-	//			}),
-	//		}
-	//	}
-	//
-	//	return nil
-	//}, RepeatUntilNoSteps())
-}
-
-func EnsureSkillPoints() error {
-	// TODO finish this
-	return nil
-	//ctx := context.Get()
-	//
-	//char, isLevelingChar := ctx.Char.(LevelingCharacter)
-	//availablePoints, unusedSkillPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
-	//
-	//assignedPoints := make(map[skill.ID]int)
-	//for _, sk := range char.SkillPoints() {
-	//	currentPoints, found := assignedPoints[sk]
-	//	if !found {
-	//		currentPoints = 0
-	//	}
-	//
-	//	assignedPoints[sk] = currentPoints + 1
-	//
-	//	characterPoints, found := ctx.Data.PlayerUnit.Skills[sk]
-	//	if !found || int(characterPoints.Level) < assignedPoints[sk] {
-	//		skillDesc, skFound := skill.Desc[sk]
-	//		if !skFound {
-	//			ctx.Logger.Error("skill not found for character", slog.Any("skill", sk))
-	//			return nil
-	//		}
-	//
-	//		if !ctx.Data.OpenMenus.SkillTree {
-	//			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
-	//		}
-	//
-	//		utils.Sleep(100)
-	//		if ctx.Data.LegacyGraphics {
-	//			ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
-	//		} else {
-	//			ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
-	//		}
-	//		utils.Sleep(200)
-	//		if ctx.Data.LegacyGraphics {
-	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
-	//		} else {
-	//			ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
-	//		}
-	//		utils.Sleep(500)
-	//		return nil
-	//	}
-	//}
-	//
-	//return nil
-}
-
-func UpdateQuestLog() error {
 	ctx := context.Get()
-	ctx.SetLastAction("UpdateQuestLog")
-
-	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); !isLevelingChar {
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	if !isLevelingChar {
 		return nil
 	}
 
-	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.QuestLog)
-	utils.Sleep(1000)
+	statPoints, hasUnusedPoints := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+	if !hasUnusedPoints || statPoints.Value == 0 {
+		return nil
+	}
+
+	remainingPoints := statPoints.Value
+	allocations := char.StatPoints()
+	for _, allocation := range allocations {
+		if statPoints.Value == 0 {
+			break
+		}
+
+		currentValue, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(allocation.Stat, 0)
+		if currentValue.Value >= allocation.Points {
+			continue
+		}
+
+		// Calculate how many points we can actually spend
+		pointsToSpend := min(allocation.Points-currentValue.Value, remainingPoints)
+		for i := 0; i < pointsToSpend; i++ {
+
+			if !spendStatPoint(allocation.Stat) {
+				ctx.Logger.Error(fmt.Sprintf("Failed to spend point in %v", allocation.Stat))
+				continue
+			}
+
+			remainingPoints--
+
+			updatedValue, _ := ctx.Data.PlayerUnit.BaseStats.FindStat(allocation.Stat, 0)
+			if updatedValue.Value >= allocation.Points {
+				ctx.Logger.Debug(fmt.Sprintf("Increased %v to target %d (%d total points remaining)",
+					allocation.Stat, allocation.Points, remainingPoints))
+			}
+		}
+	}
+	return step.CloseAllMenus()
+
+}
+
+func EnsureSkillPoints() error {
+	ctx := context.Get()
+
+	char, isLevelingChar := ctx.Char.(context.LevelingCharacter)
+	skillPoints, hasUnusedPoints := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+
+	if !isLevelingChar || !hasUnusedPoints || skillPoints.Value == 0 {
+		if ctx.Data.OpenMenus.SkillTree {
+			step.CloseAllMenus()
+		}
+		return nil
+	}
+
+	remainingPoints := skillPoints.Value
+	skillsToAssign := char.SkillPoints()
+
+	for _, skillID := range skillsToAssign {
+		if remainingPoints <= 0 {
+			break
+		}
+
+		characterPoints, found := ctx.Data.PlayerUnit.Skills[skillID]
+		currentLevel := 0
+		if found {
+			currentLevel = int(characterPoints.Level)
+		}
+
+		// Try to spend a point in this skill
+		if spendSkillPoint(skillID) {
+			remainingPoints--
+			ctx.Logger.Debug(fmt.Sprintf("Increased skill %v to level %d (%d total points remaining)",
+				skill.SkillNames[skillID], currentLevel+1, remainingPoints))
+		} else {
+			ctx.Logger.Error(fmt.Sprintf("Failed to spend point in skill %v", skill.SkillNames[skillID]))
+		}
+	}
 
 	return step.CloseAllMenus()
 }
+
+func spendStatPoint(statID stat.ID) bool {
+	ctx := context.Get()
+	beforePoints, _ := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+
+	if !ctx.Data.OpenMenus.Character {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.CharacterScreen)
+		utils.Sleep(100)
+	}
+
+	statBtnPosition := uiStatButtonPosition[statID]
+	if ctx.Data.LegacyGraphics {
+		statBtnPosition = uiStatButtonPositionLegacy[statID]
+	}
+
+	ctx.HID.Click(game.LeftButton, statBtnPosition.X, statBtnPosition.Y)
+	utils.Sleep(300)
+
+	afterPoints, _ := ctx.Data.PlayerUnit.FindStat(stat.StatPoints, 0)
+	return beforePoints.Value-afterPoints.Value == 1
+}
+
+func spendSkillPoint(skillID skill.ID) bool {
+	ctx := context.Get()
+	beforePoints, _ := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+
+	if !ctx.Data.OpenMenus.SkillTree {
+		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.SkillTree)
+		utils.Sleep(100)
+	}
+
+	skillDesc, found := skill.Desc[skillID]
+	if !found {
+		ctx.Logger.Error(fmt.Sprintf("skill not found for character: %v", skillID))
+		return false
+	}
+
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+	} else {
+		ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+	}
+	utils.Sleep(200)
+
+	if ctx.Data.LegacyGraphics {
+		ctx.HID.Click(game.LeftButton, uiSkillColumnPositionLegacy[skillDesc.Column-1], uiSkillRowPositionLegacy[skillDesc.Row-1])
+	} else {
+		ctx.HID.Click(game.LeftButton, uiSkillColumnPosition[skillDesc.Column-1], uiSkillRowPosition[skillDesc.Row-1])
+	}
+	utils.Sleep(300)
+
+	afterPoints, _ := ctx.Data.PlayerUnit.FindStat(stat.SkillPoints, 0)
+	return beforePoints.Value-afterPoints.Value == 1
+}
+
 func getAvailableSkillKB() []data.KeyBinding {
 	availableSkillKB := make([]data.KeyBinding, 0)
 	ctx := context.Get()
@@ -191,73 +216,94 @@ func EnsureSkillBindings() error {
 		return nil
 	}
 
+	// Bind right skills
 	mainSkill, skillsToBind := char.SkillsToBind()
-	skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+	if _, found := ctx.Data.Inventory.Find(item.TomeOfTownPortal, item.LocationInventory); found {
+		skillsToBind = append(skillsToBind, skill.TomeOfTownPortal)
+	}
+
 	notBoundSkills := make([]skill.ID, 0)
 	for _, sk := range skillsToBind {
-		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && ctx.Data.PlayerUnit.Skills[sk].Level > 0 {
+		if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(sk); !found && (sk == skill.TomeOfTownPortal || ctx.Data.PlayerUnit.Skills[sk].Level > 0) {
 			notBoundSkills = append(notBoundSkills, sk)
+			slices.Sort(notBoundSkills)
+			notBoundSkills = slices.Compact(notBoundSkills) // In case we have duplicates (tp tome)
 		}
 	}
 
-	if len(notBoundSkills) > 0 {
-		ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
-		utils.Sleep(300)
-		ctx.HID.MovePointer(10, 10)
-		utils.Sleep(300)
+	clvl, _ := ctx.Data.PlayerUnit.FindStat(stat.Level, 0)
+	//Hacky way to find if we're lvling a sorc at clvl 1
+	str, _ := ctx.Data.PlayerUnit.FindStat(stat.Strength, 0)
+
+	if len(notBoundSkills) > 0 || (clvl.Value == 1 && str.Value == 10) {
+		ctx.Logger.Debug("Unbound skills found, trying to bind")
+		if ctx.GameReader.LegacyGraphics() {
+			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic)
+		} else {
+			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+		}
 
 		availableKB := getAvailableSkillKB()
-
-		for i, sk := range notBoundSkills {
-			skillPosition, found := calculateSkillPositionInUI(false, sk)
-			if !found {
-				continue
+		ctx.Logger.Debug(fmt.Sprintf("Available KB: %v", availableKB))
+		if len(notBoundSkills) > 0 {
+			for i, sk := range notBoundSkills {
+				skillPosition, found := calculateSkillPositionInUI(false, sk)
+				if !found {
+					continue
+				}
+				ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(availableKB[i])
+				utils.Sleep(300)
 			}
-
-			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
-			utils.Sleep(100)
-			ctx.HID.PressKeyBinding(availableKB[i])
-			utils.Sleep(300)
+		} else {
+			if _, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.FireBolt); !found {
+				ctx.Logger.Debug("Lvl 1 sorc found - forcing fire bolt bind")
+				if ctx.GameReader.LegacyGraphics() {
+					ctx.HID.MovePointer(1000, 530)
+				} else {
+					ctx.HID.MovePointer(685, 545)
+				}
+				utils.Sleep(100)
+				ctx.HID.PressKeyBinding(availableKB[0])
+				utils.Sleep(300)
+			}
 		}
 
 	}
 
-	if ctx.Data.PlayerUnit.LeftSkill != mainSkill {
-		ctx.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
-		utils.Sleep(300)
-		ctx.HID.MovePointer(10, 10)
-		utils.Sleep(300)
+	//Set left (main) skill
+	if mainSkill > 0 { // If it's anything other than attack
+		if ctx.GameReader.LegacyGraphics() {
+			ctx.HID.Click(game.LeftButton, ui.MainSkillButtonXClassic, ui.MainSkillButtonYClassic)
+		} else {
+			ctx.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
+		}
 
 		skillPosition, found := calculateSkillPositionInUI(true, mainSkill)
 		if found {
-			ctx.HID.MovePointer(skillPosition.X, skillPosition.Y)
-			utils.Sleep(100)
 			ctx.HID.Click(game.LeftButton, skillPosition.X, skillPosition.Y)
 			utils.Sleep(300)
 		}
 	}
-
 	return nil
 }
 
 func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position, bool) {
-	d := context.Get().Data
+	ctx := context.Get()
 
-	var scrolls = []skill.ID{
-		skill.TomeOfTownPortal, skill.ScrollOfTownPortal, skill.TomeOfIdentify, skill.ScrollOfIdentify,
-	}
-
-	if _, found := d.PlayerUnit.Skills[skillID]; !found {
+	if _, found := ctx.Data.PlayerUnit.Skills[skillID]; !found {
 		return data.Position{}, false
 	}
 
 	targetSkill := skill.Skills[skillID]
 	descs := make(map[skill.ID]skill.Skill)
-	row := 0
 	totalRows := make([]int, 0)
+	pageSkills := make(map[int][]skill.ID)
+	row := 0
 	column := 0
-	skillsWithCharges := 0
-	for skID, points := range d.PlayerUnit.Skills {
+
+	for skID := range ctx.Data.PlayerUnit.Skills {
 		sk := skill.Skills[skID]
 		// Skip skills that can not be bind
 		if sk.Desc().ListRow < 0 {
@@ -265,34 +311,16 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 		}
 
 		// Skip skills that can not be bind to current mouse button
-		if (mainSkill == true && !sk.LeftSkill) || (mainSkill == false && !sk.RightSkill) {
+		if (mainSkill && !sk.LeftSkill) || (!mainSkill && !sk.RightSkill) {
 			continue
 		}
 
-		if points.Charges > 0 {
-			skillsWithCharges++
-			continue
-		}
-
-		if slices.Contains(scrolls, sk.ID) {
-			continue
-		}
 		descs[skID] = sk
-
-		if skID != targetSkill.ID && sk.Desc().Page == targetSkill.Desc().Page {
-			if sk.Desc().ListRow > targetSkill.Desc().ListRow {
-				column++
-			} else if sk.Desc().ListRow == targetSkill.Desc().ListRow && sk.Desc().Column > targetSkill.Desc().Column {
-				column++
-			}
+		if sk.Desc().Page == targetSkill.Desc().Page {
+			pageSkills[sk.Desc().Page] = append(pageSkills[sk.Desc().Page], skID)
 		}
-
 		totalRows = append(totalRows, sk.Desc().ListRow)
-		if row == targetSkill.Desc().ListRow {
-			continue
-		}
 
-		row++
 	}
 
 	slices.Sort(totalRows)
@@ -300,35 +328,56 @@ func calculateSkillPositionInUI(mainSkill bool, skillID skill.ID) (data.Position
 
 	// If we don't have any skill of a specific tree, the entire row gets one line down
 	for i, currentRow := range totalRows {
-		if currentRow == row {
+		if currentRow == targetSkill.Desc().ListRow {
 			row = i
 			break
 		}
 	}
 
-	// Scrolls and charges are not in the same list
-	if slices.Contains(scrolls, skillID) {
-		column = skillsWithCharges
-		row = len(totalRows)
-		for _, skID := range scrolls {
-			if d.PlayerUnit.Skills[skID].Quantity > 0 {
-				if skID == skillID {
-					break
-				}
-				column++
-			}
+	skillsInPage := pageSkills[targetSkill.Desc().Page]
+	slices.Sort(skillsInPage)
+	for i, skills := range skillsInPage {
+		if skills == targetSkill.ID {
+			column = i
+			break
 		}
 	}
 
-	skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * column)
-	if !mainSkill {
-		skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * column)
+	if ctx.GameReader.LegacyGraphics() {
+		skillOffsetX := ui.MainSkillListFirstSkillXClassic + (ui.SkillListSkillOffsetClassic * column)
+		if !mainSkill {
+			skillOffsetX = ui.SecondarySkillListFirstSkillXClassic - (ui.SkillListSkillOffsetClassic * column)
+		}
+
+		return data.Position{
+			X: skillOffsetX,
+			Y: ui.SkillListFirstSkillYClassic - ui.SkillListSkillOffsetClassic*row,
+		}, true
+	} else {
+		skillOffsetX := ui.MainSkillListFirstSkillX - (ui.SkillListSkillOffset * (len(skillsInPage) - (column + 1)))
+		if !mainSkill {
+			skillOffsetX = ui.SecondarySkillListFirstSkillX + (ui.SkillListSkillOffset * (len(skillsInPage) - (column + 1))) // Order is reversed in resurrected gfx
+		}
+
+		return data.Position{
+			X: skillOffsetX,
+			Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
+		}, true
+	}
+}
+
+func UpdateQuestLog() error {
+	ctx := context.Get()
+	ctx.SetLastAction("UpdateQuestLog")
+
+	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); !isLevelingChar {
+		return nil
 	}
 
-	return data.Position{
-		X: skillOffsetX,
-		Y: ui.SkillListFirstSkillY - ui.SkillListSkillOffset*row,
-	}, true
+	ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.QuestLog)
+	utils.Sleep(1000)
+
+	return step.CloseAllMenus()
 }
 
 func HireMerc() error {
@@ -347,9 +396,15 @@ func HireMerc() error {
 			}
 			ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 			utils.Sleep(2000)
-			ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
-			utils.Sleep(500)
-			ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+			if ctx.Data.LegacyGraphics {
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListXClassic, ui.FirstMercFromContractorListYClassic)
+				utils.Sleep(500)
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListXClassic, ui.FirstMercFromContractorListYClassic)
+			} else {
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+				utils.Sleep(500)
+				ctx.HID.Click(game.LeftButton, ui.FirstMercFromContractorListX, ui.FirstMercFromContractorListY)
+			}
 		}
 	}
 

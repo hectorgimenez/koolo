@@ -191,7 +191,7 @@ func shouldStashIt(i data.Item, firstRun bool) (bool, string, string) {
 	}
 
 	// Don't stash items from quests during leveling process, it makes things easier to track
-	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); isLevelingChar && i.IsFromQuest() {
+	if _, isLevelingChar := ctx.Char.(context.LevelingCharacter); isLevelingChar && i.IsFromQuest() && i.Name != "HoradricCube" {
 		return false, "", ""
 	}
 
