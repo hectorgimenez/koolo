@@ -188,6 +188,8 @@ game:
       - 119 # Icy Cellar
       - 121 # Nihlathak's Temple (Will do Nihlathak run)
       - 128 # The Worldstone Keep Level 1 (Will do Baal run)
+  countess:
+    clearGhosts: false # Will go room to room in the Tower and kill every ghost.   
 
 companion:
   enabled: false
