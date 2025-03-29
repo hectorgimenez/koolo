@@ -1,3 +1,6 @@
+<div style="background-color: #FFFACD; padding: 10px; border-radius: 5px; text-align: center">
+  <h2 style="margin: 0;">⚠️ Warning: People using this tool have been reporting bans. Do not use it.</h2>
+</div>
 <p align="center">
   <img src="assets/koolo.webp" alt="Koolo" width="150">
 </p>
