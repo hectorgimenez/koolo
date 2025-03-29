@@ -151,6 +151,10 @@
                     Use teleport when available
                 </label>
                 <label>
+                    <input type="checkbox" name="characterUseQuickCast" {{ if .Config.Character.UseQuickCast }}checked{{ end }}/>
+                    Use quick cast
+                </label>
+                <label>
                     <input type="checkbox" name="characterStashToShared" {{ if .Config.Character.StashToShared }}checked{{ end }}/>
                     Always stash to shared tab
                 </label>

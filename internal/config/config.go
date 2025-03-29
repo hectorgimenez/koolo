@@ -110,6 +110,7 @@ type CharacterCfg struct {
 		UseMerc       bool   `yaml:"useMerc"`
 		StashToShared bool   `yaml:"stashToShared"`
 		UseTeleport   bool   `yaml:"useTeleport"`
+		UseQuickCast  bool   `yaml:"useQuickCast"`
 		BerserkerBarb struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`

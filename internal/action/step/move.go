@@ -104,11 +104,11 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 
 		// Press the Teleport keybinding if it's available, otherwise use vigor (if available)
 		if ctx.Data.CanTeleport() {
-			if ctx.Data.PlayerUnit.RightSkill != skill.Teleport {
+			if ctx.Data.PlayerUnit.RightSkill != skill.Teleport && !ctx.Data.CharacterCfg.Character.UseQuickCast {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.Teleport))
 			}
 		} else if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(skill.Vigor); found {
-			if ctx.Data.PlayerUnit.RightSkill != skill.Vigor {
+			if ctx.Data.PlayerUnit.RightSkill != skill.Vigor && !ctx.Data.CharacterCfg.Character.UseQuickCast {
 				ctx.HID.PressKeyBinding(kb)
 			}
 		}
