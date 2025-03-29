@@ -144,6 +144,7 @@ type CharacterCfg struct {
 		Pit struct {
 			MoveThroughBlackMarsh bool `yaml:"moveThroughBlackMarsh"`
 			OpenChests            bool `yaml:"openChests"`
+			OpenSuperChests       bool `yaml:"openSuperChests"`
 			FocusOnElitePacks     bool `yaml:"focusOnElitePacks"`
 			OnlyClearLevel2       bool `yaml:"onlyClearLevel2"`
 		} `yaml:"pit"`
@@ -152,14 +153,17 @@ type CharacterCfg struct {
 		}
 		StonyTomb struct {
 			OpenChests        bool `yaml:"openChests"`
+			OpenSuperChests   bool `yaml:"openSuperChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"stony_tomb"`
 		Mausoleum struct {
 			OpenChests        bool `yaml:"openChests"`
+			OpenSuperChests   bool `yaml:"openSuperChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"mausoleum"`
 		AncientTunnels struct {
 			OpenChests        bool `yaml:"openChests"`
+			OpenSuperChests   bool `yaml:"openSuperChests"`
 			FocusOnElitePacks bool `yaml:"focusOnElitePacks"`
 		} `yaml:"ancient_tunnels"`
 		DrifterCavern struct {
