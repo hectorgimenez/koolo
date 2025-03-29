@@ -299,6 +299,18 @@ func ensureEnemyIsInRange(monster data.Monster, maxDistance, minDistance int, ne
 	distanceToMonster := ctx.PathFinder.DistanceFromMe(monster.Position)
 	hasLoS := ctx.PathFinder.LineOfSight(currentPos, monster.Position)
 
+	if ctx.CharacterCfg.Character.UseTeleStomp {
+		// We have line of sight, and we are inside the attack range, we can skip
+		if hasLoS && distanceToMonster <= 3 {
+			return nil
+		}
+
+		// move directly to target to telestomp
+		if distanceToMonster >= 3 {
+			return MoveTo(monster.Position)
+		}
+	}
+
 	// We have line of sight, and we are inside the attack range, we can skip
 	if hasLoS && distanceToMonster <= maxDistance && !needsRepositioning {
 		return nil
