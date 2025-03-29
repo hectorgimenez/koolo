@@ -21,6 +21,9 @@ func PreRun(firstRun bool) error {
 
 	if firstRun {
 		Stash(false)
+		// Here we build the gear cache for the first time and do not rebuild it until we stop the bot
+		buildGearCache()
+		utils.Sleep(500)
 	}
 
 	UpdateQuestLog()
@@ -107,12 +110,12 @@ func InRunReturnTownRoutine() error {
 	ReviveMerc()
 	HireMerc()
 	Repair()
-	
-	if (ctx.CharacterCfg.Companion.Leader) {
+
+	if ctx.CharacterCfg.Companion.Leader {
 		UsePortalInTown()
 		utils.Sleep(500)
 		return OpenTPIfLeader()
 	}
-	
+
 	return UsePortalInTown()
 }

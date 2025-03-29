@@ -10,6 +10,7 @@ import (
 
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
+	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/koolo/internal/config"
 	"github.com/hectorgimenez/koolo/internal/event"
 	"github.com/hectorgimenez/koolo/internal/game"
@@ -35,6 +36,13 @@ type Status struct {
 	Priority Priority
 }
 
+type WeaponBonusCache struct {
+	IsValid            bool
+	Slot0AllClassBonus int
+	Slot1AllClassBonus int
+	OptimalSkillSlots  map[skill.ID]int
+}
+
 type Context struct {
 	Name              string
 	ExecutionPriority Priority
@@ -53,6 +61,7 @@ type Context struct {
 	LastBuffAt        time.Time
 	ContextDebug      map[Priority]*Debug
 	CurrentGame       *CurrentGameHelper
+	WeaponBonusCache  WeaponBonusCache
 }
 
 type Debug struct {
