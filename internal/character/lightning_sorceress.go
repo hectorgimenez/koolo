@@ -32,21 +32,18 @@ func (s LightningSorceress) CheckKeyBindings() []skill.ID {
 
 	for _, cskill := range requiredKeybindings {
 		if _, found := s.Data.KeyBindings.KeyBindingForSkill(cskill); !found {
-			missingKeybindings = append(missingKeybindings, cskill)
+			switch cskill {
+			// Since we can have one of 3 armors:
+			case skill.ShiverArmor:
+				_, found1 := s.Data.KeyBindings.KeyBindingForSkill(skill.FrozenArmor)
+				_, found2 := s.Data.KeyBindings.KeyBindingForSkill(skill.ChillingArmor)
+				if !found1 && !found2 {
+					missingKeybindings = append(missingKeybindings, skill.ShiverArmor)
+				}
+			default:
+				missingKeybindings = append(missingKeybindings, cskill)
+			}
 		}
-	}
-
-	// Check for one of the armor skills
-	armorSkills := []skill.ID{skill.FrozenArmor, skill.ShiverArmor, skill.ChillingArmor}
-	hasArmor := false
-	for _, armor := range armorSkills {
-		if _, found := s.Data.KeyBindings.KeyBindingForSkill(armor); found {
-			hasArmor = true
-			break
-		}
-	}
-	if !hasArmor {
-		missingKeybindings = append(missingKeybindings, skill.FrozenArmor)
 	}
 
 	if len(missingKeybindings) > 0 {
