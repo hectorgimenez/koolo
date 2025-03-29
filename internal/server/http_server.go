@@ -926,6 +926,7 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		cfg.Game.Leveling.EnsurePointsAllocation = r.Form.Has("gameLevelingEnsurePointsAllocation")
 		cfg.Game.Leveling.EnsureKeyBinding = r.Form.Has("gameLevelingEnsureKeyBinding")
+		cfg.Game.Leveling.AutoEquip = r.Form.Has("gameLevelingAutoEquip")
 
 		// Quests options for Act 1
 		cfg.Game.Quests.ClearDen = r.Form.Has("gameQuestsClearDen")
